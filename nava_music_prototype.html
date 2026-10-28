@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>نوا | استودیوی هوشمند موسیقی</title>
+<style>
+:root {
+  --site-primary: #f2c14e;
+  --site-secondary: #18243a;
+  --site-background: #0b1220;
+  --site-on-primary: #171717;
+  --site-on-secondary: #f7f8fb;
+  --site-on-background: #f4f6fb;
+  --site-font-body: Tahoma, Arial, sans-serif;
+  --site-font-heading: Tahoma, Arial, sans-serif;
+  --site-heading-scale: 1;
+  --site-spacing-scale: 1;
+  --site-radius-scale: 1;
+  --site-decoration-opacity: 1;
+  color-scheme: light dark;
+}
+* { box-sizing: border-box; }
+body { margin: 0; font-family: var(--site-font-body); background: var(--site-background); color: var(--site-on-background); }
+.app { min-height: 100vh; width: 100%; background: var(--site-background); overflow: hidden; position: relative; }
+.app::before { content:""; position:absolute; width:340px; height:340px; border-radius:50%; background:radial-gradient(circle, rgba(242,193,78,.15), transparent 70%); top:30px; left:-130px; opacity:var(--site-decoration-opacity); pointer-events:none; }
+.wrap { width:min(100% - 32px, 1040px); margin:0 auto; position:relative; }
+header { display:flex; align-items:center; justify-content:space-between; gap:14px; padding:22px 0; border-bottom:1px solid rgba(255,255,255,.09); }
+.brand { display:flex; align-items:center; gap:10px; font-weight:900; font-size:22px; letter-spacing:-.5px; }
+.logo { width:40px; height:40px; display:grid; place-items:center; border-radius:14px; background:var(--site-primary); color:var(--site-on-primary); box-shadow:0 8px 24px rgba(242,193,78,.18); }
+.brand small { display:block; color:#9da8bc; font-size:10px; font-weight:500; margin-top:3px; letter-spacing:0; }
+.pill { font-size:12px; border:1px solid rgba(242,193,78,.4); color:var(--site-primary); border-radius:999px; padding:8px 12px; white-space:nowrap; }
+.hero { padding:42px 0 24px; text-align:center; }
+.eyebrow { color:var(--site-primary); font-size:12px; font-weight:700; letter-spacing:.3px; }
+h1 { font-family:var(--site-font-heading); font-size:calc(34px * var(--site-heading-scale)); line-height:1.5; margin:12px 0 8px; letter-spacing:-1px; }
+.gradient { color:var(--site-primary); }
+.hero p { color:#aeb8c9; line-height:2; max-width:580px; margin:0 auto; font-size:14px; }
+.workspace { display:grid; grid-template-columns:1.3fr .7fr; gap:18px; padding:18px 0 44px; }
+.panel { background:linear-gradient(145deg, #141e30, #101827); border:1px solid rgba(255,255,255,.1); border-radius:calc(22px * var(--site-radius-scale)); padding:22px; box-shadow:0 20px 60px rgba(0,0,0,.15); }
+.panel h2 { font-size:17px; margin:0 0 18px; }
+.field-label { display:block; font-size:13px; color:#dbe1eb; margin:17px 0 9px; }
+textarea, input, select { width:100%; background:#0b1220; color:#f4f6fb; border:1px solid #344158; border-radius:12px; padding:13px 14px; font:inherit; outline:none; }
+textarea { min-height:120px; resize:vertical; line-height:1.9; }
+textarea:focus, input:focus, select:focus { border-color:var(--site-primary); box-shadow:0 0 0 3px rgba(242,193,78,.1); }
+.hint { font-size:11px; color:#8995aa; margin-top:7px; line-height:1.8; }
+.two { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+.chips { display:flex; flex-wrap:wrap; gap:8px; }
+.chip { border:1px solid #354158; color:#d4dbea; background:#101827; border-radius:999px; padding:8px 12px; font-size:12px; cursor:pointer; }
+.chip.active { background:rgba(242,193,78,.13); color:var(--site-primary); border-color:var(--site-primary); }
+.primary-btn { display:flex; justify-content:center; align-items:center; gap:10px; width:100%; margin-top:20px; border:0; border-radius:14px; padding:15px 18px; background:var(--site-primary); color:var(--site-on-primary); font:inherit; font-weight:900; cursor:pointer; transition:transform .15s, filter .15s; }
+.primary-btn:hover { filter:brightness(1.04); transform:translateY(-1px); }
+.side-title { font-size:13px; color:#aeb8c9; margin-bottom:14px; }
+.feature { display:flex; gap:12px; padding:13px 0; border-bottom:1px solid rgba(255,255,255,.07); }
+.feature:last-of-type { border-bottom:0; }
+.feature-icon { flex:0 0 38px; height:38px; display:grid; place-items:center; border-radius:12px; background:#263147; font-size:18px; }
+.feature strong { font-size:13px; display:block; margin:2px 0 5px; }
+.feature p { color:#9da8bc; font-size:11px; line-height:1.8; margin:0; }
+.notice { margin-top:18px; border:1px solid rgba(242,193,78,.25); background:rgba(242,193,78,.07); border-radius:14px; padding:13px; font-size:11px; color:#d8d4c6; line-height:1.9; }
+.status { display:none; margin-top:14px; padding:13px; border-radius:12px; background:#202e44; border:1px solid #394b67; color:#e8edf6; font-size:12px; line-height:1.9; }
+.status.show { display:block; }
+footer { border-top:1px solid rgba(255,255,255,.08); padding:20px 0 28px; color:#7f8ba1; font-size:11px; display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap; }
+@media(max-width:720px) { .workspace { grid-template-columns:1fr; } .hero { padding-top:32px; } h1 { font-size:calc(29px * var(--site-heading-scale)); } .panel { padding:18px; } .wrap { width:min(100% - 22px, 1040px); } header { padding:16px 0; } }
+@media(prefers-color-scheme:light) { body { background:#f2f4f8; color:#172033; } .app { background:#f2f4f8; color:#172033; } header { border-color:#dce1ea; } .hero p { color:#59667b; } .panel { background:#fff; border-color:#dce1ea; box-shadow:0 14px 40px rgba(22,33,55,.07); } .field-label { color:#303c50; } textarea, input, select { background:#f8f9fc; color:#172033; border-color:#d5dce7; } .chip { background:#f8f9fc; color:#303c50; border-color:#d5dce7; } .feature-icon { background:#edf0f6; } .feature p, .side-title { color:#657188; } .notice { color:#6a5720; } .status { background:#edf2fa; color:#172033; border-color:#cbd7e9; } footer { border-color:#dce1ea; color:#69758a; } }
+</style>
+</head>
+<body>
+<div class="app" id="app">
+  <div class="wrap">
+    <header>
+      <div class="brand"><div class="logo">♫</div><div>نوا<small>استودیوی هوشمند موسیقی</small></div></div>
+      <div class="pill">نسخهٔ آزمایشی</div>
+    </header>
+    <section class="hero">
+      <div class="eyebrow">از شعر تا آهنگ، با سلیقهٔ تو</div>
+      <h1>صدای ایده‌ات را <span class="gradient">بساز</span></h1>
+      <p>شعرت را بنویس، سبک دلخواهت را انتخاب کن و برای ساخت آهنگ آماده شو. نوا برای تجربه‌ای ساده‌تر و فارسی‌زبان طراحی شده است.</p>
+    </section>
+    <main class="workspace">
+      <section class="panel">
+        <h2>🎙️ آهنگ تازه بساز</h2>
+        <label class="field-label" for="lyrics">شعر یا توضیح آهنگ</label>
+        <textarea id="lyrics" placeholder="مثلاً: یک آهنگ پاپ احساسی دربارهٔ امید، شب و شروع دوباره..."></textarea>
+        <div class="hint">می‌توانی شعر کامل بنویسی یا فقط توضیح بدهی چه آهنگی می‌خواهی.</div>
+        <div class="two">
+          <div><label class="field-label" for="language">زبان آهنگ</label><select id="language"><option value="fa">فارسی</option><option value="az">ترکی آذربایجانی</option><option value="tr">ترکی استانبولی</option><option value="mix">فارسی و ترکی</option><option value="other">بدون محدودیت زبانی</option></select></div>
+          <div><label class="field-label" for="voice">نوع خواننده</label><select id="voice"><option>صدای مرد</option><option>صدای زن</option><option>دوصدایی</option><option>بی‌کلام</option></select></div>
+        </div>
+        <label class="field-label">سبک موسیقی</label>
+        <div class="chips" id="styles"><button class="chip active" type="button">پاپ</button><button class="chip" type="button">سنتی</button><button class="chip" type="button">احساسی</button><button class="chip" type="button">راک</button><button class="chip" type="button">آذربایجانی</button><button class="chip" type="button">شاد و ریتمیک</button><button class="chip" type="button">مداحی</button></div>
+        <label class="field-label" for="mood">توضیحات تکمیلی (اختیاری)</label>
+        <input id="mood" placeholder="مثلاً آرام، سینمایی، سازهای زنده...">
+        <button class="primary-btn" id="generate">✦ آماده‌سازی آهنگ من</button>
+        <div class="status" id="status" role="status" aria-live="polite"></div>
+      </section>
+      <aside class="panel">
+        <div class="side-title">چرا نوا؟</div>
+        <div class="feature"><div class="feature-icon">ع</div><div><strong>طراحی‌شده برای فارسی</strong><p>تمرکز روی تجربهٔ کاربر فارسی‌زبان و نیازهای موسیقی منطقه‌ای.</p></div></div>
+        <div class="feature"><div class="feature-icon">♫</div><div><strong>سبک دلخواه تو</strong><p>از پاپ و موسیقی احساسی تا سبک‌های سنتی و آذربایجانی.</p></div></div>
+        <div class="feature"><div class="feature-icon">✎</div><div><strong>ایده از خودت شروع می‌شود</strong><p>شعر، حال‌وهوا و نوع خواننده را در یک فرم ساده انتخاب کن.</p></div></div>
+        <div class="feature"><div class="feature-icon">⬇</div><div><strong>آماده برای پخش و دانلود</strong><p>جایگاه پخش و دریافت فایل در نسخهٔ متصل به موتور فعال خواهد شد.</p></div></div>
+        <div class="notice"><strong>شفافیت نسخهٔ آزمایشی:</strong><br>این نمونه فعلاً طراحی و فرم تعاملی سایت است. برای تولید و دانلود آهنگ واقعی باید موتور مجاز و قابل‌اعتماد به آن متصل شود. فعلاً هیچ هزینه‌ای دریافت نمی‌شود.</div>
+      </aside>
+    </main>
+    <footer><span>نوا © نسخهٔ مفهومی</span><span>اول کیفیت؛ بعد هزینه و اشتراک</span></footer>
+  </div>
+</div>
+<script>
+const styleButtons = [...document.querySelectorAll('#styles .chip')];
+styleButtons.forEach(button => button.addEventListener('click', () => button.classList.toggle('active')));
+const statusBox = document.getElementById('status');
+document.getElementById('generate').addEventListener('click', () => {
+  const lyrics = document.getElementById('lyrics').value.trim();
+  const language = document.getElementById('language').selectedOptions[0].text;
+  const voice = document.getElementById('voice').value;
+  const mood = document.getElementById('mood').value.trim();
+  const styles = styleButtons.filter(b => b.classList.contains('active')).map(b => b.textContent).join('، ') || 'انتخاب نشده';
+  if (!lyrics) {
+    statusBox.textContent = 'اول شعر یا توضیح آهنگت را بنویس تا اطلاعات لازم آماده شود.';
+    statusBox.classList.add('show');
+    document.getElementById('lyrics').focus();
+    return;
+  }
+  statusBox.innerHTML = '<strong>درخواستت آماده است؛ هنوز تولید واقعی وصل نشده.</strong><br>زبان: ' + language + '<br>خواننده: ' + voice + '<br>سبک: ' + styles + '<br>توضیحات: ' + (mood || 'ندارد') + '<br><br>مرحلهٔ بعد، اتصال یک موتور تولید آهنگ با هزینه و مجوز روشن است. این نمونه هیچ آهنگی تولید یا آپلود نمی‌کند.';
+  statusBox.classList.add('show');
+});
+</script>
+</body>
+</html>
