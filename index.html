@@ -1,429 +1,294 @@
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#101321">
-  <title>نوا | استودیوی هوشمند موسیقی</title>
-  <style>
-    :root {
-      --bg: #0b0e18;
-      --panel: #141928;
-      --panel2: #1b2234;
-      --gold: #f2c14e;
-      --text: #f5f6fa;
-      --muted: #a5aec1;
-      --border: #30384b;
-      --green: #5ee0a0;
-    }
-
-    * { box-sizing: border-box; }
-
-    body {
-      margin: 0;
-      color: var(--text);
-      background:
-        radial-gradient(ellipse at 50% -10%, #28304d 0%, transparent 55%),
-        var(--bg);
-      font-family: Tahoma, Arial, sans-serif;
-      min-height: 100vh;
-      line-height: 1.9;
-    }
-
-    .container {
-      width: min(900px, 92%);
-      margin: auto;
-      padding: 28px 0 55px;
-    }
-
-    header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      margin-bottom: 38px;
-    }
-
-    .brand {
-      font-size: 30px;
-      font-weight: 900;
-      color: var(--gold);
-      letter-spacing: 1px;
-    }
-
-    .brand small {
-      display: block;
-      font-size: 11px;
-      font-weight: normal;
-      color: var(--muted);
-      letter-spacing: 0;
-    }
-
-    .badge {
-      border: 1px solid #46506a;
-      border-radius: 30px;
-      padding: 5px 12px;
-      color: var(--green);
-      font-size: 12px;
-    }
-
-    .hero { text-align: center; margin-bottom: 28px; }
-
-    .hero h1 {
-      font-size: clamp(25px, 5vw, 39px);
-      margin: 0 0 8px;
-      line-height: 1.6;
-    }
-
-    .hero h1 span { color: var(--gold); }
-
-    .hero p {
-      color: var(--muted);
-      margin: 0;
-      font-size: 14px;
-    }
-
-    .card {
-      background: rgba(20, 25, 40, .96);
-      border: 1px solid var(--border);
-      border-radius: 22px;
-      padding: clamp(17px, 4vw, 28px);
-      margin-bottom: 18px;
-      box-shadow: 0 12px 38px #00000018;
-    }
-
-    .section-title {
-      font-size: 17px;
-      font-weight: bold;
-      margin: 0 0 15px;
-    }
-
-    label {
-      display: block;
-      margin-bottom: 7px;
-      font-size: 13px;
-      color: #dce1ed;
-    }
-
-    input, textarea, select {
-      width: 100%;
-      color: var(--text);
-      background: #0e1321;
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 13px 14px;
-      font: inherit;
-      font-size: 14px;
-      outline: none;
-    }
-
-    input:focus, textarea:focus, select:focus {
-      border-color: var(--gold);
-    }
-
-    textarea {
-      resize: vertical;
-      min-height: 180px;
-    }
-
-    .hint {
-      color: var(--muted);
-      font-size: 12px;
-      margin-top: 6px;
-    }
-
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 16px;
-    }
-
-    .field { margin-bottom: 17px; }
-
-    .chips {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 9px;
-    }
-
-    .chip {
-      background: var(--panel2);
-      color: #dce1ed;
-      border: 1px solid var(--border);
-      border-radius: 30px;
-      padding: 7px 14px;
-      cursor: pointer;
-      font: inherit;
-      font-size: 13px;
-    }
-
-    .chip.active {
-      background: #42371d;
-      color: var(--gold);
-      border-color: var(--gold);
-    }
-
-    .main-button {
-      width: 100%;
-      border: 0;
-      border-radius: 14px;
-      padding: 15px;
-      margin-top: 10px;
-      cursor: pointer;
-      background: linear-gradient(110deg, #f7d879, #e9ad32);
-      color: #17130a;
-      font: inherit;
-      font-size: 17px;
-      font-weight: 900;
-      box-shadow: 0 6px 24px #f2c14e20;
-    }
-
-    .main-button:disabled {
-      opacity: .6;
-      cursor: wait;
-    }
-
-    .status {
-      display: none;
-      white-space: pre-wrap;
-      overflow-wrap: anywhere;
-      background: #0e1321;
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      padding: 15px;
-      margin-top: 18px;
-      font-size: 13px;
-    }
-
-    .status.show { display: block; }
-
-    .status audio {
-      display: block;
-      width: 100%;
-      margin-top: 15px;
-    }
-
-    .download {
-      display: inline-block;
-      color: var(--gold);
-      border: 1px solid #75602e;
-      border-radius: 10px;
-      padding: 8px 14px;
-      margin-top: 14px;
-      text-decoration: none;
-    }
-
-    .footnote {
-      text-align: center;
-      color: var(--muted);
-      font-size: 12px;
-      margin-top: 25px;
-    }
-
-    @media (max-width: 580px) {
-      .grid { grid-template-columns: 1fr; gap: 0; }
-      header { margin-bottom: 28px; }
-      .brand { font-size: 25px; }
-      .badge { font-size: 10px; }
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#101321">
+<title>نوا | استودیوی هوشمند موسیقی</title>
+<style>
+:root{--bg:#0b0e18;--panel:#141928;--panel2:#1b2234;--gold:#f2c14e;--text:#f5f6fa;--muted:#a5aec1;--border:#30384b;--green:#5ee0a0}
+*{box-sizing:border-box}
+body{margin:0;color:var(--text);background:radial-gradient(ellipse at 50% -10%,#28304d 0%,transparent 55%),var(--bg);font-family:Tahoma,Arial,sans-serif;min-height:100vh;line-height:1.9}
+.container{width:min(900px,92%);margin:auto;padding:28px 0 55px}
+header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:38px}
+.brand{font-size:30px;font-weight:900;color:var(--gold);letter-spacing:1px}
+.brand small{display:block;font-size:11px;font-weight:normal;color:var(--muted);letter-spacing:0}
+.badge{border:1px solid #46506a;border-radius:30px;padding:5px 12px;color:var(--green);font-size:12px}
+.hero{text-align:center;margin-bottom:28px}
+.hero h1{font-size:clamp(25px,5vw,39px);margin:0 0 8px;line-height:1.6}
+.hero h1 span{color:var(--gold)}
+.hero p{color:var(--muted);margin:0;font-size:14px}
+.card{background:rgba(20,25,40,.96);border:1px solid var(--border);border-radius:22px;padding:clamp(17px,4vw,28px);margin-bottom:18px;box-shadow:0 12px 38px #00000018}
+.section-title{font-size:17px;font-weight:bold;margin:0 0 15px}
+label{display:block;margin-bottom:7px;font-size:13px;color:#dce1ed}
+input,textarea,select{width:100%;color:var(--text);background:#0e1321;border:1px solid var(--border);border-radius:12px;padding:13px 14px;font:inherit;font-size:14px;outline:none}
+input:focus,textarea:focus,select:focus{border-color:var(--gold)}
+textarea{resize:vertical;min-height:180px}
+.hint{color:var(--muted);font-size:12px;margin-top:6px}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.field{margin-bottom:17px}
+.chips{display:flex;flex-wrap:wrap;gap:9px}
+.chip{background:var(--panel2);color:#dce1ed;border:1px solid var(--border);border-radius:30px;padding:7px 14px;cursor:pointer;font:inherit;font-size:13px}
+.chip.active{background:#42371d;color:var(--gold);border-color:var(--gold)}
+.main-button{width:100%;border:0;border-radius:14px;padding:15px;margin-top:10px;cursor:pointer;background:linear-gradient(110deg,#f7d879,#e9ad32);color:#17130a;font:inherit;font-size:16px;font-weight:900;box-shadow:0 6px 24px #f2c14e20}
+.secondary-button{background:linear-gradient(110deg,#8ce8c0,#3abf8b)}
+.main-button:disabled{opacity:.6;cursor:wait}
+.status{display:none;white-space:pre-wrap;overflow-wrap:anywhere;background:#0e1321;border:1px solid var(--border);border-radius:14px;padding:15px;margin-top:18px;font-size:13px}
+.status.show{display:block}
+.status audio{display:block;width:100%;margin-top:15px}
+.download{display:inline-block;color:var(--gold);border:1px solid #75602e;border-radius:10px;padding:8px 14px;margin-top:14px;text-decoration:none}
+.footnote{text-align:center;color:var(--muted);font-size:12px;margin-top:25px}
+@media(max-width:580px){.grid{grid-template-columns:1fr;gap:0}header{margin-bottom:28px}.brand{font-size:25px}.badge{font-size:10px}}
+</style>
 </head>
-
 <body>
-  <main class="container">
-    <header>
-      <div class="brand">♫ نوا
-        <small>استودیوی هوشمند موسیقی</small>
-      </div>
-      <div class="badge">● نسخه آزمایشی</div>
-    </header>
+<main class="container">
+<header>
+<div class="brand">♫ نوا<small>استودیوی هوشمند موسیقی</small></div>
+<div class="badge">● نسخه آزمایشی</div>
+</header>
 
-    <section class="hero">
-      <h1>موسیقی خودت را <span>خلق کن</span></h1>
-      <p>ایده یا شعرت را بنویس و برای ساخت آهنگ آماده شو.</p>
-    </section>
+<section class="hero">
+<h1>موسیقی خودت را <span>خلق کن</span></h1>
+<p>موضوعت را بگو، شعر بساز و آن را به آهنگ تبدیل کن.</p>
+</section>
 
-    <section class="card">
-      <h2 class="section-title">۱. شعر یا توضیحات آهنگ</h2>
-      <div class="field">
-        <label for="lyrics">متن آهنگ</label>
-        <textarea id="lyrics" maxlength="8000"
-          placeholder="شعر خودت را اینجا بنویس..."></textarea>
-        <div class="hint">متن اختصاصی خودت را وارد کن. کیفیت و طول آهنگ به موتور موسیقی بستگی دارد.</div>
-      </div>
+<section class="card">
+<h2 class="section-title">۱. ساخت شعر با هوش مصنوعی</h2>
+<div class="field">
+<label for="topic">موضوع ترانه</label>
+<input id="topic" maxlength="500" placeholder="مثلاً عشق، دلتنگی، امید یا خاطرات کودکی">
+</div>
+<div class="grid">
+<div class="field">
+<label for="lyricStyle">سبک ترانه</label>
+<select id="lyricStyle">
+<option>پاپ فارسی</option><option>سنتی ایرانی</option>
+<option>راک</option><option>عاشقانه</option>
+<option>غمگین</option><option>حماسی</option>
+<option>مداحی</option><option>آذربایجانی</option>
+</select>
+</div>
+<div class="field">
+<label for="lyricMood">حال‌وهوا</label>
+<select id="lyricMood">
+<option>احساسی</option><option>شاد و پرانرژی</option>
+<option>غمگین و عمیق</option><option>عاشقانه</option>
+<option>حماسی و باشکوه</option><option>آرام و دلنشین</option>
+</select>
+</div>
+</div>
+<button type="button" id="makeLyrics" class="main-button secondary-button">✍ ساخت شعر با هوش مصنوعی</button>
+<div id="lyricStatus" class="status" role="status" aria-live="polite"></div>
+</section>
 
-      <div class="field">
-        <label for="language">زبان آواز</label>
-        <select id="language">
-          <option value="Persian">فارسی</option>
-          <option value="Azerbaijani Turkish">ترکی آذربایجانی</option>
-          <option value="Istanbul Turkish">ترکی استانبولی</option>
-          <option value="Persian and Azerbaijani Turkish">فارسی و ترکی آذربایجانی</option>
-          <option value="English">انگلیسی</option>
-        </select>
-      </div>
-    </section>
+<section class="card">
+<h2 class="section-title">۲. شعر آهنگ</h2>
+<div class="field">
+<label for="lyrics">متن آهنگ</label>
+<textarea id="lyrics" maxlength="8000" placeholder="شعر خودت را بنویس یا با بخش ساخت شعر، یک ترانه بساز..."></textarea>
+<div class="hint">می‌توانی شعر تولیدشده را ویرایش کنی یا متن خودت را وارد کنی.</div>
+</div>
+<div class="field">
+<label for="language">زبان آواز</label>
+<select id="language">
+<option value="Persian">فارسی</option>
+<option value="Azerbaijani Turkish">ترکی آذربایجانی</option>
+<option value="Istanbul Turkish">ترکی استانبولی</option>
+<option value="Persian and Azerbaijani Turkish">فارسی و ترکی آذربایجانی</option>
+<option value="English">انگلیسی</option>
+</select>
+</div>
+</section>
 
-    <section class="card">
-      <h2 class="section-title">۲. سبک و حال‌وهوای موسیقی</h2>
+<section class="card">
+<h2 class="section-title">۳. سبک و حال‌وهوای موسیقی</h2>
+<label>سبک آهنگ (چند گزینه می‌توانی انتخاب کنی)</label>
+<div class="chips" id="styles">
+<button type="button" class="chip active">پاپ</button>
+<button type="button" class="chip">سنتی</button>
+<button type="button" class="chip">راک</button>
+<button type="button" class="chip">غمگین</button>
+<button type="button" class="chip">عاشقانه</button>
+<button type="button" class="chip">حماسی</button>
+<button type="button" class="chip">مداحی</button>
+<button type="button" class="chip">آذربایجانی</button>
+<button type="button" class="chip">بی‌کلام</button>
+</div>
+<div class="grid" style="margin-top:20px">
+<div class="field">
+<label for="voice">نوع صدا</label>
+<select id="voice">
+<option value="male">خواننده مرد</option>
+<option value="female">خواننده زن</option>
+<option value="duet">دوخواننده</option>
+<option value="instrumental">بی‌کلام</option>
+</select>
+</div>
+<div class="field">
+<label for="mood">توضیحات بیشتر (اختیاری)</label>
+<input id="mood" maxlength="500" placeholder="مثلاً صدای عمیق و احساسی">
+</div>
+</div>
+<button type="button" id="generate" class="main-button">✦ ساخت آهنگ</button>
+<div id="status" class="status" role="status" aria-live="polite"></div>
+</section>
 
-      <label>سبک آهنگ (چند گزینه می‌توانی انتخاب کنی)</label>
-      <div class="chips" id="styles">
-        <button type="button" class="chip active">پاپ</button>
-        <button type="button" class="chip">سنتی</button>
-        <button type="button" class="chip">راک</button>
-        <button type="button" class="chip">غمگین</button>
-        <button type="button" class="chip">عاشقانه</button>
-        <button type="button" class="chip">حماسی</button>
-        <button type="button" class="chip">مداحی</button>
-        <button type="button" class="chip">آذربایجانی</button>
-        <button type="button" class="chip">بی‌کلام</button>
-      </div>
+<p class="footnote">نوا در مرحله آزمایش است؛ ساخت شعر و آهنگ به دسترسی سرویس‌های مربوط بستگی دارد.</p>
+</main>
 
-      <div class="grid" style="margin-top:20px">
-        <div class="field">
-          <label for="voice">نوع صدا</label>
-          <select id="voice">
-            <option value="male">خواننده مرد</option>
-            <option value="female">خواننده زن</option>
-            <option value="duet">دوخواننده</option>
-            <option value="instrumental">بی‌کلام</option>
-          </select>
-        </div>
+<script>
+const BASE_URL = "https://nava-music-api.honrrpower.workers.dev";
+const styles = [...document.querySelectorAll("#styles .chip")];
+const lyricsBox = document.getElementById("lyrics");
+const makeLyricsButton = document.getElementById("makeLyrics");
+const lyricStatus = document.getElementById("lyricStatus");
+const generateButton = document.getElementById("generate");
+const statusBox = document.getElementById("status");
 
-        <div class="field">
-          <label for="mood">توضیحات بیشتر (اختیاری)</label>
-          <input id="mood" maxlength="500"
-            placeholder="مثلاً صدای عمیق و احساسی">
-        </div>
-      </div>
+styles.forEach(chip => {
+  chip.addEventListener("click", () => chip.classList.toggle("active"));
+});
 
-      <button type="button" id="generate" class="main-button">
-        ✦ ساخت آهنگ
-      </button>
+function showMessage(box, message) {
+  box.replaceChildren();
+  box.textContent = message;
+  box.classList.add("show");
+}
 
-      <div id="status" class="status" role="status" aria-live="polite"></div>
-    </section>
+async function postJSON(path, payload, timeoutMs = 90000) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
 
-    <p class="footnote">
-      نوا در مرحله آزمایش است؛ ساخت آهنگ ممکن است با خطای سرویس مواجه شود.
-    </p>
-  </main>
-
-  <script>
-    const API_URL =
-      "https://nava-music-api.honrrpower.workers.dev/generate";
-
-    const styles = [...document.querySelectorAll("#styles .chip")];
-    const button = document.getElementById("generate");
-    const statusBox = document.getElementById("status");
-
-    styles.forEach(chip => {
-      chip.addEventListener("click", () => {
-        chip.classList.toggle("active");
-      });
+  try {
+    const response = await fetch(BASE_URL + path, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+      signal: controller.signal
     });
 
-    function showMessage(message) {
-      statusBox.replaceChildren();
-      statusBox.textContent = message;
-      statusBox.classList.add("show");
+    let result;
+    try {
+      result = await response.json();
+    } catch {
+      throw new Error("پاسخ سرویس قابل خواندن نیست.");
     }
 
-    button.addEventListener("click", async () => {
-      const lyrics = document.getElementById("lyrics").value.trim();
-
-      if (!lyrics) {
-        showMessage("اول متن آهنگ را بنویس.");
-        document.getElementById("lyrics").focus();
-        return;
-      }
-
-      const language = document.getElementById("language").value;
-      const voice = document.getElementById("voice").value;
-      const mood = document.getElementById("mood").value.trim();
-
-      const selectedStyles = styles
-        .filter(chip => chip.classList.contains("active"))
-        .map(chip => chip.textContent.trim());
-
-      if (selectedStyles.includes("بی‌کلام")) {
-        selectedStyles.push("instrumental");
-      }
-
-      button.disabled = true;
-      button.textContent = "⏳ در حال ارسال درخواست...";
-      showMessage(
-        "درخواست به سرویس موسیقی ارسال شد.\n" +
-        "ممکن است چند دقیقه طول بکشد. صفحه را نبند."
+    if (!response.ok) {
+      throw new Error(
+        result.details || result.error || ("خطای سرویس: " + response.status)
       );
+    }
+    return result;
+  } finally {
+    clearTimeout(timer);
+  }
+}
 
-      try {
-        const response = await fetch(API_URL, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            lyrics,
-            language,
-            voice,
-            style: selectedStyles.join(", ") || "پاپ",
-            mood
-          })
-        });
+makeLyricsButton.addEventListener("click", async () => {
+  const topic = document.getElementById("topic").value.trim();
 
-        let result;
-        try {
-          result = await response.json();
-        } catch {
-          throw new Error("پاسخ سرویس قابل خواندن نیست.");
-        }
+  if (!topic) {
+    showMessage(lyricStatus, "اول موضوع ترانه را بنویس.");
+    document.getElementById("topic").focus();
+    return;
+  }
 
-        if (!response.ok) {
-          throw new Error(
-            result.details ||
-            result.error ||
-            ("خطای سرویس: " + response.status)
-          );
-        }
+  makeLyricsButton.disabled = true;
+  makeLyricsButton.textContent = "⏳ در حال نوشتن ترانه...";
+  showMessage(lyricStatus, "هوش مصنوعی در حال نوشتن شعر فارسی است؛ کمی صبر کن.");
 
-        if (!result.success || !result.audioUrl) {
-          throw new Error(
-            result.error || "فایل صوتی در پاسخ سرویس پیدا نشد."
-          );
-        }
-
-        statusBox.replaceChildren();
-
-        const heading = document.createElement("strong");
-        heading.textContent = "🎵 نتیجه ساخت آهنگ";
-        statusBox.appendChild(heading);
-
-        const audio = document.createElement("audio");
-        audio.controls = true;
-        audio.preload = "metadata";
-        audio.src = result.audioUrl;
-        statusBox.appendChild(audio);
-
-        const download = document.createElement("a");
-        download.className = "download";
-        download.href = result.audioUrl;
-        download.download = "nava-song.mp3";
-        download.textContent = "⬇ دانلود آهنگ";
-        statusBox.appendChild(download);
-
-        statusBox.classList.add("show");
-
-      } catch (error) {
-        showMessage(
-          "ساخت آهنگ ناموفق بود.\n\n" +
-          (error.message || "خطای ناشناخته") +
-          "\n\nفعلاً دوباره روی دکمه نزن؛ ابتدا خطا را بررسی می‌کنیم."
-        );
-      } finally {
-        button.disabled = false;
-        button.textContent = "✦ ساخت آهنگ";
-      }
+  try {
+    const result = await postJSON("/lyrics", {
+      topic,
+      style: document.getElementById("lyricStyle").value,
+      mood: document.getElementById("lyricMood").value
     });
-  </script>
+
+    if (!result.success || !result.lyrics) {
+      throw new Error("متن شعر دریافت نشد.");
+    }
+
+    lyricsBox.value = result.lyrics;
+    showMessage(lyricStatus, "✅ شعر ساخته شد و داخل کادر متن آهنگ قرار گرفت. می‌توانی ویرایشش کنی و بعد روی «ساخت آهنگ» بزنی.");
+    lyricsBox.scrollIntoView({ behavior: "smooth", block: "center" });
+  } catch (error) {
+    showMessage(
+      lyricStatus,
+      "ساخت شعر ناموفق بود.\n" +
+      (error.name === "AbortError" ? "زمان انتظار تمام شد؛ دوباره امتحان کن." : error.message)
+    );
+  } finally {
+    makeLyricsButton.disabled = false;
+    makeLyricsButton.textContent = "✍ ساخت شعر با هوش مصنوعی";
+  }
+});
+
+generateButton.addEventListener("click", async () => {
+  const lyrics = lyricsBox.value.trim();
+
+  if (!lyrics) {
+    showMessage(statusBox, "اول متن آهنگ را بنویس یا با هوش مصنوعی شعر بساز.");
+    lyricsBox.focus();
+    return;
+  }
+
+  const selectedStyles = styles
+    .filter(chip => chip.classList.contains("active"))
+    .map(chip => chip.textContent.trim());
+
+  const voice = document.getElementById("voice").value;
+  if (voice === "instrumental" && !selectedStyles.includes("بی‌کلام")) {
+    selectedStyles.push("بی‌کلام");
+  }
+
+  generateButton.disabled = true;
+  generateButton.textContent = "⏳ در حال ساخت آهنگ...";
+  showMessage(statusBox, "درخواست به سرویس موسیقی ارسال شد. ممکن است چند دقیقه طول بکشد؛ صفحه را نبند.");
+
+  try {
+    const result = await postJSON("/generate", {
+      lyrics,
+      language: document.getElementById("language").value,
+      voice,
+      style: selectedStyles.join(", ") || "پاپ",
+      mood: document.getElementById("mood").value.trim()
+    }, 260000);
+
+    if (!result.success || !result.audioUrl) {
+      throw new Error(result.error || "فایل صوتی دریافت نشد.");
+    }
+
+    statusBox.replaceChildren();
+    const heading = document.createElement("strong");
+    heading.textContent = "🎵 آهنگ آماده است";
+    statusBox.appendChild(heading);
+
+    const audio = document.createElement("audio");
+    audio.controls = true;
+    audio.preload = "metadata";
+    audio.src = result.audioUrl;
+    statusBox.appendChild(audio);
+
+    const download = document.createElement("a");
+    download.className = "download";
+    download.href = result.audioUrl;
+    download.download = "nava-song.mp3";
+    download.textContent = "⬇ دانلود آهنگ";
+    statusBox.appendChild(download);
+    statusBox.classList.add("show");
+  } catch (error) {
+    showMessage(
+      statusBox,
+      "ساخت آهنگ ناموفق بود.\n" +
+      (error.name === "AbortError" ? "زمان انتظار تمام شد؛ وضعیت سرویس را بررسی کن." : error.message)
+    );
+  } finally {
+    generateButton.disabled = false;
+    generateButton.textContent = "✦ ساخت آهنگ";
+  }
+});
+</script>
 </body>
 </html>
