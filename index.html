@@ -59,25 +59,34 @@ textarea{resize:vertical;min-height:180px}
 <label for="topic">موضوع ترانه</label>
 <input id="topic" maxlength="500" placeholder="مثلاً عشق، دلتنگی، امید یا خاطرات کودکی">
 </div>
+
 <div class="grid">
 <div class="field">
 <label for="lyricStyle">سبک ترانه</label>
 <select id="lyricStyle">
-<option>پاپ فارسی</option><option>سنتی ایرانی</option>
-<option>راک</option><option>عاشقانه</option>
-<option>غمگین</option><option>حماسی</option>
-<option>مداحی</option><option>آذربایجانی</option>
+<option>پاپ فارسی</option>
+<option>سنتی ایرانی</option>
+<option>راک</option>
+<option>عاشقانه</option>
+<option>غمگین</option>
+<option>حماسی</option>
+<option>مداحی</option>
+<option>آذربایجانی</option>
 </select>
 </div>
 <div class="field">
 <label for="lyricMood">حال‌وهوا</label>
 <select id="lyricMood">
-<option>احساسی</option><option>شاد و پرانرژی</option>
-<option>غمگین و عمیق</option><option>عاشقانه</option>
-<option>حماسی و باشکوه</option><option>آرام و دلنشین</option>
+<option>احساسی</option>
+<option>شاد و پرانرژی</option>
+<option>غمگین و عمیق</option>
+<option>عاشقانه</option>
+<option>حماسی و باشکوه</option>
+<option>آرام و دلنشین</option>
 </select>
 </div>
 </div>
+
 <button type="button" id="makeLyrics" class="main-button secondary-button">✍ ساخت شعر با هوش مصنوعی</button>
 <div id="lyricStatus" class="status" role="status" aria-live="polite"></div>
 </section>
@@ -89,6 +98,7 @@ textarea{resize:vertical;min-height:180px}
 <textarea id="lyrics" maxlength="8000" placeholder="شعر خودت را بنویس یا با بخش ساخت شعر، یک ترانه بساز..."></textarea>
 <div class="hint">می‌توانی شعر تولیدشده را ویرایش کنی یا متن خودت را وارد کنی.</div>
 </div>
+
 <div class="field">
 <label for="language">زبان آواز</label>
 <select id="language">
@@ -115,6 +125,7 @@ textarea{resize:vertical;min-height:180px}
 <button type="button" class="chip">آذربایجانی</button>
 <button type="button" class="chip">بی‌کلام</button>
 </div>
+
 <div class="grid" style="margin-top:20px">
 <div class="field">
 <label for="voice">نوع صدا</label>
@@ -130,6 +141,7 @@ textarea{resize:vertical;min-height:180px}
 <input id="mood" maxlength="500" placeholder="مثلاً صدای عمیق و احساسی">
 </div>
 </div>
+
 <button type="button" id="generate" class="main-button">✦ ساخت آهنگ</button>
 <div id="status" class="status" role="status" aria-live="polite"></div>
 </section>
@@ -138,7 +150,9 @@ textarea{resize:vertical;min-height:180px}
 </main>
 
 <script>
-const BASE_URL = "https://nava-music-api.honrrpower.workers.dev";
+const MUSIC_API = "https://nava-music-api.honrrpower.workers.dev";
+const LYRICS_API = "https://nava-lyrics-api.honrrpower.workers.dev";
+
 const styles = [...document.querySelectorAll("#styles .chip")];
 const lyricsBox = document.getElementById("lyrics");
 const makeLyricsButton = document.getElementById("makeLyrics");
@@ -156,12 +170,12 @@ function showMessage(box, message) {
   box.classList.add("show");
 }
 
-async function postJSON(path, payload, timeoutMs = 90000) {
+async function postJSON(baseURL, path, payload, timeoutMs = 90000) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
 
   try {
-    const response = await fetch(BASE_URL + path, {
+    const response = await fetch(baseURL + path, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
@@ -180,6 +194,7 @@ async function postJSON(path, payload, timeoutMs = 90000) {
         result.details || result.error || ("خطای سرویس: " + response.status)
       );
     }
+
     return result;
   } finally {
     clearTimeout(timer);
@@ -197,13 +212,14 @@ makeLyricsButton.addEventListener("click", async () => {
 
   makeLyricsButton.disabled = true;
   makeLyricsButton.textContent = "⏳ در حال نوشتن ترانه...";
-  showMessage(lyricStatus, "هوش مصنوعی در حال نوشتن شعر فارسی است؛ کمی صبر کن.");
+  showMessage(lyricStatus, "هوش مصنوعی در حال نوشتن ترانه است؛ کمی صبر کن.");
 
   try {
-    const result = await postJSON("/lyrics", {
+    const result = await postJSON(LYRICS_API, "/lyrics", {
       topic,
       style: document.getElementById("lyricStyle").value,
-      mood: document.getElementById("lyricMood").value
+      mood: document.getElementById("lyricMood").value,
+      language: document.getElementById("language").value
     });
 
     if (!result.success || !result.lyrics) {
@@ -211,13 +227,18 @@ makeLyricsButton.addEventListener("click", async () => {
     }
 
     lyricsBox.value = result.lyrics;
-    showMessage(lyricStatus, "✅ شعر ساخته شد و داخل کادر متن آهنگ قرار گرفت. می‌توانی ویرایشش کنی و بعد روی «ساخت آهنگ» بزنی.");
+    showMessage(
+      lyricStatus,
+      "✅ شعر ساخته شد و داخل کادر متن آهنگ قرار گرفت. می‌توانی ویرایشش کنی و بعد روی «ساخت آهنگ» بزنی."
+    );
     lyricsBox.scrollIntoView({ behavior: "smooth", block: "center" });
   } catch (error) {
     showMessage(
       lyricStatus,
       "ساخت شعر ناموفق بود.\n" +
-      (error.name === "AbortError" ? "زمان انتظار تمام شد؛ دوباره امتحان کن." : error.message)
+      (error.name === "AbortError"
+        ? "زمان انتظار تمام شد؛ دوباره امتحان کن."
+        : error.message)
     );
   } finally {
     makeLyricsButton.disabled = false;
@@ -239,6 +260,7 @@ generateButton.addEventListener("click", async () => {
     .map(chip => chip.textContent.trim());
 
   const voice = document.getElementById("voice").value;
+
   if (voice === "instrumental" && !selectedStyles.includes("بی‌کلام")) {
     selectedStyles.push("بی‌کلام");
   }
@@ -248,7 +270,7 @@ generateButton.addEventListener("click", async () => {
   showMessage(statusBox, "درخواست به سرویس موسیقی ارسال شد. ممکن است چند دقیقه طول بکشد؛ صفحه را نبند.");
 
   try {
-    const result = await postJSON("/generate", {
+    const result = await postJSON(MUSIC_API, "/generate", {
       lyrics,
       language: document.getElementById("language").value,
       voice,
@@ -261,6 +283,7 @@ generateButton.addEventListener("click", async () => {
     }
 
     statusBox.replaceChildren();
+
     const heading = document.createElement("strong");
     heading.textContent = "🎵 آهنگ آماده است";
     statusBox.appendChild(heading);
@@ -277,12 +300,15 @@ generateButton.addEventListener("click", async () => {
     download.download = "nava-song.mp3";
     download.textContent = "⬇ دانلود آهنگ";
     statusBox.appendChild(download);
+
     statusBox.classList.add("show");
   } catch (error) {
     showMessage(
       statusBox,
       "ساخت آهنگ ناموفق بود.\n" +
-      (error.name === "AbortError" ? "زمان انتظار تمام شد؛ وضعیت سرویس را بررسی کن." : error.message)
+      (error.name === "AbortError"
+        ? "زمان انتظار تمام شد؛ وضعیت سرویس را بررسی کن."
+        : error.message)
     );
   } finally {
     generateButton.disabled = false;
