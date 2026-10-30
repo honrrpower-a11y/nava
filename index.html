@@ -3,47 +3,32 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>پلتفرم نوا | Nava Studio</title>
-    <!-- استفاده از فونت Vazirmatn -->
+    <title>استودیو نوا | Nava Studio</title>
     <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet" type="text/css" />
     <style>
         :root {
-            /* استایل الهام‌گرفته از فضای موزیکال و مدرن (پایه دارکِ شیک) */
-            --bg-color: #0B0F19;          /* سورمه‌ای بسیار تیره و عمیق (پس‌زمینه اصلی) */
-            --card-bg: #131B2E;           /* سورمه‌ای ملایم‌تر برای کارت‌ها */
-            --text-main: #F8FAFC;         /* سفید یخی برای خوانایی عالی */
-            --text-sub: #94A3B8;          /* خاکستری ملایم برای متن‌های فرعی */
-            
-            /* گرادینت‌ها و رنگ‌های نئونی و پرانرژی */
-            --primary-gradient: linear-gradient(135deg, #8B5CF6 0%, #EC4899 100%); /* بنفش به سرخابی */
-            --primary-color: #8B5CF6;     /* بنفش نئونی اصلی */
-            --accent-glow: rgba(139, 92, 246, 0.25); /* نور پس‌زمینه */
-            
-            --border-color: #1E293B;      /* خطوط حاشیه‌ی تیره و مدرن */
-            --shadow-color: rgba(0, 0, 0, 0.5); 
-        }
-
-        [data-theme="light"] {
-            /* حالتِ روشن (در صورت نیاز به سوییچ) */
-            --bg-color: #F8FAFC;
-            --card-bg: #FFFFFF;
-            --text-main: #0F172A;
-            --text-sub: #64748B;
-            --primary-gradient: linear-gradient(135deg, #7C3AED 0%, #DB2777 100%);
-            --primary-color: #7C3AED;
-            --accent-glow: rgba(124, 58, 237, 0.15);
-            --border-color: #E2E8F0;
-            --shadow-color: rgba(0, 0, 0, 0.05);
+            --bg-deep: #090A0F;
+            --card-bg: rgba(19, 23, 34, 0.75);
+            --text-main: #FFFFFF;
+            --text-sub: #94A3B8;
+            --accent-purple: #8B5CF6;
+            --accent-pink: #EC4899;
+            --accent-cyan: #06B6D4;
+            --border-glass: rgba(255, 255, 255, 0.08);
+            --glow-main: rgba(139, 92, 246, 0.35);
         }
 
         * {
             box-sizing: border-box;
-            transition: background-color 0.3s, color 0.3s, border-color 0.3s;
+            transition: all 0.3s ease;
         }
 
         body {
             font-family: 'Vazirmatn', sans-serif;
-            background-color: var(--bg-color);
+            background-color: var(--bg-deep);
+            background-image: 
+                radial-gradient(circle at 15% 20%, rgba(139, 92, 246, 0.15) 0%, transparent 40%),
+                radial-gradient(circle at 85% 80%, rgba(236, 72, 153, 0.12) 0%, transparent 40%);
             color: var(--text-main);
             margin: 0;
             padding: 20px;
@@ -55,60 +40,46 @@
 
         .container {
             width: 100%;
-            max-width: 650px;
+            max-width: 620px;
             background-color: var(--card-bg);
-            border-radius: 24px;
-            padding: 30px;
-            box-shadow: 0 20px 40px var(--shadow-color);
-            border: 1px solid var(--border-color);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 28px;
+            padding: 32px;
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            border: 1px solid var(--border-glass);
             position: relative;
-            overflow: hidden;
         }
 
-        /* هدر و دکمه سوییچ تم */
+        /* هدر */
         .header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 25px;
+            margin-bottom: 28px;
         }
 
         .logo {
             font-size: 1.6rem;
             font-weight: 900;
-            background: var(--primary-gradient);
+            background: linear-gradient(135deg, #A78BFA 0%, #F472B6 50%, #38BDF8 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 10px;
+            letter-spacing: -0.5px;
         }
 
-        .theme-toggle-btn {
-            background: var(--border-color);
-            border: none;
-            color: var(--text-main);
-            padding: 8px 16px;
-            border-radius: 50px;
-            cursor: pointer;
-            font-family: inherit;
-            font-size: 0.9rem;
-            font-weight: bold;
-        }
-
-        .theme-toggle-btn:hover {
-            opacity: 0.8;
-        }
-
-        /* دکمه‌های تب‌بندی */
+        /* تب‌ها */
         .tabs {
             display: flex;
             gap: 8px;
-            background-color: var(--bg-color);
+            background: rgba(0, 0, 0, 0.3);
             padding: 6px;
-            border-radius: 14px;
-            margin-bottom: 25px;
-            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            margin-bottom: 28px;
+            border: 1px solid var(--border-glass);
         }
 
         .tab-btn {
@@ -120,14 +91,15 @@
             font-family: inherit;
             font-size: 0.95rem;
             font-weight: bold;
-            border-radius: 10px;
+            border-radius: 12px;
             cursor: pointer;
         }
 
         .tab-btn.active {
-            background: var(--primary-gradient);
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.3), rgba(236, 72, 153, 0.2));
             color: #FFFFFF;
-            box-shadow: 0 4px 15px var(--accent-glow);
+            border: 1px solid rgba(139, 92, 246, 0.4);
+            box-shadow: 0 0 20px rgba(139, 92, 246, 0.2);
         }
 
         .tab-content {
@@ -138,63 +110,67 @@
             display: block;
         }
 
-        /* استایل فرم‌ها */
+        /* اینپوت‌ها */
         textarea, input, select {
             width: 100%;
-            padding: 14px;
-            border-radius: 12px;
-            border: 1px solid var(--border-color);
-            background-color: var(--bg-color);
+            padding: 15px;
+            border-radius: 14px;
+            border: 1px solid var(--border-glass);
+            background-color: rgba(0, 0, 0, 0.25);
             color: var(--text-main);
             font-family: inherit;
             font-size: 0.95rem;
             margin-top: 8px;
-            margin-bottom: 18px;
+            margin-bottom: 20px;
             outline: none;
         }
 
         textarea:focus, input:focus, select:focus {
-            border-color: var(--primary-color);
-            box-shadow: 0 0 10px var(--accent-glow);
+            border-color: var(--accent-purple);
+            box-shadow: 0 0 15px var(--glow-main);
+            background-color: rgba(0, 0, 0, 0.4);
         }
 
         label {
             font-weight: bold;
             font-size: 0.9rem;
-            color: var(--text-main);
+            color: var(--text-sub);
         }
 
+        /* دکمه اصلی عملیات */
         .action-btn {
             width: 100%;
-            padding: 14px;
+            padding: 15px;
             border: none;
-            border-radius: 12px;
-            background: var(--primary-gradient);
+            border-radius: 14px;
+            background: linear-gradient(135deg, #8B5CF6 0%, #EC4899 100%);
             color: #FFFFFF;
             font-family: inherit;
             font-size: 1.05rem;
             font-weight: bold;
             cursor: pointer;
-            box-shadow: 0 6px 20px var(--accent-glow);
+            box-shadow: 0 8px 25px rgba(139, 92, 246, 0.4);
+            position: relative;
+            overflow: hidden;
         }
 
         .action-btn:hover {
-            opacity: 0.95;
-            transform: translateY(-1px);
+            transform: translateY(-2px);
+            box-shadow: 0 12px 35px rgba(236, 72, 153, 0.5);
         }
 
-        /* کادر پیش‌نمایش کارت استوری نئونی */
+        /* کارت پیش‌نمایش استوری */
         .story-preview-card {
-            margin-top: 25px;
-            padding: 35px 20px;
-            border-radius: 18px;
+            margin-top: 28px;
+            padding: 40px 24px;
+            border-radius: 20px;
             background: linear-gradient(145deg, #0f172a, #1e1b4b);
             color: #FFFFFF;
             text-align: center;
-            border: 1px solid rgba(139, 92, 246, 0.4);
-            box-shadow: 0 10px 30px rgba(139, 92, 246, 0.15);
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5), 0 0 25px rgba(139, 92, 246, 0.15);
             position: relative;
-            min-height: 220px;
+            min-height: 230px;
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -202,73 +178,72 @@
         }
 
         .story-text {
-            font-size: 1.25rem;
-            line-height: 1.8;
+            font-size: 1.3rem;
+            line-height: 1.9;
             font-weight: bold;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
         }
 
         .story-subtitle {
-            margin-top: 20px;
+            margin-top: 22px;
             font-size: 0.85rem;
-            background: var(--primary-gradient);
+            background: linear-gradient(135deg, #A78BFA, #F472B6);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             font-weight: bold;
+            letter-spacing: 1px;
         }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <!-- هدر سایت -->
+    <!-- هدر -->
     <div class="header">
         <div class="logo">
-            <span>🎛️</span> استودیو نوا
+            <span>✨</span> نوا | Nava Studio
         </div>
-        <button class="theme-toggle-btn" onclick="toggleTheme()" id="themeBtn">☀️ حالت روشن</button>
     </div>
 
-    <!-- دکمه‌های تب‌بندی -->
+    <!-- تب‌ها -->
     <div class="tabs">
         <button class="tab-btn active" onclick="switchTab('musicTab', this)">🎵 موزیک و صدا</button>
-        <button class="tab-btn" onclick="switchTab('storyTab', this)">✨ استوری‌ساز مینیمال</button>
+        <button class="tab-btn" onclick="switchTab('storyTab', this)">⚡ استوری‌ساز مینیمال</button>
     </div>
 
-    <!-- تب ۱: موزیک و صدا -->
+    <!-- تب ۱ -->
     <div id="musicTab" class="tab-content active">
-        <label for="lyrics">متن یا ترانه:</label>
-        <textarea id="lyrics" rows="4" placeholder="متن ترانه یا ایده صوتی خود را اینجا بنویسید..."></textarea>
+        <label for="lyrics">متن یا ایده صوتی:</label>
+        <textarea id="lyrics" rows="4" placeholder="متن ترانه یا ایده خود را بنویسید..."></textarea>
 
-        <label for="style">سبک موسیقی:</label>
-        <input type="text" id="style" placeholder="مثال: Persian Pop, Upbeat, Electro Beats">
+        <label for="style">سبک و فضا:</label>
+        <input type="text" id="style" placeholder="مثال: Deep Ambient, Cinematic, Lo-Fi">
 
-        <button class="action-btn">ساخت قطعه صوتی 🚀</button>
+        <button class="action-btn">پردازش و خلق صوتی 🎧</button>
     </div>
 
-    <!-- تب ۲: استوری‌ساز مینیمال -->
+    <!-- تب ۲ -->
     <div id="storyTab" class="tab-content">
-        <label for="storyInput">متن دل‌نوشته یا جمله استوری:</label>
-        <textarea id="storyInput" rows="3" placeholder="یک جمله کوتاه، حس‌وحال شبانه یا دل‌نوشته بنویسید..." oninput="updatePreview()"></textarea>
+        <label for="storyInput">متن دل‌نوشته یا استوری:</label>
+        <textarea id="storyInput" rows="3" placeholder="جمله یا حس‌وحال خود را بنویسید..." oninput="updatePreview()"></textarea>
 
-        <label for="storyStyle">لحن کارت:</label>
-        <select id="storyStyle" onchange="updatePreview()">
-            <option value="minimal">مینیمال و دارک</option>
-            <option value="warm">موزیکال و عمیق</option>
-            <option value="motivational">انگیزشی نئونی</option>
+        <label for="storyStyle">فضای کارت:</label>
+        <select id="storyStyle">
+            <option value="minimal">دارک و کهکشانی</option>
+            <option value="deep">عمیق و مبهم</option>
         </select>
 
-        <button class="action-btn">پردازش و بازنویسی با هوش مصنوعی ✨</button>
+        <button class="action-btn">بازنویسی هوشمند متن ✨</button>
 
-        <!-- پیش‌نمایش زنده کارت استوری -->
-        <div class="story-preview-card" id="storyPreview">
+        <!-- پیش‌نمایش -->
+        <div class="story-preview-card">
             <div class="story-text" id="previewText">« متن شما اینجا قرار می‌گیرد... »</div>
-            <div class="story-subtitle" id="previewSub">@Nava_Studio</div>
+            <div class="story-subtitle">@Nava_Studio</div>
         </div>
     </div>
 </div>
 
 <script>
-    // تغییر تب‌ها
     function switchTab(tabId, element) {
         document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
         document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
@@ -277,21 +252,6 @@
         element.classList.add('active');
     }
 
-    // سوییچ بین تم دارکِ نئونی و حالت روشن
-    function toggleTheme() {
-        const html = document.documentElement;
-        const btn = document.getElementById('themeBtn');
-        
-        if (html.getAttribute('data-theme') === 'light') {
-            html.removeAttribute('data-theme');
-            btn.innerText = '☀️ حالت روشن';
-        } else {
-            html.setAttribute('data-theme', 'light');
-            btn.innerText = '🌙 نایت‌مود';
-        }
-    }
-
-    // آپدیت زنده پیش‌نمایش کارت استوری
     function updatePreview() {
         const input = document.getElementById('storyInput').value;
         const previewText = document.getElementById('previewText');
