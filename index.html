@@ -8,12 +8,11 @@
     <style>
         :root {
             --bg-deep: #090A0F;
-            --card-bg: rgba(19, 23, 34, 0.75);
+            --card-bg: rgba(19, 23, 34, 0.8);
             --text-main: #FFFFFF;
             --text-sub: #94A3B8;
             --accent-purple: #8B5CF6;
             --accent-pink: #EC4899;
-            --accent-cyan: #06B6D4;
             --border-glass: rgba(255, 255, 255, 0.08);
             --glow-main: rgba(139, 92, 246, 0.35);
         }
@@ -40,23 +39,21 @@
 
         .container {
             width: 100%;
-            max-width: 620px;
+            max-width: 650px;
             background-color: var(--card-bg);
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
             border-radius: 28px;
             padding: 32px;
-            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.6);
             border: 1px solid var(--border-glass);
-            position: relative;
         }
 
-        /* هدر */
         .header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 28px;
+            margin-bottom: 25px;
         }
 
         .logo {
@@ -65,20 +62,15 @@
             background: linear-gradient(135deg, #A78BFA 0%, #F472B6 50%, #38BDF8 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            letter-spacing: -0.5px;
         }
 
-        /* تب‌ها */
         .tabs {
             display: flex;
             gap: 8px;
             background: rgba(0, 0, 0, 0.3);
             padding: 6px;
             border-radius: 16px;
-            margin-bottom: 28px;
+            margin-bottom: 25px;
             border: 1px solid var(--border-glass);
         }
 
@@ -110,25 +102,23 @@
             display: block;
         }
 
-        /* اینپوت‌ها */
         textarea, input, select {
             width: 100%;
-            padding: 15px;
+            padding: 14px;
             border-radius: 14px;
             border: 1px solid var(--border-glass);
             background-color: rgba(0, 0, 0, 0.25);
             color: var(--text-main);
             font-family: inherit;
             font-size: 0.95rem;
-            margin-top: 8px;
-            margin-bottom: 20px;
+            margin-top: 6px;
+            margin-bottom: 16px;
             outline: none;
         }
 
         textarea:focus, input:focus, select:focus {
             border-color: var(--accent-purple);
             box-shadow: 0 0 15px var(--glow-main);
-            background-color: rgba(0, 0, 0, 0.4);
         }
 
         label {
@@ -137,7 +127,15 @@
             color: var(--text-sub);
         }
 
-        /* دکمه اصلی عملیات */
+        .row-group {
+            display: flex;
+            gap: 15px;
+        }
+
+        .row-group > div {
+            flex: 1;
+        }
+
         .action-btn {
             width: 100%;
             padding: 15px;
@@ -150,8 +148,7 @@
             font-weight: bold;
             cursor: pointer;
             box-shadow: 0 8px 25px rgba(139, 92, 246, 0.4);
-            position: relative;
-            overflow: hidden;
+            margin-top: 10px;
         }
 
         .action-btn:hover {
@@ -159,18 +156,15 @@
             box-shadow: 0 12px 35px rgba(236, 72, 153, 0.5);
         }
 
-        /* کارت پیش‌نمایش استوری */
         .story-preview-card {
-            margin-top: 28px;
-            padding: 40px 24px;
+            margin-top: 25px;
+            padding: 35px 20px;
             border-radius: 20px;
             background: linear-gradient(145deg, #0f172a, #1e1b4b);
             color: #FFFFFF;
             text-align: center;
             border: 1px solid rgba(139, 92, 246, 0.3);
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5), 0 0 25px rgba(139, 92, 246, 0.15);
-            position: relative;
-            min-height: 230px;
+            min-height: 210px;
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -178,64 +172,75 @@
         }
 
         .story-text {
-            font-size: 1.3rem;
-            line-height: 1.9;
+            font-size: 1.25rem;
+            line-height: 1.8;
             font-weight: bold;
-            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
         }
 
         .story-subtitle {
-            margin-top: 22px;
+            margin-top: 18px;
             font-size: 0.85rem;
             background: linear-gradient(135deg, #A78BFA, #F472B6);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             font-weight: bold;
-            letter-spacing: 1px;
         }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <!-- هدر -->
     <div class="header">
-        <div class="logo">
-            <span>✨</span> نوا | Nava Studio
-        </div>
+        <div class="logo">✨ استودیو نوا</div>
     </div>
 
-    <!-- تب‌ها -->
     <div class="tabs">
         <button class="tab-btn active" onclick="switchTab('musicTab', this)">🎵 موزیک و صدا</button>
         <button class="tab-btn" onclick="switchTab('storyTab', this)">⚡ استوری‌ساز مینیمال</button>
     </div>
 
-    <!-- تب ۱ -->
+    <!-- تب ۱: موزیک و صدا (با تمام امکانات و تنظیمات کامل) -->
     <div id="musicTab" class="tab-content active">
-        <label for="lyrics">متن یا ایده صوتی:</label>
-        <textarea id="lyrics" rows="4" placeholder="متن ترانه یا ایده خود را بنویسید..."></textarea>
+        <label for="lyrics">متن ترانه یا ایده صوتی:</label>
+        <textarea id="lyrics" rows="3" placeholder="متن ترانه یا توصیف فضای صوتی..."></textarea>
 
-        <label for="style">سبک و فضا:</label>
-        <input type="text" id="style" placeholder="مثال: Deep Ambient, Cinematic, Lo-Fi">
+        <label for="style">سبک موسیقی:</label>
+        <input type="text" id="style" placeholder="مثال: Cinematic Ambient, Lo-Fi Beat, Synthwave">
 
-        <button class="action-btn">پردازش و خلق صوتی 🎧</button>
+        <div class="row-group">
+            <div>
+                <label for="tempo">سرعت (Tempo):</label>
+                <select id="tempo">
+                    <option value="normal">معمولی / ملایم</option>
+                    <option value="upbeat">پرانرژی و ریتمیک</option>
+                    <option value="slow">کند و احساسی</option>
+                </select>
+            </div>
+            <div>
+                <label for="vocal">نوع خروجی:</label>
+                <select id="vocal">
+                    <option value="instrumental">بی‌کلام (Instrumental)</option>
+                    <option value="withVocals">باکلام / آوایی</option>
+                </select>
+            </div>
+        </div>
+
+        <button class="action-btn">ساخت و پردازش قطعه صوتی 🎧</button>
     </div>
 
-    <!-- تب ۲ -->
+    <!-- تب ۲: استوری‌ساز مینیمال -->
     <div id="storyTab" class="tab-content">
         <label for="storyInput">متن دل‌نوشته یا استوری:</label>
-        <textarea id="storyInput" rows="3" placeholder="جمله یا حس‌وحال خود را بنویسید..." oninput="updatePreview()"></textarea>
+        <textarea id="storyInput" rows="3" placeholder="یک جمله کوتاه یا حس‌وحال شبانه..." oninput="updatePreview()"></textarea>
 
         <label for="storyStyle">فضای کارت:</label>
         <select id="storyStyle">
             <option value="minimal">دارک و کهکشانی</option>
-            <option value="deep">عمیق و مبهم</option>
+            <option value="deep">عمیق و نئونی</option>
         </select>
 
         <button class="action-btn">بازنویسی هوشمند متن ✨</button>
 
-        <!-- پیش‌نمایش -->
         <div class="story-preview-card">
             <div class="story-text" id="previewText">« متن شما اینجا قرار می‌گیرد... »</div>
             <div class="story-subtitle">@Nava_Studio</div>
