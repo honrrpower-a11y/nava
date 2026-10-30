@@ -8,29 +8,32 @@
     <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet" type="text/css" />
     <style>
         :root {
-            /* تم روشنِ جدید: مینیمال، خنثی و بسیار شیک */
-            --bg-color: #F4F5F7;          
-            --card-bg: #FFFFFF;           
-            --text-main: #1E293B;         
-            --text-sub: #64748B;          
-            --primary-orange: #F97316;    
-            --primary-gold: #EA580C;      
-            --accent-purple: #8B5CF6;     
-            --border-color: #E2E8F0;      
-            --shadow-color: rgba(0, 0, 0, 0.05); 
+            /* استایل الهام‌گرفته از فضای موزیکال و مدرن (پایه دارکِ شیک) */
+            --bg-color: #0B0F19;          /* سورمه‌ای بسیار تیره و عمیق (پس‌زمینه اصلی) */
+            --card-bg: #131B2E;           /* سورمه‌ای ملایم‌تر برای کارت‌ها */
+            --text-main: #F8FAFC;         /* سفید یخی برای خوانایی عالی */
+            --text-sub: #94A3B8;          /* خاکستری ملایم برای متن‌های فرعی */
+            
+            /* گرادینت‌ها و رنگ‌های نئونی و پرانرژی */
+            --primary-gradient: linear-gradient(135deg, #8B5CF6 0%, #EC4899 100%); /* بنفش به سرخابی */
+            --primary-color: #8B5CF6;     /* بنفش نئونی اصلی */
+            --accent-glow: rgba(139, 92, 246, 0.25); /* نور پس‌زمینه */
+            
+            --border-color: #1E293B;      /* خطوط حاشیه‌ی تیره و مدرن */
+            --shadow-color: rgba(0, 0, 0, 0.5); 
         }
 
-        [data-theme="dark"] {
-            /* پلت نایت‌مود (تاریک و مدرن) */
-            --bg-color: #0D1B2A;
-            --card-bg: #1B263B;
-            --text-main: #F8F9FA;
-            --text-sub: #ADB5BD;
-            --primary-orange: #FFB703;
-            --primary-gold: #FB8500;
-            --accent-purple: #F72585;
-            --border-color: #415A77;
-            --shadow-color: rgba(0, 0, 0, 0.4);
+        [data-theme="light"] {
+            /* حالتِ روشن (در صورت نیاز به سوییچ) */
+            --bg-color: #F8FAFC;
+            --card-bg: #FFFFFF;
+            --text-main: #0F172A;
+            --text-sub: #64748B;
+            --primary-gradient: linear-gradient(135deg, #7C3AED 0%, #DB2777 100%);
+            --primary-color: #7C3AED;
+            --accent-glow: rgba(124, 58, 237, 0.15);
+            --border-color: #E2E8F0;
+            --shadow-color: rgba(0, 0, 0, 0.05);
         }
 
         * {
@@ -54,13 +57,15 @@
             width: 100%;
             max-width: 650px;
             background-color: var(--card-bg);
-            border-radius: 20px;
-            padding: 25px;
-            box-shadow: 0 10px 30px var(--shadow-color);
+            border-radius: 24px;
+            padding: 30px;
+            box-shadow: 0 20px 40px var(--shadow-color);
             border: 1px solid var(--border-color);
+            position: relative;
+            overflow: hidden;
         }
 
-        /* هدر و دکمه نایت مود */
+        /* هدر و دکمه سوییچ تم */
         .header {
             display: flex;
             justify-content: space-between;
@@ -69,17 +74,19 @@
         }
 
         .logo {
-            font-size: 1.5rem;
+            font-size: 1.6rem;
             font-weight: 900;
-            color: var(--primary-orange);
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
             display: flex;
             align-items: center;
             gap: 8px;
         }
 
         .theme-toggle-btn {
-            background: var(--bg-color);
-            border: 1px solid var(--border-color);
+            background: var(--border-color);
+            border: none;
             color: var(--text-main);
             padding: 8px 16px;
             border-radius: 50px;
@@ -90,16 +97,16 @@
         }
 
         .theme-toggle-btn:hover {
-            border-color: var(--primary-orange);
+            opacity: 0.8;
         }
 
         /* دکمه‌های تب‌بندی */
         .tabs {
             display: flex;
-            gap: 10px;
+            gap: 8px;
             background-color: var(--bg-color);
             padding: 6px;
-            border-radius: 12px;
+            border-radius: 14px;
             margin-bottom: 25px;
             border: 1px solid var(--border-color);
         }
@@ -111,16 +118,16 @@
             background: transparent;
             color: var(--text-sub);
             font-family: inherit;
-            font-size: 1rem;
+            font-size: 0.95rem;
             font-weight: bold;
-            border-radius: 8px;
+            border-radius: 10px;
             cursor: pointer;
         }
 
         .tab-btn.active {
-            background-color: var(--card-bg);
-            color: var(--primary-orange);
-            box-shadow: 0 2px 8px var(--shadow-color);
+            background: var(--primary-gradient);
+            color: #FFFFFF;
+            box-shadow: 0 4px 15px var(--accent-glow);
         }
 
         .tab-content {
@@ -147,7 +154,8 @@
         }
 
         textarea:focus, input:focus, select:focus {
-            border-color: var(--primary-orange);
+            border-color: var(--primary-color);
+            box-shadow: 0 0 10px var(--accent-glow);
         }
 
         label {
@@ -161,28 +169,30 @@
             padding: 14px;
             border: none;
             border-radius: 12px;
-            background: linear-gradient(135deg, var(--primary-gold), var(--primary-orange));
+            background: var(--primary-gradient);
             color: #FFFFFF;
             font-family: inherit;
             font-size: 1.05rem;
             font-weight: bold;
             cursor: pointer;
-            box-shadow: 0 4px 15px var(--shadow-color);
+            box-shadow: 0 6px 20px var(--accent-glow);
         }
 
         .action-btn:hover {
             opacity: 0.95;
+            transform: translateY(-1px);
         }
 
-        /* کادر پیش‌نمایش کارت استوری */
+        /* کادر پیش‌نمایش کارت استوری نئونی */
         .story-preview-card {
             margin-top: 25px;
             padding: 35px 20px;
-            border-radius: 16px;
-            background: #111111; 
+            border-radius: 18px;
+            background: linear-gradient(145deg, #0f172a, #1e1b4b);
             color: #FFFFFF;
             text-align: center;
-            border: 2px solid var(--primary-orange);
+            border: 1px solid rgba(139, 92, 246, 0.4);
+            box-shadow: 0 10px 30px rgba(139, 92, 246, 0.15);
             position: relative;
             min-height: 220px;
             display: flex;
@@ -200,8 +210,10 @@
         .story-subtitle {
             margin-top: 20px;
             font-size: 0.85rem;
-            color: var(--primary-gold);
-            opacity: 0.9;
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: bold;
         }
     </style>
 </head>
@@ -211,9 +223,9 @@
     <!-- هدر سایت -->
     <div class="header">
         <div class="logo">
-            <span>✨</span> استودیو نوا
+            <span>🎛️</span> استودیو نوا
         </div>
-        <button class="theme-toggle-btn" onclick="toggleTheme()" id="themeBtn">🌙 نایت‌مود</button>
+        <button class="theme-toggle-btn" onclick="toggleTheme()" id="themeBtn">☀️ حالت روشن</button>
     </div>
 
     <!-- دکمه‌های تب‌بندی -->
@@ -241,7 +253,7 @@
         <label for="storyStyle">لحن کارت:</label>
         <select id="storyStyle" onchange="updatePreview()">
             <option value="minimal">مینیمال و دارک</option>
-            <option value="warm">گرم و عمیق</option>
+            <option value="warm">موزیکال و عمیق</option>
             <option value="motivational">انگیزشی نئونی</option>
         </select>
 
@@ -265,17 +277,17 @@
         element.classList.add('active');
     }
 
-    // سوییچ بین تم روشنِ مینیمال و نایت‌مود
+    // سوییچ بین تم دارکِ نئونی و حالت روشن
     function toggleTheme() {
-        const body = document.body;
+        const html = document.documentElement;
         const btn = document.getElementById('themeBtn');
         
-        if (body.getAttribute('data-theme') === 'dark') {
-            body.removeAttribute('data-theme');
-            btn.innerText = '🌙 نایت‌مود';
+        if (html.getAttribute('data-theme') === 'light') {
+            html.removeAttribute('data-theme');
+            btn.innerText = '☀️ حالت روشن';
         } else {
-            body.setAttribute('data-theme', 'dark');
-            btn.innerText = '☀️ تم روشن';
+            html.setAttribute('data-theme', 'light');
+            btn.innerText = '🌙 نایت‌مود';
         }
     }
 
