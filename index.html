@@ -8,20 +8,20 @@
     <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet" type="text/css" />
     <style>
         :root {
-            /* پلت رنگ‌های گرم (پیش‌فرض) */
-            --bg-color: #FFF8F0;
-            --card-bg: #FFFFFF;
-            --text-main: #2B2D42;
-            --text-sub: #6C757D;
-            --primary-orange: #FB8500;
-            --primary-gold: #FFB703;
-            --accent-purple: #7209B7;
-            --border-color: #FFE5D9;
-            --shadow-color: rgba(251, 133, 0, 0.15);
+            /* تم روشنِ جدید: مینیمال، خنثی و بسیار شیک */
+            --bg-color: #F4F5F7;          
+            --card-bg: #FFFFFF;           
+            --text-main: #1E293B;         
+            --text-sub: #64748B;          
+            --primary-orange: #F97316;    
+            --primary-gold: #EA580C;      
+            --accent-purple: #8B5CF6;     
+            --border-color: #E2E8F0;      
+            --shadow-color: rgba(0, 0, 0, 0.05); 
         }
 
         [data-theme="dark"] {
-            /* پلت نایت‌مود (تاریک و شیک) */
+            /* پلت نایت‌مود (تاریک و مدرن) */
             --bg-color: #0D1B2A;
             --card-bg: #1B263B;
             --text-main: #F8F9FA;
@@ -46,6 +46,8 @@
             padding: 20px;
             display: flex;
             justify-content: center;
+            align-items: center;
+            min-height: 100vh;
         }
 
         .container {
@@ -87,6 +89,10 @@
             font-weight: bold;
         }
 
+        .theme-toggle-btn:hover {
+            border-color: var(--primary-orange);
+        }
+
         /* دکمه‌های تب‌بندی */
         .tabs {
             display: flex;
@@ -95,6 +101,7 @@
             padding: 6px;
             border-radius: 12px;
             margin-bottom: 25px;
+            border: 1px solid var(--border-color);
         }
 
         .tab-btn {
@@ -139,13 +146,14 @@
             outline: none;
         }
 
-        textarea:focus, input:focus {
+        textarea:focus, input:focus, select:focus {
             border-color: var(--primary-orange);
         }
 
         label {
             font-weight: bold;
             font-size: 0.9rem;
+            color: var(--text-main);
         }
 
         .action-btn {
@@ -162,17 +170,21 @@
             box-shadow: 0 4px 15px var(--shadow-color);
         }
 
+        .action-btn:hover {
+            opacity: 0.95;
+        }
+
         /* کادر پیش‌نمایش کارت استوری */
         .story-preview-card {
             margin-top: 25px;
-            padding: 30px 20px;
+            padding: 35px 20px;
             border-radius: 16px;
-            background: #111111; /* همیشه دارک برای حس استوری نئونی/مینیمال */
+            background: #111111; 
             color: #FFFFFF;
             text-align: center;
             border: 2px solid var(--primary-orange);
             position: relative;
-            min-height: 200px;
+            min-height: 220px;
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -180,16 +192,16 @@
         }
 
         .story-text {
-            font-size: 1.2rem;
+            font-size: 1.25rem;
             line-height: 1.8;
             font-weight: bold;
         }
 
         .story-subtitle {
-            margin-top: 15px;
+            margin-top: 20px;
             font-size: 0.85rem;
             color: var(--primary-gold);
-            opacity: 0.8;
+            opacity: 0.9;
         }
     </style>
 </head>
@@ -199,7 +211,7 @@
     <!-- هدر سایت -->
     <div class="header">
         <div class="logo">
-            <span>🍊</span> استودیو نوا
+            <span>✨</span> استودیو نوا
         </div>
         <button class="theme-toggle-btn" onclick="toggleTheme()" id="themeBtn">🌙 نایت‌مود</button>
     </div>
@@ -224,7 +236,7 @@
     <!-- تب ۲: استوری‌ساز مینیمال -->
     <div id="storyTab" class="tab-content">
         <label for="storyInput">متن دل‌نوشته یا جمله استوری:</label>
-        <textarea id="storyInput" rows="3" placeholder="یک جمله کوتاه‌ها، حس‌وحال شبانه یا دل‌نوشته بنویسید..." oninput="updatePreview()"></textarea>
+        <textarea id="storyInput" rows="3" placeholder="یک جمله کوتاه، حس‌وحال شبانه یا دل‌نوشته بنویسید..." oninput="updatePreview()"></textarea>
 
         <label for="storyStyle">لحن کارت:</label>
         <select id="storyStyle" onchange="updatePreview()">
@@ -237,7 +249,7 @@
 
         <!-- پیش‌نمایش زنده کارت استوری -->
         <div class="story-preview-card" id="storyPreview">
-            <div class="story-text" id="previewText">متن شما اینجا قرار می‌گیرد...</div>
+            <div class="story-text" id="previewText">« متن شما اینجا قرار می‌گیرد... »</div>
             <div class="story-subtitle" id="previewSub">@Nava_Studio</div>
         </div>
     </div>
@@ -253,7 +265,7 @@
         element.classList.add('active');
     }
 
-    // سوییچ بین تم گرم و نایت‌مود
+    // سوییچ بین تم روشنِ مینیمال و نایت‌مود
     function toggleTheme() {
         const body = document.body;
         const btn = document.getElementById('themeBtn');
@@ -263,7 +275,7 @@
             btn.innerText = '🌙 نایت‌مود';
         } else {
             body.setAttribute('data-theme', 'dark');
-            btn.innerText = '☀️ تم گرم';
+            btn.innerText = '☀️ تم روشن';
         }
     }
 
@@ -275,7 +287,7 @@
         if (input.trim() !== '') {
             previewText.innerText = `« ${input} »`;
         } else {
-            previewText.innerText = 'متن شما اینجا قرار می‌گیرد...';
+            previewText.innerText = '« متن شما اینجا قرار می‌گیرد... »';
         }
     }
 </script>
