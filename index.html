@@ -8,7 +8,7 @@
     <style>
         :root {
             --bg-deep: #090A0F;
-            --card-bg: rgba(19, 23, 34, 0.8);
+            --card-bg: rgba(19, 23, 34, 0.85);
             --text-main: #FFFFFF;
             --text-sub: #94A3B8;
             --accent-purple: #8B5CF6;
@@ -30,7 +30,7 @@
                 radial-gradient(circle at 85% 80%, rgba(236, 72, 153, 0.12) 0%, transparent 40%);
             color: var(--text-main);
             margin: 0;
-            padding: 20px;
+            padding: 15px;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -39,59 +39,59 @@
 
         .container {
             width: 100%;
-            max-width: 650px;
+            max-width: 600px;
             background-color: var(--card-bg);
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
-            border-radius: 28px;
-            padding: 32px;
+            border-radius: 24px;
+            padding: 24px;
             box-shadow: 0 30px 60px rgba(0, 0, 0, 0.6);
             border: 1px solid var(--border-glass);
         }
 
         .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 25px;
+            text-align: center;
+            margin-bottom: 20px;
         }
 
         .logo {
-            font-size: 1.6rem;
+            font-size: 1.5rem;
             font-weight: 900;
             background: linear-gradient(135deg, #A78BFA 0%, #F472B6 50%, #38BDF8 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
 
+        /* تب‌ها */
         .tabs {
             display: flex;
-            gap: 8px;
-            background: rgba(0, 0, 0, 0.3);
-            padding: 6px;
-            border-radius: 16px;
-            margin-bottom: 25px;
+            gap: 6px;
+            background: rgba(0, 0, 0, 0.4);
+            padding: 5px;
+            border-radius: 14px;
+            margin-bottom: 20px;
             border: 1px solid var(--border-glass);
         }
 
         .tab-btn {
             flex: 1;
-            padding: 12px;
+            padding: 10px 8px;
             border: none;
             background: transparent;
             color: var(--text-sub);
             font-family: inherit;
-            font-size: 0.95rem;
+            font-size: 0.9rem;
             font-weight: bold;
-            border-radius: 12px;
+            border-radius: 10px;
             cursor: pointer;
+            text-align: center;
         }
 
         .tab-btn.active {
-            background: linear-gradient(135deg, rgba(139, 92, 246, 0.3), rgba(236, 72, 153, 0.2));
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.35), rgba(236, 72, 153, 0.25));
             color: #FFFFFF;
             border: 1px solid rgba(139, 92, 246, 0.4);
-            box-shadow: 0 0 20px rgba(139, 92, 246, 0.2);
+            box-shadow: 0 0 15px rgba(139, 92, 246, 0.2);
         }
 
         .tab-content {
@@ -104,32 +104,33 @@
 
         textarea, input, select {
             width: 100%;
-            padding: 14px;
-            border-radius: 14px;
+            padding: 12px;
+            border-radius: 12px;
             border: 1px solid var(--border-glass);
-            background-color: rgba(0, 0, 0, 0.25);
+            background-color: rgba(0, 0, 0, 0.3);
             color: var(--text-main);
             font-family: inherit;
-            font-size: 0.95rem;
-            margin-top: 6px;
-            margin-bottom: 16px;
+            font-size: 0.9rem;
+            margin-top: 5px;
+            margin-bottom: 15px;
             outline: none;
         }
 
         textarea:focus, input:focus, select:focus {
             border-color: var(--accent-purple);
-            box-shadow: 0 0 15px var(--glow-main);
+            box-shadow: 0 0 12px var(--glow-main);
         }
 
         label {
             font-weight: bold;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             color: var(--text-sub);
+            display: block;
         }
 
         .row-group {
             display: flex;
-            gap: 15px;
+            gap: 10px;
         }
 
         .row-group > div {
@@ -138,33 +139,33 @@
 
         .action-btn {
             width: 100%;
-            padding: 15px;
+            padding: 14px;
             border: none;
-            border-radius: 14px;
+            border-radius: 12px;
             background: linear-gradient(135deg, #8B5CF6 0%, #EC4899 100%);
             color: #FFFFFF;
             font-family: inherit;
-            font-size: 1.05rem;
+            font-size: 1rem;
             font-weight: bold;
             cursor: pointer;
-            box-shadow: 0 8px 25px rgba(139, 92, 246, 0.4);
-            margin-top: 10px;
+            box-shadow: 0 6px 20px rgba(139, 92, 246, 0.4);
+            margin-top: 5px;
         }
 
         .action-btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 12px 35px rgba(236, 72, 153, 0.5);
+            box-shadow: 0 10px 30px rgba(236, 72, 153, 0.5);
         }
 
         .story-preview-card {
-            margin-top: 25px;
-            padding: 35px 20px;
-            border-radius: 20px;
+            margin-top: 20px;
+            padding: 25px 15px;
+            border-radius: 16px;
             background: linear-gradient(145deg, #0f172a, #1e1b4b);
             color: #FFFFFF;
             text-align: center;
             border: 1px solid rgba(139, 92, 246, 0.3);
-            min-height: 210px;
+            min-height: 180px;
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -172,14 +173,14 @@
         }
 
         .story-text {
-            font-size: 1.25rem;
-            line-height: 1.8;
+            font-size: 1.15rem;
+            line-height: 1.7;
             font-weight: bold;
         }
 
         .story-subtitle {
-            margin-top: 18px;
-            font-size: 0.85rem;
+            margin-top: 15px;
+            font-size: 0.8rem;
             background: linear-gradient(135deg, #A78BFA, #F472B6);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
@@ -191,21 +192,25 @@
 
 <div class="container">
     <div class="header">
-        <div class="logo">✨ استودیو نوا</div>
+        <div class="logo">✨ استودیو نوا | Nava Studio</div>
     </div>
 
+    <!-- تب‌ها -->
     <div class="tabs">
         <button class="tab-btn active" onclick="switchTab('musicTab', this)">🎵 موزیک و صدا</button>
-        <button class="tab-btn" onclick="switchTab('storyTab', this)">⚡ استوری‌ساز مینیمال</button>
+        <button class="tab-btn" onclick="switchTab('storyTab', this)">⚡ استوری‌ساز</button>
     </div>
 
-    <!-- تب ۱: موزیک و صدا (با تمام امکانات و تنظیمات کامل) -->
+    <!-- تب ۱: موزیک و صدا (با تمام فیلدهای کامل سبک، خواننده و تنظیمات) -->
     <div id="musicTab" class="tab-content active">
         <label for="lyrics">متن ترانه یا ایده صوتی:</label>
-        <textarea id="lyrics" rows="3" placeholder="متن ترانه یا توصیف فضای صوتی..."></textarea>
+        <textarea id="lyrics" rows="3" placeholder="متن ترانه یا توصیف فضای صوتی مورد نظر..."></textarea>
 
-        <label for="style">سبک موسیقی:</label>
+        <label for="style">سبک موسیقی (Genre / Style):</label>
         <input type="text" id="style" placeholder="مثال: Cinematic Ambient, Lo-Fi Beat, Synthwave">
+
+        <label for="singer">خواننده یا جنس صدا (Vocalist / Voice):</label>
+        <input type="text" id="singer" placeholder="مثال: صدای مرد گرم و عمیق، یا زن احساسی">
 
         <div class="row-group">
             <div>
@@ -217,10 +222,10 @@
                 </select>
             </div>
             <div>
-                <label for="vocal">نوع خروجی:</label>
-                <select id="vocal">
+                <label for="vocalType">نوع خروجی:</label>
+                <select id="vocalType">
                     <option value="instrumental">بی‌کلام (Instrumental)</option>
-                    <option value="withVocals">باکلام / آوایی</option>
+                    <option value="withVocals">باکلام (Vocal)</option>
                 </select>
             </div>
         </div>
@@ -231,7 +236,7 @@
     <!-- تب ۲: استوری‌ساز مینیمال -->
     <div id="storyTab" class="tab-content">
         <label for="storyInput">متن دل‌نوشته یا استوری:</label>
-        <textarea id="storyInput" rows="3" placeholder="یک جمله کوتاه یا حس‌وحال شبانه..." oninput="updatePreview()"></textarea>
+        <textarea id="storyInput" rows="3" placeholder="یک جمله کوتاه یا حس‌وحال..." oninput="updatePreview()"></textarea>
 
         <label for="storyStyle">فضای کارت:</label>
         <select id="storyStyle">
