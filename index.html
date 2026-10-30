@@ -50,44 +50,29 @@ textarea{resize:vertical;min-height:180px}
 
 <section class="hero">
 <h1>موسیقی خودت را <span>خلق کن</span></h1>
-<p>موضوعت را بگو، شعر بساز و آن را به آهنگ تبدیل کن.</p>
+<p>موضوعت را به هر زبانی بنویس، هوش مصنوعی خودش زبان و شعرش را می‌سازد.</p>
 </section>
 
 <section class="card">
 <h2 class="section-title">۱. ساخت شعر با هوش مصنوعی</h2>
 <div class="field">
-<label for="topic">موضوع ترانه</label>
-<input id="topic" maxlength="500" placeholder="مثلاً عشق، دلتنگی، امید یا خاطرات کودکی">
+<label for="topic">موضوع یا ایده ترانه (به فارسی، ترکی، انگلیسی و...)</label>
+<input id="topic" maxlength="500" placeholder="مثلاً: خاطرات بارانی / آنا / My lonely heart">
 </div>
 
-<div class="grid">
 <div class="field">
-<label for="lyricStyle">سبک ترانه</label>
-<select id="lyricStyle">
-<option>پاپ فارسی</option>
-<option>سنتی ایرانی</option>
-<option>راک</option>
-<option>عاشقانه</option>
-<option>غمگین</option>
-<option>حماسی</option>
-<option>مداحی</option>
-<option>آذربایجانی</option>
-</select>
-</div>
-<div class="field">
-<label for="lyricMood">حال‌وهوا</label>
+<label for="lyricMood">حال‌وهوای ترانه</label>
 <select id="lyricMood">
-<option>احساسی</option>
+<option>احساسی و عمیق</option>
 <option>شاد و پرانرژی</option>
-<option>غمگین و عمیق</option>
+<option>غمگین و دلتنگ</option>
 <option>عاشقانه</option>
 <option>حماسی و باشکوه</option>
 <option>آرام و دلنشین</option>
 </select>
 </div>
-</div>
 
-<button type="button" id="makeLyrics" class="main-button secondary-button">✍ ساخت شعر با هوش مصنوعی</button>
+<button type="button" id="makeLyrics" class="main-button secondary-button">✍ ساخت هوشمند شعر</button>
 <div id="lyricStatus" class="status" role="status" aria-live="polite"></div>
 </section>
 
@@ -98,16 +83,6 @@ textarea{resize:vertical;min-height:180px}
 <textarea id="lyrics" maxlength="8000" placeholder="شعر خودت را بنویس یا با بخش ساخت شعر، یک ترانه بساز..."></textarea>
 <div class="hint">می‌توانی شعر تولیدشده را ویرایش کنی یا متن خودت را وارد کنی.</div>
 </div>
-
-<div class="field">
-<label for="language">زبان آواز</label>
-<select id="language">
-<option value="Persian">فارسی</option>
-<option value="Azerbaijani Turkish">ترکی آذربایجانی</option>
-<option value="Istanbul Turkish">ترکی استانبولی</option>
-<option value="Persian and Azerbaijani Turkish">فارسی و ترکی آذربایجانی</option>
-<option value="English">انگلیسی</option>
-</select>
 </div>
 </section>
 
@@ -121,7 +96,6 @@ textarea{resize:vertical;min-height:180px}
 <button type="button" class="chip">غمگین</button>
 <button type="button" class="chip">عاشقانه</button>
 <button type="button" class="chip">حماسی</button>
-<button type="button" class="chip">مداحی</button>
 <button type="button" class="chip">آذربایجانی</button>
 <button type="button" class="chip">بی‌کلام</button>
 </div>
@@ -138,7 +112,7 @@ textarea{resize:vertical;min-height:180px}
 </div>
 <div class="field">
 <label for="mood">توضیحات بیشتر (اختیاری)</label>
-<input id="mood" maxlength="500" placeholder="مثلاً صدای عمیق و احساسی">
+<input id="mood" maxlength="500" placeholder="مثلاً صدای عمیق و با احساس">
 </div>
 </div>
 
@@ -211,15 +185,14 @@ makeLyricsButton.addEventListener("click", async () => {
   }
 
   makeLyricsButton.disabled = true;
-  makeLyricsButton.textContent = "⏳ در حال نوشتن ترانه...";
-  showMessage(lyricStatus, "هوش مصنوعی در حال نوشتن ترانه است؛ کمی صبر کن.");
+  makeLyricsButton.textContent = "⏳ در حال خلق ترانه...";
+  showMessage(lyricStatus, "سایت نوا در حال بررسی موضوع و ساخت ترانه است؛ کمی صبر کن.");
 
   try {
+    // ارسال درخواست بدون نیاز به تعیین دستی زبان؛ هوش مصنوعی خودش زبان موضوع را تشخیص می‌دهد
     const result = await postJSON(LYRICS_API, "", {
       topic,
-      style: document.getElementById("lyricStyle").value,
-      mood: document.getElementById("lyricMood").value,
-      language: document.getElementById("language").value
+      mood: document.getElementById("lyricMood").value
     });
 
     if (!result.success || !result.lyrics) {
@@ -229,7 +202,7 @@ makeLyricsButton.addEventListener("click", async () => {
     lyricsBox.value = result.lyrics;
     showMessage(
       lyricStatus,
-      "✅ شعر ساخته شد و داخل کادر متن آهنگ قرار گرفت. می‌توانی ویرایشش کنی و بعد روی «ساخت آهنگ» بزنی."
+      "✅ شعر به‌صورت خودکار متناسب با زبان موضوع ساخته شد و در کادر قرار گرفت."
     );
     lyricsBox.scrollIntoView({ behavior: "smooth", block: "center" });
   } catch (error) {
@@ -242,7 +215,7 @@ makeLyricsButton.addEventListener("click", async () => {
     );
   } finally {
     makeLyricsButton.disabled = false;
-    makeLyricsButton.textContent = "✍ ساخت شعر با هوش مصنوعی";
+    makeLyricsButton.textContent = "✍ ساخت هوشمند شعر";
   }
 });
 
@@ -272,7 +245,6 @@ generateButton.addEventListener("click", async () => {
   try {
     const result = await postJSON(MUSIC_API, "/generate", {
       lyrics,
-      language: document.getElementById("language").value,
       voice,
       style: selectedStyles.join(", ") || "پاپ",
       mood: document.getElementById("mood").value.trim()
