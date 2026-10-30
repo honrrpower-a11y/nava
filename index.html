@@ -83,7 +83,6 @@ textarea{resize:vertical;min-height:180px}
 <textarea id="lyrics" maxlength="8000" placeholder="شعر خودت را بنویس یا با بخش ساخت شعر، یک ترانه بساز..."></textarea>
 <div class="hint">می‌توانی شعر تولیدشده را ویرایش کنی یا متن خودت را وارد کنی.</div>
 </div>
-</div>
 </section>
 
 <section class="card">
@@ -102,17 +101,20 @@ textarea{resize:vertical;min-height:180px}
 
 <div class="grid" style="margin-top:20px">
 <div class="field">
-<label for="voice">نوع صدا</label>
+<label for="voice">جنس و لحن صدا</label>
 <select id="voice">
-<option value="male">خواننده مرد</option>
-<option value="female">خواننده زن</option>
-<option value="duet">دوخواننده</option>
-<option value="instrumental">بی‌کلام</option>
+<option value="male_pop">خواننده مرد (پاپ جوان و روشن)</option>
+<option value="male_deep">خواننده مرد (باریتون عمیق و گرم)</option>
+<option value="male_raspy">خواننده مرد (صدای خش‌دار و احساسی)</option>
+<option value="female_pop">خواننده زن (پاپ شفاف و ملایم)</option>
+<option value="female_powerful">خواننده زن (قدرتمند و پرانرژی)</option>
+<option value="duet">دوخواننده (مرد و زن)</option>
+<option value="instrumental">بی‌کلام (بدون خواننده)</option>
 </select>
 </div>
 <div class="field">
 <label for="mood">توضیحات بیشتر (اختیاری)</label>
-<input id="mood" maxlength="500" placeholder="مثلاً صدای عمیق و با احساس">
+<input id="mood" maxlength="500" placeholder="مثلاً: با گیتار آکوستیک ملایم یا ریتم تند">
 </div>
 </div>
 
@@ -189,7 +191,6 @@ makeLyricsButton.addEventListener("click", async () => {
   showMessage(lyricStatus, "سایت نوا در حال بررسی موضوع و ساخت ترانه است؛ کمی صبر کن.");
 
   try {
-    // ارسال درخواست بدون نیاز به تعیین دستی زبان؛ هوش مصنوعی خودش زبان موضوع را تشخیص می‌دهد
     const result = await postJSON(LYRICS_API, "", {
       topic,
       mood: document.getElementById("lyricMood").value
