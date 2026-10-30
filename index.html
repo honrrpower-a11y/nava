@@ -1,278 +1,491 @@
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>استودیو نوا | Nava Studio</title>
-    <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet" type="text/css" />
-    <style>
-        :root {
-            --bg-deep: #090A0F;
-            --card-bg: rgba(19, 23, 34, 0.85);
-            --text-main: #FFFFFF;
-            --text-sub: #94A3B8;
-            --accent-purple: #8B5CF6;
-            --accent-pink: #EC4899;
-            --border-glass: rgba(255, 255, 255, 0.08);
-            --glow-main: rgba(139, 92, 246, 0.35);
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#101321">
+<title>نوا | استودیوی هوشمند موسیقی</title>
+<link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet" type="text/css" />
+<style>
+:root {
+    --bg: #0b0e18;
+    --panel: #141928;
+    --panel2: #1b2234;
+    --gold: #f2c14e;
+    --text: #f5f6fa;
+    --muted: #a5aec1;
+    --border: #30384b;
+    --green: #5ee0a0;
+    --card-shadow: 0 12px 38px #00000018;
+}
 
-        * {
-            box-sizing: border-box;
-            transition: all 0.3s ease;
-        }
+[data-theme="light"] {
+    --bg: #f4f6fb;
+    --panel: #ffffff;
+    --panel2: #e8ecf5;
+    --gold: #d99b11;
+    --text: #1e2530;
+    --muted: #64748b;
+    --border: #cbd5e1;
+    --green: #10b981;
+    --card-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
+}
 
-        body {
-            font-family: 'Vazirmatn', sans-serif;
-            background-color: var(--bg-deep);
-            background-image: 
-                radial-gradient(circle at 15% 20%, rgba(139, 92, 246, 0.15) 0%, transparent 40%),
-                radial-gradient(circle at 85% 80%, rgba(236, 72, 153, 0.12) 0%, transparent 40%);
-            color: var(--text-main);
-            margin: 0;
-            padding: 15px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-        }
+*{box-sizing:border-box; transition: background 0.3s ease, color 0.3s ease, border-color 0.3s ease;}
+body{margin:0;color:var(--text);background:radial-gradient(ellipse at 50% -10%,var(--panel2) 0%,transparent 55%),var(--bg);font-family:'Vazirmatn',Tahoma,Arial,sans-serif;min-height:100vh;line-height:1.9}
+.container{width:min(900px,92%);margin:auto;padding:28px 0 55px}
 
-        .container {
-            width: 100%;
-            max-width: 600px;
-            background-color: var(--card-bg);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border-radius: 24px;
-            padding: 24px;
-            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.6);
-            border: 1px solid var(--border-glass);
-        }
+header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:38px}
+.brand{font-size:30px;font-weight:900;color:var(--gold);letter-spacing:1px;display:flex;flex-direction:column}
+.brand small{font-size:11px;font-weight:normal;color:var(--muted);letter-spacing:0}
 
-        .header {
-            text-align: center;
-            margin-bottom: 20px;
-        }
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
 
-        .logo {
-            font-size: 1.5rem;
-            font-weight: 900;
-            background: linear-gradient(135deg, #A78BFA 0%, #F472B6 50%, #38BDF8 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
+.badge{border:1px solid var(--border);border-radius:30px;padding:5px 12px;color:var(--green);font-size:12px;background:var(--panel)}
 
-        /* تب‌ها */
-        .tabs {
-            display: flex;
-            gap: 6px;
-            background: rgba(0, 0, 0, 0.4);
-            padding: 5px;
-            border-radius: 14px;
-            margin-bottom: 20px;
-            border: 1px solid var(--border-glass);
-        }
+.theme-toggle {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 18px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+.theme-toggle:hover {
+    border-color: var(--gold);
+}
 
-        .tab-btn {
-            flex: 1;
-            padding: 10px 8px;
-            border: none;
-            background: transparent;
-            color: var(--text-sub);
-            font-family: inherit;
-            font-size: 0.9rem;
-            font-weight: bold;
-            border-radius: 10px;
-            cursor: pointer;
-            text-align: center;
-        }
+/* تب‌ها */
+.tabs {
+    display: flex;
+    gap: 8px;
+    background: var(--panel2);
+    padding: 6px;
+    border-radius: 18px;
+    margin-bottom: 25px;
+    border: 1px solid var(--border);
+}
+.tab-btn {
+    flex: 1;
+    padding: 12px;
+    border: none;
+    background: transparent;
+    color: var(--muted);
+    font-family: inherit;
+    font-size: 0.95rem;
+    font-weight: bold;
+    border-radius: 12px;
+    cursor: pointer;
+    text-align: center;
+}
+.tab-btn.active {
+    background: var(--panel);
+    color: var(--gold);
+    border: 1px solid var(--border);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+.tab-content {
+    display: none;
+}
+.tab-content.active {
+    display: block;
+}
 
-        .tab-btn.active {
-            background: linear-gradient(135deg, rgba(139, 92, 246, 0.35), rgba(236, 72, 153, 0.25));
-            color: #FFFFFF;
-            border: 1px solid rgba(139, 92, 246, 0.4);
-            box-shadow: 0 0 15px rgba(139, 92, 246, 0.2);
-        }
+.hero{text-align:center;margin-bottom:28px}
+.hero h1{font-size:clamp(25px,5vw,39px);margin:0 0 8px;line-height:1.6}
+.hero h1 span{color:var(--gold)}
+.hero p{color:var(--muted);margin:0;font-size:14px}
 
-        .tab-content {
-            display: none;
-        }
+.card{background:var(--panel);border:1px solid var(--border);border-radius:22px;padding:clamp(17px,4vw,28px);margin-bottom:18px;box-shadow:var(--card-shadow)}
+.section-title{font-size:17px;font-weight:bold;margin:0 0 15px}
+label{display:block;margin-bottom:7px;font-size:13px;color:var(--text)}
+input,textarea,select{width:100%;color:var(--text);background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:13px 14px;font:inherit;font-size:14px;outline:none}
+input:focus,textarea:focus,select:focus{border-color:var(--gold)}
+textarea{resize:vertical;min-height:180px}
+.hint{color:var(--muted);font-size:12px;margin-top:6px}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.field{margin-bottom:17px}
+.chips{display:flex;flex-wrap:wrap;gap:9px}
+.chip{background:var(--panel2);color:var(--text);border:1px solid var(--border);border-radius:30px;padding:7px 14px;cursor:pointer;font:inherit;font-size:13px}
+.chip.active{background:var(--panel);color:var(--gold);border-color:var(--gold)}
 
-        .tab-content.active {
-            display: block;
-        }
+.main-button{width:100%;border:0;border-radius:14px;padding:15px;margin-top:10px;cursor:pointer;background:linear-gradient(110deg,#f7d879,#e9ad32);color:#17130a;font:inherit;font-size:16px;font-weight:900;box-shadow:0 6px 24px #f2c14e20}
+.secondary-button{background:linear-gradient(110deg,#8ce8c0,#3abf8b); color: #08281a;}
+.main-button:disabled{opacity:.6;cursor:wait}
 
-        textarea, input, select {
-            width: 100%;
-            padding: 12px;
-            border-radius: 12px;
-            border: 1px solid var(--border-glass);
-            background-color: rgba(0, 0, 0, 0.3);
-            color: var(--text-main);
-            font-family: inherit;
-            font-size: 0.9rem;
-            margin-top: 5px;
-            margin-bottom: 15px;
-            outline: none;
-        }
+.status{display:none;white-space:pre-wrap;overflow-wrap:anywhere;background:var(--bg);border:1px solid var(--border);border-radius:14px;padding:15px;margin-top:18px;font-size:13px}
+.status.show{display:block}
+.status audio{display:block;width:100%;margin-top:15px}
+.download{display:inline-block;color:var(--gold);border:1px solid var(--border);border-radius:10px;padding:8px 14px;margin-top:14px;text-decoration:none}
 
-        textarea:focus, input:focus, select:focus {
-            border-color: var(--accent-purple);
-            box-shadow: 0 0 12px var(--glow-main);
-        }
+/* پیش‌نمایش استوری‌ساز */
+.story-preview-card {
+    margin-top: 20px;
+    padding: 35px 20px;
+    border-radius: 20px;
+    background: linear-gradient(145deg, #0f172a, #1e1b4b);
+    color: #FFFFFF;
+    text-align: center;
+    border: 1px solid rgba(139, 92, 246, 0.3);
+    min-height: 200px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+.story-text {
+    font-size: 1.2rem;
+    line-height: 1.8;
+    font-weight: bold;
+}
+.story-subtitle {
+    margin-top: 18px;
+    font-size: 0.85rem;
+    background: linear-gradient(135deg, #A78BFA, #F472B6);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-weight: bold;
+}
 
-        label {
-            font-weight: bold;
-            font-size: 0.85rem;
-            color: var(--text-sub);
-            display: block;
-        }
-
-        .row-group {
-            display: flex;
-            gap: 10px;
-        }
-
-        .row-group > div {
-            flex: 1;
-        }
-
-        .action-btn {
-            width: 100%;
-            padding: 14px;
-            border: none;
-            border-radius: 12px;
-            background: linear-gradient(135deg, #8B5CF6 0%, #EC4899 100%);
-            color: #FFFFFF;
-            font-family: inherit;
-            font-size: 1rem;
-            font-weight: bold;
-            cursor: pointer;
-            box-shadow: 0 6px 20px rgba(139, 92, 246, 0.4);
-            margin-top: 5px;
-        }
-
-        .action-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 30px rgba(236, 72, 153, 0.5);
-        }
-
-        .story-preview-card {
-            margin-top: 20px;
-            padding: 25px 15px;
-            border-radius: 16px;
-            background: linear-gradient(145deg, #0f172a, #1e1b4b);
-            color: #FFFFFF;
-            text-align: center;
-            border: 1px solid rgba(139, 92, 246, 0.3);
-            min-height: 180px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .story-text {
-            font-size: 1.15rem;
-            line-height: 1.7;
-            font-weight: bold;
-        }
-
-        .story-subtitle {
-            margin-top: 15px;
-            font-size: 0.8rem;
-            background: linear-gradient(135deg, #A78BFA, #F472B6);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            font-weight: bold;
-        }
-    </style>
+.footnote{text-align:center;color:var(--muted);font-size:12px;margin-top:25px}
+@media(max-width:580px){.grid{grid-template-columns:1fr;gap:0}header{margin-bottom:28px}.brand{font-size:22px}.badge{font-size:10px}}
+</style>
 </head>
 <body>
+<main class="container">
+<header>
+<div class="brand">♫ نوا<small>استودیوی هوشمند موسیقی</small></div>
+<div class="header-actions">
+  <div class="badge">● نسخه آزمایشی</div>
+  <button type="button" class="theme-toggle" id="themeToggle" title="تغییر حالت تاریک/روشن">🌙</button>
+</div>
+</header>
 
-<div class="container">
-    <div class="header">
-        <div class="logo">✨ استودیو نوا | Nava Studio</div>
-    </div>
-
-    <!-- تب‌ها -->
-    <div class="tabs">
-        <button class="tab-btn active" onclick="switchTab('musicTab', this)">🎵 موزیک و صدا</button>
-        <button class="tab-btn" onclick="switchTab('storyTab', this)">⚡ استوری‌ساز</button>
-    </div>
-
-    <!-- تب ۱: موزیک و صدا (با تمام فیلدهای کامل سبک، خواننده و تنظیمات) -->
-    <div id="musicTab" class="tab-content active">
-        <label for="lyrics">متن ترانه یا ایده صوتی:</label>
-        <textarea id="lyrics" rows="3" placeholder="متن ترانه یا توصیف فضای صوتی مورد نظر..."></textarea>
-
-        <label for="style">سبک موسیقی (Genre / Style):</label>
-        <input type="text" id="style" placeholder="مثال: Cinematic Ambient, Lo-Fi Beat, Synthwave">
-
-        <label for="singer">خواننده یا جنس صدا (Vocalist / Voice):</label>
-        <input type="text" id="singer" placeholder="مثال: صدای مرد گرم و عمیق، یا زن احساسی">
-
-        <div class="row-group">
-            <div>
-                <label for="tempo">سرعت (Tempo):</label>
-                <select id="tempo">
-                    <option value="normal">معمولی / ملایم</option>
-                    <option value="upbeat">پرانرژی و ریتمیک</option>
-                    <option value="slow">کند و احساسی</option>
-                </select>
-            </div>
-            <div>
-                <label for="vocalType">نوع خروجی:</label>
-                <select id="vocalType">
-                    <option value="instrumental">بی‌کلام (Instrumental)</option>
-                    <option value="withVocals">باکلام (Vocal)</option>
-                </select>
-            </div>
-        </div>
-
-        <button class="action-btn">ساخت و پردازش قطعه صوتی 🎧</button>
-    </div>
-
-    <!-- تب ۲: استوری‌ساز مینیمال -->
-    <div id="storyTab" class="tab-content">
-        <label for="storyInput">متن دل‌نوشته یا استوری:</label>
-        <textarea id="storyInput" rows="3" placeholder="یک جمله کوتاه یا حس‌وحال..." oninput="updatePreview()"></textarea>
-
-        <label for="storyStyle">فضای کارت:</label>
-        <select id="storyStyle">
-            <option value="minimal">دارک و کهکشانی</option>
-            <option value="deep">عمیق و نئونی</option>
-        </select>
-
-        <button class="action-btn">بازنویسی هوشمند متن ✨</button>
-
-        <div class="story-preview-card">
-            <div class="story-text" id="previewText">« متن شما اینجا قرار می‌گیرد... »</div>
-            <div class="story-subtitle">@Nava_Studio</div>
-        </div>
-    </div>
+<div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('musicTab', this)">🎵 استودیوی موسیقی</button>
+    <button class="tab-btn" onclick="switchTab('storyTab', this)">⚡ استوری‌ساز مینیمال</button>
 </div>
 
+<!-- تب اول: استودیوی موسیقی کامل خودتان -->
+<div id="musicTab" class="tab-content active">
+    <section class="hero">
+    <h1>موسیقی خودت را <span>خلق کن</span></h1>
+    <p>موضوعت را به هر زبانی بنویس، هوش مصنوعی خودش زبان و شعرش را می‌سازد.</p>
+    </section>
+
+    <section class="card">
+    <h2 class="section-title">۱. ساخت شعر با هوش مصنوعی</h2>
+    <div class="field">
+    <label for="topic">موضوع یا ایده ترانه (به فارسی، ترکی، انگلیسی و...)</label>
+    <input id="topic" maxlength="500" placeholder="مثلاً: خاطرات بارانی / آنا / My lonely heart">
+    </div>
+    <div class="field">
+    <label for="lyricMood">حال‌وهوای ترانه</label>
+    <select id="lyricMood">
+    <option>احساسی و عمیق</option>
+    <option>شاد و پرانرژی</option>
+    <option>غمگین و دلتنگ</option>
+    <option>عاشقانه</option>
+    <option>حماسی و باشکوه</option>
+    <option>آرام و دلنشین</option>
+    </select>
+    </div>
+
+    <button type="button" id="makeLyrics" class="main-button secondary-button">✍ ساخت هوشمند شعر</button>
+    <div id="lyricStatus" class="status" role="status" aria-live="polite"></div>
+    </section>
+
+    <section class="card">
+    <h2 class="section-title">۲. شعر آهنگ</h2>
+    <div class="field">
+    <label for="lyrics">متن آهنگ</label>
+    <textarea id="lyrics" maxlength="8000" placeholder="شعر خودت را بنویس یا با بخش ساخت شعر، یک ترانه بساز..."></textarea>
+    <div class="hint">می‌توانی شعر تولیدشده را ویرایش کنی یا متن خودت را وارد کنی.</div>
+    </div>
+    </section>
+
+    <section class="card">
+    <h2 class="section-title">۳. سبک و حال‌وهوای موسیقی</h2>
+    <label>سبک آهنگ (چند گزینه می‌توانی انتخاب کنی)</label>
+    <div class="chips" id="styles">
+    <button type="button" class="chip active">پاپ</button>
+    <button type="button" class="chip">سنتی</button>
+    <button type="button" class="chip">راک</button>
+    <button type="button" class="chip">غمگین</button>
+    <button type="button" class="chip">عاشقانه</button>
+    <button type="button" class="chip">حماسی</button>
+    <button type="button" class="chip">آذربایجانی</button>
+    <button type="button" class="chip">ترکیه‌ای</button>
+    <button type="button" class="chip">بی‌کلام</button>
+    </div>
+
+    <div class="grid" style="margin-top:20px">
+    <div class="field">
+    <label for="voice">جنس و لحن صدا</label>
+    <select id="voice">
+    <option value="male_pop">خواننده مرد (پاپ جوان و روشن)</option>
+    <option value="male_deep">خواننده مرد (باریتون عمیق و گرم)</option>
+    <option value="male_raspy">خواننده مرد (صدای خش‌دار و احساسی)</option>
+    <option value="female_pop">خواننده زن (پاپ شفاف و ملایم)</option>
+    <option value="female_powerful">خواننده زن (قدرتمند و پرانرژی)</option>
+    <option value="duet">دوخواننده (مرد و زن)</option>
+    <option value="instrumental">بی‌کلام (بدون خواننده)</option>
+    </select>
+    </div>
+    <div class="field">
+    <label for="mood">توضیحات بیشتر (اختیاری)</label>
+    <input id="mood" maxlength="500" placeholder="مثلاً: با گیتار آکوستیک ملایم یا ریتم تند">
+    </div>
+    </div>
+
+    <button type="button" id="generate" class="main-button">✦ ساخت آهنگ</button>
+    <div id="status" class="status" role="status" aria-live="polite"></div>
+    </section>
+</div>
+
+<!-- تب دوم: استوری‌ساز مینیمال -->
+<div id="storyTab" class="tab-content">
+    <section class="hero">
+    <h1>استوری‌ساز <span>مینیمال</span></h1>
+    <p>متن یا دل‌نوشته‌ات را وارد کن تا برای انتشار در استوری آماده شود.</p>
+    </section>
+
+    <section class="card">
+    <h2 class="section-title">متن استوری</h2>
+    <div class="field">
+    <label for="storyInput">متن دل‌نوشته یا شعر کوتاه:</label>
+    <textarea id="storyInput" rows="3" placeholder="جمله یا حس‌وحال خود را بنویسید..." oninput="updatePreview()" style="min-height: 120px;"></textarea>
+    </div>
+
+    <div class="story-preview-card">
+        <div class="story-text" id="previewText">« متن شما اینجا قرار می‌گیرد... »</div>
+        <div class="story-subtitle">@Nava_Studio</div>
+    </div>
+    </section>
+</div>
+
+<p class="footnote">نوا در مرحله آزمایش است؛ ساخت شعر و آهنگ به دسترسی سرویس‌های مربوط بستگی دارد.</p>
+</main>
+
 <script>
-    function switchTab(tabId, element) {
-        document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
-        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-        
-        document.getElementById(tabId).classList.add('active');
-        element.classList.add('active');
+const MUSIC_API = "https://nava-music-api.honrrpower.workers.dev";
+const LYRICS_API = "https://nava-lyrics-api.honrrpower.workers.dev";
+
+// مدیریت تب‌ها
+function switchTab(tabId, element) {
+    document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+    
+    document.getElementById(tabId).classList.add('active');
+    element.classList.add('active');
+}
+
+// پیش‌نمایش زنده استوری
+function updatePreview() {
+    const input = document.getElementById('storyInput').value;
+    const previewText = document.getElementById('previewText');
+    if (input.trim() !== '') {
+        previewText.innerText = `« ${input} »`;
+    } else {
+        previewText.innerText = '« متن شما اینجا قرار می‌گیرد... »';
+    }
+}
+
+// سیستم نایت مود / لایت مود
+const themeToggle = document.getElementById('themeToggle');
+const htmlElement = document.documentElement;
+
+// بررسی ذخیره قبلی کاربر
+const savedTheme = localStorage.getItem('nava_theme') || 'dark';
+if (savedTheme === 'light') {
+    htmlElement.setAttribute('data-theme', 'light');
+    themeToggle.textContent = '☀️';
+} else {
+    htmlElement.removeAttribute('data-theme');
+    themeToggle.textContent = '🌙';
+}
+
+themeToggle.addEventListener('click', () => {
+    if (htmlElement.getAttribute('data-theme') === 'light') {
+        htmlElement.removeAttribute('data-theme');
+        localStorage.setItem('nava_theme', 'dark');
+        themeToggle.textContent = '🌙';
+    } else {
+        htmlElement.setAttribute('data-theme', 'light');
+        localStorage.setItem('nava_theme', 'light');
+        themeToggle.textContent = '☀️';
+    }
+});
+
+const styles = [...document.querySelectorAll("#styles .chip")];
+const lyricsBox = document.getElementById("lyrics");
+const makeLyricsButton = document.getElementById("makeLyrics");
+const lyricStatus = document.getElementById("lyricStatus");
+const generateButton = document.getElementById("generate");
+const statusBox = document.getElementById("status");
+
+styles.forEach(chip => {
+  chip.addEventListener("click", () => chip.classList.toggle("active"));
+});
+
+function showMessage(box, message) {
+  box.replaceChildren();
+  box.textContent = message;
+  box.classList.add("show");
+}
+
+async function postJSON(baseURL, path, payload, timeoutMs = 130000) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    const response = await fetch(baseURL + path, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+      signal: controller.signal
+    });
+
+    let result;
+    try {
+      result = await response.json();
+    } catch {
+      throw new Error("پاسخ سرویس قابل خواندن نیست.");
     }
 
-    function updatePreview() {
-        const input = document.getElementById('storyInput').value;
-        const previewText = document.getElementById('previewText');
-        
-        if (input.trim() !== '') {
-            previewText.innerText = `« ${input} »`;
-        } else {
-            previewText.innerText = '« متن شما اینجا قرار می‌گیرد... »';
-        }
+    if (!response.ok) {
+      throw new Error(
+        result.details || result.error || ("خطای سرویس: " + response.status)
+      );
     }
+
+    return result;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+makeLyricsButton.addEventListener("click", async () => {
+  const topic = document.getElementById("topic").value.trim();
+
+  if (!topic) {
+    showMessage(lyricStatus, "اول موضوع ترانه را بنویس.");
+    document.getElementById("topic").focus();
+    return;
+  }
+
+  makeLyricsButton.disabled = true;
+  makeLyricsButton.textContent = "⏳ در حال خلق ترانه...";
+  showMessage(lyricStatus, "سایت نوا در حال بررسی موضوع و ساخت ترانه است؛ کمی صبر کن.");
+
+  try {
+    const result = await postJSON(LYRICS_API, "", {
+      topic,
+      mood: document.getElementById("lyricMood").value
+    });
+
+    if (!result.success || !result.lyrics) {
+      throw new Error("متن شعر دریافت نشد.");
+    }
+
+    lyricsBox.value = result.lyrics;
+    showMessage(
+      lyricStatus,
+      "✅ شعر به‌صورت خودکار متناسب با زبان موضوع ساخته شد و در کادر قرار گرفت."
+    );
+    lyricsBox.scrollIntoView({ behavior: "smooth", block: "center" });
+  } catch (error) {
+    showMessage(
+      lyricStatus,
+      "ساخت شعر ناموفق بود.\n" +
+      (error.name === "AbortError"
+        ? "زمان انتظار تمام شد؛ دوباره امتحان کن."
+        : error.message)
+    );
+  } finally {
+    makeLyricsButton.disabled = false;
+    makeLyricsButton.textContent = "✍ ساخت هوشمند شعر";
+  }
+});
+
+generateButton.addEventListener("click", async () => {
+  const lyrics = lyricsBox.value.trim();
+
+  if (!lyrics) {
+    showMessage(statusBox, "اول متن آهنگ را بنویس یا با هوش مصنوعی شعر بساز.");
+    lyricsBox.focus();
+    return;
+  }
+
+  const selectedStyles = styles
+    .filter(chip => chip.classList.contains("active"))
+    .map(chip => chip.textContent.trim());
+
+  const voice = document.getElementById("voice").value;
+
+  if (voice === "instrumental" && !selectedStyles.includes("بی‌کلام")) {
+    selectedStyles.push("بی‌کلام");
+  }
+
+  generateButton.disabled = true;
+  generateButton.textContent = "⏳ در حال ساخت آهنگ...";
+  showMessage(statusBox, "درخواست به سرویس موسیقی ارسال شد. ممکن است چند دقیقه طول بکشد؛ صفحه را نبند.");
+
+  try {
+    const result = await postJSON(MUSIC_API, "/generate", {
+      lyrics,
+      voice,
+      style: selectedStyles.join(", ") || "پاپ",
+      mood: document.getElementById("mood").value.trim()
+    }, 260000);
+
+    if (!result.success || !result.audioUrl) {
+      throw new Error(result.error || "فایل صوتی دریافت نشد.");
+    }
+
+    statusBox.replaceChildren();
+
+    const heading = document.createElement("strong");
+    heading.textContent = "🎵 آهنگ آماده است";
+    statusBox.appendChild(heading);
+
+    const audio = document.createElement("audio");
+    audio.controls = true;
+    audio.preload = "metadata";
+    audio.src = result.audioUrl;
+    statusBox.appendChild(audio);
+
+    const download = document.createElement("a");
+    download.className = "download";
+    download.href = result.audioUrl;
+    download.download = "nava-song.mp3";
+    download.textContent = "⬇ دانلود آهنگ";
+    statusBox.appendChild(download);
+
+    statusBox.classList.add("show");
+  } catch (error) {
+    showMessage(
+      statusBox,
+      "ساخت آهنگ ناموفق بود.\n" +
+      (error.name === "AbortError"
+        ? "زمان انتظار تمام شد؛ وضعیت سرویس را بررسی کن."
+        : error.message)
+    );
+  } finally {
+    generateButton.disabled = false;
+    generateButton.textContent = "✦ ساخت آهنگ";
+  }
+});
 </script>
-
 </body>
 </html>
