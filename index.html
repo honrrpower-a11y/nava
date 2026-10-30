@@ -211,11 +211,11 @@ makeLyricsButton.addEventListener("click", async () => {
   }
 
   makeLyricsButton.disabled = true;
-  makeLyricsButton.textContent = "⏳ در حال نوشتن ترانه (کمی صبر کنید)...";
-  showMessage(lyricStatus, "سایت نوا در حال خلق ترانه است؛ لطفاً صفحه را نبندید.");
+  makeLyricsButton.textContent = "⏳ در حال نوشتن ترانه...";
+  showMessage(lyricStatus, "هوش مصنوعی در حال نوشتن ترانه است؛ کمی صبر کن.");
 
   try {
-    const result = await postJSON(LYRICS_API, "/lyrics", {
+    const result = await postJSON(LYRICS_API, "", {
       topic,
       style: document.getElementById("lyricStyle").value,
       mood: document.getElementById("lyricMood").value,
@@ -237,7 +237,7 @@ makeLyricsButton.addEventListener("click", async () => {
       lyricStatus,
       "ساخت شعر ناموفق بود.\n" +
       (error.name === "AbortError"
-        ? "زمان انتظار تمام شد؛ لطفاً دوباره امتحان کنید."
+        ? "زمان انتظار تمام شد؛ دوباره امتحان کن."
         : error.message)
     );
   } finally {
@@ -246,4 +246,75 @@ makeLyricsButton.addEventListener("click", async () => {
   }
 });
 
-generateButton.addEventListener("click", async () =>
+generateButton.addEventListener("click", async () => {
+  const lyrics = lyricsBox.value.trim();
+
+  if (!lyrics) {
+    showMessage(statusBox, "اول متن آهنگ را بنویس یا با هوش مصنوعی شعر بساز.");
+    lyricsBox.focus();
+    return;
+  }
+
+  const selectedStyles = styles
+    .filter(chip => chip.classList.contains("active"))
+    .map(chip => chip.textContent.trim());
+
+  const voice = document.getElementById("voice").value;
+
+  if (voice === "instrumental" && !selectedStyles.includes("بی‌کلام")) {
+    selectedStyles.push("بی‌کلام");
+  }
+
+  generateButton.disabled = true;
+  generateButton.textContent = "⏳ در حال ساخت آهنگ...";
+  showMessage(statusBox, "درخواست به سرویس موسیقی ارسال شد. ممکن است چند دقیقه طول بکشد؛ صفحه را نبند.");
+
+  try {
+    const result = await postJSON(MUSIC_API, "/generate", {
+      lyrics,
+      language: document.getElementById("language").value,
+      voice,
+      style: selectedStyles.join(", ") || "پاپ",
+      mood: document.getElementById("mood").value.trim()
+    }, 260000);
+
+    if (!result.success || !result.audioUrl) {
+      throw new Error(result.error || "فایل صوتی دریافت نشد.");
+    }
+
+    statusBox.replaceChildren();
+
+    const heading = document.createElement("strong");
+    heading.textContent = "🎵 آهنگ آماده است";
+    statusBox.appendChild(heading);
+
+    const audio = document.createElement("audio");
+    audio.controls = true;
+    audio.preload = "metadata";
+    audio.src = result.audioUrl;
+    statusBox.appendChild(audio);
+
+    const download = document.createElement("a");
+    download.className = "download";
+    download.href = result.audioUrl;
+    download.download = "nava-song.mp3";
+    download.textContent = "⬇ دانلود آهنگ";
+    statusBox.appendChild(download);
+
+    statusBox.classList.add("show");
+  } catch (error) {
+    showMessage(
+      statusBox,
+      "ساخت آهنگ ناموفق بود.\n" +
+      (error.name === "AbortError"
+        ? "زمان انتظار تمام شد؛ وضعیت سرویس را بررسی کن."
+        : error.message)
+    );
+  } finally {
+    generateButton.disabled = false;
+    generateButton.textContent = "✦ ساخت آهنگ";
+  }
+});
+</script>
+</body>
+</html>
