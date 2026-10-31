@@ -115,9 +115,10 @@ textarea{resize:vertical;min-height:180px}
 .hint{color:var(--muted);font-size:12px;margin-top:6px}
 .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
 .field{margin-bottom:17px}
-.chips{display:flex;flex-wrap:wrap;gap:9px}
+
+.chips{display:flex;flex-wrap:wrap;gap:9px;margin-bottom:12px}
 .chip{background:var(--panel2);color:var(--text);border:1px solid var(--border);border-radius:30px;padding:7px 14px;cursor:pointer;font:inherit;font-size:13px}
-.chip.active{background:var(--panel);color:var(--gold);border-color:var(--gold)}
+.chip:hover{border-color:var(--gold);color:var(--gold)}
 
 .main-button{width:100%;border:0;border-radius:14px;padding:15px;margin-top:10px;cursor:pointer;background:linear-gradient(110deg,#f7d879,#e9ad32);color:#17130a;font:inherit;font-size:16px;font-weight:900;box-shadow:0 6px 24px #f2c14e20}
 .secondary-button{background:linear-gradient(110deg,#8ce8c0,#3abf8b); color: #08281a;}
@@ -176,7 +177,7 @@ textarea{resize:vertical;min-height:180px}
     <button class="tab-btn" onclick="switchTab('storyTab', this)">⚡ استوری‌ساز مینیمال</button>
 </div>
 
-<!-- تب اول: استودیوی موسیقی کامل خودتان -->
+<!-- تب اول: استودیوی موسیقی -->
 <div id="musicTab" class="tab-content active">
     <section class="hero">
     <h1>موسیقی خودت را <span>خلق کن</span></h1>
@@ -216,17 +217,23 @@ textarea{resize:vertical;min-height:180px}
 
     <section class="card">
     <h2 class="section-title">۳. سبک و حال‌وهوای موسیقی</h2>
-    <label>سبک آهنگ (چند گزینه می‌توانی انتخاب کنی)</label>
-    <div class="chips" id="styles">
-    <button type="button" class="chip active">پاپ</button>
-    <button type="button" class="chip">سنتی</button>
-    <button type="button" class="chip">راک</button>
-    <button type="button" class="chip">غمگین</button>
-    <button type="button" class="chip">عاشقانه</button>
-    <button type="button" class="chip">حماسی</button>
-    <button type="button" class="chip">آذربایجانی</button>
-    <button type="button" class="chip">ترکیه‌ای</button>
-    <button type="button" class="chip">بی‌کلام</button>
+    
+    <div class="field">
+        <label>میانبرهای سریع سبک (برای اضافه شدن به کادر پایین):</label>
+        <div class="chips" id="styleChips">
+            <button type="button" class="chip" data-val="شاد و پرانرژی">⚡ شاد و پرانرژی</button>
+            <button type="button" class="chip" data-val="پاپ ملایم">🎵 پاپ ملایم</button>
+            <button type="button" class="chip" data-val="سنتی و اصیل">🎻 سنتی و اصیل</button>
+            <button type="button" class="chip" data-val="غمگین و احساسی">🌧 غمگین و احساسی</button>
+            <button type="button" class="chip" data-val="آذربایجانی شاد">🌟 آذربایجانی شاد</button>
+            <button type="button" class="chip" data-val="بی‌کلام گیتار">🎸 بی‌کلام گیتار</button>
+        </div>
+    </div>
+
+    <div class="field">
+        <label for="styleInput">سبک دلخواه (به زبان فارسی یا انگلیسی، هر توصیفی که دوست داری):</label>
+        <input id="styleInput" maxlength="300" placeholder="مثلاً: ریتم شاد و بندری با گیتار بیس تند یا پاپ احساسی ملایم">
+        <div class="hint">می‌توانی از میانبرهای بالا استفاده کنی یا خودت هر متن و سبکی که در سر داری بنویسی.</div>
     </div>
 
     <div class="grid" style="margin-top:20px">
@@ -305,7 +312,6 @@ function updatePreview() {
 const themeToggle = document.getElementById('themeToggle');
 const htmlElement = document.documentElement;
 
-// بررسی ذخیره قبلی کاربر
 const savedTheme = localStorage.getItem('nava_theme') || 'dark';
 if (savedTheme === 'light') {
     htmlElement.setAttribute('data-theme', 'light');
@@ -327,16 +333,24 @@ themeToggle.addEventListener('click', () => {
     }
 });
 
-const styles = [...document.querySelectorAll("#styles .chip")];
+// مدیریت چیپ‌های میانبر سبک
+const styleInput = document.getElementById("styleInput");
+document.querySelectorAll("#styleChips .chip").forEach(chip => {
+  chip.addEventListener("click", () => {
+    const val = chip.getAttribute("data-val");
+    if (styleInput.value.trim() === "") {
+        styleInput.value = val;
+    } else {
+        styleInput.value += "، " + val;
+    }
+  });
+});
+
 const lyricsBox = document.getElementById("lyrics");
 const makeLyricsButton = document.getElementById("makeLyrics");
 const lyricStatus = document.getElementById("lyricStatus");
 const generateButton = document.getElementById("generate");
 const statusBox = document.getElementById("status");
-
-styles.forEach(chip => {
-  chip.addEventListener("click", () => chip.classList.toggle("active"));
-});
 
 function showMessage(box, message) {
   box.replaceChildren();
@@ -427,15 +441,8 @@ generateButton.addEventListener("click", async () => {
     return;
   }
 
-  const selectedStyles = styles
-    .filter(chip => chip.classList.contains("active"))
-    .map(chip => chip.textContent.trim());
-
+  const userStyle = styleInput.value.trim() || "پاپ";
   const voice = document.getElementById("voice").value;
-
-  if (voice === "instrumental" && !selectedStyles.includes("بی‌کلام")) {
-    selectedStyles.push("بی‌کلام");
-  }
 
   generateButton.disabled = true;
   generateButton.textContent = "⏳ در حال ساخت آهنگ...";
@@ -445,7 +452,7 @@ generateButton.addEventListener("click", async () => {
     const result = await postJSON(MUSIC_API, "/generate", {
       lyrics,
       voice,
-      style: selectedStyles.join(", ") || "پاپ",
+      style: userStyle,
       mood: document.getElementById("mood").value.trim()
     }, 260000);
 
