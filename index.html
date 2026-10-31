@@ -176,12 +176,32 @@ textarea{resize:vertical;min-height:180px}
     <button class="tab-btn active" onclick="switchTab('musicTab', this)">🎵 استودیوی موسیقی</button>
     <button class="tab-btn" onclick="switchTab('storyTab', this)">⚡ استوری‌ساز مینیمال</button>
 </div>
+<!-- بخش انتخاب زبان -->
+<div class="language-selector" style="margin-bottom: 10px;">
+  <label style="margin-right: 10px; font-weight: bold;">زبان شعر:</label>
+  <button type="button" class="lang-btn active" data-lang="fa" onclick="setLang('fa')">فارسی</button>
+  <button type="button" class="lang-btn" data-lang="tr" onclick="setLang('tr')">Türkçe (ترکی)</button>
+  <button type="button" class="lang-btn" data-lang="en" onclick="setLang('en')">English</button>
+</div>
+
+<script>
+  let selectedLanguage = "fa"; // پیش‌فرض فارسی
+  function setLang(lang) {
+    selectedLanguage = lang;
+    document.querySelectorAll('.lang-btn').forEach(btn => {
+      btn.style.background = btn.getAttribute('data-lang') === lang ? '#007bff' : '#ccc';
+      btn.style.color = btn.getAttribute('data-lang') === lang ? '#fff' : '#000';
+    });
+  }
+  // فعال کردن استایل پیش‌فرض روی دکمه فارسی
+  setTimeout(() => setLang('fa'), 100);
+</script>
 
 <!-- تب اول: استودیوی موسیقی -->
 <div id="musicTab" class="tab-content active">
     <section class="hero">
     <h1>موسیقی خودت را <span>خلق کن</span></h1>
-    <p>موضوعت را به هر زبانی بنویس، هوش مصنوعی خودش زبان و شعرش را می‌سازد.</p>
+    <p>موضوعت را به هر زبانی بنویس،  نوا خودش زبان و شعرش را می‌سازد.</p>
     </section>
 
     <section class="card">
