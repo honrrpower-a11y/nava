@@ -404,7 +404,8 @@ makeLyricsButton.addEventListener("click", async () => {
   showMessage(lyricStatus, "سایت نوا در حال بررسی موضوع و ساخت ترانه است؛ کمی صبر کن.");
 
   try {
-    const result = await postJSON(LYRICS_API, "", {
+    // اصلاح مسیر به /lyrics
+    const result = await postJSON(LYRICS_API, "/lyrics", {
       topic,
       mood: document.getElementById("lyricMood").value
     });
@@ -444,7 +445,6 @@ generateButton.addEventListener("click", async () => {
 
   let rawStyle = styleInput.value.trim() || "پاپ";
   
-  // تقویت هوشمند سبک شاد برای اینکه خروجی واقعاً پرانرژی و کوبنده شود
   if (rawStyle.includes("شاد") || rawStyle.includes("پرانرژی")) {
       rawStyle += ", Upbeat high-energy dance rhythm, vibrant fast tempo, powerful bass beat";
   }
