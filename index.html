@@ -176,13 +176,7 @@ textarea{resize:vertical;min-height:180px}
     <button class="tab-btn active" onclick="switchTab('musicTab', this)">🎵 استودیوی موسیقی</button>
     <button class="tab-btn" onclick="switchTab('storyTab', this)">⚡ استوری‌ساز مینیمال</button>
 </div>
-<!-- بخش انتخاب زبان -->
-<div class="language-selector" style="margin-bottom: 10px;">
-  <label style="margin-right: 10px; font-weight: bold;">زبان شعر:</label>
-  <button type="button" class="lang-btn active" data-lang="fa" onclick="setLang('fa')">فارسی</button>
-  <button type="button" class="lang-btn" data-lang="tr" onclick="setLang('tr')">Türkçe (ترکی)</button>
-  <button type="button" class="lang-btn" data-lang="en" onclick="setLang('en')">English</button>
-</div>
+
 
 <script>
   let selectedLanguage = "fa"; // پیش‌فرض فارسی
@@ -205,9 +199,27 @@ textarea{resize:vertical;min-height:180px}
     </section>
 
     <section class="card">
-    <h2 class="section-title">۱. ساخت شعر با هوش مصنوعی</h2>
+    <h2 class="section-title">۱. ساخت شعر با نوا</h2>
     <div class="field">
-    <label for="topic">موضوع یا ایده ترانه (به فارسی، ترکی، انگلیسی و...)</label>
+        <!-- منوی کشویی انتخاب زبان -->
+<div class="language-dropdown-container" style="margin-bottom: 15px;">
+  <label for="langSelect" style="display: block; margin-bottom: 5px; font-weight: bold; font-size: 14px; color: #333;">زبان ترانه:</label>
+  <select id="langSelect" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ccc; background-color: #fff; font-size: 14px; cursor: pointer;">
+    <option value="fa">فارسی (اعراب‌گذاری‌شده)</option>
+    <option value="tr">Türkçe (ترکی استانبولی)</option>
+    <option value="en">English (انگلیسی)</option>
+  </select>
+</div>
+
+<script>
+  // تابع برای خواندن مقدار زبان انتخابی از منوی کشویی هنگام ارسال درخواست
+  function getSelectedLanguage() {
+    const selectElement = document.getElementById("langSelect");
+    return selectElement ? selectElement.value : "fa";
+  }
+</script>
+
+    <label for="topic">موضوع یا ایده ترانه (با توجه به زبان انتخابی)</label>
     <input id="topic" maxlength="500" placeholder="مثلاً: خاطرات بارانی / Ben yalan soylamam / My lonely heart">
     </div>
     <div class="field">
