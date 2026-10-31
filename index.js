@@ -23,7 +23,7 @@ function getLanguage(explicitLang) {
 export default {
   async fetch(request, env) {
     const origin = request.headers.get("Origin") || "";
-    const corsOrigin = origin === ALLOWED_ORIGIN ? ALLOWED_ORIGIN : "null";
+    const corsOrigin = origin === ALLOWED_ORIGIN ? ALLOWED_ORIGIN : "*";
 
     if (request.method === "OPTIONS") {
       return new Response(null, {
@@ -40,14 +40,10 @@ export default {
     const url = new URL(request.url);
 
     if (url.pathname === "/health" && request.method === "GET") {
-      return json({ service: "Nava Unified API", status: "online" }, 200, corsOrigin);
+      return json({ service: "Nava Music API", status: "online" }, 200, corsOrigin);
     }
 
-    if (origin && origin !== ALLOWED_ORIGIN) {
-      return json({ error: "Origin not allowed" }, 403, corsOrigin);
-    }
-
-    // 1. مسیر ساخت ترانه با جمنای (روان، مدرن و بدون اعراب اضافی)
+    // 1. مسیر ساخت ترانه با جمنای
     if (url.pathname === "/lyrics" && request.method === "POST") {
       let input;
       try { input = await request.json(); } catch { return json({ error: "اطلاعات معتبر نیست." }, 400, corsOrigin); }
@@ -63,15 +59,16 @@ export default {
       if (language === 'tr') langName = 'Türkçe (ترکی استانبولی)';
       if (language === 'en') langName = 'English (انگلیسی)';
 
-      const systemPrompt = `تو یک ترانه‌سرای حرفه‌ای و مسلط به زبان (${langName}) هستی. 
-بر اساس «موضوع» و «حال‌وهوا»، یک ترانه‌ی کاملاً روان، ریتمیک، مدرن و طبیعی (بدون کلمات عجیب، کتابی یا ساختگی) بنویس.
+      const systemPrompt = `تو یک ترانه‌سرای محبوب، مردمی و مدرن در سبک پاپ هستی. وظیفه تو نوشتن ترانه‌هایی است که با کلمات کاملاً روزمره، ساده، روان و قابل فهم برای همه ساخته شوند.
 
-قوانین:
-1. از هیچ‌گونه اعراب‌گذاری (فتحه، کسره، ضمه، تشدید) استفاده نکن.
-2. ساختار ترانه شامل [Verse 1] و [Chorus] باشد.
-3. هیچ‌گونه مقدمه، توضیح یا متن اضافه‌ای ننویس و فقط خود ترانه را خروجی بده.`;
+قوانین سخت‌گیرانه:
+1. ممنوعیت کاملِ اعراب‌گذاری: از هیچ‌گونه علامت اعراب (مثل فتحه، کسره، ضمه، تشدید) استفاده نکن. متن باید کاملاً لخت و ساده باشد.
+2. ممنوعیت کلمات ساختگی یا عجیب: به هیچ وجه کلمات عجیب، نامفهوم، آرکائیک یا جمله‌بندی‌های رباتیک و سنگین نساز. کلمات باید کاملاً طبیعی و محاوره‌ای باشند.
+3. ساختار ترانه فقط شامل تگ‌های استاندارد باشد: [Verse 1] و [Chorus].
+4. هیچ مقدمه، توضیح یا حاشیه‌ای ننویس؛ فقط و فقط متن ترانه را خروجی بده.
+5. زبان ترانه: ${langName}.`;
 
-      const userPrompt = `موضوع ترانه: ${topic}\nحال‌وهوا: ${mood}\nزبان مورد نظر: ${langName}`;
+      const userPrompt = `موضوع ترانه: ${topic}\nحال‌وهوا: ${mood}`;
 
       try {
         const geminiRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${env.GEMINI_API_KEY}`, {
@@ -95,72 +92,72 @@ export default {
       }
     }
 
-    // 2. مسیر اصلی ساخت موزیک با Ace Music
-    if (url.pathname !== "/generate" || request.method !== "POST") {
-      return json({ error: "Not found" }, 404, corsOrigin);
-    }
+    // 2. مسیر ساخت موزیک با Ace Music
+    if (url.pathname === "/generate" && request.method === "POST") {
+      if (!env.ACEMUSIC_API_KEY) return json({ error: "کلید ACE Music پیدا نشد." }, 500, corsOrigin);
 
-    if (!env.ACEMUSIC_API_KEY) return json({ error: "کلید ACE Music پیدا نشد." }, 500, corsOrigin);
+      let input;
+      try { input = await request.json(); } catch { return json({ error: "اطلاعات معتبر نیست." }, 400, corsOrigin); }
 
-    let input;
-    try { input = await request.json(); } catch { return json({ error: "اطلاعات معتبر نیست." }, 400, corsOrigin); }
+      const rawLyrics = String(input.finglish || input.lyrics || input.topic || "").trim();
+      let style = String(input.style || "").trim();
+      const voice = String(input.voice || "male_pop").trim();
+      let mood = String(input.mood || "").trim();
+      const vocalLang = getLanguage(input.language);
 
-    const rawLyrics = String(input.finglish || input.lyrics || input.topic || "").trim();
-    let style = String(input.style || "").trim();
-    const voice = String(input.voice || "male_pop").trim();
-    let mood = String(input.mood || "").trim();
-    const vocalLang = getLanguage(input.language);
+      if (!rawLyrics) return json({ error: "متن آهنگ خالی است." }, 400, corsOrigin);
 
-    if (!rawLyrics) return json({ error: "متن آهنگ خالی است." }, 400, corsOrigin);
+      const structuredLyrics = /\[(verse|chorus|bridge|intro|outro)/i.test(rawLyrics) ? rawLyrics : `[Verse 1]\n${rawLyrics}`;
 
-    const structuredLyrics = /\[(verse|chorus|bridge|intro|outro)/i.test(rawLyrics) ? rawLyrics : `[Verse 1]\n${rawLyrics}`;
-
-    if (style) {
-      style = style
-        .replace(/Turkish baglama/gi, "Authentic Turkish Baglama saz, traditional Anatolian acoustic strings")
-        .replace(/باغلاما/gi, "Turkish Baglama saz, traditional Anatolian folk acoustic strings")
-        .replace(/پاپ/gi, "modern energetic Persian pop arrangement, vibrant rhythm, uplifting dance bassline")
-        .replace(/سنتی/gi, "traditional Persian classical masterpiece, Santur, Setar, Tar, Tonbak")
-        .replace(/راک/gi, "arena rock music, heavy electric guitars, powerful driving drums")
-        .replace(/آذربایجانی/gi, "Authentic Azerbaijani Baku folk music, Qarmon accordion, Naghara and Ghaval percussion");
-    } else {
-      style = "modern energetic Persian pop arrangement";
-    }
-
-    let moodPrompt = mood ? `Musical Mood: ${mood}.` : "";
-    let voiceDesc = "A complete song with clear energetic male lead vocals. 100% MALE singer.";
-    if (voice === "male_deep") voiceDesc = "Deep baritone MALE lead vocalist, warm and low voice.";
-    else if (voice === "female_pop") voiceDesc = "Soft melodic female soprano lead vocalist. 100% FEMALE singer.";
-
-    const body = {
-      model: "acemusic/acestep-v1.5-turbo",
-      messages: [{ role: "user", content: `<prompt>\n${voiceDesc}\nGenre: ${style}\n${moodPrompt}\n</prompt>\n<lyrics>\n${structuredLyrics}\n</lyrics>` }],
-      stream: false,
-      thinking: true,
-      use_format: true,
-      audio_config: { 
-        format: "mp3", 
-        duration: 60, 
-        vocal_language: vocalLang, 
-        instrumental: false 
+      if (style) {
+        style = style
+          .replace(/Turkish baglama/gi, "Authentic Turkish Baglama saz, traditional Anatolian acoustic strings")
+          .replace(/باغلاما/gi, "Turkish Baglama saz, traditional Anatolian folk acoustic strings")
+          .replace(/پاپ/gi, "modern energetic Persian pop arrangement, vibrant rhythm, uplifting dance bassline")
+          .replace(/سنتی/gi, "traditional Persian classical masterpiece, Santur, Setar, Tar, Tonbak")
+          .replace(/راک/gi, "arena rock music, heavy electric guitars, powerful driving drums")
+          .replace(/آذربایجانی/gi, "Authentic Azerbaijani Baku folk music, Qarmon accordion, Naghara and Ghaval percussion");
+      } else {
+        style = "modern energetic Persian pop arrangement";
       }
-    };
 
-    try {
-      const res = await fetch("https://api.acemusic.ai/v1/chat/completions", {
-        method: "POST",
-        headers: { "Authorization": `Bearer ${env.ACEMUSIC_API_KEY}`, "Content-Type": "application/json" },
-        body: JSON.stringify(body)
-      });
-      const data = await res.json();
-      if (!res.ok) return json({ error: data.error?.message || "خطا در ساخت موزیک" }, 500, corsOrigin);
+      let moodPrompt = mood ? `Musical Mood: ${mood}.` : "";
+      let voiceDesc = "A complete song with clear energetic male lead vocals. 100% MALE singer.";
+      if (voice === "male_deep") voiceDesc = "Deep baritone MALE lead vocalist, warm and low voice.";
+      else if (voice === "female_pop") voiceDesc = "Soft melodic female soprano lead vocalist. 100% FEMALE singer.";
 
-      const audioUrl = data.choices?.[0]?.message?.audio?.[0]?.audio_url?.url;
-      if (!audioUrl) return json({ error: "فایل صوتی دریافت نشد." }, 502, corsOrigin);
+      const body = {
+        model: "acemusic/acestep-v1.5-turbo",
+        messages: [{ role: "user", content: `<prompt>\n${voiceDesc}\nGenre: ${style}\n${moodPrompt}\n</prompt>\n<lyrics>\n${structuredLyrics}\n</lyrics>` }],
+        stream: false,
+        thinking: true,
+        use_format: true,
+        audio_config: { 
+          format: "mp3", 
+          duration: 60, 
+          vocal_language: vocalLang, 
+          instrumental: false 
+        }
+      };
 
-      return json({ success: true, audioUrl }, 200, corsOrigin);
-    } catch (e) {
-      return json({ error: "ارتباط با سرور موزیک ناموفق بود.", details: e.message }, 500, corsOrigin);
+      try {
+        const res = await fetch("https://api.acemusic.ai/v1/chat/completions", {
+          method: "POST",
+          headers: { "Authorization": `Bearer ${env.ACEMUSIC_API_KEY}`, "Content-Type": "application/json" },
+          body: JSON.stringify(body)
+        });
+        const data = await res.json();
+        if (!res.ok) return json({ error: data.error?.message || "خطا در ساخت موزیک" }, 500, corsOrigin);
+
+        const audioUrl = data.choices?.[0]?.message?.audio?.[0]?.audio_url?.url;
+        if (!audioUrl) return json({ error: "فایل صوتی دریافت نشد." }, 502, corsOrigin);
+
+        return json({ success: true, audioUrl }, 200, corsOrigin);
+      } catch (e) {
+        return json({ error: "ارتباط با سرور موزیک ناموفق بود.", details: e.message }, 500, corsOrigin);
+      }
     }
+
+    return json({ error: "Not found" }, 404, corsOrigin);
   }
 };
