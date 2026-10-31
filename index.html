@@ -65,7 +65,6 @@ header{display:flex;align-items:center;justify-content:space-between;gap:12px;ma
     border-color: var(--gold);
 }
 
-/* تب‌ها */
 .tabs {
     display: flex;
     gap: 8px;
@@ -196,7 +195,6 @@ textarea{resize:vertical;min-height:180px}
     <button class="tab-btn" onclick="switchTab('storyTab', this)">⚡ استوری‌ساز مینیمال</button>
 </div>
 
-<!-- تب اول: استودیوی موسیقی -->
 <div id="musicTab" class="tab-content active">
     <section class="hero">
     <h1>موسیقی خودت را <span>خلق کن</span></h1>
@@ -287,7 +285,6 @@ textarea{resize:vertical;min-height:180px}
     </section>
 </div>
 
-<!-- تب دوم: استوری‌ساز مینیمال -->
 <div id="storyTab" class="tab-content">
     <section class="hero">
     <h1>استوری‌ساز <span>مینیمال</span></h1>
@@ -312,10 +309,8 @@ textarea{resize:vertical;min-height:180px}
 </main>
 
 <script>
-const WORKER_URL = "https://nava-music-api.honrrpower.workers.dev";
-
-const MUSIC_API = WORKER_URL;
-const LYRICS_API = WORKER_URL;
+const MUSIC_API = "https://nava-music-api.honrrpower.workers.dev";
+const LYRICS_API = "https://nava-lyrics-api.honrrpower.workers.dev";
 
 function getSelectedLanguage() {
   const selectElement = document.getElementById("langSelect");
