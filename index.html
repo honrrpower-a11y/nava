@@ -110,7 +110,6 @@ header{display:flex;align-items:center;justify-content:space-between;gap:12px;ma
 .section-title{font-size:17px;font-weight:bold;margin:0 0 15px}
 label{display:block;margin-bottom:7px;font-size:13px;color:var(--text)}
 
-/* اصلاح استایل عناصر ورودی و کشوی زبان برای پشتیبانی کامل از تم‌ها */
 input, textarea, select {
     width: 100%;
     color: var(--text);
@@ -126,7 +125,6 @@ input:focus, textarea:focus, select:focus {
     border-color: var(--gold);
 }
 
-/* حل مشکل رنگ متن و پس‌زمینه گزینه‌های کشوی زبان در حالت نایت مود و لایت مود */
 select option {
     background-color: var(--panel);
     color: var(--text);
@@ -151,7 +149,6 @@ textarea{resize:vertical;min-height:180px}
 .status audio{display:block;width:100%;margin-top:15px}
 .download{display:inline-block;color:var(--gold);border:1px solid var(--border);border-radius:10px;padding:8px 14px;margin-top:14px;text-decoration:none}
 
-/* پیش‌نمایش استوری‌ساز */
 .story-preview-card {
     margin-top: 20px;
     padding: 35px 20px;
@@ -209,11 +206,10 @@ textarea{resize:vertical;min-height:180px}
     <section class="card">
     <h2 class="section-title">۱. ساخت شعر با نوا</h2>
     <div class="field">
-        <!-- منوی کشویی انتخاب زبان -->
         <div class="language-dropdown-container" style="margin-bottom: 15px;">
           <label for="langSelect">زبان ترانه:</label>
           <select id="langSelect">
-            <option value="fa">فارسی (اعراب‌گذاری‌شده)</option>
+            <option value="fa">فارسی (بدون اعراب اضافی)</option>
             <option value="tr">Türkçe (ترکی استانبولی)</option>
             <option value="en">English (انگلیسی)</option>
           </select>
@@ -316,16 +312,16 @@ textarea{resize:vertical;min-height:180px}
 </main>
 
 <script>
-const MUSIC_API = "https://nava-music-api.honrrpower.workers.dev";
-const LYRICS_API = "https://nava-lyrics-api.honrrpower.workers.dev";
+const WORKER_URL = "https://nava-music-api.honrrpower.workers.dev";
 
-// تابع برای خواندن زبان انتخابی
+const MUSIC_API = WORKER_URL;
+const LYRICS_API = WORKER_URL;
+
 function getSelectedLanguage() {
   const selectElement = document.getElementById("langSelect");
   return selectElement ? selectElement.value : "fa";
 }
 
-// مدیریت تب‌ها
 function switchTab(tabId, element) {
     document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
     document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
@@ -334,7 +330,6 @@ function switchTab(tabId, element) {
     element.classList.add('active');
 }
 
-// پیش‌نمایش زنده استوری
 function updatePreview() {
     const input = document.getElementById('storyInput').value;
     const previewText = document.getElementById('previewText');
@@ -345,7 +340,6 @@ function updatePreview() {
     }
 }
 
-// سیستم نایت مود / لایت مود
 const themeToggle = document.getElementById('themeToggle');
 const htmlElement = document.documentElement;
 
@@ -370,7 +364,6 @@ themeToggle.addEventListener('click', () => {
     }
 });
 
-// مدیریت چیپ‌های میانبر سبک
 const styleInput = document.getElementById("styleInput");
 document.querySelectorAll("#styleChips .chip").forEach(chip => {
   chip.addEventListener("click", () => {
