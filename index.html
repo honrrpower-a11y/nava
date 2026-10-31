@@ -188,7 +188,7 @@ textarea{resize:vertical;min-height:180px}
     <h2 class="section-title">۱. ساخت شعر با هوش مصنوعی</h2>
     <div class="field">
     <label for="topic">موضوع یا ایده ترانه (به فارسی، ترکی، انگلیسی و...)</label>
-    <input id="topic" maxlength="500" placeholder="مثلاً: خاطرات بارانی / آنا / My lonely heart">
+    <input id="topic" maxlength="500" placeholder="مثلاً: خاطرات بارانی / Ben yalan soylamam / My lonely heart">
     </div>
     <div class="field">
     <label for="lyricMood">حال‌وهوای ترانه</label>
@@ -221,20 +221,18 @@ textarea{resize:vertical;min-height:180px}
     <div class="field">
         <label>میانبرهای سریع سبک (برای اضافه شدن به کادر پایین):</label>
         <div class="chips" id="styleChips">
-            <button type="button" class="chip" data-val="شاد و پرانرژی">⚡ شاد و پرانرژی</button>
-            <button type="button" class="chip" data-val="پاپ">🎵 پاپ</button>
-            <button type="button" class="chip" data-val="ترکی آذربایجانی">🌟 ترکی آذربایجانی</button>
-            <button type="button" class="chip" data-val="ترکیه‌ای (استانبولی)">🇹🇷 ترکیه‌ای (استانبولی)</button>
-            <button type="button" class="chip" data-val="سنتی و اصیل">🎻 سنتی و اصیل</button>
-            <button type="button" class="chip" data-val="غمگین و احساسی">🌧 غمگین و احساسی</button>
-            <button type="button" class="chip" data-val="بی‌کلام">🎸 بی‌کلام</button>
+            <button type="button" class="chip" data-val="Turkish baglama, traditional Anatolian rhythm, energetic folk beat">🎻 ترکی با ساز باغلاما</button>
+            <button type="button" class="chip" data-val="Upbeat high-energy dance rhythm, vibrant fast tempo, powerful bass beat">⚡ شاد و پرانرژی (بیس‌دار)</button>
+            <button type="button" class="chip" data-val="Modern pop music, acoustic guitars, emotional rhythm">🎵 پاپ مدرن</button>
+            <button type="button" class="chip" data-val="Sad and deep melancholic melody, slow tempo">🌧 غمگین و احساسی</button>
+            <button type="button" class="chip" data-val="Instrumental, cinematic, beautiful background music">🎸 بی‌کلام</button>
         </div>
     </div>
 
     <div class="field">
-        <label for="styleInput">سبک دلخواه (به زبان فارسی یا انگلیسی، هر توصیفی که دوست داری):</label>
-        <input id="styleInput" maxlength="300" placeholder="مثلاً: ترکی آذربایجانی با ریتم شاد و باغلاما">
-        <div class="hint">می‌توانی از میانبرهای بالا استفاده کنی یا خودت هر متن و سبکی که در سر داری بنویسی.</div>
+        <label for="styleInput">سبک دلخواه (پیشنهاد: برای سازهای خاص مثل باغلاما، از کلیدواژه انگلیسی استفاده کنید):</label>
+        <input id="styleInput" maxlength="300" placeholder="مثلاً: Turkish baglama, energetic folk beat">
+        <div class="hint">نکته درباره مشکل ساز: موتور موزیک برای نواختن سازهای محلی (مثل باغلاما) به کلمات کلیدی انگلیسی دقیق نیاز دارد.</div>
     </div>
 
     <div class="grid" style="margin-top:20px">
@@ -342,7 +340,7 @@ document.querySelectorAll("#styleChips .chip").forEach(chip => {
     if (styleInput.value.trim() === "") {
         styleInput.value = val;
     } else {
-        styleInput.value += "، " + val;
+        styleInput.value += ", " + val;
     }
   });
 });
@@ -404,7 +402,6 @@ makeLyricsButton.addEventListener("click", async () => {
   showMessage(lyricStatus, "سایت نوا در حال بررسی موضوع و ساخت ترانه است؛ کمی صبر کن.");
 
   try {
-    // اصلاح مسیر به /lyrics
     const result = await postJSON(LYRICS_API, "/lyrics", {
       topic,
       mood: document.getElementById("lyricMood").value
@@ -443,11 +440,7 @@ generateButton.addEventListener("click", async () => {
     return;
   }
 
-  let rawStyle = styleInput.value.trim() || "پاپ";
-  
-  if (rawStyle.includes("شاد") || rawStyle.includes("پرانرژی")) {
-      rawStyle += ", Upbeat high-energy dance rhythm, vibrant fast tempo, powerful bass beat";
-  }
+  let rawStyle = styleInput.value.trim() || "Pop music";
 
   const voice = document.getElementById("voice").value;
 
@@ -482,7 +475,9 @@ generateButton.addEventListener("click", async () => {
     const download = document.createElement("a");
     download.className = "download";
     download.href = result.audioUrl;
-    download.download = "nava-song.mp3";
+    // حل مشکل دانلود: تولید نام تصادفی یکتا برای جلوگیری از بازنویسی فایل‌های قبلی
+    const randomId = Math.floor(Math.random() * 90000) + 10000;
+    download.download = `nava-song-${randomId}.mp3`;
     download.textContent = "⬇ دانلود آهنگ";
     statusBox.appendChild(download);
 
