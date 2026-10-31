@@ -109,8 +109,30 @@ header{display:flex;align-items:center;justify-content:space-between;gap:12px;ma
 .card{background:var(--panel);border:1px solid var(--border);border-radius:22px;padding:clamp(17px,4vw,28px);margin-bottom:18px;box-shadow:var(--card-shadow)}
 .section-title{font-size:17px;font-weight:bold;margin:0 0 15px}
 label{display:block;margin-bottom:7px;font-size:13px;color:var(--text)}
-input,textarea,select{width:100%;color:var(--text);background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:13px 14px;font:inherit;font-size:14px;outline:none}
-input:focus,textarea:focus,select:focus{border-color:var(--gold)}
+
+/* اصلاح استایل عناصر ورودی و کشوی زبان برای پشتیبانی کامل از تم‌ها */
+input, textarea, select {
+    width: 100%;
+    color: var(--text);
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 13px 14px;
+    font: inherit;
+    font-size: 14px;
+    outline: none;
+}
+input:focus, textarea:focus, select:focus {
+    border-color: var(--gold);
+}
+
+/* حل مشکل رنگ متن و پس‌زمینه گزینه‌های کشوی زبان در حالت نایت مود و لایت مود */
+select option {
+    background-color: var(--panel);
+    color: var(--text);
+    padding: 10px;
+}
+
 textarea{resize:vertical;min-height:180px}
 .hint{color:var(--muted);font-size:12px;margin-top:6px}
 .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
@@ -177,50 +199,28 @@ textarea{resize:vertical;min-height:180px}
     <button class="tab-btn" onclick="switchTab('storyTab', this)">⚡ استوری‌ساز مینیمال</button>
 </div>
 
-
-<script>
-  let selectedLanguage = "fa"; // پیش‌فرض فارسی
-  function setLang(lang) {
-    selectedLanguage = lang;
-    document.querySelectorAll('.lang-btn').forEach(btn => {
-      btn.style.background = btn.getAttribute('data-lang') === lang ? '#007bff' : '#ccc';
-      btn.style.color = btn.getAttribute('data-lang') === lang ? '#fff' : '#000';
-    });
-  }
-  // فعال کردن استایل پیش‌فرض روی دکمه فارسی
-  setTimeout(() => setLang('fa'), 100);
-</script>
-
 <!-- تب اول: استودیوی موسیقی -->
 <div id="musicTab" class="tab-content active">
     <section class="hero">
     <h1>موسیقی خودت را <span>خلق کن</span></h1>
-    <p>موضوعت را به هر زبانی بنویس،  نوا خودش زبان و شعرش را می‌سازد.</p>
+    <p>موضوعت را به هر زبانی بنویس، نوا خودش زبان و شعرش را می‌سازد.</p>
     </section>
 
     <section class="card">
     <h2 class="section-title">۱. ساخت شعر با نوا</h2>
     <div class="field">
         <!-- منوی کشویی انتخاب زبان -->
-<div class="language-dropdown-container" style="margin-bottom: 15px;">
-  <label for="langSelect" style="display: block; margin-bottom: 5px; font-weight: bold; font-size: 14px; color: #333;">زبان ترانه:</label>
-  <select id="langSelect" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ccc; background-color: #fff; font-size: 14px; cursor: pointer;">
-    <option value="fa">فارسی (اعراب‌گذاری‌شده)</option>
-    <option value="tr">Türkçe (ترکی استانبولی)</option>
-    <option value="en">English (انگلیسی)</option>
-  </select>
-</div>
+        <div class="language-dropdown-container" style="margin-bottom: 15px;">
+          <label for="langSelect">زبان ترانه:</label>
+          <select id="langSelect">
+            <option value="fa">فارسی (اعراب‌گذاری‌شده)</option>
+            <option value="tr">Türkçe (ترکی استانبولی)</option>
+            <option value="en">English (انگلیسی)</option>
+          </select>
+        </div>
 
-<script>
-  // تابع برای خواندن مقدار زبان انتخابی از منوی کشویی هنگام ارسال درخواست
-  function getSelectedLanguage() {
-    const selectElement = document.getElementById("langSelect");
-    return selectElement ? selectElement.value : "fa";
-  }
-</script>
-
-    <label for="topic">موضوع یا ایده ترانه (با توجه به زبان انتخابی)</label>
-    <input id="topic" maxlength="500" placeholder="مثلاً: خاطرات بارانی / Ben yalan soylamam / My lonely heart">
+        <label for="topic">موضوع یا ایده ترانه (با توجه به زبان انتخابی)</label>
+        <input id="topic" maxlength="500" placeholder="مثلاً: خاطرات بارانی / Ben yalan soylamam / My lonely heart">
     </div>
     <div class="field">
     <label for="lyricMood">حال‌وهوای ترانه</label>
@@ -318,6 +318,12 @@ textarea{resize:vertical;min-height:180px}
 <script>
 const MUSIC_API = "https://nava-music-api.honrrpower.workers.dev";
 const LYRICS_API = "https://nava-lyrics-api.honrrpower.workers.dev";
+
+// تابع برای خواندن زبان انتخابی
+function getSelectedLanguage() {
+  const selectElement = document.getElementById("langSelect");
+  return selectElement ? selectElement.value : "fa";
+}
 
 // مدیریت تب‌ها
 function switchTab(tabId, element) {
@@ -429,6 +435,8 @@ makeLyricsButton.addEventListener("click", async () => {
     return;
   }
 
+  const selectedLang = getSelectedLanguage();
+
   makeLyricsButton.disabled = true;
   makeLyricsButton.textContent = "⏳ در حال خلق ترانه...";
   showMessage(lyricStatus, "سایت نوا در حال بررسی موضوع و ساخت ترانه است؛ کمی صبر کن.");
@@ -436,7 +444,8 @@ makeLyricsButton.addEventListener("click", async () => {
   try {
     const result = await postJSON(LYRICS_API, "/lyrics", {
       topic,
-      mood: document.getElementById("lyricMood").value
+      mood: document.getElementById("lyricMood").value,
+      language: selectedLang
     });
 
     if (!result.success || !result.lyrics) {
@@ -507,7 +516,6 @@ generateButton.addEventListener("click", async () => {
     download.className = "download";
     download.href = result.audioUrl;
     
-    // حل قطعی مشکل دانلود: تولید شناسه تصادفی برای جلوگیری از بازنویسی فایل‌ها
     const randomId = Math.floor(Math.random() * 90000) + 10000;
     download.download = `nava-song-${randomId}.mp3`;
     
