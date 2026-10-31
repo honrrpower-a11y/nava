@@ -219,7 +219,7 @@ textarea{resize:vertical;min-height:180px}
     <h2 class="section-title">۳. سبک و حال‌وهوای موسیقی</h2>
     
     <div class="field">
-        <label>میانبرهای سریع سبک (برای اضافه شدن به کادر پایین):</label>
+        <label>میانبرهای سریع سبک (برای اعمال سازهای زنده و بیس‌دار):</label>
         <div class="chips" id="styleChips">
             <button type="button" class="chip" data-val="Turkish baglama, traditional Anatolian rhythm, energetic folk beat">🎻 ترکی با ساز باغلاما</button>
             <button type="button" class="chip" data-val="Upbeat high-energy dance rhythm, vibrant fast tempo, powerful bass beat">⚡ شاد و پرانرژی (بیس‌دار)</button>
@@ -230,9 +230,9 @@ textarea{resize:vertical;min-height:180px}
     </div>
 
     <div class="field">
-        <label for="styleInput">سبک دلخواه (پیشنهاد: برای سازهای خاص مثل باغلاما، از کلیدواژه انگلیسی استفاده کنید):</label>
+        <label for="styleInput">سبک دلخواه (برای سازهای خاص از کلیدواژه انگلیسی استفاده کنید):</label>
         <input id="styleInput" maxlength="300" placeholder="مثلاً: Turkish baglama, energetic folk beat">
-        <div class="hint">نکته درباره مشکل ساز: موتور موزیک برای نواختن سازهای محلی (مثل باغلاما) به کلمات کلیدی انگلیسی دقیق نیاز دارد.</div>
+        <div class="hint">با استفاده از کلیدواژه‌های دقیق انگلیسی در بالا، سازهایی مثل باغلاما به خوبی در موزیک نواخته می‌شوند.</div>
     </div>
 
     <div class="grid" style="margin-top:20px">
@@ -441,7 +441,6 @@ generateButton.addEventListener("click", async () => {
   }
 
   let rawStyle = styleInput.value.trim() || "Pop music";
-
   const voice = document.getElementById("voice").value;
 
   generateButton.disabled = true;
@@ -475,9 +474,11 @@ generateButton.addEventListener("click", async () => {
     const download = document.createElement("a");
     download.className = "download";
     download.href = result.audioUrl;
-    // حل مشکل دانلود: تولید نام تصادفی یکتا برای جلوگیری از بازنویسی فایل‌های قبلی
+    
+    // حل قطعی مشکل دانلود: تولید شناسه تصادفی برای جلوگیری از بازنویسی فایل‌ها
     const randomId = Math.floor(Math.random() * 90000) + 10000;
     download.download = `nava-song-${randomId}.mp3`;
+    
     download.textContent = "⬇ دانلود آهنگ";
     statusBox.appendChild(download);
 
