@@ -1,4 +1,3 @@
-
 const ALLOWED_ORIGIN = "https://honrrpower-a11y.github.io";
 const MUSIC_DURATION_SECONDS = 60;
 
@@ -323,6 +322,26 @@ function buildLyricsPrompt(topic, style, language) {
 }
 
 // ==========================================
+// ساخت سبک نهایی موسیقی برای UdioAPI
+// ==========================================
+
+function buildUdioStyle(settings) {
+  const parts = [
+    settings.style,
+    getMoodDescription(settings.musicMood),
+    settings.extraMood,
+    getVoiceDescription(settings.voice),
+    settings.instrumentPrompt,
+    settings.pronunciationNotes
+      ? `Pronunciation instructions: ${settings.pronunciationNotes}`
+      : "",
+    "Professional studio-quality production, clear vocals, balanced mix, memorable melody, natural song structure, tasteful instrumental introduction and proper musical ending."
+  ].filter(Boolean);
+
+  return parts.join(" ").slice(0, 1000);
+}
+
+// ==========================================
 // Worker
 // ==========================================
 
@@ -349,6 +368,7 @@ export default {
 
     // ==========================================
     // ۱. ساخت شعر
+    // این بخش بدون تغییر از نسخه قبلی حفظ شده
     // ==========================================
 
     if (
@@ -561,18 +581,22 @@ export default {
     }
 
     // ==========================================
-    // ۲. ساخت موسیقی با ACE
+    // ۲. ساخت موسیقی با UdioAPI
+    // ACE در این نسخه اجرا نمی‌شود
     // ==========================================
 
     if (
       url.pathname === "/generate-music" &&
       request.method === "POST"
     ) {
-      const apiKey = env.ACEMUSIC_API_KEY;
+      const apiKey = env.UDIO_API_KEY;
 
       if (!apiKey) {
         return json(
-          { error: "کلید ACEMUSIC_API_KEY تنظیم نشده است." },
+          {
+            success: false,
+            error: "کلید UDIO_API_KEY در تنظیمات Worker ثبت نشده است."
+          },
           500,
           corsOrigin
         );
@@ -584,7 +608,10 @@ export default {
         input = await request.json();
       } catch {
         return json(
-          { error: "فرمت اطلاعات ارسالی نامعتبر است." },
+          {
+            success: false,
+            error: "فرمت اطلاعات ارسالی نامعتبر است."
+          },
           400,
           corsOrigin
         );
@@ -638,7 +665,21 @@ export default {
 
       if (!instrumental && !singingLyrics) {
         return json(
-          { error: "متن ترانه خالی است. ابتدا شعر را وارد کن." },
+          {
+            success: false,
+            error: "متن ترانه خالی است. ابتدا شعر را وارد کن."
+          },
+          400,
+          corsOrigin
+        );
+      }
+
+      if (!instrumental && singingLyrics.length > 5000) {
+        return json(
+          {
+            success: false,
+            error: "متن ترانه بیش از محدودیت ۵۰۰۰ کاراکتری UdioAPI است. لطفاً شعر را کوتاه‌تر کن."
+          },
           400,
           corsOrigin
         );
@@ -688,7 +729,7 @@ Keep the arrangement balanced and leave space for the featured instrument.
       }
 
       // ------------------------------------------
-      // پرامپت موسیقی
+      // ساخت توضیحات موسیقی
       // ------------------------------------------
 
       const promptParts = [
@@ -741,135 +782,254 @@ Finish with a proper musical ending.
       const musicPrompt = promptParts.join("\n\n");
 
       // ------------------------------------------
-      // ارسال متن به شکل Tagged Mode
+      // ساخت Style مناسب UdioAPI
       // ------------------------------------------
 
-      const messageContent = instrumental
-        ? `<prompt>\n${musicPrompt}\n</prompt>`
-        : `<prompt>\n${musicPrompt}\n</prompt>\n<lyrics>\n${singingLyrics}\n</lyrics>`;
+      const udioStyle = buildUdioStyle({
+        style,
+        musicMood,
+        extraMood,
+        voice,
+        instrumentPrompt,
+        pronunciationNotes
+      });
 
-      const body = {
-        model: "acemusic/acestep-v1.5-turbo",
+      // در Custom Mode متن شعر مستقیماً در prompt قرار می‌گیرد.
+      // برای موسیقی بی‌کلام، توضیحات موسیقی ارسال می‌شود.
 
-        messages: [
-          {
-            role: "user",
-            content: messageContent
-          }
-        ],
+      const udioPrompt = instrumental
+        ? musicPrompt.slice(0, 5000)
+        : singingLyrics;
 
-        stream: false,
+      // ------------------------------------------
+      // ساخت درخواست UdioAPI
+      // ------------------------------------------
 
-        // تنظیمات قبلی حفظ شده‌اند
-        use_format: false,
-        use_cot_caption: false,
-        use_cot_language: false,
-
-        audio_config: {
-          format: "mp3",
-          duration: MUSIC_DURATION_SECONDS,
-          vocal_language: language,
-          instrumental: instrumental
-        }
+      const udioBody = {
+        model: "chirp-v5-5",
+        prompt: udioPrompt,
+        style: udioStyle,
+        title: "Nava AI Song",
+        duration: MUSIC_DURATION_SECONDS,
+        make_instrumental: instrumental,
+        style_weight: 0.65,
+        weirdness_constraint: 0.55,
+        audio_weight: 0.65
       };
 
+      // تعیین جنسیت خواننده
+      // برای duet جنسیت را محدود نمی‌کنیم.
+
+      if (!instrumental && voice !== "duet") {
+        udioBody.gender =
+          voice === "female_pop" || voice === "female_powerful"
+            ? "female"
+            : "male";
+      }
+
       // ------------------------------------------
-      // درخواست به ACE
+      // مرحله اول: ارسال درخواست ساخت آهنگ
       // ------------------------------------------
 
+      let createData;
+
       try {
-        const res = await fetch(
-          "https://api.acemusic.ai/v1/chat/completions",
+        const createRes = await fetch(
+          "https://udioapi.pro/api/v2/generate",
           {
             method: "POST",
             headers: {
               "Authorization": `Bearer ${apiKey}`,
               "Content-Type": "application/json"
             },
-            body: JSON.stringify(body)
+            body: JSON.stringify(udioBody)
           }
         );
 
-        const rawText = await res.text();
-
-        let data;
+        const rawCreate = await createRes.text();
 
         try {
-          data = JSON.parse(rawText);
+          createData = JSON.parse(rawCreate);
         } catch {
           return json(
             {
-              error: "پاسخ سرور Ace Music غیرقابل پردازش است.",
-              details: rawText.slice(0, 1500),
-              status: res.status
+              success: false,
+              error: "پاسخ UdioAPI قابل پردازش نیست.",
+              details: rawCreate.slice(0, 1000),
+              status: createRes.status
             },
             502,
             corsOrigin
           );
         }
 
-        if (!res.ok) {
-          const errorDetails =
-            data.error?.message ||
-            data.error?.detail ||
-            data.message ||
-            JSON.stringify(data);
-
+        if (!createRes.ok) {
           return json(
             {
-              error: `خطای Ace Music (${res.status})`,
-              details: errorDetails,
-              status: res.status
+              success: false,
+              error:
+                createData.message ||
+                `خطای UdioAPI با کد ${createRes.status}`,
+              details: createData
             },
             502,
             corsOrigin
           );
         }
-
-        // استخراج فایل صوتی
-
-        const message = data.choices?.[0]?.message;
-        const audioItem = message?.audio?.[0];
-
-        const audioUrl =
-          audioItem?.audio_url?.url ||
-          audioItem?.url ||
-          data.audioUrl ||
-          data.audio_url;
-
-        if (typeof audioUrl !== "string" || !audioUrl) {
-          return json(
-            {
-              error: "پاسخ دریافت شد اما لینک فایل صوتی در آن نبود.",
-              details: "ساختار پاسخ صوتی با قالب مورد انتظار مطابقت ندارد.",
-              raw: data
-            },
-            502,
-            corsOrigin
-          );
-        }
-
-        return json(
-          {
-            success: true,
-            audioUrl: audioUrl,
-            requestedDuration: MUSIC_DURATION_SECONDS
-          },
-          200,
-          corsOrigin
-        );
 
       } catch (e) {
         return json(
           {
-            error: "خطای پردازش در ارتباط با سرور موزیک",
+            success: false,
+            error: "ارتباط با UdioAPI برای شروع ساخت آهنگ برقرار نشد.",
             details: e.message
           },
-          500,
+          502,
           corsOrigin
         );
       }
+
+      const workId =
+        createData.workId ||
+        createData.data?.task_id ||
+        createData.data?.workId;
+
+      if (!workId) {
+        return json(
+          {
+            success: false,
+            error: "UdioAPI درخواست را دریافت کرد اما شناسه ساخت آهنگ برنگرداند.",
+            details: createData
+          },
+          502,
+          corsOrigin
+        );
+      }
+
+      // ------------------------------------------
+      // مرحله دوم: بررسی وضعیت ساخت آهنگ
+      // هر ۷ ثانیه Feed بررسی می‌شود.
+      // اولین فایل صوتی آماده‌شده دریافت می‌شود.
+      // ------------------------------------------
+
+      const maxAttempts = 30;
+      let lastFeedError = "";
+
+      for (let attempt = 0; attempt < maxAttempts; attempt++) {
+        await new Promise(resolve => setTimeout(resolve, 7000));
+
+        try {
+          const feedRes = await fetch(
+            `https://udioapi.pro/api/v2/feed?workId=${encodeURIComponent(workId)}`,
+            {
+              method: "GET",
+              headers: {
+                "Authorization": `Bearer ${apiKey}`
+              }
+            }
+          );
+
+          const rawFeed = await feedRes.text();
+
+          let feedData;
+
+          try {
+            feedData = JSON.parse(rawFeed);
+          } catch {
+            lastFeedError = "پاسخ وضعیت UdioAPI قابل پردازش نبود.";
+            continue;
+          }
+
+          if (!feedRes.ok) {
+            lastFeedError =
+              feedData.message ||
+              `خطای بررسی وضعیت با کد ${feedRes.status}`;
+            continue;
+          }
+
+          const task = feedData.data || {};
+
+          const clips = Array.isArray(task.response_data)
+            ? task.response_data
+            : [];
+
+          // --------------------------------------
+          // اگر فایل صوتی آماده شده باشد
+          // --------------------------------------
+
+          const readyClip = clips.find(clip => {
+            return (
+              clip.status === "first" &&
+              typeof clip.audio_url === "string" &&
+              clip.audio_url.startsWith("https://") &&
+              !clip.fail_message
+            );
+          });
+
+          if (readyClip) {
+            return json(
+              {
+                success: true,
+                audioUrl: readyClip.audio_url,
+                title: readyClip.title || "Nava AI Song",
+                duration: readyClip.duration || MUSIC_DURATION_SECONDS,
+                requestedDuration: MUSIC_DURATION_SECONDS,
+                provider: "UdioAPI",
+                workId
+              },
+              200,
+              corsOrigin
+            );
+          }
+
+          // --------------------------------------
+          // تشخیص شکست ساخت آهنگ
+          // --------------------------------------
+
+          const failedClip = clips.find(
+            clip => clip.fail_message || clip.error_message
+          );
+
+          if (task.type === "FAILED" || failedClip) {
+            return json(
+              {
+                success: false,
+                error:
+                  failedClip?.fail_message ||
+                  failedClip?.error_message ||
+                  "ساخت آهنگ توسط UdioAPI ناموفق بود. ممکن است اعتبار درخواست برگشت داده شده باشد.",
+                workId
+              },
+              502,
+              corsOrigin
+            );
+          }
+
+        } catch (e) {
+          lastFeedError = e.message || "خطای موقت در بررسی وضعیت آهنگ";
+        }
+      }
+
+      // ------------------------------------------
+      // پایان زمان انتظار
+      // ------------------------------------------
+
+      return json(
+        {
+          success: false,
+          pending: true,
+          workId,
+          error: "درخواست ساخت ثبت شده است اما آماده‌شدن فایل صوتی بیشتر از زمان انتظار طول کشید. برای جلوگیری از هزینه دوباره، فعلاً درخواست ساخت جدید ارسال نکن.",
+          details: lastFeedError || undefined
+        },
+        202,
+        corsOrigin
+      );
     }
+
+    // ==========================================
+    // مسیر نامعتبر
+    // ==========================================
 
     return json(
       { error: "Not found" },
