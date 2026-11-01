@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
 <head>
@@ -86,6 +87,7 @@ textarea{resize:vertical;min-height:180px}
 
  <section class="card">
   <h2 class="section-title">۱. ساخت شعر با نوا</h2>
+
   <div class="field">
    <label for="langSelect">زبان ترانه:</label>
    <select id="langSelect">
@@ -93,9 +95,11 @@ textarea{resize:vertical;min-height:180px}
     <option value="tr">Türkçe (ترکی استانبولی)</option>
     <option value="en">English (انگلیسی)</option>
    </select>
+
    <label for="topic" style="margin-top:14px">موضوع یا ایده ترانه</label>
    <input id="topic" maxlength="500" placeholder="مثلاً: خاطرات بارانی / Ben yalan soylamam / My lonely heart">
   </div>
+
   <div class="field">
    <label for="lyricMood">حال‌وهوای ترانه</label>
    <select id="lyricMood">
@@ -107,16 +111,24 @@ textarea{resize:vertical;min-height:180px}
     <option>آرام و دلنشین</option>
    </select>
   </div>
+
   <button type="button" id="makeLyrics" class="main-button secondary-button">✍ ساخت هوشمند شعر</button>
   <div id="lyricStatus" class="status" role="status" aria-live="polite"></div>
  </section>
 
  <section class="card">
   <h2 class="section-title">۲. شعر آهنگ</h2>
+
   <div class="field">
-   <label for="lyrics">متن آهنگ</label>
+   <label for="lyrics">متن اصلی آهنگ</label>
    <textarea id="lyrics" maxlength="8000" placeholder="شعر خودت را بنویس یا با بخش ساخت شعر، یک ترانه بساز..."></textarea>
-   <div class="hint">می‌توانی شعر تولیدشده را ویرایش کنی یا متن خودت را وارد کنی.</div>
+   <div class="hint">این متن برای نمایش و ویرایش اصلی است. اگر آن را تغییر بدهی، نسخه مخصوص خوانندگی قبلی پاک می‌شود.</div>
+  </div>
+
+  <div class="field">
+   <label for="singingLyrics">نسخه مخصوص خوانندگی و تلفظ</label>
+   <textarea id="singingLyrics" maxlength="8000" placeholder="بعد از ساخت شعر، نسخه مخصوص خوانندگی اینجا قرار می‌گیرد. برای شعر دستی می‌توانی نسخه تلفظی خودت را اینجا وارد کنی..."></textarea>
+   <div class="hint">نوا کلمات دشوار را در این نسخه اعراب‌گذاری می‌کند و ترکیب‌هایی مثل «کافه ای» را جدا می‌نویسد. می‌توانی این نسخه را هم دستی اصلاح کنی.</div>
   </div>
  </section>
 
@@ -132,6 +144,7 @@ textarea{resize:vertical;min-height:180px}
     <button type="button" class="chip" data-val="Sad emotional ballad, slow tempo, expressive melody, soft piano and strings">🌧 غمگین و احساسی</button>
     <button type="button" class="chip" data-val="Cinematic instrumental soundtrack, expressive orchestral arrangement, no vocals" data-instrumental="true">🎼 بی‌کلام</button>
    </div>
+
    <label for="styleInput">سبک دلخواه موسیقی</label>
    <input id="styleInput" maxlength="300" placeholder="مثلاً: Persian pop, Turkish folk, cinematic...">
    <div class="hint">می‌توانی از میانبرها استفاده کنی یا سبک دلخواهت را بنویسی.</div>
@@ -150,6 +163,7 @@ textarea{resize:vertical;min-height:180px}
      <option value="instrumental">بی‌کلام (بدون خواننده)</option>
     </select>
    </div>
+
    <div class="field">
     <label for="musicMood">حال‌وهوای موسیقی</label>
     <select id="musicMood">
@@ -167,7 +181,7 @@ textarea{resize:vertical;min-height:180px}
   <div class="field">
    <label for="instruments">سازهای موردنظر</label>
    <input id="instruments" maxlength="300" placeholder="مثلاً: باغلاما، پیانو، ویولن، گیتار آکوستیک">
-   <div class="hint">سازهایی را بنویس که می‌خواهی در آهنگ شنیده شوند. چند ساز را با ویرگول جدا کن.</div>
+   <div class="hint">ساز اولی که می‌نویسی ساز اصلی آهنگ خواهد بود؛ سازهای بعدی نقش همراه دارند. سازها را با ویرگول جدا کن.</div>
   </div>
 
   <div class="field">
@@ -178,7 +192,7 @@ textarea{resize:vertical;min-height:180px}
   <div class="field">
    <label for="pronunciationNotes">راهنمای تلفظ و اعراب‌گذاری کلمات</label>
    <textarea id="pronunciationNotes" maxlength="1200" rows="3" style="min-height:90px" placeholder="مثلاً: «مُهر» با ضمه خوانده شود؛ «گذر» به صورت گُذَر تلفظ شود."></textarea>
-   <div class="hint">فقط کلمات دشوار یا تلفظ‌های خاص را بنویس. متن اصلی شعر بدون اجازه تو بازنویسی نمی‌شود.</div>
+   <div class="hint">اگر تلفظ کلمه‌ای خاص است، اینجا بنویس. متن شعر بدون اجازه تو بازنویسی نمی‌شود.</div>
   </div>
 
   <div class="hint">مدت درخواستی آهنگ: یک دقیقه (۶۰ ثانیه)</div>
@@ -192,12 +206,14 @@ textarea{resize:vertical;min-height:180px}
   <h1>استوری‌ساز <span>مینیمال</span></h1>
   <p>متن یا دل‌نوشته‌ات را وارد کن تا برای انتشار در استوری آماده شود.</p>
  </section>
+
  <section class="card">
   <h2 class="section-title">متن استوری</h2>
   <div class="field">
    <label for="storyInput">متن دل‌نوشته یا شعر کوتاه:</label>
    <textarea id="storyInput" rows="3" placeholder="جمله یا حس‌وحال خود را بنویسید..." style="min-height:120px"></textarea>
   </div>
+
   <div class="story-preview-card">
    <div class="story-text" id="previewText">« متن شما اینجا قرار می‌گیرد... »</div>
    <div class="story-subtitle">@Nava_Studio</div>
@@ -255,10 +271,15 @@ themeToggle.addEventListener("click", () => {
 
 // میانبرهای سبک
 const styleInput = document.getElementById("styleInput");
+
 document.querySelectorAll("#styleChips .chip").forEach(chip => {
  chip.addEventListener("click", () => {
   styleInput.value = chip.dataset.val || "";
-  document.querySelectorAll("#styleChips .chip").forEach(item => item.classList.remove("selected"));
+
+  document.querySelectorAll("#styleChips .chip").forEach(item => {
+   item.classList.remove("selected");
+  });
+
   chip.classList.add("selected");
 
   if (chip.dataset.instrumental === "true") {
@@ -272,11 +293,14 @@ document.querySelectorAll("#styleChips .chip").forEach(chip => {
 // پیش‌نمایش استوری
 document.getElementById("storyInput").addEventListener("input", () => {
  const value = document.getElementById("storyInput").value.trim();
+
  document.getElementById("previewText").textContent =
   value ? `« ${value} »` : "« متن شما اینجا قرار می‌گیرد... »";
 });
 
 const lyricsBox = document.getElementById("lyrics");
+const singingLyricsBox = document.getElementById("singingLyrics");
+
 const makeLyricsButton = document.getElementById("makeLyrics");
 const lyricStatus = document.getElementById("lyricStatus");
 const generateButton = document.getElementById("generate");
@@ -287,6 +311,13 @@ function showMessage(box, message) {
  box.textContent = message;
  box.classList.add("show");
 }
+
+// اگر متن اصلی شعر تغییر کند، نسخه خوانندگی قبلی دیگر معتبر نیست.
+lyricsBox.addEventListener("input", () => {
+ if (singingLyricsBox.value.trim()) {
+  singingLyricsBox.value = "";
+ }
+});
 
 // ارسال درخواست و مدیریت خطا
 async function postJSON(baseURL, path, payload, timeoutMs = 130000) {
@@ -312,25 +343,35 @@ async function postJSON(baseURL, path, payload, timeoutMs = 130000) {
 
   if (!response.ok) {
    const details = result.details;
+
    const message = typeof details === "string"
     ? details
     : result.error || "خطای سرویس: " + response.status;
+
    throw new Error(message);
   }
 
   return result;
+
  } catch (error) {
   if (error.name === "AbortError") throw error;
+
   if (error instanceof TypeError) {
    throw new Error("ارتباط با سرور برقرار نشد. اینترنت، آدرس Worker یا تنظیمات CORS را بررسی کن.");
   }
+
   throw error;
+
  } finally {
   clearTimeout(timer);
  }
 }
 
-// ساخت شعر؛ همان مسیر و منطق قبلی حفظ شده
+// ==========================================
+// ساخت شعر
+// یک درخواست به Gemini؛ بدون درخواست جداگانه اعراب‌گذاری
+// ==========================================
+
 makeLyricsButton.addEventListener("click", async () => {
  const topic = document.getElementById("topic").value.trim();
 
@@ -345,7 +386,11 @@ makeLyricsButton.addEventListener("click", async () => {
 
  makeLyricsButton.disabled = true;
  makeLyricsButton.textContent = "⏳ در حال خلق ترانه...";
- showMessage(lyricStatus, "نوا در حال ساخت ترانه است؛ کمی صبر کن.");
+
+ showMessage(
+  lyricStatus,
+  "نوا در حال ساخت شعر و آماده‌سازی نسخه خوانندگی است؛ کمی صبر کن."
+ );
 
  try {
   const result = await postJSON(LYRICS_API, "/generate-lyrics", {
@@ -360,23 +405,46 @@ makeLyricsButton.addEventListener("click", async () => {
   }
 
   lyricsBox.value = result.lyrics;
-  showMessage(lyricStatus, "✅ شعر با موفقیت ساخته شد و در کادر متن آهنگ قرار گرفت.");
-  lyricsBox.scrollIntoView({behavior:"smooth", block:"center"});
+
+  // نسخه مخصوص خوانندگی از همان درخواست دریافت می‌شود.
+  // اگر پاسخ سرویس قدیمی باشد، متن اصلی استفاده می‌شود.
+  singingLyricsBox.value =
+   result.singingLyrics || result.lyrics;
+
+  showMessage(
+   lyricStatus,
+   "✅ شعر و نسخه مخصوص خوانندگی با موفقیت ساخته شدند.\n" +
+   "سرویس تولیدکننده: " + (result.provider || "نامشخص")
+  );
+
+  lyricsBox.scrollIntoView({
+   behavior: "smooth",
+   block: "center"
+  });
 
  } catch (error) {
-  showMessage(lyricStatus,
+  showMessage(
+   lyricStatus,
    "ساخت شعر ناموفق بود.\n" +
-   (error.name === "AbortError" ? "زمان انتظار تمام شد؛ دوباره امتحان کن." : error.message)
+   (error.name === "AbortError"
+    ? "زمان انتظار تمام شد؛ دوباره امتحان کن."
+    : error.message)
   );
+
  } finally {
   makeLyricsButton.disabled = false;
   makeLyricsButton.textContent = "✍ ساخت هوشمند شعر";
  }
 });
 
+// ==========================================
 // ساخت آهنگ با ACE Music
+// ==========================================
+
 generateButton.addEventListener("click", async () => {
  const lyrics = lyricsBox.value.trim();
+ const singingLyrics = singingLyricsBox.value.trim();
+
  const voice = document.getElementById("voice").value;
  const instrumental = voice === "instrumental";
 
@@ -388,6 +456,10 @@ generateButton.addEventListener("click", async () => {
 
  const payload = {
   lyrics: lyrics,
+
+  // نسخه مخصوص خوانندگی در صورت وجود
+  singingLyrics: singingLyrics,
+
   language: getSelectedLanguage(),
   voice: voice,
   style: styleInput.value.trim(),
@@ -400,10 +472,19 @@ generateButton.addEventListener("click", async () => {
 
  generateButton.disabled = true;
  generateButton.textContent = "⏳ در حال ساخت آهنگ یک‌دقیقه‌ای...";
- showMessage(statusBox, "درخواست ساخت آهنگ ۶۰ ثانیه‌ای به ACE Music ارسال شد. ممکن است چند دقیقه طول بکشد؛ صفحه را نبند.");
+
+ showMessage(
+  statusBox,
+  "درخواست ساخت آهنگ ۶۰ ثانیه‌ای به ACE Music ارسال شد. ممکن است چند دقیقه طول بکشد؛ صفحه را نبند."
+ );
 
  try {
-  const result = await postJSON(MUSIC_API, "/generate-music", payload, 300000);
+  const result = await postJSON(
+   MUSIC_API,
+   "/generate-music",
+   payload,
+   300000
+  );
 
   if (!result.success || !result.audioUrl) {
    throw new Error(result.error || "فایل صوتی دریافت نشد.");
@@ -419,6 +500,7 @@ generateButton.addEventListener("click", async () => {
   audio.controls = true;
   audio.preload = "metadata";
   audio.src = result.audioUrl;
+
   statusBox.appendChild(audio);
 
   const download = document.createElement("a");
@@ -426,22 +508,28 @@ generateButton.addEventListener("click", async () => {
   download.href = result.audioUrl;
   download.target = "_blank";
   download.rel = "noopener";
-  download.download = `nava-song-${Math.floor(Math.random() * 90000) + 10000}.mp3`;
+  download.download =
+   `nava-song-${Math.floor(Math.random() * 90000) + 10000}.mp3`;
+
   download.textContent = "⬇ دانلود آهنگ";
   statusBox.appendChild(download);
 
   const info = document.createElement("div");
   info.className = "hint";
   info.textContent = "مدت درخواستی: ۶۰ ثانیه";
-  statusBox.appendChild(info);
 
+  statusBox.appendChild(info);
   statusBox.classList.add("show");
 
  } catch (error) {
-  showMessage(statusBox,
+  showMessage(
+   statusBox,
    "ساخت آهنگ ناموفق بود.\n" +
-   (error.name === "AbortError" ? "زمان انتظار تمام شد؛ وضعیت سرویس را بررسی کن." : error.message)
+   (error.name === "AbortError"
+    ? "زمان انتظار تمام شد؛ وضعیت سرویس را بررسی کن."
+    : error.message)
   );
+
  } finally {
   generateButton.disabled = false;
   generateButton.textContent = "✦ ساخت آهنگ یک‌دقیقه‌ای";
