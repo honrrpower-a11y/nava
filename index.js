@@ -55,7 +55,7 @@ export default {
       const prompt = `یک شعر با موضوع "${topic}" و سبک "${style}" به زبان "${language}" بنویس. ساختار استاندارد ترانه شامل بندهای Verse و Chorus داشته باشد.`;
 
       try {
-        const geminiRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${apiKey}`, {
+        const geminiRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent?key=${apiKey}`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
