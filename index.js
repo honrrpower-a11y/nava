@@ -130,63 +130,98 @@ function normalizeVoice(value) {
 function getVoiceDescription(voice) {
   const voices = {
     male_pop: `
-STRICT VOCAL CAST: ONE MALE SINGER ONLY.
-Use a clearly recognizable adult male pop lead voice.
-No female singer, no female backing vocals, no female duet,
-no gender switching and no alternating female vocal lines.
-Keep the same male vocal identity throughout the entire song.
-Bright, clear, youthful male pop tone.
+VOCAL CAST - ABSOLUTE PRIORITY:
+ONE SINGLE ADULT MALE LEAD SINGER ONLY.
+The same male singer must perform EVERY lyric line from beginning to end.
+All verses, pre-chorus, chorus, bridge and final chorus must be sung by this exact same male voice.
+Use a bright, clear, youthful male pop voice.
+
+STRICTLY FORBIDDEN:
+Female vocals, female singer, duet, alternating singers,
+call-and-response vocals, female chorus, female harmonies,
+additional singers, vocal gender changes or voice switching.
+
+This is a SOLO MALE PERFORMANCE, NOT A DUET.
+Do not assign different singers to different song sections.
 `,
 
     male_deep: `
-STRICT VOCAL CAST: ONE MALE SINGER ONLY.
-Use a clearly recognizable male baritone voice.
-Warm, mature, rich low-mid register.
-No female singer, no female backing vocals, no duet,
-no gender switching and no alternating female vocal lines.
-Keep the same male vocal identity throughout the entire song.
+VOCAL CAST - ABSOLUTE PRIORITY:
+ONE SINGLE ADULT MALE BARITONE SINGER ONLY.
+The same male singer must perform EVERY lyric line from beginning to end.
+All verses, pre-chorus, chorus, bridge and final chorus must use this exact same male voice.
+Use a warm, mature, rich and deep male baritone voice.
+
+STRICTLY FORBIDDEN:
+Female vocals, female singer, duet, alternating singers,
+call-and-response vocals, female chorus, female harmonies,
+additional singers, vocal gender changes or voice switching.
+
+This is a SOLO MALE PERFORMANCE, NOT A DUET.
+Do not assign different singers to different song sections.
 `,
 
     male_raspy: `
-STRICT VOCAL CAST: ONE MALE SINGER ONLY.
-Use a clearly recognizable expressive male voice
-with a natural subtle husky texture.
-No female singer, no female backing vocals, no duet,
-no gender switching and no alternating female vocal lines.
-Keep the same male vocal identity throughout the entire song.
+VOCAL CAST - ABSOLUTE PRIORITY:
+ONE SINGLE ADULT MALE SINGER ONLY.
+The same male singer must perform EVERY lyric line from beginning to end.
+All song sections must use this exact same male voice.
+Use an expressive male voice with a natural, subtle husky texture.
+
+STRICTLY FORBIDDEN:
+Female vocals, female singer, duet, alternating singers,
+call-and-response vocals, female chorus, female harmonies,
+additional singers, vocal gender changes or voice switching.
+
+This is a SOLO MALE PERFORMANCE, NOT A DUET.
+Do not assign different singers to different song sections.
 `,
 
     female_pop: `
-STRICT VOCAL CAST: ONE FEMALE SINGER ONLY.
-Use a clearly recognizable adult female pop lead voice.
-No male singer, no male backing vocals, no male duet,
-no gender switching and no alternating male vocal lines.
-Keep the same female vocal identity throughout the entire song.
-Clear, expressive and natural female pop tone.
+VOCAL CAST - ABSOLUTE PRIORITY:
+ONE SINGLE ADULT FEMALE LEAD SINGER ONLY.
+The same female singer must perform EVERY lyric line from beginning to end.
+All verses, pre-chorus, chorus, bridge and final chorus must use this exact same female voice.
+Use a clear, expressive and natural female pop voice.
+
+STRICTLY FORBIDDEN:
+Male vocals, male singer, duet, alternating singers,
+call-and-response vocals, male chorus, male harmonies,
+additional singers, vocal gender changes or voice switching.
+
+This is a SOLO FEMALE PERFORMANCE, NOT A DUET.
+Do not assign different singers to different song sections.
 `,
 
     female_powerful: `
-STRICT VOCAL CAST: ONE FEMALE SINGER ONLY.
-Use a clearly recognizable powerful female lead voice.
-Strong female projection and expressive sustained notes.
-No male singer, no male backing vocals, no male duet,
-no gender switching and no alternating male vocal lines.
-Keep the same female vocal identity throughout the entire song.
+VOCAL CAST - ABSOLUTE PRIORITY:
+ONE SINGLE ADULT FEMALE LEAD SINGER ONLY.
+The same female singer must perform EVERY lyric line from beginning to end.
+All song sections must use this exact same female voice.
+Use a powerful, expressive female voice with strong projection.
+
+STRICTLY FORBIDDEN:
+Male vocals, male singer, duet, alternating singers,
+call-and-response vocals, male chorus, male harmonies,
+additional singers, vocal gender changes or voice switching.
+
+This is a SOLO FEMALE PERFORMANCE, NOT A DUET.
+Do not assign different singers to different song sections.
 `,
 
     duet: `
-STRICT VOCAL CAST: ONE MALE SINGER AND ONE FEMALE SINGER.
+VOCAL CAST:
+ONE MALE SINGER AND ONE FEMALE SINGER.
 Use two clearly distinguishable vocal identities.
-Male and female singers must alternate in appropriate sections.
+Male and female singers alternate in appropriate sections.
 Both voices may sing together in the chorus.
-Do not change the identity of either singer.
+Keep each singer's identity consistent.
 `,
 
     instrumental: `
-STRICT VOCAL CAST: NO HUMAN VOICE.
+NO HUMAN VOICE.
 Instrumental music only.
-Absolutely no singing, no spoken words, no humming,
-no vocal samples and no choir.
+Absolutely no singing, spoken words, humming or choir.
 `
   };
 
@@ -720,7 +755,16 @@ Do not invent, replace or omit lyric words.
 
         instrumental
           ? "Instrumental only. No vocals of any kind."
-          : "Keep the selected lead singer consistent throughout the complete song. The voice must be clear and intelligible.",
+          : `
+VOCAL IDENTITY CONSISTENCY - CRITICAL:
+Use exactly ONE lead singer matching the selected voice.
+The same singer must sing every single section and every lyric line.
+Never switch singers between verses, chorus or bridge.
+Never introduce a second singer.
+No duet, no alternating male and female voices,
+no call-and-response and no additional vocal performers.
+The selected singer's identity must remain unchanged from the first lyric to the last.
+`,
 
         `
 ARRANGEMENT:
@@ -871,4 +915,4 @@ Develop the arrangement naturally and finish with a musical ending.
       corsOrigin
     );
   }
-}; 
+};
