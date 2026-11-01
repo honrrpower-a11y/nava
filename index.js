@@ -1,3 +1,4 @@
+
 const ALLOWED_ORIGIN = "https://honrrpower-a11y.github.io";
 const MUSIC_DURATION_SECONDS = 60;
 
@@ -129,100 +130,26 @@ function normalizeVoice(value) {
 
 function getVoiceDescription(voice) {
   const voices = {
-    male_pop: `
-VOCAL CAST - ABSOLUTE PRIORITY:
-ONE SINGLE ADULT MALE LEAD SINGER ONLY.
-The same male singer must perform EVERY lyric line from beginning to end.
-All verses, pre-chorus, chorus, bridge and final chorus must be sung by this exact same male voice.
-Use a bright, clear, youthful male pop voice.
+    male_pop:
+      "Solo male pop lead vocal, one consistent male singer throughout the entire song. Bright, clear and youthful male voice. No duet or female lead vocals.",
 
-STRICTLY FORBIDDEN:
-Female vocals, female singer, duet, alternating singers,
-call-and-response vocals, female chorus, female harmonies,
-additional singers, vocal gender changes or voice switching.
+    male_deep:
+      "Solo male baritone lead vocal, one consistent deep, warm and mature male singer throughout the entire song. No duet or female lead vocals.",
 
-This is a SOLO MALE PERFORMANCE, NOT A DUET.
-Do not assign different singers to different song sections.
-`,
+    male_raspy:
+      "Solo male lead vocal, one consistent expressive male singer throughout the entire song, with a natural subtle husky texture. No duet or female lead vocals.",
 
-    male_deep: `
-VOCAL CAST - ABSOLUTE PRIORITY:
-ONE SINGLE ADULT MALE BARITONE SINGER ONLY.
-The same male singer must perform EVERY lyric line from beginning to end.
-All verses, pre-chorus, chorus, bridge and final chorus must use this exact same male voice.
-Use a warm, mature, rich and deep male baritone voice.
+    female_pop:
+      "Solo female pop lead vocal, one consistent clear and expressive female singer throughout the entire song. No duet or male lead vocals.",
 
-STRICTLY FORBIDDEN:
-Female vocals, female singer, duet, alternating singers,
-call-and-response vocals, female chorus, female harmonies,
-additional singers, vocal gender changes or voice switching.
+    female_powerful:
+      "Solo powerful female lead vocal, one consistent expressive female singer throughout the entire song. No duet or male lead vocals.",
 
-This is a SOLO MALE PERFORMANCE, NOT A DUET.
-Do not assign different singers to different song sections.
-`,
+    duet:
+      "Male and female duet with two distinct, consistent singers. Let them alternate naturally and sing together where musically appropriate.",
 
-    male_raspy: `
-VOCAL CAST - ABSOLUTE PRIORITY:
-ONE SINGLE ADULT MALE SINGER ONLY.
-The same male singer must perform EVERY lyric line from beginning to end.
-All song sections must use this exact same male voice.
-Use an expressive male voice with a natural, subtle husky texture.
-
-STRICTLY FORBIDDEN:
-Female vocals, female singer, duet, alternating singers,
-call-and-response vocals, female chorus, female harmonies,
-additional singers, vocal gender changes or voice switching.
-
-This is a SOLO MALE PERFORMANCE, NOT A DUET.
-Do not assign different singers to different song sections.
-`,
-
-    female_pop: `
-VOCAL CAST - ABSOLUTE PRIORITY:
-ONE SINGLE ADULT FEMALE LEAD SINGER ONLY.
-The same female singer must perform EVERY lyric line from beginning to end.
-All verses, pre-chorus, chorus, bridge and final chorus must use this exact same female voice.
-Use a clear, expressive and natural female pop voice.
-
-STRICTLY FORBIDDEN:
-Male vocals, male singer, duet, alternating singers,
-call-and-response vocals, male chorus, male harmonies,
-additional singers, vocal gender changes or voice switching.
-
-This is a SOLO FEMALE PERFORMANCE, NOT A DUET.
-Do not assign different singers to different song sections.
-`,
-
-    female_powerful: `
-VOCAL CAST - ABSOLUTE PRIORITY:
-ONE SINGLE ADULT FEMALE LEAD SINGER ONLY.
-The same female singer must perform EVERY lyric line from beginning to end.
-All song sections must use this exact same female voice.
-Use a powerful, expressive female voice with strong projection.
-
-STRICTLY FORBIDDEN:
-Male vocals, male singer, duet, alternating singers,
-call-and-response vocals, male chorus, male harmonies,
-additional singers, vocal gender changes or voice switching.
-
-This is a SOLO FEMALE PERFORMANCE, NOT A DUET.
-Do not assign different singers to different song sections.
-`,
-
-    duet: `
-VOCAL CAST:
-ONE MALE SINGER AND ONE FEMALE SINGER.
-Use two clearly distinguishable vocal identities.
-Male and female singers alternate in appropriate sections.
-Both voices may sing together in the chorus.
-Keep each singer's identity consistent.
-`,
-
-    instrumental: `
-NO HUMAN VOICE.
-Instrumental music only.
-Absolutely no singing, spoken words, humming or choir.
-`
+    instrumental:
+      "Instrumental music only, without singing or spoken vocals."
   };
 
   return voices[voice] || voices.male_pop;
@@ -283,51 +210,115 @@ function buildLyricsPrompt(topic, style, language) {
 
 برای موضوع زیر یک ترانه کامل، منسجم، احساسی و قابل اجرا بساز.
 
+مشخصات:
 موضوع: ${topic}
-سبک: ${style}
+سبک و حال‌وهوای ترانه: ${style}
 زبان: ${language}
 
-اصول ترانه:
-- موضوع مرکزی مشخص و داستان منسجم داشته باشد.
-- زبان طبیعی، روان و زنده باشد.
-- از عبارت‌های مصنوعی و کلیشه‌ای دوری کن.
-- قافیه طبیعی باشد و به معنا آسیب نزند.
-- طول سطرها برای اجرای موسیقایی مناسب باشد.
-- ترجیع‌بند ماندگار و قابل زمزمه باشد.
+اصول ترانه‌سرایی:
 
-ساختار:
+۱. داستان و مفهوم:
+- ترانه باید یک موضوع مرکزی مشخص داشته باشد.
+- از ابتدا تا انتها مسیر احساسی منسجم داشته باشد.
+- هر بند تصویر یا احساس تازه‌ای اضافه کند.
+- از تکرار بی‌هدف مفهوم خودداری کن.
+
+۲. زبان:
+- از زبان طبیعی، روان و زنده استفاده کن.
+- جمله‌ها هنگام خواندن با صدای بلند طبیعی باشند.
+- از عبارت‌های مصنوعی و ترکیب‌های بی‌معنی دوری کن.
+- هیچ کلمه‌ای را فقط برای تکمیل قافیه وارد نکن.
+
+۳. قافیه و وزن:
+- قافیه‌ها طبیعی و گوش‌نواز باشند.
+- طول سطرها برای اجرای موسیقایی مناسب باشد.
+- روانی و معنای درست از قافیه اجباری مهم‌تر است.
+
+۴. تصویرسازی:
+- از تصاویر ملموس و جزئیات واقعی استفاده کن.
+- از کلیشه‌های تکراری و عبارت‌های مصرف‌شده دوری کن.
+- احساس را با تصویر و موقعیت منتقل کن.
+
+۵. ترجیع‌بند:
+- بخش به‌یادماندنی و احساسی ترانه باشد.
+- جمله محوری مشخص و قابل زمزمه داشته باشد.
+- ساده، قدرتمند و ماندگار باشد.
+
+۶. ساختار:
 
 [Verse 1]
+معرفی موضوع و موقعیت.
+
 [Pre-Chorus]
+افزایش تدریجی احساس.
+
 [Chorus]
+پیام اصلی و بخش ماندگار.
+
 [Verse 2]
+ادامه داستان با تصاویر تازه.
+
 [Bridge]
+تغییر احساسی یا نگاه متفاوت.
+
 [Final Chorus]
+بازگشت به ترجیع‌بند با همان متن اصلی.
 
-قوانین فارسی:
+۷. کنترل کیفیت:
+- تمام جمله‌ها باید معنی روشن داشته باشند.
+- فارسی باید طبیعی و خوش‌آهنگ باشد.
+- قافیه‌ها نباید تصنعی باشند.
+- سطرها باید قابلیت خوانده شدن روی موسیقی داشته باشند.
+- از تکرار بی‌هدف خودداری کن.
 
-دو نسخه هماهنگ بساز:
+قوانین ویژه زبان فارسی:
 
-lyrics:
-متن اصلی و خوانا، بدون اعراب‌گذاری اضافی.
+اگر زبان ترانه فارسی است:
 
-singingLyrics:
-دقیقاً همان کلمات و سطرها، فقط با اعراب‌گذاری محدود
-برای کلمات دشوار یا چندخوانشی.
+الف) دو نسخه کاملاً هماهنگ بساز:
 
-هیچ کلمه یا سطری را تغییر نده، حذف نکن یا اضافه نکن.
+نسخه اول با نام lyrics:
+- متن معمولی و خوانا برای نمایش به کاربر.
+- بدون اعراب‌گذاری اضافی.
+- ساختار و واژه‌های طبیعی فارسی.
 
-جدانویسی ه غیرملفوظ را رعایت کن:
-کافه ای، خانه ام، پنجره ات، خسته ام.
+نسخه دوم با نام singingLyrics:
+- دقیقاً همان شعر و همان کلمات نسخه اول.
+- فقط کلمات دشوار، چندخوانشی یا دارای تلفظ احتمالی اشتباه را با اعراب لازم مشخص کن.
+- تمام شعر را اعراب‌گذاری نکن.
+- اعراب‌گذاری باید با توجه به معنای جمله باشد.
+- کلمات ساده و واضح را بدون اعراب نگه دار.
+- هیچ کلمه‌ای را تغییر نده و هیچ سطری را حذف یا اضافه نکن.
 
-برای ترکی و انگلیسی، دو نسخه از نظر متن یکسان باشند.
+ب) جدانویسی «ه» غیرملفوظ:
+وقتی کلمه‌ای به «ه» غیرملفوظ ختم می‌شود و پسوند یا واژه‌ای مانند «ای»، «ام»، «ات»، «اش»، «ایم»، «اید» یا «اند» به آن می‌پیوندد، آن‌ها را جدا بنویس.
 
-فقط JSON معتبر برگردان:
+نمونه:
+کافهای ← کافه ای
+خانهام ← خانه ام
+پنجرهات ← پنجره ات
+خستهام ← خسته ام
+قصهام ← قصه ام
+
+این قاعده را در هر دو نسخه رعایت کن.
+این جدانویسی نباید باعث تغییر معنای کلمات شود.
+
+اگر زبان ترکی یا انگلیسی است:
+- هر دو نسخه باید از نظر متن یکسان باشند.
+- اعراب فارسی به آن‌ها اضافه نکن.
+
+قوانین خروجی بسیار مهم:
+- فقط یک JSON معتبر برگردان.
+- هیچ مقدمه یا توضیحی بیرون از JSON ننویس.
+- از Markdown و کدبلاک استفاده نکن.
+- ساختار دقیقاً این باشد:
 
 {
   "lyrics": "متن کامل شعر اصلی",
-  "singingLyrics": "نسخه مناسب خوانندگی"
+  "singingLyrics": "همان شعر با اعراب‌گذاری انتخابی برای خوانندگی"
 }
+
+تمام خطوط شعر و برچسب‌های بخش‌ها را در هر دو نسخه حفظ کن.
 `;
 }
 
@@ -668,51 +659,31 @@ export default {
 
       let instrumentPrompt = "";
 
-      if (leadInstrument && !instrumental) {
+      if (leadInstrument) {
         instrumentPrompt = `
-INSTRUMENT ARRANGEMENT - HIGH PRIORITY:
+FEATURED INSTRUMENT:
+${leadInstrument}.
 
-The main featured instrument is: ${leadInstrument}.
-
-This exact instrument must be clearly recognizable by its real timbre.
-It must not be replaced by another instrument.
-
-Give it a prominent melodic role:
-- Play a recognizable melody in the introduction.
-- Bring it forward between vocal phrases.
-- Give it a noticeable instrumental passage.
-- Keep it audible under the vocals without being buried in the mix.
-
+Build a recognizable musical hook around this instrument.
+Let its characteristic sound lead the melody.
+Feature it clearly in the instrumental opening and in short melodic passages between vocal lines.
+Bring it forward in at least one noticeable instrumental section.
+Keep its sound recognizable and present in the overall arrangement.
 `;
-      } else if (leadInstrument && instrumental) {
+      } else {
         instrumentPrompt = `
-INSTRUMENTAL ARRANGEMENT - HIGH PRIORITY:
-
-The main instrument is: ${leadInstrument}.
-
-Make this instrument the dominant musical voice.
-Use its real recognizable timbre.
-Build the main melody around it.
-Feature it prominently in the introduction and throughout the piece.
-
+Choose a coherent professional instrumental arrangement that naturally fits the selected genre and mood.
 `;
       }
 
       if (supportingInstruments.length) {
         instrumentPrompt += `
-Supporting instruments:
+SUPPORTING INSTRUMENTS:
 ${supportingInstruments.join(", ")}.
 
-Use each supporting instrument audibly and distinctly.
-They must complement the main instrument, not replace it.
-Keep the arrangement balanced and avoid burying the featured instrument.
-`;
-      }
-
-      if (!instrumentList.length) {
-        instrumentPrompt = `
-Choose a coherent professional arrangement that fits the selected genre.
-Use instruments naturally suited to the style.
+Arrange these as supporting parts around the featured instrument.
+Use them naturally for rhythm, harmony and musical depth.
+Keep the arrangement balanced and leave space for the featured instrument.
 `;
       }
 
@@ -721,7 +692,7 @@ Use instruments naturally suited to the style.
       // ------------------------------------------
 
       const promptParts = [
-        "Create a professionally arranged, coherent musical recording.",
+        "Create a polished, melodic and professionally arranged song with a natural musical flow.",
 
         `GENRE AND STYLE: ${style}.`,
 
@@ -737,42 +708,33 @@ Use instruments naturally suited to the style.
 
         `VOCAL LANGUAGE: ${getLanguageName(language)}.`,
 
-        suppliedSingingLyrics
-          ? `
-Sing the supplied lyrics exactly as written.
-Preserve the words, line order, spelling, spacing and supplied vowel diacritics.
-Do not rewrite, paraphrase, translate or omit any lyric line.
-`
+        instrumental
+          ? "Create instrumental music only. Do not include any human voice."
           : `
-Sing the supplied lyrics exactly.
-For Persian, pronounce ambiguous words according to their context.
-Do not invent, replace or omit lyric words.
+Sing the supplied lyrics exactly as written.
+Preserve the original words, line order and pronunciation.
+Do not rewrite, paraphrase, translate or omit any lyric line.
 `,
 
         pronunciationNotes
-          ? `PRONUNCIATION NOTES: ${pronunciationNotes}. Follow these carefully.`
+          ? `PRONUNCIATION NOTES: ${pronunciationNotes}.`
           : "",
 
         instrumental
-          ? "Instrumental only. No vocals of any kind."
+          ? ""
           : `
-VOCAL IDENTITY CONSISTENCY - CRITICAL:
-Use exactly ONE lead singer matching the selected voice.
-The same singer must sing every single section and every lyric line.
-Never switch singers between verses, chorus or bridge.
-Never introduce a second singer.
-No duet, no alternating male and female voices,
-no call-and-response and no additional vocal performers.
-The selected singer's identity must remain unchanged from the first lyric to the last.
+Begin with a short instrumental introduction using the selected instruments only.
+No vocals, humming, ad-libs, shouts, vocal samples or spoken sounds before the first lyric line.
+Start the singer exactly with the first supplied lyric line.
 `,
 
         `
 ARRANGEMENT:
-Create a recognizable musical introduction.
-Maintain a clear melodic identity.
-Use short instrumental responses between vocal phrases.
-Give the main instrument audible moments.
-Develop the arrangement naturally and finish with a musical ending.
+Create a memorable melody and a natural song structure.
+Use the featured instrument for recognizable melodic phrases.
+Add tasteful instrumental responses between vocal phrases.
+Let the arrangement develop naturally without overcrowding the mix.
+Finish with a proper musical ending.
 `
       ].filter(Boolean);
 
@@ -798,7 +760,7 @@ Develop the arrangement naturally and finish with a musical ending.
 
         stream: false,
 
-        // جلوگیری از بازنویسی خودکار پرامپت و شعر
+        // تنظیمات قبلی حفظ شده‌اند
         use_format: false,
         use_cot_caption: false,
         use_cot_language: false,
@@ -916,3 +878,4 @@ Develop the arrangement naturally and finish with a musical ending.
     );
   }
 };
+ 
