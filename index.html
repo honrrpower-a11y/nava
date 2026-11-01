@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
 <head>
@@ -309,8 +310,9 @@ textarea{resize:vertical;min-height:180px}
 </main>
 
 <script>
+// هر دو سرویس از یک Worker استفاده می‌کنند
 const MUSIC_API = "https://nava-music-api.honrrpower.workers.dev";
-const LYRICS_API = "https://nava-lyrics-api.honrrpower.workers.dev";
+const LYRICS_API = MUSIC_API;
 
 function getSelectedLanguage() {
   const selectElement = document.getElementById("langSelect");
@@ -335,6 +337,7 @@ function updatePreview() {
     }
 }
 
+// تنظیم حالت تاریک و روشن
 const themeToggle = document.getElementById('themeToggle');
 const htmlElement = document.documentElement;
 
@@ -359,6 +362,7 @@ themeToggle.addEventListener('click', () => {
     }
 });
 
+// میانبرهای سبک
 const styleInput = document.getElementById("styleInput");
 document.querySelectorAll("#styleChips .chip").forEach(chip => {
   chip.addEventListener("click", () => {
@@ -383,6 +387,7 @@ function showMessage(box, message) {
   box.classList.add("show");
 }
 
+// ارسال درخواست و مدیریت خطاها
 async function postJSON(baseURL, path, payload, timeoutMs = 130000) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
@@ -395,24 +400,47 @@ async function postJSON(baseURL, path, payload, timeoutMs = 130000) {
       signal: controller.signal
     });
 
+    const rawText = await response.text();
     let result;
+
     try {
-      result = await response.json();
+      result = JSON.parse(rawText);
     } catch {
-      throw new Error("پاسخ سرویس قابل خواندن نیست.");
+      throw new Error("پاسخ سرور قابل خواندن نیست. کد HTTP: " + response.status);
     }
 
     if (!response.ok) {
-      throw new Error(
-        result.details || result.error || ("خطای سرویس: " + response.status)
-      );
+      const details = result.details;
+      const message = typeof details === "string"
+        ? details
+        : result.error || "خطای سرویس: " + response.status;
+
+      throw new Error(message);
     }
 
     return result;
+
+  } catch (error) {
+    if (error.name === "AbortError") {
+      throw error;
+    }
+
+    if (error instanceof TypeError) {
+      throw new Error(
+        "ارتباط با سرور برقرار نشد. اینترنت، آدرس Worker یا تنظیمات CORS را بررسی کن."
+      );
+    }
+
+    throw error;
+
   } finally {
     clearTimeout(timer);
   }
 }
+
+// ==================================
+// ساخت شعر با Gemini
+// ==================================
 
 makeLyricsButton.addEventListener("click", async () => {
   const topic = document.getElementById("topic").value.trim();
@@ -424,28 +452,44 @@ makeLyricsButton.addEventListener("click", async () => {
   }
 
   const selectedLang = getSelectedLanguage();
+  const selectedMood = document.getElementById("lyricMood").value;
 
   makeLyricsButton.disabled = true;
   makeLyricsButton.textContent = "⏳ در حال خلق ترانه...";
-  showMessage(lyricStatus, "سایت نوا در حال بررسی موضوع و ساخت ترانه است؛ کمی صبر کن.");
+
+  showMessage(
+    lyricStatus,
+    "نوا در حال ساخت ترانه با هوش مصنوعی Gemini است؛ کمی صبر کن."
+  );
 
   try {
-    const result = await postJSON(LYRICS_API, "/lyrics", {
-      topic,
-      mood: document.getElementById("lyricMood").value,
-      language: selectedLang
-    });
+    const result = await postJSON(
+      LYRICS_API,
+      "/generate-lyrics",
+      {
+        topic: topic,
+        style: selectedMood,
+        mood: selectedMood,
+        language: selectedLang
+      }
+    );
 
     if (!result.success || !result.lyrics) {
-      throw new Error("متن شعر دریافت نشد.");
+      throw new Error(result.error || "متن شعر دریافت نشد.");
     }
 
     lyricsBox.value = result.lyrics;
+
     showMessage(
       lyricStatus,
-      "✅ شعر به‌صورت خودکار متناسب با زبان موضوع ساخته شد و در کادر قرار گرفت."
+      "✅ شعر با موفقیت ساخته شد و در کادر متن آهنگ قرار گرفت."
     );
-    lyricsBox.scrollIntoView({ behavior: "smooth", block: "center" });
+
+    lyricsBox.scrollIntoView({
+      behavior: "smooth",
+      block: "center"
+    });
+
   } catch (error) {
     showMessage(
       lyricStatus,
@@ -454,11 +498,16 @@ makeLyricsButton.addEventListener("click", async () => {
         ? "زمان انتظار تمام شد؛ دوباره امتحان کن."
         : error.message)
     );
+
   } finally {
     makeLyricsButton.disabled = false;
     makeLyricsButton.textContent = "✍ ساخت هوشمند شعر";
   }
 });
+
+// ==================================
+// ساخت آهنگ با ACE Music
+// ==================================
 
 generateButton.addEventListener("click", async () => {
   const lyrics = lyricsBox.value.trim();
@@ -469,20 +518,30 @@ generateButton.addEventListener("click", async () => {
     return;
   }
 
-  let rawStyle = styleInput.value.trim() || "Pop music";
+  const rawStyle = styleInput.value.trim() || "Pop music";
   const voice = document.getElementById("voice").value;
+  const mood = document.getElementById("mood").value.trim();
 
   generateButton.disabled = true;
   generateButton.textContent = "⏳ در حال ساخت آهنگ...";
-  showMessage(statusBox, "درخواست به سرویس موسیقی ارسال شد. ممکن است چند دقیقه طول بکشد؛ صفحه را نبند.");
+
+  showMessage(
+    statusBox,
+    "درخواست به سرویس ACE Music ارسال شد. ممکن است چند دقیقه طول بکشد؛ صفحه را نبند."
+  );
 
   try {
-    const result = await postJSON(MUSIC_API, "/generate", {
-      lyrics,
-      voice,
-      style: rawStyle,
-      mood: document.getElementById("mood").value.trim()
-    }, 260000);
+    const result = await postJSON(
+      MUSIC_API,
+      "/generate-music",
+      {
+        lyrics: lyrics,
+        voice: voice,
+        style: rawStyle,
+        mood: mood
+      },
+      260000
+    );
 
     if (!result.success || !result.audioUrl) {
       throw new Error(result.error || "فایل صوتی دریافت نشد.");
@@ -503,14 +562,17 @@ generateButton.addEventListener("click", async () => {
     const download = document.createElement("a");
     download.className = "download";
     download.href = result.audioUrl;
-    
+    download.target = "_blank";
+    download.rel = "noopener";
+
     const randomId = Math.floor(Math.random() * 90000) + 10000;
     download.download = `nava-song-${randomId}.mp3`;
-    
+
     download.textContent = "⬇ دانلود آهنگ";
     statusBox.appendChild(download);
 
     statusBox.classList.add("show");
+
   } catch (error) {
     showMessage(
       statusBox,
@@ -519,6 +581,7 @@ generateButton.addEventListener("click", async () => {
         ? "زمان انتظار تمام شد؛ وضعیت سرویس را بررسی کن."
         : error.message)
     );
+
   } finally {
     generateButton.disabled = false;
     generateButton.textContent = "✦ ساخت آهنگ";
