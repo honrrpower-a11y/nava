@@ -14,10 +14,35 @@ function json(data, status, origin) {
   });
 }
 
+// استخراج متن پاسخ مدل
+function extractText(content) {
+  if (typeof content === "string") {
+    return content.trim();
+  }
+
+  if (Array.isArray(content)) {
+    return content
+      .map(part => typeof part === "string" ? part : part.text || "")
+      .join("")
+      .trim();
+  }
+
+  return "";
+}
+
+// حذف بخش تفکر احتمالی مدل Qwen
+function cleanLyrics(text) {
+  return String(text || "")
+    .replace(/<think>[\s\S]*?<\/think>/gi, "")
+    .replace(/<think>[\s\S]*$/gi, "")
+    .trim();
+}
+
 export default {
   async fetch(request, env) {
     const origin = request.headers.get("Origin") || "";
-    const corsOrigin = origin === ALLOWED_ORIGIN ? ALLOWED_ORIGIN : "*";
+    const corsOrigin =
+      origin === ALLOWED_ORIGIN ? ALLOWED_ORIGIN : "*";
 
     if (request.method === "OPTIONS") {
       return new Response(null, {
@@ -33,18 +58,24 @@ export default {
 
     const url = new URL(request.url);
 
-    // ۱. مسیر ساخت شعر
-    if (url.pathname === "/generate-lyrics" && request.method === "POST") {
-      const apiKey = env.GEMINI_API_KEY;
-      if (!apiKey) {
-        return json({ error: "کلید GEMINI_API_KEY تنظیم نشده است." }, 500, corsOrigin);
-      }
+    // ==========================================
+    // ۱. ساخت شعر با Gemini و پشتیبان OpenRouter
+    // ==========================================
 
+    if (
+      url.pathname === "/generate-lyrics" &&
+      request.method === "POST"
+    ) {
       let input;
+
       try {
         input = await request.json();
       } catch {
-        return json({ error: "اطلاعات ارسالی نامعتبر است." }, 400, corsOrigin);
+        return json(
+          { error: "اطلاعات ارسالی نامعتبر است." },
+          400,
+          corsOrigin
+        );
       }
 
       const topic = String(input.topic || "").trim();
@@ -52,11 +83,14 @@ export default {
       const language = String(input.language || "fa").trim();
 
       if (!topic) {
-        return json({ error: "موضوع شعر نمی‌تواند خالی باشد." }, 400, corsOrigin);
+        return json(
+          { error: "موضوع شعر نمی‌تواند خالی باشد." },
+          400,
+          corsOrigin
+        );
       }
 
-      
-const prompt = `
+      const prompt = `
 تو یک ترانه‌سرای حرفه‌ای، خلاق و باتجربه هستی.
 وظیفه تو نوشتن ترانه‌هایی است که قابلیت تبدیل شدن به آهنگ واقعی و ماندگار را داشته باشند.
 
@@ -130,61 +164,213 @@ const prompt = `
 - هیچ بخشی از این دستورالعمل را در خروجی تکرار نکن.
 `;
 
+      let geminiError = "";
+
+      // ------------------------------------------
+      // مرحله اول: تلاش برای ساخت شعر  
+      // ------------------------------------------
+
+      if (env.GEMINI_API_KEY) {
+        try {
+          const geminiRes = await fetch(
+            `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent?key=${env.GEMINI_API_KEY}`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json"
+              },
+              body: JSON.stringify({
+                contents: [
+                  {
+                    parts: [{ text: prompt }]
+                  }
+                ]
+              })
+            }
+          );
+
+          const data = await geminiRes.json();
+
+          if (geminiRes.ok) {
+            const lyrics = extractText(
+              data.candidates?.[0]?.content?.parts
+                ?.map(part => part.text || "")
+                .join("")
+            );
+
+            if (lyrics) {
+              return json(
+                {
+                  success: true,
+                  lyrics,
+                  provider: "Gemini"
+                },
+                200,
+                corsOrigin
+              );
+            }
+
+            geminiError = "جمنای متن معتبری تولید نکرد.";
+          } else {
+            geminiError =
+              data.error?.message ||
+              `خطای Gemini با کد ${geminiRes.status}`;
+          }
+
+        } catch (e) {
+          geminiError = e.message || "خطای ارتباط با Gemini";
+        }
+      } else {
+        geminiError = "کلید GEMINI_API_KEY تنظیم نشده است.";
+      }
+
+      // ------------------------------------------
+      // مرحله دوم: پشتیبان OpenRouter
+      // ------------------------------------------
+
+      if (!env.OPENROUTER_API_KEY) {
+        return json(
+          {
+            error: "ساخت شعر با Gemini ناموفق بود و کلید OpenRouter نیز تنظیم نشده است.",
+            geminiError
+          },
+          502,
+          corsOrigin
+        );
+      }
+
       try {
-        const geminiRes = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent?key=${apiKey}`,
+        const routerRes = await fetch(
+          "https://openrouter.ai/api/v1/chat/completions",
           {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: {
+              "Authorization": `Bearer ${env.OPENROUTER_API_KEY}`,
+              "Content-Type": "application/json",
+              "HTTP-Referer": "https://honrrpower-a11y.github.io/nava/",
+              "X-OpenRouter-Title": "Nava AI"
+            },
             body: JSON.stringify({
-              contents: [{ parts: [{ text: prompt }] }]
+              model: "qwen/qwen3-8b:free",
+              messages: [
+                {
+                  role: "user",
+                  content: prompt
+                }
+              ],
+              temperature: 0.85,
+              max_tokens: 1800,
+              stream: false
             })
           }
         );
 
-        const data = await geminiRes.json();
+        const rawText = await routerRes.text();
 
-        if (!geminiRes.ok) {
+        let routerData;
+
+        try {
+          routerData = JSON.parse(rawText);
+        } catch {
           return json(
-            { error: data.error?.message || "خطا در ارتباط با جمنای" },
-            500,
+            {
+              error: "پاسخ OpenRouter قابل پردازش نیست.",
+              geminiError,
+              routerStatus: routerRes.status
+            },
+            502,
             corsOrigin
           );
         }
 
-        const lyrics = data.candidates?.[0]?.content?.parts?.[0]?.text;
-
-        if (!lyrics) {
-          return json({ error: "متنی از جمنای دریافت نشد." }, 502, corsOrigin);
+        if (!routerRes.ok || routerData.error) {
+          return json(
+            {
+              error: "ساخت شعر با هر دو سرویس ناموفق بود.",
+              geminiError,
+              openRouterError:
+                routerData.error?.message ||
+                `خطای OpenRouter با کد ${routerRes.status}`
+            },
+            502,
+            corsOrigin
+          );
         }
 
-        return json({ success: true, lyrics }, 200, corsOrigin);
+        let lyrics = extractText(
+          routerData.choices?.[0]?.message?.content
+        );
+
+        lyrics = cleanLyrics(lyrics);
+
+        if (!lyrics) {
+          return json(
+            {
+              error: "OpenRouter هم متن معتبری تولید نکرد.",
+              geminiError
+            },
+            502,
+            corsOrigin
+          );
+        }
+
+        return json(
+          {
+            success: true,
+            lyrics,
+            provider: "OpenRouter - Qwen3 8B"
+          },
+          200,
+          corsOrigin
+        );
 
       } catch (e) {
         return json(
-          { error: "خطای سرور در ساخت شعر", details: e.message },
-          500,
+          {
+            error: "ارتباط با هر دو سرویس ساخت شعر ناموفق بود.",
+            geminiError,
+            openRouterError: e.message
+          },
+          502,
           corsOrigin
         );
       }
     }
 
-    // ۲. مسیر ساخت آهنگ
-    if (url.pathname === "/generate-music" && request.method === "POST") {
+    // ==========================================
+    // ۲. مسیر ساخت آهنگ با Ace Music
+    // این بخش بدون تغییر حفظ شده است.
+    // ==========================================
+
+    if (
+      url.pathname === "/generate-music" &&
+      request.method === "POST"
+    ) {
       const apiKey = env.ACEMUSIC_API_KEY;
 
       if (!apiKey) {
-        return json({ error: "کلید ACEMUSIC_API_KEY تنظیم نشده است." }, 500, corsOrigin);
+        return json(
+          { error: "کلید ACEMUSIC_API_KEY تنظیم نشده است." },
+          500,
+          corsOrigin
+        );
       }
 
       let input;
+
       try {
         input = await request.json();
       } catch {
-        return json({ error: "فرمت اطلاعات ارسالی نامعتبر است." }, 400, corsOrigin);
+        return json(
+          { error: "فرمت اطلاعات ارسالی نامعتبر است." },
+          400,
+          corsOrigin
+        );
       }
 
-      const lyrics = String(input.lyrics || input.topic || "Test song").trim();
+      const lyrics = String(
+        input.lyrics || input.topic || "Test song"
+      ).trim();
 
       const body = {
         model: "acemusic/acestep-v1.5-turbo",
@@ -204,18 +390,22 @@ const prompt = `
       };
 
       try {
-        const res = await fetch("https://api.acemusic.ai/v1/chat/completions", {
-          method: "POST",
-          headers: {
-            "Authorization": `Bearer ${apiKey}`,
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify(body)
-        });
+        const res = await fetch(
+          "https://api.acemusic.ai/v1/chat/completions",
+          {
+            method: "POST",
+            headers: {
+              "Authorization": `Bearer ${apiKey}`,
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify(body)
+          }
+        );
 
         const rawText = await res.text();
 
         let data;
+
         try {
           data = JSON.parse(rawText);
         } catch {
@@ -232,13 +422,18 @@ const prompt = `
 
         if (!res.ok) {
           return json(
-            { error: "خطا از سرور Ace Music", details: data, status: res.status },
+            {
+              error: "خطا از سرور Ace Music",
+              details: data,
+              status: res.status
+            },
             500,
             corsOrigin
           );
         }
 
-        const audioUrl = data.choices?.[0]?.message?.audio?.[0]?.audio_url?.url;
+        const audioUrl =
+          data.choices?.[0]?.message?.audio?.[0]?.audio_url?.url;
 
         if (!audioUrl) {
           return json(
@@ -251,7 +446,14 @@ const prompt = `
           );
         }
 
-        return json({ success: true, audioUrl }, 200, corsOrigin);
+        return json(
+          {
+            success: true,
+            audioUrl
+          },
+          200,
+          corsOrigin
+        );
 
       } catch (e) {
         return json(
@@ -265,6 +467,10 @@ const prompt = `
       }
     }
 
-    return json({ error: "Not found" }, 404, corsOrigin);
+    return json(
+      { error: "Not found" },
+      404,
+      corsOrigin
+    );
   }
 };
