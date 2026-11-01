@@ -1,5 +1,5 @@
-
 const ALLOWED_ORIGIN = "https://honrrpower-a11y.github.io";
+const MUSIC_DURATION_SECONDS = 60;
 
 function json(data, status, origin) {
   return new Response(JSON.stringify(data), {
@@ -38,9 +38,87 @@ function cleanLyrics(text) {
     .trim();
 }
 
+// پاک‌سازی ورودی‌های متنی
+function safeText(value, maxLength = 1000) {
+  return String(value ?? "")
+    .replace(/<\/?(?:prompt|lyrics)\b[^>]*>/gi, "")
+    .replace(/[<>]/g, "")
+    .replace(/\u0000/g, "")
+    .trim()
+    .slice(0, maxLength);
+}
+
+// دستور اختصاصی صدای خواننده
+function getVoiceDescription(voice) {
+  const voices = {
+    male_pop:
+      "A youthful male pop lead vocal with a clear, bright tone, confident melodic delivery and natural pronunciation.",
+
+    male_deep:
+      "A warm mellow male baritone lead vocal, rich low-mid register, smooth intimate delivery, controlled dynamics. Avoid an excessively deep or muddy voice.",
+
+    male_raspy:
+      "An expressive male lead vocal with a naturally textured husky tone and subtle controlled rasp. Emotional but clear and intelligible.",
+
+    female_pop:
+      "A clear, bright and gentle female pop lead vocal, smooth tone, expressive phrasing and natural pronunciation.",
+
+    female_powerful:
+      "A powerful expressive female lead vocal with strong projection, confident sustained notes and controlled emotional intensity.",
+
+    duet:
+      "A male and female vocal duet with clearly distinguishable voices, alternating lead lines and tasteful harmonies in the chorus.",
+
+    instrumental:
+      "Instrumental music only. Absolutely no singing, no spoken voice, no humming and no vocal samples."
+  };
+
+  return voices[voice] || voices.male_pop;
+}
+
+// دستور اختصاصی حال‌وهوای موسیقی
+function getMoodDescription(mood) {
+  const moods = {
+    emotional:
+      "Deeply emotional and expressive atmosphere, memorable melodic phrasing and dynamic development.",
+
+    happy:
+      "Joyful, upbeat and optimistic atmosphere, lively rhythm and bright melodic energy.",
+
+    sad:
+      "Melancholic and wistful atmosphere, tender expressive melody and restrained dynamics.",
+
+    romantic:
+      "Warm intimate romantic atmosphere, lyrical melody and gentle emotional expression.",
+
+    epic:
+      "Grand cinematic and majestic atmosphere, dramatic build-up and powerful musical impact.",
+
+    calm:
+      "Peaceful, soothing and spacious atmosphere, gentle dynamics and relaxed pacing.",
+
+    energetic:
+      "High-energy powerful atmosphere, driving rhythm, strong groove and lively momentum."
+  };
+
+  return moods[mood] || "";
+}
+
+// زبان خوانندگی
+function getLanguageName(language) {
+  const languages = {
+    fa: "Persian (Farsi)",
+    tr: "Turkish (Istanbul Turkish)",
+    en: "English"
+  };
+
+  return languages[language] || "Persian (Farsi)";
+}
+
 export default {
   async fetch(request, env) {
     const origin = request.headers.get("Origin") || "";
+
     const corsOrigin =
       origin === ALLOWED_ORIGIN ? ALLOWED_ORIGIN : "*";
 
@@ -183,10 +261,7 @@ export default {
 
       let geminiError = "";
 
-      // ------------------------------------------
-      // مرحله اول: تلاش برای ساخت شعر
-      // ------------------------------------------
-
+      // مرحله اول: Gemini
       if (env.GEMINI_API_KEY) {
         try {
           const geminiRes = await fetch(
@@ -237,14 +312,12 @@ export default {
         } catch (e) {
           geminiError = e.message || "خطای ارتباط با Gemini";
         }
+
       } else {
         geminiError = "کلید GEMINI_API_KEY تنظیم نشده است.";
       }
 
-      // ------------------------------------------
-      // مرحله دوم: پشتیبان OpenRouter
-      // ------------------------------------------
-
+      // مرحله دوم: OpenRouter
       if (!env.OPENROUTER_API_KEY) {
         return json(
           {
@@ -355,7 +428,7 @@ export default {
     }
 
     // ==========================================
-    // ۲. مسیر ساخت آهنگ با Ace Music
+    // ۲. ساخت آهنگ با ACE Music
     // ==========================================
 
     if (
@@ -384,24 +457,85 @@ export default {
         );
       }
 
-      const lyrics = String(
-        input.lyrics || input.topic || "Test song"
-      ).trim();
+      // دریافت و پاک‌سازی تنظیمات
+      const lyrics = safeText(input.lyrics || "", 8000);
+      const voice = safeText(input.voice || "male_pop", 40);
+      const style = safeText(input.style || "Modern pop", 300);
+      const musicMood = safeText(input.musicMood || "emotional", 30);
+      const extraMood = safeText(input.mood || "", 500);
+      const instruments = safeText(input.instruments || "", 300);
+      const pronunciationNotes = safeText(
+        input.pronunciationNotes || "",
+        1200
+      );
 
+      const language = ["fa", "tr", "en"].includes(input.language)
+        ? input.language
+        : "fa";
+
+      const instrumental = voice === "instrumental";
+
+      if (!instrumental && !lyrics) {
+        return json(
+          { error: "متن ترانه خالی است. ابتدا شعر را وارد کن." },
+          400,
+          corsOrigin
+        );
+      }
+
+      // ساخت توضیحات موسیقی
+      const promptParts = [
+        "Create a complete, coherent, professionally arranged song.",
+        `Music style and genre: ${style}.`,
+        getMoodDescription(musicMood),
+        getVoiceDescription(voice),
+
+        instruments
+          ? `Required featured instruments: ${instruments}. Make these instruments clearly audible and musically prominent. Do not replace them with unrelated lead instruments.`
+          : "Choose instruments and arrangement that naturally fit the selected music genre.",
+
+        extraMood
+          ? `Additional musical direction: ${extraMood}.`
+          : "",
+
+        `The vocal language must be ${getLanguageName(language)}.`,
+
+        pronunciationNotes
+          ? `Pronunciation instructions: ${pronunciationNotes}. Follow the requested pronunciation for the specified words. Preserve the supplied lyrics. Do not translate, rewrite, omit or add lyric lines. Apply diacritics only where explicitly indicated.`
+          : "Sing the supplied lyrics exactly as written, with clear and natural pronunciation. Do not rewrite, translate, omit or add lyric lines.",
+
+        instrumental
+          ? "Instrumental-only music. No singing, no spoken words, no humming and no vocal samples."
+          : "The lead vocal must be clearly audible and balanced with the instruments. Keep the lyrics intelligible.",
+
+        "Create a well-developed musical arrangement with an introduction, main melodic section, dynamic development and a satisfying ending. Avoid an abrupt ending."
+      ].filter(Boolean);
+
+      const musicPrompt = promptParts.join(" ");
+
+      // جدا نگه داشتن توضیحات موسیقی و متن ترانه
+      const messageContent = instrumental
+        ? `<prompt>\n${musicPrompt}\n</prompt>`
+        : `<prompt>\n${musicPrompt}\n</prompt>\n<lyrics>\n${lyrics}\n</lyrics>`;
+
+      // مدت درخواستی: ۶۰ ثانیه
       const body = {
         model: "acemusic/acestep-v1.5-turbo",
+
         messages: [
           {
             role: "user",
-            content: `<lyrics>\n${lyrics}\n</lyrics>`
+            content: messageContent
           }
         ],
+
         stream: false,
+
         audio_config: {
           format: "mp3",
-          duration: 30,
-          vocal_language: "fa",
-          instrumental: false
+          duration: MUSIC_DURATION_SECONDS,
+          vocal_language: language,
+          instrumental: instrumental
         }
       };
 
@@ -428,15 +562,15 @@ export default {
           return json(
             {
               error: "پاسخ سرور Ace Music غیرقابل پردازش است.",
-              rawResponse: rawText,
+              details: rawText.slice(0, 1500),
               status: res.status
             },
-            500,
+            502,
             corsOrigin
           );
         }
 
-        // نمایش جزئیات واقعی خطای Ace Music
+        // نمایش خطای واقعی ACE
         if (!res.ok) {
           const errorDetails =
             data.error?.message ||
@@ -450,18 +584,26 @@ export default {
               details: errorDetails,
               status: res.status
             },
-            500,
+            502,
             corsOrigin
           );
         }
 
-        const audioUrl =
-          data.choices?.[0]?.message?.audio?.[0]?.audio_url?.url;
+        // استخراج لینک فایل صوتی
+        const message = data.choices?.[0]?.message;
+        const audioItem = message?.audio?.[0];
 
-        if (!audioUrl) {
+        const audioUrl =
+          audioItem?.audio_url?.url ||
+          audioItem?.url ||
+          data.audioUrl ||
+          data.audio_url;
+
+        if (typeof audioUrl !== "string" || !audioUrl) {
           return json(
             {
               error: "پاسخ دریافت شد اما لینک فایل صوتی در آن نبود.",
+              details: "ساختار پاسخ صوتی با قالب مورد انتظار مطابقت ندارد.",
               raw: data
             },
             502,
@@ -472,7 +614,8 @@ export default {
         return json(
           {
             success: true,
-            audioUrl
+            audioUrl: audioUrl,
+            requestedDuration: MUSIC_DURATION_SECONDS
           },
           200,
           corsOrigin
