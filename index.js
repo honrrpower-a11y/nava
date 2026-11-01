@@ -1,3 +1,4 @@
+
 const ALLOWED_ORIGIN = "https://honrrpower-a11y.github.io";
 
 function json(data, status, origin) {
@@ -40,7 +41,9 @@ export default {
       }
 
       let input;
-      try { input = await request.json(); } catch {
+      try {
+        input = await request.json();
+      } catch {
         return json({ error: "اطلاعات ارسالی نامعتبر است." }, 400, corsOrigin);
       }
 
@@ -52,40 +55,67 @@ export default {
         return json({ error: "موضوع شعر نمی‌تواند خالی باشد." }, 400, corsOrigin);
       }
 
-      const prompt = `یک شعر با موضوع "${topic}" و سبک "${style}" به زبان "${language}" بنویس. ساختار استاندارد ترانه شامل بندهای Verse و Chorus داشته باشد.`;
+      const prompt = `یک ترانه با موضوع "${topic}" و سبک "${style}" به زبان "${language}" بنویس.
+
+فقط متن ترانه را تولید کن.
+هیچ مقدمه، توضیح، عنوان اضافی یا جمله‌ای قبل از شروع ترانه ننویس.
+ترانه مستقیماً با [Verse 1] شروع شود.
+ساختار استاندارد شامل [Verse 1]، [Chorus]، [Verse 2] و [Bridge] باشد.
+قافیه‌ها طبیعی، وزن سطرها هماهنگ و زبان ترانه روان و احساسی باشد.
+از جملات کلیشه‌ای و تکراری پرهیز کن.
+خروجی فقط شامل متن کامل ترانه باشد.`;
 
       try {
-        const geminiRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent?key=${apiKey}`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
-        });
+        const geminiRes = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent?key=${apiKey}`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              contents: [{ parts: [{ text: prompt }] }]
+            })
+          }
+        );
 
         const data = await geminiRes.json();
+
         if (!geminiRes.ok) {
-          return json({ error: data.error?.message || "خطا در ارتباط با جمنای" }, 500, corsOrigin);
+          return json(
+            { error: data.error?.message || "خطا در ارتباط با جمنای" },
+            500,
+            corsOrigin
+          );
         }
 
         const lyrics = data.candidates?.[0]?.content?.parts?.[0]?.text;
+
         if (!lyrics) {
           return json({ error: "متنی از جمنای دریافت نشد." }, 502, corsOrigin);
         }
 
         return json({ success: true, lyrics }, 200, corsOrigin);
+
       } catch (e) {
-        return json({ error: "خطای سرور در ساخت شعر", details: e.message }, 500, corsOrigin);
+        return json(
+          { error: "خطای سرور در ساخت شعر", details: e.message },
+          500,
+          corsOrigin
+        );
       }
     }
 
     // ۲. مسیر ساخت آهنگ
     if (url.pathname === "/generate-music" && request.method === "POST") {
       const apiKey = env.ACEMUSIC_API_KEY;
+
       if (!apiKey) {
         return json({ error: "کلید ACEMUSIC_API_KEY تنظیم نشده است." }, 500, corsOrigin);
       }
 
       let input;
-      try { input = await request.json(); } catch {
+      try {
+        input = await request.json();
+      } catch {
         return json({ error: "فرمت اطلاعات ارسالی نامعتبر است." }, 400, corsOrigin);
       }
 
@@ -93,41 +123,80 @@ export default {
 
       const body = {
         model: "acemusic/acestep-v1.5-turbo",
-        messages: [{ role: "user", content: `<lyrics>\n${lyrics}\n</lyrics>` }],
+        messages: [
+          {
+            role: "user",
+            content: `<lyrics>\n${lyrics}\n</lyrics>`
+          }
+        ],
         stream: false,
-        audio_config: { format: "mp3", duration: 30, vocal_language: "fa", instrumental: false }
+        audio_config: {
+          format: "mp3",
+          duration: 30,
+          vocal_language: "fa",
+          instrumental: false
+        }
       };
 
       try {
         const res = await fetch("https://api.acemusic.ai/v1/chat/completions", {
           method: "POST",
-          headers: { 
-            "Authorization": `Bearer ${apiKey}`, 
-            "Content-Type": "application/json" 
+          headers: {
+            "Authorization": `Bearer ${apiKey}`,
+            "Content-Type": "application/json"
           },
           body: JSON.stringify(body)
         });
 
         const rawText = await res.text();
+
         let data;
         try {
           data = JSON.parse(rawText);
         } catch {
-          return json({ error: "پاسخ سرور Ace Music غیرقابل پردازش است.", rawResponse: rawText, status: res.status }, 500, corsOrigin);
+          return json(
+            {
+              error: "پاسخ سرور Ace Music غیرقابل پردازش است.",
+              rawResponse: rawText,
+              status: res.status
+            },
+            500,
+            corsOrigin
+          );
         }
 
         if (!res.ok) {
-          return json({ error: "خطا از سرور Ace Music", details: data, status: res.status }, 500, corsOrigin);
+          return json(
+            { error: "خطا از سرور Ace Music", details: data, status: res.status },
+            500,
+            corsOrigin
+          );
         }
 
         const audioUrl = data.choices?.[0]?.message?.audio?.[0]?.audio_url?.url;
+
         if (!audioUrl) {
-          return json({ error: "پاسخ دریافت شد اما لینک فایل صوتی در آن نبود.", raw: data }, 502, corsOrigin);
+          return json(
+            {
+              error: "پاسخ دریافت شد اما لینک فایل صوتی در آن نبود.",
+              raw: data
+            },
+            502,
+            corsOrigin
+          );
         }
 
         return json({ success: true, audioUrl }, 200, corsOrigin);
+
       } catch (e) {
-        return json({ error: "خطای پردازش در ارتباط با سرور موزیک", details: e.message }, 500, corsOrigin);
+        return json(
+          {
+            error: "خطای پردازش در ارتباط با سرور موزیک",
+            details: e.message
+          },
+          500,
+          corsOrigin
+        );
       }
     }
 
