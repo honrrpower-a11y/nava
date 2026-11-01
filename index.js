@@ -1,5 +1,10 @@
+
 const ALLOWED_ORIGIN = "https://honrrpower-a11y.github.io";
 const MUSIC_DURATION_SECONDS = 60;
+
+// ==========================================
+// ابزارهای عمومی
+// ==========================================
 
 function json(data, status, origin) {
   return new Response(JSON.stringify(data), {
@@ -14,7 +19,6 @@ function json(data, status, origin) {
   });
 }
 
-// استخراج متن پاسخ مدل
 function extractText(content) {
   if (typeof content === "string") {
     return content.trim();
@@ -22,7 +26,7 @@ function extractText(content) {
 
   if (Array.isArray(content)) {
     return content
-      .map(part => typeof part === "string" ? part : part.text || "")
+      .map(part => typeof part === "string" ? part : part?.text || "")
       .join("")
       .trim();
   }
@@ -30,15 +34,15 @@ function extractText(content) {
   return "";
 }
 
-// حذف بخش تفکر احتمالی مدل Qwen
 function cleanLyrics(text) {
   return String(text || "")
     .replace(/<think>[\s\S]*?<\/think>/gi, "")
     .replace(/<think>[\s\S]*$/gi, "")
+    .replace(/^```(?:json)?\s*/i, "")
+    .replace(/\s*```$/i, "")
     .trim();
 }
 
-// پاک‌سازی ورودی‌های متنی
 function safeText(value, maxLength = 1000) {
   return String(value ?? "")
     .replace(/<\/?(?:prompt|lyrics)\b[^>]*>/gi, "")
@@ -48,7 +52,80 @@ function safeText(value, maxLength = 1000) {
     .slice(0, maxLength);
 }
 
-// دستور اختصاصی صدای خواننده
+// جدانویسی پسوندهای متصل به ه غیرملفوظ
+// مثال: کافهای ← کافه ای
+// خانهام ← خانه ام
+// پنجرهات ← پنجره ات
+function normalizePersianSpacing(text) {
+  return String(text || "").replace(
+    /([\u0621-\u064A]{2,})ه(ای|ام|ات|اش|ایم|اید|اند)(?=[\s،؛.!؟,:]|$)/g,
+    "$1ه $2"
+  );
+}
+
+// استخراج دو نسخه شعر از خروجی مدل
+function parseLyricsOutput(rawText) {
+  const cleaned = cleanLyrics(rawText);
+
+  let parsed = null;
+
+  try {
+    parsed = JSON.parse(cleaned);
+  } catch {
+    const firstBrace = cleaned.indexOf("{");
+    const lastBrace = cleaned.lastIndexOf("}");
+
+    if (firstBrace !== -1 && lastBrace > firstBrace) {
+      try {
+        parsed = JSON.parse(
+          cleaned.slice(firstBrace, lastBrace + 1)
+        );
+      } catch {
+        parsed = null;
+      }
+    }
+  }
+
+  let lyrics = "";
+  let singingLyrics = "";
+
+  if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+    lyrics = extractText(
+      parsed.lyrics || parsed.originalLyrics || parsed.original
+    );
+
+    singingLyrics = extractText(
+      parsed.singingLyrics ||
+      parsed.singing_lyrics ||
+      parsed.pronunciationLyrics
+    );
+  }
+
+  // اگر مدل به جای JSON متن ساده برگرداند،
+  // شعر از بین نمی‌رود و همان متن استفاده می‌شود.
+  if (!lyrics) {
+    lyrics = cleaned;
+  }
+
+  lyrics = normalizePersianSpacing(lyrics);
+
+  if (!singingLyrics) {
+    singingLyrics = lyrics;
+  } else {
+    singingLyrics = normalizePersianSpacing(singingLyrics);
+  }
+
+  return {
+    lyrics: lyrics.trim(),
+    singingLyrics: singingLyrics.trim()
+  };
+}
+
+// ==========================================
+// صدای خواننده
+// این تنظیمات عمداً حفظ شده‌اند.
+// ==========================================
+
 function getVoiceDescription(voice) {
   const voices = {
     male_pop:
@@ -76,7 +153,10 @@ function getVoiceDescription(voice) {
   return voices[voice] || voices.male_pop;
 }
 
-// دستور اختصاصی حال‌وهوای موسیقی
+// ==========================================
+// حال‌وهوای موسیقی
+// ==========================================
+
 function getMoodDescription(mood) {
   const moods = {
     emotional:
@@ -104,7 +184,10 @@ function getMoodDescription(mood) {
   return moods[mood] || "";
 }
 
+// ==========================================
 // زبان خوانندگی
+// ==========================================
+
 function getLanguageName(language) {
   const languages = {
     fa: "Persian (Farsi)",
@@ -114,6 +197,132 @@ function getLanguageName(language) {
 
   return languages[language] || "Persian (Farsi)";
 }
+
+// ==========================================
+// ساخت پرامپت شعر
+// ==========================================
+
+function buildLyricsPrompt(topic, style, language) {
+  return `
+تو یک ترانه‌سرای حرفه‌ای، خلاق و مسلط به ترانه‌سرایی موسیقایی هستی.
+
+برای موضوع زیر یک ترانه کامل، منسجم، احساسی و قابل اجرا بساز.
+
+مشخصات:
+موضوع: ${topic}
+سبک و حال‌وهوای ترانه: ${style}
+زبان: ${language}
+
+اصول ترانه‌سرایی:
+
+۱. داستان و مفهوم:
+- ترانه باید یک موضوع مرکزی مشخص داشته باشد.
+- از ابتدا تا انتها مسیر احساسی منسجم داشته باشد.
+- هر بند تصویر یا احساس تازه‌ای اضافه کند.
+- از تکرار بی‌هدف مفهوم خودداری کن.
+
+۲. زبان:
+- از زبان طبیعی، روان و زنده استفاده کن.
+- جمله‌ها هنگام خواندن با صدای بلند طبیعی باشند.
+- از عبارت‌های مصنوعی و ترکیب‌های بی‌معنی دوری کن.
+- هیچ کلمه‌ای را فقط برای تکمیل قافیه وارد نکن.
+
+۳. قافیه و وزن:
+- قافیه‌ها طبیعی و گوش‌نواز باشند.
+- طول سطرها برای اجرای موسیقایی مناسب باشد.
+- روانی و معنای درست از قافیه اجباری مهم‌تر است.
+
+۴. تصویرسازی:
+- از تصاویر ملموس و جزئیات واقعی استفاده کن.
+- از کلیشه‌های تکراری و عبارت‌های مصرف‌شده دوری کن.
+- احساس را با تصویر و موقعیت منتقل کن.
+
+۵. ترجیع‌بند:
+- بخش به‌یادماندنی و احساسی ترانه باشد.
+- جمله محوری مشخص و قابل زمزمه داشته باشد.
+- ساده، قدرتمند و ماندگار باشد.
+
+۶. ساختار:
+
+[Verse 1]
+معرفی موضوع و موقعیت.
+
+[Pre-Chorus]
+افزایش تدریجی احساس.
+
+[Chorus]
+پیام اصلی و بخش ماندگار.
+
+[Verse 2]
+ادامه داستان با تصاویر تازه.
+
+[Bridge]
+تغییر احساسی یا نگاه متفاوت.
+
+[Final Chorus]
+بازگشت به ترجیع‌بند با همان متن اصلی.
+
+۷. کنترل کیفیت:
+- تمام جمله‌ها باید معنی روشن داشته باشند.
+- فارسی باید طبیعی و خوش‌آهنگ باشد.
+- قافیه‌ها نباید تصنعی باشند.
+- سطرها باید قابلیت خوانده شدن روی موسیقی داشته باشند.
+- از تکرار بی‌هدف خودداری کن.
+
+قوانین ویژه زبان فارسی:
+
+اگر زبان ترانه فارسی است:
+
+الف) دو نسخه کاملاً هماهنگ بساز:
+
+نسخه اول با نام lyrics:
+- متن معمولی و خوانا برای نمایش به کاربر.
+- بدون اعراب‌گذاری اضافی.
+- ساختار و واژه‌های طبیعی فارسی.
+
+نسخه دوم با نام singingLyrics:
+- دقیقاً همان شعر و همان کلمات نسخه اول.
+- فقط کلمات دشوار، چندخوانشی یا دارای تلفظ احتمالی اشتباه را با اعراب لازم مشخص کن.
+- تمام شعر را اعراب‌گذاری نکن.
+- اعراب‌گذاری باید با توجه به معنای جمله باشد.
+- کلمات ساده و واضح را بدون اعراب نگه دار.
+- هیچ کلمه‌ای را تغییر نده و هیچ سطری را حذف یا اضافه نکن.
+
+ب) جدانویسی «ه» غیرملفوظ:
+وقتی کلمه‌ای به «ه» غیرملفوظ ختم می‌شود و پسوند یا واژه‌ای مانند «ای»، «ام»، «ات»، «اش»، «ایم»، «اید» یا «اند» به آن می‌پیوندد، آن‌ها را جدا بنویس.
+
+نمونه:
+کافهای ← کافه ای
+خانهام ← خانه ام
+پنجرهات ← پنجره ات
+خستهام ← خسته ام
+قصهام ← قصه ام
+
+این قاعده را در هر دو نسخه رعایت کن.
+این جدانویسی نباید باعث تغییر معنای کلمات شود.
+
+اگر زبان ترکی یا انگلیسی است:
+- هر دو نسخه باید از نظر متن یکسان باشند.
+- اعراب فارسی به آن‌ها اضافه نکن.
+
+قوانین خروجی بسیار مهم:
+- فقط یک JSON معتبر برگردان.
+- هیچ مقدمه یا توضیحی بیرون از JSON ننویس.
+- از Markdown و کدبلاک استفاده نکن.
+- ساختار دقیقاً این باشد:
+
+{
+  "lyrics": "متن کامل شعر اصلی",
+  "singingLyrics": "همان شعر با اعراب‌گذاری انتخابی برای خوانندگی"
+}
+
+تمام خطوط شعر و برچسب‌های بخش‌ها را در هر دو نسخه حفظ کن.
+`;
+}
+
+// ==========================================
+// Worker
+// ==========================================
 
 export default {
   async fetch(request, env) {
@@ -156,9 +365,11 @@ export default {
         );
       }
 
-      const topic = String(input.topic || "").trim();
-      const style = String(input.style || "پاپ").trim();
-      const language = String(input.language || "fa").trim();
+      const topic = safeText(input.topic || "", 500);
+      const style = safeText(input.style || "پاپ", 100);
+      const language = ["fa", "tr", "en"].includes(input.language)
+        ? input.language
+        : "fa";
 
       if (!topic) {
         return json(
@@ -168,100 +379,15 @@ export default {
         );
       }
 
-      const prompt = `
-تو یک ترانه‌سرای حرفه‌ای و خلاق هستی که برای خوانندگان و آهنگسازان ترانه می‌نویسی.
-ترانه‌ای خلق کن که از نظر ادبی، احساسی و موسیقایی کیفیت بالایی داشته باشد و قابلیت تبدیل شدن به یک آهنگ واقعی و شنیدنی را داشته باشد.
-
-مشخصات:
-موضوع: ${topic}
-سبک موسیقی: ${style}
-زبان: ${language}
-
-اصول اصلی ترانه‌سرایی:
-
-1. داستان و مفهوم:
-- ترانه باید یک موضوع مرکزی و مشخص داشته باشد.
-- از ابتدا تا انتها یک داستان یا مسیر احساسی منسجم را دنبال کند.
-- هر بند باید اطلاعات، احساس یا تصویر تازه‌ای به داستان اضافه کند.
-- از تکرار یک مفهوم با کلمات متفاوت خودداری کن.
-
-2. زبان و بیان:
-- از زبانی طبیعی، روان، زنده و قابل فهم استفاده کن.
-- در ترانه فارسی، از فارسی امروزی و خوش‌آهنگ استفاده کن.
-- جمله‌ها باید هنگام خواندن با صدای بلند طبیعی به نظر برسند.
-- از ترکیب‌های نامأنوس، جمله‌های ناقص و عبارت‌های بی‌معنی پرهیز کن.
-- هیچ کلمه‌ای را فقط برای تکمیل قافیه وارد شعر نکن.
-- از ترجمه تحت‌اللفظی و ساختارهای مصنوعی دوری کن.
-
-3. قافیه و وزن:
-- قافیه‌ها باید طبیعی و گوش‌نواز باشند.
-- در هر بخش، تا حد امکان الگوی قافیه مشخص و هماهنگ داشته باش.
-- طول سطرهای یک بخش باید برای اجرای موسیقایی مناسب و نسبتاً هماهنگ باشد.
-- از کش دادن بی‌دلیل جمله‌ها برای جور شدن قافیه پرهیز کن.
-- روانی و معنای درست را به قافیه اجباری ترجیح بده.
-
-4. تصویرسازی و خلاقیت:
-- از تصاویر ملموس، جزئیات واقعی و تشبیه‌های تازه استفاده کن.
-- به جای کلیشه‌های تکراری، احساس را با موقعیت و تصویر منتقل کن.
-- از عبارت‌های مصرف‌شده مثل قلب شکسته، شب تاریک، اشک پنهان و آسمان بی‌انتها بی‌دلیل استفاده کن.
-- خلاقیت باید در خدمت مفهوم باشد، نه صرفاً بازی با کلمات.
-
-5. ترجیع‌بند (Chorus):
-- ترجیع‌بند مهم‌ترین و به‌یادماندنی‌ترین بخش ترانه باشد.
-- یک جمله محوری و خاص داشته باشد که به راحتی در ذهن بماند.
-- از نظر احساسی قدرتمند و از نظر کلامی ساده و قابل زمزمه باشد.
-- از جملات طولانی و پیچیده در ترجیع‌بند خودداری کن.
-
-6. هماهنگی با سبک موسیقی:
-- لحن، واژگان، ریتم و فضای احساسی را متناسب با سبک انتخاب‌شده تنظیم کن.
-- ترانه پاپ، سنتی، رپ، راک و سایر سبک‌ها نباید ساختار و لحن یکسان داشته باشند.
-- اگر سبک شاد است، متن نباید ناخواسته غمگین شود.
-- اگر سبک عاشقانه یا غمگین است، احساس باید باورپذیر باشد.
-
-7. ساختار ترانه:
-
-[Verse 1]
-معرفی موضوع، شخصیت یا موقعیت داستان.
-
-[Pre-Chorus]
-افزایش تدریجی احساس و آماده‌سازی برای ترجیع‌بند.
-
-[Chorus]
-پیام اصلی، جمله محوری و بخش به‌یادماندنی.
-
-[Verse 2]
-ادامه داستان با جزئیات و تصاویر جدید، بدون تکرار بند اول.
-
-[Bridge]
-یک تغییر احساسی، کشف تازه یا نگاه متفاوت به موضوع.
-
-[Final Chorus]
-بازگشت به ترجیع‌بند با همان متن اصلی.
-
-8. کنترل کیفیت نهایی:
-قبل از ارائه ترانه، متن را از نظر خودت بررسی و اصلاح کن:
-- آیا تمام جمله‌ها معنی روشن دارند؟
-- آیا کلمات در فارسی طبیعی هستند؟
-- آیا قافیه‌ها تصنعی نشده‌اند؟
-- آیا سطرها قابلیت خوانده شدن روی موسیقی را دارند؟
-- آیا ترجیع‌بند جذاب و ماندگار است؟
-- آیا هیچ سطر تکراری یا بی‌هدف وجود دارد؟
-
-اگر جمله‌ای ضعیف یا نامأنوس است، آن را بازنویسی کن.
-
-قوانین خروجی:
-- مستقیماً با [Verse 1] شروع کن.
-- فقط متن نهایی ترانه را بنویس.
-- هیچ مقدمه، توضیح، تحلیل یا عنوان اضافی ننویس.
-- از ایموجی و شماره‌گذاری استفاده نکن.
-- ساختار بخش‌ها را دقیقاً حفظ کن.
-- ترانه کامل، منسجم و باکیفیت باشد.
-- کیفیت را به طولانی بودن ترجیح بده.
-`;
+      const prompt = buildLyricsPrompt(topic, style, language);
 
       let geminiError = "";
 
+      // ------------------------------------------
       // مرحله اول: Gemini
+      // در حالت موفق فقط یک درخواست ارسال می‌شود.
+      // ------------------------------------------
+
       if (env.GEMINI_API_KEY) {
         try {
           const geminiRes = await fetch(
@@ -276,7 +402,12 @@ export default {
                   {
                     parts: [{ text: prompt }]
                   }
-                ]
+                ],
+                generationConfig: {
+                  temperature: 0.85,
+                  maxOutputTokens: 3000,
+                  responseMimeType: "application/json"
+                }
               })
             }
           );
@@ -284,17 +415,20 @@ export default {
           const data = await geminiRes.json();
 
           if (geminiRes.ok) {
-            const lyrics = extractText(
+            const rawLyrics = extractText(
               data.candidates?.[0]?.content?.parts
                 ?.map(part => part.text || "")
                 .join("")
             );
 
-            if (lyrics) {
+            const result = parseLyricsOutput(rawLyrics);
+
+            if (result.lyrics) {
               return json(
                 {
                   success: true,
-                  lyrics,
+                  lyrics: result.lyrics,
+                  singingLyrics: result.singingLyrics,
                   provider: "Gemini"
                 },
                 200,
@@ -317,7 +451,11 @@ export default {
         geminiError = "کلید GEMINI_API_KEY تنظیم نشده است.";
       }
 
+      // ------------------------------------------
       // مرحله دوم: OpenRouter
+      // فقط در صورت شکست Gemini
+      // ------------------------------------------
+
       if (!env.OPENROUTER_API_KEY) {
         return json(
           {
@@ -349,7 +487,7 @@ export default {
                 }
               ],
               temperature: 0.85,
-              max_tokens: 1800,
+              max_tokens: 3000,
               stream: false
             })
           }
@@ -387,13 +525,13 @@ export default {
           );
         }
 
-        let lyrics = extractText(
+        const rawLyrics = extractText(
           routerData.choices?.[0]?.message?.content
         );
 
-        lyrics = cleanLyrics(lyrics);
+        const result = parseLyricsOutput(rawLyrics);
 
-        if (!lyrics) {
+        if (!result.lyrics) {
           return json(
             {
               error: "OpenRouter هم متن معتبری تولید نکرد.",
@@ -407,7 +545,8 @@ export default {
         return json(
           {
             success: true,
-            lyrics,
+            lyrics: result.lyrics,
+            singingLyrics: result.singingLyrics,
             provider: "OpenRouter - Qwen3 8B"
           },
           200,
@@ -457,13 +596,28 @@ export default {
         );
       }
 
-      // دریافت و پاک‌سازی تنظیمات
-      const lyrics = safeText(input.lyrics || "", 8000);
+      // دریافت متن اصلی و نسخه خوانندگی
+      const originalLyrics = normalizePersianSpacing(
+        safeText(input.lyrics || "", 8000)
+      );
+
+      const suppliedSingingLyrics = normalizePersianSpacing(
+        safeText(input.singingLyrics || "", 8000)
+      );
+
+      const singingLyrics =
+        suppliedSingingLyrics || originalLyrics;
+
       const voice = safeText(input.voice || "male_pop", 40);
       const style = safeText(input.style || "Modern pop", 300);
       const musicMood = safeText(input.musicMood || "emotional", 30);
       const extraMood = safeText(input.mood || "", 500);
-      const instruments = safeText(input.instruments || "", 300);
+
+      const instruments = safeText(
+        input.instruments || "",
+        300
+      );
+
       const pronunciationNotes = safeText(
         input.pronunciationNotes || "",
         1200
@@ -475,7 +629,7 @@ export default {
 
       const instrumental = voice === "instrumental";
 
-      if (!instrumental && !lyrics) {
+      if (!instrumental && !singingLyrics) {
         return json(
           { error: "متن ترانه خالی است. ابتدا شعر را وارد کن." },
           400,
@@ -483,15 +637,43 @@ export default {
         );
       }
 
+      // ------------------------------------------
+      // تفکیک ساز اصلی و سازهای همراه
+      // اولین ساز واردشده = ساز اصلی
+      // ------------------------------------------
+
+      const instrumentList = instruments
+        .split(/[,،;؛\n]+/)
+        .map(item => item.trim())
+        .filter(Boolean);
+
+      const leadInstrument = instrumentList[0] || "";
+      const supportingInstruments = instrumentList.slice(1);
+
+      // ------------------------------------------
       // ساخت توضیحات موسیقی
+      // صدای خواننده و حس قبلی حفظ شده‌اند.
+      // ------------------------------------------
+
       const promptParts = [
         "Create a complete, coherent, professionally arranged song.",
+
         `Music style and genre: ${style}.`,
+
         getMoodDescription(musicMood),
+
         getVoiceDescription(voice),
 
+        leadInstrument
+          ? `PRIMARY FEATURED INSTRUMENT: ${leadInstrument}. This is the main requested instrument. Make its identity unmistakable and clearly audible. It must play a recognizable melodic hook, not merely a faint background layer. Feature it in the introduction and in instrumental passages between vocal sections. Do not replace it with another instrument.`
+          : "",
+
+        supportingInstruments.length
+          ? `SUPPORTING INSTRUMENTS: ${supportingInstruments.join(", ")}. Use these as clearly identifiable supporting instruments in the arrangement. Give each one an audible musical role while keeping ${leadInstrument} as the main featured instrument.`
+          : "",
+
         instruments
-          ? `Required featured instruments: ${instruments}. Make these instruments clearly audible and musically prominent. Do not replace them with unrelated lead instruments.`
+          ? "Instrument arrangement priority: use the exact requested instruments. Do not silently substitute unrelated instruments. Keep the main instrument prominent in the mix and preserve a natural, musical balance."
           : "Choose instruments and arrangement that naturally fit the selected music genre.",
 
         extraMood
@@ -500,15 +682,23 @@ export default {
 
         `The vocal language must be ${getLanguageName(language)}.`,
 
+        suppliedSingingLyrics
+          ? "Sing the supplied pronunciation-ready lyrics exactly as written. Respect all supplied Persian vowel diacritics and word spacing. Do not remove diacritics or merge separated words."
+          : "For Persian lyrics, infer the correct pronunciation of ambiguous words from their sentence context. Pay special attention to Persian words ending in silent he (ه) when followed by suffixes. Read the words naturally and correctly. Do not invent or change lyric words.",
+
         pronunciationNotes
-          ? `Pronunciation instructions: ${pronunciationNotes}. Follow the requested pronunciation for the specified words. Preserve the supplied lyrics. Do not translate, rewrite, omit or add lyric lines. Apply diacritics only where explicitly indicated.`
-          : "Sing the supplied lyrics exactly as written, with clear and natural pronunciation. Do not rewrite, translate, omit or add lyric lines.",
+          ? `Additional pronunciation instructions: ${pronunciationNotes}. Follow these instructions carefully. Preserve the supplied lyrics.`
+          : "",
 
         instrumental
           ? "Instrumental-only music. No singing, no spoken words, no humming and no vocal samples."
-          : "The lead vocal must be clearly audible and balanced with the instruments. Keep the lyrics intelligible.",
+          : "The lead vocal must remain clearly audible, emotionally expressive and balanced with the instruments. Preserve the natural vocal character and make every lyric line intelligible.",
 
-        "Create a well-developed musical arrangement with an introduction, main melodic section, dynamic development and a satisfying ending. Avoid an abrupt ending."
+        "Create a well-developed musical arrangement with a memorable introduction, a clear main melodic section, musical transitions between vocal sections, dynamic development and a satisfying ending.",
+
+        "The featured lead instrument must have audible melodic moments between vocal lines. Do not let the vocal cover the main instrument.",
+
+        "Avoid an abrupt ending."
       ].filter(Boolean);
 
       const musicPrompt = promptParts.join(" ");
@@ -516,7 +706,7 @@ export default {
       // جدا نگه داشتن توضیحات موسیقی و متن ترانه
       const messageContent = instrumental
         ? `<prompt>\n${musicPrompt}\n</prompt>`
-        : `<prompt>\n${musicPrompt}\n</prompt>\n<lyrics>\n${lyrics}\n</lyrics>`;
+        : `<prompt>\n${musicPrompt}\n</prompt>\n<lyrics>\n${singingLyrics}\n</lyrics>`;
 
       // مدت درخواستی: ۶۰ ثانیه
       const body = {
@@ -570,7 +760,6 @@ export default {
           );
         }
 
-        // نمایش خطای واقعی ACE
         if (!res.ok) {
           const errorDetails =
             data.error?.message ||
