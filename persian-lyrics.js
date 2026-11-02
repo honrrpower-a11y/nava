@@ -2,7 +2,7 @@
 /*
  * Nava Persian Lyrics Engine
  * Version: 0.3.1
- * Manual syllable dictionary + review detection
+ * Manual syllable dictionary + review and approval system
  */
 
 const NAVA_PRONUNCIATION = [
@@ -17,12 +17,6 @@ const NAVA_PRONUNCIATION = [
   { word: "می‌خوام", variants: ["می‌خوام", "می خوام"], spoken: "می‌خوام", singing: "می‌خوام", phonetic: "mi-khaam" },
   { word: "خسته", variants: ["خسته"], spoken: "خسته", singing: "خسته", phonetic: "khas-te" }
 ];
-
-/*
- * Manual dictionary.
- * Only manually entered words are accepted as verified.
- * Unknown words are marked for review, never guessed.
- */
 
 const NAVA_SYLLABLES = {
   "تو": ["تو"],
@@ -63,6 +57,14 @@ const NAVA_SYLLABLES = {
   "دل‌شکسته": ["دِل", "شِ", "کَس", "تِ"]
 };
 
+/*
+ * User-approved dictionary.
+ * Approved words are saved in browser storage.
+ */
+
+const NAVA_STORAGE_KEY = "nava_persian_reviewed_words_v1";
+const NAVA_USER_SYLLABLES = {};
+
 function normalizePersian(text) {
   return String(text || "")
     .replace(/ي/g, "ی")
@@ -72,6 +74,12 @@ function normalizePersian(text) {
     .replace(/[\u064B-\u065F\u0670]/g, "")
     .replace(/[ \t]+/g, " ")
     .replace(/ *\n */g, "\n")
+    .trim();
+}
+
+function normalizeWord(word) {
+  return normalizePersian(word)
+    .replace(/[\u200c]/g, "")
     .trim();
 }
 
@@ -102,21 +110,165 @@ function getPronunciationHints(line) {
   return hints;
 }
 
+/*
+ * Load previously approved words.
+ */
+
+function loadReviewedWords() {
+  if (typeof localStorage === "undefined") return;
+
+  try {
+    const saved = localStorage.getItem(NAVA_STORAGE_KEY);
+    if (!saved) return;
+
+    const data = JSON.parse(saved);
+
+    if (!data || typeof data !== "object") return;
+
+    for (const [word, syllables] of Object.entries(data)) {
+      if (
+        typeof word === "string" &&
+        Array.isArray(syllables) &&
+        syllables.length > 0 &&
+        syllables.every(s => typeof s === "string" && s.trim())
+      ) {
+        NAVA_USER_SYLLABLES[word] = syllables;
+      }
+    }
+  } catch (error) {
+    console.warn("Nava dictionary loading failed:", error);
+  }
+}
+
+/*
+ * Save approved words in browser storage.
+ */
+
+function saveReviewedWords() {
+  if (typeof localStorage === "undefined") {
+    return {
+      success: false,
+      message: "ذخیره‌سازی مرورگر در دسترس نیست."
+    };
+  }
+
+  try {
+    localStorage.setItem(
+      NAVA_STORAGE_KEY,
+      JSON.stringify(NAVA_USER_SYLLABLES)
+    );
+
+    return {
+      success: true,
+      message: "فرهنگ لغت ذخیره شد."
+    };
+  } catch (error) {
+    return {
+      success: false,
+      message: "ذخیره‌سازی انجام نشد: " + error.message
+    };
+  }
+}
+
+/*
+ * Approve a word and add its syllables.
+ * Example:
+ * addReviewedWord("پنجره", ["پَن", "جَ", "رِه"])
+ */
+
+function addReviewedWord(word, syllables) {
+  const cleanWord = normalizeWord(word);
+
+  if (!cleanWord) {
+    return { success: false, message: "واژه خالی است." };
+  }
+
+  if (!Array.isArray(syllables) || syllables.length === 0) {
+    return { success: false, message: "هجابندی معتبر وارد نشده است." };
+  }
+
+  const cleanSyllables = syllables
+    .map(item => String(item || "").trim())
+    .filter(Boolean);
+
+  if (cleanSyllables.length !== syllables.length) {
+    return { success: false, message: "یکی از هجاها خالی است." };
+  }
+
+  if (cleanSyllables.join("").replace(/‌/g, "") !== cleanWord) {
+    return {
+      success: false,
+      message: "مجموع هجاها با حروف واژه مطابقت ندارد. هجابندی را بررسی کن."
+    };
+  }
+
+  NAVA_USER_SYLLABLES[cleanWord] = cleanSyllables;
+
+  const saved = saveReviewedWords();
+
+  if (!saved.success) {
+    delete NAVA_USER_SYLLABLES[cleanWord];
+
+    return saved;
+  }
+
+  return {
+    success: true,
+    word: cleanWord,
+    syllables: cleanSyllables,
+    message: "واژه تأیید و ذخیره شد."
+  };
+}
+
+/*
+ * Get all user-approved words.
+ */
+
+function getReviewedWords() {
+  return JSON.parse(JSON.stringify(NAVA_USER_SYLLABLES));
+}
+
+/*
+ * Export dictionary as JSON.
+ * Useful for future transfer to the main Nava engine.
+ */
+
+function exportReviewedDictionary() {
+  return JSON.stringify(NAVA_USER_SYLLABLES, null, 2);
+}
+
+/*
+ * Get syllable information for a line.
+ */
+
 function getSyllables(line) {
   const words = line.match(/[\u0600-\u06FF\u200c]+/g) || [];
 
   return words.map(word => {
-    const syllables = NAVA_SYLLABLES[word] || null;
+    const key = normalizeWord(word);
+
+    const userSyllables = NAVA_USER_SYLLABLES[key];
+    const originalSyllables = NAVA_SYLLABLES[word] || NAVA_SYLLABLES[key];
+
+    const syllables = userSyllables || originalSyllables || null;
 
     return {
       word,
       syllables,
       syllable_count: syllables ? syllables.length : null,
-      syllable_source: syllables ? "manual_dictionary" : null,
+      syllable_source: userSyllables
+        ? "user_reviewed_dictionary"
+        : originalSyllables
+          ? "manual_dictionary"
+          : null,
       review_required: !syllables
     };
   });
 }
+
+/*
+ * Main engine.
+ */
 
 function preparePersianLyrics(input) {
   const originalText = String(input || "");
@@ -187,6 +339,16 @@ function preparePersianLyrics(input) {
   };
 }
 
+/*
+ * Load saved words when the engine starts.
+ */
+
+loadReviewedWords();
+
+/*
+ * Exports
+ */
+
 if (typeof module !== "undefined" && module.exports) {
   module.exports = {
     preparePersianLyrics,
@@ -194,7 +356,11 @@ if (typeof module !== "undefined" && module.exports) {
     prepareSingingText,
     getPronunciationHints,
     getSyllables,
+    addReviewedWord,
+    getReviewedWords,
+    exportReviewedDictionary,
     NAVA_PRONUNCIATION,
-    NAVA_SYLLABLES
+    NAVA_SYLLABLES,
+    NAVA_USER_SYLLABLES
   };
 }
