@@ -1,5 +1,10 @@
+
 const ALLOWED_ORIGIN = "https://honrrpower-a11y.github.io";
 const MUSIC_DURATION_SECONDS = 60;
+
+// ACE-Step
+const ACE_API_URL = "https://api.acemusic.ai/v1/chat/completions";
+const ACE_MODEL = "acemusic/acestep-v1.5-turbo";
 
 // ==========================================
 // ابزارهای عمومی
@@ -23,7 +28,9 @@ function extractText(content) {
 
   if (Array.isArray(content)) {
     return content
-      .map(part => typeof part === "string" ? part : part?.text || "")
+      .map(part =>
+        typeof part === "string" ? part : part?.text || ""
+      )
       .join("")
       .trim();
   }
@@ -73,7 +80,9 @@ function parseLyricsOutput(rawText) {
 
     if (firstBrace !== -1 && lastBrace > firstBrace) {
       try {
-        parsed = JSON.parse(cleaned.slice(firstBrace, lastBrace + 1));
+        parsed = JSON.parse(
+          cleaned.slice(firstBrace, lastBrace + 1)
+        );
       } catch {
         parsed = null;
       }
@@ -83,9 +92,15 @@ function parseLyricsOutput(rawText) {
   let lyrics = "";
   let singingLyrics = "";
 
-  if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+  if (
+    parsed &&
+    typeof parsed === "object" &&
+    !Array.isArray(parsed)
+  ) {
     lyrics = extractText(
-      parsed.lyrics || parsed.originalLyrics || parsed.original
+      parsed.lyrics ||
+      parsed.originalLyrics ||
+      parsed.original
     );
 
     singingLyrics = extractText(
@@ -124,31 +139,33 @@ const VALID_VOICES = [
 ];
 
 function normalizeVoice(value) {
-  return VALID_VOICES.includes(value) ? value : "male_pop";
+  return VALID_VOICES.includes(value)
+    ? value
+    : "male_pop";
 }
 
 function getVoiceDescription(voice) {
   const voices = {
     male_pop:
-      "Solo male pop lead vocal, one consistent male singer throughout the entire song. Bright, clear and youthful male voice. No duet or female lead vocals.",
+      "Solo male pop lead vocal. One consistent male singer throughout the entire song. Bright, clear and youthful male voice. No duet, no female lead vocals and no female backing vocals.",
 
     male_deep:
-      "Solo male baritone lead vocal, one consistent deep, warm and mature male singer throughout the entire song. No duet or female lead vocals.",
+      "Solo male baritone lead vocal. One consistent deep, warm and mature male singer throughout the entire song. No duet and no female vocals.",
 
     male_raspy:
-      "Solo male lead vocal, one consistent expressive male singer throughout the entire song, with a natural subtle husky texture. No duet or female lead vocals.",
+      "Solo male lead vocal. One consistent expressive male singer throughout the entire song, with a natural subtle husky texture. No duet and no female vocals.",
 
     female_pop:
-      "Solo female pop lead vocal, one consistent clear and expressive female singer throughout the entire song. No duet or male lead vocals.",
+      "Solo female pop lead vocal. One consistent clear and expressive female singer throughout the entire song. No duet and no male vocals.",
 
     female_powerful:
-      "Solo powerful female lead vocal, one consistent expressive female singer throughout the entire song. No duet or male lead vocals.",
+      "Solo powerful female lead vocal. One consistent expressive female singer throughout the entire song. No duet and no male vocals.",
 
     duet:
-      "Male and female duet with two distinct, consistent singers. Let them alternate naturally and sing together where musically appropriate.",
+      "Male and female duet with two distinct and consistent singers. Let them alternate naturally and sing together where musically appropriate.",
 
     instrumental:
-      "Instrumental music only, without singing or spoken vocals."
+      "Instrumental music only, without singing, speech, humming or human vocal sounds."
   };
 
   return voices[voice] || voices.male_pop;
@@ -182,7 +199,7 @@ function getMoodDescription(mood) {
       "High-energy atmosphere, driving rhythm, strong groove and lively momentum."
   };
 
-  return moods[mood] || "";
+  return moods[mood] || moods.emotional;
 }
 
 // ==========================================
@@ -197,6 +214,16 @@ function getLanguageName(language) {
   };
 
   return languages[language] || "Persian (Farsi)";
+}
+
+function getAceLanguage(language) {
+  const languages = {
+    fa: "fa",
+    tr: "tr",
+    en: "en"
+  };
+
+  return languages[language] || "fa";
 }
 
 // ==========================================
@@ -322,23 +349,185 @@ function buildLyricsPrompt(topic, style, language) {
 }
 
 // ==========================================
-// ساخت سبک نهایی موسیقی برای UdioAPI
+// ساخت پرامپت اختصاصی موسیقی برای ACE
 // ==========================================
 
-function buildUdioStyle(settings) {
-  const parts = [
-    settings.style,
-    getMoodDescription(settings.musicMood),
-    settings.extraMood,
-    getVoiceDescription(settings.voice),
-    settings.instrumentPrompt,
-    settings.pronunciationNotes
-      ? `Pronunciation instructions: ${settings.pronunciationNotes}`
-      : "",
-    "Professional studio-quality production, clear vocals, balanced mix, memorable melody, natural song structure, tasteful instrumental introduction and proper musical ending."
-  ].filter(Boolean);
+function buildAceMusicPrompt(settings) {
+  const {
+    style,
+    musicMood,
+    voice,
+    instruments,
+    extraMood,
+    pronunciationNotes,
+    language,
+    instrumental
+  } = settings;
 
-  return parts.join(" ").slice(0, 1000);
+  const instrumentList = instruments
+    .split(/[,،;؛\n]+/)
+    .map(item => item.trim())
+    .filter(Boolean)
+    .slice(0, 8);
+
+  const leadInstrument = instrumentList[0] || "";
+  const supportingInstruments = instrumentList.slice(1);
+
+  const parts = [
+    "Create an original, professionally produced song with a distinctive musical identity.",
+    `GENRE AND STYLE: ${style}.`,
+    `MOOD: ${getMoodDescription(musicMood)}.`,
+    `VOCAL STYLE: ${getVoiceDescription(voice)}.`,
+    `VOCAL LANGUAGE: ${getLanguageName(language)}.`
+  ];
+
+  if (extraMood) {
+    parts.push(
+      `ADDITIONAL ARTISTIC DIRECTION: ${extraMood}.`
+    );
+  }
+
+  if (leadInstrument) {
+    parts.push(`
+FEATURED LEAD INSTRUMENT:
+${leadInstrument}.
+
+This is the most important featured instrument in the arrangement.
+Make its sound prominent, recognizable and musically important.
+Create a memorable melodic hook using this instrument.
+Feature it clearly in the instrumental introduction.
+Bring it forward in instrumental passages between vocal lines.
+Do not bury it beneath keyboards, strings or background layers.
+`);
+  } else {
+    parts.push(`
+Choose a coherent professional instrumental arrangement
+that naturally fits the selected genre and mood.
+Avoid a generic arrangement.
+`);
+  }
+
+  if (supportingInstruments.length > 0) {
+    parts.push(`
+SUPPORTING INSTRUMENTS:
+${supportingInstruments.join(", ")}.
+
+Use these instruments as supporting layers.
+Give each instrument an appropriate musical role.
+Keep the featured lead instrument clearly audible.
+`);
+  }
+
+  if (instrumental) {
+    parts.push(`
+INSTRUMENTAL ONLY:
+Create instrumental music without any human voice.
+No singing, no speech, no humming, no vocal samples,
+no choir and no vocal-like sounds.
+`);
+  } else {
+    parts.push(`
+VOCAL PERFORMANCE:
+Use the selected singer type consistently.
+Keep the same lead singer throughout the song.
+Do not add an unrequested second singer.
+Do not add female backing vocals to a male solo song.
+Do not add male backing vocals to a female solo song.
+Do not add a choir unless duet is selected.
+`);
+  }
+
+  if (language === "fa" && !instrumental) {
+    parts.push(`
+PERSIAN VOCAL REQUIREMENTS:
+Sing in natural native Iranian Persian (Farsi).
+Use clear Iranian Persian pronunciation and natural Persian vowels.
+Avoid foreign, Indian-sounding or unnatural pronunciation.
+Preserve the supplied Persian words.
+Do not translate, rewrite or replace the lyrics.
+Avoid unnecessary vocal ornaments.
+`);
+  }
+
+  if (pronunciationNotes && !instrumental) {
+    parts.push(`
+PRONUNCIATION INSTRUCTIONS:
+${pronunciationNotes}
+`);
+  }
+
+  if (!instrumental) {
+    parts.push(`
+INTRODUCTION:
+Begin with a short instrumental introduction.
+Do not sing, hum, shout, speak or use vocal ad-libs before
+the first supplied lyric line.
+Start the singer with the first supplied lyric line.
+Do not add "woo", "yeah", "hoo" or similar sounds
+unless they are explicitly part of the lyrics.
+`);
+  }
+
+  parts.push(`
+ARRANGEMENT AND PRODUCTION:
+Create a memorable and distinctive melody.
+Use a natural musical structure with clear transitions.
+Allow the arrangement to develop dynamically.
+Give the selected instruments meaningful musical roles.
+Keep the lead vocal clear and understandable.
+Avoid repetitive generic arrangements.
+Use a proper musical ending.
+Produce a balanced, clean studio-quality mix.
+`);
+
+  return parts.join("\n\n").slice(0, 7000);
+}
+
+// ==========================================
+// استخراج خروجی صوتی ACE
+// ==========================================
+
+function extractAceAudio(data) {
+  const message = data?.choices?.[0]?.message;
+
+  const audioItems = Array.isArray(message?.audio)
+    ? message.audio
+    : [];
+
+  for (const item of audioItems) {
+    const audioUrl = item?.audio_url?.url;
+
+    if (
+      typeof audioUrl === "string" &&
+      (
+        audioUrl.startsWith("data:audio/") ||
+        audioUrl.startsWith("https://")
+      )
+    ) {
+      return audioUrl;
+    }
+  }
+
+  const alternatives = [
+    message?.audio_url?.url,
+    message?.audio_url,
+    data?.audio_url?.url,
+    data?.audio_url
+  ];
+
+  for (const item of alternatives) {
+    if (
+      typeof item === "string" &&
+      (
+        item.startsWith("data:audio/") ||
+        item.startsWith("https://")
+      )
+    ) {
+      return item;
+    }
+  }
+
+  return "";
 }
 
 // ==========================================
@@ -350,7 +539,13 @@ export default {
     const origin = request.headers.get("Origin") || "";
 
     const corsOrigin =
-      origin === ALLOWED_ORIGIN ? ALLOWED_ORIGIN : "*";
+      origin === ALLOWED_ORIGIN
+        ? ALLOWED_ORIGIN
+        : "*";
+
+    // ------------------------------------------
+    // CORS
+    // ------------------------------------------
 
     if (request.method === "OPTIONS") {
       return new Response(null, {
@@ -367,8 +562,7 @@ export default {
     const url = new URL(request.url);
 
     // ==========================================
-    // ۱. ساخت شعر
-    // این بخش بدون تغییر از نسخه قبلی حفظ شده
+    // ۱. ساخت شعر با Gemini و OpenRouter
     // ==========================================
 
     if (
@@ -402,10 +596,17 @@ export default {
         );
       }
 
-      const prompt = buildLyricsPrompt(topic, style, language);
+      const prompt = buildLyricsPrompt(
+        topic,
+        style,
+        language
+      );
+
       let geminiError = "";
 
+      // ------------------------------------------
       // Gemini
+      // ------------------------------------------
 
       if (env.GEMINI_API_KEY) {
         try {
@@ -455,25 +656,31 @@ export default {
               );
             }
 
-            geminiError = "جمنای متن معتبری تولید نکرد.";
+            geminiError =
+              "جمنای متن معتبری تولید نکرد.";
           } else {
             geminiError =
               data.error?.message ||
               `خطای Gemini با کد ${geminiRes.status}`;
           }
         } catch (e) {
-          geminiError = e.message || "خطای ارتباط با Gemini";
+          geminiError =
+            e.message || "خطای ارتباط با Gemini";
         }
       } else {
-        geminiError = "کلید GEMINI_API_KEY تنظیم نشده است.";
+        geminiError =
+          "کلید GEMINI_API_KEY تنظیم نشده است.";
       }
 
+      // ------------------------------------------
       // OpenRouter فقط در صورت شکست Gemini
+      // ------------------------------------------
 
       if (!env.OPENROUTER_API_KEY) {
         return json(
           {
-            error: "ساخت شعر با Gemini ناموفق بود و کلید OpenRouter نیز تنظیم نشده است.",
+            error:
+              "ساخت شعر با Gemini ناموفق بود و کلید OpenRouter نیز تنظیم نشده است.",
             geminiError
           },
           502,
@@ -487,9 +694,11 @@ export default {
           {
             method: "POST",
             headers: {
-              "Authorization": `Bearer ${env.OPENROUTER_API_KEY}`,
+              "Authorization":
+                `Bearer ${env.OPENROUTER_API_KEY}`,
               "Content-Type": "application/json",
-              "HTTP-Referer": "https://honrrpower-a11y.github.io/nava/",
+              "HTTP-Referer":
+                "https://honrrpower-a11y.github.io/nava/",
               "X-OpenRouter-Title": "Nava AI"
             },
             body: JSON.stringify({
@@ -548,7 +757,8 @@ export default {
         if (!result.lyrics) {
           return json(
             {
-              error: "OpenRouter هم متن معتبری تولید نکرد.",
+              error:
+                "OpenRouter هم متن معتبری تولید نکرد.",
               geminiError
             },
             502,
@@ -570,7 +780,8 @@ export default {
       } catch (e) {
         return json(
           {
-            error: "ارتباط با سرویس ساخت شعر ناموفق بود.",
+            error:
+              "ارتباط با سرویس ساخت شعر ناموفق بود.",
             geminiError,
             openRouterError: e.message
           },
@@ -581,21 +792,21 @@ export default {
     }
 
     // ==========================================
-    // ۲. ساخت موسیقی با UdioAPI
-    // ACE در این نسخه اجرا نمی‌شود
+    // ۲. ساخت موسیقی با ACE-Step
     // ==========================================
 
     if (
       url.pathname === "/generate-music" &&
       request.method === "POST"
     ) {
-      const apiKey = env.UDIO_API_KEY;
+      const apiKey = env.ACEMUSIC_API_KEY;
 
       if (!apiKey) {
         return json(
           {
             success: false,
-            error: "کلید UDIO_API_KEY در تنظیمات Worker ثبت نشده است."
+            error:
+              "کلید ACEMUSIC_API_KEY در Secrets کلودفلر ثبت نشده است."
           },
           500,
           corsOrigin
@@ -616,6 +827,10 @@ export default {
           corsOrigin
         );
       }
+
+      // ------------------------------------------
+      // دریافت و پاک‌سازی اطلاعات
+      // ------------------------------------------
 
       const originalLyrics = normalizePersianSpacing(
         safeText(input.lyrics || "", 8000)
@@ -663,11 +878,16 @@ export default {
 
       const instrumental = voice === "instrumental";
 
+      // ------------------------------------------
+      // اعتبارسنجی
+      // ------------------------------------------
+
       if (!instrumental && !singingLyrics) {
         return json(
           {
             success: false,
-            error: "متن ترانه خالی است. ابتدا شعر را وارد کن."
+            error:
+              "متن ترانه خالی است. ابتدا شعر را وارد کن."
           },
           400,
           corsOrigin
@@ -678,7 +898,8 @@ export default {
         return json(
           {
             success: false,
-            error: "متن ترانه بیش از محدودیت ۵۰۰۰ کاراکتری UdioAPI است. لطفاً شعر را کوتاه‌تر کن."
+            error:
+              "متن ترانه بیش از محدودیت ۵۰۰۰ کاراکتری است. لطفاً شعر را کوتاه‌تر کن."
           },
           400,
           corsOrigin
@@ -686,191 +907,149 @@ export default {
       }
 
       // ------------------------------------------
-      // پردازش سازها
+      // ساخت پرامپت موسیقی
       // ------------------------------------------
 
-      const instrumentList = instruments
-        .split(/[,،;؛\n]+/)
-        .map(item => item.trim())
-        .filter(Boolean)
-        .slice(0, 8);
-
-      const leadInstrument = instrumentList[0] || "";
-      const supportingInstruments = instrumentList.slice(1);
-
-      let instrumentPrompt = "";
-
-      if (leadInstrument) {
-        instrumentPrompt = `
-FEATURED INSTRUMENT:
-${leadInstrument}.
-
-Build a recognizable musical hook around this instrument.
-Let its characteristic sound lead the melody.
-Feature it clearly in the instrumental opening and in short melodic passages between vocal lines.
-Bring it forward in at least one noticeable instrumental section.
-Keep its sound recognizable and present in the overall arrangement.
-`;
-      } else {
-        instrumentPrompt = `
-Choose a coherent professional instrumental arrangement that naturally fits the selected genre and mood.
-`;
-      }
-
-      if (supportingInstruments.length) {
-        instrumentPrompt += `
-SUPPORTING INSTRUMENTS:
-${supportingInstruments.join(", ")}.
-
-Arrange these as supporting parts around the featured instrument.
-Use them naturally for rhythm, harmony and musical depth.
-Keep the arrangement balanced and leave space for the featured instrument.
-`;
-      }
-
-      // ------------------------------------------
-      // ساخت توضیحات موسیقی
-      // ------------------------------------------
-
-      const promptParts = [
-        "Create a polished, melodic and professionally arranged song with a natural musical flow.",
-
-        `GENRE AND STYLE: ${style}.`,
-
-        `MOOD: ${getMoodDescription(musicMood)}`,
-
-        getVoiceDescription(voice),
-
-        instrumentPrompt,
-
-        extraMood
-          ? `Additional musical direction: ${extraMood}.`
-          : "",
-
-        `VOCAL LANGUAGE: ${getLanguageName(language)}.`,
-
-        instrumental
-          ? "Create instrumental music only. Do not include any human voice."
-          : `
-Sing the supplied lyrics exactly as written.
-Preserve the original words, line order and pronunciation.
-Do not rewrite, paraphrase, translate or omit any lyric line.
-`,
-
-        pronunciationNotes
-          ? `PRONUNCIATION NOTES: ${pronunciationNotes}.`
-          : "",
-
-        instrumental
-          ? ""
-          : `
-Begin with a short instrumental introduction using the selected instruments only.
-No vocals, humming, ad-libs, shouts, vocal samples or spoken sounds before the first lyric line.
-Start the singer exactly with the first supplied lyric line.
-`,
-
-        `
-ARRANGEMENT:
-Create a memorable melody and a natural song structure.
-Use the featured instrument for recognizable melodic phrases.
-Add tasteful instrumental responses between vocal phrases.
-Let the arrangement develop naturally without overcrowding the mix.
-Finish with a proper musical ending.
-`
-      ].filter(Boolean);
-
-      const musicPrompt = promptParts.join("\n\n");
-
-      // ------------------------------------------
-      // ساخت Style مناسب UdioAPI
-      // ------------------------------------------
-
-      const udioStyle = buildUdioStyle({
+      const musicPrompt = buildAceMusicPrompt({
         style,
         musicMood,
-        extraMood,
         voice,
-        instrumentPrompt,
-        pronunciationNotes
+        instruments,
+        extraMood,
+        pronunciationNotes,
+        language,
+        instrumental
       });
 
-      // در Custom Mode متن شعر مستقیماً در prompt قرار می‌گیرد.
-      // برای موسیقی بی‌کلام، توضیحات موسیقی ارسال می‌شود.
-
-      const udioPrompt = instrumental
-        ? musicPrompt.slice(0, 5000)
-        : singingLyrics;
-
       // ------------------------------------------
-      // ساخت درخواست UdioAPI
+      // ساخت متن ورودی ACE
       // ------------------------------------------
 
-      const udioBody = {
-        model: "chirp-v5-5",
-        prompt: udioPrompt,
-        style: udioStyle,
-        title: "Nava AI Song",
-        duration: MUSIC_DURATION_SECONDS,
-        make_instrumental: instrumental,
-        style_weight: 0.65,
-        weirdness_constraint: 0.55,
-        audio_weight: 0.65
-      };
+      let messageContent;
 
-      // تعیین جنسیت خواننده
-      // برای duet جنسیت را محدود نمی‌کنیم.
+      if (instrumental) {
+        messageContent = `
+<prompt>
+${musicPrompt}
+</prompt>
+`;
+      } else {
+        messageContent = `
+<prompt>
+${musicPrompt}
+</prompt>
 
-      if (!instrumental && voice !== "duet") {
-        udioBody.gender =
-          voice === "female_pop" || voice === "female_powerful"
-            ? "female"
-            : "male";
+<lyrics>
+${singingLyrics}
+</lyrics>
+`;
       }
 
       // ------------------------------------------
-      // مرحله اول: ارسال درخواست ساخت آهنگ
+      // تنظیمات درخواست ACE
       // ------------------------------------------
 
-      let createData;
+      const audioConfig = {
+        duration: MUSIC_DURATION_SECONDS,
+        format: "mp3",
+        vocal_language: getAceLanguage(language)
+      };
+
+      if (instrumental) {
+        audioConfig.instrumental = true;
+      }
+
+      const aceBody = {
+        model: ACE_MODEL,
+
+        messages: [
+          {
+            role: "user",
+            content: messageContent
+          }
+        ],
+
+        stream: false,
+
+        thinking: true,
+
+        use_format: false,
+
+        use_cot_caption: false,
+
+        use_cot_language: false,
+
+        temperature: 0.75,
+
+        audio_config: audioConfig
+      };
+
+      // ------------------------------------------
+      // ارسال درخواست به ACE
+      // ------------------------------------------
+
+      let aceResponse;
 
       try {
-        const createRes = await fetch(
-          "https://udioapi.pro/api/v2/generate",
-          {
-            method: "POST",
-            headers: {
-              "Authorization": `Bearer ${apiKey}`,
-              "Content-Type": "application/json"
-            },
-            body: JSON.stringify(udioBody)
-          }
+        const controller = new AbortController();
+
+        const timeout = setTimeout(
+          () => controller.abort(),
+          240000
         );
 
-        const rawCreate = await createRes.text();
+        let aceRes;
 
         try {
-          createData = JSON.parse(rawCreate);
+          aceRes = await fetch(
+            ACE_API_URL,
+            {
+              method: "POST",
+              headers: {
+                "Authorization": `Bearer ${apiKey}`,
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+              },
+              body: JSON.stringify(aceBody),
+              signal: controller.signal
+            }
+          );
+        } finally {
+          clearTimeout(timeout);
+        }
+
+        const rawResponse = await aceRes.text();
+
+        try {
+          aceResponse = JSON.parse(rawResponse);
         } catch {
           return json(
             {
               success: false,
-              error: "پاسخ UdioAPI قابل پردازش نیست.",
-              details: rawCreate.slice(0, 1000),
-              status: createRes.status
+              error: "پاسخ ACE قابل پردازش نیست.",
+              status: aceRes.status,
+              details: rawResponse.slice(0, 1200),
+              provider: "ACE"
             },
             502,
             corsOrigin
           );
         }
 
-        if (!createRes.ok) {
+        if (!aceRes.ok || aceResponse.error) {
+          const apiError =
+            aceResponse.error?.message ||
+            aceResponse.error ||
+            aceResponse.message ||
+            `خطای ACE با کد ${aceRes.status}`;
+
           return json(
             {
               success: false,
-              error:
-                createData.message ||
-                `خطای UdioAPI با کد ${createRes.status}`,
-              details: createData
+              error: String(apiError).slice(0, 1200),
+              status: aceRes.status,
+              provider: "ACE",
+              model: ACE_MODEL
             },
             502,
             corsOrigin
@@ -878,28 +1057,20 @@ Finish with a proper musical ending.
         }
 
       } catch (e) {
+        const timeoutError =
+          e.name === "AbortError";
+
         return json(
           {
             success: false,
-            error: "ارتباط با UdioAPI برای شروع ساخت آهنگ برقرار نشد.",
-            details: e.message
-          },
-          502,
-          corsOrigin
-        );
-      }
 
-      const workId =
-        createData.workId ||
-        createData.data?.task_id ||
-        createData.data?.workId;
+            error: timeoutError
+              ? "زمان انتظار برای ساخت آهنگ توسط ACE تمام شد."
+              : "ارتباط با سرویس ACE برقرار نشد.",
 
-      if (!workId) {
-        return json(
-          {
-            success: false,
-            error: "UdioAPI درخواست را دریافت کرد اما شناسه ساخت آهنگ برنگرداند.",
-            details: createData
+            details: e.message || "ACE connection error",
+
+            provider: "ACE"
           },
           502,
           corsOrigin
@@ -907,122 +1078,58 @@ Finish with a proper musical ending.
       }
 
       // ------------------------------------------
-      // مرحله دوم: بررسی وضعیت ساخت آهنگ
-      // هر ۷ ثانیه Feed بررسی می‌شود.
-      // اولین فایل صوتی آماده‌شده دریافت می‌شود.
+      // استخراج فایل صوتی
       // ------------------------------------------
 
-      const maxAttempts = 30;
-      let lastFeedError = "";
+      const audioUrl = extractAceAudio(aceResponse);
 
-      for (let attempt = 0; attempt < maxAttempts; attempt++) {
-        await new Promise(resolve => setTimeout(resolve, 7000));
+      if (!audioUrl) {
+        const message =
+          aceResponse.choices?.[0]?.message;
 
-        try {
-          const feedRes = await fetch(
-            `https://udioapi.pro/api/v2/feed?workId=${encodeURIComponent(workId)}`,
-            {
-              method: "GET",
-              headers: {
-                "Authorization": `Bearer ${apiKey}`
-              }
-            }
-          );
+        const responseText = extractText(
+          message?.content
+        );
 
-          const rawFeed = await feedRes.text();
+        return json(
+          {
+            success: false,
 
-          let feedData;
+            error:
+              "ACE پاسخ داده است اما فایل صوتی در پاسخ پیدا نشد.",
 
-          try {
-            feedData = JSON.parse(rawFeed);
-          } catch {
-            lastFeedError = "پاسخ وضعیت UdioAPI قابل پردازش نبود.";
-            continue;
-          }
+            details: responseText.slice(0, 1500),
 
-          if (!feedRes.ok) {
-            lastFeedError =
-              feedData.message ||
-              `خطای بررسی وضعیت با کد ${feedRes.status}`;
-            continue;
-          }
+            provider: "ACE",
 
-          const task = feedData.data || {};
-
-          const clips = Array.isArray(task.response_data)
-            ? task.response_data
-            : [];
-
-          // --------------------------------------
-          // اگر فایل صوتی آماده شده باشد
-          // --------------------------------------
-
-          const readyClip = clips.find(clip => {
-            return (
-              clip.status === "first" &&
-              typeof clip.audio_url === "string" &&
-              clip.audio_url.startsWith("https://") &&
-              !clip.fail_message
-            );
-          });
-
-          if (readyClip) {
-            return json(
-              {
-                success: true,
-                audioUrl: readyClip.audio_url,
-                title: readyClip.title || "Nava AI Song",
-                duration: readyClip.duration || MUSIC_DURATION_SECONDS,
-                requestedDuration: MUSIC_DURATION_SECONDS,
-                provider: "UdioAPI",
-                workId
-              },
-              200,
-              corsOrigin
-            );
-          }
-
-          // --------------------------------------
-          // تشخیص شکست ساخت آهنگ
-          // --------------------------------------
-
-          const failedClip = clips.find(
-            clip => clip.fail_message || clip.error_message
-          );
-
-          if (task.type === "FAILED" || failedClip) {
-            return json(
-              {
-                success: false,
-                error:
-                  failedClip?.fail_message ||
-                  failedClip?.error_message ||
-                  "ساخت آهنگ توسط UdioAPI ناموفق بود. ممکن است اعتبار درخواست برگشت داده شده باشد.",
-                workId
-              },
-              502,
-              corsOrigin
-            );
-          }
-
-        } catch (e) {
-          lastFeedError = e.message || "خطای موقت در بررسی وضعیت آهنگ";
-        }
+            model: ACE_MODEL
+          },
+          502,
+          corsOrigin
+        );
       }
 
       // ------------------------------------------
-      // پایان زمان انتظار
+      // خروجی سازگار با سایت Nava
       // ------------------------------------------
 
       return json(
         {
-          success: false,
-          pending: true,
-          workId,
-          error: "درخواست ساخت ثبت شده است اما آماده‌شدن فایل صوتی بیشتر از زمان انتظار طول کشید. برای جلوگیری از هزینه دوباره، فعلاً درخواست ساخت جدید ارسال نکن.",
-          details: lastFeedError || undefined
+          success: true,
+
+          audioUrl,
+
+          title: "Nava AI Song",
+
+          duration: MUSIC_DURATION_SECONDS,
+
+          requestedDuration: MUSIC_DURATION_SECONDS,
+
+          provider: "ACE-Step",
+
+          model: ACE_MODEL
         },
-        202,
+        200,
         corsOrigin
       );
     }
@@ -1032,10 +1139,11 @@ Finish with a proper musical ending.
     // ==========================================
 
     return json(
-      { error: "Not found" },
+      {
+        error: "Not found"
+      },
       404,
       corsOrigin
     );
   }
 };
- 
