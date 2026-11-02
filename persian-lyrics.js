@@ -1,42 +1,82 @@
 
 /*
  * Nava Persian Lyrics Engine
- * Version: 0.1.0
- * مستقل از Worker فعلی
- * بدون API و بدون هزینه
+ * Version: 0.2.0
+ * Persian pronunciation and singing preparation
  */
 
-const NAVA_PRONUNCIATION = {
-  "چگونه": {
+const NAVA_PRONUNCIATION = [
+  {
+    word: "چگونه",
+    variants: ["چگونه"],
     spoken: "چگونه",
-    phonetic: "che-goo-ne",
-    singing: "چِگُونه"
+    singing: "چِگُونه",
+    phonetic: "che-goo-ne"
   },
-  "دیوونه": {
+  {
+    word: "دیوونه",
+    variants: ["دیوونه"],
     spoken: "دیوونه",
+    singing: "دیوونه",
     phonetic: "di-voo-ne"
   },
-  "بی‌نشونه": {
+  {
+    word: "بی‌نشونه",
+    variants: ["بی‌نشونه", "بی نشونه"],
     spoken: "بی‌نشونه",
+    singing: "بی‌نشونه",
     phonetic: "bi-ne-shoo-ne"
   },
-  "پریشون": {
+  {
+    word: "پریشون",
+    variants: ["پریشون"],
     spoken: "پریشون",
+    singing: "پریشون",
     phonetic: "pa-ri-shoon"
   },
-  "بی‌امونه": {
+  {
+    word: "بی‌امونه",
+    variants: ["بی‌امونه", "بی امونه"],
     spoken: "بی‌امونه",
+    singing: "بی‌امونه",
     phonetic: "bi-a-moo-ne"
   },
-  "عاشقونه": {
+  {
+    word: "عاشقونه",
+    variants: ["عاشقونه"],
     spoken: "عاشقونه",
+    singing: "عاشقونه",
     phonetic: "a-she-ghoo-ne"
   },
-  "دل‌شکسته": {
+  {
+    word: "دل‌شکسته",
+    variants: ["دل‌شکسته", "دل شکسته"],
     spoken: "دل‌شکسته",
+    singing: "دل‌شکسته",
     phonetic: "del-she-kas-te"
+  },
+  {
+    word: "خونه",
+    variants: ["خونه"],
+    spoken: "خونه",
+    singing: "خونه",
+    phonetic: "khoo-ne"
+  },
+  {
+    word: "می‌خوام",
+    variants: ["می‌خوام", "می خوام"],
+    spoken: "می‌خوام",
+    singing: "می‌خوام",
+    phonetic: "mi-khaam"
+  },
+  {
+    word: "خسته",
+    variants: ["خسته"],
+    spoken: "خسته",
+    singing: "خسته",
+    phonetic: "khas-te"
   }
-};
+];
 
 function normalizePersian(text) {
   return String(text || "")
@@ -50,14 +90,30 @@ function normalizePersian(text) {
     .trim();
 }
 
+function prepareSingingText(line) {
+  return line
+    .replace(/می\s+خواهم/g, "می‌خوام")
+    .replace(/می‌خواهم/g, "می‌خوام")
+    .replace(/دل\s+شکسته/g, "دل‌شکسته")
+    .replace(/بی\s+نشونه/g, "بی‌نشونه")
+    .replace(/بی\s+امونه/g, "بی‌امونه")
+    .trim();
+}
+
 function getPronunciationHints(line) {
   const hints = [];
 
-  for (const [word, info] of Object.entries(NAVA_PRONUNCIATION)) {
-    if (line.includes(word)) {
+  for (const item of NAVA_PRONUNCIATION) {
+    const found = item.variants.some(variant =>
+      line.includes(variant)
+    );
+
+    if (found) {
       hints.push({
-        word,
-        ...info
+        word: item.word,
+        spoken: item.spoken,
+        singing: item.singing,
+        phonetic: item.phonetic
       });
     }
   }
@@ -76,7 +132,7 @@ function preparePersianLyrics(input) {
 
   return {
     engine: "Nava Persian Lyrics Engine",
-    version: "0.1.0",
+    version: "0.2.0",
     language: "fa",
     dialect: "persian_colloquial",
 
@@ -89,20 +145,27 @@ function preparePersianLyrics(input) {
       style: "emotional"
     },
 
-    lines: lines.map((line, index) => ({
-      line_number: index + 1,
-      original: line,
-      singing_text: line,
-      pronunciation_hints: getPronunciationHints(line)
-    }))
+    lines: lines.map((line, index) => {
+      const singingText = prepareSingingText(line);
+
+      return {
+        line_number: index + 1,
+        original: line,
+        singing_text: singingText,
+        pronunciation_hints: getPronunciationHints(
+          singingText
+        )
+      };
+    })
   };
 }
 
-// Export for use in other Nava files
 if (typeof module !== "undefined" && module.exports) {
   module.exports = {
     preparePersianLyrics,
     normalizePersian,
+    prepareSingingText,
+    getPronunciationHints,
     NAVA_PRONUNCIATION
   };
 }
