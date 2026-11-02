@@ -1,4 +1,3 @@
-
 const ALLOWED_ORIGIN = "https://honrrpower-a11y.github.io";
 const MUSIC_DURATION_SECONDS = 60;
 
@@ -525,7 +524,7 @@ function buildAceMusicPrompt(settings) {
 
   const instrumentList = getInstrumentList(instruments);
 
-  // اگر پیانو در فهرست باشد، همیشه ساز اصلی می‌شود.
+  // اگر پیانو در فهرست باشد، ساز اصلی می‌شود.
   const piano = instrumentList.find(isPianoInstrument);
 
   const leadInstrument = piano || instrumentList[0] || "";
@@ -1187,35 +1186,21 @@ export default {
       });
 
       // ------------------------------------------
-      // ساخت متن ورودی ACE
+      // ساخت متن مستقل شعر برای ACE
       // ------------------------------------------
 
-      let messageContent;
+      // شعر دیگر داخل messages قرار نمی‌گیرد.
+      // پیام فقط شامل توضیحات سبک و تنظیم موسیقی است.
+
+      let aceLyrics;
 
       if (instrumental) {
-        messageContent = `
-<prompt>
-${musicPrompt}
-</prompt>
-
-<lyrics>
-[Instrumental]
-</lyrics>
-`;
+        aceLyrics = "[Instrumental]";
       } else {
-        // مقدمه بی‌کلام پیش از شروع شعر
-        messageContent = `
-<prompt>
-${musicPrompt}
-</prompt>
+        aceLyrics = `[Intro]
+[inst]
 
-<lyrics>
-[Intro - instrumental piano]
-[Instrumental]
-
-${singingLyrics}
-</lyrics>
-`;
+${singingLyrics}`;
       }
 
       // ------------------------------------------
@@ -1232,15 +1217,23 @@ ${singingLyrics}
         audioConfig.instrumental = true;
       }
 
+      // ------------------------------------------
+      // بدنه درخواست ACE
+      // ------------------------------------------
+
       const aceBody = {
         model: ACE_MODEL,
 
+        // توضیحات موسیقی و تنظیمات در messages
         messages: [
           {
             role: "user",
-            content: messageContent
+            content: musicPrompt
           }
         ],
+
+        // متن ترانه در فیلد مستقل
+        lyrics: aceLyrics,
 
         stream: false,
 
