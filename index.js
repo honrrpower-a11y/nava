@@ -1,3 +1,4 @@
+
 const ALLOWED_ORIGIN = "https://honrrpower-a11y.github.io";
 const MUSIC_DURATION_SECONDS = 60;
 
@@ -63,32 +64,20 @@ function normalizePersianSpacing(text) {
 }
 
 // ==========================================
-// اصلاح حروف لاتین ناخواسته در شعر فارسی
+// پاک‌سازی حروف لاتین ناخواسته در شعر فارسی
 // ==========================================
 
 function cleanPersianLatinMix(text, language = "fa") {
   let result = String(text || "");
 
-  if (language !== "fa") {
-    return result;
-  }
-
-  // نمونه:
-  // خط کشte  -> خط کش
-  // اومdu    -> اوم
-  //
-  // فقط حروف لاتین چسبیده به انتهای واژه فارسی حذف می‌شوند.
-  // کلمات انگلیسی مستقل دست‌نخورده باقی می‌مانند.
+  if (language !== "fa") return result;
 
   result = result.replace(
     /([\u0600-\u06FF\uFB50-\uFDFF\uFE70-\uFEFF])([A-Za-z]{1,12})(?=$|[\s،؛,.!?؟:])/g,
     "$1"
   );
 
-  // حذف فاصله‌های اضافی
   result = result.replace(/[ \t]{2,}/g, " ");
-
-  // حذف فاصله قبل از علائم نگارشی
   result = result.replace(/\s+([،؛.!؟,:])/g, "$1");
 
   return result.trim();
@@ -110,12 +99,7 @@ function prepareLyrics(text, language = "fa") {
 function prepareSingingLyrics(text, voice) {
   let result = String(text || "").trim();
 
-  // در ACE متن داخل پرانتز ممکن است به شکل
-  // backing vocal یا harmony اجرا شود.
-  //
-  // برای تک‌خوانی، پرانتزها حذف می‌شوند
-  // اما خود کلمات حفظ می‌شوند.
-
+  // حذف پرانتزهای احتمالی هم‌خوانی در حالت تک‌خوان
   if (voice !== "duet") {
     result = result.replace(/\(([^()]*)\)/g, "$1");
     result = result.replace(/（([^（）]*)）/g, "$1");
@@ -209,26 +193,117 @@ function normalizeVoice(value) {
 
 function getVoiceDescription(voice) {
   const voices = {
-    male_pop:
-      "STRICT SOLO MALE LEAD VOCAL. One single adult male singer only. Clear, natural, youthful male pop voice. One consistent male vocal identity from beginning to end. Absolutely no female singer, no second singer, no duet, no backing vocals, no vocal harmonies, no choir and no vocal ad-libs.",
+    male_pop: `
+STRICT SINGLE MALE SOLO VOCAL.
+Exactly one adult male singer.
+One unique male vocal identity from beginning to end.
+One lead vocal recording only.
+Natural clear youthful male pop voice.
+No female voice.
+No second male voice.
+No duet.
+No backing vocals.
+No vocal harmonies.
+No choir.
+No vocal doubling.
+No layered lead vocals.
+No call and response.
+No vocal ad-libs.
+No wordless vocal sounds.
+`,
 
-    male_deep:
-      "STRICT SOLO MALE BARITONE LEAD VOCAL. One single adult male singer only. Deep, warm, mature and natural male voice. One consistent male vocal identity throughout the entire song. No female singer, no second singer, no duet, no backing vocals, no vocal harmonies, no choir and no vocal ad-libs.",
+    male_deep: `
+STRICT SINGLE MALE SOLO BARITONE VOCAL.
+Exactly one adult male singer.
+One unique deep, warm and mature male voice.
+One lead vocal recording only.
+Keep the same male voice throughout the song.
+Natural intimate baritone performance.
+No female voice.
+No second male voice.
+No duet.
+No backing vocals.
+No vocal harmonies.
+No choir.
+No vocal doubling.
+No layered lead vocals.
+No call and response.
+No vocal ad-libs.
+No wordless vocal sounds.
+`,
 
-    male_raspy:
-      "STRICT SOLO MALE LEAD VOCAL. One single adult male singer only. Expressive natural male voice with a subtle husky texture. One consistent male vocal identity throughout the entire song. No female singer, no second singer, no duet, no backing vocals, no vocal harmonies, no choir and no vocal ad-libs.",
+    male_raspy: `
+STRICT SINGLE MALE SOLO VOCAL.
+Exactly one adult male singer.
+One unique natural male voice with a subtle husky texture.
+One lead vocal recording only.
+Keep the same male vocal identity throughout.
+No female voice.
+No second male voice.
+No duet.
+No backing vocals.
+No vocal harmonies.
+No choir.
+No vocal doubling.
+No layered lead vocals.
+No call and response.
+No vocal ad-libs.
+No wordless vocal sounds.
+`,
 
-    female_pop:
-      "STRICT SOLO FEMALE LEAD VOCAL. One single adult female singer only. Clear, natural and expressive female pop voice. One consistent female vocal identity throughout the entire song. No male singer, no second singer, no duet, no backing vocals, no vocal harmonies, no choir and no vocal ad-libs.",
+    female_pop: `
+STRICT SINGLE FEMALE SOLO VOCAL.
+Exactly one adult female singer.
+One unique natural female voice throughout.
+One lead vocal recording only.
+No male voice.
+No second female voice.
+No duet.
+No backing vocals.
+No vocal harmonies.
+No choir.
+No vocal doubling.
+No layered lead vocals.
+No vocal ad-libs.
+No wordless vocal sounds.
+`,
 
-    female_powerful:
-      "STRICT SOLO FEMALE LEAD VOCAL. One single adult female singer only. Powerful, expressive and natural female voice. One consistent female vocal identity throughout the entire song. No male singer, no second singer, no duet, no backing vocals, no vocal harmonies, no choir and no vocal ad-libs.",
+    female_powerful: `
+STRICT SINGLE FEMALE SOLO VOCAL.
+Exactly one adult female singer.
+One unique powerful and expressive female voice.
+One lead vocal recording only.
+Keep the same female voice throughout.
+No male voice.
+No second female voice.
+No duet.
+No backing vocals.
+No vocal harmonies.
+No choir.
+No vocal doubling.
+No layered lead vocals.
+No vocal ad-libs.
+No wordless vocal sounds.
+`,
 
-    duet:
-      "Male and female duet with two distinct and consistent singers. Let them alternate naturally and sing together where musically appropriate.",
+    duet: `
+Male and female duet with two distinct and consistent singers.
+Let them alternate naturally and sing together where musically appropriate.
+`,
 
-    instrumental:
-      "STRICTLY INSTRUMENTAL MUSIC. Absolutely no human voice of any kind. No singing, no speech, no humming, no vocal samples, no choir, no vocal chops, no vocal ad-libs and no human-like vocal sounds."
+    instrumental: `
+STRICTLY INSTRUMENTAL MUSIC.
+Absolutely no human voice of any kind.
+No singing.
+No speech.
+No humming.
+No vocal samples.
+No choir.
+No vocal chops.
+No vocal ad-libs.
+No human-like vocal sounds.
+No wordless vocalizations.
+`
   };
 
   return voices[voice] || voices.male_pop;
@@ -417,6 +492,22 @@ function buildLyricsPrompt(topic, style, language) {
 }
 
 // ==========================================
+// تشخیص ساز اصلی
+// ==========================================
+
+function getInstrumentList(instruments) {
+  return String(instruments || "")
+    .split(/[,،;؛\n]+/)
+    .map(item => item.trim())
+    .filter(Boolean)
+    .slice(0, 8);
+}
+
+function isPianoInstrument(name) {
+  return /piano|پیانو|پیانوئی/i.test(name);
+}
+
+// ==========================================
 // ساخت پرامپت اختصاصی موسیقی برای ACE
 // ==========================================
 
@@ -432,14 +523,18 @@ function buildAceMusicPrompt(settings) {
     instrumental
   } = settings;
 
-  const instrumentList = instruments
-    .split(/[,،;؛\n]+/)
-    .map(item => item.trim())
-    .filter(Boolean)
-    .slice(0, 8);
+  const instrumentList = getInstrumentList(instruments);
 
-  const leadInstrument = instrumentList[0] || "";
-  const supportingInstruments = instrumentList.slice(1);
+  // اگر پیانو در فهرست باشد، همیشه ساز اصلی می‌شود.
+  const piano = instrumentList.find(isPianoInstrument);
+
+  const leadInstrument = piano || instrumentList[0] || "";
+
+  const supportingInstruments = instrumentList.filter(
+    item => item !== leadInstrument
+  );
+
+  const pianoSelected = Boolean(piano);
 
   const parts = [
     "Create an original, professionally produced song with a distinctive musical identity.",
@@ -455,7 +550,29 @@ function buildAceMusicPrompt(settings) {
     );
   }
 
-  if (leadInstrument) {
+  if (pianoSelected) {
+    parts.push(`
+PIANO IS THE MAIN LEAD INSTRUMENT - VERY IMPORTANT:
+
+The piano must be clearly audible, prominent and dominant in the arrangement.
+
+Use a real acoustic piano sound with recognizable piano notes.
+Do not replace the piano with generic keyboard pads or synthesizer textures.
+
+Start the song with a beautiful solo piano introduction.
+The piano introduction must be clearly recognizable before the singer begins.
+
+Use a memorable piano melody and recurring piano motif.
+Keep the piano present during the verses and choruses.
+Give the piano clear melodic phrases between vocal lines.
+Bring the piano forward in instrumental passages.
+
+The piano must not be buried beneath strings, pads, guitars or percussion.
+Keep its volume and presence strong enough to be easily recognized.
+
+Do not let supporting instruments overpower the piano.
+`);
+  } else if (leadInstrument) {
     parts.push(`
 FEATURED LEAD INSTRUMENT:
 ${leadInstrument}.
@@ -465,7 +582,7 @@ Make its sound prominent, recognizable and musically important.
 Create a memorable melodic hook using this instrument.
 Feature it clearly in the instrumental introduction.
 Bring it forward in instrumental passages between vocal lines.
-Do not bury it beneath keyboards, strings or background layers.
+Do not bury it beneath background layers.
 `);
   } else {
     parts.push(`
@@ -480,40 +597,72 @@ Avoid a generic arrangement.
 SUPPORTING INSTRUMENTS:
 ${supportingInstruments.join(", ")}.
 
-Use these instruments as supporting layers.
-Give each instrument an appropriate musical role.
+Use these instruments as supporting layers only.
 Keep the featured lead instrument clearly audible.
+Do not let supporting instruments dominate the mix.
 `);
   }
 
   if (instrumental) {
     parts.push(`
 INSTRUMENTAL ONLY - ABSOLUTE REQUIREMENT:
+
 This track must contain instruments only.
-Do not generate any human voice.
-No singing, no speech, no humming, no vocal samples,
-no choir, no vocal chops, no vocal ad-libs,
-no human-like sounds and no wordless vocalizations.
+
+No human voice of any kind.
+No singing.
+No speech.
+No humming.
+No vocal samples.
+No choir.
+No vocal chops.
+No vocal ad-libs.
+No wordless vocalizations.
+No "hoo", "woo", "ooh", "yeah" or similar sounds.
+
 Use instruments to fill every musical section.
 `);
-  } else {
+  } else if (voice !== "duet") {
     parts.push(`
-VOCAL PERFORMANCE - STRICT SOLO PERFORMANCE:
-Use exactly one lead singer.
-Keep the same singer throughout the entire song.
-Do not introduce a second singer.
-Do not introduce a different voice in the introduction.
-Do not add backing vocals, harmonies, choir or vocal doubles.
-Do not add female vocals to a male solo song.
-Do not add male vocals to a female solo song.
-Do not add vocal ad-libs or wordless vocalizations.
-The singer must sing only the supplied lyrics.
+SINGLE SINGER - ABSOLUTE PRIORITY:
+
+Use exactly ONE human singer.
+There must be only one vocal identity in the entire song.
+
+The lead vocal must sound like one person singing alone.
+
+NO second singer.
+NO female voice in a male solo song.
+NO male voice in a female solo song.
+NO backing vocals.
+NO harmonies.
+NO choir.
+NO vocal doubling.
+NO layered vocals.
+NO duplicated lead vocal.
+NO call-and-response.
+NO overlapping singers.
+NO vocal ad-libs.
+NO humming.
+NO wordless vocal sounds.
+
+VOCAL MIXING:
+Use one clean, centered, dry lead vocal.
+Keep the vocal natural and intimate.
+Avoid chorus effects on the voice.
+Avoid vocal doubling effects.
+Avoid stereo widening of the vocal.
+Avoid artificial layered vocal textures.
+
+Do not create the impression of two singers.
+The singer must perform the lyrics alone.
 `);
   }
 
   if (language === "fa" && !instrumental) {
     parts.push(`
 PERSIAN VOCAL REQUIREMENTS:
+
 Sing in natural native Iranian Persian (Farsi).
 Use clear Iranian Persian pronunciation and natural Persian vowels.
 Avoid foreign, Indian-sounding or unnatural pronunciation.
@@ -533,26 +682,48 @@ ${pronunciationNotes}
 
   if (!instrumental) {
     parts.push(`
-INTRODUCTION:
-Begin with a short instrumental introduction.
-No human voice before the first supplied lyric line.
-Do not sing, hum, shout, speak or use vocal ad-libs in the intro.
-Start the singer with the first supplied lyric line.
-Do not add "woo", "yeah", "hoo", "ooh" or similar sounds
-unless they are explicitly part of the supplied lyrics.
+INTRODUCTION - STRICTLY INSTRUMENTAL:
+
+The introduction must contain instruments only.
+
+Begin with a short, clear instrumental introduction.
+If piano is selected, begin with solo piano.
+
+Absolutely no human voice in the introduction.
+
+No "hoo".
+No "woo".
+No "ooh".
+No "yeah".
+No humming.
+No female vocal sounds.
+No male vocal sounds.
+No shouting.
+No whispering.
+No spoken words.
+No vocal samples.
+No background singing.
+
+The first human voice in the song must begin with the first supplied lyric line.
+
+Do not add any sounds that are not present in the supplied lyrics.
 `);
   }
 
   parts.push(`
 ARRANGEMENT AND PRODUCTION:
+
 Create a memorable and distinctive melody.
 Use a natural musical structure with clear transitions.
 Allow the arrangement to develop dynamically.
 Give the selected instruments meaningful musical roles.
+
 Keep the lead vocal clear and understandable.
+Use a balanced professional studio mix.
+Avoid unnecessary vocal effects.
+Avoid layered vocal textures.
 Avoid repetitive generic arrangements.
 Use a proper musical ending.
-Produce a balanced, clean studio-quality mix.
 `);
 
   return parts.join("\n\n").slice(0, 7000);
@@ -1032,12 +1203,16 @@ ${musicPrompt}
 </lyrics>
 `;
       } else {
+        // مقدمه بی‌کلام پیش از شروع شعر
         messageContent = `
 <prompt>
 ${musicPrompt}
 </prompt>
 
 <lyrics>
+[Intro - instrumental piano]
+[Instrumental]
+
 ${singingLyrics}
 </lyrics>
 `;
