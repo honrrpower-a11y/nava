@@ -1,78 +1,79 @@
+
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="theme-color" content="#0b1020">
-<title>Nava AI | استودیوی هوشمند موسیقی</title>
+<meta name="theme-color" content="#101321">
+<meta name="description" content="Nava Studio - استودیوی هوشمند ساخت موسیقی با هوش مصنوعی">
+<title>Nava Studio | استودیوی هوشمند موسیقی</title>
+
 <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet">
 
 <style>
 :root {
-  --bg:#090d19;
-  --surface:#111829;
-  --surface2:#182238;
-  --surface3:#202c45;
-  --gold:#f4c45e;
-  --gold2:#dba53d;
-  --text:#f5f6fa;
-  --muted:#9ba9c1;
-  --border:#2b3851;
+  color-scheme:dark;
+  --bg:#0c1020;
+  --surface:#151b2d;
+  --surface2:#20283d;
+  --surface3:#29334c;
+  --gold:#f2c66d;
+  --gold2:#d99c3d;
+  --text:#f5f3ee;
+  --muted:#a5aec0;
+  --border:#303b54;
   --green:#55d6a0;
+  --accent:#a99be9;
   --shadow:0 18px 55px #0005;
+  --input:#101629;
+  --hero1:#202a43;
+  --hero2:#151a2b;
 }
 
 [data-theme="light"] {
-  --bg:#f1f3f9;
-  --surface:#fff;
-  --surface2:#e9edf6;
-  --surface3:#dfe5f0;
-  --gold:#bd841a;
-  --gold2:#e0aa3d;
-  --text:#172033;
-  --muted:#66748b;
-  --border:#d5dce9;
-  --green:#079968;
-  --shadow:0 15px 40px #25345212;
+  color-scheme:light;
+  --bg:#f5eee4;
+  --surface:#fffaf3;
+  --surface2:#f2e5d7;
+  --surface3:#e9d6c2;
+  --gold:#a85f32;
+  --gold2:#c47b43;
+  --text:#34271f;
+  --muted:#846f61;
+  --border:#e5d2bf;
+  --green:#278b68;
+  --accent:#916e9e;
+  --shadow:0 15px 40px #79563712;
+  --input:#fffdf9;
+  --hero1:#f0d9c2;
+  --hero2:#f8eee1;
 }
 
-* {
-  box-sizing:border-box;
-}
+* {box-sizing:border-box}
 
-html {
-  scroll-behavior:smooth;
-}
+html {scroll-behavior:smooth}
 
 body {
   margin:0;
   min-height:100vh;
   background:
-    radial-gradient(ellipse at 80% -10%,#29334e 0,transparent 36%),
-    radial-gradient(ellipse at 0% 40%,#20233b55 0,transparent 35%),
+    radial-gradient(ellipse at 85% -10%,#34405c55,transparent 38%),
+    radial-gradient(ellipse at 5% 45%,#41304a22,transparent 35%),
     var(--bg);
   color:var(--text);
   font-family:Vazirmatn,Tahoma,sans-serif;
   line-height:1.9;
+  transition:background .25s,color .25s;
 }
 
-button,input,textarea,select {
-  font:inherit;
-}
-
-button {
-  cursor:pointer;
-}
-
-button:disabled {
-  opacity:.55;
-  cursor:wait;
-}
+button,input,textarea,select {font:inherit}
+button {cursor:pointer}
+button:disabled {opacity:.55;cursor:wait}
 
 .container {
-  width:min(1100px,93%);
+  width:min(1080px,94%);
   margin:auto;
-  padding:22px 0 50px;
+  padding:22px 0 45px;
 }
 
 /* HEADER */
@@ -81,59 +82,72 @@ button:disabled {
   display:flex;
   align-items:center;
   justify-content:space-between;
-  gap:15px;
-  margin-bottom:25px;
+  gap:14px;
+  margin-bottom:22px;
 }
 
 .brand {
   display:flex;
   align-items:center;
   gap:12px;
+  min-width:0;
 }
 
 .brand-icon {
-  width:48px;
-  height:48px;
+  width:49px;
+  height:49px;
   display:grid;
   place-items:center;
   border-radius:16px;
-  background:linear-gradient(145deg,#f8d77e,#d69a2e);
-  color:#17130b;
+  background:linear-gradient(145deg,#ffe29a,#d69a42);
+  color:#24170b;
   font-size:27px;
-  box-shadow:0 8px 25px #f2c14e25;
+  box-shadow:0 8px 25px #d99c3d35;
+  position:relative;
+  overflow:hidden;
+}
+
+.brand-icon::after {
+  content:"";
+  position:absolute;
+  inset:4px;
+  border:1px solid #fff8;
+  border-radius:12px;
 }
 
 .brand-name {
-  font-size:24px;
+  font-size:23px;
   font-weight:950;
   color:var(--gold);
   line-height:1.3;
+  letter-spacing:1px;
 }
 
 .brand-sub {
-  font-size:10px;
+  font-size:9px;
   color:var(--muted);
-  letter-spacing:1px;
+  letter-spacing:2px;
+  direction:ltr;
 }
 
 .header-actions {
   display:flex;
   align-items:center;
-  gap:10px;
+  gap:9px;
 }
 
 .status-pill {
   border:1px solid var(--border);
   background:var(--surface);
   color:var(--green);
-  padding:5px 12px;
+  padding:5px 11px;
   border-radius:30px;
-  font-size:11px;
+  font-size:10px;
 }
 
 .theme-toggle {
-  width:42px;
-  height:42px;
+  width:43px;
+  height:43px;
   border-radius:14px;
   border:1px solid var(--border);
   color:var(--text);
@@ -141,8 +155,40 @@ button:disabled {
   font-size:19px;
 }
 
-/* HERO */
+/* NAVIGATION */
 
+.nav-tabs {
+  display:flex;
+  gap:9px;
+  padding:6px;
+  border:1px solid var(--border);
+  background:var(--surface);
+  border-radius:17px;
+  margin-bottom:22px;
+  box-shadow:var(--shadow);
+}
+
+.nav-tab {
+  flex:1;
+  border:0;
+  border-radius:12px;
+  padding:11px 8px;
+  color:var(--muted);
+  background:transparent;
+  font-size:13px;
+  font-weight:bold;
+}
+
+.nav-tab.active {
+  color:#21170c;
+  background:linear-gradient(110deg,#f7d98c,#dda548);
+  box-shadow:0 5px 18px #d99c3d25;
+}
+
+.tab-content {display:none}
+.tab-content.active {display:block}
+
+/* HERO */
 
 .hero {
   position:relative;
@@ -151,104 +197,52 @@ button:disabled {
   grid-template-columns:1.35fr .65fr;
   gap:15px;
   align-items:center;
-  padding:20px 28px;
-  margin-bottom:18px;
-  border:1px solid #b98b3938;
-  border-radius:23px;
+  padding:25px 30px;
+  margin-bottom:19px;
+  border:1px solid #c99a3c45;
+  border-radius:24px;
   background:
-    radial-gradient(circle at 15% 50%,#8e642b32,transparent 40%),
-    linear-gradient(125deg,#1d2941,#111729 65%,#191b2c);
+    radial-gradient(circle at 15% 50%,#b98b3930,transparent 42%),
+    linear-gradient(125deg,var(--hero1),var(--hero2) 75%);
   box-shadow:var(--shadow);
-}
-
-.hero h1 {
-  font-size:clamp(23px,4vw,32px);
-  line-height:1.4;
-  margin:7px 0 5px;
-}
-
-.hero p {
-  color:#aab5c9;
-  font-size:12px;
-  line-height:1.8;
-  margin:0;
-  max-width:450px;
-}
-
-.hero-art {
-  position:relative;
-  z-index:1;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  min-height:105px;
-}
-
-.disc {
-  width:105px;
-  height:105px;
-  border-radius:50%;
-  display:grid;
-  place-items:center;
-  background:
-    repeating-radial-gradient(circle,#111827 0 4px,#222d43 5px 7px);
-  border:5px solid #d6a344;
-  box-shadow:0 0 0 8px #f4c45e12,0 0 30px #f4c45e25;
-  transform:rotate(-15deg);
-}
-
-.disc-center {
-  width:35px;
-  height:35px;
-  display:grid;
-  place-items:center;
-  border-radius:50%;
-  background:linear-gradient(145deg,#f8d77e,#d69a2e);
-  color:#16120a;
-  font-size:19px;
 }
 
 .hero::after {
   content:"♫";
   position:absolute;
-  left:20px;
-  bottom:-80px;
-  font-size:230px;
+  left:15px;
+  bottom:-95px;
+  font-size:245px;
   color:#f4c45e0b;
   pointer-events:none;
 }
 
-.hero-content {
-  position:relative;
-  z-index:1;
-}
+.hero-content {position:relative;z-index:1}
 
 .eyebrow {
   display:inline-block;
   color:var(--gold);
-  font-size:12px;
+  font-size:11px;
   font-weight:bold;
-  border:1px solid #f4c45e44;
-  background:#f4c45e12;
+  border:1px solid #d5a34d55;
+  background:#d5a34d12;
   padding:5px 12px;
   border-radius:30px;
 }
 
 .hero h1 {
-  font-size:clamp(27px,5vw,43px);
-  line-height:1.55;
-  margin:12px 0 8px;
+  font-size:clamp(26px,5vw,40px);
+  line-height:1.5;
+  margin:12px 0 7px;
 }
 
-.hero h1 span {
-  color:var(--gold);
-}
+.hero h1 span {color:var(--gold)}
 
 .hero p {
-  color:#aab5c9;
-  font-size:14px;
+  color:var(--muted);
+  font-size:13px;
   margin:0;
-  max-width:560px;
+  max-width:520px;
 }
 
 .hero-art {
@@ -266,8 +260,7 @@ button:disabled {
   border-radius:50%;
   display:grid;
   place-items:center;
-  background:
-    repeating-radial-gradient(circle,#111827 0 4px,#222d43 5px 7px);
+  background:repeating-radial-gradient(circle,#111827 0 4px,#283248 5px 7px);
   border:7px solid #d6a344;
   box-shadow:0 0 0 12px #f4c45e12,0 0 45px #f4c45e25;
   transform:rotate(-15deg);
@@ -284,51 +277,23 @@ button:disabled {
   font-size:22px;
 }
 
-/* NAVIGATION */
+/* CARDS AND FIELDS */
 
-.nav-tabs {
-  display:flex;
-  gap:9px;
-  padding:7px;
-  border:1px solid var(--border);
+.card {
   background:var(--surface);
-  border-radius:17px;
-  margin-bottom:25px;
+  border:1px solid var(--border);
+  border-radius:21px;
+  padding:23px;
+  margin-bottom:18px;
+  box-shadow:var(--shadow);
 }
-
-.nav-tab {
-  flex:1;
-  border:0;
-  border-radius:12px;
-  padding:12px 8px;
-  color:var(--muted);
-  background:transparent;
-  font-size:14px;
-  font-weight:bold;
-}
-
-.nav-tab.active {
-  color:#17130b;
-  background:linear-gradient(110deg,#f7d879,#e6ad3b);
-  box-shadow:0 5px 18px #f2c14e20;
-}
-
-.tab-content {
-  display:none;
-}
-
-.tab-content.active {
-  display:block;
-}
-
-/* SECTION */
 
 .section-heading {
-  margin:0 0 17px;
+  margin:0 0 15px;
   display:flex;
   align-items:center;
   gap:10px;
-  font-size:18px;
+  font-size:17px;
   font-weight:900;
 }
 
@@ -339,40 +304,25 @@ button:disabled {
   place-items:center;
   flex-shrink:0;
   border-radius:10px;
-  background:#f4c45e18;
+  background:#d5a34d18;
   color:var(--gold);
-  font-size:14px;
-}
-
-.card {
-  background:var(--surface);
-  border:1px solid var(--border);
-  border-radius:22px;
-  padding:24px;
-  margin-bottom:19px;
-  box-shadow:var(--shadow);
+  font-size:13px;
 }
 
 .card-intro {
   color:var(--muted);
   font-size:12px;
-  margin:-10px 0 18px;
+  margin:-8px 0 17px;
 }
 
 .grid {
   display:grid;
   grid-template-columns:repeat(2,minmax(0,1fr));
-  gap:17px;
+  gap:16px;
 }
 
-.field {
-  min-width:0;
-  margin-bottom:17px;
-}
-
-.field:last-child {
-  margin-bottom:0;
-}
+.field {min-width:0;margin-bottom:16px}
+.field:last-child {margin-bottom:0}
 
 label {
   display:block;
@@ -386,17 +336,18 @@ input,textarea,select {
   width:100%;
   min-width:0;
   color:var(--text);
-  background:var(--bg);
+  background:var(--input);
   border:1px solid var(--border);
   border-radius:13px;
-  padding:13px 14px;
-  font-size:14px;
+  padding:12px 14px;
+  font-size:13px;
   outline:none;
+  transition:border .2s,box-shadow .2s;
 }
 
 input:focus,textarea:focus,select:focus {
   border-color:var(--gold);
-  box-shadow:0 0 0 3px #f4c45e15;
+  box-shadow:0 0 0 3px #d5a34d18;
 }
 
 select option {
@@ -404,10 +355,7 @@ select option {
   color:var(--text);
 }
 
-textarea {
-  resize:vertical;
-  min-height:170px;
-}
+textarea {resize:vertical;min-height:165px}
 
 .hint {
   color:var(--muted);
@@ -421,13 +369,14 @@ textarea {
   width:100%;
   border:0;
   border-radius:14px;
-  padding:15px 18px;
+  padding:14px 17px;
   background:linear-gradient(110deg,#f7d879,#e5a936);
-  color:#17130a;
-  font-size:15px;
+  color:#21170b;
+  font-size:14px;
   font-weight:950;
-  box-shadow:0 7px 24px #f2c14e20;
+  box-shadow:0 7px 24px #d99c3d25;
   margin-top:8px;
+  transition:transform .2s,filter .2s;
 }
 
 .main-button:hover:not(:disabled) {
@@ -436,72 +385,9 @@ textarea {
 }
 
 .secondary-button {
-  background:linear-gradient(110deg,#9ae8c7,#43c18e);
+  background:linear-gradient(110deg,#a8e8ca,#43bd8e);
   color:#08281b;
   box-shadow:0 7px 24px #43c18e18;
-}
-
-/* LOCAL MUSIC */
-
-.local-feature {
-  border:1px solid #c99a3c50;
-  background:linear-gradient(130deg,#c99a3c0c,var(--surface));
-  padding:18px;
-  border-radius:17px;
-}
-
-.local-description {
-  background:var(--surface2);
-  border:1px solid var(--border);
-  border-radius:14px;
-  padding:15px;
-  margin-top:14px;
-  color:var(--muted);
-  font-size:13px;
-}
-
-.instrument-preview {
-  display:flex;
-  flex-wrap:wrap;
-  gap:9px;
-  margin-top:14px;
-}
-
-.instrument-chip {
-  display:inline-block;
-  background:#f4c45e13;
-  color:var(--gold);
-  border:1px solid #f4c45e44;
-  padding:7px 13px;
-  border-radius:30px;
-  font-size:12px;
-  font-weight:bold;
-}
-
-.local-intro-grid {
-  display:grid;
-  grid-template-columns:repeat(2,minmax(0,1fr));
-  gap:12px;
-  margin-top:18px;
-}
-
-.local-mini-card {
-  background:var(--surface2);
-  border:1px solid var(--border);
-  border-radius:15px;
-  padding:14px;
-}
-
-.local-mini-card strong {
-  display:block;
-  color:var(--gold);
-  font-size:13px;
-  margin-bottom:4px;
-}
-
-.local-mini-card span {
-  color:var(--muted);
-  font-size:11px;
 }
 
 /* MOOD OPTIONS */
@@ -512,9 +398,7 @@ textarea {
   gap:9px;
 }
 
-.mood-option {
-  position:relative;
-}
+.mood-option {position:relative}
 
 .mood-option input {
   position:absolute;
@@ -525,12 +409,12 @@ textarea {
 .mood-option label {
   display:block;
   text-align:center;
-  padding:10px 5px;
+  padding:9px 5px;
   margin:0;
   border:1px solid var(--border);
   border-radius:12px;
   color:var(--muted);
-  background:var(--bg);
+  background:var(--input);
   font-size:12px;
   cursor:pointer;
 }
@@ -538,44 +422,98 @@ textarea {
 .mood-option input:checked + label {
   color:var(--gold);
   border-color:var(--gold);
-  background:#f4c45e12;
+  background:#d5a34d12;
 }
 
-/* ADVANCED */
+/* ADVANCED SETTINGS */
 
 .advanced {
   border:1px solid var(--border);
-  border-radius:15px;
+  border-radius:16px;
   overflow:hidden;
-  margin-top:18px;
+  margin-top:19px;
 }
 
-.advanced summary {
-  padding:13px 15px;
+.advanced > summary {
+  padding:14px 16px;
   background:var(--surface2);
-  color:var(--muted);
+  color:var(--text);
   cursor:pointer;
   font-size:13px;
   font-weight:bold;
   list-style:none;
 }
 
-.advanced summary::-webkit-details-marker {
+.advanced > summary::-webkit-details-marker,
+.sub-advanced > summary::-webkit-details-marker {
   display:none;
 }
 
-.advanced summary::before {
+.advanced > summary::before,
+.sub-advanced > summary::before {
   content:"＋";
   color:var(--gold);
   margin-left:8px;
 }
 
-.advanced[open] summary::before {
+.advanced[open] > summary::before,
+.sub-advanced[open] > summary::before {
   content:"−";
 }
 
-.advanced-content {
-  padding:17px;
+.advanced-content {padding:17px}
+
+.sub-advanced {
+  border:1px solid var(--border);
+  border-radius:13px;
+  overflow:hidden;
+  margin-bottom:15px;
+}
+
+.sub-advanced > summary {
+  padding:12px 14px;
+  background:var(--surface2);
+  color:var(--text);
+  cursor:pointer;
+  font-size:13px;
+  font-weight:bold;
+  list-style:none;
+}
+
+.sub-content {padding:14px}
+
+.local-description {
+  background:var(--surface2);
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:12px;
+  margin-top:11px;
+  color:var(--muted);
+  font-size:12px;
+}
+
+.instrument-preview {
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  margin-top:11px;
+}
+
+.instrument-chip {
+  display:inline-block;
+  background:#d5a34d15;
+  color:var(--gold);
+  border:1px solid #d5a34d45;
+  padding:5px 11px;
+  border-radius:30px;
+  font-size:11px;
+  font-weight:bold;
+}
+
+.optional-note {
+  color:var(--muted);
+  font-size:11px;
+  margin-top:10px;
 }
 
 /* STATUS */
@@ -584,17 +522,15 @@ textarea {
   display:none;
   white-space:pre-wrap;
   overflow-wrap:anywhere;
-  background:var(--bg);
+  background:var(--input);
   border:1px solid var(--border);
   border-radius:14px;
-  padding:15px;
-  margin-top:17px;
+  padding:14px;
+  margin-top:16px;
   font-size:13px;
 }
 
-.status.show {
-  display:block;
-}
+.status.show {display:block}
 
 .status audio {
   display:block;
@@ -619,7 +555,7 @@ textarea {
   margin-top:10px;
 }
 
-/* STORY */
+/* STORY MAKER */
 
 .story-card {
   background:
@@ -672,72 +608,38 @@ textarea {
 
 .footer-brand {
   color:var(--gold);
-  font-weight:900;
-  font-size:14px;
-  margin-bottom:5px;
+  font-weight:950;
+  font-size:15px;
+  letter-spacing:1px;
+  direction:ltr;
 }
+
+/* RESPONSIVE */
 
 @media(max-width:700px) {
   .hero {
     grid-template-columns:1fr;
-    padding:25px 20px;
+    padding:23px 19px;
   }
 
-  .hero-art {
-    min-height:115px;
-  }
+  .hero-art {min-height:105px}
 
-  .disc {
-    width:105px;
-    height:105px;
-  }
+  .disc {width:105px;height:105px}
+  .disc-center {width:35px;height:35px}
 
-  .disc-center {
-    width:35px;
-    height:35px;
-  }
-
-  .grid {
-    grid-template-columns:1fr;
-    gap:0;
-  }
-
-  .card {
-    padding:19px;
-  }
-
-  .mood-grid {
-    grid-template-columns:repeat(2,minmax(0,1fr));
-  }
+  .grid {grid-template-columns:1fr;gap:0}
+  .card {padding:18px}
+  .mood-grid {grid-template-columns:repeat(2,minmax(0,1fr))}
 }
 
 @media(max-width:430px) {
-  .container {
-    width:94%;
-    padding-top:15px;
-  }
-
-  .brand-name {
-    font-size:21px;
-  }
-
-  .status-pill {
-    font-size:9px;
-    padding:4px 8px;
-  }
-
-  .nav-tab {
-    font-size:10px;
-    padding:11px 4px;
-  }
-
-  .hero h1 {
-    font-size:27px;
-  }
-
-  .local-intro-grid {
-    grid-template-columns:1fr;
-  }
+  .container {width:94%;padding-top:14px}
+  .brand-name {font-size:20px}
+  .brand-sub {font-size:8px}
+  .brand-icon {width:43px;height:43px}
+  .status-pill {font-size:9px;padding:4px 7px}
+  .nav-tab {font-size:11px;padding:10px 4px}
+  .hero h1 {font-size:27px}
 }
 </style>
 </head>
@@ -747,26 +649,22 @@ textarea {
 
 <header class="header">
   <div class="brand">
-    <div class="brand-icon">♫</div>
+    <div class="brand-icon" aria-hidden="true">♫</div>
     <div>
-      <div class="brand-name">NAVA AI</div>
-      <div class="brand-sub">SMART MUSIC STUDIO</div>
+      <div class="brand-name">NAVA STUDIO</div>
+      <div class="brand-sub">AI MUSIC CREATION STUDIO</div>
     </div>
   </div>
 
   <div class="header-actions">
     <span class="status-pill">● نسخه آزمایشی</span>
-    <button class="theme-toggle" id="themeToggle" type="button" aria-label="تغییر تم">☀️</button>
+    <button class="theme-toggle" id="themeToggle" type="button" aria-label="تغییر حالت شب و روز">☀️</button>
   </div>
 </header>
 
-<!-- NAVIGATION -->
 <nav class="nav-tabs">
   <button class="nav-tab active" type="button" data-tab="musicTab">
     🎵 استودیوی موسیقی
-  </button>
-  <button class="nav-tab" type="button" data-tab="localTab">
-    🎶 موسیقی محلی
   </button>
   <button class="nav-tab" type="button" data-tab="storyTab">
     ✦ استوری‌ساز
@@ -774,11 +672,12 @@ textarea {
 </nav>
 
 <!-- MUSIC STUDIO -->
+
 <div id="musicTab" class="tab-content active">
 
   <section class="hero">
     <div class="hero-content">
-      <span class="eyebrow">✦ استودیوی خلاقیت موسیقی</span>
+      <span class="eyebrow">✦ NAVA AI MUSIC STUDIO</span>
       <h1>صدای ایده‌هایت را <span>بساز</span></h1>
       <p>
         از یک ایده ساده تا یک ترانه و آهنگ اختصاصی؛
@@ -792,6 +691,8 @@ textarea {
     </div>
   </section>
 
+  <!-- LYRICS -->
+
   <section class="card">
     <h2 class="section-heading">
       <span class="section-number">۱</span>
@@ -799,7 +700,7 @@ textarea {
     </h2>
 
     <p class="card-intro">
-      موضوعت را بنویس؛ نوا می‌تواند برایت ترانه بسازد.
+      زبان و موضوع را انتخاب کن؛ نوا می‌تواند برایت ترانه بسازد.
     </p>
 
     <div class="grid">
@@ -826,6 +727,8 @@ textarea {
     <div id="lyricStatus" class="status" role="status" aria-live="polite"></div>
   </section>
 
+  <!-- LYRICS TEXT -->
+
   <section class="card">
     <h2 class="section-heading">
       <span class="section-number">۲</span>
@@ -837,12 +740,14 @@ textarea {
       <textarea id="lyrics" maxlength="8000"
         placeholder="متن ترانه را اینجا بنویس یا شعر ساخته‌شده را ویرایش کن..."></textarea>
       <div class="hint">
-        متن شعر قبل از ساخت آهنگ قابل ویرایش است.
+        می‌توانی شعر تولیدشده را ویرایش کنی یا متن آماده خودت را وارد کنی.
       </div>
     </div>
   </section>
 
   <textarea id="singingLyrics" maxlength="8000" hidden aria-hidden="true"></textarea>
+
+  <!-- MUSIC DESIGN -->
 
   <section class="card">
     <h2 class="section-heading">
@@ -908,9 +813,49 @@ textarea {
       </div>
     </div>
 
+    <!-- ADVANCED SETTINGS -->
+
     <details class="advanced">
-      <summary>تنظیمات حرفه‌ای و جزئیات بیشتر</summary>
+      <summary>تنظیمات بیشتر و حرفه‌ای</summary>
       <div class="advanced-content">
+
+        <!-- LOCAL MUSIC INSIDE STUDIO -->
+
+        <details class="sub-advanced" id="localSettings">
+          <summary>🎶 موسیقی محلی و منطقه‌ای (اختیاری)</summary>
+          <div class="sub-content">
+
+            <div class="field">
+              <label for="localRegion">انتخاب منطقه موسیقی</label>
+              <select id="localRegion">
+                <option value="">بدون موسیقی محلی</option>
+                <option value="kurdish">کردی</option>
+                <option value="turkish">آذربایجانی و ترکی</option>
+                <option value="lori">لری</option>
+                <option value="gilaki">گیلکی</option>
+                <option value="mazani">مازندرانی</option>
+                <option value="southern">جنوبی و بندری</option>
+                <option value="khorasani">خراسانی</option>
+                <option value="bakhtiari">بختیاری</option>
+              </select>
+            </div>
+
+            <div class="local-description" id="localDescription">
+              اگر سبک محلی انتخاب کنی، حال‌وهوای موسیقی و سازهای پیشنهادی آن منطقه به تنظیم آهنگ اضافه می‌شود.
+            </div>
+
+            <div class="instrument-preview" id="localInstrumentPreview">
+              <span class="instrument-chip">انتخاب منطقه برای نمایش سازها</span>
+            </div>
+
+            <p class="optional-note">
+              انتخاب موسیقی محلی، زبان شعر را تغییر نمی‌دهد.
+              مثلاً می‌توانی شعر فارسی با موسیقی لری بسازی یا شعر آماده لری را وارد کنی.
+            </p>
+          </div>
+        </details>
+
+        <!-- VOICE -->
 
         <div class="field">
           <label for="voice">جنس و لحن صدای خواننده</label>
@@ -937,6 +882,7 @@ textarea {
             style="min-height:90px"
             placeholder="مثلاً کلمه‌ای با تلفظ خاص یا لهجه مشخص..."></textarea>
         </div>
+
       </div>
     </details>
 
@@ -952,139 +898,13 @@ textarea {
   </section>
 </div>
 
-<!-- LOCAL MUSIC PAGE -->
-<div id="localTab" class="tab-content">
-
-  <section class="hero">
-    <div class="hero-content">
-      <span class="eyebrow">✦ نغمه‌های سرزمین ایران</span>
-      <h1>موسیقی <span>محلی ایران</span></h1>
-      <p>
-        از نغمه‌های کردی و ترکی تا موسیقی جنوب و خراسان؛
-        منطقه موردعلاقه‌ات را انتخاب کن و با حال‌وهوای آن آهنگ بساز.
-      </p>
-    </div>
-
-    <div class="hero-art">
-      <div class="disc">
-        <div class="disc-center">♫</div>
-      </div>
-    </div>
-  </section>
-
-  <section class="card">
-    <h2 class="section-heading">
-      <span class="section-number">۱</span>
-      انتخاب منطقه موسیقی
-    </h2>
-
-    <p class="card-intro">
-      هر منطقه ویژگی‌های ملودیک و سازهای مخصوص خودش را دارد.
-    </p>
-
-    <div class="field">
-      <label for="localRegion">منطقه موردنظر</label>
-      <select id="localRegion">
-        <option value="">انتخاب منطقه</option>
-        <option value="kurdish">کردی</option>
-        <option value="turkish">ترکی</option>
-        <option value="lori">لری</option>
-        <option value="gilaki">گیلکی</option>
-        <option value="mazani">مازندرانی</option>
-        <option value="southern">جنوبی و بندری</option>
-        <option value="khorasani">خراسانی</option>
-        <option value="bakhtiari">بختیاری</option>
-      </select>
-    </div>
-
-    <div class="local-description" id="localDescription">
-      یک منطقه انتخاب کن تا توضیحات و سازهای پیشنهادی آن نمایش داده شوند.
-    </div>
-  </section>
-
-  <section class="card">
-    <h2 class="section-heading">
-      <span class="section-number">۲</span>
-      سازهای محلی پیشنهادی
-    </h2>
-
-    <p class="card-intro">
-      سازهای شناخته‌شده و مناسب هر منطقه را می‌توانی در تنظیم آهنگ استفاده کنی.
-    </p>
-
-    <div id="localInstrumentPreview" class="instrument-preview">
-      <span class="instrument-chip">پس از انتخاب منطقه نمایش داده می‌شود</span>
-    </div>
-
-    <div class="hint" style="margin-top:18px">
-      انتخاب منطقه، زبان ترانه را به‌صورت خودکار تغییر نمی‌دهد.
-      می‌توانی زبان شعر را جداگانه در استودیو انتخاب کنی.
-    </div>
-
-    <button type="button" class="main-button" id="useLocalMusic">
-      🎵 استفاده از این سبک در استودیو
-    </button>
-
-    <div id="localStatus" class="status"></div>
-  </section>
-
-  <section class="card">
-    <h2 class="section-heading">
-      <span class="section-number">♫</span>
-      نغمه‌های محلی
-    </h2>
-
-    <div class="local-intro-grid">
-      <div class="local-mini-card">
-        <strong>کردی</strong>
-        <span>تنبور، دف و شمشال</span>
-      </div>
-
-      <div class="local-mini-card">
-        <strong>ترکی</strong>
-        <span>باغلاما، بالابان و دف</span>
-      </div>
-
-      <div class="local-mini-card">
-        <strong>لری</strong>
-        <span>سرنا، دهل و کمانچه</span>
-      </div>
-
-      <div class="local-mini-card">
-        <strong>گیلکی</strong>
-        <span>لله‌وا، نقاره و دایره</span>
-      </div>
-
-      <div class="local-mini-card">
-        <strong>مازندرانی</strong>
-        <span>لله‌وا، دوتار و دایره</span>
-      </div>
-
-      <div class="local-mini-card">
-        <strong>جنوبی و بندری</strong>
-        <span>نی‌انبان، دمام و دهل</span>
-      </div>
-
-      <div class="local-mini-card">
-        <strong>خراسانی</strong>
-        <span>دوتار، دایره و دهل</span>
-      </div>
-
-      <div class="local-mini-card">
-        <strong>بختیاری</strong>
-        <span>سرنا، دهل و کرنا</span>
-      </div>
-    </div>
-  </section>
-
-</div>
-
 <!-- STORY MAKER -->
+
 <div id="storyTab" class="tab-content">
 
   <section class="hero">
     <div class="hero-content">
-      <span class="eyebrow">✦ استوری‌ساز نوا</span>
+      <span class="eyebrow">✦ NAVA CREATIVE TOOLS</span>
       <h1>کلماتت را <span>زیباتر نمایش بده</span></h1>
       <p>
         متن، شعر کوتاه یا دل‌نوشته‌ات را وارد کن و پیش‌نمایش آن را ببین.
@@ -1120,14 +940,12 @@ textarea {
       <div class="story-subtitle">@Nava_Studio</div>
     </div>
 
-    <div class="story-note">
-      پیش‌نمایش متنی استوری
-    </div>
+    <div class="story-note">پیش‌نمایش متنی استوری</div>
   </section>
 </div>
 
 <footer class="footer">
-  <div class="footer-brand">♫ NAVA AI</div>
+  <div class="footer-brand">♫ NAVA STUDIO</div>
   <div>ایده‌های تو، موسیقی نوا</div>
   <div>نوا در مرحله آزمایش است؛ ساخت آهنگ به دسترسی سرویس مربوط بستگی دارد.</div>
 </footer>
@@ -1163,22 +981,15 @@ function openTab(tabId) {
 
   const selectedTab = document.getElementById(tabId);
 
-  if (selectedTab) {
-    selectedTab.classList.add("active");
-  }
+  if (selectedTab) selectedTab.classList.add("active");
 
   const selectedButton = document.querySelector(
     `.nav-tab[data-tab="${tabId}"]`
   );
 
-  if (selectedButton) {
-    selectedButton.classList.add("active");
-  }
+  if (selectedButton) selectedButton.classList.add("active");
 
-  window.scrollTo({
-    top: 0,
-    behavior: "smooth"
-  });
+  window.scrollTo({top:0,behavior:"smooth"});
 }
 
 document.querySelectorAll(".nav-tab").forEach(button => {
@@ -1198,17 +1009,19 @@ let savedTheme = "dark";
 
 try {
   savedTheme = localStorage.getItem("nava_theme") || "dark";
-} catch (error) {
-  savedTheme = "dark";
-}
+} catch (error) {}
 
 function applyTheme(theme) {
   if (theme === "light") {
-    htmlElement.setAttribute("data-theme", "light");
+    htmlElement.setAttribute("data-theme","light");
     themeToggle.textContent = "🌙";
+    document.querySelector('meta[name="theme-color"]')
+      .setAttribute("content","#f5eee4");
   } else {
     htmlElement.removeAttribute("data-theme");
     themeToggle.textContent = "☀️";
+    document.querySelector('meta[name="theme-color"]')
+      .setAttribute("content","#101321");
   }
 }
 
@@ -1223,7 +1036,7 @@ themeToggle.addEventListener("click", () => {
   applyTheme(nextTheme);
 
   try {
-    localStorage.setItem("nava_theme", nextTheme);
+    localStorage.setItem("nava_theme",nextTheme);
   } catch (error) {}
 });
 
@@ -1261,7 +1074,7 @@ const instrumentsInput = document.getElementById("instruments");
    STATUS MESSAGE
 ================================= */
 
-function showMessage(box, message) {
+function showMessage(box,message) {
   box.replaceChildren();
   box.textContent = message;
   box.classList.add("show");
@@ -1271,7 +1084,7 @@ function showMessage(box, message) {
    SINGING LYRICS
 ================================= */
 
-lyricsBox.addEventListener("input", () => {
+lyricsBox.addEventListener("input",() => {
   singingLyricsBox.value = "";
 });
 
@@ -1279,21 +1092,19 @@ lyricsBox.addEventListener("input", () => {
    API REQUEST
 ================================= */
 
-async function postJSON(baseURL, path, payload, timeoutMs = 130000) {
+async function postJSON(baseURL,path,payload,timeoutMs = 130000) {
   const controller = new AbortController();
 
   const timer = setTimeout(() => {
     controller.abort();
-  }, timeoutMs);
+  },timeoutMs);
 
   try {
-    const response = await fetch(baseURL + path, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(payload),
-      signal: controller.signal
+    const response = await fetch(baseURL + path,{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify(payload),
+      signal:controller.signal
     });
 
     const rawText = await response.text();
@@ -1322,9 +1133,7 @@ async function postJSON(baseURL, path, payload, timeoutMs = 130000) {
     return result;
 
   } catch (error) {
-    if (error.name === "AbortError") {
-      throw error;
-    }
+    if (error.name === "AbortError") throw error;
 
     if (error instanceof TypeError) {
       throw new Error(
@@ -1343,11 +1152,11 @@ async function postJSON(baseURL, path, payload, timeoutMs = 130000) {
    GENERATE LYRICS
 ================================= */
 
-makeLyricsButton.addEventListener("click", async () => {
+makeLyricsButton.addEventListener("click",async () => {
   const topic = document.getElementById("topic").value.trim();
 
   if (!topic) {
-    showMessage(lyricStatus, "اول موضوع ترانه را بنویس.");
+    showMessage(lyricStatus,"اول موضوع ترانه را بنویس.");
     document.getElementById("topic").focus();
     return;
   }
@@ -1355,18 +1164,15 @@ makeLyricsButton.addEventListener("click", async () => {
   makeLyricsButton.disabled = true;
   makeLyricsButton.textContent = "⏳ در حال خلق ترانه...";
 
-  showMessage(
-    lyricStatus,
-    "نوا در حال ساخت ترانه است؛ کمی صبر کن."
-  );
+  showMessage(lyricStatus,"نوا در حال ساخت ترانه است؛ کمی صبر کن.");
 
   try {
     const result = await postJSON(
       LYRICS_API,
       "/generate-lyrics",
       {
-        topic: topic,
-        language: getSelectedLanguage()
+        topic:topic,
+        language:getSelectedLanguage()
       }
     );
 
@@ -1375,9 +1181,7 @@ makeLyricsButton.addEventListener("click", async () => {
     }
 
     lyricsBox.value = result.lyrics;
-
-    singingLyricsBox.value =
-      result.singingLyrics || result.lyrics;
+    singingLyricsBox.value = result.singingLyrics || result.lyrics;
 
     showMessage(
       lyricStatus,
@@ -1385,8 +1189,8 @@ makeLyricsButton.addEventListener("click", async () => {
     );
 
     lyricsBox.scrollIntoView({
-      behavior: "smooth",
-      block: "center"
+      behavior:"smooth",
+      block:"center"
     });
 
   } catch (error) {
@@ -1412,55 +1216,55 @@ makeLyricsButton.addEventListener("click", async () => {
 
 const localMusicOptions = {
   kurdish: {
-    prompt: "Authentic Kurdish regional folk music, recognizable Kurdish melodic phrasing and traditional rhythmic character. Avoid generic Persian pop arrangement.",
-    instruments: "تنبور، دف، شمشال"
+    prompt:"Authentic Kurdish regional folk music, recognizable Kurdish melodic phrasing and traditional rhythmic character. Avoid generic Persian pop arrangement.",
+    instruments:"تنبور، دف، شمشال"
   },
 
   turkish: {
-    prompt: "Authentic Iranian Azerbaijani and Anatolian Turkish folk music, recognizable Turkish folk melodic phrasing and traditional rhythmic character. Prominent baglama where suitable.",
-    instruments: "باغلاما، بالابان، دف"
+    prompt:"Authentic Iranian Azerbaijani folk music, recognizable Azerbaijani melodic phrasing and traditional rhythmic character. Prominent Azerbaijani instruments where suitable.",
+    instruments:"باغلاما، بالابان، دف"
   },
 
   lori: {
-    prompt: "Authentic Lori regional folk music, traditional Lori melodic phrasing, regional dance rhythm and folk character.",
-    instruments: "سرنا، دهل، کمانچه"
+    prompt:"Authentic Lori regional folk music, traditional Lori melodic phrasing, regional dance rhythm and folk character.",
+    instruments:"سرنا، دهل، کمانچه"
   },
 
   gilaki: {
-    prompt: "Authentic Gilaki folk music from northern Iran, northern regional melodic phrasing and lively traditional folk rhythm.",
-    instruments: "لله‌وا، نقاره، دایره"
+    prompt:"Authentic Gilaki folk music from northern Iran, northern regional melodic phrasing and lively traditional folk rhythm.",
+    instruments:"لله‌وا، نقاره، دایره"
   },
 
   mazani: {
-    prompt: "Authentic Mazandarani folk music from northern Iran, traditional Mazani melodic phrasing and regional folk rhythm.",
-    instruments: "لله‌وا، دوتار، دایره"
+    prompt:"Authentic Mazandarani folk music from northern Iran, traditional Mazani melodic phrasing and regional folk rhythm.",
+    instruments:"لله‌وا، دوتار، دایره"
   },
 
   southern: {
-    prompt: "Authentic Southern Iranian and Persian Gulf folk music, Bandar regional rhythmic groove, lively percussion and coastal folk character.",
-    instruments: "نی‌انبان، دمام، دهل"
+    prompt:"Authentic Southern Iranian and Persian Gulf folk music, Bandar regional rhythmic groove, lively percussion and coastal folk character.",
+    instruments:"نی‌انبان، دمام، دهل"
   },
 
   khorasani: {
-    prompt: "Authentic Khorasani folk music, traditional regional melodic phrasing and prominent dotar-led folk arrangement.",
-    instruments: "دوتار، دایره، دهل"
+    prompt:"Authentic Khorasani folk music, traditional regional melodic phrasing and prominent dotar-led folk arrangement.",
+    instruments:"دوتار، دایره، دهل"
   },
 
   bakhtiari: {
-    prompt: "Authentic Bakhtiari folk music, traditional Bakhtiari melodic phrasing, regional folk rhythm and instrumentation.",
-    instruments: "سرنا، دهل، کرنا"
+    prompt:"Authentic Bakhtiari folk music, traditional Bakhtiari melodic phrasing, regional folk rhythm and instrumentation.",
+    instruments:"سرنا، دهل، کرنا"
   }
 };
 
 const localDescriptions = {
-  kurdish: "موسیقی کردی با ملودی‌های منطقه‌ای و سازهایی مانند تنبور، دف و شمشال.",
-  turkish: "موسیقی ترکی با باغلاما، بالابان و ریتم‌های محلی.",
-  lori: "موسیقی لری با سرنا، دهل و ملودی‌های پرشور.",
-  gilaki: "موسیقی گیلکی با لله‌وا، نقاره و ریتم‌های محلی شمال ایران.",
-  mazani: "موسیقی مازندرانی با لله‌وا، دوتار و دایره.",
-  southern: "موسیقی جنوب و بندر با نی‌انبان، دمام و ریتم‌های پرتحرک.",
-  khorasani: "موسیقی خراسانی با محوریت دوتار و ملودی‌های منطقه‌ای.",
-  bakhtiari: "موسیقی بختیاری با سرنا، دهل و کرنا."
+  kurdish:"موسیقی کردی با ملودی‌های منطقه‌ای و سازهایی مانند تنبور، دف و شمشال.",
+  turkish:"موسیقی آذربایجانی ایران با ملودی‌های محلی و سازهایی مانند باغلاما و بالابان.",
+  lori:"موسیقی لری با سرنا، دهل و ملودی‌های پرشور.",
+  gilaki:"موسیقی گیلکی با لله‌وا، نقاره و ریتم‌های محلی شمال ایران.",
+  mazani:"موسیقی مازندرانی با لله‌وا، دوتار و دایره.",
+  southern:"موسیقی جنوب و بندر با نی‌انبان، دمام و ریتم‌های پرتحرک.",
+  khorasani:"موسیقی خراسانی با محوریت دوتار و ملودی‌های منطقه‌ای.",
+  bakhtiari:"موسیقی بختیاری با سرنا، دهل و کرنا."
 };
 
 let lastSuggestedInstruments = "";
@@ -1469,7 +1273,7 @@ let lastSuggestedInstruments = "";
    LOCAL REGION SELECTION
 ================================= */
 
-localRegionSelect.addEventListener("change", () => {
+localRegionSelect.addEventListener("change",() => {
   const previousSuggestion = lastSuggestedInstruments;
   const key = localRegionSelect.value;
   const selected = localMusicOptions[key];
@@ -1485,19 +1289,21 @@ localRegionSelect.addEventListener("change", () => {
     }
 
     lastSuggestedInstruments = "";
+
   } else if (
     !currentInstruments ||
     currentInstruments === previousSuggestion
   ) {
     instrumentsInput.value = selected.instruments;
     lastSuggestedInstruments = selected.instruments;
+
   } else {
     lastSuggestedInstruments = "";
   }
 
   document.getElementById("localDescription").textContent =
     localDescriptions[key] ||
-    "یک منطقه انتخاب کن تا توضیحات آن نمایش داده شوند.";
+    "اگر سبک محلی انتخاب کنی، حال‌وهوای موسیقی و سازهای پیشنهادی آن منطقه به تنظیم آهنگ اضافه می‌شود.";
 
   const preview = document.getElementById("localInstrumentPreview");
   preview.replaceChildren();
@@ -1512,64 +1318,16 @@ localRegionSelect.addEventListener("change", () => {
   } else {
     const chip = document.createElement("span");
     chip.className = "instrument-chip";
-    chip.textContent = "پس از انتخاب منطقه نمایش داده می‌شود";
+    chip.textContent = "انتخاب منطقه برای نمایش سازها";
     preview.appendChild(chip);
   }
-});
-
-/* =================================
-   APPLY LOCAL MUSIC TO STUDIO
-================================= */
-
-document.getElementById("useLocalMusic").addEventListener("click", () => {
-  if (!localRegionSelect.value) {
-    showMessage(
-      document.getElementById("localStatus"),
-      "ابتدا یک منطقه موسیقی انتخاب کن."
-    );
-    return;
-  }
-
-  const selected = localMusicOptions[localRegionSelect.value];
-
-  if (!selected) {
-    showMessage(
-      document.getElementById("localStatus"),
-      "منطقه انتخاب‌شده معتبر نیست."
-    );
-    return;
-  }
-
-  const currentInstruments = instrumentsInput.value.trim();
-
-  if (
-    !currentInstruments ||
-    currentInstruments === lastSuggestedInstruments
-  ) {
-    instrumentsInput.value = selected.instruments;
-    lastSuggestedInstruments = selected.instruments;
-  }
-
-  showMessage(
-    document.getElementById("localStatus"),
-    "✅ سبک محلی انتخاب شد.\nاکنون می‌توانی تنظیمات آهنگ را در استودیو تکمیل کنی."
-  );
-
-  openTab("musicTab");
-
-  setTimeout(() => {
-    styleSelect.scrollIntoView({
-      behavior: "smooth",
-      block: "center"
-    });
-  }, 150);
 });
 
 /* =================================
    INSTRUMENTAL MODE
 ================================= */
 
-styleSelect.addEventListener("change", () => {
+styleSelect.addEventListener("change",() => {
   if (styleSelect.value.includes("no vocals")) {
     voiceSelect.value = "instrumental";
   } else if (voiceSelect.value === "instrumental") {
@@ -1577,7 +1335,7 @@ styleSelect.addEventListener("change", () => {
   }
 });
 
-voiceSelect.addEventListener("change", () => {
+voiceSelect.addEventListener("change",() => {
   if (voiceSelect.value === "instrumental") {
     styleSelect.value =
       "Cinematic instrumental soundtrack, expressive orchestral arrangement, no vocals";
@@ -1588,7 +1346,7 @@ voiceSelect.addEventListener("change", () => {
    GENERATE MUSIC
 ================================= */
 
-generateButton.addEventListener("click", async () => {
+generateButton.addEventListener("click",async () => {
   const lyrics = lyricsBox.value.trim();
   const singingLyrics = singingLyricsBox.value.trim();
 
@@ -1622,17 +1380,17 @@ generateButton.addEventListener("click", async () => {
     document.querySelector('input[name="musicMood"]:checked');
 
   const payload = {
-    lyrics: lyrics,
-    singingLyrics: singingLyrics,
-    language: getSelectedLanguage(),
-    voice: voice,
-    style: finalStyle,
-    musicMood: selectedMood ? selectedMood.value : "emotional",
-    instruments: finalInstruments,
-    mood: document.getElementById("mood").value.trim(),
+    lyrics:lyrics,
+    singingLyrics:singingLyrics,
+    language:getSelectedLanguage(),
+    voice:voice,
+    style:finalStyle,
+    musicMood:selectedMood ? selectedMood.value : "emotional",
+    instruments:finalInstruments,
+    mood:document.getElementById("mood").value.trim(),
     pronunciationNotes:
       document.getElementById("pronunciationNotes").value.trim(),
-    duration: 60
+    duration:60
   };
 
   generateButton.disabled = true;
@@ -1672,9 +1430,7 @@ generateButton.addEventListener("click", async () => {
     download.href = result.audioUrl;
     download.target = "_blank";
     download.rel = "noopener";
-    download.download =
-      `nava-song-${Date.now()}.mp3`;
-
+    download.download = `nava-song-${Date.now()}.mp3`;
     download.textContent = "⬇ دانلود آهنگ";
     statusBox.appendChild(download);
 
@@ -1686,8 +1442,8 @@ generateButton.addEventListener("click", async () => {
     statusBox.classList.add("show");
 
     statusBox.scrollIntoView({
-      behavior: "smooth",
-      block: "center"
+      behavior:"smooth",
+      block:"center"
     });
 
   } catch (error) {
