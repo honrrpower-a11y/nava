@@ -1,3 +1,4 @@
+
 const ALLOWED_ORIGIN = "https://honrrpower-a11y.github.io";
 const MUSIC_DURATION_SECONDS = 60;
 
@@ -98,7 +99,6 @@ function prepareLyrics(text, language = "fa") {
 function prepareSingingLyrics(text, voice) {
   let result = String(text || "").trim();
 
-  // حذف پرانتزهای احتمالی هم‌خوانی در حالت تک‌خوان
   if (voice !== "duet") {
     result = result.replace(/\(([^()]*)\)/g, "$1");
     result = result.replace(/（([^（）]*)）/g, "$1");
@@ -309,34 +309,182 @@ No wordless vocalizations.
 }
 
 // ==========================================
-// حال‌وهوای موسیقی
+// پروفایل مستقل برای هر حال‌وهوای موسیقی
 // ==========================================
 
-function getMoodDescription(mood) {
-  const moods = {
-    emotional:
-      "Deep emotional atmosphere, expressive melody and natural dynamic development.",
+function getMoodProfile(mood) {
+  const profiles = {
+    emotional: {
+      bpm: 82,
+      description: `
+Emotional contemporary ballad.
+Moderate-slow tempo around 82 BPM.
+Expressive melodic phrases, warm harmony and gradual emotional development.
+Begin intimate and restrained, then build into a memorable emotional chorus.
+Use meaningful pauses and dynamic contrast.
+Avoid dance beats and overly cheerful rhythms.
+`
+    },
 
-    happy:
-      "Joyful upbeat atmosphere, bright melody and lively rhythm.",
+    happy: {
+      bpm: 122,
+      description: `
+Bright joyful upbeat pop music.
+Lively tempo around 122 BPM.
+Major-key feeling, playful melodic hooks and cheerful rhythmic movement.
+Use a bouncy groove, bright percussion and an uplifting chorus.
+The music should feel optimistic, light and genuinely happy.
+Avoid sad or dark musical textures.
+`
+    },
 
-    sad:
-      "Melancholic atmosphere, tender expressive melody and restrained dynamics.",
+    sad: {
+      bpm: 70,
+      description: `
+Deep melancholic slow ballad.
+Slow tempo around 70 BPM.
+Minor-key atmosphere, delicate melody and spacious arrangement.
+Use restrained percussion, emotional pauses and expressive instrumental phrases.
+The music should feel reflective, lonely and bittersweet.
+Avoid upbeat dance rhythms.
+`
+    },
 
-    romantic:
-      "Warm intimate romantic atmosphere, lyrical melody and gentle expression.",
+    romantic: {
+      bpm: 88,
+      description: `
+Warm intimate romantic music.
+Gentle tempo around 88 BPM.
+Soft flowing rhythm, tender melodic phrases and rich warm harmony.
+Create an intimate atmosphere with graceful musical transitions.
+The arrangement should feel affectionate, elegant and emotionally close.
+Avoid aggressive drums and heavy rock energy.
+`
+    },
 
-    epic:
-      "Grand cinematic atmosphere, dramatic development and powerful musical impact.",
+    epic: {
+      bpm: 108,
+      description: `
+Powerful cinematic epic music.
+Driving tempo around 108 BPM.
+Grand harmonic movement, dramatic percussion and a strong memorable theme.
+Build intensity progressively toward a powerful climax.
+Use wide dynamic contrast and cinematic instrumental layers.
+The music should feel heroic, dramatic and expansive.
+`
+    },
 
-    calm:
-      "Peaceful soothing atmosphere, gentle dynamics and relaxed pacing.",
+    calm: {
+      bpm: 66,
+      description: `
+Peaceful relaxing ambient music.
+Slow tempo around 66 BPM.
+Gentle flowing movement, spacious sound and soft dynamics.
+Use delicate melodic phrases and a calm uncluttered arrangement.
+Create a meditative, peaceful and soothing atmosphere.
+Avoid heavy percussion and energetic rhythmic patterns.
+`
+    },
 
-    energetic:
-      "High-energy atmosphere, driving rhythm, strong groove and lively momentum."
+    energetic: {
+      bpm: 136,
+      description: `
+High-energy modern music.
+Fast tempo around 136 BPM.
+Strong rhythmic drive, punchy drums and a powerful groove.
+Use energetic melodic hooks and dynamic instrumental breaks.
+The music should feel exciting, active and full of momentum.
+Avoid slow ballad pacing.
+`
+    }
   };
 
-  return moods[mood] || moods.emotional;
+  return profiles[mood] || profiles.emotional;
+}
+
+// ==========================================
+// تشخیص سبک موسیقی و حفظ انتخاب کاربر
+// ==========================================
+
+function getStyleDescription(style) {
+  const original = String(style || "Modern pop").trim();
+  const value = original.toLowerCase();
+
+  let detail = "";
+
+  if (
+    /آذربایجان|آذری|azerbaijan|azerbaijani|باغلاما|baglama|saz|ترکیه|ترکی|turkish/.test(value)
+  ) {
+    detail = `
+Use an Azerbaijani or Turkish folk-inspired musical identity.
+Feature regional melodic phrasing and characteristic folk ornamentation.
+Use a clearly recognizable regional rhythm and melodic character.
+Avoid turning the result into generic Western pop.
+`;
+  } else if (
+    /کردی|کردستان|kurdish|kurdi/.test(value)
+  ) {
+    detail = `
+Use a Kurdish folk-inspired musical identity.
+Use characteristic Kurdish melodic phrasing and rhythmic movement.
+Give the melody a recognizable regional character.
+Avoid generic Western pop arrangements.
+`;
+  } else if (
+    /سنتی|اصیل|traditional|classical persian|موسیقی ایرانی/.test(value)
+  ) {
+    detail = `
+Use Persian traditional musical aesthetics.
+Create expressive Persian melodic phrasing and ornamentation.
+Use an authentic traditional musical character rather than generic pop.
+`;
+  } else if (
+    /راک|rock|metal/.test(value)
+  ) {
+    detail = `
+Use a clearly recognizable rock arrangement.
+Give electric guitars, bass and live-style drums a strong musical role.
+Use rock-oriented riffs, rhythmic accents and energetic transitions.
+Do not turn the arrangement into soft generic pop.
+`;
+  } else if (
+    /الکترونیک|edm|electronic|dance|house|techno/.test(value)
+  ) {
+    detail = `
+Use a clearly electronic music production style.
+Build the rhythm around electronic drums, synthesizers and controlled bass.
+Use genre-appropriate rhythmic drops and electronic transitions.
+Do not use a traditional acoustic ballad arrangement.
+`;
+  } else if (
+    /جاز|jazz|blues|بلوز/.test(value)
+  ) {
+    detail = `
+Use jazz or blues musical language.
+Create expressive phrasing, characteristic harmony and a natural groove.
+Avoid generic pop chord progressions and production.
+`;
+  } else if (
+    /هیپ.?هاپ|hip.?hop|rap|رپ/.test(value)
+  ) {
+    detail = `
+Use a recognizable hip-hop or rap production style.
+Create a strong rhythmic foundation, controlled bass and genre-appropriate drums.
+Keep the arrangement rhythmically focused.
+`;
+  } else if (
+    /پاپ|pop/.test(value)
+  ) {
+    detail = `
+Use a polished modern pop arrangement.
+Create a memorable chorus, clear melodic hooks and a contemporary rhythmic foundation.
+`;
+  }
+
+  return {
+    original,
+    detail
+  };
 }
 
 // ==========================================
@@ -524,9 +672,7 @@ function buildAceMusicPrompt(settings) {
 
   const instrumentList = getInstrumentList(instruments);
 
-  // اگر پیانو در فهرست باشد، ساز اصلی می‌شود.
   const piano = instrumentList.find(isPianoInstrument);
-
   const leadInstrument = piano || instrumentList[0] || "";
 
   const supportingInstruments = instrumentList.filter(
@@ -534,69 +680,98 @@ function buildAceMusicPrompt(settings) {
   );
 
   const pianoSelected = Boolean(piano);
+  const moodProfile = getMoodProfile(musicMood);
+  const styleProfile = getStyleDescription(style);
 
   const parts = [
-    "Create an original, professionally produced song with a distinctive musical identity.",
-    `GENRE AND STYLE: ${style}.`,
-    `MOOD: ${getMoodDescription(musicMood)}.`,
-    `VOCAL STYLE: ${getVoiceDescription(voice)}.`,
-    `VOCAL LANGUAGE: ${getLanguageName(language)}.`
+    `
+CREATE A DISTINCTIVE ORIGINAL MUSIC TRACK.
+
+The selected genre, mood and instruments must be clearly recognizable.
+Do not use a generic default pop arrangement.
+Do not ignore the selected musical direction.
+
+SELECTED GENRE:
+${styleProfile.original}
+
+${styleProfile.detail}
+
+SELECTED MOOD:
+${moodProfile.description}
+
+TEMPO:
+Use approximately ${moodProfile.bpm} BPM unless the selected genre strongly requires a small adjustment.
+`
   ];
 
+  if (!instrumental) {
+    parts.push(`
+VOCAL STYLE:
+${getVoiceDescription(voice)}
+
+VOCAL LANGUAGE:
+${getLanguageName(language)}.
+`);
+  }
+
   if (extraMood) {
-    parts.push(
-      `ADDITIONAL ARTISTIC DIRECTION: ${extraMood}.`
-    );
+    parts.push(`
+ADDITIONAL ARTISTIC DIRECTION:
+${extraMood}
+
+Treat this direction as an important part of the musical identity.
+`);
   }
 
   if (pianoSelected) {
     parts.push(`
-PIANO IS THE MAIN LEAD INSTRUMENT - VERY IMPORTANT:
+PIANO IS THE DOMINANT LEAD INSTRUMENT.
 
-The piano must be clearly audible, prominent and dominant in the arrangement.
+This is a piano-led arrangement, not an arrangement where piano is merely background decoration.
 
-Use a real acoustic piano sound with recognizable piano notes.
-Do not replace the piano with generic keyboard pads or synthesizer textures.
+The piano must be one of the loudest and most clearly recognizable instruments.
 
-Start the song with a beautiful solo piano introduction.
-The piano introduction must be clearly recognizable before the singer begins.
+PIANO REQUIREMENTS:
+- Begin with a clearly audible solo acoustic piano introduction.
+- Use real piano notes, not only keyboard pads or synthesizer textures.
+- Create a memorable piano melody and recurring piano motif.
+- Keep the piano clearly audible throughout the verses and choruses.
+- Add expressive piano phrases between vocal lines.
+- Give the piano prominent instrumental passages.
+- Let the piano carry important melodic sections.
+- Keep the piano forward in the mix.
+- Do not bury the piano beneath strings, pads, guitars or percussion.
+- Supporting instruments must leave enough space for the piano.
+- Do not replace the piano melody with a guitar or synthesizer melody.
 
-Use a memorable piano melody and recurring piano motif.
-Keep the piano present during the verses and choruses.
-Give the piano clear melodic phrases between vocal lines.
-Bring the piano forward in instrumental passages.
-
-The piano must not be buried beneath strings, pads, guitars or percussion.
-Keep its volume and presence strong enough to be easily recognized.
-
-Do not let supporting instruments overpower the piano.
+The listener should immediately recognize that piano is the main instrument.
 `);
   } else if (leadInstrument) {
     parts.push(`
 FEATURED LEAD INSTRUMENT:
-${leadInstrument}.
+${leadInstrument}
 
-This is the most important featured instrument in the arrangement.
-Make its sound prominent, recognizable and musically important.
+Make this instrument prominent, recognizable and musically important.
 Create a memorable melodic hook using this instrument.
-Feature it clearly in the instrumental introduction.
-Bring it forward in instrumental passages between vocal lines.
+Feature it clearly in the introduction and instrumental passages.
 Do not bury it beneath background layers.
 `);
   } else {
     parts.push(`
-Choose a coherent professional instrumental arrangement
-that naturally fits the selected genre and mood.
-Avoid a generic arrangement.
+INSTRUMENT ARRANGEMENT:
+
+Choose a coherent arrangement that fits the selected genre and mood.
+Use distinct melodic and rhythmic elements.
+Avoid a generic arrangement that sounds identical to unrelated genres.
 `);
   }
 
   if (supportingInstruments.length > 0) {
     parts.push(`
 SUPPORTING INSTRUMENTS:
-${supportingInstruments.join(", ")}.
+${supportingInstruments.join(", ")}
 
-Use these instruments as supporting layers only.
+These are supporting instruments, not competing lead instruments.
 Keep the featured lead instrument clearly audible.
 Do not let supporting instruments dominate the mix.
 `);
@@ -604,22 +779,30 @@ Do not let supporting instruments dominate the mix.
 
   if (instrumental) {
     parts.push(`
-INSTRUMENTAL ONLY - ABSOLUTE REQUIREMENT:
+INSTRUMENTAL ONLY - ABSOLUTE REQUIREMENT.
 
-This track must contain instruments only.
+Generate a completely instrumental music track.
 
-No human voice of any kind.
-No singing.
-No speech.
-No humming.
-No vocal samples.
-No choir.
-No vocal chops.
-No vocal ad-libs.
-No wordless vocalizations.
-No "hoo", "woo", "ooh", "yeah" or similar sounds.
+There must be no human voice anywhere in the audio.
 
-Use instruments to fill every musical section.
+STRICTLY FORBIDDEN:
+- Singing
+- Speech
+- Humming
+- Human vocal samples
+- Choir
+- Vocal chops
+- Vocal ad-libs
+- Wordless vocalizations
+- Human-like sounds
+- "Hoo", "Woo", "Ooh", "Yeah"
+- Any female or male vocal sound
+
+Use musical instruments only.
+The melody must be played by instruments, never by a human voice.
+
+Create a complete instrumental arrangement with a clear beginning,
+musical development, memorable instrumental theme and proper ending.
 `);
   } else if (voice !== "duet") {
     parts.push(`
@@ -683,8 +866,6 @@ ${pronunciationNotes}
     parts.push(`
 INTRODUCTION - STRICTLY INSTRUMENTAL:
 
-The introduction must contain instruments only.
-
 Begin with a short, clear instrumental introduction.
 If piano is selected, begin with solo piano.
 
@@ -713,15 +894,13 @@ Do not add any sounds that are not present in the supplied lyrics.
 ARRANGEMENT AND PRODUCTION:
 
 Create a memorable and distinctive melody.
-Use a natural musical structure with clear transitions.
-Allow the arrangement to develop dynamically.
-Give the selected instruments meaningful musical roles.
-
-Keep the lead vocal clear and understandable.
+Use the selected genre and mood as the main musical direction.
+Make the selected mood clearly audible through rhythm, harmony and instrumentation.
+Use meaningful musical development instead of repeating one arrangement throughout.
+Create clear transitions between sections.
+Give selected instruments meaningful musical roles.
 Use a balanced professional studio mix.
-Avoid unnecessary vocal effects.
-Avoid layered vocal textures.
-Avoid repetitive generic arrangements.
+Keep the lead instrument recognizable.
 Use a proper musical ending.
 `);
 
@@ -1189,9 +1368,6 @@ export default {
       // ساخت متن مستقل شعر برای ACE
       // ------------------------------------------
 
-      // شعر دیگر داخل messages قرار نمی‌گیرد.
-      // پیام فقط شامل توضیحات سبک و تنظیم موسیقی است.
-
       let aceLyrics;
 
       if (instrumental) {
@@ -1207,15 +1383,22 @@ ${singingLyrics}`;
       // تنظیمات درخواست ACE
       // ------------------------------------------
 
+      const moodProfile = getMoodProfile(musicMood);
+
       const audioConfig = {
         duration: MUSIC_DURATION_SECONDS,
         format: "mp3",
-        vocal_language: getAceLanguage(language)
+        instrumental: instrumental
       };
 
-      if (instrumental) {
-        audioConfig.instrumental = true;
+      // برای موسیقی باکلام، زبان خوانندگی ارسال می‌شود.
+      // در حالت بی‌کلام، این فیلد عمداً حذف می‌شود.
+      if (!instrumental) {
+        audioConfig.vocal_language = getAceLanguage(language);
       }
+
+      // سرعت متناسب با حال‌وهوای انتخاب‌شده
+      audioConfig.bpm = moodProfile.bpm;
 
       // ------------------------------------------
       // بدنه درخواست ACE
@@ -1224,7 +1407,6 @@ ${singingLyrics}`;
       const aceBody = {
         model: ACE_MODEL,
 
-        // توضیحات موسیقی و تنظیمات در messages
         messages: [
           {
             role: "user",
@@ -1232,7 +1414,6 @@ ${singingLyrics}`;
           }
         ],
 
-        // متن ترانه در فیلد مستقل
         lyrics: aceLyrics,
 
         stream: false,
@@ -1245,7 +1426,7 @@ ${singingLyrics}`;
 
         use_cot_language: false,
 
-        temperature: 0.75,
+        temperature: 0.85,
 
         audio_config: audioConfig
       };
