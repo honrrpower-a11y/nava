@@ -1,4 +1,3 @@
-
 const ALLOWED_ORIGIN = "https://honrrpower-a11y.github.io";
 const MUSIC_DURATION_SECONDS = 60;
 
@@ -64,10 +63,72 @@ function normalizePersianSpacing(text) {
 }
 
 // ==========================================
+// اصلاح حروف لاتین ناخواسته در شعر فارسی
+// ==========================================
+
+function cleanPersianLatinMix(text, language = "fa") {
+  let result = String(text || "");
+
+  if (language !== "fa") {
+    return result;
+  }
+
+  // نمونه:
+  // خط کشte  -> خط کش
+  // اومdu    -> اوم
+  //
+  // فقط حروف لاتین چسبیده به انتهای واژه فارسی حذف می‌شوند.
+  // کلمات انگلیسی مستقل دست‌نخورده باقی می‌مانند.
+
+  result = result.replace(
+    /([\u0600-\u06FF\uFB50-\uFDFF\uFE70-\uFEFF])([A-Za-z]{1,12})(?=$|[\s،؛,.!?؟:])/g,
+    "$1"
+  );
+
+  // حذف فاصله‌های اضافی
+  result = result.replace(/[ \t]{2,}/g, " ");
+
+  // حذف فاصله قبل از علائم نگارشی
+  result = result.replace(/\s+([،؛.!؟,:])/g, "$1");
+
+  return result.trim();
+}
+
+function prepareLyrics(text, language = "fa") {
+  let result = String(text || "");
+
+  result = normalizePersianSpacing(result);
+  result = cleanPersianLatinMix(result, language);
+
+  return result.trim();
+}
+
+// ==========================================
+// آماده‌سازی متن برای خوانندگی
+// ==========================================
+
+function prepareSingingLyrics(text, voice) {
+  let result = String(text || "").trim();
+
+  // در ACE متن داخل پرانتز ممکن است به شکل
+  // backing vocal یا harmony اجرا شود.
+  //
+  // برای تک‌خوانی، پرانتزها حذف می‌شوند
+  // اما خود کلمات حفظ می‌شوند.
+
+  if (voice !== "duet") {
+    result = result.replace(/\(([^()]*)\)/g, "$1");
+    result = result.replace(/（([^（）]*)）/g, "$1");
+  }
+
+  return result.trim();
+}
+
+// ==========================================
 // استخراج دو نسخه شعر
 // ==========================================
 
-function parseLyricsOutput(rawText) {
+function parseLyricsOutput(rawText, language = "fa") {
   const cleaned = cleanLyrics(rawText);
 
   let parsed = null;
@@ -110,12 +171,14 @@ function parseLyricsOutput(rawText) {
     );
   }
 
-  if (!lyrics) lyrics = cleaned;
+  if (!lyrics) {
+    lyrics = cleaned;
+  }
 
-  lyrics = normalizePersianSpacing(lyrics);
+  lyrics = prepareLyrics(lyrics, language);
 
   singingLyrics = singingLyrics
-    ? normalizePersianSpacing(singingLyrics)
+    ? prepareLyrics(singingLyrics, language)
     : lyrics;
 
   return {
@@ -147,25 +210,25 @@ function normalizeVoice(value) {
 function getVoiceDescription(voice) {
   const voices = {
     male_pop:
-      "Solo male pop lead vocal. One consistent male singer throughout the entire song. Bright, clear and youthful male voice. No duet, no female lead vocals and no female backing vocals.",
+      "STRICT SOLO MALE LEAD VOCAL. One single adult male singer only. Clear, natural, youthful male pop voice. One consistent male vocal identity from beginning to end. Absolutely no female singer, no second singer, no duet, no backing vocals, no vocal harmonies, no choir and no vocal ad-libs.",
 
     male_deep:
-      "Solo male baritone lead vocal. One consistent deep, warm and mature male singer throughout the entire song. No duet and no female vocals.",
+      "STRICT SOLO MALE BARITONE LEAD VOCAL. One single adult male singer only. Deep, warm, mature and natural male voice. One consistent male vocal identity throughout the entire song. No female singer, no second singer, no duet, no backing vocals, no vocal harmonies, no choir and no vocal ad-libs.",
 
     male_raspy:
-      "Solo male lead vocal. One consistent expressive male singer throughout the entire song, with a natural subtle husky texture. No duet and no female vocals.",
+      "STRICT SOLO MALE LEAD VOCAL. One single adult male singer only. Expressive natural male voice with a subtle husky texture. One consistent male vocal identity throughout the entire song. No female singer, no second singer, no duet, no backing vocals, no vocal harmonies, no choir and no vocal ad-libs.",
 
     female_pop:
-      "Solo female pop lead vocal. One consistent clear and expressive female singer throughout the entire song. No duet and no male vocals.",
+      "STRICT SOLO FEMALE LEAD VOCAL. One single adult female singer only. Clear, natural and expressive female pop voice. One consistent female vocal identity throughout the entire song. No male singer, no second singer, no duet, no backing vocals, no vocal harmonies, no choir and no vocal ad-libs.",
 
     female_powerful:
-      "Solo powerful female lead vocal. One consistent expressive female singer throughout the entire song. No duet and no male vocals.",
+      "STRICT SOLO FEMALE LEAD VOCAL. One single adult female singer only. Powerful, expressive and natural female voice. One consistent female vocal identity throughout the entire song. No male singer, no second singer, no duet, no backing vocals, no vocal harmonies, no choir and no vocal ad-libs.",
 
     duet:
       "Male and female duet with two distinct and consistent singers. Let them alternate naturally and sing together where musically appropriate.",
 
     instrumental:
-      "Instrumental music only, without singing, speech, humming or human vocal sounds."
+      "STRICTLY INSTRUMENTAL MUSIC. Absolutely no human voice of any kind. No singing, no speech, no humming, no vocal samples, no choir, no vocal chops, no vocal ad-libs and no human-like vocal sounds."
   };
 
   return voices[voice] || voices.male_pop;
@@ -301,7 +364,13 @@ function buildLyricsPrompt(topic, style, language) {
 
 اگر زبان ترانه فارسی است:
 
-الف) دو نسخه کاملاً هماهنگ بساز:
+الف) فقط از حروف و واژه‌های فارسی برای متن فارسی استفاده کن.
+- هیچ حرف لاتینی را به انتهای کلمات فارسی نچسبان.
+- از ترکیب تصادفی حروف فارسی و لاتین خودداری کن.
+- اگر واژه‌ای را نمی‌دانی، آن را با واژه فارسی طبیعی جایگزین کن.
+- کلمات انگلیسی فقط زمانی مجازند که عمداً و به‌صورت مستقل در ترانه استفاده شوند.
+
+ب) دو نسخه کاملاً هماهنگ بساز:
 
 نسخه اول با نام lyrics:
 - متن معمولی و خوانا برای نمایش به کاربر.
@@ -316,18 +385,17 @@ function buildLyricsPrompt(topic, style, language) {
 - کلمات ساده و واضح را بدون اعراب نگه دار.
 - هیچ کلمه‌ای را تغییر نده و هیچ سطری را حذف یا اضافه نکن.
 
-ب) جدانویسی «ه» غیرملفوظ:
+ج) جدانویسی «ه» غیرملفوظ:
 وقتی کلمه‌ای به «ه» غیرملفوظ ختم می‌شود و پسوند یا واژه‌ای مانند «ای»، «ام»، «ات»، «اش»، «ایم»، «اید» یا «اند» به آن می‌پیوندد، آن‌ها را جدا بنویس.
 
 نمونه:
-کافهای ← کافه ای
-خانهام ← خانه ام
-پنجرهات ← پنجره ات
-خستهام ← خسته ام
-قصهام ← قصه ام
+کافه ای
+خانه ام
+پنجره ات
+خسته ام
+قصه ام
 
 این قاعده را در هر دو نسخه رعایت کن.
-این جدانویسی نباید باعث تغییر معنای کلمات شود.
 
 اگر زبان ترکی یا انگلیسی است:
 - هر دو نسخه باید از نظر متن یکسان باشند.
@@ -420,20 +488,26 @@ Keep the featured lead instrument clearly audible.
 
   if (instrumental) {
     parts.push(`
-INSTRUMENTAL ONLY:
-Create instrumental music without any human voice.
+INSTRUMENTAL ONLY - ABSOLUTE REQUIREMENT:
+This track must contain instruments only.
+Do not generate any human voice.
 No singing, no speech, no humming, no vocal samples,
-no choir and no vocal-like sounds.
+no choir, no vocal chops, no vocal ad-libs,
+no human-like sounds and no wordless vocalizations.
+Use instruments to fill every musical section.
 `);
   } else {
     parts.push(`
-VOCAL PERFORMANCE:
-Use the selected singer type consistently.
-Keep the same lead singer throughout the song.
-Do not add an unrequested second singer.
-Do not add female backing vocals to a male solo song.
-Do not add male backing vocals to a female solo song.
-Do not add a choir unless duet is selected.
+VOCAL PERFORMANCE - STRICT SOLO PERFORMANCE:
+Use exactly one lead singer.
+Keep the same singer throughout the entire song.
+Do not introduce a second singer.
+Do not introduce a different voice in the introduction.
+Do not add backing vocals, harmonies, choir or vocal doubles.
+Do not add female vocals to a male solo song.
+Do not add male vocals to a female solo song.
+Do not add vocal ad-libs or wordless vocalizations.
+The singer must sing only the supplied lyrics.
 `);
   }
 
@@ -443,8 +517,9 @@ PERSIAN VOCAL REQUIREMENTS:
 Sing in natural native Iranian Persian (Farsi).
 Use clear Iranian Persian pronunciation and natural Persian vowels.
 Avoid foreign, Indian-sounding or unnatural pronunciation.
-Preserve the supplied Persian words.
+Preserve the supplied Persian words exactly.
 Do not translate, rewrite or replace the lyrics.
+Do not invent extra words or syllables.
 Avoid unnecessary vocal ornaments.
 `);
   }
@@ -460,11 +535,11 @@ ${pronunciationNotes}
     parts.push(`
 INTRODUCTION:
 Begin with a short instrumental introduction.
-Do not sing, hum, shout, speak or use vocal ad-libs before
-the first supplied lyric line.
+No human voice before the first supplied lyric line.
+Do not sing, hum, shout, speak or use vocal ad-libs in the intro.
 Start the singer with the first supplied lyric line.
-Do not add "woo", "yeah", "hoo" or similar sounds
-unless they are explicitly part of the lyrics.
+Do not add "woo", "yeah", "hoo", "ooh" or similar sounds
+unless they are explicitly part of the supplied lyrics.
 `);
   }
 
@@ -641,7 +716,10 @@ export default {
                 .join("")
             );
 
-            const result = parseLyricsOutput(rawLyrics);
+            const result = parseLyricsOutput(
+              rawLyrics,
+              language
+            );
 
             if (result.lyrics) {
               return json(
@@ -752,7 +830,10 @@ export default {
           routerData.choices?.[0]?.message?.content
         );
 
-        const result = parseLyricsOutput(rawLyrics);
+        const result = parseLyricsOutput(
+          rawLyrics,
+          language
+        );
 
         if (!result.lyrics) {
           return json(
@@ -832,19 +913,32 @@ export default {
       // دریافت و پاک‌سازی اطلاعات
       // ------------------------------------------
 
-      const originalLyrics = normalizePersianSpacing(
-        safeText(input.lyrics || "", 8000)
-      );
-
-      const suppliedSingingLyrics = normalizePersianSpacing(
-        safeText(input.singingLyrics || "", 8000)
-      );
-
-      const singingLyrics =
-        suppliedSingingLyrics || originalLyrics;
+      const language = ["fa", "tr", "en"].includes(input.language)
+        ? input.language
+        : "fa";
 
       const voice = normalizeVoice(
         safeText(input.voice || "male_pop", 40)
+      );
+
+      const instrumental = voice === "instrumental";
+
+      const originalLyrics = prepareLyrics(
+        safeText(input.lyrics || "", 8000),
+        language
+      );
+
+      const suppliedSingingLyrics = prepareLyrics(
+        safeText(input.singingLyrics || "", 8000),
+        language
+      );
+
+      const rawSingingLyrics =
+        suppliedSingingLyrics || originalLyrics;
+
+      const singingLyrics = prepareSingingLyrics(
+        rawSingingLyrics,
+        voice
       );
 
       const style = safeText(
@@ -872,12 +966,6 @@ export default {
         1200
       );
 
-      const language = ["fa", "tr", "en"].includes(input.language)
-        ? input.language
-        : "fa";
-
-      const instrumental = voice === "instrumental";
-
       // ------------------------------------------
       // اعتبارسنجی
       // ------------------------------------------
@@ -894,7 +982,13 @@ export default {
         );
       }
 
-      if (!instrumental && singingLyrics.length > 5000) {
+      if (
+        !instrumental &&
+        (
+          singingLyrics.length > 5000 ||
+          originalLyrics.length > 5000
+        )
+      ) {
         return json(
           {
             success: false,
@@ -932,6 +1026,10 @@ export default {
 <prompt>
 ${musicPrompt}
 </prompt>
+
+<lyrics>
+[Instrumental]
+</lyrics>
 `;
       } else {
         messageContent = `
