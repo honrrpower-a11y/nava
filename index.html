@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#101321">
 <title>نوا | استودیوی هوشمند موسیقی</title>
+
 <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet">
 
 <style>
@@ -19,6 +20,7 @@
  --green:#5ee0a0;
  --card-shadow:0 12px 38px #00000018;
 }
+
 [data-theme="light"] {
  --bg:#f4f6fb;
  --panel:#fff;
@@ -30,10 +32,12 @@
  --green:#10b981;
  --card-shadow:0 10px 30px rgba(0,0,0,.06);
 }
+
 * {
  box-sizing:border-box;
  transition:background .3s,color .3s,border-color .3s;
 }
+
 body {
  margin:0;
  color:var(--text);
@@ -42,11 +46,13 @@ body {
  min-height:100vh;
  line-height:1.9;
 }
+
 .container {
  width:min(900px,92%);
  margin:auto;
  padding:28px 0 55px;
 }
+
 header {
  display:flex;
  align-items:center;
@@ -54,6 +60,7 @@ header {
  gap:12px;
  margin-bottom:32px;
 }
+
 .brand {
  font-size:30px;
  font-weight:900;
@@ -62,16 +69,19 @@ header {
  display:flex;
  flex-direction:column;
 }
+
 .brand small {
  font-size:11px;
  font-weight:normal;
  color:var(--muted);
 }
+
 .header-actions {
  display:flex;
  align-items:center;
  gap:10px;
 }
+
 .badge {
  border:1px solid var(--border);
  border-radius:30px;
@@ -80,6 +90,7 @@ header {
  font-size:12px;
  background:var(--panel);
 }
+
 .theme-toggle {
  background:var(--panel);
  border:1px solid var(--border);
@@ -90,6 +101,7 @@ header {
  cursor:pointer;
  font-size:18px;
 }
+
 .tabs {
  display:flex;
  gap:8px;
@@ -99,6 +111,7 @@ header {
  margin-bottom:25px;
  border:1px solid var(--border);
 }
+
 .tab-btn {
  flex:1;
  padding:12px;
@@ -111,28 +124,42 @@ header {
  border-radius:12px;
  cursor:pointer;
 }
+
 .tab-btn.active {
  background:var(--panel);
  color:var(--gold);
  border:1px solid var(--border);
 }
-.tab-content {display:none}
-.tab-content.active {display:block}
+
+.tab-content {
+ display:none;
+}
+
+.tab-content.active {
+ display:block;
+}
+
 .hero {
  text-align:center;
  margin-bottom:25px;
 }
+
 .hero h1 {
  font-size:clamp(25px,5vw,39px);
  margin:0 0 8px;
  line-height:1.6;
 }
-.hero h1 span {color:var(--gold)}
+
+.hero h1 span {
+ color:var(--gold);
+}
+
 .hero p {
  color:var(--muted);
  margin:0;
  font-size:14px;
 }
+
 .card {
  background:var(--panel);
  border:1px solid var(--border);
@@ -141,17 +168,20 @@ header {
  margin-bottom:18px;
  box-shadow:var(--card-shadow);
 }
+
 .section-title {
  font-size:17px;
  font-weight:bold;
  margin:0 0 17px;
 }
+
 label {
  display:block;
  margin-bottom:7px;
  font-size:13px;
  color:var(--text);
 }
+
 input,textarea,select {
  width:100%;
  color:var(--text);
@@ -163,29 +193,37 @@ input,textarea,select {
  font-size:14px;
  outline:none;
 }
-input:focus,textarea:focus,select:focus {
+
+input:focus,
+textarea:focus,
+select:focus {
  border-color:var(--gold);
 }
+
 select option {
  background:var(--panel);
  color:var(--text);
 }
+
 textarea {
  resize:vertical;
  min-height:180px;
 }
+
 .hint {
  color:var(--muted);
  font-size:12px;
  margin-top:6px;
 }
-.field {margin-bottom:17px}
-.field:last-child {margin-bottom:0}
-.grid {
- display:grid;
- grid-template-columns:repeat(2,minmax(0,1fr));
- gap:16px;
+
+.field {
+ margin-bottom:17px;
 }
+
+.field:last-child {
+ margin-bottom:0;
+}
+
 .main-button {
  width:100%;
  border:0;
@@ -200,14 +238,17 @@ textarea {
  font-weight:900;
  box-shadow:0 6px 24px #f2c14e20;
 }
+
 .secondary-button {
  background:linear-gradient(110deg,#8ce8c0,#3abf8b);
  color:#08281a;
 }
+
 .main-button:disabled {
  opacity:.6;
  cursor:wait;
 }
+
 .status {
  display:none;
  white-space:pre-wrap;
@@ -219,12 +260,17 @@ textarea {
  margin-top:18px;
  font-size:13px;
 }
-.status.show {display:block}
+
+.status.show {
+ display:block;
+}
+
 .status audio {
  display:block;
  width:100%;
  margin-top:15px;
 }
+
 .download {
  display:inline-block;
  color:var(--gold);
@@ -235,13 +281,13 @@ textarea {
  text-decoration:none;
 }
 
-/* تنظیمات بیشتر */
 .advanced-settings {
  border:1px solid var(--border);
  border-radius:14px;
  margin-top:18px;
  overflow:hidden;
 }
+
 .advanced-settings summary {
  cursor:pointer;
  padding:12px 15px;
@@ -251,16 +297,29 @@ textarea {
  background:var(--panel2);
  list-style:none;
 }
-.advanced-settings summary::-webkit-details-marker {display:none}
+
+.advanced-settings summary::-webkit-details-marker {
+ display:none;
+}
+
 .advanced-settings summary::before {
  content:"＋";
  display:inline-block;
  margin-left:8px;
  color:var(--gold);
 }
-.advanced-settings[open] summary::before {content:"−"}
-.advanced-content {padding:16px}
-.advanced-content .field:last-child {margin-bottom:0}
+
+.advanced-settings[open] summary::before {
+ content:"−";
+}
+
+.advanced-content {
+ padding:16px;
+}
+
+.advanced-content .field:last-child {
+ margin-bottom:0;
+}
 
 .story-preview-card {
  margin-top:20px;
@@ -276,11 +335,13 @@ textarea {
  justify-content:center;
  align-items:center;
 }
+
 .story-text {
  font-size:1.2rem;
  line-height:1.8;
  font-weight:bold;
 }
+
 .story-subtitle {
  margin-top:18px;
  font-size:.85rem;
@@ -289,20 +350,36 @@ textarea {
  -webkit-text-fill-color:transparent;
  font-weight:bold;
 }
+
 .footnote {
  text-align:center;
  color:var(--muted);
  font-size:12px;
  margin-top:25px;
 }
+
 @media(max-width:580px) {
  .grid {
   grid-template-columns:1fr;
   gap:0;
  }
- header {margin-bottom:25px}
- .brand {font-size:22px}
- .badge {font-size:10px}
+
+ header {
+  margin-bottom:25px;
+ }
+
+ .brand {
+  font-size:22px;
+ }
+
+ .badge {
+  font-size:10px;
+ }
+
+ .tab-btn {
+  font-size:12px;
+  padding:10px 5px;
+ }
 }
 </style>
 </head>
@@ -318,13 +395,23 @@ textarea {
 
  <div class="header-actions">
   <div class="badge">● نسخه آزمایشی</div>
-  <button type="button" class="theme-toggle" id="themeToggle" title="تغییر حالت تاریک/روشن">🌙</button>
+  <button
+   type="button"
+   class="theme-toggle"
+   id="themeToggle"
+   title="تغییر حالت تاریک/روشن"
+  >🌙</button>
  </div>
 </header>
 
 <div class="tabs">
- <button type="button" class="tab-btn active" data-tab="musicTab">🎵 استودیوی موسیقی</button>
- <button type="button" class="tab-btn" data-tab="storyTab">⚡ استوری‌ساز مینیمال</button>
+ <button type="button" class="tab-btn active" data-tab="musicTab">
+  🎵 استودیوی موسیقی
+ </button>
+
+ <button type="button" class="tab-btn" data-tab="storyTab">
+  ⚡ استوری‌ساز مینیمال
+ </button>
 </div>
 
 <!-- استودیوی موسیقی -->
@@ -337,10 +424,12 @@ textarea {
 
  <!-- موضوع و ساخت شعر -->
  <section class="card">
+
   <h2 class="section-title">۱. موضوع ترانه</h2>
 
   <div class="field">
    <label for="langSelect">زبان ترانه</label>
+
    <select id="langSelect">
     <option value="fa">فارسی</option>
     <option value="tr">Türkçe (ترکی استانبولی)</option>
@@ -350,6 +439,7 @@ textarea {
 
   <div class="field">
    <label for="topic">موضوع یا ایده ترانه</label>
+
    <input
     id="topic"
     maxlength="500"
@@ -357,55 +447,134 @@ textarea {
    >
   </div>
 
-  <button type="button" id="makeLyrics" class="main-button secondary-button">
+  <button
+   type="button"
+   id="makeLyrics"
+   class="main-button secondary-button"
+  >
    ✍ ساخت هوشمند شعر
   </button>
 
-  <div id="lyricStatus" class="status" role="status" aria-live="polite"></div>
+  <div
+   id="lyricStatus"
+   class="status"
+   role="status"
+   aria-live="polite"
+  ></div>
+
  </section>
 
- <!-- متن اصلی شعر -->
+ <!-- متن شعر -->
  <section class="card">
+
   <h2 class="section-title">۲. متن ترانه</h2>
 
   <div class="field">
    <label for="lyrics">متن شعر</label>
+
    <textarea
     id="lyrics"
     maxlength="8000"
     placeholder="شعر خودت را بنویس یا با کمک نوا یک ترانه بساز..."
    ></textarea>
+
    <div class="hint">
     می‌توانی شعر ساخته‌شده را ویرایش کنی یا متن دلخواه خودت را بنویسی.
    </div>
   </div>
+
  </section>
 
- <!-- نسخه خوانندگی مخفی است و فقط پشت‌صحنه استفاده می‌شود -->
- <textarea id="singingLyrics" maxlength="8000" hidden aria-hidden="true"></textarea>
+ <!-- نسخه خوانندگی مخفی -->
+ <textarea
+  id="singingLyrics"
+  maxlength="8000"
+  hidden
+  aria-hidden="true"
+ ></textarea>
 
- <!-- تنظیمات اصلی موسیقی -->
+ <!-- تنظیمات موسیقی -->
  <section class="card">
+
   <h2 class="section-title">۳. تنظیم موسیقی</h2>
 
+  <!-- موسیقی محلی -->
   <div class="field">
+
+   <label for="localRegion">🎶 موسیقی محلی ایران</label>
+
+   <select id="localRegion">
+    <option value="">بدون انتخاب موسیقی محلی</option>
+    <option value="kurdish">کردی</option>
+    <option value="turkish">ترکی</option>
+    <option value="lori">لری</option>
+    <option value="gilaki">گیلکی</option>
+    <option value="mazani">مازندرانی</option>
+    <option value="southern">جنوبی و بندری</option>
+    <option value="khorasani">خراسانی</option>
+    <option value="bakhtiari">بختیاری</option>
+   </select>
+
+   <div class="hint">
+    با انتخاب منطقه، ویژگی‌های موسیقی و سازهای محلی پیشنهاد می‌شوند.
+    انتخاب منطقه به‌تنهایی زبان شعر را تغییر نمی‌دهد.
+   </div>
+
+  </div>
+
+  <!-- سبک موسیقی -->
+  <div class="field">
+
    <label for="styleInput">سبک ترانه</label>
+
    <select id="styleInput">
-    <option value="Modern Persian pop, polished production, catchy melodic arrangement">پاپ مدرن</option>
-    <option value="Turkish Anatolian folk pop, prominent bağlama, rhythmic folk arrangement">ترکی با ساز باغلاما</option>
-    <option value="Traditional Persian music, Persian classical instruments, expressive melody">سنتی ایرانی</option>
-    <option value="Upbeat dance pop, energetic rhythm, punchy bass and lively percussion">پاپ شاد و رقصی</option>
-    <option value="Sad emotional ballad, slow tempo, expressive melody, soft piano and strings">بالاد غمگین و احساسی</option>
-    <option value="Acoustic pop, warm guitar, natural organic arrangement">آکوستیک</option>
-    <option value="Modern rap, rhythmic vocal delivery, strong beat and deep bass">رپ</option>
-    <option value="Cinematic soundtrack, expressive orchestral arrangement">سینمایی</option>
-    <option value="Cinematic instrumental soundtrack, expressive orchestral arrangement, no vocals">موسیقی بی‌کلام</option>
+
+    <option value="Modern Persian pop, polished production, catchy melodic arrangement">
+     پاپ مدرن
+    </option>
+
+    <option value="Turkish Anatolian folk pop, prominent bağlama, rhythmic folk arrangement">
+     ترکی با ساز باغلاما
+    </option>
+
+    <option value="Traditional Persian music, Persian classical instruments, expressive melody">
+     سنتی ایرانی
+    </option>
+
+    <option value="Upbeat dance pop, energetic rhythm, punchy bass and lively percussion">
+     پاپ شاد و رقصی
+    </option>
+
+    <option value="Sad emotional ballad, slow tempo, expressive melody, soft piano and strings">
+     بالاد غمگین و احساسی
+    </option>
+
+    <option value="Acoustic pop, warm guitar, natural organic arrangement">
+     آکوستیک
+    </option>
+
+    <option value="Modern rap, rhythmic vocal delivery, strong beat and deep bass">
+     رپ
+    </option>
+
+    <option value="Cinematic soundtrack, expressive orchestral arrangement">
+     سینمایی
+    </option>
+
+    <option value="Cinematic instrumental soundtrack, expressive orchestral arrangement, no vocals">
+     موسیقی بی‌کلام
+    </option>
+
    </select>
   </div>
 
+  <!-- تنها انتخاب‌گر حال و هوا -->
   <div class="field">
+
    <label for="musicMood">حال‌وهوای موسیقی</label>
+
    <select id="musicMood">
+
     <option value="emotional">احساسی و عمیق</option>
     <option value="happy">شاد و پرانرژی</option>
     <option value="sad">غمگین و دلتنگ</option>
@@ -413,52 +582,92 @@ textarea {
     <option value="epic">حماسی و باشکوه</option>
     <option value="calm">آرام و دلنشین</option>
     <option value="energetic">پرقدرت و ریتمیک</option>
+
    </select>
   </div>
 
+  <!-- سازها -->
   <div class="field">
+
    <label for="instruments">سازهای موردنظر</label>
+
    <input
     id="instruments"
     maxlength="300"
     placeholder="مثلاً: باغلاما، پیانو، ویولن"
    >
+
    <div class="hint">
     ساز اول، ساز اصلی آهنگ است و سازهای بعدی نقش همراه دارند.
     سازها را با ویرگول جدا کن.
    </div>
+
   </div>
 
-  <!-- تنظیمات تخصصی در حالت بسته -->
+  <!-- تنظیمات پیشرفته -->
   <details class="advanced-settings">
+
    <summary>تنظیمات بیشتر (اختیاری)</summary>
 
    <div class="advanced-content">
 
     <div class="field">
+
      <label for="voice">جنس و لحن صدای خواننده</label>
+
      <select id="voice">
-      <option value="male_pop">خواننده مرد (پاپ جوان و روشن)</option>
-      <option value="male_deep">خواننده مرد (باریتون عمیق و گرم)</option>
-      <option value="male_raspy">خواننده مرد (صدای خش‌دار و احساسی)</option>
-      <option value="female_pop">خواننده زن (پاپ شفاف و ملایم)</option>
-      <option value="female_powerful">خواننده زن (قدرتمند و پرانرژی)</option>
-      <option value="duet">دوخواننده (مرد و زن)</option>
-      <option value="instrumental">بی‌کلام (بدون خواننده)</option>
+
+      <option value="male_pop">
+       خواننده مرد (پاپ جوان و روشن)
+      </option>
+
+      <option value="male_deep">
+       خواننده مرد (باریتون عمیق و گرم)
+      </option>
+
+      <option value="male_raspy">
+       خواننده مرد (صدای خش‌دار و احساسی)
+      </option>
+
+      <option value="female_pop">
+       خواننده زن (پاپ شفاف و ملایم)
+      </option>
+
+      <option value="female_powerful">
+       خواننده زن (قدرتمند و پرانرژی)
+      </option>
+
+      <option value="duet">
+       دوخواننده (مرد و زن)
+      </option>
+
+      <option value="instrumental">
+       بی‌کلام (بدون خواننده)
+      </option>
+
      </select>
     </div>
 
     <div class="field">
-     <label for="mood">توضیحات تکمیلی موسیقی</label>
+
+     <label for="mood">
+      توضیحات نحوه اجرای آهنگ (اختیاری)
+     </label>
+
      <input
       id="mood"
       maxlength="500"
       placeholder="مثلاً: شروع آرام، اوج احساسی در ترجیع‌بند..."
      >
+
     </div>
 
     <div class="field">
-     <label for="pronunciationNotes">راهنمای تلفظ کلمات خاص</label>
+
+     <label for="pronunciationNotes">
+      راهنمای تلفظ کلمات خاص
+     </label>
+
      <textarea
       id="pronunciationNotes"
       maxlength="1200"
@@ -466,9 +675,11 @@ textarea {
       style="min-height:90px"
       placeholder="مثلاً: کلمه «مُهر» با ضمه خوانده شود."
      ></textarea>
+
      <div class="hint">
       اگر تلفظ کلمه‌ای خاص است، اینجا راهنمایی کن.
      </div>
+
     </div>
 
    </div>
@@ -478,11 +689,21 @@ textarea {
    مدت درخواستی آهنگ: یک دقیقه (۶۰ ثانیه)
   </div>
 
-  <button type="button" id="generate" class="main-button">
+  <button
+   type="button"
+   id="generate"
+   class="main-button"
+  >
    ✦ ساخت آهنگ یک‌دقیقه‌ای
   </button>
 
-  <div id="status" class="status" role="status" aria-live="polite"></div>
+  <div
+   id="status"
+   class="status"
+   role="status"
+   aria-live="polite"
+  ></div>
+
  </section>
 
 </div>
@@ -492,26 +713,42 @@ textarea {
 
  <section class="hero">
   <h1>استوری‌ساز <span>مینیمال</span></h1>
-  <p>متن یا دل‌نوشته‌ات را وارد کن تا برای انتشار در استوری آماده شود.</p>
+  <p>
+   متن یا دل‌نوشته‌ات را وارد کن تا برای انتشار در استوری آماده شود.
+  </p>
  </section>
 
  <section class="card">
+
   <h2 class="section-title">متن استوری</h2>
 
   <div class="field">
-   <label for="storyInput">متن دل‌نوشته یا شعر کوتاه</label>
+
+   <label for="storyInput">
+    متن دل‌نوشته یا شعر کوتاه
+   </label>
+
    <textarea
     id="storyInput"
     rows="3"
     placeholder="جمله یا حس‌وحال خود را بنویسید..."
     style="min-height:120px"
    ></textarea>
+
   </div>
 
   <div class="story-preview-card">
-   <div class="story-text" id="previewText">« متن شما اینجا قرار می‌گیرد... »</div>
-   <div class="story-subtitle">@Nava_Studio</div>
+
+   <div class="story-text" id="previewText">
+    « متن شما اینجا قرار می‌گیرد... »
+   </div>
+
+   <div class="story-subtitle">
+    @Nava_Studio
+   </div>
+
   </div>
+
  </section>
 
 </div>
@@ -525,6 +762,10 @@ textarea {
 <script>
 "use strict";
 
+/* ==========================================
+   آدرس سرویس‌ها
+========================================== */
+
 const MUSIC_API = "https://nava-music-api.honrrpower.workers.dev";
 const LYRICS_API = MUSIC_API;
 
@@ -532,9 +773,14 @@ function getSelectedLanguage() {
  return document.getElementById("langSelect").value;
 }
 
-// تب‌ها
+/* ==========================================
+   تب‌ها
+========================================== */
+
 document.querySelectorAll(".tab-btn").forEach(button => {
+
  button.addEventListener("click", () => {
+
   document.querySelectorAll(".tab-content").forEach(tab => {
    tab.classList.remove("active");
   });
@@ -544,86 +790,163 @@ document.querySelectorAll(".tab-btn").forEach(button => {
   });
 
   document.getElementById(button.dataset.tab).classList.add("active");
+
   button.classList.add("active");
+
  });
+
 });
 
-// حالت تاریک و روشن
+/* ==========================================
+   حالت تاریک و روشن
+========================================== */
+
 const themeToggle = document.getElementById("themeToggle");
 const htmlElement = document.documentElement;
+
 const savedTheme = localStorage.getItem("nava_theme") || "dark";
 
 if (savedTheme === "light") {
+
  htmlElement.setAttribute("data-theme", "light");
  themeToggle.textContent = "☀️";
+
 } else {
+
  htmlElement.removeAttribute("data-theme");
  themeToggle.textContent = "🌙";
+
 }
 
 themeToggle.addEventListener("click", () => {
+
  if (htmlElement.getAttribute("data-theme") === "light") {
+
   htmlElement.removeAttribute("data-theme");
+
   localStorage.setItem("nava_theme", "dark");
+
   themeToggle.textContent = "🌙";
+
  } else {
+
   htmlElement.setAttribute("data-theme", "light");
+
   localStorage.setItem("nava_theme", "light");
+
   themeToggle.textContent = "☀️";
+
  }
+
 });
 
-// پیش‌نمایش استوری
+/* ==========================================
+   پیش‌نمایش استوری
+========================================== */
+
 document.getElementById("storyInput").addEventListener("input", () => {
+
  const value = document.getElementById("storyInput").value.trim();
 
  document.getElementById("previewText").textContent =
   value ? `« ${value} »` : "« متن شما اینجا قرار می‌گیرد... »";
+
 });
 
-// عناصر شعر
+/* ==========================================
+   عناصر شعر و آهنگ
+========================================== */
+
 const lyricsBox = document.getElementById("lyrics");
+
 const singingLyricsBox = document.getElementById("singingLyrics");
 
 const makeLyricsButton = document.getElementById("makeLyrics");
+
 const lyricStatus = document.getElementById("lyricStatus");
+
 const generateButton = document.getElementById("generate");
+
 const statusBox = document.getElementById("status");
 
+const styleSelect = document.getElementById("styleInput");
+
+const voiceSelect = document.getElementById("voice");
+
+const localRegionSelect = document.getElementById("localRegion");
+
+const instrumentsInput = document.getElementById("instruments");
+
+/* ==========================================
+   نمایش پیام
+========================================== */
+
 function showMessage(box, message) {
+
  box.replaceChildren();
+
  box.textContent = message;
+
  box.classList.add("show");
+
 }
 
-// اگر کاربر شعر اصلی را تغییر دهد، نسخه خوانندگی قبلی پاک می‌شود.
+/* ==========================================
+   پاک کردن نسخه خوانندگی قدیمی
+========================================== */
+
 lyricsBox.addEventListener("input", () => {
+
  singingLyricsBox.value = "";
+
 });
 
-// ارسال درخواست و مدیریت خطا
+/* ==========================================
+   ارسال درخواست و مدیریت خطا
+========================================== */
+
 async function postJSON(baseURL, path, payload, timeoutMs = 130000) {
+
  const controller = new AbortController();
- const timer = setTimeout(() => controller.abort(), timeoutMs);
+
+ const timer = setTimeout(() => {
+  controller.abort();
+ }, timeoutMs);
 
  try {
+
   const response = await fetch(baseURL + path, {
+
    method: "POST",
-   headers: {"Content-Type": "application/json"},
+
+   headers: {
+    "Content-Type": "application/json"
+   },
+
    body: JSON.stringify(payload),
+
    signal: controller.signal
+
   });
 
   const rawText = await response.text();
+
   let result;
 
   try {
+
    result = JSON.parse(rawText);
+
   } catch {
-   throw new Error("پاسخ سرور قابل خواندن نیست. کد HTTP: " + response.status);
+
+   throw new Error(
+    "پاسخ سرور قابل خواندن نیست. کد HTTP: " + response.status
+   );
+
   }
 
   if (!response.ok) {
+
    const details = result.details;
 
    const message = typeof details === "string"
@@ -631,41 +954,58 @@ async function postJSON(baseURL, path, payload, timeoutMs = 130000) {
     : result.error || "خطای سرویس: " + response.status;
 
    throw new Error(message);
+
   }
 
   return result;
 
  } catch (error) {
-  if (error.name === "AbortError") throw error;
+
+  if (error.name === "AbortError") {
+   throw error;
+  }
 
   if (error instanceof TypeError) {
-   throw new Error("ارتباط با سرور برقرار نشد. اینترنت، آدرس Worker یا تنظیمات CORS را بررسی کن.");
+
+   throw new Error(
+    "ارتباط با سرور برقرار نشد. اینترنت، آدرس Worker یا تنظیمات CORS را بررسی کن."
+   );
+
   }
 
   throw error;
 
  } finally {
+
   clearTimeout(timer);
+
  }
+
 }
 
-// ==========================================
-// ساخت شعر
-// یک درخواست به Gemini؛ بدون درخواست جداگانه اعراب‌گذاری
-// ==========================================
+/* ==========================================
+   ساخت شعر
+   یک درخواست به سرویس فعلی
+========================================== */
 
 makeLyricsButton.addEventListener("click", async () => {
+
  const topic = document.getElementById("topic").value.trim();
 
  if (!topic) {
+
   showMessage(lyricStatus, "اول موضوع ترانه را بنویس.");
+
   document.getElementById("topic").focus();
+
   return;
+
  }
 
  const selectedLang = getSelectedLanguage();
 
  makeLyricsButton.disabled = true;
+
  makeLyricsButton.textContent = "⏳ در حال خلق ترانه...";
 
  showMessage(
@@ -674,25 +1014,32 @@ makeLyricsButton.addEventListener("click", async () => {
  );
 
  try {
-  const result = await postJSON(LYRICS_API, "/generate-lyrics", {
-   topic: topic,
-   language: selectedLang
-  });
+
+  const result = await postJSON(
+   LYRICS_API,
+   "/generate-lyrics",
+   {
+    topic: topic,
+    language: selectedLang
+   }
+  );
 
   if (!result.success || !result.lyrics) {
+
    throw new Error(result.error || "متن شعر دریافت نشد.");
+
   }
 
   lyricsBox.value = result.lyrics;
 
-  // نسخه خوانندگی فقط در حافظه صفحه قرار می‌گیرد و نمایش داده نمی‌شود.
   singingLyricsBox.value =
    result.singingLyrics || result.lyrics;
 
   showMessage(
    lyricStatus,
    "✅ شعر با موفقیت ساخته شد.\n" +
-   "سرویس تولیدکننده: " + (result.provider || "نامشخص")
+   "سرویس تولیدکننده: " +
+   (result.provider || "نامشخص")
   );
 
   lyricsBox.scrollIntoView({
@@ -701,70 +1048,273 @@ makeLyricsButton.addEventListener("click", async () => {
   });
 
  } catch (error) {
+
   showMessage(
    lyricStatus,
    "ساخت شعر ناموفق بود.\n" +
-   (error.name === "AbortError"
-    ? "زمان انتظار تمام شد؛ دوباره امتحان کن."
-    : error.message)
+   (
+    error.name === "AbortError"
+     ? "زمان انتظار تمام شد؛ دوباره امتحان کن."
+     : error.message
+   )
   );
 
  } finally {
+
   makeLyricsButton.disabled = false;
+
   makeLyricsButton.textContent = "✍ ساخت هوشمند شعر";
+
  }
+
 });
 
-// ==========================================
-// انتخاب موسیقی بی‌کلام
-// ==========================================
+/* ==========================================
+   موسیقی محلی ایران
+========================================== */
 
-const styleSelect = document.getElementById("styleInput");
-const voiceSelect = document.getElementById("voice");
+const localMusicOptions = {
+
+ kurdish: {
+
+  prompt:
+   "Authentic Kurdish regional folk music, recognizable Kurdish melodic phrasing and traditional rhythmic character. Use Kurdish folk influence respectfully; avoid generic Persian pop arrangement.",
+
+  instruments:
+   "تنبور، دف، شمشال"
+
+ },
+
+ turkish: {
+
+  prompt:
+   "Authentic Turkish folk music with regional Iranian Turkish and Anatolian Turkish folk character, recognizable Turkish folk melodic phrasing and traditional rhythmic character. Prominent baglama where suitable.",
+
+  instruments:
+   "باغلاما، بالابان، دف"
+
+ },
+
+ lori: {
+
+  prompt:
+   "Authentic Lori regional folk music, traditional Lori melodic phrasing, regional dance rhythm and folk character.",
+
+  instruments:
+   "سرنا، دهل، کمانچه"
+
+ },
+
+ gilaki: {
+
+  prompt:
+   "Authentic Gilaki folk music from northern Iran, northern regional melodic phrasing and lively traditional folk rhythm.",
+
+  instruments:
+   "لله‌وا، نقاره، دایره"
+
+ },
+
+ mazani: {
+
+  prompt:
+   "Authentic Mazandarani folk music from northern Iran, traditional Mazani melodic phrasing and regional folk rhythm.",
+
+  instruments:
+   "لله‌وا، دوتار، دایره"
+
+ },
+
+ southern: {
+
+  prompt:
+   "Authentic Southern Iranian and Persian Gulf folk music, Bandar regional rhythmic groove, lively percussion and coastal folk character.",
+
+  instruments:
+   "نی‌انبان، دمام، دهل"
+
+ },
+
+ khorasani: {
+
+  prompt:
+   "Authentic Khorasani folk music, traditional regional melodic phrasing and prominent dotar-led folk arrangement.",
+
+  instruments:
+   "دوتار، دایره، دهل"
+
+ },
+
+ bakhtiari: {
+
+  prompt:
+   "Authentic Bakhtiari folk music, traditional Bakhtiari melodic phrasing, regional folk rhythm and instrumentation.",
+
+  instruments:
+   "سرنا، دهل، کرنا"
+
+ }
+
+};
+
+/*
+این متغیر مشخص می‌کند چه سازی را خود برنامه
+به‌صورت خودکار پیشنهاد داده است.
+اگر کاربر خودش ساز را تغییر دهد، انتخاب او حفظ می‌شود.
+*/
+
+let lastSuggestedInstruments = "";
+
+/* ==========================================
+   انتخاب منطقه موسیقی محلی
+========================================== */
+
+localRegionSelect.addEventListener("change", () => {
+
+ const previousSuggestion = lastSuggestedInstruments;
+
+ const selected = localMusicOptions[localRegionSelect.value];
+
+ const currentInstruments = instrumentsInput.value.trim();
+
+ // اگر منطقه پاک شد، فقط پیشنهاد خودکار قبلی پاک می‌شود.
+ if (!selected) {
+
+  if (
+   previousSuggestion &&
+   currentInstruments === previousSuggestion
+  ) {
+
+   instrumentsInput.value = "";
+
+  }
+
+  lastSuggestedInstruments = "";
+
+  return;
+
+ }
+
+ // اگر فیلد خالی باشد یا هنوز پیشنهاد قبلی برنامه داخل آن باشد،
+ // سازهای منطقه جدید جایگزین می‌شوند.
+
+ if (
+  !currentInstruments ||
+  currentInstruments === previousSuggestion
+ ) {
+
+  instrumentsInput.value = selected.instruments;
+
+  lastSuggestedInstruments = selected.instruments;
+
+ } else {
+
+  // اگر کاربر ساز دلخواه وارد کرده، آن را دست نمی‌زنیم.
+  lastSuggestedInstruments = "";
+
+ }
+
+});
+
+/* ==========================================
+   تشخیص موسیقی بی‌کلام
+========================================== */
 
 styleSelect.addEventListener("change", () => {
+
  if (styleSelect.value.includes("no vocals")) {
+
   voiceSelect.value = "instrumental";
+
  } else if (voiceSelect.value === "instrumental") {
+
   voiceSelect.value = "male_pop";
+
  }
+
 });
 
-// ==========================================
-// ساخت آهنگ با ACE Music
-// ==========================================
+/* ==========================================
+   ساخت آهنگ با ACE Music
+========================================== */
 
 generateButton.addEventListener("click", async () => {
+
  const lyrics = lyricsBox.value.trim();
+
  const singingLyrics = singingLyricsBox.value.trim();
 
  const voice = voiceSelect.value;
+
  const instrumental = voice === "instrumental";
 
+ // بررسی وجود شعر
  if (!instrumental && !lyrics) {
-  showMessage(statusBox, "اول متن آهنگ را بنویس یا با هوش مصنوعی شعر بساز.");
+
+  showMessage(
+   statusBox,
+   "اول متن آهنگ را بنویس یا با هوش مصنوعی شعر بساز."
+  );
+
   lyricsBox.focus();
+
   return;
+
  }
 
+ // منطقه محلی انتخاب‌شده
+ const selectedRegion = localMusicOptions[localRegionSelect.value];
+
+ // سبک پایه
+ const baseStyle = styleSelect.value;
+
+ /*
+ اگر موسیقی محلی انتخاب شده باشد،
+ ویژگی‌های منطقه‌ای به سبک پایه اضافه می‌شوند.
+ ساختار فیلد style حفظ می‌شود.
+ */
+
+ const finalStyle = selectedRegion
+
+  ? baseStyle + ". " + selectedRegion.prompt
+
+  : baseStyle;
+
+ // سازهای انتخابی
+ const finalInstruments =
+  instrumentsInput.value.trim() ||
+  (selectedRegion ? selectedRegion.instruments : "");
+
+ // اطلاعات ارسالی به Worker
  const payload = {
+
   lyrics: lyrics,
 
-  // نسخه مخصوص خوانندگی مخفی است و فقط به Worker ارسال می‌شود.
   singingLyrics: singingLyrics,
 
   language: getSelectedLanguage(),
+
   voice: voice,
-  style: styleSelect.value,
+
+  style: finalStyle,
+
   musicMood: document.getElementById("musicMood").value,
-  instruments: document.getElementById("instruments").value.trim(),
+
+  instruments: finalInstruments,
+
   mood: document.getElementById("mood").value.trim(),
-  pronunciationNotes: document.getElementById("pronunciationNotes").value.trim(),
+
+  pronunciationNotes:
+   document.getElementById("pronunciationNotes").value.trim(),
+
   duration: 60
+
  };
 
  generateButton.disabled = true;
- generateButton.textContent = "⏳ در حال ساخت آهنگ یک‌دقیقه‌ای...";
+
+ generateButton.textContent =
+  "⏳ در حال ساخت آهنگ یک‌دقیقه‌ای...";
 
  showMessage(
   statusBox,
@@ -772,6 +1322,7 @@ generateButton.addEventListener("click", async () => {
  );
 
  try {
+
   const result = await postJSON(
    MUSIC_API,
    "/generate-music",
@@ -780,56 +1331,79 @@ generateButton.addEventListener("click", async () => {
   );
 
   if (!result.success || !result.audioUrl) {
+
    throw new Error(result.error || "فایل صوتی دریافت نشد.");
+
   }
 
   statusBox.replaceChildren();
 
   const heading = document.createElement("strong");
+
   heading.textContent = "🎵 آهنگ آماده است";
+
   statusBox.appendChild(heading);
 
   const audio = document.createElement("audio");
+
   audio.controls = true;
+
   audio.preload = "metadata";
+
   audio.src = result.audioUrl;
 
   statusBox.appendChild(audio);
 
   const download = document.createElement("a");
+
   download.className = "download";
+
   download.href = result.audioUrl;
+
   download.target = "_blank";
+
   download.rel = "noopener";
+
   download.download =
    `nava-song-${Math.floor(Math.random() * 90000) + 10000}.mp3`;
 
   download.textContent = "⬇ دانلود آهنگ";
+
   statusBox.appendChild(download);
 
   const info = document.createElement("div");
+
   info.className = "hint";
+
   info.textContent = "مدت درخواستی: ۶۰ ثانیه";
 
   statusBox.appendChild(info);
+
   statusBox.classList.add("show");
 
  } catch (error) {
+
   showMessage(
    statusBox,
    "ساخت آهنگ ناموفق بود.\n" +
-   (error.name === "AbortError"
-    ? "زمان انتظار تمام شد؛ وضعیت سرویس را بررسی کن."
-    : error.message)
+   (
+    error.name === "AbortError"
+     ? "زمان انتظار تمام شد؛ وضعیت سرویس را بررسی کن."
+     : error.message
+   )
   );
 
  } finally {
+
   generateButton.disabled = false;
+
   generateButton.textContent = "✦ ساخت آهنگ یک‌دقیقه‌ای";
+
  }
+
 });
+
 </script>
 
 </body>
-</html>
- 
+     </html> 
