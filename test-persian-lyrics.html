@@ -44,7 +44,7 @@
   <h3>خروجی موتور:</h3>
   <pre id="result">هنوز آزمایشی اجرا نشده است.</pre>
 
-  <script src="./persian-lyrics.js?v=031"></script>
+  <script src="./persian-lyrics.js?v=031-test"></script>
 
   <script>
     const sampleLyrics = `
@@ -57,11 +57,13 @@
 چگونه چگونه
 من از سبزه سبزم ولی خسته خسته
 من از شهر عشقم ولی دل شکسته
+پنجره باز مانده است
 `;
 
     function runTest() {
       try {
         const output = preparePersianLyrics(sampleLyrics);
+
         document.getElementById("result").textContent =
           JSON.stringify(output, null, 2);
       } catch (error) {
