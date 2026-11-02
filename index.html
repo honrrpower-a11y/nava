@@ -50,7 +50,6 @@
 }
 
 * {box-sizing:border-box}
-
 html {scroll-behavior:smooth}
 
 body {
@@ -614,6 +613,215 @@ textarea {resize:vertical;min-height:165px}
   direction:ltr;
 }
 
+/* ==========================================
+   LIGHT THEME - COLORFUL STUDIO DESIGN
+   These rules apply ONLY to day mode.
+   Night mode remains unchanged.
+========================================== */
+
+/* Main hero */
+
+[data-theme="light"] .hero {
+  background:
+    radial-gradient(circle at 15% 50%,#e7b86b55,transparent 42%),
+    linear-gradient(125deg,#f3dfc5,#fff8ed 75%);
+  border-color:#dfbd91;
+}
+
+[data-theme="light"] .hero h1 {
+  color:#463126;
+}
+
+[data-theme="light"] .hero p {
+  color:#846c5a;
+}
+
+[data-theme="light"] .hero::after {
+  color:#a66e3820;
+}
+
+[data-theme="light"] .eyebrow {
+  color:#98602f;
+  border-color:#d8ae7a;
+  background:#e7bd8325;
+}
+
+[data-theme="light"] .disc {
+  border-color:#c88d48;
+  box-shadow:0 0 0 12px #dcae6818,0 0 45px #dcae6830;
+}
+
+/* Lyrics section - Amber and cream */
+
+[data-theme="light"] #musicTab > section.card:nth-of-type(2) {
+  background:
+    radial-gradient(circle at 100% 0%,#f3d49b65,transparent 45%),
+    linear-gradient(135deg,#fffaf1,#fff5e5);
+  border-color:#e9d0a8;
+}
+
+[data-theme="light"] #musicTab > section.card:nth-of-type(2) .section-number {
+  background:#e6ae4b30;
+  color:#a96c20;
+}
+
+/* Lyrics editor - Warm ivory */
+
+[data-theme="light"] #musicTab > section.card:nth-of-type(3) {
+  background:
+    radial-gradient(circle at 0% 100%,#ead8c855,transparent 45%),
+    linear-gradient(135deg,#fffaf6,#fffdf9);
+  border-color:#e6d2bd;
+}
+
+/* Music design - Lavender and purple */
+
+[data-theme="light"] #musicTab > section.card:nth-of-type(4) {
+  background:
+    radial-gradient(circle at 100% 0%,#d8c8f455,transparent 42%),
+    linear-gradient(135deg,#fffaff,#f5efff);
+  border-color:#d9c8ed;
+}
+
+[data-theme="light"] #musicTab > section.card:nth-of-type(4) .section-number {
+  background:#a88adf25;
+  color:#7952a5;
+}
+
+/* Advanced settings - Copper and warm brown */
+
+[data-theme="light"] #musicTab > section.card:nth-of-type(4) .advanced {
+  border-color:#e3c5ac;
+}
+
+[data-theme="light"] #musicTab > section.card:nth-of-type(4) .advanced > summary {
+  background:linear-gradient(100deg,#f3e1d0,#f7e9dc);
+  color:#704c37;
+}
+
+[data-theme="light"] #musicTab > section.card:nth-of-type(4) .advanced-content {
+  background:
+    radial-gradient(circle at 0% 100%,#eac2a655,transparent 45%),
+    #fff9f3;
+}
+
+[data-theme="light"] #musicTab > section.card:nth-of-type(4) .field label {
+  color:#714b37;
+}
+
+/* Local music - Jade and turquoise */
+
+[data-theme="light"] #localSettings {
+  border-color:#b8dccc;
+}
+
+[data-theme="light"] #localSettings > summary {
+  background:linear-gradient(100deg,#dff2e9,#eaf8f3);
+  color:#286b55;
+}
+
+[data-theme="light"] #localSettings .sub-content {
+  background:
+    radial-gradient(circle at 100% 0%,#b9eadb55,transparent 50%),
+    #f1faf5;
+}
+
+[data-theme="light"] #localSettings .local-description {
+  background:#e3f4ec;
+  border-color:#b8dfcd;
+  color:#416b59;
+}
+
+[data-theme="light"] #localSettings .instrument-chip {
+  background:#d8f1e8;
+  border-color:#a8d9c6;
+  color:#28775e;
+}
+
+[data-theme="light"] #localSettings .optional-note {
+  color:#628273;
+}
+
+/* Music generation button - Gold and green */
+
+[data-theme="light"] #generate {
+  background:linear-gradient(110deg,#e7bd70,#8fc9a8);
+  color:#27382c;
+  box-shadow:0 8px 25px #7eaa8730;
+}
+
+/* Lyrics generation button */
+
+[data-theme="light"] #makeLyrics {
+  background:linear-gradient(110deg,#b8e5d0,#77c5a2);
+  color:#214b3a;
+}
+
+/* Mood options */
+
+[data-theme="light"] .mood-option label {
+  background:#fffdfb;
+  border-color:#dfd1e9;
+}
+
+[data-theme="light"] .mood-option input:checked + label {
+  background:#eee4fa;
+  border-color:#ad91d3;
+  color:#76529e;
+}
+
+/* Story maker - Rose and lavender */
+
+[data-theme="light"] #storyTab > section.card {
+  background:
+    radial-gradient(circle at 100% 0%,#efcce255,transparent 42%),
+    linear-gradient(135deg,#fff8fc,#f6f0ff);
+  border-color:#e7cde5;
+}
+
+[data-theme="light"] #storyTab > section.card .section-number {
+  background:#e8c8e925;
+  color:#995d91;
+}
+
+[data-theme="light"] .story-card {
+  background:
+    radial-gradient(circle at 20% 20%,#d7b5ef55,transparent 45%),
+    linear-gradient(145deg,#503b65,#78516e);
+  border-color:#cba7d7;
+}
+
+[data-theme="light"] .story-subtitle {
+  color:#f6d8ef;
+}
+
+/* Tabs in day mode */
+
+[data-theme="light"] .nav-tabs {
+  background:#fffaf3;
+  border-color:#e5d2bf;
+}
+
+[data-theme="light"] .nav-tab.active {
+  background:linear-gradient(110deg,#f5d99a,#e8b86c);
+  color:#49311d;
+}
+
+/* Form fields */
+
+[data-theme="light"] input,
+[data-theme="light"] textarea,
+[data-theme="light"] select {
+  background:#fffdf9;
+}
+
+[data-theme="light"] input:focus,
+[data-theme="light"] textarea:focus,
+[data-theme="light"] select:focus {
+  border-color:#bd8cbd;
+  box-shadow:0 0 0 3px #b88bc31a;
+}
+
 /* RESPONSIVE */
 
 @media(max-width:700px) {
@@ -623,7 +831,6 @@ textarea {resize:vertical;min-height:165px}
   }
 
   .hero-art {min-height:105px}
-
   .disc {width:105px;height:105px}
   .disc-center {width:35px;height:35px}
 
@@ -819,8 +1026,6 @@ textarea {resize:vertical;min-height:165px}
       <summary>تنظیمات بیشتر و حرفه‌ای</summary>
       <div class="advanced-content">
 
-        <!-- LOCAL MUSIC INSIDE STUDIO -->
-
         <details class="sub-advanced" id="localSettings">
           <summary>🎶 موسیقی محلی و منطقه‌ای (اختیاری)</summary>
           <div class="sub-content">
@@ -854,8 +1059,6 @@ textarea {resize:vertical;min-height:165px}
             </p>
           </div>
         </details>
-
-        <!-- VOICE -->
 
         <div class="field">
           <label for="voice">جنس و لحن صدای خواننده</label>
@@ -955,9 +1158,7 @@ textarea {resize:vertical;min-height:165px}
 <script>
 "use strict";
 
-/* =================================
-   API CONNECTIONS
-================================= */
+/* API CONNECTIONS */
 
 const MUSIC_API = "https://nava-music-api.honrrpower.workers.dev";
 const LYRICS_API = MUSIC_API;
@@ -966,9 +1167,7 @@ function getSelectedLanguage() {
   return document.getElementById("langSelect").value;
 }
 
-/* =================================
-   TABS
-================================= */
+/* TABS */
 
 function openTab(tabId) {
   document.querySelectorAll(".tab-content").forEach(tab => {
@@ -980,7 +1179,6 @@ function openTab(tabId) {
   });
 
   const selectedTab = document.getElementById(tabId);
-
   if (selectedTab) selectedTab.classList.add("active");
 
   const selectedButton = document.querySelector(
@@ -998,9 +1196,7 @@ document.querySelectorAll(".nav-tab").forEach(button => {
   });
 });
 
-/* =================================
-   THEME
-================================= */
+/* THEME */
 
 const themeToggle = document.getElementById("themeToggle");
 const htmlElement = document.documentElement;
@@ -1040,9 +1236,7 @@ themeToggle.addEventListener("click", () => {
   } catch (error) {}
 });
 
-/* =================================
-   STORY PREVIEW
-================================= */
+/* STORY PREVIEW */
 
 document.getElementById("storyInput").addEventListener("input", event => {
   const value = event.target.value.trim();
@@ -1051,9 +1245,7 @@ document.getElementById("storyInput").addEventListener("input", event => {
     value ? `« ${value} »` : "« متن شما اینجا قرار می‌گیرد... »";
 });
 
-/* =================================
-   ELEMENTS
-================================= */
+/* ELEMENTS */
 
 const lyricsBox = document.getElementById("lyrics");
 const singingLyricsBox = document.getElementById("singingLyrics");
@@ -1070,9 +1262,7 @@ const voiceSelect = document.getElementById("voice");
 const localRegionSelect = document.getElementById("localRegion");
 const instrumentsInput = document.getElementById("instruments");
 
-/* =================================
-   STATUS MESSAGE
-================================= */
+/* STATUS MESSAGE */
 
 function showMessage(box,message) {
   box.replaceChildren();
@@ -1080,17 +1270,13 @@ function showMessage(box,message) {
   box.classList.add("show");
 }
 
-/* =================================
-   SINGING LYRICS
-================================= */
+/* SINGING LYRICS */
 
 lyricsBox.addEventListener("input",() => {
   singingLyricsBox.value = "";
 });
 
-/* =================================
-   API REQUEST
-================================= */
+/* API REQUEST */
 
 async function postJSON(baseURL,path,payload,timeoutMs = 130000) {
   const controller = new AbortController();
@@ -1148,9 +1334,7 @@ async function postJSON(baseURL,path,payload,timeoutMs = 130000) {
   }
 }
 
-/* =================================
-   GENERATE LYRICS
-================================= */
+/* GENERATE LYRICS */
 
 makeLyricsButton.addEventListener("click",async () => {
   const topic = document.getElementById("topic").value.trim();
@@ -1210,9 +1394,7 @@ makeLyricsButton.addEventListener("click",async () => {
   }
 });
 
-/* =================================
-   IRANIAN LOCAL MUSIC
-================================= */
+/* IRANIAN LOCAL MUSIC */
 
 const localMusicOptions = {
   kurdish: {
@@ -1269,9 +1451,7 @@ const localDescriptions = {
 
 let lastSuggestedInstruments = "";
 
-/* =================================
-   LOCAL REGION SELECTION
-================================= */
+/* LOCAL REGION SELECTION */
 
 localRegionSelect.addEventListener("change",() => {
   const previousSuggestion = lastSuggestedInstruments;
@@ -1323,9 +1503,7 @@ localRegionSelect.addEventListener("change",() => {
   }
 });
 
-/* =================================
-   INSTRUMENTAL MODE
-================================= */
+/* INSTRUMENTAL MODE */
 
 styleSelect.addEventListener("change",() => {
   if (styleSelect.value.includes("no vocals")) {
@@ -1342,9 +1520,7 @@ voiceSelect.addEventListener("change",() => {
   }
 });
 
-/* =================================
-   GENERATE MUSIC
-================================= */
+/* GENERATE MUSIC */
 
 generateButton.addEventListener("click",async () => {
   const lyrics = lyricsBox.value.trim();
@@ -1466,3 +1642,4 @@ generateButton.addEventListener("click",async () => {
 
 </body>
 </html>
+ 
