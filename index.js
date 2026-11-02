@@ -327,14 +327,20 @@ Avoid dance beats and overly cheerful rhythms.
     },
 
     happy: {
-      bpm: 122,
+      bpm: 124,
       description: `
-Bright joyful upbeat pop music.
-Lively tempo around 122 BPM.
-Major-key feeling, playful melodic hooks and cheerful rhythmic movement.
-Use a bouncy groove, bright percussion and an uplifting chorus.
-The music should feel optimistic, light and genuinely happy.
-Avoid sad or dark musical textures.
+Genuinely happy, bright and uplifting modern pop music.
+Fast upbeat tempo at exactly 124 BPM.
+Clear straight 4/4 dance-pop rhythm.
+Strong punchy kick drum on every beat.
+Crisp snare and bright handclaps.
+Bouncy melodic bass line.
+Bright major-key chords.
+Playful rhythmic piano and catchy melodic hooks.
+Energetic rhythmic movement from the very beginning.
+A joyful, memorable and uplifting chorus.
+The groove should make the listener feel like moving and dancing.
+Avoid slow ballad rhythm, sad melodies and dark atmosphere.
 `
     },
 
@@ -403,7 +409,7 @@ Avoid slow ballad pacing.
 }
 
 // ==========================================
-// تشخیص سبک موسیقی و حفظ انتخاب کاربر
+// تشخیص سبک موسیقی
 // ==========================================
 
 function getStyleDescription(style) {
@@ -655,7 +661,7 @@ function isPianoInstrument(name) {
 }
 
 // ==========================================
-// ساخت پرامپت اختصاصی موسیقی برای ACE
+// ساخت پرامپت موسیقی برای ACE
 // ==========================================
 
 function buildAceMusicPrompt(settings) {
@@ -671,7 +677,6 @@ function buildAceMusicPrompt(settings) {
   } = settings;
 
   const instrumentList = getInstrumentList(instruments);
-
   const piano = instrumentList.find(isPianoInstrument);
   const leadInstrument = piano || instrumentList[0] || "";
 
@@ -679,30 +684,26 @@ function buildAceMusicPrompt(settings) {
     item => item !== leadInstrument
   );
 
-  const pianoSelected = Boolean(piano);
   const moodProfile = getMoodProfile(musicMood);
   const styleProfile = getStyleDescription(style);
 
-  const parts = [
-    `
-CREATE A DISTINCTIVE ORIGINAL MUSIC TRACK.
+  const parts = [];
 
-The selected genre, mood and instruments must be clearly recognizable.
-Do not use a generic default pop arrangement.
-Do not ignore the selected musical direction.
+  parts.push(`
+ORIGINAL MUSIC PRODUCTION.
 
-SELECTED GENRE:
+GENRE:
 ${styleProfile.original}
 
 ${styleProfile.detail}
 
-SELECTED MOOD:
+MOOD:
 ${moodProfile.description}
 
 TEMPO:
-Use approximately ${moodProfile.bpm} BPM unless the selected genre strongly requires a small adjustment.
-`
-  ];
+Exactly ${moodProfile.bpm} BPM.
+Use a clear and recognizable rhythmic groove.
+`);
 
   if (!instrumental) {
     parts.push(`
@@ -718,33 +719,24 @@ ${getLanguageName(language)}.
     parts.push(`
 ADDITIONAL ARTISTIC DIRECTION:
 ${extraMood}
-
-Treat this direction as an important part of the musical identity.
 `);
   }
 
-  if (pianoSelected) {
+  if (piano) {
     parts.push(`
-PIANO IS THE DOMINANT LEAD INSTRUMENT.
+DOMINANT INSTRUMENT: REAL ACOUSTIC PIANO.
 
-This is a piano-led arrangement, not an arrangement where piano is merely background decoration.
-
-The piano must be one of the loudest and most clearly recognizable instruments.
-
-PIANO REQUIREMENTS:
-- Begin with a clearly audible solo acoustic piano introduction.
-- Use real piano notes, not only keyboard pads or synthesizer textures.
-- Create a memorable piano melody and recurring piano motif.
-- Keep the piano clearly audible throughout the verses and choruses.
-- Add expressive piano phrases between vocal lines.
-- Give the piano prominent instrumental passages.
-- Let the piano carry important melodic sections.
-- Keep the piano forward in the mix.
-- Do not bury the piano beneath strings, pads, guitars or percussion.
-- Supporting instruments must leave enough space for the piano.
-- Do not replace the piano melody with a guitar or synthesizer melody.
-
-The listener should immediately recognize that piano is the main instrument.
+The piano must be the main lead instrument.
+Start with a clearly audible solo acoustic piano introduction.
+Use real piano notes, not pads or synthesizer textures.
+Create a memorable piano melody and recurring piano motif.
+Keep the piano clearly audible throughout the verses and choruses.
+Add expressive piano phrases between vocal lines.
+Give the piano prominent instrumental passages.
+Keep the piano forward in the mix.
+Supporting instruments must not overpower the piano.
+Do not replace the piano melody with guitar or synthesizer.
+The listener must immediately recognize the piano as the main instrument.
 `);
   } else if (leadInstrument) {
     parts.push(`
@@ -754,15 +746,12 @@ ${leadInstrument}
 Make this instrument prominent, recognizable and musically important.
 Create a memorable melodic hook using this instrument.
 Feature it clearly in the introduction and instrumental passages.
-Do not bury it beneath background layers.
 `);
   } else {
     parts.push(`
 INSTRUMENT ARRANGEMENT:
-
 Choose a coherent arrangement that fits the selected genre and mood.
 Use distinct melodic and rhythmic elements.
-Avoid a generic arrangement that sounds identical to unrelated genres.
 `);
   }
 
@@ -773,7 +762,6 @@ ${supportingInstruments.join(", ")}
 
 These are supporting instruments, not competing lead instruments.
 Keep the featured lead instrument clearly audible.
-Do not let supporting instruments dominate the mix.
 `);
   }
 
@@ -782,35 +770,23 @@ Do not let supporting instruments dominate the mix.
 INSTRUMENTAL ONLY - ABSOLUTE REQUIREMENT.
 
 Generate a completely instrumental music track.
-
 There must be no human voice anywhere in the audio.
 
 STRICTLY FORBIDDEN:
-- Singing
-- Speech
-- Humming
-- Human vocal samples
-- Choir
-- Vocal chops
-- Vocal ad-libs
-- Wordless vocalizations
-- Human-like sounds
-- "Hoo", "Woo", "Ooh", "Yeah"
-- Any female or male vocal sound
+Singing, speech, humming, human vocal samples, choir,
+vocal chops, vocal ad-libs, wordless vocalizations,
+human-like sounds, "Hoo", "Woo", "Ooh", "Yeah",
+or any female or male vocal sound.
 
 Use musical instruments only.
-The melody must be played by instruments, never by a human voice.
-
-Create a complete instrumental arrangement with a clear beginning,
-musical development, memorable instrumental theme and proper ending.
+All melodies must be played by instruments, never by a human voice.
 `);
-  } else if (voice !== "duet") {
+  } else {
     parts.push(`
-SINGLE SINGER - ABSOLUTE PRIORITY:
+SINGLE SINGER - ABSOLUTE PRIORITY.
 
 Use exactly ONE human singer.
 There must be only one vocal identity in the entire song.
-
 The lead vocal must sound like one person singing alone.
 
 NO second singer.
@@ -827,17 +803,13 @@ NO overlapping singers.
 NO vocal ad-libs.
 NO humming.
 NO wordless vocal sounds.
+NO "Hoo", "Woo", "Ooh", "Yeah".
 
 VOCAL MIXING:
-Use one clean, centered, dry lead vocal.
+Use one clean, centered lead vocal.
 Keep the vocal natural and intimate.
-Avoid chorus effects on the voice.
-Avoid vocal doubling effects.
-Avoid stereo widening of the vocal.
-Avoid artificial layered vocal textures.
-
+Avoid chorus effects, vocal doubling and stereo widening.
 Do not create the impression of two singers.
-The singer must perform the lyrics alone.
 `);
   }
 
@@ -864,29 +836,18 @@ ${pronunciationNotes}
 
   if (!instrumental) {
     parts.push(`
-INTRODUCTION - STRICTLY INSTRUMENTAL:
+INTRODUCTION - STRICTLY INSTRUMENTAL.
 
 Begin with a short, clear instrumental introduction.
 If piano is selected, begin with solo piano.
 
 Absolutely no human voice in the introduction.
+No "hoo", "woo", "ooh", "yeah", humming,
+female vocal sounds, male vocal sounds, shouting,
+whispering, spoken words or vocal samples.
 
-No "hoo".
-No "woo".
-No "ooh".
-No "yeah".
-No humming.
-No female vocal sounds.
-No male vocal sounds.
-No shouting.
-No whispering.
-No spoken words.
-No vocal samples.
-No background singing.
-
-The first human voice in the song must begin with the first supplied lyric line.
-
-Do not add any sounds that are not present in the supplied lyrics.
+The first human voice must begin with the first supplied lyric line.
+Do not add sounds that are not present in the supplied lyrics.
 `);
   }
 
@@ -1350,7 +1311,7 @@ export default {
       }
 
       // ------------------------------------------
-      // ساخت پرامپت موسیقی
+      // ساخت توضیح موسیقی
       // ------------------------------------------
 
       const musicPrompt = buildAceMusicPrompt({
@@ -1365,19 +1326,22 @@ export default {
       });
 
       // ------------------------------------------
-      // ساخت متن مستقل شعر برای ACE
+      // ساخت متن Tagged Mode برای ACE
       // ------------------------------------------
 
-      let aceLyrics;
+      const aceLyrics = instrumental
+        ? "[Instrumental]"
+        : singingLyrics;
 
-      if (instrumental) {
-        aceLyrics = "[Instrumental]";
-      } else {
-        aceLyrics = `[Intro]
-[inst]
+      const taggedContent = `
+<prompt>
+${musicPrompt}
+</prompt>
 
-${singingLyrics}`;
-      }
+<lyrics>
+${aceLyrics}
+</lyrics>
+`.trim();
 
       // ------------------------------------------
       // تنظیمات درخواست ACE
@@ -1388,17 +1352,13 @@ ${singingLyrics}`;
       const audioConfig = {
         duration: MUSIC_DURATION_SECONDS,
         format: "mp3",
-        instrumental: instrumental
+        instrumental: instrumental,
+        bpm: moodProfile.bpm
       };
 
-      // برای موسیقی باکلام، زبان خوانندگی ارسال می‌شود.
-      // در حالت بی‌کلام، این فیلد عمداً حذف می‌شود.
       if (!instrumental) {
         audioConfig.vocal_language = getAceLanguage(language);
       }
-
-      // سرعت متناسب با حال‌وهوای انتخاب‌شده
-      audioConfig.bpm = moodProfile.bpm;
 
       // ------------------------------------------
       // بدنه درخواست ACE
@@ -1410,11 +1370,9 @@ ${singingLyrics}`;
         messages: [
           {
             role: "user",
-            content: musicPrompt
+            content: taggedContent
           }
         ],
-
-        lyrics: aceLyrics,
 
         stream: false,
 
