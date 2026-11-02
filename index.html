@@ -1,385 +1,669 @@
+
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="theme-color" content="#101321">
-<title>نوا | استودیوی هوشمند موسیقی</title>
-
+<meta name="theme-color" content="#0b1020">
+<title>Nava AI | استودیوی هوشمند موسیقی</title>
 <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet">
 
 <style>
 :root {
- --bg:#0b0e18;
- --panel:#141928;
- --panel2:#1b2234;
- --gold:#f2c14e;
- --text:#f5f6fa;
- --muted:#a5aec1;
- --border:#30384b;
- --green:#5ee0a0;
- --card-shadow:0 12px 38px #00000018;
+  --bg:#090d19;
+  --surface:#111829;
+  --surface2:#182238;
+  --surface3:#202c45;
+  --gold:#f4c45e;
+  --gold2:#dba53d;
+  --text:#f5f6fa;
+  --muted:#9ba9c1;
+  --border:#2b3851;
+  --green:#55d6a0;
+  --red:#ff7777;
+  --shadow:0 18px 55px #0005;
 }
 
 [data-theme="light"] {
- --bg:#f4f6fb;
- --panel:#fff;
- --panel2:#e8ecf5;
- --gold:#d99b11;
- --text:#1e2530;
- --muted:#64748b;
- --border:#cbd5e1;
- --green:#10b981;
- --card-shadow:0 10px 30px rgba(0,0,0,.06);
+  --bg:#f1f3f9;
+  --surface:#fff;
+  --surface2:#e9edf6;
+  --surface3:#dfe5f0;
+  --gold:#bd841a;
+  --gold2:#e0aa3d;
+  --text:#172033;
+  --muted:#66748b;
+  --border:#d5dce9;
+  --green:#079968;
+  --red:#dc5555;
+  --shadow:0 15px 40px #25345212;
 }
 
 * {
- box-sizing:border-box;
- transition:background .3s,color .3s,border-color .3s;
+  box-sizing:border-box;
+}
+
+html {
+  scroll-behavior:smooth;
 }
 
 body {
- margin:0;
- color:var(--text);
- background:radial-gradient(ellipse at 50% -10%,var(--panel2) 0%,transparent 55%),var(--bg);
- font-family:Vazirmatn,Tahoma,Arial,sans-serif;
- min-height:100vh;
- line-height:1.9;
+  margin:0;
+  min-height:100vh;
+  background:
+    radial-gradient(ellipse at 80% -10%,#29334e 0,transparent 36%),
+    radial-gradient(ellipse at 0% 40%,#20233b55 0,transparent 35%),
+    var(--bg);
+  color:var(--text);
+  font-family:Vazirmatn,Tahoma,sans-serif;
+  line-height:1.9;
+}
+
+button,input,textarea,select {
+  font:inherit;
+}
+
+button {
+  cursor:pointer;
+}
+
+button:disabled {
+  opacity:.55;
+  cursor:wait;
 }
 
 .container {
- width:min(900px,92%);
- margin:auto;
- padding:28px 0 55px;
+  width:min(1100px,93%);
+  margin:auto;
+  padding:22px 0 50px;
 }
 
-header {
- display:flex;
- align-items:center;
- justify-content:space-between;
- gap:12px;
- margin-bottom:32px;
+/* HEADER */
+
+.header {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:15px;
+  margin-bottom:25px;
 }
 
 .brand {
- font-size:30px;
- font-weight:900;
- color:var(--gold);
- letter-spacing:1px;
- display:flex;
- flex-direction:column;
+  display:flex;
+  align-items:center;
+  gap:12px;
 }
 
-.brand small {
- font-size:11px;
- font-weight:normal;
- color:var(--muted);
+.brand-icon {
+  width:48px;
+  height:48px;
+  display:grid;
+  place-items:center;
+  border-radius:16px;
+  background:linear-gradient(145deg,#f8d77e,#d69a2e);
+  color:#17130b;
+  font-size:27px;
+  box-shadow:0 8px 25px #f2c14e25;
+}
+
+.brand-name {
+  font-size:24px;
+  font-weight:950;
+  color:var(--gold);
+  line-height:1.3;
+}
+
+.brand-sub {
+  font-size:10px;
+  color:var(--muted);
+  letter-spacing:1px;
 }
 
 .header-actions {
- display:flex;
- align-items:center;
- gap:10px;
+  display:flex;
+  align-items:center;
+  gap:10px;
 }
 
-.badge {
- border:1px solid var(--border);
- border-radius:30px;
- padding:5px 12px;
- color:var(--green);
- font-size:12px;
- background:var(--panel);
+.status-pill {
+  border:1px solid var(--border);
+  background:var(--surface);
+  color:var(--green);
+  padding:5px 12px;
+  border-radius:30px;
+  font-size:11px;
 }
 
 .theme-toggle {
- background:var(--panel);
- border:1px solid var(--border);
- color:var(--text);
- border-radius:50%;
- width:40px;
- height:40px;
- cursor:pointer;
- font-size:18px;
+  width:42px;
+  height:42px;
+  border-radius:14px;
+  border:1px solid var(--border);
+  color:var(--text);
+  background:var(--surface);
+  font-size:19px;
 }
 
-.tabs {
- display:flex;
- gap:8px;
- background:var(--panel2);
- padding:6px;
- border-radius:18px;
- margin-bottom:25px;
- border:1px solid var(--border);
-}
-
-.tab-btn {
- flex:1;
- padding:12px;
- border:0;
- background:transparent;
- color:var(--muted);
- font-family:inherit;
- font-size:.95rem;
- font-weight:bold;
- border-radius:12px;
- cursor:pointer;
-}
-
-.tab-btn.active {
- background:var(--panel);
- color:var(--gold);
- border:1px solid var(--border);
-}
-
-.tab-content {
- display:none;
-}
-
-.tab-content.active {
- display:block;
-}
+/* HERO */
 
 .hero {
- text-align:center;
- margin-bottom:25px;
+  position:relative;
+  overflow:hidden;
+  display:grid;
+  grid-template-columns:1.35fr .65fr;
+  gap:20px;
+  align-items:center;
+  padding:35px;
+  margin-bottom:24px;
+  border:1px solid #b98b3938;
+  border-radius:27px;
+  background:
+    radial-gradient(circle at 15% 50%,#8e642b32,transparent 40%),
+    linear-gradient(125deg,#1d2941,#111729 65%,#191b2c);
+  box-shadow:var(--shadow);
+}
+
+.hero::after {
+  content:"♫";
+  position:absolute;
+  left:20px;
+  bottom:-80px;
+  font-size:230px;
+  color:#f4c45e0b;
+  pointer-events:none;
+}
+
+.hero-content {
+  position:relative;
+  z-index:1;
+}
+
+.eyebrow {
+  display:inline-block;
+  color:var(--gold);
+  font-size:12px;
+  font-weight:bold;
+  border:1px solid #f4c45e44;
+  background:#f4c45e12;
+  padding:5px 12px;
+  border-radius:30px;
 }
 
 .hero h1 {
- font-size:clamp(25px,5vw,39px);
- margin:0 0 8px;
- line-height:1.6;
+  font-size:clamp(27px,5vw,43px);
+  line-height:1.55;
+  margin:12px 0 8px;
 }
 
 .hero h1 span {
- color:var(--gold);
+  color:var(--gold);
 }
 
 .hero p {
- color:var(--muted);
- margin:0;
- font-size:14px;
+  color:#aab5c9;
+  font-size:14px;
+  margin:0;
+  max-width:560px;
+}
+
+.hero-art {
+  position:relative;
+  z-index:1;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  min-height:145px;
+}
+
+.disc {
+  width:145px;
+  height:145px;
+  border-radius:50%;
+  display:grid;
+  place-items:center;
+  background:
+    repeating-radial-gradient(circle,#111827 0 4px,#222d43 5px 7px);
+  border:7px solid #d6a344;
+  box-shadow:0 0 0 12px #f4c45e12,0 0 45px #f4c45e25;
+  transform:rotate(-15deg);
+}
+
+.disc-center {
+  width:45px;
+  height:45px;
+  display:grid;
+  place-items:center;
+  border-radius:50%;
+  background:linear-gradient(145deg,#f8d77e,#d69a2e);
+  color:#16120a;
+  font-size:22px;
+}
+
+/* NAVIGATION */
+
+.nav-tabs {
+  display:flex;
+  gap:9px;
+  padding:7px;
+  border:1px solid var(--border);
+  background:var(--surface);
+  border-radius:17px;
+  margin-bottom:25px;
+}
+
+.nav-tab {
+  flex:1;
+  border:0;
+  border-radius:12px;
+  padding:12px 8px;
+  color:var(--muted);
+  background:transparent;
+  font-size:14px;
+  font-weight:bold;
+}
+
+.nav-tab.active {
+  color:#17130b;
+  background:linear-gradient(110deg,#f7d879,#e6ad3b);
+  box-shadow:0 5px 18px #f2c14e20;
+}
+
+.tab-content {
+  display:none;
+}
+
+.tab-content.active {
+  display:block;
+}
+
+/* SECTION */
+
+.section-heading {
+  margin:0 0 17px;
+  display:flex;
+  align-items:center;
+  gap:10px;
+  font-size:18px;
+  font-weight:900;
+}
+
+.section-number {
+  width:31px;
+  height:31px;
+  display:grid;
+  place-items:center;
+  flex-shrink:0;
+  border-radius:10px;
+  background:#f4c45e18;
+  color:var(--gold);
+  font-size:14px;
 }
 
 .card {
- background:var(--panel);
- border:1px solid var(--border);
- border-radius:22px;
- padding:clamp(17px,4vw,28px);
- margin-bottom:18px;
- box-shadow:var(--card-shadow);
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:22px;
+  padding:24px;
+  margin-bottom:19px;
+  box-shadow:var(--shadow);
 }
 
-.section-title {
- font-size:17px;
- font-weight:bold;
- margin:0 0 17px;
+.card-intro {
+  color:var(--muted);
+  font-size:12px;
+  margin:-10px 0 18px;
 }
 
-label {
- display:block;
- margin-bottom:7px;
- font-size:13px;
- color:var(--text);
-}
-
-input,textarea,select {
- width:100%;
- color:var(--text);
- background:var(--bg);
- border:1px solid var(--border);
- border-radius:12px;
- padding:13px 14px;
- font:inherit;
- font-size:14px;
- outline:none;
-}
-
-input:focus,
-textarea:focus,
-select:focus {
- border-color:var(--gold);
-}
-
-select option {
- background:var(--panel);
- color:var(--text);
-}
-
-textarea {
- resize:vertical;
- min-height:180px;
-}
-
-.hint {
- color:var(--muted);
- font-size:12px;
- margin-top:6px;
+.grid {
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:17px;
 }
 
 .field {
- margin-bottom:17px;
+  min-width:0;
+  margin-bottom:17px;
 }
 
 .field:last-child {
- margin-bottom:0;
+  margin-bottom:0;
 }
 
+label {
+  display:block;
+  margin-bottom:7px;
+  color:var(--text);
+  font-size:13px;
+  font-weight:bold;
+}
+
+input,textarea,select {
+  width:100%;
+  min-width:0;
+  color:var(--text);
+  background:var(--bg);
+  border:1px solid var(--border);
+  border-radius:13px;
+  padding:13px 14px;
+  font-size:14px;
+  outline:none;
+}
+
+input:focus,textarea:focus,select:focus {
+  border-color:var(--gold);
+  box-shadow:0 0 0 3px #f4c45e15;
+}
+
+select option {
+  background:var(--surface);
+  color:var(--text);
+}
+
+textarea {
+  resize:vertical;
+  min-height:170px;
+}
+
+.hint {
+  color:var(--muted);
+  font-size:11px;
+  margin-top:6px;
+}
+
+.counter {
+  text-align:left;
+  color:var(--muted);
+  font-size:10px;
+  margin-top:4px;
+}
+
+/* BUTTONS */
+
 .main-button {
- width:100%;
- border:0;
- border-radius:14px;
- padding:15px;
- margin-top:10px;
- cursor:pointer;
- background:linear-gradient(110deg,#f7d879,#e9ad32);
- color:#17130a;
- font:inherit;
- font-size:16px;
- font-weight:900;
- box-shadow:0 6px 24px #f2c14e20;
+  width:100%;
+  border:0;
+  border-radius:14px;
+  padding:15px 18px;
+  background:linear-gradient(110deg,#f7d879,#e5a936);
+  color:#17130a;
+  font-size:15px;
+  font-weight:950;
+  box-shadow:0 7px 24px #f2c14e20;
+  margin-top:8px;
+}
+
+.main-button:hover:not(:disabled) {
+  filter:brightness(1.06);
+  transform:translateY(-1px);
 }
 
 .secondary-button {
- background:linear-gradient(110deg,#8ce8c0,#3abf8b);
- color:#08281a;
+  background:linear-gradient(110deg,#9ae8c7,#43c18e);
+  color:#08281b;
+  box-shadow:0 7px 24px #43c18e18;
 }
 
-.main-button:disabled {
- opacity:.6;
- cursor:wait;
+.small-button {
+  border:1px solid var(--border);
+  background:var(--surface2);
+  color:var(--text);
+  border-radius:10px;
+  padding:7px 12px;
+  font-size:12px;
 }
 
-.status {
- display:none;
- white-space:pre-wrap;
- overflow-wrap:anywhere;
- background:var(--bg);
- border:1px solid var(--border);
- border-radius:14px;
- padding:15px;
- margin-top:18px;
- font-size:13px;
+/* LOCAL MUSIC */
+
+.local-box {
+  border:1px solid #c99a3c50;
+  background:linear-gradient(130deg,#c99a3c0c,var(--surface));
+  padding:17px;
+  border-radius:17px;
+  margin-bottom:19px;
 }
 
-.status.show {
- display:block;
+.local-title {
+  display:flex;
+  align-items:center;
+  gap:8px;
+  font-weight:900;
+  margin-bottom:10px;
 }
 
-.status audio {
- display:block;
- width:100%;
- margin-top:15px;
+.local-title span {
+  color:var(--gold);
 }
 
-.download {
- display:inline-block;
- color:var(--gold);
- border:1px solid var(--border);
- border-radius:10px;
- padding:8px 14px;
- margin-top:14px;
- text-decoration:none;
+/* MOOD OPTIONS */
+
+.mood-grid {
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:9px;
 }
 
-.advanced-settings {
- border:1px solid var(--border);
- border-radius:14px;
- margin-top:18px;
- overflow:hidden;
+.mood-option {
+  position:relative;
 }
 
-.advanced-settings summary {
- cursor:pointer;
- padding:12px 15px;
- color:var(--muted);
- font-size:13px;
- font-weight:bold;
- background:var(--panel2);
- list-style:none;
+.mood-option input {
+  position:absolute;
+  opacity:0;
+  pointer-events:none;
 }
 
-.advanced-settings summary::-webkit-details-marker {
- display:none;
+.mood-option label {
+  display:block;
+  text-align:center;
+  padding:10px 5px;
+  margin:0;
+  border:1px solid var(--border);
+  border-radius:12px;
+  color:var(--muted);
+  background:var(--bg);
+  font-size:12px;
+  cursor:pointer;
 }
 
-.advanced-settings summary::before {
- content:"＋";
- display:inline-block;
- margin-left:8px;
- color:var(--gold);
+.mood-option input:checked + label {
+  color:var(--gold);
+  border-color:var(--gold);
+  background:#f4c45e12;
 }
 
-.advanced-settings[open] summary::before {
- content:"−";
+/* ADVANCED */
+
+.advanced {
+  border:1px solid var(--border);
+  border-radius:15px;
+  overflow:hidden;
+  margin-top:18px;
+}
+
+.advanced summary {
+  padding:13px 15px;
+  background:var(--surface2);
+  color:var(--muted);
+  cursor:pointer;
+  font-size:13px;
+  font-weight:bold;
+  list-style:none;
+}
+
+.advanced summary::-webkit-details-marker {
+  display:none;
+}
+
+.advanced summary::before {
+  content:"＋";
+  color:var(--gold);
+  margin-left:8px;
+}
+
+.advanced[open] summary::before {
+  content:"−";
 }
 
 .advanced-content {
- padding:16px;
+  padding:17px;
 }
 
-.advanced-content .field:last-child {
- margin-bottom:0;
+/* STATUS */
+
+.status {
+  display:none;
+  white-space:pre-wrap;
+  overflow-wrap:anywhere;
+  background:var(--bg);
+  border:1px solid var(--border);
+  border-radius:14px;
+  padding:15px;
+  margin-top:17px;
+  font-size:13px;
 }
 
-.story-preview-card {
- margin-top:20px;
- padding:35px 20px;
- border-radius:20px;
- background:linear-gradient(145deg,#0f172a,#1e1b4b);
- color:#fff;
- text-align:center;
- border:1px solid rgba(139,92,246,.3);
- min-height:200px;
- display:flex;
- flex-direction:column;
- justify-content:center;
- align-items:center;
+.status.show {
+  display:block;
+}
+
+.status audio {
+  display:block;
+  width:100%;
+  margin-top:13px;
+}
+
+.download {
+  display:inline-block;
+  color:var(--gold);
+  border:1px solid var(--border);
+  border-radius:10px;
+  padding:8px 14px;
+  margin-top:12px;
+  text-decoration:none;
+  font-size:13px;
+}
+
+.status-info {
+  color:var(--muted);
+  font-size:11px;
+  margin-top:10px;
+}
+
+/* STORY */
+
+.story-card {
+  background:
+    radial-gradient(circle at 20% 20%,#a78bfa30,transparent 45%),
+    linear-gradient(145deg,#111827,#24204b);
+  border:1px solid #a78bfa50;
+  border-radius:22px;
+  padding:35px 22px;
+  min-height:260px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+  color:white;
+  margin-top:18px;
+  overflow-wrap:anywhere;
 }
 
 .story-text {
- font-size:1.2rem;
- line-height:1.8;
- font-weight:bold;
+  font-size:clamp(19px,4vw,27px);
+  line-height:2;
+  font-weight:900;
+  white-space:pre-wrap;
 }
 
 .story-subtitle {
- margin-top:18px;
- font-size:.85rem;
- background:linear-gradient(135deg,#A78BFA,#F472B6);
- -webkit-background-clip:text;
- -webkit-text-fill-color:transparent;
- font-weight:bold;
+  margin-top:22px;
+  color:#d6b7ff;
+  font-size:13px;
+  font-weight:bold;
+  direction:ltr;
 }
 
-.footnote {
- text-align:center;
- color:var(--muted);
- font-size:12px;
- margin-top:25px;
+.story-note {
+  color:var(--muted);
+  font-size:11px;
+  text-align:center;
+  margin-top:12px;
 }
 
-@media(max-width:580px) {
- .grid {
-  grid-template-columns:1fr;
-  gap:0;
- }
+/* FOOTER */
 
- header {
-  margin-bottom:25px;
- }
+.footer {
+  text-align:center;
+  padding:22px 5px 5px;
+  color:var(--muted);
+  font-size:11px;
+}
 
- .brand {
-  font-size:22px;
- }
+.footer-brand {
+  color:var(--gold);
+  font-weight:900;
+  font-size:14px;
+  margin-bottom:5px;
+}
 
- .badge {
-  font-size:10px;
- }
+@media(max-width:700px) {
+  .hero {
+    grid-template-columns:1fr;
+    padding:25px 20px;
+  }
 
- .tab-btn {
-  font-size:12px;
-  padding:10px 5px;
- }
+  .hero-art {
+    min-height:115px;
+  }
+
+  .disc {
+    width:105px;
+    height:105px;
+  }
+
+  .disc-center {
+    width:35px;
+    height:35px;
+  }
+
+  .grid {
+    grid-template-columns:1fr;
+    gap:0;
+  }
+
+  .card {
+    padding:19px;
+  }
+
+  .mood-grid {
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+}
+
+@media(max-width:430px) {
+  .container {
+    width:94%;
+    padding-top:15px;
+  }
+
+  .brand-name {
+    font-size:21px;
+  }
+
+  .status-pill {
+    font-size:9px;
+    padding:4px 8px;
+  }
+
+  .nav-tab {
+    font-size:11px;
+    padding:11px 4px;
+  }
+
+  .hero h1 {
+    font-size:27px;
+  }
 }
 </style>
 </head>
@@ -387,1023 +671,740 @@ textarea {
 <body>
 <main class="container">
 
-<header>
- <div class="brand">
-  ♫ نوا
-  <small>استودیوی هوشمند موسیقی</small>
- </div>
+<header class="header">
+  <div class="brand">
+    <div class="brand-icon">♫</div>
+    <div>
+      <div class="brand-name">NAVA AI</div>
+      <div class="brand-sub">SMART MUSIC STUDIO</div>
+    </div>
+  </div>
 
- <div class="header-actions">
-  <div class="badge">● نسخه آزمایشی</div>
-  <button
-   type="button"
-   class="theme-toggle"
-   id="themeToggle"
-   title="تغییر حالت تاریک/روشن"
-  >🌙</button>
- </div>
+  <div class="header-actions">
+    <span class="status-pill">● نسخه آزمایشی</span>
+    <button class="theme-toggle" id="themeToggle" type="button" aria-label="تغییر تم">☀️</button>
+  </div>
 </header>
 
-<div class="tabs">
- <button type="button" class="tab-btn active" data-tab="musicTab">
-  🎵 استودیوی موسیقی
- </button>
+<section class="hero">
+  <div class="hero-content">
+    <span class="eyebrow">✦ استودیوی خلاقیت موسیقی</span>
+    <h1>صدای ایده‌هایت را <span>بساز</span></h1>
+    <p>
+      از یک ایده ساده تا یک ترانه و آهنگ اختصاصی؛
+      خلاقیتت را به موسیقی تبدیل کن.
+    </p>
+  </div>
 
- <button type="button" class="tab-btn" data-tab="storyTab">
-  ⚡ استوری‌ساز مینیمال
- </button>
-</div>
+  <div class="hero-art">
+    <div class="disc">
+      <div class="disc-center">♫</div>
+    </div>
+  </div>
+</section>
 
-<!-- استودیوی موسیقی -->
+<nav class="nav-tabs">
+  <button class="nav-tab active" type="button" data-tab="musicTab">🎵 استودیوی موسیقی</button>
+  <button class="nav-tab" type="button" data-tab="storyTab">✦ استوری‌ساز</button>
+</nav>
+
+<!-- MUSIC STUDIO -->
 <div id="musicTab" class="tab-content active">
 
- <section class="hero">
-  <h1>موسیقی خودت را <span>خلق کن</span></h1>
-  <p>موضوعت را بنویس و آهنگ دلخواهت را بساز.</p>
- </section>
+  <section class="card">
+    <h2 class="section-heading">
+      <span class="section-number">۱</span>
+      ایده و ترانه
+    </h2>
 
- <!-- موضوع و ساخت شعر -->
- <section class="card">
+    <p class="card-intro">
+      موضوعت را بنویس؛ نوا می‌تواند برایت ترانه بسازد.
+    </p>
 
-  <h2 class="section-title">۱. موضوع ترانه</h2>
+    <div class="grid">
+      <div class="field">
+        <label for="langSelect">زبان ترانه</label>
+        <select id="langSelect">
+          <option value="fa">فارسی</option>
+          <option value="tr">ترکی استانبولی</option>
+          <option value="en">انگلیسی</option>
+        </select>
+      </div>
 
-  <div class="field">
-   <label for="langSelect">زبان ترانه</label>
+      <div class="field">
+        <label for="topic">موضوع ترانه</label>
+        <input id="topic" maxlength="500"
+          placeholder="مثلاً عشق، خاطره، امید، دلتنگی...">
+      </div>
+    </div>
 
-   <select id="langSelect">
-    <option value="fa">فارسی</option>
-    <option value="tr">Türkçe (ترکی استانبولی)</option>
-    <option value="en">English (انگلیسی)</option>
-   </select>
-  </div>
+    <button type="button" id="makeLyrics" class="main-button secondary-button">
+      ✍️ ساخت هوشمند شعر
+    </button>
 
-  <div class="field">
-   <label for="topic">موضوع یا ایده ترانه</label>
+    <div id="lyricStatus" class="status" role="status" aria-live="polite"></div>
+  </section>
 
-   <input
-    id="topic"
-    maxlength="500"
-    placeholder="مثلاً: خاطرات بارانی، عشق از دست‌رفته، امید به زندگی..."
-   >
-  </div>
-
-  <button
-   type="button"
-   id="makeLyrics"
-   class="main-button secondary-button"
-  >
-   ✍ ساخت هوشمند شعر
-  </button>
-
-  <div
-   id="lyricStatus"
-   class="status"
-   role="status"
-   aria-live="polite"
-  ></div>
-
- </section>
-
- <!-- متن شعر -->
- <section class="card">
-
-  <h2 class="section-title">۲. متن ترانه</h2>
-
-  <div class="field">
-   <label for="lyrics">متن شعر</label>
-
-   <textarea
-    id="lyrics"
-    maxlength="8000"
-    placeholder="شعر خودت را بنویس یا با کمک نوا یک ترانه بساز..."
-   ></textarea>
-
-   <div class="hint">
-    می‌توانی شعر ساخته‌شده را ویرایش کنی یا متن دلخواه خودت را بنویسی.
-   </div>
-  </div>
-
- </section>
-
- <!-- نسخه خوانندگی مخفی -->
- <textarea
-  id="singingLyrics"
-  maxlength="8000"
-  hidden
-  aria-hidden="true"
- ></textarea>
-
- <!-- تنظیمات موسیقی -->
- <section class="card">
-
-  <h2 class="section-title">۳. تنظیم موسیقی</h2>
-
-  <!-- موسیقی محلی -->
-  <div class="field">
-
-   <label for="localRegion">🎶 موسیقی محلی ایران</label>
-
-   <select id="localRegion">
-    <option value="">بدون انتخاب موسیقی محلی</option>
-    <option value="kurdish">کردی</option>
-    <option value="turkish">ترکی</option>
-    <option value="lori">لری</option>
-    <option value="gilaki">گیلکی</option>
-    <option value="mazani">مازندرانی</option>
-    <option value="southern">جنوبی و بندری</option>
-    <option value="khorasani">خراسانی</option>
-    <option value="bakhtiari">بختیاری</option>
-   </select>
-
-   <div class="hint">
-    با انتخاب منطقه، ویژگی‌های موسیقی و سازهای محلی پیشنهاد می‌شوند.
-    انتخاب منطقه به‌تنهایی زبان شعر را تغییر نمی‌دهد.
-   </div>
-
-  </div>
-
-  <!-- سبک موسیقی -->
-  <div class="field">
-
-   <label for="styleInput">سبک ترانه</label>
-
-   <select id="styleInput">
-
-    <option value="Modern Persian pop, polished production, catchy melodic arrangement">
-     پاپ مدرن
-    </option>
-
-    <option value="Turkish Anatolian folk pop, prominent bağlama, rhythmic folk arrangement">
-     ترکی با ساز باغلاما
-    </option>
-
-    <option value="Traditional Persian music, Persian classical instruments, expressive melody">
-     سنتی ایرانی
-    </option>
-
-    <option value="Upbeat dance pop, energetic rhythm, punchy bass and lively percussion">
-     پاپ شاد و رقصی
-    </option>
-
-    <option value="Sad emotional ballad, slow tempo, expressive melody, soft piano and strings">
-     بالاد غمگین و احساسی
-    </option>
-
-    <option value="Acoustic pop, warm guitar, natural organic arrangement">
-     آکوستیک
-    </option>
-
-    <option value="Modern rap, rhythmic vocal delivery, strong beat and deep bass">
-     رپ
-    </option>
-
-    <option value="Cinematic soundtrack, expressive orchestral arrangement">
-     سینمایی
-    </option>
-
-    <option value="Cinematic instrumental soundtrack, expressive orchestral arrangement, no vocals">
-     موسیقی بی‌کلام
-    </option>
-
-   </select>
-  </div>
-
-  <!-- تنها انتخاب‌گر حال و هوا -->
-  <div class="field">
-
-   <label for="musicMood">حال‌وهوای موسیقی</label>
-
-   <select id="musicMood">
-
-    <option value="emotional">احساسی و عمیق</option>
-    <option value="happy">شاد و پرانرژی</option>
-    <option value="sad">غمگین و دلتنگ</option>
-    <option value="romantic">عاشقانه</option>
-    <option value="epic">حماسی و باشکوه</option>
-    <option value="calm">آرام و دلنشین</option>
-    <option value="energetic">پرقدرت و ریتمیک</option>
-
-   </select>
-  </div>
-
-  <!-- سازها -->
-  <div class="field">
-
-   <label for="instruments">سازهای موردنظر</label>
-
-   <input
-    id="instruments"
-    maxlength="300"
-    placeholder="مثلاً: باغلاما، پیانو، ویولن"
-   >
-
-   <div class="hint">
-    ساز اول، ساز اصلی آهنگ است و سازهای بعدی نقش همراه دارند.
-    سازها را با ویرگول جدا کن.
-   </div>
-
-  </div>
-
-  <!-- تنظیمات پیشرفته -->
-  <details class="advanced-settings">
-
-   <summary>تنظیمات بیشتر (اختیاری)</summary>
-
-   <div class="advanced-content">
+  <section class="card">
+    <h2 class="section-heading">
+      <span class="section-number">۲</span>
+      متن ترانه
+    </h2>
 
     <div class="field">
+      <label for="lyrics">شعر آهنگ</label>
+      <textarea id="lyrics" maxlength="8000"
+        placeholder="متن ترانه را اینجا بنویس یا شعر ساخته‌شده را ویرایش کن..."></textarea>
+      <div class="hint">
+        متن شعر قبل از ساخت آهنگ قابل ویرایش است.
+      </div>
+    </div>
+  </section>
 
-     <label for="voice">جنس و لحن صدای خواننده</label>
+  <textarea id="singingLyrics" maxlength="8000" hidden aria-hidden="true"></textarea>
 
-     <select id="voice">
+  <section class="card">
+    <h2 class="section-heading">
+      <span class="section-number">۳</span>
+      طراحی صدای آهنگ
+    </h2>
 
-      <option value="male_pop">
-       خواننده مرد (پاپ جوان و روشن)
-      </option>
+    <div class="local-box">
+      <div class="local-title">
+        <span>♫</span>
+        موسیقی محلی ایران
+      </div>
 
-      <option value="male_deep">
-       خواننده مرد (باریتون عمیق و گرم)
-      </option>
-
-      <option value="male_raspy">
-       خواننده مرد (صدای خش‌دار و احساسی)
-      </option>
-
-      <option value="female_pop">
-       خواننده زن (پاپ شفاف و ملایم)
-      </option>
-
-      <option value="female_powerful">
-       خواننده زن (قدرتمند و پرانرژی)
-      </option>
-
-      <option value="duet">
-       دوخواننده (مرد و زن)
-      </option>
-
-      <option value="instrumental">
-       بی‌کلام (بدون خواننده)
-      </option>
-
-     </select>
+      <div class="field">
+        <label for="localRegion">انتخاب منطقه موسیقی</label>
+        <select id="localRegion">
+          <option value="">بدون انتخاب موسیقی محلی</option>
+          <option value="kurdish">کردی</option>
+          <option value="turkish">ترکی</option>
+          <option value="lori">لری</option>
+          <option value="gilaki">گیلکی</option>
+          <option value="mazani">مازندرانی</option>
+          <option value="southern">جنوبی و بندری</option>
+          <option value="khorasani">خراسانی</option>
+          <option value="bakhtiari">بختیاری</option>
+        </select>
+        <div class="hint">
+          با انتخاب منطقه، ویژگی‌های موسیقی و سازهای پیشنهادی اضافه می‌شوند.
+          زبان شعر به‌صورت خودکار تغییر نمی‌کند.
+        </div>
+      </div>
     </div>
 
     <div class="field">
-
-     <label for="mood">
-      توضیحات نحوه اجرای آهنگ (اختیاری)
-     </label>
-
-     <input
-      id="mood"
-      maxlength="500"
-      placeholder="مثلاً: شروع آرام، اوج احساسی در ترجیع‌بند..."
-     >
-
+      <label for="styleInput">سبک موسیقی</label>
+      <select id="styleInput">
+        <option value="Modern Persian pop, polished production, catchy melodic arrangement">پاپ مدرن</option>
+        <option value="Turkish Anatolian folk pop, prominent bağlama, rhythmic folk arrangement">ترکی با ساز باغلاما</option>
+        <option value="Traditional Persian music, Persian classical instruments, expressive melody">سنتی ایرانی</option>
+        <option value="Upbeat dance pop, energetic rhythm, punchy bass and lively percussion">پاپ شاد و رقصی</option>
+        <option value="Sad emotional ballad, slow tempo, expressive melody, soft piano and strings">بالاد غمگین و احساسی</option>
+        <option value="Acoustic pop, warm guitar, natural organic arrangement">آکوستیک</option>
+        <option value="Modern rap, rhythmic vocal delivery, strong beat and deep bass">رپ</option>
+        <option value="Cinematic soundtrack, expressive orchestral arrangement">سینمایی</option>
+        <option value="Cinematic instrumental soundtrack, expressive orchestral arrangement, no vocals">موسیقی بی‌کلام</option>
+      </select>
     </div>
 
     <div class="field">
-
-     <label for="pronunciationNotes">
-      راهنمای تلفظ کلمات خاص
-     </label>
-
-     <textarea
-      id="pronunciationNotes"
-      maxlength="1200"
-      rows="3"
-      style="min-height:90px"
-      placeholder="مثلاً: کلمه «مُهر» با ضمه خوانده شود."
-     ></textarea>
-
-     <div class="hint">
-      اگر تلفظ کلمه‌ای خاص است، اینجا راهنمایی کن.
-     </div>
-
+      <label>حال‌وهوای موسیقی</label>
+      <div class="mood-grid">
+        <div class="mood-option">
+          <input type="radio" name="musicMood" id="moodEmotional" value="emotional" checked>
+          <label for="moodEmotional">💜 احساسی</label>
+        </div>
+        <div class="mood-option">
+          <input type="radio" name="musicMood" id="moodHappy" value="happy">
+          <label for="moodHappy">☀️ شاد</label>
+        </div>
+        <div class="mood-option">
+          <input type="radio" name="musicMood" id="moodSad" value="sad">
+          <label for="moodSad">🌧️ غمگین</label>
+        </div>
+        <div class="mood-option">
+          <input type="radio" name="musicMood" id="moodRomantic" value="romantic">
+          <label for="moodRomantic">❤️ عاشقانه</label>
+        </div>
+        <div class="mood-option">
+          <input type="radio" name="musicMood" id="moodEpic" value="epic">
+          <label for="moodEpic">⚔️ حماسی</label>
+        </div>
+        <div class="mood-option">
+          <input type="radio" name="musicMood" id="moodCalm" value="calm">
+          <label for="moodCalm">🌙 آرام</label>
+        </div>
+        <div class="mood-option">
+          <input type="radio" name="musicMood" id="moodEnergy" value="energetic">
+          <label for="moodEnergy">🔥 پرانرژی</label>
+        </div>
+      </div>
     </div>
 
-   </div>
-  </details>
+    <div class="field">
+      <label for="instruments">سازهای موردنظر</label>
+      <input id="instruments" maxlength="300"
+        placeholder="مثلاً پیانو، ویولن، گیتار، باغلاما...">
+      <div class="hint">
+        ساز اول، ساز اصلی آهنگ است. سازهای بعدی نقش همراه دارند.
+      </div>
+    </div>
 
-  <div class="hint" style="margin-top:15px">
-   مدت درخواستی آهنگ: یک دقیقه (۶۰ ثانیه)
-  </div>
+    <details class="advanced">
+      <summary>تنظیمات حرفه‌ای و جزئیات بیشتر</summary>
+      <div class="advanced-content">
 
-  <button
-   type="button"
-   id="generate"
-   class="main-button"
-  >
-   ✦ ساخت آهنگ یک‌دقیقه‌ای
-  </button>
+        <div class="field">
+          <label for="voice">جنس و لحن صدای خواننده</label>
+          <select id="voice">
+            <option value="male_pop">خواننده مرد؛ پاپ جوان و روشن</option>
+            <option value="male_deep">خواننده مرد؛ باریتون عمیق و گرم</option>
+            <option value="male_raspy">خواننده مرد؛ خش‌دار و احساسی</option>
+            <option value="female_pop">خواننده زن؛ شفاف و ملایم</option>
+            <option value="female_powerful">خواننده زن؛ قدرتمند و پرانرژی</option>
+            <option value="duet">دوخواننده؛ مرد و زن</option>
+            <option value="instrumental">بی‌کلام؛ بدون خواننده</option>
+          </select>
+        </div>
 
-  <div
-   id="status"
-   class="status"
-   role="status"
-   aria-live="polite"
-  ></div>
+        <div class="field">
+          <label for="mood">توضیحات نحوه اجرای آهنگ</label>
+          <input id="mood" maxlength="500"
+            placeholder="مثلاً شروع آرام، اوج احساسی در ترجیع‌بند...">
+        </div>
 
- </section>
+        <div class="field">
+          <label for="pronunciationNotes">راهنمای تلفظ کلمات خاص</label>
+          <textarea id="pronunciationNotes" maxlength="1200" rows="3"
+            style="min-height:90px"
+            placeholder="مثلاً کلمه‌ای با تلفظ خاص یا لهجه مشخص..."></textarea>
+        </div>
+      </div>
+    </details>
 
+    <div class="hint" style="margin-top:17px">
+      مدت درخواستی: ۶۰ ثانیه
+    </div>
+
+    <button type="button" id="generate" class="main-button">
+      ✦ ساخت آهنگ
+    </button>
+
+    <div id="status" class="status" role="status" aria-live="polite"></div>
+  </section>
 </div>
 
-<!-- استوری‌ساز -->
+<!-- STORY MAKER -->
 <div id="storyTab" class="tab-content">
+  <section class="card">
+    <h2 class="section-heading">
+      <span class="section-number">✦</span>
+      استوری‌ساز مینیمال
+    </h2>
 
- <section class="hero">
-  <h1>استوری‌ساز <span>مینیمال</span></h1>
-  <p>
-   متن یا دل‌نوشته‌ات را وارد کن تا برای انتشار در استوری آماده شود.
-  </p>
- </section>
+    <p class="card-intro">
+      متن، شعر کوتاه یا دل‌نوشته‌ات را وارد کن و پیش‌نمایش آن را ببین.
+    </p>
 
- <section class="card">
+    <div class="field">
+      <label for="storyInput">متن استوری</label>
+      <textarea id="storyInput" rows="4" maxlength="500"
+        style="min-height:120px"
+        placeholder="جمله یا حس‌وحالت را بنویس..."></textarea>
+    </div>
 
-  <h2 class="section-title">متن استوری</h2>
+    <div class="story-card">
+      <div class="story-text" id="previewText">« متن شما اینجا قرار می‌گیرد... »</div>
+      <div class="story-subtitle">@Nava_Studio</div>
+    </div>
 
-  <div class="field">
-
-   <label for="storyInput">
-    متن دل‌نوشته یا شعر کوتاه
-   </label>
-
-   <textarea
-    id="storyInput"
-    rows="3"
-    placeholder="جمله یا حس‌وحال خود را بنویسید..."
-    style="min-height:120px"
-   ></textarea>
-
-  </div>
-
-  <div class="story-preview-card">
-
-   <div class="story-text" id="previewText">
-    « متن شما اینجا قرار می‌گیرد... »
-   </div>
-
-   <div class="story-subtitle">
-    @Nava_Studio
-   </div>
-
-  </div>
-
- </section>
-
+    <div class="story-note">
+      پیش‌نمایش متنی استوری
+    </div>
+  </section>
 </div>
 
-<p class="footnote">
- نوا در مرحله آزمایش است؛ ساخت شعر و آهنگ به دسترسی سرویس‌های مربوط بستگی دارد.
-</p>
+<footer class="footer">
+  <div class="footer-brand">♫ NAVA AI</div>
+  <div>ایده‌های تو، موسیقی نوا</div>
+  <div>نوا در مرحله آزمایش است؛ ساخت آهنگ به دسترسی سرویس مربوط بستگی دارد.</div>
+</footer>
 
 </main>
 
 <script>
 "use strict";
 
-/* ==========================================
-   آدرس سرویس‌ها
-========================================== */
+/* =================================
+   API CONNECTIONS
+================================= */
 
 const MUSIC_API = "https://nava-music-api.honrrpower.workers.dev";
 const LYRICS_API = MUSIC_API;
 
 function getSelectedLanguage() {
- return document.getElementById("langSelect").value;
+  return document.getElementById("langSelect").value;
 }
 
-/* ==========================================
-   تب‌ها
-========================================== */
+/* =================================
+   TABS
+================================= */
 
-document.querySelectorAll(".tab-btn").forEach(button => {
+document.querySelectorAll(".nav-tab").forEach(button => {
+  button.addEventListener("click", () => {
+    document.querySelectorAll(".tab-content").forEach(tab => {
+      tab.classList.remove("active");
+    });
 
- button.addEventListener("click", () => {
+    document.querySelectorAll(".nav-tab").forEach(btn => {
+      btn.classList.remove("active");
+    });
 
-  document.querySelectorAll(".tab-content").forEach(tab => {
-   tab.classList.remove("active");
+    document.getElementById(button.dataset.tab).classList.add("active");
+    button.classList.add("active");
   });
-
-  document.querySelectorAll(".tab-btn").forEach(btn => {
-   btn.classList.remove("active");
-  });
-
-  document.getElementById(button.dataset.tab).classList.add("active");
-
-  button.classList.add("active");
-
- });
-
 });
 
-/* ==========================================
-   حالت تاریک و روشن
-========================================== */
+/* =================================
+   THEME
+================================= */
 
 const themeToggle = document.getElementById("themeToggle");
 const htmlElement = document.documentElement;
 
-const savedTheme = localStorage.getItem("nava_theme") || "dark";
+let savedTheme = "dark";
 
-if (savedTheme === "light") {
-
- htmlElement.setAttribute("data-theme", "light");
- themeToggle.textContent = "☀️";
-
-} else {
-
- htmlElement.removeAttribute("data-theme");
- themeToggle.textContent = "🌙";
-
+try {
+  savedTheme = localStorage.getItem("nava_theme") || "dark";
+} catch (error) {
+  savedTheme = "dark";
 }
 
+function applyTheme(theme) {
+  if (theme === "light") {
+    htmlElement.setAttribute("data-theme", "light");
+    themeToggle.textContent = "🌙";
+  } else {
+    htmlElement.removeAttribute("data-theme");
+    themeToggle.textContent = "☀️";
+  }
+}
+
+applyTheme(savedTheme);
+
 themeToggle.addEventListener("click", () => {
+  const nextTheme =
+    htmlElement.getAttribute("data-theme") === "light"
+      ? "dark"
+      : "light";
 
- if (htmlElement.getAttribute("data-theme") === "light") {
+  applyTheme(nextTheme);
 
-  htmlElement.removeAttribute("data-theme");
-
-  localStorage.setItem("nava_theme", "dark");
-
-  themeToggle.textContent = "🌙";
-
- } else {
-
-  htmlElement.setAttribute("data-theme", "light");
-
-  localStorage.setItem("nava_theme", "light");
-
-  themeToggle.textContent = "☀️";
-
- }
-
+  try {
+    localStorage.setItem("nava_theme", nextTheme);
+  } catch (error) {}
 });
 
-/* ==========================================
-   پیش‌نمایش استوری
-========================================== */
+/* =================================
+   STORY PREVIEW
+================================= */
 
-document.getElementById("storyInput").addEventListener("input", () => {
+document.getElementById("storyInput").addEventListener("input", event => {
+  const value = event.target.value.trim();
 
- const value = document.getElementById("storyInput").value.trim();
-
- document.getElementById("previewText").textContent =
-  value ? `« ${value} »` : "« متن شما اینجا قرار می‌گیرد... »";
-
+  document.getElementById("previewText").textContent =
+    value ? `« ${value} »` : "« متن شما اینجا قرار می‌گیرد... »";
 });
 
-/* ==========================================
-   عناصر شعر و آهنگ
-========================================== */
+/* =================================
+   ELEMENTS
+================================= */
 
 const lyricsBox = document.getElementById("lyrics");
-
 const singingLyricsBox = document.getElementById("singingLyrics");
 
 const makeLyricsButton = document.getElementById("makeLyrics");
-
 const lyricStatus = document.getElementById("lyricStatus");
 
 const generateButton = document.getElementById("generate");
-
 const statusBox = document.getElementById("status");
 
 const styleSelect = document.getElementById("styleInput");
-
 const voiceSelect = document.getElementById("voice");
 
 const localRegionSelect = document.getElementById("localRegion");
-
 const instrumentsInput = document.getElementById("instruments");
 
-/* ==========================================
-   نمایش پیام
-========================================== */
+/* =================================
+   STATUS MESSAGE
+================================= */
 
 function showMessage(box, message) {
-
- box.replaceChildren();
-
- box.textContent = message;
-
- box.classList.add("show");
-
+  box.replaceChildren();
+  box.textContent = message;
+  box.classList.add("show");
 }
 
-/* ==========================================
-   پاک کردن نسخه خوانندگی قدیمی
-========================================== */
+/* =================================
+   SINGING LYRICS
+================================= */
 
 lyricsBox.addEventListener("input", () => {
-
- singingLyricsBox.value = "";
-
+  singingLyricsBox.value = "";
 });
 
-/* ==========================================
-   ارسال درخواست و مدیریت خطا
-========================================== */
+/* =================================
+   API REQUEST
+================================= */
 
 async function postJSON(baseURL, path, payload, timeoutMs = 130000) {
+  const controller = new AbortController();
 
- const controller = new AbortController();
-
- const timer = setTimeout(() => {
-  controller.abort();
- }, timeoutMs);
-
- try {
-
-  const response = await fetch(baseURL + path, {
-
-   method: "POST",
-
-   headers: {
-    "Content-Type": "application/json"
-   },
-
-   body: JSON.stringify(payload),
-
-   signal: controller.signal
-
-  });
-
-  const rawText = await response.text();
-
-  let result;
+  const timer = setTimeout(() => {
+    controller.abort();
+  }, timeoutMs);
 
   try {
+    const response = await fetch(baseURL + path, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(payload),
+      signal: controller.signal
+    });
 
-   result = JSON.parse(rawText);
+    const rawText = await response.text();
 
-  } catch {
+    let result;
 
-   throw new Error(
-    "پاسخ سرور قابل خواندن نیست. کد HTTP: " + response.status
-   );
+    try {
+      result = JSON.parse(rawText);
+    } catch {
+      throw new Error(
+        "پاسخ سرور قابل خواندن نیست. کد HTTP: " + response.status
+      );
+    }
 
+    if (!response.ok) {
+      const details = result.details;
+
+      const message =
+        typeof details === "string"
+          ? details
+          : result.error || "خطای سرویس: " + response.status;
+
+      throw new Error(message);
+    }
+
+    return result;
+
+  } catch (error) {
+    if (error.name === "AbortError") {
+      throw error;
+    }
+
+    if (error instanceof TypeError) {
+      throw new Error(
+        "ارتباط با سرور برقرار نشد. اینترنت، آدرس Worker یا تنظیمات CORS را بررسی کن."
+      );
+    }
+
+    throw error;
+
+  } finally {
+    clearTimeout(timer);
   }
-
-  if (!response.ok) {
-
-   const details = result.details;
-
-   const message = typeof details === "string"
-    ? details
-    : result.error || "خطای سرویس: " + response.status;
-
-   throw new Error(message);
-
-  }
-
-  return result;
-
- } catch (error) {
-
-  if (error.name === "AbortError") {
-   throw error;
-  }
-
-  if (error instanceof TypeError) {
-
-   throw new Error(
-    "ارتباط با سرور برقرار نشد. اینترنت، آدرس Worker یا تنظیمات CORS را بررسی کن."
-   );
-
-  }
-
-  throw error;
-
- } finally {
-
-  clearTimeout(timer);
-
- }
-
 }
 
-/* ==========================================
-   ساخت شعر
-   یک درخواست به سرویس فعلی
-========================================== */
+/* =================================
+   GENERATE LYRICS
+================================= */
 
 makeLyricsButton.addEventListener("click", async () => {
+  const topic = document.getElementById("topic").value.trim();
 
- const topic = document.getElementById("topic").value.trim();
-
- if (!topic) {
-
-  showMessage(lyricStatus, "اول موضوع ترانه را بنویس.");
-
-  document.getElementById("topic").focus();
-
-  return;
-
- }
-
- const selectedLang = getSelectedLanguage();
-
- makeLyricsButton.disabled = true;
-
- makeLyricsButton.textContent = "⏳ در حال خلق ترانه...";
-
- showMessage(
-  lyricStatus,
-  "نوا در حال ساخت شعر و آماده‌سازی نسخه خوانندگی است؛ کمی صبر کن."
- );
-
- try {
-
-  const result = await postJSON(
-   LYRICS_API,
-   "/generate-lyrics",
-   {
-    topic: topic,
-    language: selectedLang
-   }
-  );
-
-  if (!result.success || !result.lyrics) {
-
-   throw new Error(result.error || "متن شعر دریافت نشد.");
-
+  if (!topic) {
+    showMessage(lyricStatus, "اول موضوع ترانه را بنویس.");
+    document.getElementById("topic").focus();
+    return;
   }
 
-  lyricsBox.value = result.lyrics;
-
-  singingLyricsBox.value =
-   result.singingLyrics || result.lyrics;
+  makeLyricsButton.disabled = true;
+  makeLyricsButton.textContent = "⏳ در حال خلق ترانه...";
 
   showMessage(
-   lyricStatus,
-   "✅ شعر با موفقیت ساخته شد.\n" +
-   "سرویس تولیدکننده: " +
-   (result.provider || "نامشخص")
+    lyricStatus,
+    "نوا در حال ساخت ترانه است؛ کمی صبر کن."
   );
 
-  lyricsBox.scrollIntoView({
-   behavior: "smooth",
-   block: "center"
-  });
+  try {
+    const result = await postJSON(
+      LYRICS_API,
+      "/generate-lyrics",
+      {
+        topic: topic,
+        language: getSelectedLanguage()
+      }
+    );
 
- } catch (error) {
+    if (!result.success || !result.lyrics) {
+      throw new Error(result.error || "متن شعر دریافت نشد.");
+    }
 
-  showMessage(
-   lyricStatus,
-   "ساخت شعر ناموفق بود.\n" +
-   (
-    error.name === "AbortError"
-     ? "زمان انتظار تمام شد؛ دوباره امتحان کن."
-     : error.message
-   )
-  );
+    lyricsBox.value = result.lyrics;
 
- } finally {
+    singingLyricsBox.value =
+      result.singingLyrics || result.lyrics;
 
-  makeLyricsButton.disabled = false;
+    showMessage(
+      lyricStatus,
+      "✅ شعر با موفقیت ساخته شد.\nاکنون می‌توانی آن را ویرایش کنی یا آهنگ بسازی."
+    );
 
-  makeLyricsButton.textContent = "✍ ساخت هوشمند شعر";
+    lyricsBox.scrollIntoView({
+      behavior: "smooth",
+      block: "center"
+    });
 
- }
+  } catch (error) {
+    showMessage(
+      lyricStatus,
+      "ساخت شعر ناموفق بود.\n" +
+      (
+        error.name === "AbortError"
+          ? "زمان انتظار تمام شد؛ دوباره امتحان کن."
+          : error.message
+      )
+    );
 
+  } finally {
+    makeLyricsButton.disabled = false;
+    makeLyricsButton.textContent = "✍️ ساخت هوشمند شعر";
+  }
 });
 
-/* ==========================================
-   موسیقی محلی ایران
-========================================== */
+/* =================================
+   IRANIAN LOCAL MUSIC
+================================= */
 
 const localMusicOptions = {
+  kurdish: {
+    prompt: "Authentic Kurdish regional folk music, recognizable Kurdish melodic phrasing and traditional rhythmic character. Avoid generic Persian pop arrangement.",
+    instruments: "تنبور، دف، شمشال"
+  },
 
- kurdish: {
+  turkish: {
+    prompt: "Authentic Iranian Azerbaijani and Anatolian Turkish folk music, recognizable Turkish folk melodic phrasing and traditional rhythmic character. Prominent baglama where suitable.",
+    instruments: "باغلاما، بالابان، دف"
+  },
 
-  prompt:
-   "Authentic Kurdish regional folk music, recognizable Kurdish melodic phrasing and traditional rhythmic character. Use Kurdish folk influence respectfully; avoid generic Persian pop arrangement.",
+  lori: {
+    prompt: "Authentic Lori regional folk music, traditional Lori melodic phrasing, regional dance rhythm and folk character.",
+    instruments: "سرنا، دهل، کمانچه"
+  },
 
-  instruments:
-   "تنبور، دف، شمشال"
+  gilaki: {
+    prompt: "Authentic Gilaki folk music from northern Iran, northern regional melodic phrasing and lively traditional folk rhythm.",
+    instruments: "لله‌وا، نقاره، دایره"
+  },
 
- },
+  mazani: {
+    prompt: "Authentic Mazandarani folk music from northern Iran, traditional Mazani melodic phrasing and regional folk rhythm.",
+    instruments: "لله‌وا، دوتار، دایره"
+  },
 
- turkish: {
+  southern: {
+    prompt: "Authentic Southern Iranian and Persian Gulf folk music, Bandar regional rhythmic groove, lively percussion and coastal folk character.",
+    instruments: "نی‌انبان، دمام، دهل"
+  },
 
-  prompt:
-   "Authentic Turkish folk music with regional Iranian Turkish and Anatolian Turkish folk character, recognizable Turkish folk melodic phrasing and traditional rhythmic character. Prominent baglama where suitable.",
+  khorasani: {
+    prompt: "Authentic Khorasani folk music, traditional regional melodic phrasing and prominent dotar-led folk arrangement.",
+    instruments: "دوتار، دایره، دهل"
+  },
 
-  instruments:
-   "باغلاما، بالابان، دف"
-
- },
-
- lori: {
-
-  prompt:
-   "Authentic Lori regional folk music, traditional Lori melodic phrasing, regional dance rhythm and folk character.",
-
-  instruments:
-   "سرنا، دهل، کمانچه"
-
- },
-
- gilaki: {
-
-  prompt:
-   "Authentic Gilaki folk music from northern Iran, northern regional melodic phrasing and lively traditional folk rhythm.",
-
-  instruments:
-   "لله‌وا، نقاره، دایره"
-
- },
-
- mazani: {
-
-  prompt:
-   "Authentic Mazandarani folk music from northern Iran, traditional Mazani melodic phrasing and regional folk rhythm.",
-
-  instruments:
-   "لله‌وا، دوتار، دایره"
-
- },
-
- southern: {
-
-  prompt:
-   "Authentic Southern Iranian and Persian Gulf folk music, Bandar regional rhythmic groove, lively percussion and coastal folk character.",
-
-  instruments:
-   "نی‌انبان، دمام، دهل"
-
- },
-
- khorasani: {
-
-  prompt:
-   "Authentic Khorasani folk music, traditional regional melodic phrasing and prominent dotar-led folk arrangement.",
-
-  instruments:
-   "دوتار، دایره، دهل"
-
- },
-
- bakhtiari: {
-
-  prompt:
-   "Authentic Bakhtiari folk music, traditional Bakhtiari melodic phrasing, regional folk rhythm and instrumentation.",
-
-  instruments:
-   "سرنا، دهل، کرنا"
-
- }
-
+  bakhtiari: {
+    prompt: "Authentic Bakhtiari folk music, traditional Bakhtiari melodic phrasing, regional folk rhythm and instrumentation.",
+    instruments: "سرنا، دهل، کرنا"
+  }
 };
-
-/*
-این متغیر مشخص می‌کند چه سازی را خود برنامه
-به‌صورت خودکار پیشنهاد داده است.
-اگر کاربر خودش ساز را تغییر دهد، انتخاب او حفظ می‌شود.
-*/
 
 let lastSuggestedInstruments = "";
 
-/* ==========================================
-   انتخاب منطقه موسیقی محلی
-========================================== */
-
 localRegionSelect.addEventListener("change", () => {
+  const previousSuggestion = lastSuggestedInstruments;
+  const selected = localMusicOptions[localRegionSelect.value];
+  const currentInstruments = instrumentsInput.value.trim();
 
- const previousSuggestion = lastSuggestedInstruments;
+  if (!selected) {
+    if (
+      previousSuggestion &&
+      currentInstruments === previousSuggestion
+    ) {
+      instrumentsInput.value = "";
+    }
 
- const selected = localMusicOptions[localRegionSelect.value];
-
- const currentInstruments = instrumentsInput.value.trim();
-
- // اگر منطقه پاک شد، فقط پیشنهاد خودکار قبلی پاک می‌شود.
- if (!selected) {
+    lastSuggestedInstruments = "";
+    return;
+  }
 
   if (
-   previousSuggestion &&
-   currentInstruments === previousSuggestion
+    !currentInstruments ||
+    currentInstruments === previousSuggestion
   ) {
-
-   instrumentsInput.value = "";
-
+    instrumentsInput.value = selected.instruments;
+    lastSuggestedInstruments = selected.instruments;
+  } else {
+    lastSuggestedInstruments = "";
   }
-
-  lastSuggestedInstruments = "";
-
-  return;
-
- }
-
- // اگر فیلد خالی باشد یا هنوز پیشنهاد قبلی برنامه داخل آن باشد،
- // سازهای منطقه جدید جایگزین می‌شوند.
-
- if (
-  !currentInstruments ||
-  currentInstruments === previousSuggestion
- ) {
-
-  instrumentsInput.value = selected.instruments;
-
-  lastSuggestedInstruments = selected.instruments;
-
- } else {
-
-  // اگر کاربر ساز دلخواه وارد کرده، آن را دست نمی‌زنیم.
-  lastSuggestedInstruments = "";
-
- }
-
 });
 
-/* ==========================================
-   تشخیص موسیقی بی‌کلام
-========================================== */
+/* =================================
+   INSTRUMENTAL MODE
+================================= */
 
 styleSelect.addEventListener("change", () => {
-
- if (styleSelect.value.includes("no vocals")) {
-
-  voiceSelect.value = "instrumental";
-
- } else if (voiceSelect.value === "instrumental") {
-
-  voiceSelect.value = "male_pop";
-
- }
-
+  if (styleSelect.value.includes("no vocals")) {
+    voiceSelect.value = "instrumental";
+  } else if (voiceSelect.value === "instrumental") {
+    voiceSelect.value = "male_pop";
+  }
 });
 
-/* ==========================================
-   ساخت آهنگ با ACE Music
-========================================== */
+voiceSelect.addEventListener("change", () => {
+  if (voiceSelect.value === "instrumental") {
+    styleSelect.value =
+      "Cinematic instrumental soundtrack, expressive orchestral arrangement, no vocals";
+  }
+});
+
+/* =================================
+   GENERATE MUSIC
+================================= */
 
 generateButton.addEventListener("click", async () => {
+  const lyrics = lyricsBox.value.trim();
+  const singingLyrics = singingLyricsBox.value.trim();
 
- const lyrics = lyricsBox.value.trim();
+  const voice = voiceSelect.value;
+  const instrumental = voice === "instrumental";
 
- const singingLyrics = singingLyricsBox.value.trim();
+  if (!instrumental && !lyrics) {
+    showMessage(
+      statusBox,
+      "اول متن آهنگ را بنویس یا با هوش مصنوعی شعر بساز."
+    );
 
- const voice = voiceSelect.value;
-
- const instrumental = voice === "instrumental";
-
- // بررسی وجود شعر
- if (!instrumental && !lyrics) {
-
-  showMessage(
-   statusBox,
-   "اول متن آهنگ را بنویس یا با هوش مصنوعی شعر بساز."
-  );
-
-  lyricsBox.focus();
-
-  return;
-
- }
-
- // منطقه محلی انتخاب‌شده
- const selectedRegion = localMusicOptions[localRegionSelect.value];
-
- // سبک پایه
- const baseStyle = styleSelect.value;
-
- /*
- اگر موسیقی محلی انتخاب شده باشد،
- ویژگی‌های منطقه‌ای به سبک پایه اضافه می‌شوند.
- ساختار فیلد style حفظ می‌شود.
- */
-
- const finalStyle = selectedRegion
-
-  ? baseStyle + ". " + selectedRegion.prompt
-
-  : baseStyle;
-
- // سازهای انتخابی
- const finalInstruments =
-  instrumentsInput.value.trim() ||
-  (selectedRegion ? selectedRegion.instruments : "");
-
- // اطلاعات ارسالی به Worker
- const payload = {
-
-  lyrics: lyrics,
-
-  singingLyrics: singingLyrics,
-
-  language: getSelectedLanguage(),
-
-  voice: voice,
-
-  style: finalStyle,
-
-  musicMood: document.getElementById("musicMood").value,
-
-  instruments: finalInstruments,
-
-  mood: document.getElementById("mood").value.trim(),
-
-  pronunciationNotes:
-   document.getElementById("pronunciationNotes").value.trim(),
-
-  duration: 60
-
- };
-
- generateButton.disabled = true;
-
- generateButton.textContent =
-  "⏳ در حال ساخت آهنگ یک‌دقیقه‌ای...";
-
- showMessage(
-  statusBox,
-  "درخواست ساخت آهنگ ۶۰ ثانیه‌ای ارسال شد. ممکن است چند دقیقه طول بکشد؛ صفحه را نبند."
- );
-
- try {
-
-  const result = await postJSON(
-   MUSIC_API,
-   "/generate-music",
-   payload,
-   300000
-  );
-
-  if (!result.success || !result.audioUrl) {
-
-   throw new Error(result.error || "فایل صوتی دریافت نشد.");
-
+    lyricsBox.focus();
+    return;
   }
 
-  statusBox.replaceChildren();
+  const selectedRegion =
+    localMusicOptions[localRegionSelect.value];
 
-  const heading = document.createElement("strong");
+  const baseStyle = styleSelect.value;
 
-  heading.textContent = "🎵 آهنگ آماده است";
+  const finalStyle = selectedRegion
+    ? baseStyle + ". " + selectedRegion.prompt
+    : baseStyle;
 
-  statusBox.appendChild(heading);
+  const finalInstruments =
+    instrumentsInput.value.trim() ||
+    (selectedRegion ? selectedRegion.instruments : "");
 
-  const audio = document.createElement("audio");
+  const selectedMood =
+    document.querySelector('input[name="musicMood"]:checked');
 
-  audio.controls = true;
+  const payload = {
+    lyrics: lyrics,
+    singingLyrics: singingLyrics,
+    language: getSelectedLanguage(),
+    voice: voice,
+    style: finalStyle,
+    musicMood: selectedMood ? selectedMood.value : "emotional",
+    instruments: finalInstruments,
+    mood: document.getElementById("mood").value.trim(),
+    pronunciationNotes:
+      document.getElementById("pronunciationNotes").value.trim(),
+    duration: 60
+  };
 
-  audio.preload = "metadata";
-
-  audio.src = result.audioUrl;
-
-  statusBox.appendChild(audio);
-
-  const download = document.createElement("a");
-
-  download.className = "download";
-
-  download.href = result.audioUrl;
-
-  download.target = "_blank";
-
-  download.rel = "noopener";
-
-  download.download =
-   `nava-song-${Math.floor(Math.random() * 90000) + 10000}.mp3`;
-
-  download.textContent = "⬇ دانلود آهنگ";
-
-  statusBox.appendChild(download);
-
-  const info = document.createElement("div");
-
-  info.className = "hint";
-
-  info.textContent = "مدت درخواستی: ۶۰ ثانیه";
-
-  statusBox.appendChild(info);
-
-  statusBox.classList.add("show");
-
- } catch (error) {
+  generateButton.disabled = true;
+  generateButton.textContent = "⏳ در حال ساخت آهنگ...";
 
   showMessage(
-   statusBox,
-   "ساخت آهنگ ناموفق بود.\n" +
-   (
-    error.name === "AbortError"
-     ? "زمان انتظار تمام شد؛ وضعیت سرویس را بررسی کن."
-     : error.message
-   )
+    statusBox,
+    "درخواست ساخت آهنگ ارسال شد. ممکن است چند دقیقه طول بکشد؛ صفحه را نبند."
   );
 
- } finally {
+  try {
+    const result = await postJSON(
+      MUSIC_API,
+      "/generate-music",
+      payload,
+      300000
+    );
 
-  generateButton.disabled = false;
+    if (!result.success || !result.audioUrl) {
+      throw new Error(result.error || "فایل صوتی دریافت نشد.");
+    }
 
-  generateButton.textContent = "✦ ساخت آهنگ یک‌دقیقه‌ای";
+    statusBox.replaceChildren();
 
- }
+    const heading = document.createElement("strong");
+    heading.textContent = "🎵 آهنگ آماده است";
+    statusBox.appendChild(heading);
 
+    const audio = document.createElement("audio");
+    audio.controls = true;
+    audio.preload = "metadata";
+    audio.src = result.audioUrl;
+    statusBox.appendChild(audio);
+
+    const download = document.createElement("a");
+    download.className = "download";
+    download.href = result.audioUrl;
+    download.target = "_blank";
+    download.rel = "noopener";
+    download.download =
+      `nava-song-${Date.now()}.mp3`;
+
+    download.textContent = "⬇ دانلود آهنگ";
+    statusBox.appendChild(download);
+
+    const info = document.createElement("div");
+    info.className = "status-info";
+    info.textContent = "مدت درخواستی: ۶۰ ثانیه";
+    statusBox.appendChild(info);
+
+    statusBox.classList.add("show");
+
+    statusBox.scrollIntoView({
+      behavior: "smooth",
+      block: "center"
+    });
+
+  } catch (error) {
+    showMessage(
+      statusBox,
+      "ساخت آهنگ ناموفق بود.\n" +
+      (
+        error.name === "AbortError"
+          ? "زمان انتظار تمام شد؛ وضعیت سرویس را بررسی کن."
+          : error.message
+      )
+    );
+
+  } finally {
+    generateButton.disabled = false;
+    generateButton.textContent = "✦ ساخت آهنگ";
+  }
 });
-
 </script>
 
 </body>
-                                          </html>
+</html>
