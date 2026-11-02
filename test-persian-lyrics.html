@@ -1,0 +1,75 @@
+
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Nava - Persian Lyrics Test</title>
+  <style>
+    body {
+      background: #111827;
+      color: #f9fafb;
+      font-family: Tahoma, sans-serif;
+      padding: 20px;
+      line-height: 2;
+    }
+    h2 { color: #facc15; }
+    button {
+      background: #eab308;
+      color: #111827;
+      border: 0;
+      padding: 12px 22px;
+      border-radius: 8px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    pre {
+      direction: ltr;
+      text-align: left;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+      background: #1f2937;
+      padding: 15px;
+      border-radius: 8px;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>آزمایش موتور فارسی Nava</h2>
+  <p>برای اجرای آزمایش، دکمه زیر را بزن.</p>
+
+  <button onclick="runTest()">اجرای آزمایش</button>
+
+  <h3>خروجی موتور:</h3>
+  <pre id="result">هنوز آزمایشی اجرا نشده است.</pre>
+
+  <script src="./persian-lyrics.js"></script>
+
+  <script>
+    const sampleLyrics = `
+تو دیوونه رفتی یه شب بی نشونه
+تو خواستی که قلبم پریشون بمونه
+واست گریه من دیگه بی امونه
+دل از درد عشقت یه دریای خونه
+می خواهم با تو باشم هنوز عاشقونه
+ولی نازنینم چگونه چگونه
+چگونه چگونه
+من از سبزه سبزم ولی خسته خسته
+من از شهر عشقم ولی دل شکسته
+`;
+
+    function runTest() {
+      try {
+        const output = preparePersianLyrics(sampleLyrics);
+        document.getElementById("result").textContent =
+          JSON.stringify(output, null, 2);
+      } catch (error) {
+        document.getElementById("result").textContent =
+          "ERROR: " + error.message;
+      }
+    }
+  </script>
+
+</body>
+</html>
