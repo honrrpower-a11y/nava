@@ -198,6 +198,7 @@ Exactly one adult male singer.
 One unique male vocal identity from beginning to end.
 One lead vocal recording only.
 Natural clear youthful male pop voice.
+Keep the same singer and vocal tone throughout the entire song.
 No female voice.
 No second male voice.
 No duet.
@@ -329,18 +330,13 @@ Avoid dance beats and overly cheerful rhythms.
     happy: {
       bpm: 124,
       description: `
-Genuinely happy, bright and uplifting modern pop music.
-Fast upbeat tempo at exactly 124 BPM.
-Clear straight 4/4 dance-pop rhythm.
-Strong punchy kick drum on every beat.
-Crisp snare and bright handclaps.
-Bouncy melodic bass line.
-Bright major-key chords.
-Playful rhythmic piano and catchy melodic hooks.
-Energetic rhythmic movement from the very beginning.
-A joyful, memorable and uplifting chorus.
-The groove should make the listener feel like moving and dancing.
-Avoid slow ballad rhythm, sad melodies and dark atmosphere.
+Genuinely joyful and uplifting music.
+Fast, lively and danceable tempo.
+A strong, infectious groove with a memorable melodic chorus.
+Bright major-key harmony and lively rhythmic movement.
+The music must feel genuinely happy, celebratory and catchy.
+Do not confuse high energy with a good melody.
+Avoid generic EDM loops and monotonous dance beats.
 `
     },
 
@@ -412,13 +408,53 @@ Avoid slow ballad pacing.
 // تشخیص سبک موسیقی
 // ==========================================
 
-function getStyleDescription(style) {
+function getStyleDescription(style, language = "fa", musicMood = "") {
   const original = String(style || "Modern pop").trim();
   const value = original.toLowerCase();
 
   let detail = "";
 
-  if (
+  // پاپ شاد ایرانی: اولویت بالاتر از تشخیص عمومی پاپ
+  const isIranianHappyPop =
+    language === "fa" &&
+    musicMood === "happy" &&
+    /پاپ|pop/.test(value) &&
+    !/راک|rock|هیپ.?هاپ|hip.?hop|رپ|rap|الکترونیک|edm|house|techno/.test(value);
+
+  if (isIranianHappyPop) {
+    detail = `
+IRANIAN HAPPY POP - SPECIFIC MUSICAL IDENTITY.
+
+This must sound like a professionally produced, genuinely popular Iranian happy pop song.
+Do NOT create generic Western dance-pop, generic EDM or a simple electronic beat.
+
+RHYTHM:
+Use a lively Iranian 6/8 pop dance groove.
+Make the 6/8 pulse unmistakable and naturally danceable.
+Use a bouncing rhythmic feel with clear accents on the first and fourth beats of the six-part pattern.
+Combine punchy kick, crisp snare, handclaps and tasteful Iranian percussion.
+The rhythm must feel like a real Iranian celebration and party song, not a generic four-on-the-floor EDM track.
+
+MELODY:
+Write a memorable, catchy Iranian pop melody.
+Use natural Persian melodic phrasing and familiar Iranian pop harmonic movement.
+The chorus must have a strong singable hook that listeners can remember after one listen.
+Use melodic variation between verses and chorus.
+Avoid repetitive one-note melodies and generic Western EDM hooks.
+
+ARRANGEMENT:
+Use a polished modern Iranian pop arrangement.
+Combine modern pop production with a recognizable Iranian musical character.
+Use a lively bass line, rhythmic piano, tasteful melodic instrumental responses and rich but controlled accompaniment.
+Create musical fills and transitions between vocal phrases.
+The arrangement must sound like a complete commercial Iranian pop song.
+
+IMPORTANT:
+Do not turn this into traditional Persian classical music.
+Do not turn this into Arabic pop, Turkish pop, Indian music or generic Western club music.
+The result must have its own recognizable Iranian happy pop identity.
+`;
+  } else if (
     /آذربایجان|آذری|azerbaijan|azerbaijani|باغلاما|baglama|saz|ترکیه|ترکی|turkish/.test(value)
   ) {
     detail = `
@@ -685,7 +721,17 @@ function buildAceMusicPrompt(settings) {
   );
 
   const moodProfile = getMoodProfile(musicMood);
-  const styleProfile = getStyleDescription(style);
+  const styleProfile = getStyleDescription(
+    style,
+    language,
+    musicMood
+  );
+
+  const isIranianHappyPop =
+    language === "fa" &&
+    musicMood === "happy" &&
+    /پاپ|pop/i.test(style) &&
+    !/راک|rock|رپ|rap|هیپ.?هاپ|hip.?hop|edm|الکترونیک/i.test(style);
 
   const parts = [];
 
@@ -704,6 +750,35 @@ TEMPO:
 Exactly ${moodProfile.bpm} BPM.
 Use a clear and recognizable rhythmic groove.
 `);
+
+  if (isIranianHappyPop) {
+    parts.push(`
+IRANIAN HAPPY POP - ARRANGEMENT PRIORITY.
+
+The musical identity is more important than simply having a fast beat.
+
+Create a real Iranian happy pop song with a lively, recognizable 6/8 dance groove.
+Use a natural Iranian 6/8 rhythmic feel, not a generic Western four-on-the-floor beat.
+Build a bouncing bass line and lively percussion with clear rhythmic accents.
+Use tasteful Iranian percussion and handclaps to create a festive groove.
+
+MELODIC DIRECTION:
+Create a memorable Iranian pop melody with natural Persian phrasing.
+The chorus must have a catchy, joyful melodic hook.
+Use melodic movement, musical responses and clear variation between verse and chorus.
+Do not use a repetitive generic electronic loop as the main musical idea.
+
+ARRANGEMENT:
+Create a polished, full Iranian pop arrangement.
+Use a lively bass line, rhythmic chord movement, bright melodic fills and well-developed transitions.
+The intro should establish the Iranian pop groove immediately.
+The chorus should feel bigger, more joyful and more memorable than the verse.
+
+Do not imitate a specific existing song or artist.
+Do not turn this into Arabic, Turkish, Indian or generic Western dance music.
+Do not make it sound like a simple electronic beat with random instruments.
+`);
+  }
 
   if (!instrumental) {
     parts.push(`
@@ -726,17 +801,21 @@ ${extraMood}
     parts.push(`
 DOMINANT INSTRUMENT: REAL ACOUSTIC PIANO.
 
-The piano must be the main lead instrument.
-Start with a clearly audible solo acoustic piano introduction.
-Use real piano notes, not pads or synthesizer textures.
-Create a memorable piano melody and recurring piano motif.
-Keep the piano clearly audible throughout the verses and choruses.
-Add expressive piano phrases between vocal lines.
-Give the piano prominent instrumental passages.
-Keep the piano forward in the mix.
-Supporting instruments must not overpower the piano.
-Do not replace the piano melody with guitar or synthesizer.
-The listener must immediately recognize the piano as the main instrument.
+The piano must be clearly audible and musically prominent.
+Use a real acoustic piano sound, not a soft pad or a barely audible background texture.
+
+PIANO ARRANGEMENT:
+- Begin with a clearly audible piano introduction.
+- Play a recognizable rhythmic piano motif.
+- Use the piano to reinforce the happy groove.
+- Let the piano play rhythmic chords and melodic fills.
+- Give the piano a memorable melodic phrase between vocal sections.
+- Keep the piano forward and clearly separated in the mix.
+- Keep the piano audible during the chorus.
+- Do not bury the piano under synthesizers, guitars or percussion.
+- Do not replace the piano with an electric keyboard pad.
+
+The listener must clearly recognize the piano as an important part of the arrangement.
 `);
   } else if (leadInstrument) {
     parts.push(`
