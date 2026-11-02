@@ -4,47 +4,156 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Nava - Persian Lyrics Test</title>
+  <title>Nava - Persian Lyrics Review</title>
+
   <style>
+    * { box-sizing: border-box; }
+
     body {
       background: #111827;
       color: #f9fafb;
       font-family: Tahoma, sans-serif;
-      padding: 20px;
+      padding: 16px;
       line-height: 2;
+      max-width: 900px;
+      margin: auto;
     }
-    h2 { color: #facc15; }
+
+    h2, h3 { color: #facc15; }
+
     button {
       background: #eab308;
       color: #111827;
       border: 0;
-      padding: 12px 22px;
+      padding: 11px 18px;
       border-radius: 8px;
-      font-size: 16px;
+      font-size: 15px;
       cursor: pointer;
+      font-weight: bold;
+      margin: 5px 0;
     }
+
+    button.secondary {
+      background: #374151;
+      color: white;
+    }
+
+    button:disabled {
+      opacity: .5;
+      cursor: not-allowed;
+    }
+
+    .panel {
+      background: #1f2937;
+      border: 1px solid #374151;
+      border-radius: 12px;
+      padding: 15px;
+      margin: 18px 0;
+    }
+
+    .word-card {
+      background: #111827;
+      border: 1px solid #4b5563;
+      border-radius: 10px;
+      padding: 13px;
+      margin: 12px 0;
+    }
+
+    .word-title {
+      color: #facc15;
+      font-size: 19px;
+      font-weight: bold;
+    }
+
+    input {
+      display: block;
+      width: 100%;
+      padding: 12px;
+      margin: 8px 0;
+      border-radius: 8px;
+      border: 1px solid #6b7280;
+      background: #111827;
+      color: white;
+      font-family: Tahoma, sans-serif;
+      font-size: 16px;
+      direction: rtl;
+    }
+
+    .hint {
+      color: #9ca3af;
+      font-size: 13px;
+    }
+
+    .success { color: #4ade80; }
+    .warning { color: #fbbf24; }
+    .error { color: #f87171; }
+
     pre {
       direction: ltr;
       text-align: left;
       white-space: pre-wrap;
       overflow-wrap: anywhere;
-      background: #1f2937;
-      padding: 15px;
+      background: #111827;
+      padding: 14px;
       border-radius: 8px;
+      overflow-x: auto;
+      font-size: 12px;
     }
+
+    .hidden { display: none; }
   </style>
 </head>
+
 <body>
 
   <h2>آزمایش موتور فارسی Nava</h2>
-  <p>برای اجرای آزمایش، دکمه زیر را بزن.</p>
 
-  <button onclick="runTest()">اجرای آزمایش</button>
+  <p>
+    این صفحه برای بررسی هجابندی و تکمیل فرهنگ لغت فارسی Nava است.
+  </p>
 
-  <h3>خروجی موتور:</h3>
-  <pre id="result">هنوز آزمایشی اجرا نشده است.</pre>
+  <div class="panel">
+    <h3>۱. اجرای آزمایش شعر</h3>
 
-  <script src="./persian-lyrics.js?v=031-test"></script>
+    <button onclick="runTest()">اجرای آزمایش</button>
+
+    <div id="status"></div>
+  </div>
+
+  <div class="panel">
+    <h3>۲. بررسی واژه‌های ناشناخته</h3>
+
+    <p class="hint">
+      هجاهای هر واژه را با فاصله از هم جدا کن.
+      مثال: پنجره ← پَن جَ رِه
+    </p>
+
+    <div id="reviewArea">
+      هنوز آزمایشی اجرا نشده است.
+    </div>
+  </div>
+
+  <div class="panel">
+    <h3>۳. فرهنگ لغت تأییدشده</h3>
+
+    <div id="approvedArea"></div>
+
+    <button class="secondary" onclick="showApprovedWords()">
+      نمایش واژه‌های ذخیره‌شده
+    </button>
+
+    <button class="secondary" onclick="downloadDictionary()">
+      دریافت فایل فرهنگ لغت JSON
+    </button>
+  </div>
+
+  <div class="panel">
+    <h3>۴. خروجی کامل موتور</h3>
+
+    <pre id="result">هنوز آزمایشی اجرا نشده است.</pre>
+  </div>
+
+  <script src="./persian-lyrics.js?v=032-review"></script>
 
   <script>
     const sampleLyrics = `
@@ -60,17 +169,160 @@
 پنجره باز مانده است
 `;
 
+    let lastOutput = null;
+
     function runTest() {
       try {
-        const output = preparePersianLyrics(sampleLyrics);
+        lastOutput = preparePersianLyrics(sampleLyrics);
 
         document.getElementById("result").textContent =
-          JSON.stringify(output, null, 2);
+          JSON.stringify(lastOutput, null, 2);
+
+        const unknown = lastOutput.review_summary.unknown_words;
+
+        const status = document.getElementById("status");
+
+        if (unknown.length) {
+          status.innerHTML =
+            '<p class="warning">تعداد واژه‌های نیازمند بررسی: ' +
+            unknown.length + '</p>';
+        } else {
+          status.innerHTML =
+            '<p class="success">همه واژه‌های این شعر در فرهنگ لغت موجود هستند.</p>';
+        }
+
+        renderReviewWords(unknown);
+
+        showApprovedWords();
+
       } catch (error) {
         document.getElementById("result").textContent =
           "ERROR: " + error.message;
+
+        document.getElementById("status").innerHTML =
+          '<p class="error">خطا در اجرای موتور</p>';
       }
     }
+
+    function renderReviewWords(words) {
+      const area = document.getElementById("reviewArea");
+      area.innerHTML = "";
+
+      if (!words.length) {
+        area.innerHTML =
+          '<p class="success">هیچ واژه ناشناخته‌ای باقی نمانده است.</p>';
+        return;
+      }
+
+      words.forEach((word, index) => {
+        const card = document.createElement("div");
+        card.className = "word-card";
+
+        const title = document.createElement("div");
+        title.className = "word-title";
+        title.textContent = word;
+
+        const description = document.createElement("p");
+        description.className = "hint";
+        description.textContent =
+          "هجابندی پیشنهادی خودت را وارد کن و سپس تأیید کن.";
+
+        const input = document.createElement("input");
+        input.type = "text";
+        input.placeholder = "مثال: پَن جَ رِه";
+        input.id = "syllables-" + index;
+
+        const button = document.createElement("button");
+        button.textContent = "تأیید و ذخیره واژه";
+
+        const message = document.createElement("div");
+        message.id = "message-" + index;
+
+        button.onclick = function () {
+          approveWord(word, input.value, message, button);
+        };
+
+        card.appendChild(title);
+        card.appendChild(description);
+        card.appendChild(input);
+        card.appendChild(button);
+        card.appendChild(message);
+
+        area.appendChild(card);
+      });
+    }
+
+    function approveWord(word, inputValue, message, button) {
+      const syllables = inputValue
+        .trim()
+        .split(/\s+/)
+        .filter(Boolean);
+
+      if (!inputValue.trim() || syllables.length < 1) {
+        message.className = "error";
+        message.textContent = "لطفاً هجاها را وارد کن.";
+        return;
+      }
+
+      const result = addReviewedWord(word, syllables);
+
+      if (result.success) {
+        message.className = "success";
+        message.textContent = "واژه با موفقیت ذخیره شد.";
+
+        button.disabled = true;
+
+        setTimeout(function () {
+          runTest();
+        }, 500);
+
+      } else {
+        message.className = "error";
+        message.textContent = result.message;
+      }
+    }
+
+    function showApprovedWords() {
+      const area = document.getElementById("approvedArea");
+      const words = getReviewedWords();
+
+      area.innerHTML = "";
+
+      const entries = Object.entries(words);
+
+      if (!entries.length) {
+        area.textContent = "هنوز واژه‌ای به‌صورت دستی تأیید نشده است.";
+        return;
+      }
+
+      entries.forEach(([word, syllables]) => {
+        const item = document.createElement("p");
+        item.className = "success";
+        item.textContent = word + "  ←  " + syllables.join(" / ");
+        area.appendChild(item);
+      });
+    }
+
+    function downloadDictionary() {
+      const data = exportReviewedDictionary();
+
+      const blob = new Blob(
+        [data],
+        { type: "application/json;charset=utf-8" }
+      );
+
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+
+      link.href = url;
+      link.download = "nava-reviewed-words.json";
+      link.click();
+
+      URL.revokeObjectURL(url);
+    }
+
+    showApprovedWords();
+
   </script>
 
 </body>
