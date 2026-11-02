@@ -3,6 +3,7 @@
  * Nava Persian Lyrics Engine
  * Version: 0.3.1
  * Manual syllable dictionary + review and approval system
+ * Updated: syllable validation and safe storage
  */
 
 const NAVA_PRONUNCIATION = [
@@ -56,11 +57,6 @@ const NAVA_SYLLABLES = {
   "عشقم": ["عِش", "قَم"],
   "دل‌شکسته": ["دِل", "شِ", "کَس", "تِ"]
 };
-
-/*
- * User-approved dictionary.
- * Approved words are saved in browser storage.
- */
 
 const NAVA_STORAGE_KEY = "nava_persian_reviewed_words_v1";
 const NAVA_USER_SYLLABLES = {};
@@ -123,7 +119,7 @@ function loadReviewedWords() {
 
     const data = JSON.parse(saved);
 
-    if (!data || typeof data !== "object") return;
+    if (!data || typeof data !== "object" || Array.isArray(data)) return;
 
     for (const [word, syllables] of Object.entries(data)) {
       if (
@@ -171,20 +167,35 @@ function saveReviewedWords() {
 }
 
 /*
+ * Normalize text only for comparison.
+ * Diacritics and whitespace are ignored.
+ */
+
+function normalizeForComparison(text) {
+  return normalizePersian(text)
+    .replace(/[\u064B-\u065F\u0670]/g, "")
+    .replace(/[\u200c\s]/g, "");
+}
+
+/*
  * Approve a word and add its syllables.
- * Example:
- * addReviewedWord("پنجره", ["پَن", "جَ", "رِه"])
  */
 
 function addReviewedWord(word, syllables) {
   const cleanWord = normalizeWord(word);
 
   if (!cleanWord) {
-    return { success: false, message: "واژه خالی است." };
+    return {
+      success: false,
+      message: "واژه خالی است."
+    };
   }
 
   if (!Array.isArray(syllables) || syllables.length === 0) {
-    return { success: false, message: "هجابندی معتبر وارد نشده است." };
+    return {
+      success: false,
+      message: "هجابندی معتبر وارد نشده است."
+    };
   }
 
   const cleanSyllables = syllables
@@ -192,22 +203,43 @@ function addReviewedWord(word, syllables) {
     .filter(Boolean);
 
   if (cleanSyllables.length !== syllables.length) {
-    return { success: false, message: "یکی از هجاها خالی است." };
+    return {
+      success: false,
+      message: "یکی از هجاها خالی است."
+    };
   }
 
-  if (cleanSyllables.join("").replace(/‌/g, "") !== cleanWord) {
+  const joinedSyllables = cleanSyllables.join("");
+
+  if (
+    normalizeForComparison(joinedSyllables) !==
+    normalizeForComparison(cleanWord)
+  ) {
     return {
       success: false,
       message: "مجموع هجاها با حروف واژه مطابقت ندارد. هجابندی را بررسی کن."
     };
   }
 
+  // Keep previous value in case saving fails.
+  const hadPreviousValue =
+    Object.prototype.hasOwnProperty.call(
+      NAVA_USER_SYLLABLES,
+      cleanWord
+    );
+
+  const previousValue = NAVA_USER_SYLLABLES[cleanWord];
+
   NAVA_USER_SYLLABLES[cleanWord] = cleanSyllables;
 
   const saved = saveReviewedWords();
 
   if (!saved.success) {
-    delete NAVA_USER_SYLLABLES[cleanWord];
+    if (hadPreviousValue) {
+      NAVA_USER_SYLLABLES[cleanWord] = previousValue;
+    } else {
+      delete NAVA_USER_SYLLABLES[cleanWord];
+    }
 
     return saved;
   }
@@ -230,7 +262,6 @@ function getReviewedWords() {
 
 /*
  * Export dictionary as JSON.
- * Useful for future transfer to the main Nava engine.
  */
 
 function exportReviewedDictionary() {
@@ -248,19 +279,23 @@ function getSyllables(line) {
     const key = normalizeWord(word);
 
     const userSyllables = NAVA_USER_SYLLABLES[key];
-    const originalSyllables = NAVA_SYLLABLES[word] || NAVA_SYLLABLES[key];
+    const originalSyllables =
+      NAVA_SYLLABLES[word] || NAVA_SYLLABLES[key];
 
-    const syllables = userSyllables || originalSyllables || null;
+    const syllables =
+      userSyllables || originalSyllables || null;
 
     return {
       word,
       syllables,
       syllable_count: syllables ? syllables.length : null,
+
       syllable_source: userSyllables
         ? "user_reviewed_dictionary"
         : originalSyllables
           ? "manual_dictionary"
           : null,
+
       review_required: !syllables
     };
   });
@@ -307,7 +342,8 @@ function preparePersianLyrics(input) {
         review_words: [...new Set(reviewWords)]
       },
 
-      pause_after_ms: index === lines.length - 1 ? 700 : 450
+      pause_after_ms:
+        index === lines.length - 1 ? 700 : 450
     };
   });
 
