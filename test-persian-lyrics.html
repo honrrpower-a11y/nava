@@ -113,7 +113,7 @@
   </p>
 
   <div class="panel">
-    <h3>۱. اجرای آزمایش شعر</h3>
+    <h3>۱. اجرای آزمایش شعر جدید</h3>
 
     <button onclick="runTest()">اجرای آزمایش</button>
 
@@ -157,16 +157,12 @@
 
   <script>
     const sampleLyrics = `
-تو دیوونه رفتی یه شب بی نشونه
-تو خواستی که قلبم پریشون بمونه
-واست گریه من دیگه بی امونه
-دل از درد عشقت یه دریای خونه
-می خواهم با تو باشم هنوز عاشقونه
-ولی نازنینم چگونه چگونه
-چگونه چگونه
-من از سبزه سبزم ولی خسته خسته
-من از شهر عشقم ولی دل شکسته
-پنجره باز مانده است
+دلم گرفته از این شبای بی‌ستاره
+چشام هنوز دنبال رد پات می‌باره
+تو رفتی و بارون به شیشه می‌کوبه
+صدای خنده‌هات هنوز تو گوشم می‌مونه
+کجای این شهری که منو یادت نمیاد
+دلم بدون تو دیگه آروم نمی‌گیره
 `;
 
     let lastOutput = null;
@@ -192,7 +188,6 @@
         }
 
         renderReviewWords(unknown);
-
         showApprovedWords();
 
       } catch (error) {
@@ -258,7 +253,7 @@
         .split(/\s+/)
         .filter(Boolean);
 
-      if (!inputValue.trim() || syllables.length < 1) {
+      if (!inputValue.trim()) {
         message.className = "error";
         message.textContent = "لطفاً هجاها را وارد کن.";
         return;
@@ -318,7 +313,9 @@
       link.download = "nava-reviewed-words.json";
       link.click();
 
-      URL.revokeObjectURL(url);
+      setTimeout(function () {
+        URL.revokeObjectURL(url);
+      }, 1000);
     }
 
     showApprovedWords();
