@@ -1,4 +1,6 @@
+
 const ALLOWED_ORIGIN = "https://honrrpower-a11y.github.io";
+
 // ACE-Step
 const ACE_API_URL = "https://api.acemusic.ai/v1/chat/completions";
 const ACE_MODEL = "acemusic/acestep-v1.5-turbo";
@@ -13,7 +15,7 @@ function json(data, status, origin) {
     headers: {
       "Content-Type": "application/json; charset=utf-8",
       "Access-Control-Allow-Origin": origin,
-      "Access-Control-Allow-Methods": "POST, OPTIONS",
+      "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
       "Access-Control-Allow-Headers": "Content-Type",
       "Cache-Control": "no-store"
     }
@@ -364,7 +366,7 @@ export default {
         status: 204,
         headers: {
           "Access-Control-Allow-Origin": corsOrigin,
-          "Access-Control-Allow-Methods": "POST, OPTIONS",
+          "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
           "Access-Control-Allow-Headers": "Content-Type",
           "Access-Control-Max-Age": "86400"
         }
@@ -372,6 +374,26 @@ export default {
     }
 
     const url = new URL(request.url);
+
+    // ======================================
+    // بررسی سلامت و نسخه Worker
+    // ======================================
+
+    if (
+      url.pathname === "/status" &&
+      request.method === "GET"
+    ) {
+      return json(
+        {
+          success: true,
+          message: "Nava Worker is running",
+          version: "nava-test-1",
+          timestamp: new Date().toISOString()
+        },
+        200,
+        corsOrigin
+      );
+    }
 
     // ======================================
     // ۱. ساخت شعر با Gemini و OpenRouter
@@ -850,3 +872,4 @@ export default {
     );
   }
 };
+ 
