@@ -298,6 +298,208 @@ function buildLyricsPrompt(topic, style, language) {
 }
 
 // ==========================================
+// پروفایل‌های مستقل موسیقی
+// ==========================================
+
+function buildMusicProfile(input) {
+  const language = ["fa", "tr", "en"].includes(input.language)
+    ? input.language
+    : "fa";
+
+  const requestedStyle = safeText(
+    input.musicStyle ||
+    input.music_style ||
+    input.genre ||
+    input.style ||
+    "",
+    120
+  );
+
+  const style = requestedStyle.toLowerCase();
+
+  const mood = safeText(
+    input.musicMood ||
+    input.music_mood ||
+    input.mood ||
+    "",
+    120
+  );
+
+  let profile = "persian";
+  let prompt = "";
+  let bpm = null;
+  let timeSignature = null;
+
+  // ----------------------------------------
+  // موسیقی ترکیه‌ای
+  // ----------------------------------------
+
+  if (
+    /ترک|ترکی|turkish|türk|turkiye|türkiye/i.test(style) ||
+    (!requestedStyle && language === "tr")
+  ) {
+    profile = "turkish";
+
+    prompt = `
+Authentic Turkish music with a clearly recognizable Turkish musical identity.
+
+Use Turkish melodic phrasing and Turkish makam-inspired melodic structures.
+Create a distinctly Turkish melody, not a generic Western pop melody.
+
+Use appropriate Turkish instruments such as:
+baglama, saz, kanun, ney, Turkish clarinet and darbuka.
+
+The arrangement must have Turkish rhythmic character and Turkish melodic ornaments.
+Use Turkish musical phrasing throughout the song.
+
+Avoid Iranian, Arabic, Indian and Bollywood musical arrangements.
+Avoid generic Western rock and jazz sounds.
+Do not make electric guitar the dominant instrument.
+The result must sound Turkish in its melody, rhythm and arrangement.
+`;
+
+    bpm = 105;
+    timeSignature = "4";
+  }
+
+  // ----------------------------------------
+  // موسیقی عربی
+  // ----------------------------------------
+
+  else if (
+    /عرب|arabic|arab|خلیجی/i.test(style)
+  ) {
+    profile = "arabic";
+
+    prompt = `
+Authentic Arabic music with a recognizable Arabic melodic identity.
+
+Use Arabic maqam-inspired melodic phrasing and ornamentation.
+Use oud, qanun, ney, riq and darbuka where appropriate.
+Create Arabic rhythmic patterns and expressive Arabic melodies.
+
+Avoid generic Western rock, jazz and Indian musical styles.
+The result must sound Arabic in its melody and rhythm.
+`;
+
+    bpm = 100;
+    timeSignature = "4";
+  }
+
+  // ----------------------------------------
+  // موسیقی راک
+  // ----------------------------------------
+
+  else if (
+    /راک|rock|metal|متال/i.test(style)
+  ) {
+    profile = "rock";
+
+    prompt = `
+Authentic rock music.
+
+Use electric guitar, bass guitar and live rock drums.
+Create strong guitar riffs, energetic rhythmic sections and a memorable rock melody.
+Use a clear rock arrangement and dynamic song structure.
+
+Avoid jazz swing and Indian or Bollywood musical elements.
+`;
+
+    bpm = 120;
+    timeSignature = "4";
+  }
+
+  // ----------------------------------------
+  // موسیقی جاز
+  // ----------------------------------------
+
+  else if (
+    /جاز|jazz|بلوز|blues/i.test(style)
+  ) {
+    profile = "jazz";
+
+    prompt = `
+Authentic jazz music with jazz harmony and rhythmic phrasing.
+
+Use piano, upright bass, acoustic drums and saxophone where appropriate.
+Create expressive melodic improvisation and a coherent jazz arrangement.
+Use jazz chord progressions and natural swing where appropriate.
+
+Avoid rock guitar riffs and traditional regional pop arrangements.
+`;
+
+    bpm = 95;
+    timeSignature = "4";
+  }
+
+  // ----------------------------------------
+  // موسیقی ایرانی
+  // ----------------------------------------
+
+  else if (
+    /ایران|فارسی|persian|iranian|سنتی|تلفیقی/i.test(style) ||
+    language === "fa"
+  ) {
+    profile = "persian";
+
+    prompt = `
+Authentic Iranian Persian music with a distinctly Persian melodic identity.
+
+Use Persian melodic phrasing, traditional Persian musical ornaments,
+and Iranian modal and melodic characteristics.
+
+Use appropriate Iranian instruments such as:
+tar, setar, santur, kamancheh, ney, tombak and daf.
+
+Build the melody around Persian musical characteristics.
+Use Iranian rhythmic patterns and natural Persian musical phrasing.
+
+Avoid generic Western rock and jazz arrangements.
+Avoid Indian, Bollywood and Arabic musical styles.
+Do not make electric guitar the dominant instrument.
+
+The result must sound Iranian in its melody and rhythm,
+not merely use Iranian instruments over a Western pop arrangement.
+`;
+
+    bpm = 95;
+    timeSignature = "4";
+  }
+
+  // ----------------------------------------
+  // پاپ عمومی
+  // ----------------------------------------
+
+  else {
+    profile = "pop";
+
+    prompt = `
+Create a contemporary pop song with a clear musical identity.
+
+Use a memorable melody, balanced instrumentation and a coherent arrangement.
+Follow the requested musical style: ${requestedStyle || "contemporary pop"}.
+
+Avoid unnecessary jazz or rock elements unless explicitly requested.
+`;
+  }
+
+  if (mood) {
+    prompt += `
+Requested mood and atmosphere: ${mood}.
+`;
+  }
+
+  return {
+    profile,
+    requestedStyle,
+    vocalLanguage: language,
+    prompt,
+    bpm,
+    timeSignature
+  };
+}
+
+// ==========================================
 // استخراج خروجی صوتی ACE
 // ==========================================
 
@@ -387,7 +589,7 @@ export default {
         {
           success: true,
           message: "Nava Worker is running",
-          version: "nava-test-1",
+          version: "nava-test-2",
           timestamp: new Date().toISOString()
         },
         200,
@@ -631,7 +833,7 @@ export default {
     }
 
     // ======================================
-    // ۲. ساخت موسیقی با ACE - حالت آزمایشی خام
+    // ۲. ساخت موسیقی با ACE
     // ======================================
 
     if (
@@ -671,14 +873,16 @@ export default {
       // دریافت متن شعر
       // ------------------------------------
 
+      const language = ["fa", "tr", "en"].includes(input.language)
+        ? input.language
+        : "fa";
+
       const lyrics = prepareLyrics(
         safeText(
           input.singingLyrics || input.lyrics || "",
           8000
         ),
-        ["fa", "tr", "en"].includes(input.language)
-          ? input.language
-          : "fa"
+        language
       );
 
       if (!lyrics) {
@@ -705,36 +909,53 @@ export default {
       }
 
       // ------------------------------------
-      // درخواست حداقلی به ACE
-      // فقط متن شعر
+      // انتخاب پروفایل موسیقی
       // ------------------------------------
 
-      
-const aceBody = {
-  model: ACE_MODEL,
-  duration: 60,
-  messages: [
-    {
-      role: "user",
-      content: `<prompt>
-Iranian Persian pop music with authentic Persian melodic identity.
-Persian-language vocals with clear, natural Iranian pronunciation.
-Create a distinctly Iranian melody with traditional Persian melodic ornaments and phrasing.
-Use prominent Iranian instruments: tar, Persian setar, santur, kamancheh, tombak and daf.
-Blend traditional Iranian instruments with a polished modern Persian pop arrangement.
-The melody and instrumental arrangement must sound Iranian, not Indian.
-Avoid Bollywood, Indian, Hindustani and South Asian musical styles.
-Avoid tabla and Indian-style sitar arrangements.
-Keep the vocal melody expressive, memorable and naturally suited to Persian lyrics.
+      const musicProfile = buildMusicProfile(input);
+
+      // ------------------------------------
+      // درخواست ساختاریافته به ACE
+      // ------------------------------------
+
+      const audioConfig = {
+        duration: 60,
+        vocal_language: language,
+        format: "mp3"
+      };
+
+      if (musicProfile.bpm) {
+        audioConfig.bpm = musicProfile.bpm;
+      }
+
+      if (musicProfile.timeSignature) {
+        audioConfig.time_signature =
+          musicProfile.timeSignature;
+      }
+
+      const aceBody = {
+        model: ACE_MODEL,
+
+        messages: [
+          {
+            role: "user",
+            content: `<prompt>
+${musicProfile.prompt}
 </prompt>
 <lyrics>
 ${lyrics}
 </lyrics>`
-    }
-  ],
-  stream: false
-};
+          }
+        ],
 
+        stream: false,
+        thinking: true,
+        use_format: false,
+        use_cot_caption: false,
+        use_cot_language: false,
+
+        audio_config: audioConfig
+      };
 
       // ------------------------------------
       // ارسال درخواست به ACE
@@ -868,7 +1089,10 @@ ${lyrics}
           audioUrl,
           title: "Nava AI Song",
           provider: "ACE-Step",
-          model: ACE_MODEL
+          model: ACE_MODEL,
+          musicProfile: musicProfile.profile,
+          requestedStyle: musicProfile.requestedStyle,
+          targetDuration: 60
         },
         200,
         corsOrigin
