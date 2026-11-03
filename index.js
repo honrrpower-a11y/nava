@@ -1,4 +1,4 @@
-Const ALLOWED_ORIGIN = "https://honrrpower-a11y.github.io";
+const ALLOWED_ORIGIN = "https://honrrpower-a11y.github.io";
 const MUSIC_DURATION_SECONDS = 60;
 
 // ACE-Step
