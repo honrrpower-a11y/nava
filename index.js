@@ -1,5 +1,4 @@
 const ALLOWED_ORIGIN = "https://honrrpower-a11y.github.io";
-
 // ACE-Step
 const ACE_API_URL = "https://api.acemusic.ai/v1/chat/completions";
 const ACE_MODEL = "acemusic/acestep-v1.5-turbo";
