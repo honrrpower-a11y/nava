@@ -491,6 +491,44 @@ The vocal must remain clear, melodic and emotionally convincing.
 Avoid robotic delivery, flat recitation, exaggerated vibrato,
 excessive melisma and artificial vocal runs.
 
+NO WORDLESS VOCALS — ABSOLUTELY IMPORTANT:
+
+Do not sing, hum, chant or vocalize any sounds that are not written in the lyrics.
+
+No "hoo-hoo", "woo-woo", "oh-oh", "ah-ah", "ooh", "yeah",
+wordless singing, humming, vocal warm-ups, scat singing or improvised syllables.
+
+Do not add any vocal sounds before the first lyric line.
+Do not add any wordless vocal sounds between lyric lines or sections.
+Do not add improvised vocal sounds at the beginning or end of the song.
+
+The singer must perform only the actual written lyrics.
+Every vocal phrase must contain real words from the supplied Persian lyrics.
+
+The first vocal sound must be the first actual word of [Verse 1].
+Never begin the vocal performance with humming, breathing effects,
+melodic syllables or improvised ad-libs.
+
+Do not replace the first lyric line with a vocalization.
+Do not insert any extra words or sounds that are not present in the lyrics.
+
+INTRODUCTION AND VOCAL ENTRY:
+
+Begin with a short instrumental introduction using Iranian instruments only.
+
+The introduction must be completely instrumental.
+No singer, no background voice, no humming, no chanting,
+no wordless vocals and no vocal samples during the introduction.
+
+After the short instrumental introduction, the lead singer must enter
+directly with the first written lyric line.
+
+Do not add a separate vocal intro.
+Do not sing improvised syllables before the lyrics begin.
+
+Keep the instrumental introduction short and balanced.
+Do not let it consume too much of the song.
+
 PERSIAN POP MELODY:
 
 Create an original melody in the style of contemporary Iranian romantic pop.
@@ -521,19 +559,6 @@ Do not make it excessively slow, sleepy or dragging.
 Do not make it fast, aggressive or dance-oriented.
 
 Leave enough room for the singer to deliver each phrase naturally.
-
-INTRODUCTION:
-
-Begin with a short, expressive Iranian instrumental introduction before the singer enters.
-
-Start with an identifiable Persian santur or tar melody.
-The introduction should establish the Iranian atmosphere immediately.
-
-Keep the introduction short and balanced.
-Do not let the instrumental introduction consume too much of the song.
-
-Do not use a generic Western synth introduction.
-Do not imitate Turkish pop introductions.
 
 IRANIAN INSTRUMENTS AND THEIR ROLES:
 
@@ -599,6 +624,11 @@ The Iranian identity must be especially clear in the lead vocal melody,
 Persian pronunciation, phrase endings and emotional delivery.
 
 Keep the existing Iranian instrumental character and balanced arrangement.
+
+Remember:
+The introduction is instrumental only.
+The singer must start with the first written lyric word.
+No wordless vocalizations anywhere in the song.
 `;
 
     bpm = 88;
@@ -731,7 +761,7 @@ export default {
         {
           success: true,
           message: "Nava Worker is running",
-          version: "nava-test-5",
+          version: "nava-test-6",
           timestamp: new Date().toISOString()
         },
         200,
