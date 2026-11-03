@@ -1,4 +1,3 @@
-
 const ALLOWED_ORIGIN = "https://honrrpower-a11y.github.io";
 
 // ACE-Step
