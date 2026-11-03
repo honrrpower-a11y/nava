@@ -1346,6 +1346,18 @@ Do not change to 4/4 in the chorus.
 VOCAL STYLE:
 ${getVoiceDescription(voice)}
 
+==========================================
+PERSIAN VOCAL & PRONUNCIATION DIRECTIVE
+==========================================
+
+CRITICAL VOCAL PERFORMANCE RULES:
+- The singer MUST sing in natural, native Iranian Persian (Farsi).
+- Pronounce every Persian word clearly, fluently, and with correct colloquial/literary intonation.
+- ABSOLUTELY NO foreign accent, NO Indian style, NO Arabic guttural trills, and NO robotic phrasing.
+- Connect the syllables smoothly just like a real professional Iranian pop singer.
+- Follow the exact sequence of supplied lyrics without altering, translating, or repeating extra words.
+- Keep the vocal expression heartfelt, warm, and natural.
+
 VOCAL LANGUAGE:
 ${getLanguageName(language)}.
 `);
@@ -1453,20 +1465,6 @@ Do not create the impression of two singers.
 `);
   }
 
-  if (language === "fa" && !instrumental) {
-    parts.push(`
-PERSIAN VOCAL REQUIREMENTS:
-
-Sing in natural native Iranian Persian (Farsi).
-Use clear Iranian Persian pronunciation and natural Persian vowels.
-Avoid foreign, Indian-sounding or unnatural pronunciation.
-Preserve the supplied Persian words exactly.
-Do not translate, rewrite or replace the lyrics.
-Do not invent extra words or syllables.
-Avoid unnecessary vocal ornaments.
-`);
-  }
-
   if (pronunciationNotes && !instrumental) {
     parts.push(`
 PRONUNCIATION INSTRUCTIONS:
@@ -1505,8 +1503,6 @@ Keep the lead instrument recognizable.
 Use a proper musical ending.
 `);
 
-  // دستور ریتم ۶/۸ در انتهای پرامپت قرار می‌گیرد
-  // تا در صورت محدودیت طول، از دست نرود.
   let rhythmPriority = "";
 
   if (isIranianHappyPop) {
@@ -1576,7 +1572,6 @@ Do not switch to 4/4 in any section.
     return fullPrompt;
   }
 
-  // در صورت طولانی شدن پرامپت، دستور اصلی ۶/۸ حفظ می‌شود.
   if (rhythmPriority) {
     const otherParts = parts.join("\n\n");
     const availableLength = Math.max(
@@ -1722,7 +1717,7 @@ export default {
       if (env.GEMINI_API_KEY) {
         try {
           const geminiRes = await fetch(
-            `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent?key=${env.GEMINI_API_KEY}`,
+            `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${env.GEMINI_API_KEY}`,
             {
               method: "POST",
               headers: {
