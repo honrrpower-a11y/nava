@@ -712,6 +712,7 @@ export default {
       
 const aceBody = {
   model: ACE_MODEL,
+  duration: 60,
   messages: [
     {
       role: "user",
