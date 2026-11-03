@@ -709,16 +709,31 @@ export default {
       // فقط متن شعر
       // ------------------------------------
 
-      const aceBody = {
-        model: ACE_MODEL,
-        messages: [
-          {
-            role: "user",
-            content: `<lyrics>\n${lyrics}\n</lyrics>`
-          }
-        ],
-        stream: false
-      };
+      
+const aceBody = {
+  model: ACE_MODEL,
+  messages: [
+    {
+      role: "user",
+      content: `<prompt>
+Iranian Persian pop music with authentic Persian melodic identity.
+Persian-language vocals with clear, natural Iranian pronunciation.
+Create a distinctly Iranian melody with traditional Persian melodic ornaments and phrasing.
+Use prominent Iranian instruments: tar, Persian setar, santur, kamancheh, tombak and daf.
+Blend traditional Iranian instruments with a polished modern Persian pop arrangement.
+The melody and instrumental arrangement must sound Iranian, not Indian.
+Avoid Bollywood, Indian, Hindustani and South Asian musical styles.
+Avoid tabla and Indian-style sitar arrangements.
+Keep the vocal melody expressive, memorable and naturally suited to Persian lyrics.
+</prompt>
+<lyrics>
+${lyrics}
+</lyrics>`
+    }
+  ],
+  stream: false
+};
+
 
       // ------------------------------------
       // ارسال درخواست به ACE
