@@ -448,6 +448,33 @@ IMPORTANT:
 The music must sound Iranian from the very first second.
 The intro, melody, rhythm, ornaments and arrangement must all belong to Iranian musical tradition.
 
+OVERALL TEMPO AND FEEL:
+
+Create a gentle, relaxed Persian pop song with a slow-to-mid tempo feeling.
+The groove must feel calm, warm, smooth and emotionally expressive.
+
+Do not make the music fast, rushed, aggressive or dance-oriented.
+Avoid a strong driving beat.
+Avoid busy percussion and excessive rhythmic fills.
+
+The rhythm should flow gently and steadily.
+Leave enough musical space for the melody and vocals to breathe.
+
+PERSIAN VOCAL DELIVERY:
+
+The singer must sing slowly and naturally.
+Do not rush the lyrics.
+Do not squeeze many syllables into a short musical phrase.
+Avoid rapid-fire singing, fast syllabic delivery and hurried vocal phrasing.
+
+Use longer sustained notes on important emotional words.
+Allow natural pauses between lyric lines.
+Give each phrase enough time to be understood.
+Use relaxed, expressive vocal phrasing with smooth transitions.
+
+The vocal performance should feel intimate, warm and emotionally controlled.
+Do not use an overly energetic, shouting or aggressive vocal style.
+
 PERSIAN MELODIC IDENTITY:
 
 - Use authentic Iranian melodic phrasing and Persian musical ornaments.
@@ -460,10 +487,12 @@ PERSIAN MELODIC IDENTITY:
 
 INTRODUCTION:
 
-Begin with a clearly Iranian instrumental introduction.
+Begin with a short, clearly Iranian instrumental introduction before the singer enters.
 
-Start with a short, expressive Persian santur or tar melody.
-The opening must immediately establish an Iranian musical atmosphere.
+Start with an expressive Persian santur or tar melody.
+Give the introduction enough space to establish the Iranian atmosphere.
+Keep the intro brief and balanced so the vocals have enough time within the 60-second song.
+
 Do not begin with a Turkish-style instrumental phrase.
 Do not begin with generic Western pop synths or electronic beats.
 
@@ -486,7 +515,10 @@ It should complement the main melody rather than disappear behind the accompanim
 
 5. Tombak and Daf:
 Use tombak and daf to establish a natural Iranian rhythmic character.
-Avoid generic electronic dance percussion as the main rhythmic foundation.
+Play them gently and with restraint.
+Keep percussion soft, controlled and supportive.
+Avoid loud, rapid or continuous percussion patterns.
+Do not let tombak and daf overpower the singer or melodic instruments.
 
 ARRANGEMENT:
 
@@ -494,9 +526,11 @@ ARRANGEMENT:
 - Iranian instruments must be clearly audible, not merely mentioned in the prompt.
 - Give the santur or tar an identifiable role in the introduction.
 - Let the kamancheh and ney complement the vocal melody.
-- Use Iranian percussion to support the rhythm.
+- Use Iranian percussion gently to support the rhythm.
 - Keep the instruments balanced so that several Iranian instruments can be heard.
 - Do not let synthesizers, electric guitar or generic drum loops dominate the arrangement.
+- Avoid overcrowding the mix with too many simultaneous instrumental parts.
+- Give each instrument its own space.
 - Use a coherent Persian pop structure with a memorable vocal melody.
 
 STRICT STYLE EXCLUSIONS:
@@ -507,13 +541,18 @@ Avoid Turkish pop melodic phrasing.
 Avoid Arabic oud-led arrangements.
 Avoid Indian and Bollywood sounds.
 Avoid generic Western jazz and rock arrangements.
+Avoid fast dance beats and aggressive percussion.
 
 The final result must sound like Iranian Persian pop music,
 with an unmistakably Iranian introduction, melody, rhythm and instrumentation.
+
+It must feel gentle, relaxed and emotionally expressive.
+The singer must not rush the lyrics.
+The music must not sound fast or overly energetic.
 It must not sound like Turkish pop or generic Western pop with Persian vocals.
 `;
 
-    bpm = 95;
+    bpm = 82;
     timeSignature = "4";
   }
 
@@ -640,7 +679,7 @@ export default {
         {
           success: true,
           message: "Nava Worker is running",
-          version: "nava-test-3",
+          version: "nava-test-4",
           timestamp: new Date().toISOString()
         },
         200,
@@ -1162,4 +1201,4 @@ ${lyrics}
       corsOrigin
     );
   }
-};
+}; 
