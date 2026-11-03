@@ -442,69 +442,109 @@ Avoid rock guitar riffs and traditional regional pop arrangements.
     profile = "persian";
 
     prompt = `
-Create authentic Iranian Persian music with a strong and unmistakable Iranian identity.
+Create a contemporary Iranian Persian romantic pop song.
 
-IMPORTANT:
-The music must sound Iranian from the very first second.
-The intro, melody, rhythm, ornaments and arrangement must all belong to Iranian musical tradition.
+The main identity must come from the Iranian pop vocal melody and the
+natural Persian vocal performance, not simply from using Iranian instruments.
 
-OVERALL TEMPO AND FEEL:
+STYLE AND EMOTIONAL CHARACTER:
 
-Create a gentle, relaxed Persian pop song with a slow-to-mid tempo feeling.
-The groove must feel calm, warm, smooth and emotionally expressive.
+- Contemporary Iranian romantic pop.
+- Warm, intimate, heartfelt and melodic.
+- Emotional but controlled, sincere and natural.
+- A memorable Persian pop melody that feels familiar to Iranian listeners.
+- Modern production with a distinctly Iranian melodic identity.
+- Not traditional classical Persian music.
+- Not generic international or Western pop.
 
-Do not make the music fast, rushed, aggressive or dance-oriented.
-Avoid a strong driving beat.
-Avoid busy percussion and excessive rhythmic fills.
+PERSIAN VOCAL IDENTITY — VERY IMPORTANT:
 
-The rhythm should flow gently and steadily.
-Leave enough musical space for the melody and vocals to breathe.
+The lead singer must sound like a native Persian-language pop singer.
 
-PERSIAN VOCAL DELIVERY:
+Use natural Iranian Persian pronunciation, diction, accent and vocal phrasing.
 
-The singer must sing slowly and naturally.
+The vocal melody must follow the natural rhythm and stress of Persian words.
+Place emphasis on meaningful syllables and emotional words.
+Do not stress syllables in an English-like or foreign-language manner.
+
+Use connected, expressive Persian phrases.
+Let the melody rise and fall naturally with the meaning of the lyrics.
+The singer should sound emotionally involved in the words,
+as if genuinely telling a personal romantic story.
+
+VOCAL DELIVERY:
+
+Use a warm, expressive and intimate pop vocal performance.
+
+Keep the tempo moderate and comfortable.
 Do not rush the lyrics.
-Do not squeeze many syllables into a short musical phrase.
-Avoid rapid-fire singing, fast syllabic delivery and hurried vocal phrasing.
+Do not make the performance excessively slow or sleepy.
 
-Use longer sustained notes on important emotional words.
-Allow natural pauses between lyric lines.
-Give each phrase enough time to be understood.
-Use relaxed, expressive vocal phrasing with smooth transitions.
+Allow natural breathing spaces between phrases.
+Use smooth transitions between lines.
+Sustain selected emotional words naturally, without stretching every word.
 
-The vocal performance should feel intimate, warm and emotionally controlled.
-Do not use an overly energetic, shouting or aggressive vocal style.
+Use subtle, tasteful Iranian pop vocal ornaments at suitable phrase endings.
+Ornaments should be restrained and natural, not excessive traditional singing.
 
-PERSIAN MELODIC IDENTITY:
+The vocal must remain clear, melodic and emotionally convincing.
+Avoid robotic delivery, flat recitation, exaggerated vibrato,
+excessive melisma and artificial vocal runs.
 
-- Use authentic Iranian melodic phrasing and Persian musical ornaments.
-- Use Persian dastgah and avaz inspired melodic movement.
-- Use expressive Iranian melodic turns and traditional Persian phrasing.
-- Avoid Turkish makam phrasing and Turkish melodic ornaments.
-- Do not imitate Turkish pop introductions or Turkish folk melodies.
-- Do not use Arabic melodic phrasing.
-- Do not use Indian or Bollywood melodic patterns.
+PERSIAN POP MELODY:
+
+Create an original melody in the style of contemporary Iranian romantic pop.
+
+Use Iranian melodic colors and characteristic Persian melodic turns,
+while keeping the song accessible, modern and memorable.
+
+The vocal melody should have expressive rises and falls,
+natural phrase endings and emotional melodic resolution.
+
+Use melodic phrasing that feels natural when sung in Persian.
+The melody should support the emotional meaning of each line.
+
+Do not simply place Persian lyrics over a generic Western pop melody.
+Do not use English-language pop vocal phrasing.
+Avoid predictable generic international pop vocal patterns.
+
+The result should feel like a real Iranian romantic pop song,
+not a foreign pop song with Persian words.
+
+TEMPO AND GROOVE:
+
+Use a moderate, relaxed mid-tempo groove.
+
+Keep a steady and gentle pulse.
+The rhythm should move naturally without feeling rushed.
+Do not make it excessively slow, sleepy or dragging.
+Do not make it fast, aggressive or dance-oriented.
+
+Leave enough room for the singer to deliver each phrase naturally.
 
 INTRODUCTION:
 
-Begin with a short, clearly Iranian instrumental introduction before the singer enters.
+Begin with a short, expressive Iranian instrumental introduction before the singer enters.
 
-Start with an expressive Persian santur or tar melody.
-Give the introduction enough space to establish the Iranian atmosphere.
-Keep the intro brief and balanced so the vocals have enough time within the 60-second song.
+Start with an identifiable Persian santur or tar melody.
+The introduction should establish the Iranian atmosphere immediately.
 
-Do not begin with a Turkish-style instrumental phrase.
-Do not begin with generic Western pop synths or electronic beats.
+Keep the introduction short and balanced.
+Do not let the instrumental introduction consume too much of the song.
+
+Do not use a generic Western synth introduction.
+Do not imitate Turkish pop introductions.
 
 IRANIAN INSTRUMENTS AND THEIR ROLES:
 
 1. Santur:
 Use santur as a clearly audible melodic instrument.
-It should play recognizable Persian melodic phrases, especially in the intro and instrumental transitions.
+It should play recognizable Persian melodic phrases,
+especially in the intro and instrumental transitions.
 
 2. Tar:
 Use tar for expressive Persian melodic responses and short instrumental passages.
-It should be clearly distinguishable in the arrangement.
+It should remain clearly distinguishable in the arrangement.
 
 3. Kamancheh:
 Use kamancheh for emotional sustained melodies and responses between vocal phrases.
@@ -522,37 +562,46 @@ Do not let tombak and daf overpower the singer or melodic instruments.
 
 ARRANGEMENT:
 
-- Keep the arrangement Persian pop, not generic international pop.
-- Iranian instruments must be clearly audible, not merely mentioned in the prompt.
-- Give the santur or tar an identifiable role in the introduction.
-- Let the kamancheh and ney complement the vocal melody.
-- Use Iranian percussion gently to support the rhythm.
-- Keep the instruments balanced so that several Iranian instruments can be heard.
-- Do not let synthesizers, electric guitar or generic drum loops dominate the arrangement.
-- Avoid overcrowding the mix with too many simultaneous instrumental parts.
-- Give each instrument its own space.
-- Use a coherent Persian pop structure with a memorable vocal melody.
+Preserve a contemporary Persian pop arrangement with clearly audible Iranian instruments.
 
-STRICT STYLE EXCLUSIONS:
+Give santur and tar an identifiable role in the introduction.
+Let kamancheh and ney complement the vocal melody.
+Use Iranian percussion gently to support the rhythm.
 
-Avoid Turkish baglama and Turkish saz as lead instruments.
-Avoid Turkish clarinet and Turkish folk-style introductions.
-Avoid Turkish pop melodic phrasing.
-Avoid Arabic oud-led arrangements.
-Avoid Indian and Bollywood sounds.
-Avoid generic Western jazz and rock arrangements.
-Avoid fast dance beats and aggressive percussion.
+Keep the instruments balanced so that their individual sounds can be heard.
+Do not overcrowd the mix with too many simultaneous instrumental parts.
+Give each instrument its own space.
 
-The final result must sound like Iranian Persian pop music,
-with an unmistakably Iranian introduction, melody, rhythm and instrumentation.
+Do not let synthesizers, electric guitar or generic drum loops dominate the arrangement.
 
-It must feel gentle, relaxed and emotionally expressive.
-The singer must not rush the lyrics.
-The music must not sound fast or overly energetic.
-It must not sound like Turkish pop or generic Western pop with Persian vocals.
+The vocal melody must remain the emotional center of the song.
+
+STRICT VOCAL STYLE EXCLUSIONS:
+
+Avoid generic Western pop vocal phrasing.
+Avoid English-like pronunciation and syllable stress.
+Avoid foreign-sounding melodic delivery.
+Avoid Turkish pop vocal ornaments and Turkish folk phrasing.
+Avoid Arabic vocal phrasing.
+Avoid Indian and Bollywood-style singing.
+Avoid traditional classical Persian vocal performance.
+
+Do not turn the song into a traditional classical performance.
+Do not use excessive vocal ornaments.
+Do not make the singer sound like a foreign pop singer singing Persian lyrics.
+
+FINAL MUSICAL DIRECTION:
+
+The final result should sound like contemporary Iranian romantic pop:
+warm, emotional, memorable and naturally Persian.
+
+The Iranian identity must be especially clear in the lead vocal melody,
+Persian pronunciation, phrase endings and emotional delivery.
+
+Keep the existing Iranian instrumental character and balanced arrangement.
 `;
 
-    bpm = 82;
+    bpm = 88;
     timeSignature = "4";
   }
 
@@ -571,6 +620,9 @@ Follow the requested musical style: ${requestedStyle || "contemporary pop"}.
 
 Avoid unnecessary jazz or rock elements unless explicitly requested.
 `;
+
+    bpm = null;
+    timeSignature = "4";
   }
 
   if (mood) {
@@ -679,7 +731,7 @@ export default {
         {
           success: true,
           message: "Nava Worker is running",
-          version: "nava-test-4",
+          version: "nava-test-5",
           timestamp: new Date().toISOString()
         },
         200,
