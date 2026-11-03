@@ -709,7 +709,6 @@ function isPianoInstrument(name) {
 // NAVA MUSIC BRAIN - ابزارهای پایه
 // ==========================================
 
-// ساخت شناسه عددی ثابت از ورودی‌ها برای تنوع کنترل‌شده
 function navaHash(text) {
   let hash = 2166136261;
 
@@ -721,13 +720,11 @@ function navaHash(text) {
   return hash >>> 0;
 }
 
-// انتخاب یک گزینه به‌شکل پایدار
 function navaPick(items, seed) {
   if (!items.length) return null;
   return items[seed % items.length];
 }
 
-// تشخیص سبک دقیق‌تر برای موتور
 function detectNavaGenre(style, language, musicMood) {
   const value = String(style || "").toLowerCase();
 
@@ -925,18 +922,61 @@ Do not change key randomly between sections.
 function designNavaRhythm(genre, mood, baseBpm) {
   let timeSignature = "4/4";
   let groove = "Steady contemporary pop groove with clear kick and snare placement.";
+  let rhythmicPattern = "";
   let bpm = baseBpm;
 
-  if (
-    genre === "iranian_happy_pop" ||
+  if (genre === "iranian_happy_pop") {
+    timeSignature = "6/8";
+    bpm = 124;
+
+    groove = `
+Authentic Iranian happy pop 6/8 dance rhythm.
+Each bar contains SIX eighth-note subdivisions grouped into TWO main beats:
+ONE-two-three, FOUR-five-six.
+The listener must clearly feel TWO main pulses in every bar.
+`;
+
+    rhythmicPattern = `
+EXACT RHYTHMIC FEEL:
+
+Count every bar:
+1 - 2 - 3 | 4 - 5 - 6
+
+Main pulse:
+STRONG - light - light | STRONG - light - light
+
+Percussion:
+- Deep kick or tombak-style bass drum on count 1.
+- Light percussion on counts 2 and 3.
+- Clear clap, snare or daf-style accent on count 4.
+- Light percussion on counts 5 and 6.
+- Bass reinforces the two main pulses on counts 1 and 4.
+- Piano chords and melodic accompaniment follow the same six-part cycle.
+
+The rhythm must have a bouncing, rolling Iranian 6/8 dance feel.
+Each bar must sound like two groups of three, not three groups of two.
+
+STRICTLY AVOID:
+- Four-on-the-floor kick.
+- Standard straight 4/4 pop beat.
+- Generic EDM dance rhythm.
+- A simple fast beat that only sounds energetic.
+- Straight eighth-note rock or disco rhythm.
+
+The 6/8 identity must be unmistakable even without vocals.
+`;
+  } else if (
     genre === "kurdish_folk" ||
     genre === "azerbaijani_folk"
   ) {
     timeSignature = "6/8";
-    groove = "Clearly audible lilting 6/8 groove with natural dance pulse and accents on the main beats.";
-    bpm = genre === "iranian_happy_pop"
-      ? 124
-      : Math.max(76, Math.min(baseBpm, 124));
+    groove = "Regional folk-inspired 6/8 groove with two main pulses per bar.";
+
+    rhythmicPattern = `
+Use a natural folk 6/8 pulse.
+Count: ONE-two-three, FOUR-five-six.
+Keep the percussion organic and the melodic phrases aligned with the two main beats.
+`;
   } else if (genre === "turkish_folk") {
     timeSignature = "4/4";
     groove = "Folk-oriented rhythmic pulse with regional phrasing and organic percussion.";
@@ -968,6 +1008,7 @@ function designNavaRhythm(genre, mood, baseBpm) {
     bpm,
     timeSignature,
     groove,
+    rhythmicPattern,
     dynamics: dynamics[mood] || dynamics.emotional
   };
 }
@@ -1089,7 +1130,7 @@ function buildNavaMusicPlan(settings) {
   );
 
   return {
-    version: "1.0",
+    version: "1.1",
     genre,
     mood: musicMood,
     tempo: rhythm.bpm,
@@ -1155,7 +1196,14 @@ Mood expression: ${plan.melody.mood}
 
 RHYTHM DESIGN:
 ${plan.rhythm.groove}
+
+${plan.rhythm.rhythmicPattern}
+
 Dynamic direction: ${plan.rhythm.dynamics}
+
+The drums, bass, piano and melodic accompaniment must all follow
+the same rhythmic meter and accent pattern.
+Do not replace the requested meter with a generic pop beat.
 
 ARRANGEMENT PLAN:
 ${plan.arrangement.instruction}
@@ -1229,41 +1277,67 @@ MOOD:
 ${moodProfile.description}
 
 TEMPO:
-Exactly ${moodProfile.bpm} BPM.
+Exactly ${musicPlan?.tempo || moodProfile.bpm} BPM.
 Use a clear and recognizable rhythmic groove.
 `);
 
-  // اضافه شدن نقشه آهنگسازی اختصاصی Nava
   if (musicPlan) {
     parts.push(buildNavaMusicPlanPrompt(musicPlan));
   }
 
   if (isIranianHappyPop) {
     parts.push(`
-IRANIAN HAPPY POP - ARRANGEMENT PRIORITY.
+IRANIAN HAPPY POP - AUTHENTIC 6/8 DANCE RHYTHM.
 
-The musical identity is more important than simply having a fast beat.
+THIS IS NOT A GENERIC ENERGETIC POP SONG.
+THIS MUST BE A REAL IRANIAN HAPPY 6/8 POP SONG.
 
-Create a real Iranian happy pop song with a lively, recognizable 6/8 dance groove.
-Use a natural Iranian 6/8 rhythmic feel, not a generic Western four-on-the-floor beat.
-Build a bouncing bass line and lively percussion with clear rhythmic accents.
-Use tasteful Iranian percussion and handclaps to create a festive groove.
+METER:
+Strict 6/8 compound meter.
+Each bar has six eighth-note subdivisions.
+The six subdivisions form TWO main beats:
 
-MELODIC DIRECTION:
-Create a memorable Iranian pop melody with natural Persian phrasing.
-The chorus must have a catchy, joyful melodic hook.
-Use melodic movement, musical responses and clear variation between verse and chorus.
-Do not use a repetitive generic electronic loop as the main musical idea.
+ONE - two - three | FOUR - five - six
+
+The listener must feel:
+DUM - tak - tak | DUM - tak - tak
+
+RHYTHMIC FOUNDATION:
+- Strong bass drum on beat 1.
+- Clear clap or snare accent on beat 4.
+- Light percussion fills on beats 2, 3, 5 and 6.
+- Bass line must emphasize beats 1 and 4.
+- Piano chords must follow the same two-beat 6/8 cycle.
+- All instruments must lock into the same compound-meter groove.
+
+IMPORTANT:
+The rhythm must have a rolling, bouncing Iranian 6/8 dance character.
+It must sound like Iranian celebration and dance music.
+Do not merely increase the speed of a normal pop beat.
+
+FORBIDDEN RHYTHMS:
+- Straight 4/4 pop.
+- Four-on-the-floor EDM.
+- Standard disco beat.
+- Generic electronic dance rhythm.
+- Fast rock beat.
+- A simple energetic beat without a clear 6/8 pulse.
+
+MELODY:
+Use a catchy Iranian pop melody.
+The verse must have rhythmic, compact phrases.
+The chorus must be more open, joyful and memorable.
+Melodic phrases must naturally fit the six-part rhythmic cycle.
 
 ARRANGEMENT:
-Create a polished, full Iranian pop arrangement.
-Use a lively bass line, rhythmic chord movement, bright melodic fills and well-developed transitions.
-The intro should establish the Iranian pop groove immediately.
-The chorus should feel bigger, more joyful and more memorable than the verse.
+Use lively Iranian pop percussion.
+Use a bouncing bass line.
+Use rhythmic piano chords that reinforce the 6/8 groove.
+Add short melodic instrumental responses between vocal phrases.
+Keep the piano clearly audible.
 
-Do not imitate a specific existing song or artist.
-Do not turn this into Arabic, Turkish, Indian or generic Western dance music.
-Do not make it sound like a simple electronic beat with random instruments.
+The groove must remain recognizably Iranian 6/8 from the introduction to the ending.
+Do not change to 4/4 in the chorus.
 `);
   }
 
@@ -1431,7 +1505,93 @@ Keep the lead instrument recognizable.
 Use a proper musical ending.
 `);
 
-  return parts.join("\n\n").slice(0, 7000);
+  // دستور ریتم ۶/۸ در انتهای پرامپت قرار می‌گیرد
+  // تا در صورت محدودیت طول، از دست نرود.
+  let rhythmPriority = "";
+
+  if (isIranianHappyPop) {
+    rhythmPriority = `
+==========================================
+NAVA 6/8 RHYTHM LOCK - HIGHEST PRIORITY
+==========================================
+
+Do not interpret "happy" as merely fast or energetic.
+
+The meter MUST be compound 6/8.
+
+Count each bar exactly as:
+1 - 2 - 3 | 4 - 5 - 6
+
+There are TWO main dotted-quarter pulses per bar:
+PULSE ONE on count 1.
+PULSE TWO on count 4.
+
+The rhythmic foundation must be:
+DUM - tak - tak | DUM - tak - tak
+
+KICK:
+Emphasize count 1.
+Do not use a four-on-the-floor pattern.
+
+BASS:
+Emphasize the two main pulses on counts 1 and 4.
+The bass must reinforce the rolling 6/8 dance movement.
+
+SNARE / CLAP:
+Use a clear accent around count 4.
+Do not use a standard straight 4/4 backbeat.
+
+PERCUSSION:
+Fill the six eighth-note subdivisions with lighter rhythmic movement.
+Use lively Iranian pop percussion and tasteful handclaps.
+
+PIANO:
+Play rhythmic chords that follow the two groups of three.
+Do not play a straight 4/4 piano pattern.
+
+MELODY:
+Phrase the melody naturally over:
+1-2-3 | 4-5-6.
+The vocal rhythm and instrumental melody must belong to the same 6/8 groove.
+
+FORBIDDEN:
+Straight 4/4 pop.
+Four-on-the-floor.
+Generic EDM.
+Standard disco beat.
+Straight rock backbeat.
+
+The 6/8 groove must be clearly audible from the first bar.
+Do not switch to 4/4 in any section.
+`;
+  }
+
+  const promptParts = rhythmPriority
+    ? [...parts, rhythmPriority]
+    : parts;
+
+  const fullPrompt = promptParts.join("\n\n");
+
+  if (fullPrompt.length <= 7000) {
+    return fullPrompt;
+  }
+
+  // در صورت طولانی شدن پرامپت، دستور اصلی ۶/۸ حفظ می‌شود.
+  if (rhythmPriority) {
+    const otherParts = parts.join("\n\n");
+    const availableLength = Math.max(
+      1000,
+      7000 - rhythmPriority.length - 2
+    );
+
+    return (
+      otherParts.slice(0, availableLength) +
+      "\n\n" +
+      rhythmPriority
+    );
+  }
+
+  return fullPrompt.slice(0, 7000);
 }
 
 // ==========================================
