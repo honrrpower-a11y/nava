@@ -1,4 +1,3 @@
-
 const ALLOWED_ORIGIN = "https://honrrpower-a11y.github.io";
 
 // ACE-Step
@@ -443,23 +442,75 @@ Avoid rock guitar riffs and traditional regional pop arrangements.
     profile = "persian";
 
     prompt = `
-Authentic Iranian Persian music with a distinctly Persian melodic identity.
+Create authentic Iranian Persian music with a strong and unmistakable Iranian identity.
 
-Use Persian melodic phrasing, traditional Persian musical ornaments,
-and Iranian modal and melodic characteristics.
+IMPORTANT:
+The music must sound Iranian from the very first second.
+The intro, melody, rhythm, ornaments and arrangement must all belong to Iranian musical tradition.
 
-Use appropriate Iranian instruments such as:
-tar, setar, santur, kamancheh, ney, tombak and daf.
+PERSIAN MELODIC IDENTITY:
 
-Build the melody around Persian musical characteristics.
-Use Iranian rhythmic patterns and natural Persian musical phrasing.
+- Use authentic Iranian melodic phrasing and Persian musical ornaments.
+- Use Persian dastgah and avaz inspired melodic movement.
+- Use expressive Iranian melodic turns and traditional Persian phrasing.
+- Avoid Turkish makam phrasing and Turkish melodic ornaments.
+- Do not imitate Turkish pop introductions or Turkish folk melodies.
+- Do not use Arabic melodic phrasing.
+- Do not use Indian or Bollywood melodic patterns.
 
-Avoid generic Western rock and jazz arrangements.
-Avoid Indian, Bollywood and Arabic musical styles.
-Do not make electric guitar the dominant instrument.
+INTRODUCTION:
 
-The result must sound Iranian in its melody and rhythm,
-not merely use Iranian instruments over a Western pop arrangement.
+Begin with a clearly Iranian instrumental introduction.
+
+Start with a short, expressive Persian santur or tar melody.
+The opening must immediately establish an Iranian musical atmosphere.
+Do not begin with a Turkish-style instrumental phrase.
+Do not begin with generic Western pop synths or electronic beats.
+
+IRANIAN INSTRUMENTS AND THEIR ROLES:
+
+1. Santur:
+Use santur as a clearly audible melodic instrument.
+It should play recognizable Persian melodic phrases, especially in the intro and instrumental transitions.
+
+2. Tar:
+Use tar for expressive Persian melodic responses and short instrumental passages.
+It should be clearly distinguishable in the arrangement.
+
+3. Kamancheh:
+Use kamancheh for emotional sustained melodies and responses between vocal phrases.
+
+4. Ney:
+Use ney selectively for atmospheric Persian melodic passages.
+It should complement the main melody rather than disappear behind the accompaniment.
+
+5. Tombak and Daf:
+Use tombak and daf to establish a natural Iranian rhythmic character.
+Avoid generic electronic dance percussion as the main rhythmic foundation.
+
+ARRANGEMENT:
+
+- Keep the arrangement Persian pop, not generic international pop.
+- Iranian instruments must be clearly audible, not merely mentioned in the prompt.
+- Give the santur or tar an identifiable role in the introduction.
+- Let the kamancheh and ney complement the vocal melody.
+- Use Iranian percussion to support the rhythm.
+- Keep the instruments balanced so that several Iranian instruments can be heard.
+- Do not let synthesizers, electric guitar or generic drum loops dominate the arrangement.
+- Use a coherent Persian pop structure with a memorable vocal melody.
+
+STRICT STYLE EXCLUSIONS:
+
+Avoid Turkish baglama and Turkish saz as lead instruments.
+Avoid Turkish clarinet and Turkish folk-style introductions.
+Avoid Turkish pop melodic phrasing.
+Avoid Arabic oud-led arrangements.
+Avoid Indian and Bollywood sounds.
+Avoid generic Western jazz and rock arrangements.
+
+The final result must sound like Iranian Persian pop music,
+with an unmistakably Iranian introduction, melody, rhythm and instrumentation.
+It must not sound like Turkish pop or generic Western pop with Persian vocals.
 `;
 
     bpm = 95;
@@ -589,7 +640,7 @@ export default {
         {
           success: true,
           message: "Nava Worker is running",
-          version: "nava-test-2",
+          version: "nava-test-3",
           timestamp: new Date().toISOString()
         },
         200,
@@ -1112,4 +1163,3 @@ ${lyrics}
     );
   }
 };
- 
