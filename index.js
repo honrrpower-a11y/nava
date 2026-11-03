@@ -1,4 +1,3 @@
-
 const ALLOWED_ORIGIN = "https://honrrpower-a11y.github.io";
 const MUSIC_DURATION_SECONDS = 60;
 
@@ -414,7 +413,6 @@ function getStyleDescription(style, language = "fa", musicMood = "") {
 
   let detail = "";
 
-  // پاپ شاد ایرانی: اولویت بالاتر از تشخیص عمومی پاپ
   const isIranianHappyPop =
     language === "fa" &&
     musicMood === "happy" &&
@@ -455,13 +453,24 @@ Do not turn this into Arabic pop, Turkish pop, Indian music or generic Western c
 The result must have its own recognizable Iranian happy pop identity.
 `;
   } else if (
-    /آذربایجان|آذری|azerbaijan|azerbaijani|باغلاما|baglama|saz|ترکیه|ترکی|turkish/.test(value)
+    /آذربایجان|آذری|azerbaijan|azerbaijani/.test(value)
   ) {
     detail = `
-Use an Azerbaijani or Turkish folk-inspired musical identity.
-Feature regional melodic phrasing and characteristic folk ornamentation.
-Use a clearly recognizable regional rhythm and melodic character.
-Avoid turning the result into generic Western pop.
+AZERBAIJANI MUSIC IDENTITY.
+Use Azerbaijani melodic phrasing and regional ornamentation.
+Use an expressive folk-inspired melodic character.
+When appropriate, feature saz or tar-like plucked string colors.
+Avoid generic Turkish pop or Western pop phrasing.
+`;
+  } else if (
+    /باغلاما|baglama|ترکیه|ترکی|turkish/.test(value)
+  ) {
+    detail = `
+TURKISH MUSIC IDENTITY.
+Use Turkish melodic phrasing and characteristic ornamentation.
+Choose a coherent Turkish pop, arabesque or folk character according to the selected style.
+When appropriate, feature bağlama as a recognizable instrument.
+Avoid generic Western pop phrasing.
 `;
   } else if (
     /کردی|کردستان|kurdish|kurdi/.test(value)
@@ -697,6 +706,478 @@ function isPianoInstrument(name) {
 }
 
 // ==========================================
+// NAVA MUSIC BRAIN - ابزارهای پایه
+// ==========================================
+
+// ساخت شناسه عددی ثابت از ورودی‌ها برای تنوع کنترل‌شده
+function navaHash(text) {
+  let hash = 2166136261;
+
+  for (let i = 0; i < text.length; i++) {
+    hash ^= text.charCodeAt(i);
+    hash = Math.imul(hash, 16777619);
+  }
+
+  return hash >>> 0;
+}
+
+// انتخاب یک گزینه به‌شکل پایدار
+function navaPick(items, seed) {
+  if (!items.length) return null;
+  return items[seed % items.length];
+}
+
+// تشخیص سبک دقیق‌تر برای موتور
+function detectNavaGenre(style, language, musicMood) {
+  const value = String(style || "").toLowerCase();
+
+  const iranianHappyPop =
+    language === "fa" &&
+    musicMood === "happy" &&
+    /پاپ|pop/.test(value) &&
+    !/راک|rock|رپ|rap|هیپ.?هاپ|hip.?hop|edm|الکترونیک/.test(value);
+
+  if (iranianHappyPop) return "iranian_happy_pop";
+
+  if (/آذربایجان|آذری|azerbaijan|azerbaijani/.test(value)) {
+    return "azerbaijani_folk";
+  }
+
+  if (/باغلاما|baglama|ترکیه|ترکی|turkish/.test(value)) {
+    if (/عربسک|arabesque/.test(value)) return "turkish_arabesque";
+    if (/سنتی|فولک|folk|محلی/.test(value)) return "turkish_folk";
+    return "turkish_pop";
+  }
+
+  if (/کردی|کردستان|kurdish|kurdi/.test(value)) {
+    return "kurdish_folk";
+  }
+
+  if (/راک|rock|metal/.test(value)) return "rock";
+  if (/جاز|jazz/.test(value)) return "jazz";
+  if (/بلوز|blues/.test(value)) return "blues";
+  if (/هیپ.?هاپ|hip.?hop|رپ|rap/.test(value)) return "hip_hop";
+  if (/edm|الکترونیک|electronic|house|techno|dance/.test(value)) {
+    return "electronic";
+  }
+  if (/سنتی|اصیل|traditional|classical persian|موسیقی ایرانی/.test(value)) {
+    return "persian_traditional";
+  }
+  if (/پاپ|pop/.test(value)) return "pop";
+
+  return language === "tr"
+    ? "turkish_pop"
+    : language === "fa"
+      ? "iranian_pop"
+      : "modern_pop";
+}
+
+// ==========================================
+// NAVA MELODY DESIGNER
+// ==========================================
+
+function designNavaMelody(genre, mood) {
+  const profiles = {
+    iranian_happy_pop: {
+      verse: "Use a compact, rhythmic and conversational melodic contour with short memorable phrases.",
+      preChorus: "Gradually raise melodic tension and move toward a higher register.",
+      chorus: "Use a bright, memorable hook with a clear peak note and a satisfying descending response.",
+      variation: "Keep the verse rhythmically nimble; make the chorus broader, more open and easier to sing."
+    },
+
+    turkish_pop: {
+      verse: "Use flowing Turkish pop phrasing with natural syllabic movement and subtle melodic ornaments.",
+      preChorus: "Build anticipation with a gradual melodic rise.",
+      chorus: "Create a strong lyrical hook with a wider melodic range and a memorable resolving phrase.",
+      variation: "Keep the verse intimate and the chorus expansive."
+    },
+
+    turkish_arabesque: {
+      verse: "Use expressive long phrases, emotional turns and tasteful ornamentation.",
+      preChorus: "Increase tension through rising phrases and held notes.",
+      chorus: "Use an emotionally intense and memorable melodic peak.",
+      variation: "Contrast restrained lines with expressive sustained notes."
+    },
+
+    turkish_folk: {
+      verse: "Use folk-inspired melodic motifs and regional phrasing.",
+      preChorus: "Build naturally from the main folk motif.",
+      chorus: "Use a strong repetitive folk hook with clear rhythmic identity.",
+      variation: "Develop the motif through call-like instrumental responses, not extra voices."
+    },
+
+    azerbaijani_folk: {
+      verse: "Use expressive Azerbaijani folk-inspired melodic phrases and characteristic ornaments.",
+      preChorus: "Build tension with a rising phrase related to the main motif.",
+      chorus: "Use a memorable regional melodic motif with a strong emotional resolution.",
+      variation: "Keep the melody recognizable while varying its ending and ornamentation."
+    },
+
+    kurdish_folk: {
+      verse: "Use Kurdish folk-inspired melodic movement and a clear regional character.",
+      preChorus: "Increase melodic energy without losing the folk identity.",
+      chorus: "Use a memorable, open and expressive folk refrain.",
+      variation: "Alternate compact phrases with longer melodic responses."
+    },
+
+    rock: {
+      verse: "Use focused melodic phrases with rhythmic drive and a clear tonal center.",
+      preChorus: "Increase tension and melodic height.",
+      chorus: "Use a powerful, wide-range melodic hook that works over electric guitars.",
+      variation: "Make the chorus more open and forceful than the verse."
+    },
+
+    electronic: {
+      verse: "Use concise melodic phrases with a clear rhythmic identity.",
+      preChorus: "Create anticipation through rising notes and increasing rhythmic density.",
+      chorus: "Use a simple, instantly recognizable melodic hook.",
+      variation: "Use contrast between sparse sections and full electronic sections."
+    },
+
+    hip_hop: {
+      verse: "Use rhythmically precise vocal phrasing and a controlled melodic range.",
+      preChorus: "Create a gradual lift before the hook.",
+      chorus: "Use a short, memorable melodic refrain.",
+      variation: "Keep the verse rhythmically detailed and the hook simpler."
+    }
+  };
+
+  const base = profiles[genre] || {
+    verse: "Use natural, expressive melodic phrases with a clear tonal center.",
+    preChorus: "Build anticipation through a gradual melodic rise.",
+    chorus: "Create a memorable chorus with a clear melodic peak and satisfying resolution.",
+    variation: "Make the chorus noticeably different from the verse."
+  };
+
+  const moodInstructions = {
+    emotional: "Favor expressive minor-oriented phrases, meaningful pauses and emotional melodic resolution.",
+    sad: "Favor restrained descending phrases, longer held notes and a reflective melodic contour.",
+    romantic: "Favor smooth connected phrases, gentle melodic turns and warm resolutions.",
+    happy: "Favor bright major-oriented phrases, rhythmic hooks and uplifting melodic movement.",
+    epic: "Favor wide melodic range, rising sequences and a strong climactic peak.",
+    calm: "Favor spacious phrases, gentle movement and soft melodic resolution.",
+    energetic: "Favor rhythmic precision, strong accents and energetic melodic hooks."
+  };
+
+  return {
+    ...base,
+    mood: moodInstructions[mood] || moodInstructions.emotional
+  };
+}
+
+// ==========================================
+// NAVA HARMONY ENGINE
+// ==========================================
+
+function designNavaHarmony(genre, mood, seed) {
+  const minorProgressions = [
+    ["i", "VI", "III", "VII"],
+    ["i", "iv", "VI", "V"],
+    ["i", "VII", "VI", "VII"]
+  ];
+
+  const majorProgressions = [
+    ["I", "V", "vi", "IV"],
+    ["I", "vi", "IV", "V"],
+    ["vi", "IV", "I", "V"]
+  ];
+
+  const isMinor =
+    ["sad", "emotional", "epic"].includes(mood) ||
+    ["turkish_arabesque", "azerbaijani_folk"].includes(genre);
+
+  const progression = navaPick(
+    isMinor ? minorProgressions : majorProgressions,
+    seed
+  );
+
+  const keyOptions = isMinor
+    ? ["A minor", "D minor", "E minor", "G minor"]
+    : ["C major", "G major", "D major", "A major"];
+
+  const key = navaPick(keyOptions, seed >>> 3);
+
+  return {
+    key,
+    mode: isMinor ? "minor" : "major",
+    progression,
+    verse: progression,
+    chorus: isMinor
+      ? ["i", "VI", "III", "VII"]
+      : ["I", "V", "vi", "IV"],
+    bridge: isMinor
+      ? ["VI", "iv", "i", "V"]
+      : ["vi", "IV", "ii", "V"],
+    instruction: `
+Use a coherent tonal harmony in ${key}.
+Main harmonic progression: ${progression.join(" - ")}.
+Keep the harmonic movement musical and consistent.
+Use a related but slightly more uplifting or intense progression in the chorus.
+Do not change key randomly between sections.
+`
+  };
+}
+
+// ==========================================
+// NAVA RHYTHM ENGINE
+// ==========================================
+
+function designNavaRhythm(genre, mood, baseBpm) {
+  let timeSignature = "4/4";
+  let groove = "Steady contemporary pop groove with clear kick and snare placement.";
+  let bpm = baseBpm;
+
+  if (
+    genre === "iranian_happy_pop" ||
+    genre === "kurdish_folk" ||
+    genre === "azerbaijani_folk"
+  ) {
+    timeSignature = "6/8";
+    groove = "Clearly audible lilting 6/8 groove with natural dance pulse and accents on the main beats.";
+    bpm = genre === "iranian_happy_pop"
+      ? 124
+      : Math.max(76, Math.min(baseBpm, 124));
+  } else if (genre === "turkish_folk") {
+    timeSignature = "4/4";
+    groove = "Folk-oriented rhythmic pulse with regional phrasing and organic percussion.";
+  } else if (genre === "turkish_arabesque") {
+    timeSignature = "4/4";
+    groove = "Expressive slow-to-mid tempo arabesque pulse with spacious phrasing.";
+  } else if (genre === "rock") {
+    timeSignature = "4/4";
+    groove = "Driving rock backbeat with a strong kick, snare and bass foundation.";
+  } else if (genre === "electronic") {
+    timeSignature = "4/4";
+    groove = "Genre-appropriate electronic pulse with controlled kick, percussion and bass.";
+  } else if (genre === "jazz" || genre === "blues") {
+    timeSignature = "4/4";
+    groove = "Natural swung or laid-back groove appropriate to the selected jazz or blues character.";
+  }
+
+  const dynamics = {
+    emotional: "restrained verse, gradual lift, expressive chorus",
+    sad: "soft pulse, sparse percussion, spacious phrasing",
+    romantic: "gentle pulse, smooth transitions, warm dynamics",
+    happy: "bright rhythmic drive, lively accents, energetic chorus",
+    epic: "progressive build, powerful accents, dramatic climax",
+    calm: "soft pulse, minimal percussion, spacious dynamics",
+    energetic: "strong rhythmic drive, punchy accents, energetic transitions"
+  };
+
+  return {
+    bpm,
+    timeSignature,
+    groove,
+    dynamics: dynamics[mood] || dynamics.emotional
+  };
+}
+
+// ==========================================
+// NAVA ARRANGEMENT ENGINE
+// ==========================================
+
+function designNavaArrangement(genre, instruments, instrumental) {
+  const selected = getInstrumentList(instruments);
+
+  const piano = selected.find(isPianoInstrument);
+  const lead = piano || selected[0] || "";
+
+  const support = selected.filter(item => item !== lead);
+
+  const roles = {
+    lead: lead || "A genre-appropriate melodic lead instrument",
+    bass: "Bass supports the chord roots and rhythmic movement",
+    rhythm: "Drums and percussion establish the selected groove",
+    harmony: "Keys, piano, strings or guitars provide harmonic support",
+    fills: "Short instrumental responses between vocal phrases"
+  };
+
+  if (genre === "iranian_happy_pop") {
+    roles.rhythm = "Iranian 6/8 pop percussion, kick, snare and tasteful handclaps";
+    roles.harmony = "Rhythmic piano and bright modern pop harmonic layers";
+    roles.fills = "Short Iranian-pop melodic responses between vocal phrases";
+  }
+
+  if (genre === "turkish_pop" || genre === "turkish_arabesque") {
+    roles.fills = "Tasteful bağlama or regional melodic responses when suitable";
+  }
+
+  if (genre === "azerbaijani_folk") {
+    roles.fills = "Saz or tar-like folk melodic responses when suitable";
+  }
+
+  const structure = instrumental
+    ? ["intro", "main_theme", "variation", "climax", "outro"]
+    : ["intro", "verse_1", "pre_chorus", "chorus", "verse_2", "chorus", "outro"];
+
+  return {
+    lead,
+    support,
+    roles,
+    structure,
+    instruction: `
+ARRANGEMENT DEVELOPMENT:
+Intro: establish the main musical identity with instruments only.
+Verse: keep the arrangement lighter and leave space for the lead vocal.
+Pre-chorus: gradually add energy and harmonic tension.
+Chorus: widen the arrangement and strengthen the main melodic hook.
+Second verse: introduce subtle instrumental variation.
+Final chorus: deliver the fullest and most memorable arrangement.
+Outro: finish with a deliberate musical ending, not an abrupt cutoff.
+
+Instrument roles:
+Lead: ${roles.lead}
+Bass: ${roles.bass}
+Rhythm: ${roles.rhythm}
+Harmony: ${roles.harmony}
+Instrumental fills: ${roles.fills}
+`
+  };
+}
+
+// ==========================================
+// NAVA MUSIC PLAN - مغز مرکزی
+// ==========================================
+
+function buildNavaMusicPlan(settings) {
+  const {
+    style,
+    musicMood,
+    language,
+    instruments,
+    instrumental = false
+  } = settings;
+
+  const genre = detectNavaGenre(
+    style,
+    language,
+    musicMood
+  );
+
+  const moodProfile = getMoodProfile(musicMood);
+
+  const seedText = [
+    style,
+    musicMood,
+    language,
+    instruments
+  ].join("|");
+
+  const seed = navaHash(seedText);
+
+  const melody = designNavaMelody(
+    genre,
+    musicMood
+  );
+
+  const harmony = designNavaHarmony(
+    genre,
+    musicMood,
+    seed
+  );
+
+  const rhythm = designNavaRhythm(
+    genre,
+    musicMood,
+    moodProfile.bpm
+  );
+
+  const arrangement = designNavaArrangement(
+    genre,
+    instruments,
+    instrumental
+  );
+
+  return {
+    version: "1.0",
+    genre,
+    mood: musicMood,
+    tempo: rhythm.bpm,
+    timeSignature: rhythm.timeSignature,
+    key: harmony.key,
+    mode: harmony.mode,
+    harmony: {
+      verse: harmony.verse,
+      chorus: harmony.chorus,
+      bridge: harmony.bridge
+    },
+    melody,
+    rhythm,
+    instruments: {
+      lead: arrangement.lead,
+      supporting: arrangement.support,
+      roles: arrangement.roles
+    },
+    structure: arrangement.structure,
+    arrangement
+  };
+}
+
+// ==========================================
+// تبدیل MusicPlan به دستور قابل فهم برای ACE
+// ==========================================
+
+function buildNavaMusicPlanPrompt(plan) {
+  return `
+==========================================
+NAVA MUSIC BRAIN - COMPOSITION PLAN
+==========================================
+
+This is a structured musical direction created by Nava's composition engine.
+Follow the musical identity and section contrasts as closely as the model allows.
+
+GENRE:
+${plan.genre}
+
+MOOD:
+${plan.mood}
+
+TEMPO:
+${plan.tempo} BPM
+
+TIME SIGNATURE:
+${plan.timeSignature}
+
+TONAL CENTER:
+${plan.key} (${plan.mode})
+
+HARMONY:
+Verse progression: ${plan.harmony.verse.join(" - ")}
+Chorus progression: ${plan.harmony.chorus.join(" - ")}
+Bridge progression: ${plan.harmony.bridge.join(" - ")}
+
+MELODY DESIGN:
+Verse: ${plan.melody.verse}
+Pre-chorus: ${plan.melody.preChorus}
+Chorus: ${plan.melody.chorus}
+Section contrast: ${plan.melody.variation}
+Mood expression: ${plan.melody.mood}
+
+RHYTHM DESIGN:
+${plan.rhythm.groove}
+Dynamic direction: ${plan.rhythm.dynamics}
+
+ARRANGEMENT PLAN:
+${plan.arrangement.instruction}
+
+SECTION ORDER:
+${plan.structure.join(" -> ")}
+
+IMPORTANT COMPOSITION RULES:
+- Create a genuinely memorable melodic identity, not a generic loop.
+- Make the chorus clearly different from the verse.
+- Keep the tempo and rhythmic identity consistent.
+- Use harmonic movement that supports the emotional direction.
+- Give the selected lead instrument a recognizable musical role.
+- Use instrumental fills to connect vocal phrases.
+- Avoid random changes of genre, tempo or musical identity.
+- Do not imitate any specific existing song or artist.
+
+This plan is the musical blueprint for the requested composition.
+`;
+}
+
+// ==========================================
 // ساخت پرامپت موسیقی برای ACE
 // ==========================================
 
@@ -709,7 +1190,8 @@ function buildAceMusicPrompt(settings) {
     extraMood,
     pronunciationNotes,
     language,
-    instrumental
+    instrumental,
+    musicPlan
   } = settings;
 
   const instrumentList = getInstrumentList(instruments);
@@ -750,6 +1232,11 @@ TEMPO:
 Exactly ${moodProfile.bpm} BPM.
 Use a clear and recognizable rhythmic groove.
 `);
+
+  // اضافه شدن نقشه آهنگسازی اختصاصی Nava
+  if (musicPlan) {
+    parts.push(buildNavaMusicPlanPrompt(musicPlan));
+  }
 
   if (isIranianHappyPop) {
     parts.push(`
@@ -807,7 +1294,7 @@ Use a real acoustic piano sound, not a soft pad or a barely audible background t
 PIANO ARRANGEMENT:
 - Begin with a clearly audible piano introduction.
 - Play a recognizable rhythmic piano motif.
-- Use the piano to reinforce the happy groove.
+- Use the piano to reinforce the selected groove.
 - Let the piano play rhythmic chords and melodic fills.
 - Give the piano a memorable melodic phrase between vocal sections.
 - Keep the piano forward and clearly separated in the mix.
@@ -1262,7 +1749,7 @@ export default {
     }
 
     // ==========================================
-    // ۲. ساخت موسیقی با ACE-Step
+    // ۲. ساخت موسیقی با ACE-Step و Nava Music Brain
     // ==========================================
 
     if (
@@ -1390,7 +1877,19 @@ export default {
       }
 
       // ------------------------------------------
-      // ساخت توضیح موسیقی
+      // ساخت نقشه موسیقی با موتور Nava
+      // ------------------------------------------
+
+      const musicPlan = buildNavaMusicPlan({
+        style,
+        musicMood,
+        language,
+        instruments,
+        instrumental
+      });
+
+      // ------------------------------------------
+      // ساخت توضیح موسیقی برای ACE
       // ------------------------------------------
 
       const musicPrompt = buildAceMusicPrompt({
@@ -1401,7 +1900,8 @@ export default {
         extraMood,
         pronunciationNotes,
         language,
-        instrumental
+        instrumental,
+        musicPlan
       });
 
       // ------------------------------------------
@@ -1426,13 +1926,11 @@ ${aceLyrics}
       // تنظیمات درخواست ACE
       // ------------------------------------------
 
-      const moodProfile = getMoodProfile(musicMood);
-
       const audioConfig = {
         duration: MUSIC_DURATION_SECONDS,
         format: "mp3",
         instrumental: instrumental,
-        bpm: moodProfile.bpm
+        bpm: musicPlan.tempo
       };
 
       if (!instrumental) {
@@ -1611,7 +2109,20 @@ ${aceLyrics}
 
           provider: "ACE-Step",
 
-          model: ACE_MODEL
+          model: ACE_MODEL,
+
+          musicPlan: {
+            version: musicPlan.version,
+            genre: musicPlan.genre,
+            mood: musicPlan.mood,
+            tempo: musicPlan.tempo,
+            timeSignature: musicPlan.timeSignature,
+            key: musicPlan.key,
+            mode: musicPlan.mode,
+            harmony: musicPlan.harmony,
+            structure: musicPlan.structure,
+            instruments: musicPlan.instruments
+          }
         },
         200,
         corsOrigin
