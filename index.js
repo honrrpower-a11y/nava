@@ -1,3 +1,4 @@
+
 const ALLOWED_ORIGIN = "https://honrrpower-a11y.github.io";
 
 // ACE-Step
@@ -713,6 +714,7 @@ async function requestAce(apiKey, aceBody) {
     clearTimeout(timeout);
   }
 }
+
 // ==========================================
 // Worker
 // ==========================================
@@ -752,7 +754,7 @@ export default {
       return json({
         success: true,
         message: "Nava Worker is running",
-        version: "nava-test-12-text2music",
+        version: "nava-test-13-happy-iranian-text2music",
         timestamp: new Date().toISOString()
       }, 200, corsOrigin);
     }
@@ -851,7 +853,7 @@ export default {
 
     // ======================================
     // آزمایش مستقل Text-to-Music
-    // بدون فایل مرجع و بدون خواننده
+    // موسیقی شاد ایرانی، بدون خواننده
     // محافظت‌شده با NAVA_TEST_TOKEN
     // خروجی مستقیم MP3
     // ======================================
@@ -880,9 +882,6 @@ export default {
         }, 401, corsOrigin);
       }
 
-      // محدودیت دامنه حذف شده است.
-      // امنیت این مسیر همچنان با NAVA_TEST_TOKEN تأمین می‌شود.
-
       const apiKey = env.ACEMUSIC_API_KEY;
 
       if (!apiKey) {
@@ -904,72 +903,143 @@ export default {
       }
 
       const prompt = `
-Create a 30-second instrumental Iranian cinematic composition.
+Create an original 30-second joyful Iranian Persian instrumental composition.
 
-This is an independent text-to-music generation task.
-There is NO uploaded reference audio.
-Compose a new original musical piece from this written direction.
+This is a completely instrumental music generation task.
+No uploaded reference audio is provided.
+Compose a fresh, lively and memorable Iranian musical piece.
 
-MUSICAL IDENTITY:
+OVERALL MOOD:
 
-Create a recognizable Iranian Persian instrumental identity.
-The melody must feel intentional, memorable and emotionally expressive.
-Avoid generic background music and random instrumental noodling.
+Joyful, uplifting, festive, energetic, optimistic and full of life.
+The music should create the feeling of a beautiful Iranian celebration.
+Make it genuinely cheerful, not sad, melancholic, dark or dramatic.
 
-MELODY:
+IRANIAN MUSICAL IDENTITY:
 
-Compose one clear main melodic theme.
-The theme must be easy to recognize and remember.
-Develop the same theme naturally instead of introducing unrelated melodies.
-Use expressive Persian melodic phrasing inspired by Iranian musical traditions.
+The composition must have a recognizable Iranian musical identity.
+Use authentic Persian melodic phrasing and Iranian instrumental character.
+Do not create generic Western dance music with Iranian instruments added on top.
+
+MAIN MELODY:
+
+Compose a bright, catchy and memorable Iranian melody.
+The main theme should feel playful, lively and naturally uplifting.
+
+Use short melodic phrases with clear musical direction.
+Create a melody that listeners can remember after hearing it once.
+
+Develop the same main melodic idea throughout the composition.
+Do not randomly change melodies or play disconnected musical phrases.
 
 INSTRUMENTS:
 
-Feature santur as a clearly audible lead melodic instrument.
-Use kamancheh for expressive sustained melodic responses.
-Use tombak for a natural, restrained rhythmic foundation.
-A subtle warm bass layer may support the arrangement.
+1. SANTUR - MAIN LEAD:
 
-Keep the santur melody in the foreground.
-The kamancheh must be distinctly audible and must not disappear behind the mix.
-Each instrument should have a clear musical role.
+Santur must be the dominant and clearly audible melodic instrument.
 
-RHYTHM:
+Play a bright, lively and rhythmic Persian santur melody.
+Use flowing runs, playful ornaments and energetic melodic phrases.
+The santur should lead the musical identity from the opening.
 
-Use a moderate, natural 4/4 pulse around 90 BPM.
-The rhythm must feel musical and human, not mechanical.
-Avoid aggressive drums, dance beats and generic electronic loops.
+Do not bury the santur under other instruments.
 
-ARRANGEMENT AND DEVELOPMENT:
+2. KAMANCHEH - MELODIC RESPONSE:
+
+Use kamancheh for lively, expressive responses to the santur.
+Let it answer the main melody with short, joyful Persian phrases.
+
+Its sound must be clearly distinguishable.
+Avoid sad, mournful or overly dramatic kamancheh playing.
+
+3. TOMBAK AND DAF - RHYTHM:
+
+Use tombak and daf to create a joyful Iranian rhythmic foundation.
+
+The percussion should feel lively, natural and danceable.
+Use varied rhythmic accents and a flowing Iranian groove.
+
+The rhythm must support the melody and create forward motion.
+Do not use aggressive electronic drums or generic Western dance beats.
+
+4. BASS:
+
+Use a subtle warm bass line to support the rhythm.
+Keep it natural and balanced.
+
+TEMPO AND RHYTHM:
+
+Tempo: approximately 118 BPM.
+Time signature: 4/4.
+
+Create a lively, upbeat and danceable Iranian groove.
+Keep the rhythmic movement consistent and energetic.
+
+Avoid slow, sleepy, dragging or melancholic rhythms.
+Avoid aggressive techno, EDM and heavy electronic percussion.
+
+ARRANGEMENT AND MUSICAL DEVELOPMENT:
 
 0-7 seconds:
-Begin with a short, recognizable santur melodic phrase.
-Keep the opening clear and uncluttered.
+Start immediately with a bright, catchy and recognizable santur melody.
+The opening must communicate joy and energy from the first seconds.
+Do not use a slow atmospheric introduction.
 
 7-18 seconds:
-Introduce kamancheh with a complementary melodic response.
-Establish a gentle rhythmic pulse with tombak.
+Introduce lively tombak and daf percussion.
+Let kamancheh answer the santur with short, cheerful melodic phrases.
 
 18-26 seconds:
-Develop the main melody with richer but balanced instrumentation.
-Create a natural musical lift without simply increasing loudness.
+Develop the main melody with more energy.
+Use richer rhythmic accents and lively instrumental interaction.
+Build excitement naturally without simply increasing loudness.
 
 26-30 seconds:
-Bring the main melodic idea to a satisfying, intentional ending.
-Do not abruptly cut off the music.
+Bring the main melodic theme to a satisfying and intentional ending.
+Use a clear musical resolution.
+Do not abruptly cut off the composition.
+
+INSTRUMENTAL BALANCE:
+
+Keep santur in the foreground.
+Make kamancheh clearly audible.
+Give tombak and daf a strong but controlled rhythmic role.
+
+Every instrument must have a clear musical purpose.
+Avoid overcrowding the arrangement.
+Do not allow synthesizers to replace the Iranian acoustic instruments.
+
+STRICT VOCAL EXCLUSION:
+
+Instrumental music only.
+
+Absolutely no:
+- Singing
+- Human voice
+- Humming
+- Choir
+- Spoken words
+- "Hoo-hoo" or "woo-woo"
+- "Oh-oh" or "Ah-ah"
+- Wordless vocal sounds
+- Vocal samples
 
 PRODUCTION:
 
-Instrumental only.
-No vocals, no singing, no humming, no choir, no spoken words.
-No wordless vocalizations.
-No sound effects.
+Use clear instrument separation.
+Create a lively, polished and balanced mix.
+Preserve the natural character of Iranian acoustic instruments.
 
-Use clear instrument separation, balanced dynamics and a polished mix.
-Do not let synthesizers replace the acoustic Iranian instruments.
+FINAL DIRECTION:
 
-The result should sound like a coherent short musical composition,
-not a collection of disconnected sounds.
+Create a joyful, memorable and energetic Iranian instrumental composition.
+
+The santur must carry a catchy and cheerful main melody.
+Kamancheh must respond with lively Persian phrases.
+Tombak and daf must create an unmistakably joyful Iranian groove.
+
+The result should feel like a professionally arranged piece of happy Iranian music,
+not generic background music.
 `;
 
       const aceBody = {
@@ -993,7 +1063,7 @@ not a collection of disconnected sounds.
           duration: 30,
           instrumental: true,
           format: "mp3",
-          bpm: 90,
+          bpm: 118,
           time_signature: "4"
         }
       };
@@ -1017,14 +1087,11 @@ not a collection of disconnected sounds.
             status: aceResult.status,
             provider: "ACE",
             model: ACE_MODEL,
-            experiment: "independent-text2music"
+            experiment: "happy-iranian-text2music"
           }, 502, corsOrigin);
         }
 
-        // --------------------------------------
-        // حالت اول: ACE فایل را به شکل Base64 می‌دهد
-        // تبدیل Base64 به فایل واقعی MP3
-        // --------------------------------------
+        // تبدیل Base64 به فایل MP3
 
         if (audioUrl.startsWith("data:audio/")) {
           const match = audioUrl.match(
@@ -1050,7 +1117,7 @@ not a collection of disconnected sounds.
             status: 200,
             headers: {
               "Content-Type": "audio/mpeg",
-              "Content-Disposition": 'attachment; filename="nava-text2music-test.mp3"',
+              "Content-Disposition": 'attachment; filename="nava-happy-iranian-test.mp3"',
               "Content-Length": String(bytes.length),
               "Access-Control-Allow-Origin": corsOrigin,
               "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
@@ -1059,14 +1126,14 @@ not a collection of disconnected sounds.
               "X-Nava-Provider": "ACE-Step",
               "X-Nava-Model": ACE_MODEL,
               "X-Nava-Task": "text2music",
-              "X-Nava-Target-Duration": "30"
+              "X-Nava-Target-Duration": "30",
+              "X-Nava-Mood": "happy-iranian",
+              "X-Nava-BPM": "118"
             }
           });
         }
 
-        // --------------------------------------
-        // حالت دوم: ACE لینک مستقیم فایل می‌دهد
-        // --------------------------------------
+        // لینک مستقیم فایل صوتی
 
         if (audioUrl.startsWith("https://")) {
           return new Response(null, {
@@ -1093,11 +1160,12 @@ not a collection of disconnected sounds.
           details: e.message || "ACE connection error",
           provider: "ACE",
           model: ACE_MODEL,
-          experiment: "independent-text2music"
+          experiment: "happy-iranian-text2music"
         }, 502, corsOrigin);
       }
-            }
-        // ======================================
+    }
+
+    // ======================================
     // ۱. تولید شعر
     // ======================================
 
