@@ -1,6 +1,8 @@
 const ALLOWED_ORIGIN = "https://honrrpower-a11y.github.io";
+
 // ACE-Step
 const ACE_API_URL = "https://api.acemusic.ai/v1/chat/completions";
+const ACE_MODELS_URL = "https://api.acemusic.ai/v1/models";
 const ACE_MODEL = "acemusic/acestep-v1.5-turbo";
 
 // ==========================================
@@ -751,9 +753,102 @@ export default {
       return json({
         success: true,
         message: "Nava Worker is running",
-        version: "nava-test-10-cover-reference",
+        version: "nava-test-11-ace-diagnostics",
         timestamp: new Date().toISOString()
       }, 200, corsOrigin);
+    }
+
+    // ======================================
+    // تشخیص اتصال و فهرست مدل‌های ACE
+    // فقط GET؛ بدون تولید موسیقی
+    // ======================================
+
+    if (
+      url.pathname === "/ace-models" &&
+      request.method === "GET"
+    ) {
+      const apiKey = env.ACEMUSIC_API_KEY;
+
+      if (!apiKey) {
+        return json({
+          success: false,
+          error: "کلید ACEMUSIC_API_KEY در Secrets کلودفلر ثبت نشده است."
+        }, 500, corsOrigin);
+      }
+
+      const controller = new AbortController();
+
+      const timeout = setTimeout(
+        () => controller.abort(),
+        30000
+      );
+
+      try {
+        const response = await fetch(ACE_MODELS_URL, {
+          method: "GET",
+          headers: {
+            "Authorization": `Bearer ${apiKey}`,
+            "Accept": "application/json"
+          },
+          signal: controller.signal
+        });
+
+        const rawResponse = await response.text();
+
+        let data;
+
+        try {
+          data = JSON.parse(rawResponse);
+        } catch {
+          return json({
+            success: false,
+            error: "پاسخ فهرست مدل‌های ACE قابل پردازش نیست.",
+            httpStatus: response.status,
+            responsePreview: rawResponse.slice(0, 1500)
+          }, 502, corsOrigin);
+        }
+
+        if (!response.ok || data.error) {
+          return json({
+            success: false,
+            error: "ACE درخواست فهرست مدل‌ها را نپذیرفت.",
+            httpStatus: response.status,
+            details:
+              data.error?.message ||
+              data.error ||
+              data.message ||
+              rawResponse.slice(0, 1000)
+          }, 502, corsOrigin);
+        }
+
+        const modelList = Array.isArray(data.data)
+          ? data.data.map(model => ({
+              id: model.id || null,
+              object: model.object || null
+            }))
+          : null;
+
+        return json({
+          success: true,
+          message: "ارتباط احراز هویت‌شده با ACE برقرار شد.",
+          httpStatus: response.status,
+          models: modelList,
+          response: modelList ? undefined : data,
+          checkedAt: new Date().toISOString()
+        }, 200, corsOrigin);
+
+      } catch (e) {
+        return json({
+          success: false,
+          error: e.name === "AbortError"
+            ? "زمان انتظار برای پاسخ ACE تمام شد."
+            : "ارتباط با ACE ناموفق بود.",
+          details: e.message || "ACE connection error"
+        }, 502, corsOrigin);
+
+      } finally {
+        clearTimeout(timeout);
+      }
     }
 
     // ======================================
@@ -1126,11 +1221,7 @@ ${userNotes ? `Additional direction: ${userNotes}` : ""}
           }
         ],
 
-        // تغییر اصلی:
-        // استفاده از حالت Cover به جای Text-to-Music
         task_type: "cover",
-
-        // میزان تأثیرگذاری فایل مرجع
         audio_cover_strength: 0.8,
 
         stream: false,
