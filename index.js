@@ -1,4 +1,3 @@
-
 const ALLOWED_ORIGIN = "https://honrrpower-a11y.github.io";
 
 // ACE-Step
@@ -23,17 +22,12 @@ function json(data, status, origin) {
 }
 
 function extractText(content) {
-  if (typeof content === "string") {
-    return content.trim();
-  }
+  if (typeof content === "string") return content.trim();
 
   if (Array.isArray(content)) {
-    return content
-      .map(part =>
-        typeof part === "string" ? part : part?.text || ""
-      )
-      .join("")
-      .trim();
+    return content.map(part =>
+      typeof part === "string" ? part : part?.text || ""
+    ).join("").trim();
   }
 
   return "";
@@ -64,16 +58,10 @@ function normalizePersianSpacing(text) {
   );
 }
 
-// ==========================================
-// پاک‌سازی حروف لاتین ناخواسته در شعر فارسی
-// ==========================================
-
 function cleanPersianLatinMix(text, language = "fa") {
   let result = String(text || "");
 
-  if (language !== "fa") {
-    return result;
-  }
+  if (language !== "fa") return result;
 
   result = result.replace(
     /([\u0600-\u06FF\uFB50-\uFDFF\uFE70-\uFEFF])([A-Za-z]{1,12})(?=$|[\s،؛,.!?؟:])/g,
@@ -96,26 +84,19 @@ function prepareLyrics(text, language = "fa") {
 }
 
 // ==========================================
-// آماده‌سازی ساختار شعر برای ACE
-// فقط برای موسیقی فارسی
+// آماده‌سازی شعر برای ACE
 // ==========================================
 
 function prepareMusicLyrics(text, profile) {
   let result = String(text || "").trim();
 
-  if (!result || profile !== "persian") {
-    return result;
-  }
+  if (!result || profile !== "persian") return result;
 
-  // حذف برچسب مقدمه یا بخش بی‌کلام از ابتدای شعر
-  // تا مقدمه جدید دوباره تکرار نشود.
   result = result.replace(
     /^\s*(?:\[(?:intro|instrumental)\]\s*)+/i,
     ""
   );
 
-  // اگر شعر هیچ ساختار مشخصی نداشته باشد،
-  // شروع آن را به‌عنوان Verse 1 مشخص می‌کنیم.
   const hasSongSections =
     /\[(?:verse|chorus|pre-chorus|bridge|final chorus|outro|instrumental)\b[^\]]*\]/i.test(result);
 
@@ -123,7 +104,6 @@ function prepareMusicLyrics(text, profile) {
     result = `[Verse 1]\n${result}`;
   }
 
-  // مقدمه سازی مستقل از شروع آواز
   return `[Intro]\n[Instrumental]\n\n${result}`.trim();
 }
 
@@ -174,9 +154,7 @@ function parseLyricsOutput(rawText, language = "fa") {
     );
   }
 
-  if (!lyrics) {
-    lyrics = cleaned;
-  }
+  if (!lyrics) lyrics = cleaned;
 
   lyrics = prepareLyrics(lyrics, language);
 
@@ -191,7 +169,7 @@ function parseLyricsOutput(rawText, language = "fa") {
 }
 
 // ==========================================
-// ساخت پرامپت شعر
+// پرامپت ساخت شعر
 // ==========================================
 
 function buildLyricsPrompt(topic, style, language) {
@@ -200,46 +178,22 @@ function buildLyricsPrompt(topic, style, language) {
 
 برای موضوع زیر یک ترانه کامل، منسجم، احساسی و قابل اجرا بساز.
 
-مشخصات:
 موضوع: ${topic}
-سبک و حال‌وهوای ترانه: ${style}
+سبک و حال‌وهوا: ${style}
 زبان: ${language}
 
 اصول ترانه‌سرایی:
 
-۱. داستان و مفهوم:
+۱. ترانه باید موضوع مرکزی مشخص و مسیر احساسی منسجم داشته باشد.
+۲. هر بند تصویر یا احساس تازه‌ای اضافه کند.
+۳. از کلیشه‌ها و تکرار بی‌هدف دوری کن.
+۴. زبان طبیعی، روان و زنده باشد.
+۵. جمله‌ها هنگام خواندن با صدای بلند طبیعی باشند.
+۶. قافیه‌ها طبیعی باشند و به زور وارد شعر نشوند.
+۷. طول سطرها برای اجرای موسیقایی مناسب باشد.
+۸. ترجیع‌بند باید ساده، قدرتمند و به‌یادماندنی باشد.
 
-- ترانه باید یک موضوع مرکزی مشخص داشته باشد.
-- از ابتدا تا انتها مسیر احساسی منسجم داشته باشد.
-- هر بند تصویر یا احساس تازه‌ای اضافه کند.
-- از تکرار بی‌هدف مفهوم خودداری کن.
-
-۲. زبان:
-
-- از زبان طبیعی، روان و زنده استفاده کن.
-- جمله‌ها هنگام خواندن با صدای بلند طبیعی باشند.
-- از عبارت‌های مصنوعی و ترکیب‌های بی‌معنی دوری کن.
-- هیچ کلمه‌ای را فقط برای تکمیل قافیه وارد نکن.
-
-۳. قافیه و وزن:
-
-- قافیه‌ها طبیعی و گوش‌نواز باشند.
-- طول سطرها برای اجرای موسیقایی مناسب باشد.
-- روانی و معنای درست از قافیه اجباری مهم‌تر است.
-
-۴. تصویرسازی:
-
-- از تصاویر ملموس و جزئیات واقعی استفاده کن.
-- از کلیشه‌های تکراری و عبارت‌های مصرف‌شده دوری کن.
-- احساس را با تصویر و موقعیت منتقل کن.
-
-۵. ترجیع‌بند:
-
-- بخش به‌یادماندنی و احساسی ترانه باشد.
-- جمله محوری مشخص و قابل زمزمه داشته باشد.
-- ساده، قدرتمند و ماندگار باشد.
-
-۶. ساختار:
+ساختار:
 
 [Verse 1]
 معرفی موضوع و موقعیت.
@@ -259,70 +213,47 @@ function buildLyricsPrompt(topic, style, language) {
 [Final Chorus]
 بازگشت به ترجیع‌بند با همان متن اصلی.
 
-۷. کنترل کیفیت:
-
-- تمام جمله‌ها باید معنی روشن داشته باشند.
-- فارسی باید طبیعی و خوش‌آهنگ باشد.
-- قافیه‌ها نباید تصنعی باشند.
-- سطرها باید قابلیت خوانده شدن روی موسیقی داشته باشند.
-- از تکرار بی‌هدف خودداری کن.
-
 قوانین ویژه زبان فارسی:
 
-اگر زبان ترانه فارسی است:
+اگر زبان فارسی است:
 
-الف) فقط از حروف و واژه‌های فارسی برای متن فارسی استفاده کن.
-
-- هیچ حرف لاتینی را به انتهای کلمات فارسی نچسبان.
+- فقط از حروف و واژه‌های فارسی برای متن فارسی استفاده کن.
+- حروف لاتین را به انتهای کلمات فارسی نچسبان.
 - از ترکیب تصادفی حروف فارسی و لاتین خودداری کن.
-- اگر واژه‌ای را نمی‌دانی، آن را با واژه فارسی طبیعی جایگزین کن.
-- کلمات انگلیسی فقط زمانی مجازند که عمداً و به‌صورت مستقل در ترانه استفاده شوند.
+- فارسی طبیعی و خوش‌آهنگ باشد.
+- کلمات انگلیسی فقط در صورت استفاده عمدی و مستقل مجازند.
 
-ب) دو نسخه کاملاً هماهنگ بساز:
+دو نسخه هماهنگ بساز:
 
-نسخه اول با نام lyrics:
+نسخه lyrics:
+متن خوانا و طبیعی، بدون اعراب‌گذاری اضافی.
 
-- متن معمولی و خوانا برای نمایش به کاربر.
-- بدون اعراب‌گذاری اضافی.
-- ساختار و واژه‌های طبیعی فارسی.
+نسخه singingLyrics:
+دقیقاً همان شعر و همان کلمات نسخه اول.
+فقط کلمات دشوار یا چندخوانشی را با اعراب لازم مشخص کن.
+هیچ کلمه یا سطری را تغییر نده، حذف نکن یا اضافه نکن.
 
-نسخه دوم با نام singingLyrics:
+جدانویسی ه غیرملفوظ:
 
-- دقیقاً همان شعر و همان کلمات نسخه اول.
-- فقط کلمات دشوار، چندخوانشی یا دارای تلفظ احتمالی اشتباه را با اعراب لازم مشخص کن.
-- تمام شعر را اعراب‌گذاری نکن.
-- اعراب‌گذاری باید با توجه به معنای جمله باشد.
-- کلمات ساده و واضح را بدون اعراب نگه دار.
-- هیچ کلمه‌ای را تغییر نده و هیچ سطری را حذف یا اضافه نکن.
-
-ج) جدانویسی «ه» غیرملفوظ:
-
-وقتی کلمه‌ای به «ه» غیرملفوظ ختم می‌شود و پسوند یا واژه‌ای مانند «ای»، «ام»، «ات»، «اش»، «ایم»، «اید» یا «اند» به آن می‌پیوندد، آن‌ها را جدا بنویس.
-
-نمونه:
 کافه ای
 خانه ام
 پنجره ات
 خسته ام
 قصه ام
 
-این قاعده را در هر دو نسخه رعایت کن.
+اگر زبان ترکی یا انگلیسی است، هر دو نسخه از نظر متن یکسان باشند.
 
-اگر زبان ترکی یا انگلیسی است:
+قوانین خروجی:
 
-- هر دو نسخه باید از نظر متن یکسان باشند.
-- اعراب فارسی به آن‌ها اضافه نکن.
+فقط JSON معتبر برگردان.
+هیچ توضیحی بیرون از JSON ننویس.
+از Markdown و کدبلاک استفاده نکن.
 
-قوانین خروجی بسیار مهم:
-
-- فقط یک JSON معتبر برگردان.
-- هیچ مقدمه یا توضیحی بیرون از JSON ننویس.
-- از Markdown و کدبلاک استفاده نکن.
-- ساختار دقیقاً این باشد:
+ساختار دقیق:
 
 {
   "lyrics": "متن کامل شعر اصلی",
-  "singingLyrics": "همان شعر با اعراب‌گذاری انتخابی برای خوانندگی"
+  "singingLyrics": "همان شعر با اعراب‌گذاری انتخابی"
 }
 
 تمام خطوط شعر و برچسب‌های بخش‌ها را در هر دو نسخه حفظ کن.
@@ -330,7 +261,7 @@ function buildLyricsPrompt(topic, style, language) {
 }
 
 // ==========================================
-// پروفایل‌های مستقل موسیقی
+// پروفایل‌های موسیقی
 // ==========================================
 
 function buildMusicProfile(input) {
@@ -362,10 +293,6 @@ function buildMusicProfile(input) {
   let bpm = null;
   let timeSignature = null;
 
-  // ----------------------------------------
-  // موسیقی ترکیه‌ای
-  // ----------------------------------------
-
   if (
     /ترک|ترکی|turkish|türk|turkiye|türkiye/i.test(style) ||
     (!requestedStyle && language === "tr")
@@ -382,7 +309,6 @@ Use appropriate Turkish instruments such as:
 baglama, saz, kanun, ney, Turkish clarinet and darbuka.
 
 The arrangement must have Turkish rhythmic character and Turkish melodic ornaments.
-Use Turkish musical phrasing throughout the song.
 
 Avoid Iranian, Arabic, Indian and Bollywood musical arrangements.
 Avoid generic Western rock and jazz sounds.
@@ -394,13 +320,7 @@ The result must sound Turkish in its melody, rhythm and arrangement.
     timeSignature = "4";
   }
 
-  // ----------------------------------------
-  // موسیقی عربی
-  // ----------------------------------------
-
-  else if (
-    /عرب|arabic|arab|خلیجی/i.test(style)
-  ) {
+  else if (/عرب|arabic|arab|خلیجی/i.test(style)) {
     profile = "arabic";
 
     prompt = `
@@ -418,13 +338,7 @@ The result must sound Arabic in its melody and rhythm.
     timeSignature = "4";
   }
 
-  // ----------------------------------------
-  // موسیقی راک
-  // ----------------------------------------
-
-  else if (
-    /راک|rock|metal|متال/i.test(style)
-  ) {
+  else if (/راک|rock|metal|متال/i.test(style)) {
     profile = "rock";
 
     prompt = `
@@ -441,13 +355,7 @@ Avoid jazz swing and Indian or Bollywood musical elements.
     timeSignature = "4";
   }
 
-  // ----------------------------------------
-  // موسیقی جاز
-  // ----------------------------------------
-
-  else if (
-    /جاز|jazz|بلوز|blues/i.test(style)
-  ) {
+  else if (/جاز|jazz|بلوز|blues/i.test(style)) {
     profile = "jazz";
 
     prompt = `
@@ -463,10 +371,6 @@ Avoid rock guitar riffs and traditional regional pop arrangements.
     bpm = 95;
     timeSignature = "4";
   }
-
-  // ----------------------------------------
-  // موسیقی ایرانی
-  // ----------------------------------------
 
   else if (
     /ایران|فارسی|persian|iranian|سنتی|تلفیقی/i.test(style) ||
@@ -490,7 +394,6 @@ CORE MUSICAL IDENTITY:
 PERSIAN VOCAL PERFORMANCE:
 
 The lead singer must sound like a native Persian-language pop singer.
-
 Use natural Iranian Persian pronunciation, diction, accent and vocal phrasing.
 Follow the natural rhythm and stress of Persian words.
 Emphasize meaningful syllables and emotional words.
@@ -657,10 +560,6 @@ No wordless vocalizations anywhere in the song.
     timeSignature = "4";
   }
 
-  // ----------------------------------------
-  // پاپ عمومی
-  // ----------------------------------------
-
   else {
     profile = "pop";
 
@@ -673,7 +572,6 @@ Follow the requested musical style: ${requestedStyle || "contemporary pop"}.
 Avoid unnecessary jazz or rock elements unless explicitly requested.
 `;
 
-    bpm = null;
     timeSignature = "4";
   }
 
@@ -695,7 +593,7 @@ Use this mood to shape the melody, groove, dynamics and instrumental arrangement
 }
 
 // ==========================================
-// استخراج خروجی صوتی ACE
+// استخراج فایل صوتی ACE
 // ==========================================
 
 function extractAceAudio(data) {
@@ -742,6 +640,63 @@ function extractAceAudio(data) {
 }
 
 // ==========================================
+// درخواست مشترک به ACE
+// ==========================================
+
+async function requestAce(apiKey, aceBody) {
+  const controller = new AbortController();
+
+  const timeout = setTimeout(
+    () => controller.abort(),
+    240000
+  );
+
+  try {
+    const response = await fetch(ACE_API_URL, {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+        "Accept": "application/json"
+      },
+      body: JSON.stringify(aceBody),
+      signal: controller.signal
+    });
+
+    const rawResponse = await response.text();
+
+    let data;
+
+    try {
+      data = JSON.parse(rawResponse);
+    } catch {
+      throw new Error(
+        `پاسخ ACE قابل پردازش نیست. کد HTTP: ${response.status}. ` +
+        rawResponse.slice(0, 500)
+      );
+    }
+
+    if (!response.ok || data.error) {
+      const apiError =
+        data.error?.message ||
+        data.error ||
+        data.message ||
+        `خطای ACE با کد ${response.status}`;
+
+      throw new Error(String(apiError).slice(0, 1200));
+    }
+
+    return {
+      data,
+      status: response.status
+    };
+
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+// ==========================================
 // Worker
 // ==========================================
 
@@ -754,10 +709,7 @@ export default {
         ? ALLOWED_ORIGIN
         : "*";
 
-    // --------------------------------------
     // CORS
-    // --------------------------------------
-
     if (request.method === "OPTIONS") {
       return new Response(null, {
         status: 204,
@@ -773,27 +725,23 @@ export default {
     const url = new URL(request.url);
 
     // ======================================
-    // بررسی سلامت و نسخه Worker
+    // وضعیت Worker
     // ======================================
 
     if (
       url.pathname === "/status" &&
       request.method === "GET"
     ) {
-      return json(
-        {
-          success: true,
-          message: "Nava Worker is running",
-          version: "nava-test-7",
-          timestamp: new Date().toISOString()
-        },
-        200,
-        corsOrigin
-      );
+      return json({
+        success: true,
+        message: "Nava Worker is running",
+        version: "nava-test-8-instrumental-lab",
+        timestamp: new Date().toISOString()
+      }, 200, corsOrigin);
     }
 
     // ======================================
-    // ۱. ساخت شعر با Gemini و OpenRouter
+    // ۱. تولید شعر
     // ======================================
 
     if (
@@ -805,11 +753,9 @@ export default {
       try {
         input = await request.json();
       } catch {
-        return json(
-          { error: "اطلاعات ارسالی نامعتبر است." },
-          400,
-          corsOrigin
-        );
+        return json({
+          error: "اطلاعات ارسالی نامعتبر است."
+        }, 400, corsOrigin);
       }
 
       const topic = safeText(input.topic || "", 500);
@@ -820,11 +766,9 @@ export default {
         : "fa";
 
       if (!topic) {
-        return json(
-          { error: "موضوع شعر نمی‌تواند خالی باشد." },
-          400,
-          corsOrigin
-        );
+        return json({
+          error: "موضوع شعر نمی‌تواند خالی باشد."
+        }, 400, corsOrigin);
       }
 
       const prompt = buildLyricsPrompt(
@@ -835,10 +779,7 @@ export default {
 
       let geminiError = "";
 
-      // ------------------------------------
       // Gemini
-      // ------------------------------------
-
       if (env.GEMINI_API_KEY) {
         try {
           const geminiRes = await fetch(
@@ -878,47 +819,37 @@ export default {
             );
 
             if (result.lyrics) {
-              return json(
-                {
-                  success: true,
-                  lyrics: result.lyrics,
-                  singingLyrics: result.singingLyrics,
-                  provider: "Gemini"
-                },
-                200,
-                corsOrigin
-              );
+              return json({
+                success: true,
+                lyrics: result.lyrics,
+                singingLyrics: result.singingLyrics,
+                provider: "Gemini"
+              }, 200, corsOrigin);
             }
 
             geminiError = "جمنای متن معتبری تولید نکرد.";
+
           } else {
             geminiError =
               data.error?.message ||
               `خطای Gemini با کد ${geminiRes.status}`;
           }
+
         } catch (e) {
-          geminiError =
-            e.message || "خطای ارتباط با Gemini";
+          geminiError = e.message || "خطای ارتباط با Gemini";
         }
+
       } else {
-        geminiError =
-          "کلید GEMINI_API_KEY تنظیم نشده است.";
+        geminiError = "کلید GEMINI_API_KEY تنظیم نشده است.";
       }
 
-      // ------------------------------------
-      // OpenRouter فقط در صورت شکست Gemini
-      // ------------------------------------
-
+      // OpenRouter fallback
       if (!env.OPENROUTER_API_KEY) {
-        return json(
-          {
-            error:
-              "ساخت شعر با Gemini ناموفق بود و کلید OpenRouter نیز تنظیم نشده است.",
-            geminiError
-          },
-          502,
-          corsOrigin
-        );
+        return json({
+          error:
+            "ساخت شعر با Gemini ناموفق بود و کلید OpenRouter نیز تنظیم نشده است.",
+          geminiError
+        }, 502, corsOrigin);
       }
 
       try {
@@ -927,11 +858,9 @@ export default {
           {
             method: "POST",
             headers: {
-              "Authorization":
-                `Bearer ${env.OPENROUTER_API_KEY}`,
+              "Authorization": `Bearer ${env.OPENROUTER_API_KEY}`,
               "Content-Type": "application/json",
-              "HTTP-Referer":
-                "https://honrrpower-a11y.github.io/nava/",
+              "HTTP-Referer": "https://honrrpower-a11y.github.io/nava/",
               "X-OpenRouter-Title": "Nava AI"
             },
             body: JSON.stringify({
@@ -956,29 +885,21 @@ export default {
         try {
           routerData = JSON.parse(rawText);
         } catch {
-          return json(
-            {
-              error: "پاسخ OpenRouter قابل پردازش نیست.",
-              geminiError,
-              routerStatus: routerRes.status
-            },
-            502,
-            corsOrigin
-          );
+          return json({
+            error: "پاسخ OpenRouter قابل پردازش نیست.",
+            geminiError,
+            routerStatus: routerRes.status
+          }, 502, corsOrigin);
         }
 
         if (!routerRes.ok || routerData.error) {
-          return json(
-            {
-              error: "ساخت شعر با هر دو سرویس ناموفق بود.",
-              geminiError,
-              openRouterError:
-                routerData.error?.message ||
-                `خطای OpenRouter با کد ${routerRes.status}`
-            },
-            502,
-            corsOrigin
-          );
+          return json({
+            error: "ساخت شعر با هر دو سرویس ناموفق بود.",
+            geminiError,
+            openRouterError:
+              routerData.error?.message ||
+              `خطای OpenRouter با کد ${routerRes.status}`
+          }, 502, corsOrigin);
         }
 
         const rawLyrics = extractText(
@@ -991,44 +912,189 @@ export default {
         );
 
         if (!result.lyrics) {
-          return json(
-            {
-              error:
-                "OpenRouter هم متن معتبری تولید نکرد.",
-              geminiError
-            },
-            502,
-            corsOrigin
-          );
+          return json({
+            error: "OpenRouter هم متن معتبری تولید نکرد.",
+            geminiError
+          }, 502, corsOrigin);
         }
 
-        return json(
-          {
-            success: true,
-            lyrics: result.lyrics,
-            singingLyrics: result.singingLyrics,
-            provider: "OpenRouter - Qwen3 8B"
-          },
-          200,
-          corsOrigin
-        );
+        return json({
+          success: true,
+          lyrics: result.lyrics,
+          singingLyrics: result.singingLyrics,
+          provider: "OpenRouter - Qwen3 8B"
+        }, 200, corsOrigin);
 
       } catch (e) {
-        return json(
-          {
-            error:
-              "ارتباط با سرویس ساخت شعر ناموفق بود.",
-            geminiError,
-            openRouterError: e.message
-          },
-          502,
-          corsOrigin
-        );
+        return json({
+          error: "ارتباط با سرویس ساخت شعر ناموفق بود.",
+          geminiError,
+          openRouterError: e.message
+        }, 502, corsOrigin);
       }
     }
 
     // ======================================
-    // ۲. ساخت موسیقی با ACE
+    // ۲. آزمایشگاه موسیقی بی‌کلام
+    // ======================================
+
+    if (
+      url.pathname === "/generate-instrumental" &&
+      request.method === "POST"
+    ) {
+      const apiKey = env.ACEMUSIC_API_KEY;
+
+      if (!apiKey) {
+        return json({
+          success: false,
+          error: "کلید ACEMUSIC_API_KEY در Secrets کلودفلر ثبت نشده است."
+        }, 500, corsOrigin);
+      }
+
+      // ورودی اختیاری؛ فعلاً پروفایل آزمایش ثابت است.
+      let input = {};
+
+      try {
+        input = await request.json();
+      } catch {
+        // درخواست خالی نیز معتبر است.
+      }
+
+      const userNotes = safeText(
+        input.notes || "",
+        500
+      );
+
+      const prompt = `
+Create a 30-second instrumental music composition.
+
+MAIN OBJECTIVE:
+Create a beautiful, memorable and emotionally engaging lead melody.
+The melody must be the central identity of the composition.
+Do not rely on loud percussion, heavy beats or excessive sound layers.
+
+MELODIC QUALITY:
+- Compose a clear, distinctive and memorable main melody.
+- The melody must feel naturally composed, not like random notes.
+- Use meaningful melodic phrases with a recognizable musical identity.
+- Create satisfying melodic development within the short duration.
+- Avoid repetitive, generic or predictable melodic patterns.
+
+RHYTHM:
+- Use a steady, natural rhythm that supports the melody.
+- Keep the rhythmic foundation controlled and musically appropriate.
+- Avoid excessively heavy drums or aggressive percussion.
+- The rhythm and melody must feel naturally connected.
+
+INSTRUMENTAL ARRANGEMENT:
+- Use complementary instruments that support the lead melody.
+- Give each instrument a clear musical role.
+- Keep the arrangement balanced and spacious.
+- Background instruments must never overpower the main melody.
+- Create interesting musical interaction between the instruments.
+
+MUSICAL DEVELOPMENT:
+- Begin with a recognizable melodic idea.
+- Gradually introduce complementary musical layers.
+- Develop the melody naturally.
+- Build toward a short emotional and musical peak.
+- End with a satisfying musical resolution.
+- Avoid abrupt or unfinished endings.
+
+PRODUCTION:
+- Professional, clean and balanced sound.
+- Clear separation between instruments.
+- Natural dynamics.
+- No excessive sound effects.
+
+STRICT REQUIREMENTS:
+- Instrumental music only.
+- Absolutely no singing.
+- No human voice.
+- No humming.
+- No choir.
+- No spoken words.
+- No vocal samples.
+- No wordless vocalizations.
+
+The result must feel like a complete, carefully composed short instrumental piece,
+not a random background music loop.
+
+${userNotes ? `Additional direction: ${userNotes}` : ""}
+`;
+
+      const aceBody = {
+        model: ACE_MODEL,
+
+        messages: [
+          {
+            role: "user",
+            content: `<prompt>
+${prompt}
+</prompt>`
+          }
+        ],
+
+        stream: false,
+        thinking: true,
+        use_format: false,
+        use_cot_caption: false,
+        use_cot_language: false,
+
+        audio_config: {
+          duration: 30,
+          instrumental: true,
+          format: "mp3"
+        }
+      };
+
+      try {
+        const aceResult = await requestAce(
+          apiKey,
+          aceBody
+        );
+
+        const audioUrl = extractAceAudio(aceResult.data);
+
+        if (!audioUrl) {
+          const message =
+            aceResult.data.choices?.[0]?.message;
+
+          return json({
+            success: false,
+            error: "ACE پاسخ داده است اما فایل صوتی پیدا نشد.",
+            details: extractText(message?.content).slice(0, 1500),
+            status: aceResult.status,
+            provider: "ACE",
+            model: ACE_MODEL
+          }, 502, corsOrigin);
+        }
+
+        return json({
+          success: true,
+          audioUrl,
+          title: "Nava Instrumental Lab",
+          provider: "ACE-Step",
+          model: ACE_MODEL,
+          instrumental: true,
+          targetDuration: 30
+        }, 200, corsOrigin);
+
+      } catch (e) {
+        return json({
+          success: false,
+          error: e.name === "AbortError"
+            ? "زمان انتظار برای ساخت موسیقی توسط ACE تمام شد."
+            : "ساخت موسیقی بی‌کلام ناموفق بود.",
+          details: e.message || "ACE connection error",
+          provider: "ACE",
+          model: ACE_MODEL
+        }, 502, corsOrigin);
+      }
+    }
+
+    // ======================================
+    // ۳. ساخت آهنگ باکلام
     // ======================================
 
     if (
@@ -1038,15 +1104,10 @@ export default {
       const apiKey = env.ACEMUSIC_API_KEY;
 
       if (!apiKey) {
-        return json(
-          {
-            success: false,
-            error:
-              "کلید ACEMUSIC_API_KEY در Secrets کلودفلر ثبت نشده است."
-          },
-          500,
-          corsOrigin
-        );
+        return json({
+          success: false,
+          error: "کلید ACEMUSIC_API_KEY در Secrets کلودفلر ثبت نشده است."
+        }, 500, corsOrigin);
       }
 
       let input;
@@ -1054,19 +1115,11 @@ export default {
       try {
         input = await request.json();
       } catch {
-        return json(
-          {
-            success: false,
-            error: "فرمت اطلاعات ارسالی نامعتبر است."
-          },
-          400,
-          corsOrigin
-        );
+        return json({
+          success: false,
+          error: "فرمت اطلاعات ارسالی نامعتبر است."
+        }, 400, corsOrigin);
       }
-
-      // ------------------------------------
-      // دریافت متن شعر
-      // ------------------------------------
 
       const language = ["fa", "tr", "en"].includes(input.language)
         ? input.language
@@ -1081,46 +1134,26 @@ export default {
       );
 
       if (!lyrics) {
-        return json(
-          {
-            success: false,
-            error: "متن ترانه خالی است. ابتدا شعر را وارد کن."
-          },
-          400,
-          corsOrigin
-        );
+        return json({
+          success: false,
+          error: "متن ترانه خالی است. ابتدا شعر را وارد کن."
+        }, 400, corsOrigin);
       }
 
       if (lyrics.length > 5000) {
-        return json(
-          {
-            success: false,
-            error:
-              "متن ترانه بیش از محدودیت ۵۰۰۰ کاراکتری است. لطفاً شعر را کوتاه‌تر کن."
-          },
-          400,
-          corsOrigin
-        );
+        return json({
+          success: false,
+          error:
+            "متن ترانه بیش از محدودیت ۵۰۰۰ کاراکتری است. لطفاً شعر را کوتاه‌تر کن."
+        }, 400, corsOrigin);
       }
 
-      // ------------------------------------
-      // انتخاب پروفایل موسیقی
-      // ------------------------------------
-
       const musicProfile = buildMusicProfile(input);
-
-      // ------------------------------------
-      // ساخت ساختار ویژه شعر برای ACE
-      // ------------------------------------
 
       const musicLyrics = prepareMusicLyrics(
         lyrics,
         musicProfile.profile
       );
-
-      // ------------------------------------
-      // درخواست ساختاریافته به ACE
-      // ------------------------------------
 
       const audioConfig = {
         duration: 60,
@@ -1161,134 +1194,29 @@ ${musicLyrics}
         audio_config: audioConfig
       };
 
-      // ------------------------------------
-      // ارسال درخواست به ACE
-      // ------------------------------------
-
-      let aceResponse;
-      let aceStatus = 200;
-
       try {
-        const controller = new AbortController();
-
-        const timeout = setTimeout(
-          () => controller.abort(),
-          240000
+        const aceResult = await requestAce(
+          apiKey,
+          aceBody
         );
 
-        let aceRes;
+        const audioUrl = extractAceAudio(aceResult.data);
 
-        try {
-          aceRes = await fetch(
-            ACE_API_URL,
-            {
-              method: "POST",
-              headers: {
-                "Authorization": `Bearer ${apiKey}`,
-                "Content-Type": "application/json",
-                "Accept": "application/json"
-              },
-              body: JSON.stringify(aceBody),
-              signal: controller.signal
-            }
-          );
-        } finally {
-          clearTimeout(timeout);
-        }
+        if (!audioUrl) {
+          const message =
+            aceResult.data.choices?.[0]?.message;
 
-        aceStatus = aceRes.status;
-
-        const rawResponse = await aceRes.text();
-
-        try {
-          aceResponse = JSON.parse(rawResponse);
-        } catch {
-          return json(
-            {
-              success: false,
-              error: "پاسخ ACE قابل پردازش نیست.",
-              status: aceRes.status,
-              details: rawResponse.slice(0, 1200),
-              provider: "ACE"
-            },
-            502,
-            corsOrigin
-          );
-        }
-
-        if (!aceRes.ok || aceResponse.error) {
-          const apiError =
-            aceResponse.error?.message ||
-            aceResponse.error ||
-            aceResponse.message ||
-            `خطای ACE با کد ${aceRes.status}`;
-
-          return json(
-            {
-              success: false,
-              error: String(apiError).slice(0, 1200),
-              status: aceRes.status,
-              provider: "ACE",
-              model: ACE_MODEL
-            },
-            502,
-            corsOrigin
-          );
-        }
-
-      } catch (e) {
-        const timeoutError =
-          e.name === "AbortError";
-
-        return json(
-          {
+          return json({
             success: false,
-            error: timeoutError
-              ? "زمان انتظار برای ساخت آهنگ توسط ACE تمام شد."
-              : "ارتباط با سرویس ACE برقرار نشد.",
-            details: e.message || "ACE connection error",
-            provider: "ACE"
-          },
-          502,
-          corsOrigin
-        );
-      }
-
-      // ------------------------------------
-      // استخراج فایل صوتی
-      // ------------------------------------
-
-      const audioUrl = extractAceAudio(aceResponse);
-
-      if (!audioUrl) {
-        const message =
-          aceResponse.choices?.[0]?.message;
-
-        const responseText = extractText(
-          message?.content
-        );
-
-        return json(
-          {
-            success: false,
-            error:
-              "ACE پاسخ داده است اما فایل صوتی در پاسخ پیدا نشد.",
-            details: responseText.slice(0, 1500),
-            status: aceStatus,
+            error: "ACE پاسخ داده است اما فایل صوتی در پاسخ پیدا نشد.",
+            details: extractText(message?.content).slice(0, 1500),
+            status: aceResult.status,
             provider: "ACE",
             model: ACE_MODEL
-          },
-          502,
-          corsOrigin
-        );
-      }
+          }, 502, corsOrigin);
+        }
 
-      // ------------------------------------
-      // خروجی سازگار با سایت Nava
-      // ------------------------------------
-
-      return json(
-        {
+        return json({
           success: true,
           audioUrl,
           title: "Nava AI Song",
@@ -1297,22 +1225,27 @@ ${musicLyrics}
           musicProfile: musicProfile.profile,
           requestedStyle: musicProfile.requestedStyle,
           targetDuration: 60
-        },
-        200,
-        corsOrigin
-      );
+        }, 200, corsOrigin);
+
+      } catch (e) {
+        return json({
+          success: false,
+          error: e.name === "AbortError"
+            ? "زمان انتظار برای ساخت آهنگ توسط ACE تمام شد."
+            : "ارتباط با سرویس ACE برقرار نشد.",
+          details: e.message || "ACE connection error",
+          provider: "ACE",
+          model: ACE_MODEL
+        }, 502, corsOrigin);
+      }
     }
 
     // ======================================
     // مسیر نامعتبر
     // ======================================
 
-    return json(
-      {
-        error: "Not found"
-      },
-      404,
-      corsOrigin
-    );
+    return json({
+      error: "Not found"
+    }, 404, corsOrigin);
   }
 };
