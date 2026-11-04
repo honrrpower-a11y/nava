@@ -498,7 +498,7 @@ Use emotional sustained melodies and responses between vocal phrases.
 
 4. Ney:
 Use selectively for atmospheric Persian melodic passages.
-Do not let it disappear behind the accompaniment.
+Do not let it disappear behind the mix.
 
 5. Tombak and Daf:
 Use gentle, controlled Iranian percussion.
@@ -712,8 +712,8 @@ async function requestAce(apiKey, aceBody) {
   } finally {
     clearTimeout(timeout);
   }
-      }
-      // ==========================================
+}
+// ==========================================
 // Worker
 // ==========================================
 
@@ -853,6 +853,7 @@ export default {
     // آزمایش مستقل Text-to-Music
     // بدون فایل مرجع و بدون خواننده
     // محافظت‌شده با NAVA_TEST_TOKEN
+    // خروجی مستقیم MP3
     // ======================================
 
     if (
@@ -1020,21 +1021,68 @@ not a collection of disconnected sounds.
           }, 502, corsOrigin);
         }
 
+        // --------------------------------------
+        // حالت اول: ACE فایل را به شکل Base64 می‌دهد
+        // تبدیل Base64 به فایل واقعی MP3
+        // --------------------------------------
+
+        if (audioUrl.startsWith("data:audio/")) {
+          const match = audioUrl.match(
+            /^data:audio\/[^;]+;base64,([A-Za-z0-9+/=\s]+)$/i
+          );
+
+          if (!match) {
+            return json({
+              success: false,
+              error: "ساختار فایل صوتی Base64 معتبر نیست."
+            }, 502, corsOrigin);
+          }
+
+          const base64 = match[1].replace(/\s/g, "");
+          const binary = atob(base64);
+          const bytes = new Uint8Array(binary.length);
+
+          for (let i = 0; i < binary.length; i++) {
+            bytes[i] = binary.charCodeAt(i);
+          }
+
+          return new Response(bytes, {
+            status: 200,
+            headers: {
+              "Content-Type": "audio/mpeg",
+              "Content-Disposition": 'attachment; filename="nava-text2music-test.mp3"',
+              "Content-Length": String(bytes.length),
+              "Access-Control-Allow-Origin": corsOrigin,
+              "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+              "Access-Control-Allow-Headers": "Content-Type, X-Nava-Test-Token",
+              "Cache-Control": "no-store",
+              "X-Nava-Provider": "ACE-Step",
+              "X-Nava-Model": ACE_MODEL,
+              "X-Nava-Task": "text2music",
+              "X-Nava-Target-Duration": "30"
+            }
+          });
+        }
+
+        // --------------------------------------
+        // حالت دوم: ACE لینک مستقیم فایل می‌دهد
+        // --------------------------------------
+
+        if (audioUrl.startsWith("https://")) {
+          return new Response(null, {
+            status: 302,
+            headers: {
+              "Location": audioUrl,
+              "Access-Control-Allow-Origin": corsOrigin,
+              "Cache-Control": "no-store"
+            }
+          });
+        }
+
         return json({
-          success: true,
-          audioUrl,
-          title: "Nava - Independent Text-to-Music Test",
-          provider: "ACE-Step",
-          model: ACE_MODEL,
-          taskType: "text2music",
-          instrumental: true,
-          targetDuration: 30,
-          experiment: "independent-text2music",
-          musicalDirection: "Iranian instrumental - santur, kamancheh, tombak",
-          aceFinishReason:
-            aceResult.data.choices?.[0]?.finish_reason || null,
-          aceUsage: aceResult.data.usage || null
-        }, 200, corsOrigin);
+          success: false,
+          error: "فرمت فایل صوتی ACE پشتیبانی نمی‌شود."
+        }, 502, corsOrigin);
 
       } catch (e) {
         return json({
@@ -1048,9 +1096,8 @@ not a collection of disconnected sounds.
           experiment: "independent-text2music"
         }, 502, corsOrigin);
       }
-    }
-
-    // ======================================
+            }
+        // ======================================
     // ۱. تولید شعر
     // ======================================
 
