@@ -84,6 +84,23 @@ function prepareLyrics(text, language = "fa") {
 }
 
 // ==========================================
+// تبدیل فایل صوتی به Base64
+// ==========================================
+
+function arrayBufferToBase64(buffer) {
+  const bytes = new Uint8Array(buffer);
+  const chunkSize = 0x8000;
+  let binary = "";
+
+  for (let i = 0; i < bytes.length; i += chunkSize) {
+    const chunk = bytes.subarray(i, i + chunkSize);
+    binary += String.fromCharCode(...chunk);
+  }
+
+  return btoa(binary);
+}
+
+// ==========================================
 // آماده‌سازی شعر برای ACE
 // ==========================================
 
@@ -936,6 +953,7 @@ export default {
 
     // ======================================
     // ۲. آزمایشگاه موسیقی بی‌کلام
+    // دریافت MP3 مرجع
     // ======================================
 
     if (
@@ -951,157 +969,157 @@ export default {
         }, 500, corsOrigin);
       }
 
-      // ورودی اختیاری؛ فعلاً پروفایل آزمایش ثابت است.
-      let input = {};
+      let formData;
 
       try {
-        input = await request.json();
+        formData = await request.formData();
       } catch {
-        // درخواست خالی نیز معتبر است.
+        return json({
+          success: false,
+          error: "اطلاعات ارسالی معتبر نیست. فایل MP3 را انتخاب کن."
+        }, 400, corsOrigin);
       }
 
+      const referenceFile = formData.get("referenceAudio");
+
       const userNotes = safeText(
-        input.notes || "",
+        formData.get("notes") || "",
         500
       );
 
-      // پرامپت جدید بر اساس ویژگی‌های موسیقایی فایل مرجع
+      if (
+        !referenceFile ||
+        typeof referenceFile.arrayBuffer !== "function"
+      ) {
+        return json({
+          success: false,
+          error: "لطفاً فایل صوتی مرجع را انتخاب کن."
+        }, 400, corsOrigin);
+      }
+
+      if (referenceFile.size === 0) {
+        return json({
+          success: false,
+          error: "فایل انتخاب‌شده خالی است."
+        }, 400, corsOrigin);
+      }
+
+      if (referenceFile.size > 10 * 1024 * 1024) {
+        return json({
+          success: false,
+          error: "حجم فایل نباید بیشتر از ۱۰ مگابایت باشد."
+        }, 400, corsOrigin);
+      }
+
+      const fileName = String(
+        referenceFile.name || ""
+      ).toLowerCase();
+
+      if (
+        !fileName.endsWith(".mp3") &&
+        referenceFile.type !== "audio/mpeg"
+      ) {
+        return json({
+          success: false,
+          error: "فعلاً فقط فایل MP3 پشتیبانی می‌شود."
+        }, 400, corsOrigin);
+      }
+
+      let referenceAudioBase64;
+
+      try {
+        const audioBuffer = await referenceFile.arrayBuffer();
+        referenceAudioBase64 = arrayBufferToBase64(audioBuffer);
+      } catch {
+        return json({
+          success: false,
+          error: "خواندن فایل صوتی مرجع ناموفق بود."
+        }, 400, corsOrigin);
+      }
+
+      // پرامپت ساخت موسیقی بر اساس مرجع
       const prompt = `
-Create a 30-second energetic, melodic and emotionally engaging
-cinematic instrumental composition.
+Create a new 30-second instrumental composition inspired by
+the uploaded reference audio.
 
-MAIN MUSICAL OBJECTIVE:
+IMPORTANT REFERENCE INSTRUCTIONS:
 
-The composition must be built around one strong, beautiful,
-memorable and recognizable main melody.
+Listen carefully to the supplied reference audio.
 
-The lead melody is the most important element.
-It must have a clear musical identity and sound like a deliberately
-composed musical theme, not a random sequence of notes.
+Analyze and preserve its important musical characteristics:
 
-The melody should be expressive, emotionally engaging,
-easy to recognize and satisfying to listen to.
+- Main melodic identity and melodic contour.
+- Rhythmic character and groove.
+- Approximate tempo and rhythmic energy.
+- Instrumental roles and interaction.
+- Harmonic atmosphere and emotional character.
+- Musical phrasing and natural development.
 
-Do not replace melodic quality with loud percussion,
-large sound effects or excessive orchestration.
+The reference audio is the primary musical guide.
+Do not ignore it and do not create an unrelated generic composition.
 
-TEMPO AND RHYTHMIC FEEL:
+Create a NEW composition inspired by the reference.
+Do not simply reproduce or copy the original recording.
 
-Use a mid-tempo pulse of approximately 90–95 BPM.
+MELODY:
 
-Create a lively double-time feeling through the rhythmic movement
-and interaction of the instruments.
+The main melody is the most important element.
 
-The music should feel energetic, flowing and forward-moving,
-without becoming aggressive or excessively fast.
+Create a clear, memorable and emotionally engaging melodic theme.
+Keep its musical character meaningfully connected to the reference.
 
-Use a driving but controlled rhythmic foundation.
+Develop the melody through natural variations and responses.
+Avoid random notes and repetitive background patterns.
 
-Percussion should provide momentum and rhythmic character,
-but must not become heavy EDM, a dance beat or an overpowering drum pattern.
+RHYTHM:
 
-Keep the rhythm musical, natural and closely connected to the melody.
+Follow the rhythmic character of the reference.
+Do not impose an unrelated generic beat.
 
-MELODIC DEVELOPMENT:
+Keep the groove natural and musically coherent.
+Let the rhythm support the melody rather than overpower it.
 
-Write a distinctive main melodic motif and establish it clearly.
+INSTRUMENTATION:
 
-Develop the motif through meaningful variations,
-melodic responses and changes in phrasing.
+Use instruments that fit the reference audio.
 
-Use memorable melodic phrases rather than repetitive background patterns.
+Preserve the general instrumental character and musical roles
+of the reference where appropriate.
 
-The main melody must remain recognizable throughout the composition,
-even when other instruments respond to it or support it.
+Give each instrument a distinct role.
+Allow instruments to answer and complement one another.
 
-INSTRUMENTAL ARRANGEMENT:
+Do not overcrowd the arrangement.
+Keep the lead melody clearly audible.
 
-Build a rich but balanced instrumental arrangement using:
-
-- Expressive high strings carrying melodic phrases and emotional movement.
-- Warm harmonic layers supporting the main melody.
-- A clear low rhythmic foundation providing pulse and musical weight.
-- Plucked and percussive instrumental accents adding movement and detail.
-- Controlled cinematic percussion supporting the rhythmic energy.
-
-Give the instruments distinct musical roles.
-
-Do not let every instrument play the same notes at the same time.
-
-The instruments should interact naturally:
-one instrument introduces a phrase,
-another answers it,
-and other layers support or develop the musical idea.
-
-Create meaningful melodic call-and-response between instruments.
-
-Keep the main melody clearly audible and emotionally dominant.
-
-Do not bury the melody under orchestral layers.
-
-30-SECOND MUSICAL STRUCTURE:
+MUSICAL DEVELOPMENT:
 
 0–7 seconds:
-Introduce the main melodic motif clearly.
-Establish the musical identity immediately.
-Avoid a long atmospheric introduction.
+Introduce the main musical identity quickly.
 
 7–15 seconds:
-Introduce the rhythmic foundation and complementary layers.
-Increase movement and energy while preserving the main melody.
+Establish the rhythmic foundation and supporting instruments.
 
 15–23 seconds:
-Develop the main melodic idea.
-Create stronger instrumental interaction,
-melodic responses and a natural increase in energy.
+Develop the melody and create meaningful instrumental interaction.
 
 23–30 seconds:
-Reach a short but satisfying musical climax.
-Bring the main melodic identity to a memorable conclusion.
-Finish with a deliberate musical resolution,
-not an abrupt cutoff or an unfinished phrase.
+Reach a satisfying musical climax and natural ending.
 
-EMOTIONAL AND PRODUCTION QUALITY:
+PRODUCTION:
 
-Create a polished, cinematic and emotionally engaging sound.
+Create a polished, balanced and expressive instrumental recording.
+Use clear separation between instruments.
+Avoid excessive sound effects and unnecessary transitions.
 
-Use natural musical dynamics and clear separation between instruments.
-
-The arrangement should feel alive and carefully developed,
-not like a static background loop.
-
-Balance energy, melody, rhythm and harmony.
-
-Avoid excessive sound effects, unnecessary transitions
-and random instrumental changes.
-
-STRICT INSTRUMENTAL REQUIREMENTS:
+STRICT REQUIREMENTS:
 
 Instrumental music only.
+No singing, no human voice, no humming, no choir,
+no spoken words and no wordless vocalizations.
 
-Absolutely no singing.
-No human voice.
-No humming.
-No choir.
-No spoken words.
-No vocal samples.
-No wordless vocalizations.
-No improvised vocal sounds.
-
-The entire composition must be purely instrumental.
-
-FINAL DIRECTION:
-
-Create a memorable 30-second instrumental piece
-with a strong central melody, lively rhythmic movement,
-rich instrumental interaction and a satisfying musical ending.
-
-The listener should be able to remember the main melody
-after hearing the composition once.
-
-Do not create a generic ambient background track.
-Do not create heavy EDM.
-Do not sacrifice the melody for percussion or sound effects.
+Create a complete and satisfying 30-second musical passage.
+Do not end abruptly.
 
 ${userNotes ? `Additional direction: ${userNotes}` : ""}
 `;
@@ -1112,11 +1130,23 @@ ${userNotes ? `Additional direction: ${userNotes}` : ""}
         messages: [
           {
             role: "user",
-            content: `<prompt>
-${prompt}
-</prompt>`
+            content: [
+              {
+                type: "text",
+                text: `<prompt>${prompt}</prompt>`
+              },
+              {
+                type: "input_audio",
+                input_audio: {
+                  data: referenceAudioBase64,
+                  format: "mp3"
+                }
+              }
+            ]
           }
         ],
+
+        task_type: "text2music",
 
         stream: false,
         thinking: true,
@@ -1161,7 +1191,7 @@ ${prompt}
           model: ACE_MODEL,
           instrumental: true,
           targetDuration: 30,
-          experiment: "melody-rhythm-instrument-interaction"
+          experiment: "reference-audio-inspired"
         }, 200, corsOrigin);
 
       } catch (e) {
