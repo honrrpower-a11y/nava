@@ -735,7 +735,7 @@ export default {
       return json({
         success: true,
         message: "Nava Worker is running",
-        version: "nava-test-8-instrumental-lab",
+        version: "nava-test-9-reference-inspired",
         timestamp: new Date().toISOString()
       }, 200, corsOrigin);
     }
@@ -965,60 +965,143 @@ export default {
         500
       );
 
+      // پرامپت جدید بر اساس ویژگی‌های موسیقایی فایل مرجع
       const prompt = `
-Create a 30-second instrumental music composition.
+Create a 30-second energetic, melodic and emotionally engaging
+cinematic instrumental composition.
 
-MAIN OBJECTIVE:
-Create a beautiful, memorable and emotionally engaging lead melody.
-The melody must be the central identity of the composition.
-Do not rely on loud percussion, heavy beats or excessive sound layers.
+MAIN MUSICAL OBJECTIVE:
 
-MELODIC QUALITY:
-- Compose a clear, distinctive and memorable main melody.
-- The melody must feel naturally composed, not like random notes.
-- Use meaningful melodic phrases with a recognizable musical identity.
-- Create satisfying melodic development within the short duration.
-- Avoid repetitive, generic or predictable melodic patterns.
+The composition must be built around one strong, beautiful,
+memorable and recognizable main melody.
 
-RHYTHM:
-- Use a steady, natural rhythm that supports the melody.
-- Keep the rhythmic foundation controlled and musically appropriate.
-- Avoid excessively heavy drums or aggressive percussion.
-- The rhythm and melody must feel naturally connected.
+The lead melody is the most important element.
+It must have a clear musical identity and sound like a deliberately
+composed musical theme, not a random sequence of notes.
+
+The melody should be expressive, emotionally engaging,
+easy to recognize and satisfying to listen to.
+
+Do not replace melodic quality with loud percussion,
+large sound effects or excessive orchestration.
+
+TEMPO AND RHYTHMIC FEEL:
+
+Use a mid-tempo pulse of approximately 90–95 BPM.
+
+Create a lively double-time feeling through the rhythmic movement
+and interaction of the instruments.
+
+The music should feel energetic, flowing and forward-moving,
+without becoming aggressive or excessively fast.
+
+Use a driving but controlled rhythmic foundation.
+
+Percussion should provide momentum and rhythmic character,
+but must not become heavy EDM, a dance beat or an overpowering drum pattern.
+
+Keep the rhythm musical, natural and closely connected to the melody.
+
+MELODIC DEVELOPMENT:
+
+Write a distinctive main melodic motif and establish it clearly.
+
+Develop the motif through meaningful variations,
+melodic responses and changes in phrasing.
+
+Use memorable melodic phrases rather than repetitive background patterns.
+
+The main melody must remain recognizable throughout the composition,
+even when other instruments respond to it or support it.
 
 INSTRUMENTAL ARRANGEMENT:
-- Use complementary instruments that support the lead melody.
-- Give each instrument a clear musical role.
-- Keep the arrangement balanced and spacious.
-- Background instruments must never overpower the main melody.
-- Create interesting musical interaction between the instruments.
 
-MUSICAL DEVELOPMENT:
-- Begin with a recognizable melodic idea.
-- Gradually introduce complementary musical layers.
-- Develop the melody naturally.
-- Build toward a short emotional and musical peak.
-- End with a satisfying musical resolution.
-- Avoid abrupt or unfinished endings.
+Build a rich but balanced instrumental arrangement using:
 
-PRODUCTION:
-- Professional, clean and balanced sound.
-- Clear separation between instruments.
-- Natural dynamics.
-- No excessive sound effects.
+- Expressive high strings carrying melodic phrases and emotional movement.
+- Warm harmonic layers supporting the main melody.
+- A clear low rhythmic foundation providing pulse and musical weight.
+- Plucked and percussive instrumental accents adding movement and detail.
+- Controlled cinematic percussion supporting the rhythmic energy.
 
-STRICT REQUIREMENTS:
-- Instrumental music only.
-- Absolutely no singing.
-- No human voice.
-- No humming.
-- No choir.
-- No spoken words.
-- No vocal samples.
-- No wordless vocalizations.
+Give the instruments distinct musical roles.
 
-The result must feel like a complete, carefully composed short instrumental piece,
-not a random background music loop.
+Do not let every instrument play the same notes at the same time.
+
+The instruments should interact naturally:
+one instrument introduces a phrase,
+another answers it,
+and other layers support or develop the musical idea.
+
+Create meaningful melodic call-and-response between instruments.
+
+Keep the main melody clearly audible and emotionally dominant.
+
+Do not bury the melody under orchestral layers.
+
+30-SECOND MUSICAL STRUCTURE:
+
+0–7 seconds:
+Introduce the main melodic motif clearly.
+Establish the musical identity immediately.
+Avoid a long atmospheric introduction.
+
+7–15 seconds:
+Introduce the rhythmic foundation and complementary layers.
+Increase movement and energy while preserving the main melody.
+
+15–23 seconds:
+Develop the main melodic idea.
+Create stronger instrumental interaction,
+melodic responses and a natural increase in energy.
+
+23–30 seconds:
+Reach a short but satisfying musical climax.
+Bring the main melodic identity to a memorable conclusion.
+Finish with a deliberate musical resolution,
+not an abrupt cutoff or an unfinished phrase.
+
+EMOTIONAL AND PRODUCTION QUALITY:
+
+Create a polished, cinematic and emotionally engaging sound.
+
+Use natural musical dynamics and clear separation between instruments.
+
+The arrangement should feel alive and carefully developed,
+not like a static background loop.
+
+Balance energy, melody, rhythm and harmony.
+
+Avoid excessive sound effects, unnecessary transitions
+and random instrumental changes.
+
+STRICT INSTRUMENTAL REQUIREMENTS:
+
+Instrumental music only.
+
+Absolutely no singing.
+No human voice.
+No humming.
+No choir.
+No spoken words.
+No vocal samples.
+No wordless vocalizations.
+No improvised vocal sounds.
+
+The entire composition must be purely instrumental.
+
+FINAL DIRECTION:
+
+Create a memorable 30-second instrumental piece
+with a strong central melody, lively rhythmic movement,
+rich instrumental interaction and a satisfying musical ending.
+
+The listener should be able to remember the main melody
+after hearing the composition once.
+
+Do not create a generic ambient background track.
+Do not create heavy EDM.
+Do not sacrifice the melody for percussion or sound effects.
 
 ${userNotes ? `Additional direction: ${userNotes}` : ""}
 `;
@@ -1073,11 +1156,12 @@ ${prompt}
         return json({
           success: true,
           audioUrl,
-          title: "Nava Instrumental Lab",
+          title: "Nava Instrumental Lab - Reference Inspired Test",
           provider: "ACE-Step",
           model: ACE_MODEL,
           instrumental: true,
-          targetDuration: 30
+          targetDuration: 30,
+          experiment: "melody-rhythm-instrument-interaction"
         }, 200, corsOrigin);
 
       } catch (e) {
@@ -1248,4 +1332,4 @@ ${musicLyrics}
       error: "Not found"
     }, 404, corsOrigin);
   }
-};
+}; 
