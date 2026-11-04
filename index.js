@@ -1,3 +1,4 @@
+
 const ALLOWED_ORIGIN = "https://honrrpower-a11y.github.io";
 
 // ACE-Step
@@ -16,7 +17,7 @@ function json(data, status, origin) {
       "Content-Type": "application/json; charset=utf-8",
       "Access-Control-Allow-Origin": origin,
       "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-      "Access-Control-Allow-Headers": "Content-Type",
+      "Access-Control-Allow-Headers": "Content-Type, X-Nava-Test-Token",
       "Cache-Control": "no-store"
     }
   });
@@ -734,7 +735,7 @@ export default {
         headers: {
           "Access-Control-Allow-Origin": corsOrigin,
           "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-          "Access-Control-Allow-Headers": "Content-Type",
+          "Access-Control-Allow-Headers": "Content-Type, X-Nava-Test-Token",
           "Access-Control-Max-Age": "86400"
         }
       });
@@ -753,14 +754,13 @@ export default {
       return json({
         success: true,
         message: "Nava Worker is running",
-        version: "nava-test-11-ace-diagnostics",
+        version: "nava-test-12-text2music",
         timestamp: new Date().toISOString()
       }, 200, corsOrigin);
     }
 
     // ======================================
     // تشخیص اتصال و فهرست مدل‌های ACE
-    // فقط GET؛ بدون تولید موسیقی
     // ======================================
 
     if (
@@ -848,6 +848,215 @@ export default {
 
       } finally {
         clearTimeout(timeout);
+      }
+    }
+
+    // ======================================
+    // آزمایش مستقل Text-to-Music
+    // بدون فایل مرجع و بدون خواننده
+    // محافظت‌شده با NAVA_TEST_TOKEN
+    // ======================================
+
+    if (
+      url.pathname === "/ace-test-text2music" &&
+      request.method === "POST"
+    ) {
+      // اگر رمز آزمایش تنظیم نشده باشد، تولید انجام نمی‌شود.
+      if (!env.NAVA_TEST_TOKEN) {
+        return json({
+          success: false,
+          error: "Secret با نام NAVA_TEST_TOKEN در Cloudflare تنظیم نشده است."
+        }, 500, corsOrigin);
+      }
+
+      // بررسی رمز اختصاصی آزمایش
+      const suppliedToken =
+        request.headers.get("X-Nava-Test-Token") || "";
+
+      if (suppliedToken.length < 16 ||
+          suppliedToken !== env.NAVA_TEST_TOKEN) {
+        return json({
+          success: false,
+          error: "رمز آزمایش نامعتبر است."
+        }, 401, corsOrigin);
+      }
+
+      // محدود کردن فراخوانی به دامنه سایت
+      if (origin !== ALLOWED_ORIGIN) {
+        return json({
+          success: false,
+          error: "این مسیر فقط از دامنه اصلی Nava قابل فراخوانی است."
+        }, 403, corsOrigin);
+      }
+
+      const apiKey = env.ACEMUSIC_API_KEY;
+
+      if (!apiKey) {
+        return json({
+          success: false,
+          error: "کلید ACEMUSIC_API_KEY در Secrets کلودفلر ثبت نشده است."
+        }, 500, corsOrigin);
+      }
+
+      let input = {};
+
+      try {
+        input = await request.json();
+      } catch {
+        return json({
+          success: false,
+          error: "اطلاعات آزمایش معتبر نیست."
+        }, 400, corsOrigin);
+      }
+
+      // در این آزمایش، پرامپت ثابت است تا نتیجه قابل مقایسه باشد.
+      // کاربر نمی‌تواند با تغییر ورودی، موضوع یا مدت آزمایش را عوض کند.
+
+      const prompt = `
+Create a 30-second instrumental Iranian cinematic composition.
+
+This is an independent text-to-music generation task.
+There is NO uploaded reference audio.
+Compose a new original musical piece from this written direction.
+
+MUSICAL IDENTITY:
+
+Create a recognizable Iranian Persian instrumental identity.
+The melody must feel intentional, memorable and emotionally expressive.
+Avoid generic background music and random instrumental noodling.
+
+MELODY:
+
+Compose one clear main melodic theme.
+The theme must be easy to recognize and remember.
+Develop the same theme naturally instead of introducing unrelated melodies.
+Use expressive Persian melodic phrasing inspired by Iranian musical traditions.
+
+INSTRUMENTS:
+
+Feature santur as a clearly audible lead melodic instrument.
+Use kamancheh for expressive sustained melodic responses.
+Use tombak for a natural, restrained rhythmic foundation.
+A subtle warm bass layer may support the arrangement.
+
+Keep the santur melody in the foreground.
+The kamancheh must be distinctly audible and must not disappear behind the mix.
+Each instrument should have a clear musical role.
+
+RHYTHM:
+
+Use a moderate, natural 4/4 pulse around 90 BPM.
+The rhythm must feel musical and human, not mechanical.
+Avoid aggressive drums, dance beats and generic electronic loops.
+
+ARRANGEMENT AND DEVELOPMENT:
+
+0-7 seconds:
+Begin with a short, recognizable santur melodic phrase.
+Keep the opening clear and uncluttered.
+
+7-18 seconds:
+Introduce kamancheh with a complementary melodic response.
+Establish a gentle rhythmic pulse with tombak.
+
+18-26 seconds:
+Develop the main melody with richer but balanced instrumentation.
+Create a natural musical lift without simply increasing loudness.
+
+26-30 seconds:
+Bring the main melodic idea to a satisfying, intentional ending.
+Do not abruptly cut off the music.
+
+PRODUCTION:
+
+Instrumental only.
+No vocals, no singing, no humming, no choir, no spoken words.
+No wordless vocalizations.
+No sound effects.
+
+Use clear instrument separation, balanced dynamics and a polished mix.
+Do not let synthesizers replace the acoustic Iranian instruments.
+
+The result should sound like a coherent short musical composition,
+not a collection of disconnected sounds.
+`;
+
+      const aceBody = {
+        model: ACE_MODEL,
+
+        messages: [
+          {
+            role: "user",
+            content: `<prompt>${prompt}</prompt>`
+          }
+        ],
+
+        task_type: "text2music",
+        stream: false,
+        thinking: true,
+        use_format: false,
+        use_cot_caption: false,
+        use_cot_language: false,
+
+        audio_config: {
+          duration: 30,
+          instrumental: true,
+          format: "mp3",
+          bpm: 90,
+          time_signature: "4"
+        }
+      };
+
+      try {
+        const aceResult = await requestAce(
+          apiKey,
+          aceBody
+        );
+
+        const audioUrl = extractAceAudio(aceResult.data);
+
+        if (!audioUrl) {
+          const message =
+            aceResult.data.choices?.[0]?.message;
+
+          return json({
+            success: false,
+            error: "ACE پاسخ داده است اما فایل صوتی پیدا نشد.",
+            details: extractText(message?.content).slice(0, 1500),
+            status: aceResult.status,
+            provider: "ACE",
+            model: ACE_MODEL,
+            experiment: "independent-text2music"
+          }, 502, corsOrigin);
+        }
+
+        return json({
+          success: true,
+          audioUrl,
+          title: "Nava - Independent Text-to-Music Test",
+          provider: "ACE-Step",
+          model: ACE_MODEL,
+          taskType: "text2music",
+          instrumental: true,
+          targetDuration: 30,
+          experiment: "independent-text2music",
+          musicalDirection: "Iranian instrumental - santur, kamancheh, tombak",
+          aceFinishReason:
+            aceResult.data.choices?.[0]?.finish_reason || null,
+          aceUsage: aceResult.data.usage || null
+        }, 200, corsOrigin);
+
+      } catch (e) {
+        return json({
+          success: false,
+          error: e.name === "AbortError"
+            ? "زمان انتظار برای ساخت موسیقی توسط ACE تمام شد."
+            : "ساخت موسیقی آزمایشی ناموفق بود.",
+          details: e.message || "ACE connection error",
+          provider: "ACE",
+          model: ACE_MODEL,
+          experiment: "independent-text2music"
+        }, 502, corsOrigin);
       }
     }
 
@@ -1047,7 +1256,7 @@ export default {
 
     // ======================================
     // ۲. آزمایشگاه موسیقی بی‌کلام
-    // دریافت MP3 مرجع و ساخت نسخه نزدیک‌تر
+    // Cover با فایل مرجع
     // ======================================
 
     if (
@@ -1439,4 +1648,4 @@ ${musicLyrics}
       error: "Not found"
     }, 404, corsOrigin);
   }
-}; 
+};
