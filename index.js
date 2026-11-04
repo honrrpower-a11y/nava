@@ -53,7 +53,7 @@ function safeText(value, maxLength = 1000) {
 
 function normalizePersianSpacing(text) {
   return String(text || "").replace(
-    /([\u0621-\u064A]{2,})ه(ای|ام|ات|اش|ایم|اید|اند)(?=[\s،؛.!؟,:]|$)/g,
+    /([\u0621-\u06A9]{2,})ه(ای|ام|ات|اش|ایم|اید|اند)(?=[\s،؛.!؟,:]|$)/g,
     "$1ه $2"
   );
 }
@@ -752,7 +752,7 @@ export default {
       return json({
         success: true,
         message: "Nava Worker is running",
-        version: "nava-test-9-reference-inspired",
+        version: "nava-test-10-cover-reference",
         timestamp: new Date().toISOString()
       }, 200, corsOrigin);
     }
@@ -953,7 +953,7 @@ export default {
 
     // ======================================
     // ۲. آزمایشگاه موسیقی بی‌کلام
-    // دریافت MP3 مرجع
+    // دریافت MP3 مرجع و ساخت نسخه نزدیک‌تر
     // ======================================
 
     if (
@@ -1037,89 +1037,70 @@ export default {
         }, 400, corsOrigin);
       }
 
-      // پرامپت ساخت موسیقی بر اساس مرجع
       const prompt = `
-Create a new 30-second instrumental composition inspired by
-the uploaded reference audio.
+Create a 30-second instrumental cover based on the uploaded reference audio.
 
-IMPORTANT REFERENCE INSTRUCTIONS:
+The uploaded audio is the primary source.
+Use the actual musical content of the uploaded audio.
 
-Listen carefully to the supplied reference audio.
+MAIN OBJECTIVE:
 
-Analyze and preserve its important musical characteristics:
+Create a new instrumental rendition that stays strongly connected
+to the reference composition.
 
-- Main melodic identity and melodic contour.
-- Rhythmic character and groove.
-- Approximate tempo and rhythmic energy.
-- Instrumental roles and interaction.
-- Harmonic atmosphere and emotional character.
-- Musical phrasing and natural development.
+Preserve the recognizable main melody, melodic contour,
+rhythmic structure, tempo, musical phrasing and overall progression
+as closely as the model allows.
 
-The reference audio is the primary musical guide.
-Do not ignore it and do not create an unrelated generic composition.
-
-Create a NEW composition inspired by the reference.
-Do not simply reproduce or copy the original recording.
+Do not treat the reference as merely a mood or genre suggestion.
+Do not invent an unrelated melody.
+Do not replace the main melodic identity with a generic composition.
 
 MELODY:
 
-The main melody is the most important element.
+Preserve the recognizable main melodic theme of the reference.
+Keep the important melodic phrases and their musical order.
+Maintain the characteristic rises, falls, pauses and phrase endings.
 
-Create a clear, memorable and emotionally engaging melodic theme.
-Keep its musical character meaningfully connected to the reference.
-
-Develop the melody through natural variations and responses.
-Avoid random notes and repetitive background patterns.
+The melody should remain recognizable as belonging to the reference,
+even when played with different instruments.
 
 RHYTHM:
 
-Follow the rhythmic character of the reference.
-Do not impose an unrelated generic beat.
+Preserve the reference rhythmic feel and groove.
+Keep a similar tempo and rhythmic energy.
+Do not impose an unrelated beat or a different rhythmic style.
 
-Keep the groove natural and musically coherent.
-Let the rhythm support the melody rather than overpower it.
+ARRANGEMENT:
 
-INSTRUMENTATION:
+Create an instrumental rendition.
+Use a suitable instrumental arrangement that supports the original melody.
 
-Use instruments that fit the reference audio.
+Keep the lead melodic line clearly audible.
+Supporting instruments should complement the main melody,
+not compete with or replace it.
 
-Preserve the general instrumental character and musical roles
-of the reference where appropriate.
+INSTRUMENTAL ONLY:
 
-Give each instrument a distinct role.
-Allow instruments to answer and complement one another.
+No singing.
+No human voice.
+No humming.
+No choir.
+No spoken words.
+No wordless vocalizations.
 
-Do not overcrowd the arrangement.
-Keep the lead melody clearly audible.
+DURATION AND STRUCTURE:
 
-MUSICAL DEVELOPMENT:
-
-0–7 seconds:
-Introduce the main musical identity quickly.
-
-7–15 seconds:
-Establish the rhythmic foundation and supporting instruments.
-
-15–23 seconds:
-Develop the melody and create meaningful instrumental interaction.
-
-23–30 seconds:
-Reach a satisfying musical climax and natural ending.
+Create approximately 30 seconds of music.
+Keep the main melodic identity present throughout.
+Develop the arrangement naturally.
+Finish with a musically satisfying ending.
 
 PRODUCTION:
 
-Create a polished, balanced and expressive instrumental recording.
-Use clear separation between instruments.
-Avoid excessive sound effects and unnecessary transitions.
-
-STRICT REQUIREMENTS:
-
-Instrumental music only.
-No singing, no human voice, no humming, no choir,
-no spoken words and no wordless vocalizations.
-
-Create a complete and satisfying 30-second musical passage.
-Do not end abruptly.
+Use clear instrument separation.
+Keep the mix balanced and polished.
+Avoid unnecessary sound effects and unrelated musical transitions.
 
 ${userNotes ? `Additional direction: ${userNotes}` : ""}
 `;
@@ -1146,7 +1127,12 @@ ${userNotes ? `Additional direction: ${userNotes}` : ""}
           }
         ],
 
-        task_type: "text2music",
+        // تغییر اصلی:
+        // استفاده از حالت Cover به جای Text-to-Music
+        task_type: "cover",
+
+        // میزان تأثیرگذاری فایل مرجع
+        audio_cover_strength: 0.8,
 
         stream: false,
         thinking: true,
@@ -1186,12 +1172,13 @@ ${userNotes ? `Additional direction: ${userNotes}` : ""}
         return json({
           success: true,
           audioUrl,
-          title: "Nava Instrumental Lab - Reference Inspired Test",
+          title: "Nava Instrumental Lab - Reference Cover Test",
           provider: "ACE-Step",
           model: ACE_MODEL,
           instrumental: true,
           targetDuration: 30,
-          experiment: "reference-audio-inspired"
+          experiment: "reference-audio-cover",
+          coverStrength: 0.8
         }, 200, corsOrigin);
 
       } catch (e) {
