@@ -1046,8 +1046,10 @@ textarea {resize:vertical;min-height:165px}
     </div>
   </section>
 
+  <!-- EXISTING COVER TEST -->
+
   <section class="card">
-    <h2 class="section-heading"><span class="section-number">۱</span>آزمایش موسیقی بی‌کلام</h2>
+    <h2 class="section-heading"><span class="section-number">۱</span>آزمایش موسیقی بی‌کلام با فایل مرجع</h2>
 
     <p class="card-intro">
       فایل صوتی مرجع را انتخاب کن. هدف، ساخت یک قطعه جدید ۳۰ ثانیه‌ای با الهام از ویژگی‌های موسیقی مرجع است.
@@ -1112,6 +1114,65 @@ textarea {resize:vertical;min-height:165px}
       توجه: مدت ۳۰ ثانیه، مدت درخواستی از سرویس است. مدت واقعی فایل خروجی را بعد از تولید بررسی می‌کنیم.
     </p>
   </section>
+
+  <!-- NEW TEXT TO MUSIC TEST -->
+
+  <section class="card">
+    <h2 class="section-heading">
+      <span class="section-number">۲</span>
+      آزمایش مستقیم موتور ACE
+    </h2>
+
+    <p class="card-intro">
+      ساخت موسیقی بی‌کلام ایرانی بدون فایل مرجع؛ برای بررسی توانایی واقعی موتور در ملودی‌سازی و اجرای سازهای ایرانی.
+    </p>
+
+    <div class="lab-description">
+      <strong>مشخصات آزمایش:</strong>
+      <ul>
+        <li>مدت هدف: ۳۰ ثانیه</li>
+        <li>سنتور با نقش ملودی اصلی</li>
+        <li>کمانچه برای همراهی و اوج احساسی</li>
+        <li>تنبک با ریتم ایرانی</li>
+        <li>بدون خواننده و بدون کلام</li>
+        <li>شروع، گسترش ملودی، اوج و پایان طبیعی</li>
+      </ul>
+    </div>
+
+    <div class="field">
+      <label for="aceTestToken">رمز آزمایش موتور</label>
+      <input
+        id="aceTestToken"
+        type="password"
+        autocomplete="off"
+        placeholder="توکن آزمایش را وارد کن"
+      >
+      <div class="hint">
+        این همان مقدار NAVA_TEST_TOKEN در تنظیمات Cloudflare است.
+        کلید اصلی ACE را اینجا وارد نکن.
+      </div>
+    </div>
+
+    <button
+      type="button"
+      id="generateAceTextMusic"
+      class="main-button"
+    >
+      🎼 ساخت موسیقی ایرانی ۳۰ ثانیه‌ای
+    </button>
+
+    <div
+      id="aceTextMusicStatus"
+      class="status"
+      role="status"
+      aria-live="polite"
+    ></div>
+
+    <p class="lab-note">
+      این آزمایش مستقل از Cover است و فایل مرجع نمی‌خواهد. خروجی مستقیم از مسیر Text2Music موتور ACE دریافت می‌شود.
+    </p>
+  </section>
+
 </div>
 
 <!-- STORY MAKER -->
@@ -1711,7 +1772,182 @@ instrumentalButton.addEventListener("click",async () => {
   }
 });
 
+/* ==========================================
+   NAVA ACE TEXT TO MUSIC TEST
+   Direct MP3 response
+========================================== */
+
+const aceTextMusicButton =
+  document.getElementById("generateAceTextMusic");
+
+const aceTextMusicStatus =
+  document.getElementById("aceTextMusicStatus");
+
+const aceTestTokenInput =
+  document.getElementById("aceTestToken");
+
+let aceTextMusicObjectURL = null;
+
+aceTextMusicButton.addEventListener("click", async () => {
+
+  const token = aceTestTokenInput.value.trim();
+
+  if (!token) {
+    showMessage(
+      aceTextMusicStatus,
+      "ابتدا رمز آزمایش موتور را وارد کن."
+    );
+    aceTestTokenInput.focus();
+    return;
+  }
+
+  aceTextMusicButton.disabled = true;
+  aceTextMusicButton.textContent = "⏳ در حال ساخت موسیقی ایرانی...";
+
+  showMessage(
+    aceTextMusicStatus,
+    "درخواست به موتور ACE ارسال شد.\n" +
+    "ساخت موسیقی ۳۰ ثانیه‌ای ممکن است چند دقیقه طول بکشد."
+  );
+
+  try {
+
+    const controller = new AbortController();
+
+    const timer = setTimeout(
+      () => controller.abort(),
+      300000
+    );
+
+    let response;
+
+    try {
+
+      response = await fetch(
+        MUSIC_API + "/ace-test-text2music",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Nava-Test-Token": token
+          },
+          body: JSON.stringify({}),
+          signal: controller.signal
+        }
+      );
+
+    } finally {
+      clearTimeout(timer);
+    }
+
+    if (!response.ok) {
+
+      const errorText = await response.text();
+
+      let errorMessage = errorText;
+
+      try {
+        const errorJSON = JSON.parse(errorText);
+
+        errorMessage =
+          errorJSON.details ||
+          errorJSON.error ||
+          errorJSON.message ||
+          errorText;
+
+      } catch (error) {}
+
+      throw new Error(
+        errorMessage ||
+        "خطای سرور: " + response.status
+      );
+    }
+
+    const contentType =
+      response.headers.get("content-type") || "";
+
+    if (!contentType.toLowerCase().includes("audio/")) {
+
+      const errorText = await response.text();
+
+      throw new Error(
+        "سرور فایل صوتی نفرستاد. پاسخ سرور: " +
+        errorText.slice(0, 400)
+      );
+    }
+
+    const audioBlob = await response.blob();
+
+    if (!audioBlob.size) {
+      throw new Error("فایل موسیقی خالی دریافت شد.");
+    }
+
+    if (aceTextMusicObjectURL) {
+      URL.revokeObjectURL(aceTextMusicObjectURL);
+      aceTextMusicObjectURL = null;
+    }
+
+    aceTextMusicObjectURL =
+      URL.createObjectURL(audioBlob);
+
+    aceTextMusicStatus.replaceChildren();
+
+    const heading = document.createElement("strong");
+    heading.textContent = "🎵 موسیقی ایرانی آماده است";
+    aceTextMusicStatus.appendChild(heading);
+
+    const audio = document.createElement("audio");
+    audio.controls = true;
+    audio.preload = "metadata";
+    audio.src = aceTextMusicObjectURL;
+    aceTextMusicStatus.appendChild(audio);
+
+    const download = document.createElement("a");
+    download.className = "download";
+    download.href = aceTextMusicObjectURL;
+    download.download =
+      `nava-ace-text2music-${Date.now()}.mp3`;
+    download.textContent = "⬇ دانلود موسیقی";
+    aceTextMusicStatus.appendChild(download);
+
+    const info = document.createElement("div");
+    info.className = "status-info";
+    info.textContent =
+      "موتور: ACE-Step | نوع: Text2Music | مدت هدف: ۳۰ ثانیه | حجم فایل: " +
+      (audioBlob.size / (1024 * 1024)).toFixed(2) +
+      " مگابایت";
+
+    aceTextMusicStatus.appendChild(info);
+
+    aceTextMusicStatus.classList.add("show");
+
+    aceTextMusicStatus.scrollIntoView({
+      behavior: "smooth",
+      block: "center"
+    });
+
+  } catch (error) {
+
+    showMessage(
+      aceTextMusicStatus,
+      "ساخت موسیقی ناموفق بود.\n" +
+      (
+        error.name === "AbortError"
+          ? "زمان انتظار تمام شد."
+          : error.message
+      )
+    );
+
+  } finally {
+
+    aceTextMusicButton.disabled = false;
+
+    aceTextMusicButton.textContent =
+      "🎼 ساخت موسیقی ایرانی ۳۰ ثانیه‌ای";
+  }
+});
+
 </script>
 
 </body>
-      </html> 
+            </html> 
