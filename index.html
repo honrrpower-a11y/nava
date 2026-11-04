@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
 <head>
@@ -554,6 +553,39 @@ textarea {resize:vertical;min-height:165px}
   margin-top:10px;
 }
 
+/* INSTRUMENTAL LAB */
+
+.lab-description {
+  background:var(--surface2);
+  border:1px solid var(--border);
+  border-radius:14px;
+  padding:15px;
+  margin:15px 0;
+  font-size:12px;
+  color:var(--muted);
+}
+
+.lab-description strong {
+  color:var(--gold);
+  display:block;
+  margin-bottom:7px;
+}
+
+.lab-description ul {
+  margin:5px 0 0;
+  padding-right:20px;
+}
+
+.lab-description li {
+  margin:4px 0;
+}
+
+.lab-note {
+  color:var(--muted);
+  font-size:11px;
+  margin-top:12px;
+}
+
 /* STORY MAKER */
 
 .story-card {
@@ -613,13 +645,7 @@ textarea {resize:vertical;min-height:165px}
   direction:ltr;
 }
 
-/* ==========================================
-   LIGHT THEME - COLORFUL STUDIO DESIGN
-   These rules apply ONLY to day mode.
-   Night mode remains unchanged.
-========================================== */
-
-/* Main hero */
+/* LIGHT THEME */
 
 [data-theme="light"] .hero {
   background:
@@ -628,17 +654,9 @@ textarea {resize:vertical;min-height:165px}
   border-color:#dfbd91;
 }
 
-[data-theme="light"] .hero h1 {
-  color:#463126;
-}
-
-[data-theme="light"] .hero p {
-  color:#846c5a;
-}
-
-[data-theme="light"] .hero::after {
-  color:#a66e3820;
-}
+[data-theme="light"] .hero h1 {color:#463126}
+[data-theme="light"] .hero p {color:#846c5a}
+[data-theme="light"] .hero::after {color:#a66e3820}
 
 [data-theme="light"] .eyebrow {
   color:#98602f;
@@ -650,8 +668,6 @@ textarea {resize:vertical;min-height:165px}
   border-color:#c88d48;
   box-shadow:0 0 0 12px #dcae6818,0 0 45px #dcae6830;
 }
-
-/* Lyrics section - Amber and cream */
 
 [data-theme="light"] #musicTab > section.card:nth-of-type(2) {
   background:
@@ -665,16 +681,12 @@ textarea {resize:vertical;min-height:165px}
   color:#a96c20;
 }
 
-/* Lyrics editor - Warm ivory */
-
 [data-theme="light"] #musicTab > section.card:nth-of-type(3) {
   background:
     radial-gradient(circle at 0% 100%,#ead8c855,transparent 45%),
     linear-gradient(135deg,#fffaf6,#fffdf9);
   border-color:#e6d2bd;
 }
-
-/* Music design - Lavender and purple */
 
 [data-theme="light"] #musicTab > section.card:nth-of-type(4) {
   background:
@@ -687,8 +699,6 @@ textarea {resize:vertical;min-height:165px}
   background:#a88adf25;
   color:#7952a5;
 }
-
-/* Advanced settings - Copper and warm brown */
 
 [data-theme="light"] #musicTab > section.card:nth-of-type(4) .advanced {
   border-color:#e3c5ac;
@@ -708,8 +718,6 @@ textarea {resize:vertical;min-height:165px}
 [data-theme="light"] #musicTab > section.card:nth-of-type(4) .field label {
   color:#714b37;
 }
-
-/* Local music - Jade and turquoise */
 
 [data-theme="light"] #localSettings {
   border-color:#b8dccc;
@@ -742,22 +750,16 @@ textarea {resize:vertical;min-height:165px}
   color:#628273;
 }
 
-/* Music generation button - Gold and green */
-
 [data-theme="light"] #generate {
   background:linear-gradient(110deg,#e7bd70,#8fc9a8);
   color:#27382c;
   box-shadow:0 8px 25px #7eaa8730;
 }
 
-/* Lyrics generation button */
-
 [data-theme="light"] #makeLyrics {
   background:linear-gradient(110deg,#b8e5d0,#77c5a2);
   color:#214b3a;
 }
-
-/* Mood options */
 
 [data-theme="light"] .mood-option label {
   background:#fffdfb;
@@ -769,8 +771,6 @@ textarea {resize:vertical;min-height:165px}
   border-color:#ad91d3;
   color:#76529e;
 }
-
-/* Story maker - Rose and lavender */
 
 [data-theme="light"] #storyTab > section.card {
   background:
@@ -791,11 +791,7 @@ textarea {resize:vertical;min-height:165px}
   border-color:#cba7d7;
 }
 
-[data-theme="light"] .story-subtitle {
-  color:#f6d8ef;
-}
-
-/* Tabs in day mode */
+[data-theme="light"] .story-subtitle {color:#f6d8ef}
 
 [data-theme="light"] .nav-tabs {
   background:#fffaf3;
@@ -806,8 +802,6 @@ textarea {resize:vertical;min-height:165px}
   background:linear-gradient(110deg,#f5d99a,#e8b86c);
   color:#49311d;
 }
-
-/* Form fields */
 
 [data-theme="light"] input,
 [data-theme="light"] textarea,
@@ -845,7 +839,7 @@ textarea {resize:vertical;min-height:165px}
   .brand-sub {font-size:8px}
   .brand-icon {width:43px;height:43px}
   .status-pill {font-size:9px;padding:4px 7px}
-  .nav-tab {font-size:11px;padding:10px 4px}
+  .nav-tab {font-size:10px;padding:10px 3px}
   .hero h1 {font-size:27px}
 }
 </style>
@@ -869,10 +863,17 @@ textarea {resize:vertical;min-height:165px}
   </div>
 </header>
 
+<!-- NAVIGATION -->
+
 <nav class="nav-tabs">
   <button class="nav-tab active" type="button" data-tab="musicTab">
     🎵 استودیوی موسیقی
   </button>
+
+  <button class="nav-tab" type="button" data-tab="instrumentalTab">
+    🎼 آزمایشگاه موسیقی
+  </button>
+
   <button class="nav-tab" type="button" data-tab="storyTab">
     ✦ استوری‌ساز
   </button>
@@ -891,6 +892,7 @@ textarea {resize:vertical;min-height:165px}
         خلاقیتت را به موسیقی تبدیل کن.
       </p>
     </div>
+
     <div class="hero-art">
       <div class="disc">
         <div class="disc-center">♫</div>
@@ -946,6 +948,7 @@ textarea {resize:vertical;min-height:165px}
       <label for="lyrics">شعر آهنگ</label>
       <textarea id="lyrics" maxlength="8000"
         placeholder="متن ترانه را اینجا بنویس یا شعر ساخته‌شده را ویرایش کن..."></textarea>
+
       <div class="hint">
         می‌توانی شعر تولیدشده را ویرایش کنی یا متن آماده خودت را وارد کنی.
       </div>
@@ -979,31 +982,38 @@ textarea {resize:vertical;min-height:165px}
 
     <div class="field">
       <label>حال‌وهوای موسیقی</label>
+
       <div class="mood-grid">
         <div class="mood-option">
           <input type="radio" name="musicMood" id="moodEmotional" value="emotional" checked>
           <label for="moodEmotional">💜 احساسی</label>
         </div>
+
         <div class="mood-option">
           <input type="radio" name="musicMood" id="moodHappy" value="happy">
           <label for="moodHappy">☀️ شاد</label>
         </div>
+
         <div class="mood-option">
           <input type="radio" name="musicMood" id="moodSad" value="sad">
           <label for="moodSad">🌧️ غمگین</label>
         </div>
+
         <div class="mood-option">
           <input type="radio" name="musicMood" id="moodRomantic" value="romantic">
           <label for="moodRomantic">❤️ عاشقانه</label>
         </div>
+
         <div class="mood-option">
           <input type="radio" name="musicMood" id="moodEpic" value="epic">
           <label for="moodEpic">⚔️ حماسی</label>
         </div>
+
         <div class="mood-option">
           <input type="radio" name="musicMood" id="moodCalm" value="calm">
           <label for="moodCalm">🌙 آرام</label>
         </div>
+
         <div class="mood-option">
           <input type="radio" name="musicMood" id="moodEnergy" value="energetic">
           <label for="moodEnergy">🔥 پرانرژی</label>
@@ -1015,6 +1025,7 @@ textarea {resize:vertical;min-height:165px}
       <label for="instruments">سازهای موردنظر</label>
       <input id="instruments" maxlength="300"
         placeholder="مثلاً پیانو، ویولن، گیتار، باغلاما...">
+
       <div class="hint">
         ساز اول، ساز اصلی آهنگ است. سازهای بعدی نقش همراه دارند.
       </div>
@@ -1024,14 +1035,16 @@ textarea {resize:vertical;min-height:165px}
 
     <details class="advanced">
       <summary>تنظیمات بیشتر و حرفه‌ای</summary>
+
       <div class="advanced-content">
 
         <details class="sub-advanced" id="localSettings">
           <summary>🎶 موسیقی محلی و منطقه‌ای (اختیاری)</summary>
-          <div class="sub-content">
 
+          <div class="sub-content">
             <div class="field">
               <label for="localRegion">انتخاب منطقه موسیقی</label>
+
               <select id="localRegion">
                 <option value="">بدون موسیقی محلی</option>
                 <option value="kurdish">کردی</option>
@@ -1062,6 +1075,7 @@ textarea {resize:vertical;min-height:165px}
 
         <div class="field">
           <label for="voice">جنس و لحن صدای خواننده</label>
+
           <select id="voice">
             <option value="male_pop">خواننده مرد؛ پاپ جوان و روشن</option>
             <option value="male_deep">خواننده مرد؛ باریتون عمیق و گرم</option>
@@ -1081,6 +1095,7 @@ textarea {resize:vertical;min-height:165px}
 
         <div class="field">
           <label for="pronunciationNotes">راهنمای تلفظ کلمات خاص</label>
+
           <textarea id="pronunciationNotes" maxlength="1200" rows="3"
             style="min-height:90px"
             placeholder="مثلاً کلمه‌ای با تلفظ خاص یا لهجه مشخص..."></textarea>
@@ -1099,6 +1114,86 @@ textarea {resize:vertical;min-height:165px}
 
     <div id="status" class="status" role="status" aria-live="polite"></div>
   </section>
+
+</div>
+
+<!-- INSTRUMENTAL LAB -->
+
+<div id="instrumentalTab" class="tab-content">
+
+  <section class="hero">
+    <div class="hero-content">
+      <span class="eyebrow">✦ NAVA INSTRUMENTAL LAB</span>
+
+      <h1>آزمایش قدرت <span>ملودی‌سازی</span></h1>
+
+      <p>
+        آیا هوش مصنوعی می‌تواند ملودی زیبا، ریتم منظم
+        و هماهنگی طبیعی بین سازها خلق کند؟
+      </p>
+    </div>
+
+    <div class="hero-art">
+      <div class="disc">
+        <div class="disc-center">♫</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2 class="section-heading">
+      <span class="section-number">۱</span>
+      آزمایش موسیقی بی‌کلام
+    </h2>
+
+    <p class="card-intro">
+      این آزمایش برای بررسی توانایی ACE-Step در ساخت ملودی،
+      ریتم، هماهنگی سازها و پیشرفت موسیقی طراحی شده است.
+    </p>
+
+    <div class="lab-description">
+      <strong>معیارهای آزمایش:</strong>
+
+      <ul>
+        <li>ملودی اصلی زیبا و به‌یادماندنی</li>
+        <li>ریتم منظم و متناسب با ملودی</li>
+        <li>هماهنگی سازهای همراه</li>
+        <li>تغییر و پیشرفت طبیعی موسیقی</li>
+        <li>پایان‌بندی مناسب و کامل</li>
+      </ul>
+    </div>
+
+    <div class="field">
+      <label>مدت موسیقی</label>
+      <input value="۳۰ ثانیه" disabled>
+    </div>
+
+    <div class="field">
+      <label>نوع تولید</label>
+      <input value="کاملاً بی‌کلام؛ بدون خواننده" disabled>
+    </div>
+
+    <button
+      type="button"
+      id="generateInstrumental"
+      class="main-button"
+    >
+      🎼 ساخت نمونه آزمایشی
+    </button>
+
+    <div
+      id="instrumentalStatus"
+      class="status"
+      role="status"
+      aria-live="polite"
+    ></div>
+
+    <p class="lab-note">
+      توجه: مدت ۳۰ ثانیه، مدت درخواستی از سرویس است.
+      مدت واقعی فایل خروجی را بعد از تولید بررسی می‌کنیم.
+    </p>
+  </section>
+
 </div>
 
 <!-- STORY MAKER -->
@@ -1108,7 +1203,9 @@ textarea {resize:vertical;min-height:165px}
   <section class="hero">
     <div class="hero-content">
       <span class="eyebrow">✦ NAVA CREATIVE TOOLS</span>
+
       <h1>کلماتت را <span>زیباتر نمایش بده</span></h1>
+
       <p>
         متن، شعر کوتاه یا دل‌نوشته‌ات را وارد کن و پیش‌نمایش آن را ببین.
       </p>
@@ -1133,18 +1230,23 @@ textarea {resize:vertical;min-height:165px}
 
     <div class="field">
       <label for="storyInput">متن استوری</label>
+
       <textarea id="storyInput" rows="4" maxlength="500"
         style="min-height:120px"
         placeholder="جمله یا حس‌وحالت را بنویس..."></textarea>
     </div>
 
     <div class="story-card">
-      <div class="story-text" id="previewText">« متن شما اینجا قرار می‌گیرد... »</div>
+      <div class="story-text" id="previewText">
+        « متن شما اینجا قرار می‌گیرد... »
+      </div>
+
       <div class="story-subtitle">@Nava_Studio</div>
     </div>
 
     <div class="story-note">پیش‌نمایش متنی استوری</div>
   </section>
+
 </div>
 
 <footer class="footer">
@@ -1179,15 +1281,23 @@ function openTab(tabId) {
   });
 
   const selectedTab = document.getElementById(tabId);
-  if (selectedTab) selectedTab.classList.add("active");
+
+  if (selectedTab) {
+    selectedTab.classList.add("active");
+  }
 
   const selectedButton = document.querySelector(
     `.nav-tab[data-tab="${tabId}"]`
   );
 
-  if (selectedButton) selectedButton.classList.add("active");
+  if (selectedButton) {
+    selectedButton.classList.add("active");
+  }
 
-  window.scrollTo({top:0,behavior:"smooth"});
+  window.scrollTo({
+    top:0,
+    behavior:"smooth"
+  });
 }
 
 document.querySelectorAll(".nav-tab").forEach(button => {
@@ -1210,12 +1320,17 @@ try {
 function applyTheme(theme) {
   if (theme === "light") {
     htmlElement.setAttribute("data-theme","light");
+
     themeToggle.textContent = "🌙";
+
     document.querySelector('meta[name="theme-color"]')
       .setAttribute("content","#f5eee4");
+
   } else {
     htmlElement.removeAttribute("data-theme");
+
     themeToggle.textContent = "☀️";
+
     document.querySelector('meta[name="theme-color"]')
       .setAttribute("content","#101321");
   }
@@ -1223,7 +1338,7 @@ function applyTheme(theme) {
 
 applyTheme(savedTheme);
 
-themeToggle.addEventListener("click", () => {
+themeToggle.addEventListener("click",() => {
   const nextTheme =
     htmlElement.getAttribute("data-theme") === "light"
       ? "dark"
@@ -1238,11 +1353,13 @@ themeToggle.addEventListener("click", () => {
 
 /* STORY PREVIEW */
 
-document.getElementById("storyInput").addEventListener("input", event => {
+document.getElementById("storyInput").addEventListener("input",event => {
   const value = event.target.value.trim();
 
   document.getElementById("previewText").textContent =
-    value ? `« ${value} »` : "« متن شما اینجا قرار می‌گیرد... »";
+    value
+      ? `« ${value} »`
+      : "« متن شما اینجا قرار می‌گیرد... »";
 });
 
 /* ELEMENTS */
@@ -1319,7 +1436,9 @@ async function postJSON(baseURL,path,payload,timeoutMs = 130000) {
     return result;
 
   } catch (error) {
-    if (error.name === "AbortError") throw error;
+    if (error.name === "AbortError") {
+      throw error;
+    }
 
     if (error instanceof TypeError) {
       throw new Error(
@@ -1341,14 +1460,19 @@ makeLyricsButton.addEventListener("click",async () => {
 
   if (!topic) {
     showMessage(lyricStatus,"اول موضوع ترانه را بنویس.");
+
     document.getElementById("topic").focus();
+
     return;
   }
 
   makeLyricsButton.disabled = true;
   makeLyricsButton.textContent = "⏳ در حال خلق ترانه...";
 
-  showMessage(lyricStatus,"نوا در حال ساخت ترانه است؛ کمی صبر کن.");
+  showMessage(
+    lyricStatus,
+    "نوا در حال ساخت ترانه است؛ کمی صبر کن."
+  );
 
   try {
     const result = await postJSON(
@@ -1486,28 +1610,35 @@ localRegionSelect.addEventListener("change",() => {
     "اگر سبک محلی انتخاب کنی، حال‌وهوای موسیقی و سازهای پیشنهادی آن منطقه به تنظیم آهنگ اضافه می‌شود.";
 
   const preview = document.getElementById("localInstrumentPreview");
+
   preview.replaceChildren();
 
   if (selected) {
     selected.instruments.split("،").forEach(instrument => {
       const chip = document.createElement("span");
+
       chip.className = "instrument-chip";
       chip.textContent = instrument.trim();
+
       preview.appendChild(chip);
     });
+
   } else {
     const chip = document.createElement("span");
+
     chip.className = "instrument-chip";
     chip.textContent = "انتخاب منطقه برای نمایش سازها";
+
     preview.appendChild(chip);
   }
 });
 
-/* INSTRUMENTAL MODE */
+/* INSTRUMENTAL MODE IN MAIN STUDIO */
 
 styleSelect.addEventListener("change",() => {
   if (styleSelect.value.includes("no vocals")) {
     voiceSelect.value = "instrumental";
+
   } else if (voiceSelect.value === "instrumental") {
     voiceSelect.value = "male_pop";
   }
@@ -1536,6 +1667,7 @@ generateButton.addEventListener("click",async () => {
     );
 
     lyricsBox.focus();
+
     return;
   }
 
@@ -1592,27 +1724,35 @@ generateButton.addEventListener("click",async () => {
     statusBox.replaceChildren();
 
     const heading = document.createElement("strong");
+
     heading.textContent = "🎵 آهنگ آماده است";
+
     statusBox.appendChild(heading);
 
     const audio = document.createElement("audio");
+
     audio.controls = true;
     audio.preload = "metadata";
     audio.src = result.audioUrl;
+
     statusBox.appendChild(audio);
 
     const download = document.createElement("a");
+
     download.className = "download";
     download.href = result.audioUrl;
     download.target = "_blank";
     download.rel = "noopener";
     download.download = `nava-song-${Date.now()}.mp3`;
     download.textContent = "⬇ دانلود آهنگ";
+
     statusBox.appendChild(download);
 
     const info = document.createElement("div");
+
     info.className = "status-info";
     info.textContent = "مدت درخواستی: ۶۰ ثانیه";
+
     statusBox.appendChild(info);
 
     statusBox.classList.add("show");
@@ -1638,8 +1778,108 @@ generateButton.addEventListener("click",async () => {
     generateButton.textContent = "✦ ساخت آهنگ";
   }
 });
+
+/* ==========================================
+   NAVA INSTRUMENTAL LAB
+========================================== */
+
+const instrumentalButton =
+  document.getElementById("generateInstrumental");
+
+const instrumentalStatus =
+  document.getElementById("instrumentalStatus");
+
+instrumentalButton.addEventListener("click",async () => {
+
+  instrumentalButton.disabled = true;
+
+  instrumentalButton.textContent =
+    "⏳ در حال ساخت موسیقی بی‌کلام...";
+
+  showMessage(
+    instrumentalStatus,
+    "درخواست به ACE-Step ارسال شد.\nدر حال ساخت موسیقی ۳۰ ثانیه‌ای هستیم؛ لطفاً صفحه را نبند."
+  );
+
+  try {
+    const result = await postJSON(
+      MUSIC_API,
+      "/generate-instrumental",
+      {},
+      300000
+    );
+
+    if (!result.success || !result.audioUrl) {
+      throw new Error(
+        result.error || "فایل صوتی دریافت نشد."
+      );
+    }
+
+    instrumentalStatus.replaceChildren();
+
+    const heading = document.createElement("strong");
+
+    heading.textContent =
+      "🎵 نمونه موسیقی بی‌کلام آماده است";
+
+    instrumentalStatus.appendChild(heading);
+
+    const audio = document.createElement("audio");
+
+    audio.controls = true;
+    audio.preload = "metadata";
+    audio.src = result.audioUrl;
+
+    instrumentalStatus.appendChild(audio);
+
+    const download = document.createElement("a");
+
+    download.className = "download";
+    download.href = result.audioUrl;
+    download.target = "_blank";
+    download.rel = "noopener";
+    download.download =
+      `nava-instrumental-${Date.now()}.mp3`;
+
+    download.textContent = "⬇ دانلود نمونه موسیقی";
+
+    instrumentalStatus.appendChild(download);
+
+    const info = document.createElement("div");
+
+    info.className = "status-info";
+    info.textContent =
+      "مدت هدف: ۳۰ ثانیه | موتور: ACE-Step";
+
+    instrumentalStatus.appendChild(info);
+
+    instrumentalStatus.classList.add("show");
+
+    instrumentalStatus.scrollIntoView({
+      behavior:"smooth",
+      block:"center"
+    });
+
+  } catch (error) {
+    showMessage(
+      instrumentalStatus,
+      "ساخت موسیقی ناموفق بود.\n" +
+      (
+        error.name === "AbortError"
+          ? "زمان انتظار تمام شد."
+          : error.message
+      )
+    );
+
+  } finally {
+    instrumentalButton.disabled = false;
+
+    instrumentalButton.textContent =
+      "🎼 ساخت نمونه آزمایشی";
+  }
+});
+
 </script>
 
 </body>
-</html>
- 
+  </html>
