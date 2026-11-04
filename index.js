@@ -1,4 +1,3 @@
-
 const ALLOWED_ORIGIN = "https://honrrpower-a11y.github.io";
 
 // ACE-Step
@@ -713,9 +712,8 @@ async function requestAce(apiKey, aceBody) {
   } finally {
     clearTimeout(timeout);
   }
-}
-
-// ==========================================
+      }
+      // ==========================================
 // Worker
 // ==========================================
 
@@ -861,7 +859,6 @@ export default {
       url.pathname === "/ace-test-text2music" &&
       request.method === "POST"
     ) {
-      // اگر رمز آزمایش تنظیم نشده باشد، تولید انجام نمی‌شود.
       if (!env.NAVA_TEST_TOKEN) {
         return json({
           success: false,
@@ -869,25 +866,21 @@ export default {
         }, 500, corsOrigin);
       }
 
-      // بررسی رمز اختصاصی آزمایش
       const suppliedToken =
         request.headers.get("X-Nava-Test-Token") || "";
 
-      if (suppliedToken.length < 16 ||
-          suppliedToken !== env.NAVA_TEST_TOKEN) {
+      if (
+        suppliedToken.length < 16 ||
+        suppliedToken !== env.NAVA_TEST_TOKEN
+      ) {
         return json({
           success: false,
           error: "رمز آزمایش نامعتبر است."
         }, 401, corsOrigin);
       }
 
-      // محدود کردن فراخوانی به دامنه سایت
-      if (origin !== ALLOWED_ORIGIN) {
-        return json({
-          success: false,
-          error: "این مسیر فقط از دامنه اصلی Nava قابل فراخوانی است."
-        }, 403, corsOrigin);
-      }
+      // محدودیت دامنه حذف شده است.
+      // امنیت این مسیر همچنان با NAVA_TEST_TOKEN تأمین می‌شود.
 
       const apiKey = env.ACEMUSIC_API_KEY;
 
@@ -908,9 +901,6 @@ export default {
           error: "اطلاعات آزمایش معتبر نیست."
         }, 400, corsOrigin);
       }
-
-      // در این آزمایش، پرامپت ثابت است تا نتیجه قابل مقایسه باشد.
-      // کاربر نمی‌تواند با تغییر ورودی، موضوع یا مدت آزمایش را عوض کند.
 
       const prompt = `
 Create a 30-second instrumental Iranian cinematic composition.
