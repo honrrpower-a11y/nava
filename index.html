@@ -173,8 +173,14 @@ nav {
 }
 
 @keyframes pageIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* HERO */
@@ -251,22 +257,26 @@ nav {
   background: var(--panel2);
 }
 
-/* GOLDEN ORB */
+/* GOLDEN ORB - SMALL VERSION */
 
 .orb-stage {
-  min-height: 360px;
+  min-height: 180px;
   display: grid;
   place-items: center;
   position: relative;
+  overflow: hidden;
 }
 
 .orb-large {
-  width: 215px;
-  height: 215px;
+  width: 55px !important;
+  height: 55px !important;
+  min-width: 55px;
+  min-height: 55px;
   border-radius: 50%;
   position: relative;
   display: grid;
   place-items: center;
+
   background:
     radial-gradient(circle at 34% 27%,
       #fff9dc 0%,
@@ -275,65 +285,83 @@ nav {
       #a66c26 48%,
       #35200e 75%,
       #090c15 100%);
+
   box-shadow:
-    inset -15px -20px 35px #130d08,
-    inset 10px 10px 25px #fff1b2aa,
-    0 0 45px #e6b85c66,
-    0 0 100px #d49a3d33;
-  animation:
-    orbFloat 5s ease-in-out infinite,
-    orbGlow 3s ease-in-out infinite;
+    inset -5px -7px 12px #130d08,
+    inset 4px 4px 9px #fff1b2aa,
+    0 0 15px #e6b85c66;
+
+  animation: none !important;
+  transform: none !important;
 }
 
 .orb-large::before,
 .orb-large::after {
   content: "";
   position: absolute;
-  inset: -35px;
-  border: 2px solid transparent;
+  border-radius: 50%;
+  border: 1px solid transparent;
   border-top-color: #ffe4a0;
   border-bottom-color: #c18b3e;
-  border-radius: 50%;
-  filter: drop-shadow(0 0 7px #e6b85c);
   pointer-events: none;
+  filter: drop-shadow(0 0 4px #e6b85c);
 }
 
 .orb-large::before {
-  transform: scaleX(1.55) rotate(35deg);
+  inset: -9px;
+  transform: scaleX(1.3) rotate(35deg);
   animation: ringRotate 18s linear infinite;
 }
 
 .orb-large::after {
-  inset: -22px;
-  transform: scaleX(1.55) rotate(-35deg);
+  inset: -6px;
   border-top-color: #fff0bd;
   border-bottom-color: #9c692d;
+  transform: scaleX(1.3) rotate(-35deg);
   animation: ringRotateReverse 24s linear infinite;
 }
 
 .orb-dot {
-  width: 32px;
-  height: 32px;
+  width: 10px;
+  height: 10px;
   border-radius: 50%;
   background: radial-gradient(circle at 35% 30%, #fff, #ffe6a3 45%, #c58a34);
-  box-shadow: 0 0 25px #fff, 0 0 55px #e7b85e;
-  animation: corePulse 2.4s ease-in-out infinite;
+  box-shadow: 0 0 10px #fff, 0 0 20px #e7b85e;
+  animation: none !important;
 }
 
 .orb-particle {
   position: absolute;
-  width: 5px;
-  height: 5px;
+  width: 3px;
+  height: 3px;
   border-radius: 50%;
   background: #ffe6a3;
-  box-shadow: 0 0 12px 3px #e8b95c;
+  box-shadow: 0 0 7px 2px #e8b95c;
   animation: particleFloat 3s ease-in-out infinite;
 }
 
-.p1 { top: 8%; right: 25%; }
-.p2 { bottom: 15%; left: 15%; animation-delay: .7s; }
-.p3 { top: 45%; right: 2%; animation-delay: 1.2s; }
-.p4 { bottom: 5%; right: 50%; animation-delay: 1.8s; }
+.p1 {
+  top: 8%;
+  right: 25%;
+}
+
+.p2 {
+  bottom: 15%;
+  left: 15%;
+  animation-delay: .7s;
+}
+
+.p3 {
+  top: 45%;
+  right: 2%;
+  animation-delay: 1.2s;
+}
+
+.p4 {
+  bottom: 5%;
+  right: 50%;
+  animation-delay: 1.8s;
+}
 
 .orb-caption {
   position: absolute;
@@ -347,43 +375,21 @@ nav {
 
 /* ANIMATIONS */
 
-@keyframes orbFloat {
-  0%, 100% { transform: translateY(0) rotate(0deg); }
-  50% { transform: translateY(-9px) rotate(4deg); }
-}
-
-@keyframes orbGlow {
-  0%, 100% {
-    box-shadow:
-      inset -15px -20px 35px #130d08,
-      inset 10px 10px 25px #fff1b2aa,
-      0 0 45px #e6b85c66,
-      0 0 100px #d49a3d33;
-  }
-  50% {
-    box-shadow:
-      inset -15px -20px 35px #130d08,
-      inset 10px 10px 25px #fff1b2aa,
-      0 0 65px #e6b85c99,
-      0 0 130px #d49a3d66;
-  }
-}
-
 @keyframes ringRotate {
-  from { transform: scaleX(1.55) rotate(35deg); }
-  to { transform: scaleX(1.55) rotate(395deg); }
+  from {
+    transform: scaleX(1.3) rotate(35deg);
+  }
+  to {
+    transform: scaleX(1.3) rotate(395deg);
+  }
 }
 
 @keyframes ringRotateReverse {
-  from { transform: scaleX(1.55) rotate(-35deg); }
-  to { transform: scaleX(1.55) rotate(-395deg); }
-}
-
-@keyframes corePulse {
-  0%, 100% { transform: scale(1); }
-  50% {
-    transform: scale(1.25);
-    box-shadow: 0 0 35px #fff, 0 0 65px #e7b85e;
+  from {
+    transform: scaleX(1.3) rotate(-35deg);
+  }
+  to {
+    transform: scaleX(1.3) rotate(-395deg);
   }
 }
 
@@ -394,13 +400,17 @@ nav {
   }
   50% {
     opacity: 1;
-    transform: translateY(-12px) scale(1.3);
+    transform: translateY(-5px) scale(1.2);
   }
 }
 
 @keyframes logoGlow {
-  0%, 100% { box-shadow: 0 0 18px #e3b45b55; }
-  50% { box-shadow: 0 0 30px #e3b45baa, 0 0 50px #d49a3d55; }
+  0%, 100% {
+    box-shadow: 0 0 18px #e3b45b55;
+  }
+  50% {
+    box-shadow: 0 0 30px #e3b45baa, 0 0 50px #d49a3d55;
+  }
 }
 
 /* SECTION */
@@ -668,12 +678,12 @@ footer strong {
   }
 
   .orb-stage {
-    min-height: 300px;
+    min-height: 180px;
   }
 
   .orb-large {
-    width: 175px;
-    height: 175px;
+    width: 55px !important;
+    height: 55px !important;
   }
 
   .services-grid {
