@@ -1,522 +1,258 @@
-
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="theme-color" content="#101321">
-<meta name="description" content="Nava Studio - استودیوی خلاقیت و ابزارهای هوشمند">
-<title>Nava Studio | نوا</title>
-
+<meta name="theme-color" content="#101827">
+<meta name="description" content="NAVA؛ استودیوی هوشمند طراحی، محتوا و تبلیغات کسب‌وکار">
+<title>NAVA | استودیوی هوشمند</title>
 <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet">
 
 <style>
-:root {
+:root{
   color-scheme:dark;
-  --bg:#0c1020;
-  --surface:#151b2d;
-  --surface2:#20283d;
-  --gold:#f2c66d;
-  --gold2:#d99c3d;
-  --text:#f5f3ee;
-  --muted:#a5aec0;
-  --border:#303b54;
-  --green:#55d6a0;
+  --bg:#0b1220;
+  --surface:#121d30;
+  --surface2:#19263c;
+  --gold:#d8aa55;
+  --gold2:#f3d99b;
+  --text:#f6f2e9;
+  --muted:#a5afc0;
+  --border:#344158;
+  --input:#0d1728;
   --shadow:0 18px 55px #0005;
-  --input:#101629;
 }
-
-[data-theme="light"] {
+[data-theme="light"]{
   color-scheme:light;
-  --bg:#f5eee4;
-  --surface:#fffaf3;
-  --surface2:#f2e5d7;
-  --gold:#a85f32;
-  --gold2:#c47b43;
-  --text:#34271f;
-  --muted:#846f61;
-  --border:#e5d2bf;
-  --green:#278b68;
-  --shadow:0 15px 40px #79563712;
-  --input:#fffdf9;
+  --bg:#f4eee4;
+  --surface:#fffaf2;
+  --surface2:#f0e4d4;
+  --gold:#a66c2d;
+  --gold2:#d6a45b;
+  --text:#30271f;
+  --muted:#827263;
+  --border:#e2d1bc;
+  --input:#fffdf8;
+  --shadow:0 15px 40px #76552a12;
 }
-
-* {box-sizing:border-box}
-html {scroll-behavior:smooth}
-
-body {
-  margin:0;
-  min-height:100vh;
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;min-height:100vh;
   background:
-    radial-gradient(ellipse at 85% -10%,#34405c55,transparent 38%),
-    radial-gradient(ellipse at 5% 45%,#41304a22,transparent 35%),
+    radial-gradient(ellipse at 80% -10%,#bd914526,transparent 36%),
+    radial-gradient(ellipse at 5% 50%,#263c5b40,transparent 35%),
     var(--bg);
   color:var(--text);
   font-family:Vazirmatn,Tahoma,sans-serif;
   line-height:1.9;
-  transition:background .25s,color .25s;
+  transition:.25s;
 }
-
-button,input,textarea {font:inherit}
-button {cursor:pointer}
-
-.container {
-  width:min(1080px,94%);
-  margin:auto;
-  padding:22px 0 45px;
-}
+button,textarea{font:inherit}
+button{cursor:pointer}
+.container{width:min(1100px,94%);margin:auto;padding:20px 0 45px}
 
 /* HEADER */
-
-.header {
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:14px;
-  margin-bottom:22px;
+.header{
+  display:flex;align-items:center;justify-content:space-between;
+  gap:12px;margin-bottom:20px;
+}
+.brand{display:flex;align-items:center;gap:12px}
+.logo-orb{
+  width:52px;height:52px;border-radius:50%;
+  position:relative;display:grid;place-items:center;
+  background:radial-gradient(circle at 35% 30%,#fff0c5,#e7bb68 30%,#9c6828 65%,#513719);
+  box-shadow:0 0 18px #e3b45b65,0 0 42px #d49a3d28;
+}
+.logo-orb:before,.logo-orb:after{
+  content:"";position:absolute;inset:7px;
+  border:1px solid #fff0c8aa;border-radius:50%;
+  transform:rotate(35deg) scaleX(1.35);
+}
+.logo-orb:after{transform:rotate(-35deg) scaleX(1.35)}
+.logo-core{width:12px;height:12px;border-radius:50%;background:#fff4d6;box-shadow:0 0 15px white}
+.brand-name{font-size:25px;font-weight:1000;letter-spacing:3px;color:var(--gold2);direction:ltr}
+.brand-sub{font-size:9px;letter-spacing:2px;color:var(--muted);direction:ltr}
+.header-actions{display:flex;align-items:center;gap:9px}
+.status{
+  border:1px solid var(--border);background:var(--surface);
+  padding:5px 10px;border-radius:30px;color:var(--gold2);font-size:10px;
+}
+.theme-toggle{
+  width:42px;height:42px;border:1px solid var(--border);
+  border-radius:14px;background:var(--surface);color:var(--text);font-size:18px;
 }
 
-.brand {
-  display:flex;
-  align-items:center;
-  gap:12px;
+/* NAV */
+.nav{
+  display:flex;gap:7px;padding:6px;margin-bottom:20px;
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:17px;box-shadow:var(--shadow);
 }
-
-.brand-icon {
-  width:49px;
-  height:49px;
-  display:grid;
-  place-items:center;
-  border-radius:16px;
-  background:linear-gradient(145deg,#ffe29a,#d69a42);
-  color:#24170b;
-  font-size:27px;
-  box-shadow:0 8px 25px #d99c3d35;
+.nav button{
+  flex:1;border:0;border-radius:12px;padding:10px 6px;
+  background:transparent;color:var(--muted);font-weight:800;font-size:12px;
 }
-
-.brand-name {
-  font-size:23px;
-  font-weight:950;
-  color:var(--gold);
-  line-height:1.3;
-  letter-spacing:1px;
+.nav button.active{
+  background:linear-gradient(110deg,var(--gold2),var(--gold));
+  color:#20180c;
 }
-
-.brand-sub {
-  font-size:9px;
-  color:var(--muted);
-  letter-spacing:2px;
-  direction:ltr;
-}
-
-.header-actions {
-  display:flex;
-  align-items:center;
-  gap:9px;
-}
-
-.status-pill {
-  border:1px solid var(--border);
-  background:var(--surface);
-  color:var(--green);
-  padding:5px 11px;
-  border-radius:30px;
-  font-size:10px;
-}
-
-.theme-toggle {
-  width:43px;
-  height:43px;
-  border-radius:14px;
-  border:1px solid var(--border);
-  color:var(--text);
-  background:var(--surface);
-  font-size:19px;
-}
-
-/* NAVIGATION */
-
-.nav-tabs {
-  display:flex;
-  gap:9px;
-  padding:6px;
-  border:1px solid var(--border);
-  background:var(--surface);
-  border-radius:17px;
-  margin-bottom:22px;
-  box-shadow:var(--shadow);
-}
-
-.nav-tab {
-  flex:1;
-  border:0;
-  border-radius:12px;
-  padding:11px 8px;
-  color:var(--muted);
-  background:transparent;
-  font-size:13px;
-  font-weight:bold;
-}
-
-.nav-tab.active {
-  color:#21170c;
-  background:linear-gradient(110deg,#f7d98c,#dda548);
-}
-
-.tab-content {display:none}
-.tab-content.active {display:block}
+.page{display:none}
+.page.active{display:block}
 
 /* HERO */
-
-.hero {
-  position:relative;
-  overflow:hidden;
-  display:grid;
-  grid-template-columns:1.35fr .65fr;
-  gap:15px;
-  align-items:center;
-  padding:25px 30px;
-  margin-bottom:19px;
-  border:1px solid #c99a3c45;
-  border-radius:24px;
+.hero{
+  position:relative;overflow:hidden;
+  display:grid;grid-template-columns:1.4fr .6fr;
+  align-items:center;gap:20px;
+  padding:30px;border:1px solid #d5a54b55;
+  border-radius:25px;margin-bottom:20px;
   background:
-    radial-gradient(circle at 15% 50%,#b98b3930,transparent 42%),
-    linear-gradient(125deg,#202a43,#151a2b 75%);
+    radial-gradient(circle at 15% 50%,#d3a04b27,transparent 45%),
+    linear-gradient(125deg,#1b2a43,#111a2b 75%);
   box-shadow:var(--shadow);
 }
-
-.hero-content {position:relative;z-index:1}
-
-.eyebrow {
-  display:inline-block;
-  color:var(--gold);
-  font-size:11px;
-  font-weight:bold;
-  border:1px solid #d5a34d55;
-  background:#d5a34d12;
-  padding:5px 12px;
-  border-radius:30px;
+.hero-content{position:relative;z-index:1}
+.eyebrow{
+  display:inline-block;padding:5px 12px;border-radius:30px;
+  border:1px solid #d5a54b66;background:#d5a54b14;
+  color:var(--gold2);font-size:11px;font-weight:800;
 }
-
-.hero h1 {
-  font-size:clamp(26px,5vw,40px);
-  line-height:1.5;
-  margin:12px 0 7px;
+.hero h1{font-size:clamp(27px,5vw,42px);line-height:1.5;margin:13px 0 7px}
+.hero h1 span{color:var(--gold2)}
+.hero p{font-size:13px;color:#b7c0cf;margin:0;max-width:540px}
+.hero-art{display:grid;place-items:center;min-height:170px}
+.orb-large{
+  width:150px;height:150px;border-radius:50%;
+  position:relative;display:grid;place-items:center;
+  background:radial-gradient(circle at 35% 30%,#fff4d3,#e5b85e 25%,#9e6d2d 58%,#27354b 72%);
+  box-shadow:0 0 0 12px #d9aa5512,0 0 55px #e5b85e55;
 }
-
-.hero h1 span {color:var(--gold)}
-
-.hero p {
-  color:var(--muted);
-  font-size:13px;
-  margin:0;
-  max-width:520px;
+.orb-large:before,.orb-large:after{
+  content:"";position:absolute;inset:14px;
+  border:2px solid #ffe8b8aa;border-radius:50%;
+  transform:scaleX(1.55) rotate(35deg);
 }
+.orb-large:after{transform:scaleX(1.55) rotate(-35deg)}
+.orb-dot{width:27px;height:27px;border-radius:50%;background:#fff3ce;box-shadow:0 0 28px white}
 
-.hero-art {
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  min-height:145px;
+/* ASSISTANT */
+.panel{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:22px;padding:22px;margin-bottom:18px;box-shadow:var(--shadow);
 }
-
-.disc {
-  width:145px;
-  height:145px;
-  border-radius:50%;
-  display:grid;
-  place-items:center;
-  background:repeating-radial-gradient(circle,#111827 0 4px,#283248 5px 7px);
-  border:7px solid #d6a344;
-  box-shadow:0 0 0 12px #f4c45e12,0 0 45px #f4c45e25;
-  transform:rotate(-15deg);
+.panel-title{display:flex;align-items:center;gap:10px;font-size:17px;font-weight:950;margin:0 0 7px}
+.title-icon{
+  width:34px;height:34px;border-radius:11px;display:grid;place-items:center;
+  background:#d5a54b20;color:var(--gold2);
 }
-
-.disc-center {
-  width:45px;
-  height:45px;
-  display:grid;
-  place-items:center;
-  border-radius:50%;
-  background:linear-gradient(145deg,#f8d77e,#d69a2e);
-  color:#16120a;
-  font-size:22px;
+.muted{color:var(--muted);font-size:12px}
+.service-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:18px}
+.service{
+  text-align:right;display:flex;align-items:center;gap:13px;
+  padding:15px;border:1px solid var(--border);
+  border-radius:17px;background:var(--surface2);color:var(--text);
+  transition:.2s;
 }
-
-/* CARDS */
-
-.card {
-  background:var(--surface);
-  border:1px solid var(--border);
-  border-radius:21px;
-  padding:23px;
-  margin-bottom:18px;
-  box-shadow:var(--shadow);
+.service:hover,.service.selected{
+  border-color:var(--gold);transform:translateY(-2px);
+  box-shadow:0 8px 24px #d5a54b17;
 }
-
-.section-heading {
-  margin:0 0 15px;
-  display:flex;
-  align-items:center;
-  gap:10px;
-  font-size:17px;
-  font-weight:900;
+.service-icon{
+  width:44px;height:44px;flex-shrink:0;border-radius:14px;
+  display:grid;place-items:center;font-size:22px;
+  background:#d5a54b18;color:var(--gold2);
 }
-
-.section-number {
-  width:31px;
-  height:31px;
-  display:grid;
-  place-items:center;
-  flex-shrink:0;
-  border-radius:10px;
-  background:#d5a34d18;
-  color:var(--gold);
-  font-size:13px;
+.service strong{display:block;font-size:13px}
+.service small{display:block;color:var(--muted);font-size:10px;margin-top:2px}
+.service-arrow{margin-right:auto;color:var(--gold);font-size:18px}
+.request-box{
+  margin-top:20px;padding-top:18px;border-top:1px solid var(--border);
 }
-
-.card-intro {
-  color:var(--muted);
-  font-size:12px;
-  margin:-8px 0 17px;
+textarea{
+  width:100%;min-height:105px;resize:vertical;
+  border:1px solid var(--border);border-radius:14px;
+  padding:13px;background:var(--input);color:var(--text);
+  outline:none;font-size:13px;
 }
-
-/* COMING SOON */
-
-.coming-soon {
-  position:relative;
-  overflow:hidden;
-  text-align:center;
-  padding:42px 25px;
-  border:1px solid #c99a3c55;
-  border-radius:23px;
-  background:
-    radial-gradient(circle at 50% 0%,#d5a34d25,transparent 55%),
-    linear-gradient(145deg,var(--surface),var(--surface2));
-  box-shadow:var(--shadow);
+textarea:focus{border-color:var(--gold);box-shadow:0 0 0 3px #d5a54b18}
+textarea::placeholder{color:var(--muted)}
+.primary-btn{
+  border:0;border-radius:13px;padding:11px 20px;margin-top:12px;
+  color:#20180c;font-weight:900;
+  background:linear-gradient(110deg,var(--gold2),var(--gold));
+  box-shadow:0 7px 20px #d5a54b25;
 }
-
-.coming-icon {
-  width:82px;
-  height:82px;
-  display:grid;
-  place-items:center;
-  margin:0 auto 20px;
-  border-radius:25px;
-  color:#24170b;
-  background:linear-gradient(145deg,#ffe29a,#d69a42);
-  font-size:39px;
-  box-shadow:0 10px 35px #d99c3d35;
+.primary-btn:active{transform:scale(.98)}
+.response{
+  display:none;margin-top:16px;padding:15px;
+  border:1px solid #d5a54b55;border-radius:14px;
+  background:#d5a54b0c;font-size:13px;
 }
+.response.show{display:block}
+.response strong{color:var(--gold2)}
+.response p{margin:5px 0;color:var(--muted)}
+.response .hint{font-size:11px}
 
-.coming-label {
-  display:inline-block;
-  padding:5px 15px;
-  border:1px solid #d5a34d65;
-  border-radius:30px;
-  background:#d5a34d13;
-  color:var(--gold);
-  font-size:11px;
-  font-weight:bold;
-  margin-bottom:12px;
-}
-
-.coming-soon h2 {
-  font-size:clamp(24px,5vw,34px);
-  margin:4px 0 10px;
-  font-weight:950;
-}
-
-.coming-soon h2 span {color:var(--gold)}
-
-.coming-soon p {
-  max-width:570px;
-  margin:0 auto;
-  color:var(--muted);
-  font-size:13px;
-}
-
-.coming-decoration {
-  direction:ltr;
-  margin-top:25px;
-  color:var(--gold);
-  font-size:25px;
-  letter-spacing:13px;
-  opacity:.7;
-}
-
-.coming-footer {
-  margin-top:23px;
-  padding-top:18px;
-  border-top:1px solid var(--border);
-  color:var(--muted);
-  font-size:11px;
-}
-
-/* STORY MAKER */
-
-.field {margin-bottom:16px}
-
-label {
-  display:block;
-  margin-bottom:7px;
-  color:var(--text);
-  font-size:13px;
-  font-weight:bold;
-}
-
-textarea {
-  width:100%;
-  min-width:0;
-  color:var(--text);
-  background:var(--input);
-  border:1px solid var(--border);
-  border-radius:13px;
-  padding:12px 14px;
-  font-size:13px;
-  outline:none;
-  resize:vertical;
-  min-height:120px;
-}
-
-textarea:focus {
-  border-color:var(--gold);
-  box-shadow:0 0 0 3px #d5a34d18;
-}
-
-.story-card {
-  background:
-    radial-gradient(circle at 20% 20%,#a78bfa30,transparent 45%),
-    linear-gradient(145deg,#111827,#24204b);
-  border:1px solid #a78bfa50;
-  border-radius:22px;
-  padding:35px 22px;
-  min-height:260px;
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  justify-content:center;
-  text-align:center;
+/* STORY */
+.field{margin:14px 0}
+label{display:block;font-size:13px;font-weight:800;margin-bottom:7px}
+.story-card{
+  min-height:260px;margin-top:18px;padding:30px 20px;
+  display:flex;flex-direction:column;justify-content:center;align-items:center;
+  text-align:center;white-space:pre-wrap;overflow-wrap:anywhere;
+  border:1px solid #c4a16b66;border-radius:22px;
+  background:radial-gradient(circle at 20% 20%,#b78d4b35,transparent 45%),linear-gradient(145deg,#17243a,#292039);
   color:white;
-  margin-top:18px;
-  overflow-wrap:anywhere;
 }
+.story-text{font-size:clamp(19px,4vw,27px);font-weight:900;line-height:2}
+.story-subtitle{direction:ltr;color:#e6c987;font-size:12px;margin-top:20px}
 
-.story-text {
-  font-size:clamp(19px,4vw,27px);
-  line-height:2;
-  font-weight:900;
-  white-space:pre-wrap;
+/* MUSIC */
+.music-box{
+  text-align:center;padding:42px 22px;border:1px solid #d5a54b66;
+  border-radius:23px;background:
+  radial-gradient(circle at 50% 0%,#d5a54b26,transparent 55%),
+  var(--surface);box-shadow:var(--shadow);
 }
-
-.story-subtitle {
-  margin-top:22px;
-  color:#d6b7ff;
-  font-size:13px;
-  font-weight:bold;
-  direction:ltr;
+.music-icon{
+  width:82px;height:82px;border-radius:25px;margin:0 auto 18px;
+  display:grid;place-items:center;font-size:35px;color:#21180d;
+  background:linear-gradient(145deg,#ffe6aa,#c68d37);
+  box-shadow:0 0 35px #d5a54b38;
 }
-
-.story-note {
-  color:var(--muted);
-  font-size:11px;
-  text-align:center;
-  margin-top:12px;
-}
+.music-box h2{font-size:29px;margin:5px 0;color:var(--gold2)}
+.music-box p{font-size:13px;color:var(--muted);max-width:550px;margin:auto}
+.coming-label{display:inline-block;margin-top:17px;border:1px solid #d5a54b66;color:var(--gold2);padding:5px 13px;border-radius:30px;font-size:11px}
 
 /* FOOTER */
-
-.footer {
-  text-align:center;
-  padding:22px 5px 5px;
-  color:var(--muted);
-  font-size:11px;
+.footer{text-align:center;padding:25px 5px 5px;color:var(--muted);font-size:11px}
+.footer-name{direction:ltr;color:var(--gold2);font-size:17px;font-weight:950;letter-spacing:3px}
+@media(max-width:700px){
+  .hero{grid-template-columns:1fr;padding:23px 19px}
+  .hero-art{min-height:125px}
+  .orb-large{width:115px;height:115px}
+  .panel{padding:17px}
 }
-
-.footer-brand {
-  color:var(--gold);
-  font-weight:950;
-  font-size:15px;
-  letter-spacing:1px;
-  direction:ltr;
+@media(max-width:440px){
+  .container{width:94%;padding-top:13px}
+  .brand-name{font-size:21px}
+  .brand-sub{font-size:8px}
+  .logo-orb{width:45px;height:45px}
+  .status{font-size:9px;padding:4px 7px}
+  .nav button{font-size:10px;padding:9px 3px}
+  .service-grid{gap:8px}
+  .service{padding:11px 9px;gap:8px}
+  .service-icon{width:37px;height:37px;font-size:19px}
+  .service strong{font-size:11px}
+  .service small{font-size:9px}
 }
-
-/* LIGHT THEME */
-
-[data-theme="light"] .hero {
-  background:
-    radial-gradient(circle at 15% 50%,#e7b86b55,transparent 42%),
-    linear-gradient(125deg,#f3dfc5,#fff8ed 75%);
-  border-color:#dfbd91;
+[data-theme="light"] .hero{
+  background:radial-gradient(circle at 15% 50%,#d5a54b30,transparent 45%),linear-gradient(125deg,#f2dfc4,#fff8ed 75%);
 }
-
-[data-theme="light"] .hero h1 {color:#463126}
-[data-theme="light"] .hero p {color:#846c5a}
-
-[data-theme="light"] .eyebrow {
-  color:#98602f;
-  border-color:#d8ae7a;
-  background:#e7bd8325;
-}
-
-[data-theme="light"] .disc {
-  border-color:#c88d48;
-}
-
-[data-theme="light"] .nav-tabs {
-  background:#fffaf3;
-  border-color:#e5d2bf;
-}
-
-[data-theme="light"] .nav-tab.active {
-  background:linear-gradient(110deg,#f5d99a,#e8b86c);
-  color:#49311d;
-}
-
-[data-theme="light"] textarea {
-  background:#fffdf9;
-}
-
-[data-theme="light"] .coming-soon {
-  background:
-    radial-gradient(circle at 50% 0%,#e7bd8340,transparent 55%),
-    linear-gradient(145deg,#fffaf3,#f2e5d7);
-  border-color:#dfbd91;
-}
-
-[data-theme="light"] .story-card {
-  background:
-    radial-gradient(circle at 20% 20%,#d7b5ef55,transparent 45%),
-    linear-gradient(145deg,#503b65,#78516e);
-  border-color:#cba7d7;
-}
-
-[data-theme="light"] .story-subtitle {color:#f6d8ef}
-
-/* RESPONSIVE */
-
-@media(max-width:700px) {
-  .hero {
-    grid-template-columns:1fr;
-    padding:23px 19px;
-  }
-
-  .hero-art {min-height:105px}
-  .disc {width:105px;height:105px}
-  .disc-center {width:35px;height:35px}
-  .card {padding:18px}
-}
-
-@media(max-width:430px) {
-  .container {width:94%;padding-top:14px}
-  .brand-name {font-size:20px}
-  .brand-sub {font-size:8px}
-  .brand-icon {width:43px;height:43px}
-  .status-pill {font-size:9px;padding:4px 7px}
-  .nav-tab {font-size:11px;padding:10px 3px}
-  .hero h1 {font-size:27px}
-  .coming-soon {padding:34px 17px}
-}
+[data-theme="light"] .hero h1{color:#3b2c20}
+[data-theme="light"] .hero p{color:#806d5c}
+[data-theme="light"] .story-card{background:linear-gradient(145deg,#4c3b50,#76516a)}
 </style>
 </head>
 
@@ -525,118 +261,126 @@ textarea:focus {
 
 <header class="header">
   <div class="brand">
-    <div class="brand-icon" aria-hidden="true">♫</div>
+    <div class="logo-orb"><div class="logo-core"></div></div>
     <div>
-      <div class="brand-name">NAVA STUDIO</div>
+      <div class="brand-name">NAVA</div>
       <div class="brand-sub">AI CREATIVE STUDIO</div>
     </div>
   </div>
-
   <div class="header-actions">
-    <span class="status-pill">● در حال توسعه</span>
-    <button class="theme-toggle" id="themeToggle" type="button" aria-label="تغییر حالت شب و روز">☀️</button>
+    <span class="status">✦ استودیوی هوشمند</span>
+    <button class="theme-toggle" id="themeToggle" aria-label="تغییر تم">☀️</button>
   </div>
 </header>
 
-<nav class="nav-tabs">
-  <button class="nav-tab active" type="button" data-tab="musicTab">🎵 موسیقی نوا</button>
-  <button class="nav-tab" type="button" data-tab="storyTab">✦ استوری‌ساز</button>
+<nav class="nav">
+  <button class="active" data-page="homePage">✦ دستیار نوا</button>
+  <button data-page="storyPage">استوری‌ساز</button>
+  <button data-page="musicPage">موسیقی</button>
 </nav>
 
-<!-- MUSIC: COMING SOON -->
-
-<div id="musicTab" class="tab-content active">
-
+<!-- HOME -->
+<section id="homePage" class="page active">
   <section class="hero">
     <div class="hero-content">
-      <span class="eyebrow">✦ NAVA AI MUSIC</span>
-      <h1>دنیای موسیقی <span>نوا</span></h1>
-      <p>ما در حال آماده‌سازی تجربه‌ای تازه برای ساخت موسیقی هستیم.</p>
+      <span class="eyebrow">✦ YOUR CREATIVE PARTNER</span>
+      <h1>ایده‌ات را به <span>واقعیت تبدیل کن</span></h1>
+      <p>من دستیار نوا هستم. بگو برای برند یا کسب‌وکارت چه چیزی می‌خواهی بسازی؛ با هم از ایده تا اجرا پیش می‌رویم.</p>
+    </div>
+    <div class="hero-art"><div class="orb-large"><div class="orb-dot"></div></div></div>
+  </section>
+
+  <section class="panel">
+    <h2 class="panel-title"><span class="title-icon">✧</span> چطور می‌توانم کمکت کنم؟</h2>
+    <div class="muted">یکی از خدمات را انتخاب کن یا خواسته‌ات را در کادر پایین بنویس.</div>
+
+    <div class="service-grid">
+      <button class="service" data-service="logo">
+        <span class="service-icon">✥</span>
+        <span><strong>طراحی لوگو</strong><small>ساخت نشان و نماد برند</small></span>
+        <span class="service-arrow">‹</span>
+      </button>
+      <button class="service" data-service="content">
+        <span class="service-icon">✎</span>
+        <span><strong>تولید محتوا</strong><small>پست، استوری و کپشن</small></span>
+        <span class="service-arrow">‹</span>
+      </button>
+      <button class="service" data-service="promo">
+        <span class="service-icon">◈</span>
+        <span><strong>تبلیغات</strong><small>پوستر و معرفی محصول</small></span>
+        <span class="service-arrow">‹</span>
+      </button>
+      <button class="service" data-service="brand">
+        <span class="service-icon">◇</span>
+        <span><strong>هویت برند</strong><small>نام، رنگ و سبک برند</small></span>
+        <span class="service-arrow">‹</span>
+      </button>
     </div>
 
-    <div class="hero-art">
-      <div class="disc">
-        <div class="disc-center">♫</div>
-      </div>
+    <div class="request-box">
+      <label for="userRequest">درخواستت را برای نوا بنویس</label>
+      <textarea id="userRequest" maxlength="1200" placeholder="مثلاً برای فروشگاه پوشاکم یک لوگوی شیک و خاص می‌خواهم..."></textarea>
+      <button class="primary-btn" id="sendRequest">بررسی درخواست من ✦</button>
+      <div class="response" id="assistantResponse" aria-live="polite"></div>
     </div>
   </section>
 
-  <section class="coming-soon">
-    <div class="coming-icon">♫</div>
-
-    <div class="coming-label">NAVA MUSIC STUDIO</div>
-
-    <h2>به‌زودی <span>در نوا</span></h2>
-
-    <p>
-      استودیوی موسیقی نوا در حال توسعه است.
-      به‌زودی می‌توانی ایده‌هایت را به شعر و موسیقی تبدیل کنی
-      و تجربه‌ای تازه از خلق آهنگ داشته باشی.
-    </p>
-
-    <div class="coming-decoration">♫ ♪ ♬ ♪ ♫</div>
-
-    <div class="coming-footer">
-      داریم روی کیفیت بهتر و امکانات تازه کار می‌کنیم.
-      <br>
-      از همراهی تو سپاسگزاریم.
-    </div>
+  <section class="panel">
+    <h2 class="panel-title"><span class="title-icon">✦</span> دنیای نوا</h2>
+    <p class="muted">ابزارهای خلاقانه‌ای که به‌تدریج به استودیوی نوا اضافه می‌شوند.</p>
+    <div class="muted">🎨 طراحی لوگو　 ✎ تولید محتوا　 ◈ تبلیغات　 ◇ هویت برند　 ♫ موسیقی</div>
   </section>
+</section>
 
-</div>
-
-<!-- STORY MAKER -->
-
-<div id="storyTab" class="tab-content">
-
+<!-- STORY -->
+<section id="storyPage" class="page">
   <section class="hero">
     <div class="hero-content">
       <span class="eyebrow">✦ NAVA CREATIVE TOOLS</span>
       <h1>کلماتت را <span>زیباتر نمایش بده</span></h1>
       <p>متن، شعر کوتاه یا دل‌نوشته‌ات را وارد کن و پیش‌نمایش آن را ببین.</p>
     </div>
-
-    <div class="hero-art">
-      <div class="disc">
-        <div class="disc-center">✦</div>
-      </div>
-    </div>
+    <div class="hero-art"><div class="orb-large"><div class="orb-dot"></div></div></div>
   </section>
 
-  <section class="card">
-    <h2 class="section-heading">
-      <span class="section-number">✦</span>
-      استوری‌ساز مینیمال
-    </h2>
-
-    <p class="card-intro">
-      متن موردنظرت را وارد کن تا در قالب استوری نمایش داده شود.
-    </p>
-
+  <section class="panel">
+    <h2 class="panel-title"><span class="title-icon">✦</span> استوری‌ساز مینیمال</h2>
+    <p class="muted">متن موردنظرت را وارد کن تا در قالب استوری نمایش داده شود.</p>
     <div class="field">
       <label for="storyInput">متن استوری</label>
-      <textarea
-        id="storyInput"
-        rows="4"
-        maxlength="500"
-        placeholder="جمله یا حس‌وحالت را بنویس..."
-      ></textarea>
+      <textarea id="storyInput" maxlength="500" placeholder="جمله یا حس‌وحالت را بنویس..."></textarea>
     </div>
-
     <div class="story-card">
       <div class="story-text" id="previewText">« متن شما اینجا قرار می‌گیرد... »</div>
-      <div class="story-subtitle">@Nava_Studio</div>
+      <div class="story-subtitle">NAVA STUDIO</div>
     </div>
-
-    <div class="story-note">پیش‌نمایش متنی استوری</div>
+    <p class="muted" style="text-align:center">پیش‌نمایش متنی استوری</p>
   </section>
+</section>
 
-</div>
+<!-- MUSIC -->
+<section id="musicPage" class="page">
+  <section class="hero">
+    <div class="hero-content">
+      <span class="eyebrow">✦ NAVA MUSIC</span>
+      <h1>دنیای موسیقی <span>نوا</span></h1>
+      <p>برای تجربه‌ای تازه از خلق موسیقی، در حال آماده‌سازی هستیم.</p>
+    </div>
+    <div class="hero-art"><div class="orb-large"><div class="orb-dot"></div></div></div>
+  </section>
+  <section class="music-box">
+    <div class="music-icon">♫</div>
+    <div class="coming-label">NAVA MUSIC STUDIO</div>
+    <h2>به‌زودی در نوا</h2>
+    <p>استودیوی موسیقی نوا در حال توسعه است. هدف ما فراهم‌کردن تجربه‌ای خلاقانه برای تبدیل ایده‌ها به شعر و موسیقی است.</p>
+    <div class="coming-label">در حال توسعه ✦</div>
+  </section>
+</section>
 
 <footer class="footer">
-  <div class="footer-brand">♫ NAVA STUDIO</div>
+  <div class="footer-name">NAVA</div>
   <div>ایده‌های تو، دنیای نوا</div>
-  <div>ابزارهای تازه نوا به‌تدریج منتشر می‌شوند.</div>
+  <div>CREATE · DESIGN · GROW</div>
 </footer>
 
 </main>
@@ -644,84 +388,97 @@ textarea:focus {
 <script>
 "use strict";
 
-/* TAB NAVIGATION */
-
-function openTab(tabId) {
-  document.querySelectorAll(".tab-content").forEach(tab => {
-    tab.classList.remove("active");
-  });
-
-  document.querySelectorAll(".nav-tab").forEach(button => {
-    button.classList.remove("active");
-  });
-
-  const selectedTab = document.getElementById(tabId);
-  if (selectedTab) selectedTab.classList.add("active");
-
-  const selectedButton = document.querySelector(
-    `.nav-tab[data-tab="${tabId}"]`
-  );
-
-  if (selectedButton) selectedButton.classList.add("active");
-
+/* PAGE NAVIGATION */
+function openPage(pageId){
+  document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
+  document.querySelectorAll(".nav button").forEach(b=>b.classList.remove("active"));
+  const page=document.getElementById(pageId);
+  const button=document.querySelector('[data-page="'+pageId+'"]');
+  if(page) page.classList.add("active");
+  if(button) button.classList.add("active");
   window.scrollTo({top:0,behavior:"smooth"});
 }
-
-document.querySelectorAll(".nav-tab").forEach(button => {
-  button.addEventListener("click",() => openTab(button.dataset.tab));
+document.querySelectorAll(".nav button").forEach(button=>{
+  button.addEventListener("click",()=>openPage(button.dataset.page));
 });
 
 /* THEME */
-
-const themeToggle = document.getElementById("themeToggle");
-const htmlElement = document.documentElement;
-
-let savedTheme = "dark";
-
-try {
-  savedTheme = localStorage.getItem("nava_theme") || "dark";
-} catch (error) {}
-
-function applyTheme(theme) {
-  if (theme === "light") {
-    htmlElement.setAttribute("data-theme","light");
-    themeToggle.textContent = "🌙";
-    document.querySelector('meta[name="theme-color"]')
-      .setAttribute("content","#f5eee4");
-  } else {
-    htmlElement.removeAttribute("data-theme");
-    themeToggle.textContent = "☀️";
-    document.querySelector('meta[name="theme-color"]')
-      .setAttribute("content","#101321");
+const root=document.documentElement;
+const themeButton=document.getElementById("themeToggle");
+let theme="dark";
+try{theme=localStorage.getItem("nava_theme")||"dark"}catch(e){}
+function applyTheme(value){
+  if(value==="light"){
+    root.setAttribute("data-theme","light");
+    themeButton.textContent="🌙";
+    document.querySelector('meta[name="theme-color"]').content="#f4eee4";
+  }else{
+    root.removeAttribute("data-theme");
+    themeButton.textContent="☀️";
+    document.querySelector('meta[name="theme-color"]').content="#101827";
   }
 }
+applyTheme(theme);
+themeButton.addEventListener("click",()=>{
+  theme=root.getAttribute("data-theme")==="light"?"dark":"light";
+  applyTheme(theme);
+  try{localStorage.setItem("nava_theme",theme)}catch(e){}
+});
 
-applyTheme(savedTheme);
+/* ASSISTANT: FRONT-END DEMO ROUTER */
+const serviceNames={
+  logo:"طراحی لوگو",
+  content:"تولید محتوا",
+  promo:"تبلیغات",
+  brand:"هویت برند"
+};
+let selectedService="";
+const requestBox=document.getElementById("userRequest");
+const responseBox=document.getElementById("assistantResponse");
 
-themeToggle.addEventListener("click",() => {
-  const nextTheme =
-    htmlElement.getAttribute("data-theme") === "light"
-      ? "dark"
-      : "light";
+document.querySelectorAll(".service").forEach(button=>{
+  button.addEventListener("click",()=>{
+    selectedService=button.dataset.service;
+    document.querySelectorAll(".service").forEach(b=>b.classList.remove("selected"));
+    button.classList.add("selected");
+    requestBox.focus();
+    responseBox.classList.remove("show");
+    requestBox.placeholder="برای "+serviceNames[selectedService]+" چه چیزی در ذهن داری؟";
+  });
+});
 
-  applyTheme(nextTheme);
+document.getElementById("sendRequest").addEventListener("click",()=>{
+  const text=requestBox.value.trim();
+  if(!text){
+    responseBox.innerHTML="<strong>اول کمی با من صحبت کن ✦</strong><p>درخواستت را بنویس تا مسیر مناسب را پیشنهاد بدهم.</p>";
+    responseBox.classList.add("show");
+    return;
+  }
 
-  try {
-    localStorage.setItem("nava_theme",nextTheme);
-  } catch (error) {}
+  let category=selectedService;
+  const t=text.toLowerCase();
+
+  if(!category){
+    if(/لوگو|نشان|آرم|logo/.test(t)) category="logo";
+    else if(/کپشن|پست|استوری|محتوا|سناریو|content/.test(t)) category="content";
+    else if(/تبلیغ|پوستر|بنر|فروش|promo/.test(t)) category="promo";
+    else if(/برند|هویت|رنگ سازمانی|نام تجاری|brand/.test(t)) category="brand";
+  }
+
+  if(category){
+    responseBox.innerHTML="<strong>فکر می‌کنم مسیر مناسب تو: "+serviceNames[category]+"</strong><p>درخواستت دریافت شد. برای شروع این پروژه باید چند جزئیات را مشخص کنیم.</p><p class='hint'>این نسخه فعلاً درخواست را دسته‌بندی می‌کند و هنوز به مدل هوش مصنوعی متصل نیست.</p>";
+  }else{
+    responseBox.innerHTML="<strong>درخواستت را دریافت کردم ✦</strong><p>برای انتخاب مسیر دقیق‌تر، کمی بیشتر درباره کسب‌وکار و نتیجه‌ای که می‌خواهی توضیح بده.</p><p class='hint'>دستیار فعلی یک نمونه اولیه رابط کاربری است و هنوز پاسخ‌گویی هوشمند واقعی ندارد.</p>";
+  }
+  responseBox.classList.add("show");
 });
 
 /* STORY PREVIEW */
-
-document.getElementById("storyInput").addEventListener("input",event => {
-  const value = event.target.value.trim();
-
-  document.getElementById("previewText").textContent =
-    value
-      ? `« ${value} »`
-      : "« متن شما اینجا قرار می‌گیرد... »";
+document.getElementById("storyInput").addEventListener("input",event=>{
+  const value=event.target.value.trim();
+  document.getElementById("previewText").textContent=
+    value?"« "+value+" »":"« متن شما اینجا قرار می‌گیرد... »";
 });
 </script>
-
 </body>
 </html>
