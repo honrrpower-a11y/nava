@@ -26,21 +26,48 @@
   --card-surface:linear-gradient(145deg,#142137,#0c1424 70%,#142338);
 }
 
+/* LIGHT MODE BASE */
+
 body.light {
-  --bg:#f4f2ed;
-  --panel:#fff;
-  --panel2:#f0ece2;
-  --text:#172033;
-  --muted:#687386;
-  --border:rgba(150,112,43,.22);
-  --shadow:0 15px 40px rgba(30,40,60,.09);
-  --slogan-gold:#a16b18;
-  --slogan-blue:#1768b5;
-  --card-surface:linear-gradient(145deg,#fff,#f4f0e7 65%,#edf5fa);
+  --bg:#f7f2e9;
+  --panel:#fffdf8;
+  --panel2:#f5e9d8;
+  --text:#17243b;
+  --muted:#687487;
+  --gold:#bd791d;
+  --gold2:#d99424;
+  --blue:#1679d5;
+  --blue2:#3159c9;
+  --border:rgba(193,127,37,.28);
+  --shadow:0 16px 42px rgba(42,49,68,.10);
+  --slogan-gold:#c17a1c;
+  --slogan-blue:#1769bd;
+
+  --card-gradient:linear-gradient(
+    125deg,
+    #e8a82e,
+    #f16b45 42%,
+    #328ee2 78%,
+    #e8b64e
+  );
+
+  --card-surface:linear-gradient(
+    145deg,
+    #fffefa,
+    #fff8ed 58%,
+    #edf5fc
+  );
 }
 
-* { box-sizing:border-box; margin:0; padding:0; }
-html { scroll-behavior:smooth; }
+* {
+  box-sizing:border-box;
+  margin:0;
+  padding:0;
+}
+
+html {
+  scroll-behavior:smooth;
+}
 
 body {
   background:var(--bg);
@@ -50,9 +77,18 @@ body {
   transition:background .3s,color .3s;
 }
 
-button,textarea,input,select { font-family:inherit; }
-button { cursor:pointer; }
-.container { width:min(1120px,92%); margin:auto; }
+button,textarea,input,select {
+  font-family:inherit;
+}
+
+button {
+  cursor:pointer;
+}
+
+.container {
+  width:min(1120px,92%);
+  margin:auto;
+}
 
 /* HEADER */
 
@@ -206,12 +242,24 @@ nav {
 
 /* PAGES */
 
-.page { display:none; animation:pageIn .4s ease; }
-.page.active { display:block; }
+.page {
+  display:none;
+  animation:pageIn .4s ease;
+}
+
+.page.active {
+  display:block;
+}
 
 @keyframes pageIn {
-  from { opacity:0; transform:translateY(10px); }
-  to { opacity:1; transform:translateY(0); }
+  from {
+    opacity:0;
+    transform:translateY(10px);
+  }
+  to {
+    opacity:1;
+    transform:translateY(0);
+  }
 }
 
 /* HERO */
@@ -426,8 +474,14 @@ nav {
 }
 
 @keyframes particleFloat {
-  0%,100% { opacity:.3; transform:translateY(0) scale(.7); }
-  50% { opacity:1; transform:translateY(-5px) scale(1.2); }
+  0%,100% {
+    opacity:.3;
+    transform:translateY(0) scale(.7);
+  }
+  50% {
+    opacity:1;
+    transform:translateY(-5px) scale(1.2);
+  }
 }
 
 @keyframes logoGlow {
@@ -437,7 +491,9 @@ nav {
 
 /* SECTION */
 
-.section { padding:35px 0; }
+.section {
+  padding:35px 0;
+}
 
 .section-heading {
   text-align:center;
@@ -462,7 +518,7 @@ nav {
   line-height:2;
 }
 
-/* SERVICE CARDS - GOLD + BLUE */
+/* SERVICE CARDS */
 
 .services-grid {
   display:grid;
@@ -619,7 +675,9 @@ nav {
   font-size:13px;
 }
 
-.response-box.show { display:block; }
+.response-box.show {
+  display:block;
+}
 
 /* STORY MAKER */
 
@@ -780,6 +838,314 @@ footer strong {
   display:inline-block;
 }
 
+/* =========================================
+   NAVA LIGHT MODE — ENERGETIC LUXURY
+========================================= */
+
+/* زمینه روشن و پویا */
+
+body.light {
+  background:
+    radial-gradient(
+      circle at 8% 12%,
+      rgba(255,179,66,.13),
+      transparent 27%
+    ),
+    radial-gradient(
+      circle at 92% 35%,
+      rgba(44,139,225,.10),
+      transparent 28%
+    ),
+    radial-gradient(
+      circle at 50% 90%,
+      rgba(239,100,76,.07),
+      transparent 30%
+    ),
+    var(--bg);
+  background-attachment:fixed;
+}
+
+/* هدر */
+
+body.light header {
+  background:rgba(255,251,243,.88);
+  border-bottom:1px solid rgba(193,127,37,.22);
+  box-shadow:0 5px 22px rgba(40,48,65,.05);
+}
+
+body.light .brand-name {
+  color:#b9771c;
+  text-shadow:0 2px 12px rgba(239,174,61,.18);
+}
+
+/* منوی بالا */
+
+body.light .nav-btn:hover,
+body.light .nav-btn.active {
+  color:#bd5a32;
+  background:linear-gradient(
+    110deg,
+    rgba(246,179,63,.19),
+    rgba(239,105,72,.10),
+    rgba(37,137,218,.10)
+  );
+  border-color:rgba(217,145,47,.35);
+  box-shadow:0 4px 16px rgba(230,151,50,.10);
+}
+
+/* برچسب معرفی */
+
+body.light .eyebrow {
+  color:#b85b31;
+  background:linear-gradient(
+    110deg,
+    #fff0d5,
+    #ffe8dc,
+    #eaf3ff
+  );
+  border-color:rgba(218,140,48,.35);
+}
+
+/* عنوان اصلی */
+
+body.light .hero h1 span {
+  background:linear-gradient(
+    90deg,
+    #d18a20,
+    #ed6846 48%,
+    #287fd0 85%,
+    #d18a20
+  );
+  -webkit-background-clip:text;
+  background-clip:text;
+  color:transparent;
+}
+
+/* دکمه اصلی */
+
+body.light .btn-primary {
+  background:linear-gradient(
+    110deg,
+    #f6c34f,
+    #f18a3e 48%,
+    #e95c4b
+  );
+  color:#fff;
+  box-shadow:0 7px 19px rgba(224,112,52,.19);
+}
+
+body.light .btn-primary:hover {
+  box-shadow:
+    0 10px 25px rgba(224,112,52,.25),
+    0 0 18px rgba(242,181,57,.18);
+}
+
+/* دکمه ثانویه */
+
+body.light .btn-secondary {
+  color:#1c5f9c;
+  background-image:
+    linear-gradient(#fffdf8,#fff8ed),
+    linear-gradient(120deg,#e8ae39,#ee7650,#318bdc);
+}
+
+/* تیتر بخش‌ها */
+
+body.light .section-heading h2 span {
+  background:linear-gradient(
+    90deg,
+    #c6811e,
+    #ed6747,
+    #247bc9
+  );
+  -webkit-background-clip:text;
+  background-clip:text;
+  color:transparent;
+}
+
+/* کارت‌های خدمات */
+
+body.light .service-card {
+  box-shadow:0 7px 22px rgba(43,54,75,.06);
+}
+
+body.light .service-card::after {
+  background:radial-gradient(
+    circle,
+    rgba(244,139,63,.19),
+    transparent 70%
+  );
+}
+
+body.light .service-card:hover {
+  box-shadow:
+    0 15px 30px rgba(49,59,78,.11),
+    0 0 20px rgba(239,131,61,.13);
+}
+
+body.light .service-card h3 {
+  color:#1b3453;
+}
+
+body.light .service-card p {
+  color:#687487;
+}
+
+/* آیکون‌های خدمات */
+
+body.light .service-icon {
+  color:#d16b30;
+  background:linear-gradient(
+    135deg,
+    #fff0ce,
+    #ffe5dc 55%,
+    #e5f1ff
+  );
+  border:1px solid rgba(211,139,43,.42);
+  box-shadow:
+    inset 0 0 12px rgba(255,255,255,.8),
+    0 5px 13px rgba(220,130,54,.10);
+}
+
+/* پنل درخواست */
+
+body.light .request-panel::before {
+  background:linear-gradient(
+    145deg,
+    #fffefa,
+    #fff5e9 65%,
+    #edf5fc
+  );
+}
+
+body.light .request-panel h2 {
+  color:#bd6530;
+}
+
+body.light .field-label {
+  color:#b96b28;
+}
+
+body.light .request-select,
+body.light .request-textarea,
+body.light .story-input {
+  background:#fffdf8;
+  color:#17243b;
+  border-color:rgba(193,127,37,.30);
+}
+
+body.light .request-select:focus,
+body.light .request-textarea:focus,
+body.light .story-input:focus {
+  border-color:#e68b43;
+  box-shadow:
+    0 0 0 3px rgba(238,139,65,.12),
+    0 0 15px rgba(38,133,208,.08);
+}
+
+/* پیام‌ها و پاسخ‌ها */
+
+body.light .response-box {
+  background:linear-gradient(120deg,#fff8e9,#eef6ff);
+  border:1px solid rgba(218,145,50,.35);
+  border-radius:12px;
+  color:#263a56;
+}
+
+/* استوری‌ساز */
+
+body.light .tool-card-inner {
+  background:linear-gradient(
+    145deg,
+    #fffefa,
+    #fff4e7 58%,
+    #edf5ff
+  );
+}
+
+body.light .tool-card h1 {
+  color:#bd6530;
+}
+
+body.light .story-preview {
+  background:
+    radial-gradient(
+      circle at top left,
+      rgba(37,137,218,.18),
+      transparent 48%
+    ),
+    radial-gradient(
+      circle at bottom right,
+      rgba(242,155,47,.22),
+      transparent 50%
+    ),
+    linear-gradient(145deg,#253c59,#14243c);
+  border:1px solid rgba(224,163,67,.65);
+  box-shadow:
+    inset 0 0 25px rgba(37,137,218,.08),
+    0 0 18px rgba(229,154,52,.10);
+}
+
+/* صفحه موسیقی */
+
+body.light .coming-card-inner {
+  background:linear-gradient(
+    145deg,
+    #fffefa,
+    #fff0e3 60%,
+    #edf5ff
+  );
+}
+
+body.light .coming-icon {
+  background:linear-gradient(
+    120deg,
+    #e8a72e,
+    #ed6849,
+    #287fd0
+  );
+  -webkit-background-clip:text;
+  background-clip:text;
+  color:transparent;
+}
+
+body.light .coming-card h1 {
+  background:linear-gradient(
+    90deg,
+    #c6811e,
+    #ed6849,
+    #287fd0
+  );
+  -webkit-background-clip:text;
+  background-clip:text;
+  color:transparent;
+}
+
+/* فوتر */
+
+body.light footer {
+  border-top-color:rgba(193,127,37,.25);
+}
+
+body.light footer strong {
+  background:linear-gradient(
+    90deg,
+    #c6811e,
+    #ed6849,
+    #287fd0
+  );
+  -webkit-background-clip:text;
+  background-clip:text;
+  color:transparent;
+}
+
+/* دکمه تغییر تم */
+
+body.light .theme-btn:hover {
+  border-color:#e88b43;
+  box-shadow:0 0 15px rgba(239,137,60,.18);
+}
+
 /* RESPONSIVE */
 
 @media(max-width:800px) {
@@ -789,16 +1155,31 @@ footer strong {
     padding-top:40px;
   }
 
-  .hero p { margin:auto; }
-  .hero-buttons { justify-content:center; }
-  .orb-stage { min-height:250px; }
-  .services-grid { grid-template-columns:repeat(2,1fr); }
+  .hero p {
+    margin:auto;
+  }
+
+  .hero-buttons {
+    justify-content:center;
+  }
+
+  .orb-stage {
+    min-height:250px;
+  }
+
+  .services-grid {
+    grid-template-columns:repeat(2,1fr);
+  }
 }
 
 @media(max-width:480px) {
-  .header-inner { min-height:76px; }
+  .header-inner {
+    min-height:76px;
+  }
 
-  .brand-name { font-size:21px; }
+  .brand-name {
+    font-size:21px;
+  }
 
   .brand-sub {
     font-size:7px;
@@ -815,14 +1196,37 @@ footer strong {
     height:36px;
   }
 
-  .theme-btn { padding:9px 10px; }
-  .hero h1 { font-size:30px; }
-  .services-grid { gap:10px; }
-  .service-card { padding:1px; }
-  .service-card h3 { font-size:13px; }
-  .service-card p { font-size:11px; }
-  .request-content,.tool-card-inner { padding:18px; }
-  .coming-card-inner { padding:45px 17px; }
+  .theme-btn {
+    padding:9px 10px;
+  }
+
+  .hero h1 {
+    font-size:30px;
+  }
+
+  .services-grid {
+    gap:10px;
+  }
+
+  .service-card {
+    padding:1px;
+  }
+
+  .service-card h3 {
+    font-size:13px;
+  }
+
+  .service-card p {
+    font-size:11px;
+  }
+
+  .request-content,.tool-card-inner {
+    padding:18px;
+  }
+
+  .coming-card-inner {
+    padding:45px 17px;
+  }
 
   .brand {
     transform:scale(.94);
@@ -1023,6 +1427,7 @@ footer strong {
             <button class="btn-secondary" id="clearStory">پاک کردن متن</button>
             <button class="btn-primary" id="copyStory">کپی متن</button>
           </div>
+
           <div class="response-box" id="storyMessage" aria-live="polite"></div>
         </div>
       </div>
@@ -1040,6 +1445,7 @@ footer strong {
           این بخش در حال توسعه است.<br>
           به‌زودی مسیر تازه‌ای برای خلق موسیقی و تجربه‌های صوتی در نوا فعال خواهد شد.
         </p>
+
         <div style="margin-top:25px">
           <button class="btn-secondary" onclick="showPage('homePage')">
             بازگشت به صفحه اصلی
@@ -1068,7 +1474,7 @@ const pages = document.querySelectorAll(".page");
 
 function showPage(pageId) {
   pages.forEach(page => {
-    page.classList.toggle("active", page.id === pageId);
+    page.classList.toggle("active",page.id === pageId);
   });
 
   navButtons.forEach(button => {
@@ -1078,11 +1484,11 @@ function showPage(pageId) {
     );
   });
 
-  window.scrollTo({ top:0, behavior:"smooth" });
+  window.scrollTo({top:0,behavior:"smooth"});
 }
 
 navButtons.forEach(button => {
-  button.addEventListener("click", () => {
+  button.addEventListener("click",() => {
     showPage(button.dataset.page);
   });
 });
@@ -1097,7 +1503,7 @@ if (savedTheme === "light") {
   themeToggle.textContent = "🌙";
 }
 
-themeToggle.addEventListener("click", () => {
+themeToggle.addEventListener("click",() => {
   document.body.classList.toggle("light");
 
   const isLight = document.body.classList.contains("light");
