@@ -2,483 +2,1069 @@
 <html lang="fa" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="theme-color" content="#101827">
-<meta name="description" content="NAVA؛ استودیوی هوشمند طراحی، محتوا و تبلیغات کسب‌وکار">
-<title>NAVA | استودیوی هوشمند</title>
-<link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#080d19">
+<meta name="description" content="NAVA؛ استودیوی هوشمند برای ساخت، طراحی و رشد کسب‌وکارها">
+<title>NAVA | Create. Design. Grow.</title>
 
 <style>
-:root{
-  color-scheme:dark;
-  --bg:#0b1220;
-  --surface:#121d30;
-  --surface2:#19263c;
-  --gold:#d8aa55;
-  --gold2:#f3d99b;
-  --text:#f6f2e9;
-  --muted:#a5afc0;
-  --border:#344158;
-  --input:#0d1728;
-  --shadow:0 18px 55px #0005;
+:root {
+  --bg: #080d19;
+  --panel: #111a2b;
+  --panel2: #172338;
+  --text: #f4f1e9;
+  --muted: #9ba7b8;
+  --gold: #e5b85e;
+  --gold2: #ffe6a3;
+  --border: rgba(229,184,94,.2);
+  --shadow: 0 15px 50px rgba(0,0,0,.25);
 }
-[data-theme="light"]{
-  color-scheme:light;
-  --bg:#f4eee4;
-  --surface:#fffaf2;
-  --surface2:#f0e4d4;
-  --gold:#a66c2d;
-  --gold2:#d6a45b;
-  --text:#30271f;
-  --muted:#827263;
-  --border:#e2d1bc;
-  --input:#fffdf8;
-  --shadow:0 15px 40px #76552a12;
+
+body.light {
+  --bg: #f4f2ed;
+  --panel: #ffffff;
+  --panel2: #f0ece2;
+  --text: #172033;
+  --muted: #687386;
+  --border: rgba(150,112,43,.22);
+  --shadow: 0 15px 40px rgba(30,40,60,.09);
 }
-*{box-sizing:border-box}
-html{scroll-behavior:smooth}
-body{
-  margin:0;min-height:100vh;
-  background:
-    radial-gradient(ellipse at 80% -10%,#bd914526,transparent 36%),
-    radial-gradient(ellipse at 5% 50%,#263c5b40,transparent 35%),
-    var(--bg);
-  color:var(--text);
-  font-family:Vazirmatn,Tahoma,sans-serif;
-  line-height:1.9;
-  transition:.25s;
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
 }
-button,textarea{font:inherit}
-button{cursor:pointer}
-.container{width:min(1100px,94%);margin:auto;padding:20px 0 45px}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: Tahoma, Arial, sans-serif;
+  min-height: 100vh;
+  transition: background .3s, color .3s;
+}
+
+button, textarea, input {
+  font-family: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+.container {
+  width: min(1120px, 92%);
+  margin: auto;
+}
 
 /* HEADER */
-.header{
-  display:flex;align-items:center;justify-content:space-between;
-  gap:12px;margin-bottom:20px;
-}
-.brand{display:flex;align-items:center;gap:12px}
-.logo-orb{
-  width:52px;height:52px;border-radius:50%;
-  position:relative;display:grid;place-items:center;
-  background:radial-gradient(circle at 35% 30%,#fff0c5,#e7bb68 30%,#9c6828 65%,#513719);
-  box-shadow:0 0 18px #e3b45b65,0 0 42px #d49a3d28;
-}
-.logo-orb:before,.logo-orb:after{
-  content:"";position:absolute;inset:7px;
-  border:1px solid #fff0c8aa;border-radius:50%;
-  transform:rotate(35deg) scaleX(1.35);
-}
-.logo-orb:after{transform:rotate(-35deg) scaleX(1.35)}
-.logo-core{width:12px;height:12px;border-radius:50%;background:#fff4d6;box-shadow:0 0 15px white}
-.brand-name{font-size:25px;font-weight:1000;letter-spacing:3px;color:var(--gold2);direction:ltr}
-.brand-sub{font-size:9px;letter-spacing:2px;color:var(--muted);direction:ltr}
-.header-actions{display:flex;align-items:center;gap:9px}
-.status{
-  border:1px solid var(--border);background:var(--surface);
-  padding:5px 10px;border-radius:30px;color:var(--gold2);font-size:10px;
-}
-.theme-toggle{
-  width:42px;height:42px;border:1px solid var(--border);
-  border-radius:14px;background:var(--surface);color:var(--text);font-size:18px;
+
+header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: color-mix(in srgb, var(--bg) 90%, transparent);
+  backdrop-filter: blur(15px);
+  border-bottom: 1px solid var(--border);
 }
 
-/* NAV */
-.nav{
-  display:flex;gap:7px;padding:6px;margin-bottom:20px;
-  background:var(--surface);border:1px solid var(--border);
-  border-radius:17px;box-shadow:var(--shadow);
+.header-inner {
+  min-height: 76px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
 }
-.nav button{
-  flex:1;border:0;border-radius:12px;padding:10px 6px;
-  background:transparent;color:var(--muted);font-weight:800;font-size:12px;
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
-.nav button.active{
-  background:linear-gradient(110deg,var(--gold2),var(--gold));
-  color:#20180c;
+
+.logo-orb {
+  width: 43px;
+  height: 43px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%,
+    #fff4c8, #e6b75b 40%, #80501c 78%, #25190d);
+  box-shadow: 0 0 20px #e3b45b66;
+  position: relative;
+  animation: logoGlow 3s ease-in-out infinite;
 }
-.page{display:none}
-.page.active{display:block}
+
+.logo-orb::after {
+  content: "";
+  position: absolute;
+  inset: -5px;
+  border: 1px solid #e5b85e88;
+  border-radius: 50%;
+  transform: rotate(-25deg) scaleX(1.35);
+}
+
+.brand-name {
+  font-size: 25px;
+  font-weight: 900;
+  letter-spacing: 3px;
+  color: var(--gold);
+}
+
+.brand-sub {
+  font-size: 10px;
+  color: var(--muted);
+  letter-spacing: 2px;
+  margin-top: 4px;
+  direction: ltr;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.theme-btn, .menu-btn {
+  border: 1px solid var(--border);
+  color: var(--text);
+  background: var(--panel);
+  border-radius: 12px;
+  padding: 10px 13px;
+}
+
+/* NAVIGATION */
+
+nav {
+  display: flex;
+  gap: 8px;
+  padding: 0 0 13px;
+  overflow-x: auto;
+}
+
+.nav-btn {
+  background: transparent;
+  color: var(--muted);
+  border: 1px solid transparent;
+  border-radius: 10px;
+  padding: 10px 17px;
+  white-space: nowrap;
+  font-size: 13px;
+  transition: .25s;
+}
+
+.nav-btn:hover, .nav-btn.active {
+  color: var(--gold);
+  background: rgba(229,184,94,.09);
+  border-color: var(--border);
+}
+
+/* PAGES */
+
+.page {
+  display: none;
+  animation: pageIn .4s ease;
+}
+
+.page.active {
+  display: block;
+}
+
+@keyframes pageIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
 
 /* HERO */
-.hero{
-  position:relative;overflow:hidden;
-  display:grid;grid-template-columns:1.4fr .6fr;
-  align-items:center;gap:20px;
-  padding:30px;border:1px solid #d5a54b55;
-  border-radius:25px;margin-bottom:20px;
+
+.hero {
+  min-height: 470px;
+  display: grid;
+  grid-template-columns: 1.1fr .9fr;
+  align-items: center;
+  gap: 35px;
+  padding: 55px 0 35px;
+}
+
+.eyebrow {
+  display: inline-block;
+  color: var(--gold);
+  background: rgba(229,184,94,.1);
+  border: 1px solid var(--border);
+  padding: 8px 13px;
+  border-radius: 30px;
+  font-size: 12px;
+  margin-bottom: 20px;
+}
+
+.hero h1 {
+  font-size: clamp(30px, 5vw, 52px);
+  line-height: 1.55;
+  margin-bottom: 15px;
+}
+
+.hero h1 span {
+  color: var(--gold);
+}
+
+.hero p {
+  color: var(--muted);
+  line-height: 2.2;
+  font-size: 14px;
+  max-width: 540px;
+}
+
+.hero-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 25px;
+}
+
+.btn-primary, .btn-secondary {
+  padding: 13px 20px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  font-weight: bold;
+  transition: .25s;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #f2ce80, #bd8735);
+  color: #17120a;
+  border: none;
+}
+
+.btn-primary:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 25px #d9a84d55;
+}
+
+.btn-secondary {
+  color: var(--gold);
+  background: var(--panel);
+}
+
+.btn-secondary:hover {
+  background: var(--panel2);
+}
+
+/* GOLDEN ORB */
+
+.orb-stage {
+  min-height: 360px;
+  display: grid;
+  place-items: center;
+  position: relative;
+}
+
+.orb-large {
+  width: 215px;
+  height: 215px;
+  border-radius: 50%;
+  position: relative;
+  display: grid;
+  place-items: center;
   background:
-    radial-gradient(circle at 15% 50%,#d3a04b27,transparent 45%),
-    linear-gradient(125deg,#1b2a43,#111a2b 75%);
-  box-shadow:var(--shadow);
+    radial-gradient(circle at 34% 27%,
+      #fff9dc 0%,
+      #ffe4a0 8%,
+      #e8b653 24%,
+      #a66c26 48%,
+      #35200e 75%,
+      #090c15 100%);
+  box-shadow:
+    inset -15px -20px 35px #130d08,
+    inset 10px 10px 25px #fff1b2aa,
+    0 0 45px #e6b85c66,
+    0 0 100px #d49a3d33;
+  animation:
+    orbFloat 5s ease-in-out infinite,
+    orbGlow 3s ease-in-out infinite;
 }
-.hero-content{position:relative;z-index:1}
-.eyebrow{
-  display:inline-block;padding:5px 12px;border-radius:30px;
-  border:1px solid #d5a54b66;background:#d5a54b14;
-  color:var(--gold2);font-size:11px;font-weight:800;
-}
-.hero h1{font-size:clamp(27px,5vw,42px);line-height:1.5;margin:13px 0 7px}
-.hero h1 span{color:var(--gold2)}
-.hero p{font-size:13px;color:#b7c0cf;margin:0;max-width:540px}
-.hero-art{display:grid;place-items:center;min-height:170px}
-.orb-large{
-  width:150px;height:150px;border-radius:50%;
-  position:relative;display:grid;place-items:center;
-  background:radial-gradient(circle at 35% 30%,#fff4d3,#e5b85e 25%,#9e6d2d 58%,#27354b 72%);
-  box-shadow:0 0 0 12px #d9aa5512,0 0 55px #e5b85e55;
-}
-.orb-large:before,.orb-large:after{
-  content:"";position:absolute;inset:14px;
-  border:2px solid #ffe8b8aa;border-radius:50%;
-  transform:scaleX(1.55) rotate(35deg);
-}
-.orb-large:after{transform:scaleX(1.55) rotate(-35deg)}
-.orb-dot{width:27px;height:27px;border-radius:50%;background:#fff3ce;box-shadow:0 0 28px white}
 
-/* ASSISTANT */
-.panel{
-  background:var(--surface);border:1px solid var(--border);
-  border-radius:22px;padding:22px;margin-bottom:18px;box-shadow:var(--shadow);
+.orb-large::before,
+.orb-large::after {
+  content: "";
+  position: absolute;
+  inset: -35px;
+  border: 2px solid transparent;
+  border-top-color: #ffe4a0;
+  border-bottom-color: #c18b3e;
+  border-radius: 50%;
+  filter: drop-shadow(0 0 7px #e6b85c);
+  pointer-events: none;
 }
-.panel-title{display:flex;align-items:center;gap:10px;font-size:17px;font-weight:950;margin:0 0 7px}
-.title-icon{
-  width:34px;height:34px;border-radius:11px;display:grid;place-items:center;
-  background:#d5a54b20;color:var(--gold2);
-}
-.muted{color:var(--muted);font-size:12px}
-.service-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:18px}
-.service{
-  text-align:right;display:flex;align-items:center;gap:13px;
-  padding:15px;border:1px solid var(--border);
-  border-radius:17px;background:var(--surface2);color:var(--text);
-  transition:.2s;
-}
-.service:hover,.service.selected{
-  border-color:var(--gold);transform:translateY(-2px);
-  box-shadow:0 8px 24px #d5a54b17;
-}
-.service-icon{
-  width:44px;height:44px;flex-shrink:0;border-radius:14px;
-  display:grid;place-items:center;font-size:22px;
-  background:#d5a54b18;color:var(--gold2);
-}
-.service strong{display:block;font-size:13px}
-.service small{display:block;color:var(--muted);font-size:10px;margin-top:2px}
-.service-arrow{margin-right:auto;color:var(--gold);font-size:18px}
-.request-box{
-  margin-top:20px;padding-top:18px;border-top:1px solid var(--border);
-}
-textarea{
-  width:100%;min-height:105px;resize:vertical;
-  border:1px solid var(--border);border-radius:14px;
-  padding:13px;background:var(--input);color:var(--text);
-  outline:none;font-size:13px;
-}
-textarea:focus{border-color:var(--gold);box-shadow:0 0 0 3px #d5a54b18}
-textarea::placeholder{color:var(--muted)}
-.primary-btn{
-  border:0;border-radius:13px;padding:11px 20px;margin-top:12px;
-  color:#20180c;font-weight:900;
-  background:linear-gradient(110deg,var(--gold2),var(--gold));
-  box-shadow:0 7px 20px #d5a54b25;
-}
-.primary-btn:active{transform:scale(.98)}
-.response{
-  display:none;margin-top:16px;padding:15px;
-  border:1px solid #d5a54b55;border-radius:14px;
-  background:#d5a54b0c;font-size:13px;
-}
-.response.show{display:block}
-.response strong{color:var(--gold2)}
-.response p{margin:5px 0;color:var(--muted)}
-.response .hint{font-size:11px}
 
-/* STORY */
-.field{margin:14px 0}
-label{display:block;font-size:13px;font-weight:800;margin-bottom:7px}
-.story-card{
-  min-height:260px;margin-top:18px;padding:30px 20px;
-  display:flex;flex-direction:column;justify-content:center;align-items:center;
-  text-align:center;white-space:pre-wrap;overflow-wrap:anywhere;
-  border:1px solid #c4a16b66;border-radius:22px;
-  background:radial-gradient(circle at 20% 20%,#b78d4b35,transparent 45%),linear-gradient(145deg,#17243a,#292039);
-  color:white;
+.orb-large::before {
+  transform: scaleX(1.55) rotate(35deg);
+  animation: ringRotate 18s linear infinite;
 }
-.story-text{font-size:clamp(19px,4vw,27px);font-weight:900;line-height:2}
-.story-subtitle{direction:ltr;color:#e6c987;font-size:12px;margin-top:20px}
 
-/* MUSIC */
-.music-box{
-  text-align:center;padding:42px 22px;border:1px solid #d5a54b66;
-  border-radius:23px;background:
-  radial-gradient(circle at 50% 0%,#d5a54b26,transparent 55%),
-  var(--surface);box-shadow:var(--shadow);
+.orb-large::after {
+  inset: -22px;
+  transform: scaleX(1.55) rotate(-35deg);
+  border-top-color: #fff0bd;
+  border-bottom-color: #9c692d;
+  animation: ringRotateReverse 24s linear infinite;
 }
-.music-icon{
-  width:82px;height:82px;border-radius:25px;margin:0 auto 18px;
-  display:grid;place-items:center;font-size:35px;color:#21180d;
-  background:linear-gradient(145deg,#ffe6aa,#c68d37);
-  box-shadow:0 0 35px #d5a54b38;
+
+.orb-dot {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #fff, #ffe6a3 45%, #c58a34);
+  box-shadow: 0 0 25px #fff, 0 0 55px #e7b85e;
+  animation: corePulse 2.4s ease-in-out infinite;
 }
-.music-box h2{font-size:29px;margin:5px 0;color:var(--gold2)}
-.music-box p{font-size:13px;color:var(--muted);max-width:550px;margin:auto}
-.coming-label{display:inline-block;margin-top:17px;border:1px solid #d5a54b66;color:var(--gold2);padding:5px 13px;border-radius:30px;font-size:11px}
+
+.orb-particle {
+  position: absolute;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #ffe6a3;
+  box-shadow: 0 0 12px 3px #e8b95c;
+  animation: particleFloat 3s ease-in-out infinite;
+}
+
+.p1 { top: 8%; right: 25%; }
+.p2 { bottom: 15%; left: 15%; animation-delay: .7s; }
+.p3 { top: 45%; right: 2%; animation-delay: 1.2s; }
+.p4 { bottom: 5%; right: 50%; animation-delay: 1.8s; }
+
+.orb-caption {
+  position: absolute;
+  bottom: 15px;
+  color: var(--gold);
+  font-size: 11px;
+  letter-spacing: 5px;
+  direction: ltr;
+  opacity: .8;
+}
+
+/* ANIMATIONS */
+
+@keyframes orbFloat {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-9px) rotate(4deg); }
+}
+
+@keyframes orbGlow {
+  0%, 100% {
+    box-shadow:
+      inset -15px -20px 35px #130d08,
+      inset 10px 10px 25px #fff1b2aa,
+      0 0 45px #e6b85c66,
+      0 0 100px #d49a3d33;
+  }
+  50% {
+    box-shadow:
+      inset -15px -20px 35px #130d08,
+      inset 10px 10px 25px #fff1b2aa,
+      0 0 65px #e6b85c99,
+      0 0 130px #d49a3d66;
+  }
+}
+
+@keyframes ringRotate {
+  from { transform: scaleX(1.55) rotate(35deg); }
+  to { transform: scaleX(1.55) rotate(395deg); }
+}
+
+@keyframes ringRotateReverse {
+  from { transform: scaleX(1.55) rotate(-35deg); }
+  to { transform: scaleX(1.55) rotate(-395deg); }
+}
+
+@keyframes corePulse {
+  0%, 100% { transform: scale(1); }
+  50% {
+    transform: scale(1.25);
+    box-shadow: 0 0 35px #fff, 0 0 65px #e7b85e;
+  }
+}
+
+@keyframes particleFloat {
+  0%, 100% {
+    opacity: .3;
+    transform: translateY(0) scale(.7);
+  }
+  50% {
+    opacity: 1;
+    transform: translateY(-12px) scale(1.3);
+  }
+}
+
+@keyframes logoGlow {
+  0%, 100% { box-shadow: 0 0 18px #e3b45b55; }
+  50% { box-shadow: 0 0 30px #e3b45baa, 0 0 50px #d49a3d55; }
+}
+
+/* SECTION */
+
+.section {
+  padding: 35px 0;
+}
+
+.section-heading {
+  text-align: center;
+  margin-bottom: 25px;
+}
+
+.section-heading h2 {
+  font-size: 25px;
+  margin-bottom: 10px;
+}
+
+.section-heading h2 span {
+  color: var(--gold);
+}
+
+.section-heading p {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 2;
+}
+
+/* SERVICE CARDS */
+
+.services-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 15px;
+}
+
+.service-card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 23px 17px;
+  text-align: center;
+  transition: .3s;
+  cursor: pointer;
+}
+
+.service-card:hover {
+  transform: translateY(-6px);
+  border-color: var(--gold);
+  box-shadow: var(--shadow);
+}
+
+.service-icon {
+  font-size: 30px;
+  margin-bottom: 13px;
+}
+
+.service-card h3 {
+  font-size: 15px;
+  margin-bottom: 10px;
+}
+
+.service-card p {
+  font-size: 12px;
+  line-height: 1.9;
+  color: var(--muted);
+}
+
+/* REQUEST PANEL */
+
+.request-panel {
+  background: linear-gradient(145deg, var(--panel), var(--panel2));
+  border: 1px solid var(--border);
+  border-radius: 22px;
+  padding: 25px;
+  margin: 25px 0 50px;
+}
+
+.request-panel h2 {
+  font-size: 21px;
+  margin-bottom: 10px;
+}
+
+.request-panel > p {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 2;
+  margin-bottom: 18px;
+}
+
+.request-select, .request-textarea {
+  width: 100%;
+  padding: 14px;
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  outline: none;
+  margin-bottom: 12px;
+}
+
+.request-textarea {
+  min-height: 120px;
+  resize: vertical;
+  line-height: 2;
+}
+
+.request-select:focus, .request-textarea:focus {
+  border-color: var(--gold);
+}
+
+.response-box {
+  display: none;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 15px;
+  margin-top: 15px;
+  line-height: 2;
+  font-size: 13px;
+}
+
+.response-box.show {
+  display: block;
+}
+
+/* STORY MAKER */
+
+.tool-page {
+  padding: 40px 0 65px;
+  max-width: 850px;
+  margin: auto;
+}
+
+.tool-card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 25px;
+  box-shadow: var(--shadow);
+}
+
+.tool-card h1 {
+  font-size: 25px;
+  margin-bottom: 12px;
+}
+
+.tool-card > p {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 2;
+  margin-bottom: 22px;
+}
+
+.field-label {
+  display: block;
+  margin: 15px 0 9px;
+  color: var(--gold);
+  font-size: 13px;
+}
+
+.story-input {
+  width: 100%;
+  min-height: 130px;
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 15px;
+  resize: vertical;
+  outline: none;
+  line-height: 2;
+}
+
+.story-input:focus {
+  border-color: var(--gold);
+}
+
+.story-preview {
+  min-height: 190px;
+  margin-top: 18px;
+  padding: 25px;
+  border-radius: 16px;
+  background:
+    radial-gradient(circle at top left, #57401d, transparent 55%),
+    linear-gradient(145deg, #101a2b, #080d19);
+  border: 1px solid #d6a74d55;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  color: #fff0c9;
+  font-size: 20px;
+  line-height: 2;
+  overflow-wrap: anywhere;
+}
+
+.story-preview.empty {
+  color: #a6adba;
+  font-size: 14px;
+}
+
+/* MUSIC PAGE */
+
+.coming-card {
+  text-align: center;
+  padding: 65px 20px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 22px;
+  margin: 40px auto;
+  max-width: 700px;
+}
+
+.coming-icon {
+  font-size: 55px;
+  margin-bottom: 20px;
+}
+
+.coming-card h1 {
+  color: var(--gold);
+  font-size: 28px;
+  margin-bottom: 15px;
+}
+
+.coming-card p {
+  color: var(--muted);
+  line-height: 2.2;
+  font-size: 14px;
+}
 
 /* FOOTER */
-.footer{text-align:center;padding:25px 5px 5px;color:var(--muted);font-size:11px}
-.footer-name{direction:ltr;color:var(--gold2);font-size:17px;font-weight:950;letter-spacing:3px}
-@media(max-width:700px){
-  .hero{grid-template-columns:1fr;padding:23px 19px}
-  .hero-art{min-height:125px}
-  .orb-large{width:115px;height:115px}
-  .panel{padding:17px}
+
+footer {
+  border-top: 1px solid var(--border);
+  padding: 25px 0;
+  text-align: center;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 2.2;
 }
-@media(max-width:440px){
-  .container{width:94%;padding-top:13px}
-  .brand-name{font-size:21px}
-  .brand-sub{font-size:8px}
-  .logo-orb{width:45px;height:45px}
-  .status{font-size:9px;padding:4px 7px}
-  .nav button{font-size:10px;padding:9px 3px}
-  .service-grid{gap:8px}
-  .service{padding:11px 9px;gap:8px}
-  .service-icon{width:37px;height:37px;font-size:19px}
-  .service strong{font-size:11px}
-  .service small{font-size:9px}
+
+footer strong {
+  color: var(--gold);
+  letter-spacing: 3px;
+  direction: ltr;
+  display: inline-block;
 }
-[data-theme="light"] .hero{
-  background:radial-gradient(circle at 15% 50%,#d5a54b30,transparent 45%),linear-gradient(125deg,#f2dfc4,#fff8ed 75%);
+
+/* RESPONSIVE */
+
+@media (max-width: 800px) {
+  .hero {
+    grid-template-columns: 1fr;
+    text-align: center;
+    padding-top: 40px;
+  }
+
+  .hero p {
+    margin: auto;
+  }
+
+  .hero-buttons {
+    justify-content: center;
+  }
+
+  .orb-stage {
+    min-height: 300px;
+  }
+
+  .orb-large {
+    width: 175px;
+    height: 175px;
+  }
+
+  .services-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
-[data-theme="light"] .hero h1{color:#3b2c20}
-[data-theme="light"] .hero p{color:#806d5c}
-[data-theme="light"] .story-card{background:linear-gradient(145deg,#4c3b50,#76516a)}
+
+@media (max-width: 480px) {
+  .header-inner {
+    min-height: 67px;
+  }
+
+  .brand-name {
+    font-size: 21px;
+  }
+
+  .logo-orb {
+    width: 36px;
+    height: 36px;
+  }
+
+  .theme-btn {
+    padding: 9px 10px;
+  }
+
+  .hero h1 {
+    font-size: 30px;
+  }
+
+  .services-grid {
+    gap: 10px;
+  }
+
+  .service-card {
+    padding: 18px 10px;
+  }
+
+  .request-panel, .tool-card {
+    padding: 18px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+  }
+}
 </style>
 </head>
 
 <body>
-<main class="container">
 
-<header class="header">
-  <div class="brand">
-    <div class="logo-orb"><div class="logo-core"></div></div>
-    <div>
-      <div class="brand-name">NAVA</div>
-      <div class="brand-sub">AI CREATIVE STUDIO</div>
+<header>
+  <div class="container">
+    <div class="header-inner">
+      <div class="brand">
+        <div class="logo-orb"></div>
+        <div>
+          <div class="brand-name">NAVA</div>
+          <div class="brand-sub">CREATE. DESIGN. GROW.</div>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <button class="theme-btn" id="themeToggle" aria-label="تغییر تم">☀️</button>
+      </div>
     </div>
-  </div>
-  <div class="header-actions">
-    <span class="status">✦ استودیوی هوشمند</span>
-    <button class="theme-toggle" id="themeToggle" aria-label="تغییر تم">☀️</button>
+
+    <nav>
+      <button class="nav-btn active" data-page="homePage">خانه و دستیار نوا</button>
+      <button class="nav-btn" data-page="storyPage">استوری‌ساز</button>
+      <button class="nav-btn" data-page="musicPage">موسیقی</button>
+    </nav>
   </div>
 </header>
 
-<nav class="nav">
-  <button class="active" data-page="homePage">✦ دستیار نوا</button>
-  <button data-page="storyPage">استوری‌ساز</button>
-  <button data-page="musicPage">موسیقی</button>
-</nav>
+<main class="container">
 
-<!-- HOME -->
-<section id="homePage" class="page active">
-  <section class="hero">
-    <div class="hero-content">
-      <span class="eyebrow">✦ YOUR CREATIVE PARTNER</span>
-      <h1>ایده‌ات را به <span>واقعیت تبدیل کن</span></h1>
-      <p>من دستیار نوا هستم. بگو برای برند یا کسب‌وکارت چه چیزی می‌خواهی بسازی؛ با هم از ایده تا اجرا پیش می‌رویم.</p>
+  <!-- HOME PAGE -->
+
+  <section class="page active" id="homePage">
+
+    <div class="hero">
+      <div class="hero-content">
+        <div class="eyebrow">استودیوی هوشمند خلاقیت</div>
+
+        <h1>
+          ایده‌ات را به<br>
+          <span>یک اثر ماندگار</span><br>
+          تبدیل کن.
+        </h1>
+
+        <p>
+          نوا، فضای خلاقانه تو برای طراحی، تولید محتوا،
+          ساخت هویت برند و توسعه ایده‌هاست.
+          از یک فکر ساده شروع کن؛ مسیر ساختنش را با هم پیش می‌بریم.
+        </p>
+
+        <div class="hero-buttons">
+          <button class="btn-primary" onclick="scrollToRequest()">
+            شروع یک ایده جدید
+          </button>
+
+          <button class="btn-secondary" onclick="showPage('storyPage')">
+            ورود به استوری‌ساز
+          </button>
+        </div>
+      </div>
+
+      <div class="orb-stage">
+        <div class="orb-large">
+          <div class="orb-dot"></div>
+          <span class="orb-particle p1"></span>
+          <span class="orb-particle p2"></span>
+          <span class="orb-particle p3"></span>
+          <span class="orb-particle p4"></span>
+        </div>
+        <div class="orb-caption">NAVA INTELLIGENCE</div>
+      </div>
     </div>
-    <div class="hero-art"><div class="orb-large"><div class="orb-dot"></div></div></div>
-  </section>
 
-  <section class="panel">
-    <h2 class="panel-title"><span class="title-icon">✧</span> چطور می‌توانم کمکت کنم؟</h2>
-    <div class="muted">یکی از خدمات را انتخاب کن یا خواسته‌ات را در کادر پایین بنویس.</div>
+    <div class="section">
+      <div class="section-heading">
+        <h2>دنیای <span>خلاقیت نوا</span></h2>
+        <p>از کدام مسیر می‌خواهی شروع کنی؟</p>
+      </div>
 
-    <div class="service-grid">
-      <button class="service" data-service="logo">
-        <span class="service-icon">✥</span>
-        <span><strong>طراحی لوگو</strong><small>ساخت نشان و نماد برند</small></span>
-        <span class="service-arrow">‹</span>
+      <div class="services-grid">
+
+        <div class="service-card" onclick="chooseService('طراحی لوگو')">
+          <div class="service-icon">✦</div>
+          <h3>طراحی لوگو</h3>
+          <p>خلق نشانه‌ای متمایز برای هویت بصری برند</p>
+        </div>
+
+        <div class="service-card" onclick="chooseService('تولید محتوا')">
+          <div class="service-icon">✧</div>
+          <h3>تولید محتوا</h3>
+          <p>ایده‌پردازی و ساخت محتوای جذاب و کاربردی</p>
+        </div>
+
+        <div class="service-card" onclick="chooseService('تبلیغات')">
+          <div class="service-icon">◈</div>
+          <h3>تبلیغات</h3>
+          <p>طراحی پیام و مسیر معرفی محصولات و خدمات</p>
+        </div>
+
+        <div class="service-card" onclick="chooseService('هویت برند')">
+          <div class="service-icon">◇</div>
+          <h3>هویت برند</h3>
+          <p>ساخت شخصیت و زبان بصری یک کسب‌وکار</p>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="request-panel" id="requestSection">
+      <h2>با نوا صحبت کن</h2>
+      <p>
+        ایده یا خواسته‌ات را بنویس. فعلاً این بخش برای دریافت و دسته‌بندی اولیه درخواست‌ها آماده است؛
+        اتصال دستیار هوش مصنوعی در مرحله بعد انجام می‌شود.
+      </p>
+
+      <label class="field-label" for="serviceSelect">موضوع درخواست</label>
+      <select class="request-select" id="serviceSelect">
+        <option value="انتخاب نشده">انتخاب موضوع</option>
+        <option value="طراحی لوگو">طراحی لوگو</option>
+        <option value="تولید محتوا">تولید محتوا</option>
+        <option value="تبلیغات">تبلیغات</option>
+        <option value="هویت برند">هویت برند</option>
+        <option value="ایده‌پردازی">ایده‌پردازی</option>
+        <option value="سایر موارد">سایر موارد</option>
+      </select>
+
+      <label class="field-label" for="userRequest">توضیح ایده یا درخواستت</label>
+      <textarea
+        class="request-textarea"
+        id="userRequest"
+        placeholder="مثلاً برای فروشگاه پوشاکم یک لوگوی مدرن و لوکس می‌خواهم..."
+      ></textarea>
+
+      <button class="btn-primary" id="sendRequest">
+        ثبت درخواست
       </button>
-      <button class="service" data-service="content">
-        <span class="service-icon">✎</span>
-        <span><strong>تولید محتوا</strong><small>پست، استوری و کپشن</small></span>
-        <span class="service-arrow">‹</span>
-      </button>
-      <button class="service" data-service="promo">
-        <span class="service-icon">◈</span>
-        <span><strong>تبلیغات</strong><small>پوستر و معرفی محصول</small></span>
-        <span class="service-arrow">‹</span>
-      </button>
-      <button class="service" data-service="brand">
-        <span class="service-icon">◇</span>
-        <span><strong>هویت برند</strong><small>نام، رنگ و سبک برند</small></span>
-        <span class="service-arrow">‹</span>
-      </button>
+
+      <div class="response-box" id="requestResponse" aria-live="polite"></div>
     </div>
 
-    <div class="request-box">
-      <label for="userRequest">درخواستت را برای نوا بنویس</label>
-      <textarea id="userRequest" maxlength="1200" placeholder="مثلاً برای فروشگاه پوشاکم یک لوگوی شیک و خاص می‌خواهم..."></textarea>
-      <button class="primary-btn" id="sendRequest">بررسی درخواست من ✦</button>
-      <div class="response" id="assistantResponse" aria-live="polite"></div>
+  </section>
+
+  <!-- STORY PAGE -->
+
+  <section class="page" id="storyPage">
+    <div class="tool-page">
+      <div class="tool-card">
+        <h1>استوری‌ساز نوا</h1>
+        <p>
+          متن موردنظرت را وارد کن تا پیش‌نمایش ساده آن را برای استوری ببینی.
+          این نسخه فعلاً پیش‌نمایش متنی است.
+        </p>
+
+        <label class="field-label" for="storyInput">متن استوری</label>
+        <textarea
+          class="story-input"
+          id="storyInput"
+          placeholder="متن استوری خود را اینجا بنویس..."
+        ></textarea>
+
+        <label class="field-label">پیش‌نمایش استوری</label>
+        <div class="story-preview empty" id="previewText">
+          متن استوری تو اینجا نمایش داده می‌شود
+        </div>
+
+        <div style="margin-top:15px">
+          <button class="btn-secondary" id="clearStory">پاک کردن متن</button>
+          <button class="btn-primary" id="copyStory">کپی متن</button>
+        </div>
+        <div class="response-box" id="storyMessage" aria-live="polite"></div>
+      </div>
     </div>
   </section>
 
-  <section class="panel">
-    <h2 class="panel-title"><span class="title-icon">✦</span> دنیای نوا</h2>
-    <p class="muted">ابزارهای خلاقانه‌ای که به‌تدریج به استودیوی نوا اضافه می‌شوند.</p>
-    <div class="muted">🎨 طراحی لوگو　 ✎ تولید محتوا　 ◈ تبلیغات　 ◇ هویت برند　 ♫ موسیقی</div>
-  </section>
-</section>
+  <!-- MUSIC PAGE -->
 
-<!-- STORY -->
-<section id="storyPage" class="page">
-  <section class="hero">
-    <div class="hero-content">
-      <span class="eyebrow">✦ NAVA CREATIVE TOOLS</span>
-      <h1>کلماتت را <span>زیباتر نمایش بده</span></h1>
-      <p>متن، شعر کوتاه یا دل‌نوشته‌ات را وارد کن و پیش‌نمایش آن را ببین.</p>
+  <section class="page" id="musicPage">
+    <div class="coming-card">
+      <div class="coming-icon">♫</div>
+      <h1>استودیوی موسیقی نوا</h1>
+      <p>
+        این بخش در حال توسعه است.<br>
+        به‌زودی مسیر تازه‌ای برای خلق موسیقی و تجربه‌های صوتی در نوا فعال خواهد شد.
+      </p>
+      <div style="margin-top:25px">
+        <button class="btn-secondary" onclick="showPage('homePage')">
+          بازگشت به صفحه اصلی
+        </button>
+      </div>
     </div>
-    <div class="hero-art"><div class="orb-large"><div class="orb-dot"></div></div></div>
   </section>
-
-  <section class="panel">
-    <h2 class="panel-title"><span class="title-icon">✦</span> استوری‌ساز مینیمال</h2>
-    <p class="muted">متن موردنظرت را وارد کن تا در قالب استوری نمایش داده شود.</p>
-    <div class="field">
-      <label for="storyInput">متن استوری</label>
-      <textarea id="storyInput" maxlength="500" placeholder="جمله یا حس‌وحالت را بنویس..."></textarea>
-    </div>
-    <div class="story-card">
-      <div class="story-text" id="previewText">« متن شما اینجا قرار می‌گیرد... »</div>
-      <div class="story-subtitle">NAVA STUDIO</div>
-    </div>
-    <p class="muted" style="text-align:center">پیش‌نمایش متنی استوری</p>
-  </section>
-</section>
-
-<!-- MUSIC -->
-<section id="musicPage" class="page">
-  <section class="hero">
-    <div class="hero-content">
-      <span class="eyebrow">✦ NAVA MUSIC</span>
-      <h1>دنیای موسیقی <span>نوا</span></h1>
-      <p>برای تجربه‌ای تازه از خلق موسیقی، در حال آماده‌سازی هستیم.</p>
-    </div>
-    <div class="hero-art"><div class="orb-large"><div class="orb-dot"></div></div></div>
-  </section>
-  <section class="music-box">
-    <div class="music-icon">♫</div>
-    <div class="coming-label">NAVA MUSIC STUDIO</div>
-    <h2>به‌زودی در نوا</h2>
-    <p>استودیوی موسیقی نوا در حال توسعه است. هدف ما فراهم‌کردن تجربه‌ای خلاقانه برای تبدیل ایده‌ها به شعر و موسیقی است.</p>
-    <div class="coming-label">در حال توسعه ✦</div>
-  </section>
-</section>
-
-<footer class="footer">
-  <div class="footer-name">NAVA</div>
-  <div>ایده‌های تو، دنیای نوا</div>
-  <div>CREATE · DESIGN · GROW</div>
-</footer>
 
 </main>
 
+<footer>
+  <div class="container">
+    <strong>NAVA</strong>
+    <p>استودیوی هوشمند خلاقیت و رشد</p>
+    <p>Create. Design. Grow.</p>
+  </div>
+</footer>
+
 <script>
-"use strict";
-
 /* PAGE NAVIGATION */
-function openPage(pageId){
-  document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
-  document.querySelectorAll(".nav button").forEach(b=>b.classList.remove("active"));
-  const page=document.getElementById(pageId);
-  const button=document.querySelector('[data-page="'+pageId+'"]');
-  if(page) page.classList.add("active");
-  if(button) button.classList.add("active");
-  window.scrollTo({top:0,behavior:"smooth"});
+
+const navButtons = document.querySelectorAll(".nav-btn");
+const pages = document.querySelectorAll(".page");
+
+function showPage(pageId) {
+  pages.forEach(page => {
+    page.classList.toggle("active", page.id === pageId);
+  });
+
+  navButtons.forEach(button => {
+    button.classList.toggle(
+      "active",
+      button.dataset.page === pageId
+    );
+  });
+
+  window.scrollTo({ top: 0, behavior: "smooth" });
 }
-document.querySelectorAll(".nav button").forEach(button=>{
-  button.addEventListener("click",()=>openPage(button.dataset.page));
-});
 
-/* THEME */
-const root=document.documentElement;
-const themeButton=document.getElementById("themeToggle");
-let theme="dark";
-try{theme=localStorage.getItem("nava_theme")||"dark"}catch(e){}
-function applyTheme(value){
-  if(value==="light"){
-    root.setAttribute("data-theme","light");
-    themeButton.textContent="🌙";
-    document.querySelector('meta[name="theme-color"]').content="#f4eee4";
-  }else{
-    root.removeAttribute("data-theme");
-    themeButton.textContent="☀️";
-    document.querySelector('meta[name="theme-color"]').content="#101827";
-  }
-}
-applyTheme(theme);
-themeButton.addEventListener("click",()=>{
-  theme=root.getAttribute("data-theme")==="light"?"dark":"light";
-  applyTheme(theme);
-  try{localStorage.setItem("nava_theme",theme)}catch(e){}
-});
-
-/* ASSISTANT: FRONT-END DEMO ROUTER */
-const serviceNames={
-  logo:"طراحی لوگو",
-  content:"تولید محتوا",
-  promo:"تبلیغات",
-  brand:"هویت برند"
-};
-let selectedService="";
-const requestBox=document.getElementById("userRequest");
-const responseBox=document.getElementById("assistantResponse");
-
-document.querySelectorAll(".service").forEach(button=>{
-  button.addEventListener("click",()=>{
-    selectedService=button.dataset.service;
-    document.querySelectorAll(".service").forEach(b=>b.classList.remove("selected"));
-    button.classList.add("selected");
-    requestBox.focus();
-    responseBox.classList.remove("show");
-    requestBox.placeholder="برای "+serviceNames[selectedService]+" چه چیزی در ذهن داری؟";
+navButtons.forEach(button => {
+  button.addEventListener("click", () => {
+    showPage(button.dataset.page);
   });
 });
 
-document.getElementById("sendRequest").addEventListener("click",()=>{
-  const text=requestBox.value.trim();
-  if(!text){
-    responseBox.innerHTML="<strong>اول کمی با من صحبت کن ✦</strong><p>درخواستت را بنویس تا مسیر مناسب را پیشنهاد بدهم.</p>";
-    responseBox.classList.add("show");
+/* THEME */
+
+const themeToggle = document.getElementById("themeToggle");
+
+const savedTheme = localStorage.getItem("nava-theme");
+
+if (savedTheme === "light") {
+  document.body.classList.add("light");
+  themeToggle.textContent = "🌙";
+}
+
+themeToggle.addEventListener("click", () => {
+  document.body.classList.toggle("light");
+
+  const isLight = document.body.classList.contains("light");
+
+  localStorage.setItem("nava-theme", isLight ? "light" : "dark");
+  themeToggle.textContent = isLight ? "🌙" : "☀️";
+});
+
+/* REQUEST SECTION */
+
+const serviceSelect = document.getElementById("serviceSelect");
+const userRequest = document.getElementById("userRequest");
+const sendRequest = document.getElementById("sendRequest");
+const requestResponse = document.getElementById("requestResponse");
+
+function chooseService(service) {
+  serviceSelect.value = service;
+  scrollToRequest();
+}
+
+function scrollToRequest() {
+  document.getElementById("requestSection").scrollIntoView({
+    behavior: "smooth",
+    block: "center"
+  });
+
+  setTimeout(() => userRequest.focus(), 450);
+}
+
+sendRequest.addEventListener("click", () => {
+  const service = serviceSelect.value;
+  const request = userRequest.value.trim();
+
+  if (!request) {
+    requestResponse.textContent = "لطفاً ابتدا توضیح درخواستت را بنویس.";
+    requestResponse.classList.add("show");
     return;
   }
 
-  let category=selectedService;
-  const t=text.toLowerCase();
+  requestResponse.innerHTML = "";
 
-  if(!category){
-    if(/لوگو|نشان|آرم|logo/.test(t)) category="logo";
-    else if(/کپشن|پست|استوری|محتوا|سناریو|content/.test(t)) category="content";
-    else if(/تبلیغ|پوستر|بنر|فروش|promo/.test(t)) category="promo";
-    else if(/برند|هویت|رنگ سازمانی|نام تجاری|brand/.test(t)) category="brand";
-  }
+  const title = document.createElement("strong");
+  title.textContent = "درخواستت ثبت شد.";
 
-  if(category){
-    responseBox.innerHTML="<strong>فکر می‌کنم مسیر مناسب تو: "+serviceNames[category]+"</strong><p>درخواستت دریافت شد. برای شروع این پروژه باید چند جزئیات را مشخص کنیم.</p><p class='hint'>این نسخه فعلاً درخواست را دسته‌بندی می‌کند و هنوز به مدل هوش مصنوعی متصل نیست.</p>";
-  }else{
-    responseBox.innerHTML="<strong>درخواستت را دریافت کردم ✦</strong><p>برای انتخاب مسیر دقیق‌تر، کمی بیشتر درباره کسب‌وکار و نتیجه‌ای که می‌خواهی توضیح بده.</p><p class='hint'>دستیار فعلی یک نمونه اولیه رابط کاربری است و هنوز پاسخ‌گویی هوشمند واقعی ندارد.</p>";
-  }
-  responseBox.classList.add("show");
+  const detail = document.createElement("p");
+  detail.textContent =
+    "موضوع: " + service + " | متن درخواست: " + request;
+
+  const note = document.createElement("p");
+  note.textContent =
+    "این نسخه هنوز به دستیار هوش مصنوعی متصل نیست. اطلاعات فعلاً فقط در همین صفحه نمایش داده می‌شود.";
+
+  requestResponse.append(title, detail, note);
+  requestResponse.classList.add("show");
 });
 
-/* STORY PREVIEW */
-document.getElementById("storyInput").addEventListener("input",event=>{
-  const value=event.target.value.trim();
-  document.getElementById("previewText").textContent=
-    value?"« "+value+" »":"« متن شما اینجا قرار می‌گیرد... »";
+/* STORY MAKER */
+
+const storyInput = document.getElementById("storyInput");
+const previewText = document.getElementById("previewText");
+const clearStory = document.getElementById("clearStory");
+const copyStory = document.getElementById("copyStory");
+const storyMessage = document.getElementById("storyMessage");
+
+storyInput.addEventListener("input", () => {
+  const text = storyInput.value.trim();
+
+  previewText.textContent =
+    text || "متن استوری تو اینجا نمایش داده می‌شود";
+
+  previewText.classList.toggle("empty", !text);
+});
+
+clearStory.addEventListener("click", () => {
+  storyInput.value = "";
+  previewText.textContent = "متن استوری تو اینجا نمایش داده می‌شود";
+  previewText.classList.add("empty");
+  storyMessage.classList.remove("show");
+});
+
+copyStory.addEventListener("click", async () => {
+  const text = storyInput.value.trim();
+
+  if (!text) {
+    storyMessage.textContent = "ابتدا متنی برای کپی وارد کن.";
+    storyMessage.classList.add("show");
+    return;
+  }
+
+  try {
+    await navigator.clipboard.writeText(text);
+    storyMessage.textContent = "متن استوری کپی شد.";
+  } catch (error) {
+    storyMessage.textContent =
+      "کپی خودکار در این مرورگر ممکن نیست؛ متن را دستی انتخاب کن.";
+  }
+
+  storyMessage.classList.add("show");
 });
 </script>
+
 </body>
 </html>
