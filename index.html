@@ -20,6 +20,9 @@
   --blue2:#2878ff;
   --border:rgba(229,184,94,.2);
   --shadow:0 15px 50px rgba(0,0,0,.25);
+
+  --slogan-gold:#ffe6a3;
+  --slogan-blue:#25caff;
 }
 
 body.light {
@@ -30,6 +33,9 @@ body.light {
   --muted:#687386;
   --border:rgba(150,112,43,.22);
   --shadow:0 15px 40px rgba(30,40,60,.09);
+
+  --slogan-gold:#a16b18;
+  --slogan-blue:#1768b5;
 }
 
 * {
@@ -64,18 +70,26 @@ header {
 }
 
 .header-inner {
-  min-height:76px;
+  min-height:86px;
   display:flex;
   align-items:center;
-  justify-content:space-between;
+  justify-content:center;
   gap:15px;
+  position:relative;
 }
 
-.brand { display:flex; align-items:center; gap:12px; }
+.brand {
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:12px;
+  text-align:center;
+}
 
 .logo-orb {
   width:43px;
   height:43px;
+  flex-shrink:0;
   border-radius:50%;
   background:radial-gradient(circle at 35% 30%,
     #fff4c8,#e6b75b 40%,#80501c 78%,#25190d);
@@ -113,21 +127,45 @@ header {
   font-weight:900;
   letter-spacing:3px;
   color:var(--gold);
+  direction:ltr;
 }
 
 .brand-sub {
   font-size:8px;
-  color:var(--gold2);
+  font-weight:bold;
   letter-spacing:.8px;
   margin-top:5px;
   direction:ltr;
   white-space:nowrap;
+
+  background:linear-gradient(
+    90deg,
+    var(--slogan-gold),
+    var(--slogan-blue),
+    var(--slogan-gold)
+  );
+
+  -webkit-background-clip:text;
+  background-clip:text;
+  color:transparent;
+}
+
+.brand-tagline {
+  font-size:9px;
+  font-weight:bold;
+  letter-spacing:1px;
+  margin-top:5px;
+  direction:ltr;
+  white-space:nowrap;
+  color:var(--slogan-blue);
 }
 
 .header-actions {
   display:flex;
   align-items:center;
   gap:10px;
+  position:absolute;
+  left:0;
 }
 
 .theme-btn,.menu-btn {
@@ -653,11 +691,33 @@ footer strong {
 }
 
 @media(max-width:480px) {
-  .header-inner { min-height:67px; }
-  .brand-name { font-size:21px; }
-  .brand-sub { font-size:7px; letter-spacing:.3px; }
-  .logo-orb { width:36px; height:36px; }
-  .theme-btn { padding:9px 10px; }
+  .header-inner {
+    min-height:76px;
+  }
+
+  .brand-name {
+    font-size:21px;
+  }
+
+  .brand-sub {
+    font-size:7px;
+    letter-spacing:.3px;
+  }
+
+  .brand-tagline {
+    font-size:8px;
+    letter-spacing:.5px;
+  }
+
+  .logo-orb {
+    width:36px;
+    height:36px;
+  }
+
+  .theme-btn {
+    padding:9px 10px;
+  }
+
   .hero h1 { font-size:30px; }
   .services-grid { gap:10px; }
   .service-card { padding:18px 10px; }
@@ -679,17 +739,27 @@ footer strong {
 <header>
   <div class="container">
     <div class="header-inner">
+
       <div class="brand">
         <div class="logo-orb"></div>
+
         <div>
           <div class="brand-name">NAVA</div>
-          <div class="brand-sub">ONE VISION. ONE MISSION. ONE NAVA.</div>
+
+          <div class="brand-sub">
+            ONE VISION. ONE MISSION. ONE NAVA.
+          </div>
+
+          <div class="brand-tagline">
+            THE FUTURE HAS A NAME.
+          </div>
         </div>
       </div>
 
       <div class="header-actions">
         <button class="theme-btn" id="themeToggle" aria-label="تغییر تم">☀️</button>
       </div>
+
     </div>
 
     <nav>
@@ -1018,3 +1088,4 @@ copyStory.addEventListener("click",async () => {
 
 </body>
 </html>
+ 
