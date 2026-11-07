@@ -841,35 +841,129 @@ async function getNaviApprovedMemory(db) {
   return result.results || [];
 }
 
-// تشخیص دستور مستقیم ذخیره حافظه
-function parseNaviMemoryCommand(message) {
-  const text = String(message || "");
+// ==========================================
+// تشخیص دستور و اطلاعات قابل ذخیره در حافظه
+// ==========================================
 
-  const match = text.match(
+function parseNaviMemoryCommand(message) {
+  const text = safeNaviText(message, 4000);
+
+  // حالت اول: دستور «به خاطر بسپار»
+  const rememberMatch = text.match(
     /^\s*(?:ناوی[،,:؛]?\s*)?(?:لطفاً\s*)?به\s+خاطر\s+بسپار(?:\s+که)?\s*[:：،-]?\s*/u
   );
 
-  if (!match) {
+  if (rememberMatch) {
+    const value = safeNaviText(
+      text.slice(rememberMatch[0].length),
+      1000
+    );
+
     return {
-      isCommand: false,
-      value: ""
+      isCommand: true,
+      value,
+      memoryKey: "یادداشت کاربر",
+      memoryValue: value,
+      source: "user_command",
+      type: "explicit"
     };
   }
 
-  return {
-    isCommand: true,
-    value: safeNaviText(
-      text.slice(match[0].length),
+  // حالت دوم: دستور ثبت در حافظه بلندمدت
+  const saveMatch = text.match(
+    /^\s*(?:ناوی[،,:؛]?\s*)?(?:لطفاً\s*)?(?:این\s+)?(?:اطلاعات|مطلب|نکته|موضوع|مورد|رو|را)\s*(?:را|رو)?\s*(?:در|به)\s+حافظه\s+(?:بلندمدت|دائمی)(?:\s+خود)?\s*(?:ثبت|ذخیره|اضافه)\s*(?:کن|بکن|نمای)\s*[:：،-]?\s*/u
+  );
+
+  if (saveMatch) {
+    const value = safeNaviText(
+      text.slice(saveMatch[0].length),
       1000
-    )
+    );
+
+    return {
+      isCommand: true,
+      value,
+      memoryKey: "یادداشت کاربر",
+      memoryValue: value,
+      source: "user_command",
+      type: "explicit"
+    };
+  }
+
+  // حالت سوم: عبارت‌های کوتاه‌تر برای ثبت در حافظه
+  const shortSaveMatch = text.match(
+    /^\s*(?:ناوی[،,:؛]?\s*)?(?:لطفاً\s*)?(?:ثبت|ذخیره)\s+کن(?:\s+که)?\s*[:：،-]?\s*/u
+  );
+
+  if (shortSaveMatch) {
+    const value = safeNaviText(
+      text.slice(shortSaveMatch[0].length),
+      1000
+    );
+
+    return {
+      isCommand: true,
+      value,
+      memoryKey: "یادداشت کاربر",
+      memoryValue: value,
+      source: "user_command",
+      type: "explicit"
+    };
+  }
+
+  // حالت چهارم: تشخیص معرفی صریح نام کاربر
+  const nameMatch = text.match(
+    /^\s*(?:اسم|نام)\s+من\s+(?:هم\s+)?([آ-یءاأإؤئ‌\-]{2,40})\s*(?:است|هست|می‌باشد|میباشد)?[.!؟،؛\s]*$/u
+  );
+
+  if (nameMatch) {
+    const userName = safeNaviText(
+      nameMatch[1].replace(/\s+/g, " "),
+      60
+    );
+
+    if (userName) {
+      return {
+        isCommand: true,
+        value: userName,
+        memoryKey: "نام کاربر",
+        memoryValue: userName,
+        source: "user_statement",
+        type: "profile"
+      };
+    }
+  }
+
+  return {
+    isCommand: false,
+    value: "",
+    memoryKey: "",
+    memoryValue: "",
+    source: "",
+    type: ""
   };
 }
 
-// ذخیره اطلاعات تأییدشده در D1
-async function saveNaviMemoryFact(db, value) {
-  const memoryKey = "یادداشت کاربر";
+// ==========================================
+// ذخیره یا به‌روزرسانی حافظه در D1
+// ==========================================
 
-  const existing = await db.prepare(`
+async function saveNaviMemoryFact(
+  db,
+  value,
+  memoryKey = "یادداشت کاربر",
+  source = "user_command"
+) {
+  const cleanValue = safeNaviText(value, 1000);
+  const cleanKey = safeNaviText(memoryKey, 150);
+  const cleanSource = safeNaviText(source, 50);
+
+  if (!cleanValue || !cleanKey) {
+    throw new Error("اطلاعات حافظه نمی‌تواند خالی باشد.");
+  }
+
+  // بررسی وجود همان کلید و همان مقدار
+  const exactExisting = await db.prepare(`
     SELECT id
     FROM navi_memory_facts_v1
     WHERE owner_id = ?
@@ -879,32 +973,85 @@ async function saveNaviMemoryFact(db, value) {
     LIMIT 1
   `).bind(
     NAVI_OWNER_ID,
-    memoryKey,
-    value
+    cleanKey,
+    cleanValue
   ).first();
 
-  if (existing) {
+  if (exactExisting) {
     return {
-      duplicate: true
+      duplicate: true,
+      updated: false,
+      inserted: false,
+      id: exactExisting.id,
+      memoryKey: cleanKey
     };
   }
 
-  await db.prepare(`
-    INSERT INTO navi_memory_facts_v1
-    (owner_id, memory_key, memory_value, source, status)
-    VALUES (?, ?, ?, ?, ?)
+  // بررسی وجود قبلی همان کلید
+  const keyExisting = await db.prepare(`
+    SELECT id, memory_value
+    FROM navi_memory_facts_v1
+    WHERE owner_id = ?
+      AND memory_key = ?
+      AND status = 'approved'
+    ORDER BY updated_at DESC
+    LIMIT 1
   `).bind(
     NAVI_OWNER_ID,
-    memoryKey,
-    value,
-    "user_command",
-    "approved"
+    cleanKey
+  ).first();
+
+  // اگر کلید قبلاً وجود داشته باشد، مقدار آن به‌روزرسانی می‌شود
+  if (keyExisting) {
+    await db.prepare(`
+      UPDATE navi_memory_facts_v1
+      SET
+        memory_value = ?,
+        source = ?,
+        updated_at = datetime('now')
+      WHERE id = ?
+        AND owner_id = ?
+        AND status = 'approved'
+    `).bind(
+      cleanValue,
+      cleanSource,
+      keyExisting.id,
+      NAVI_OWNER_ID
+    ).run();
+
+    return {
+      duplicate: false,
+      updated: true,
+      inserted: false,
+      id: keyExisting.id,
+      memoryKey: cleanKey
+    };
+  }
+
+  // اگر کلید وجود نداشته باشد، رکورد جدید ساخته می‌شود
+  const insertResult = await db.prepare(`
+    INSERT INTO navi_memory_facts_v1
+    (owner_id, memory_key, memory_value, source, status)
+    VALUES (?, ?, ?, ?, 'approved')
+  `).bind(
+    NAVI_OWNER_ID,
+    cleanKey,
+    cleanValue,
+    cleanSource
   ).run();
 
   return {
-    duplicate: false
+    duplicate: false,
+    updated: false,
+    inserted: true,
+    id: insertResult.meta?.last_row_id || null,
+    memoryKey: cleanKey
   };
 }
+
+// ==========================================
+// ذخیره تاریخچه گفت‌وگو
+// ==========================================
 
 async function saveNaviConversation(db, userMessage, assistantMessage) {
   await db.batch([
@@ -1125,9 +1272,7 @@ async function authorizeNaviRequest(request, env) {
   return {
     valid: true
   };
-}
-
-export default {
+}export default {
   async fetch(request, env) {
     const origin = request.headers.get("Origin") || "";
 
@@ -1235,7 +1380,7 @@ export default {
       return json({
         success: true,
         message: "Nava Worker is running",
-        version: "nava-navi-0.6",
+        version: "nava-navi-0.7",
         timestamp: new Date().toISOString()
       }, 200, corsOrigin);
     }
@@ -1614,13 +1759,14 @@ export default {
       );
 
       // ======================================
-      // NAVI - دستور مستقیم ذخیره حافظه
+      // NAVI - تشخیص دستور یا معرفی اطلاعات
       // ======================================
 
       const memoryCommand = parseNaviMemoryCommand(message);
 
       if (memoryCommand.isCommand) {
         let reply = "";
+        let memorySaveResult = null;
 
         try {
           await ensureNaviMainThread(env.NAVA_DB);
@@ -1630,14 +1776,27 @@ export default {
               "حتماً. چه اطلاعاتی را می‌خواهی در حافظه بلندمدتم ذخیره کنم؟";
 
           } else {
-            const result = await saveNaviMemoryFact(
+            memorySaveResult = await saveNaviMemoryFact(
               env.NAVA_DB,
-              memoryCommand.value
+              memoryCommand.memoryValue || memoryCommand.value,
+              memoryCommand.memoryKey || "یادداشت کاربر",
+              memoryCommand.source || "user_command"
             );
 
-            reply = result.duplicate
-              ? "این اطلاعات از قبل در حافظه بلندمدتم ثبت شده است و نیازی به ثبت دوباره نیست."
-              : "انجام شد. این اطلاعات با تأیید مستقیم تو در حافظه بلندمدتم ذخیره شد و در گفتگوهای بعدی از آن استفاده می‌کنم.";
+            if (memorySaveResult.duplicate) {
+              reply =
+                "این اطلاعات از قبل در حافظه بلندمدتم ثبت شده است و نیازی به ثبت دوباره نیست.";
+
+            } else if (memorySaveResult.updated) {
+              reply =
+                "اطلاعات قبلی را با مقدار جدید به‌روزرسانی کردم و از این به بعد از نسخه جدید استفاده می‌کنم.";
+
+            } else {
+              reply =
+                memoryCommand.type === "profile"
+                  ? "متوجه شدم. نامت را در حافظه بلندمدتم ثبت کردم و در گفتگوهای بعدی از آن استفاده می‌کنم."
+                  : "انجام شد. این اطلاعات با تأیید مستقیم تو در حافظه بلندمدتم ذخیره شد و در گفتگوهای بعدی از آن استفاده می‌کنم.";
+            }
           }
 
           await saveNaviConversation(
@@ -1650,14 +1809,15 @@ export default {
             success: true,
             reply,
             assistant: "NAVI",
-            version: "0.6",
+            version: "0.7",
             memory: {
               commandRecognized: true,
               saved: Boolean(memoryCommand.value),
-              duplicate: Boolean(
-                memoryCommand.value &&
-                reply.includes("از قبل")
-              )
+              duplicate: Boolean(memorySaveResult?.duplicate),
+              updated: Boolean(memorySaveResult?.updated),
+              inserted: Boolean(memorySaveResult?.inserted),
+              memoryKey: memoryCommand.memoryKey || null,
+              source: memoryCommand.source || null
             }
           }, 200, corsOrigin);
 
@@ -1897,7 +2057,7 @@ Your purpose is to help the user move from ideas to real results.
           success: true,
           reply,
           assistant: "NAVI",
-          version: "0.6"
+          version: "0.7"
         }, 200, corsOrigin);
 
       } catch (e) {
@@ -1911,9 +2071,8 @@ Your purpose is to help the user move from ideas to real results.
       } finally {
         clearTimeout(timeout);
       }
-    }
-
-    // ======================================
+                }
+        // ======================================
     // فهرست مدل‌های ACE
     // ======================================
 
