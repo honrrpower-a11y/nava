@@ -26,8 +26,6 @@
   --card-surface:linear-gradient(145deg,#142137,#0c1424 70%,#142338);
 }
 
-/* LIGHT MODE BASE */
-
 body.light {
   --bg:#f7f2e9;
   --panel:#fffdf8;
@@ -42,21 +40,8 @@ body.light {
   --shadow:0 16px 42px rgba(42,49,68,.10);
   --slogan-gold:#c17a1c;
   --slogan-blue:#1769bd;
-
-  --card-gradient:linear-gradient(
-    125deg,
-    #e8a82e,
-    #f16b45 42%,
-    #328ee2 78%,
-    #e8b64e
-  );
-
-  --card-surface:linear-gradient(
-    145deg,
-    #fffefa,
-    #fff8ed 58%,
-    #edf5fc
-  );
+  --card-gradient:linear-gradient(125deg,#e8a82e,#f16b45 42%,#328ee2 78%,#e8b64e);
+  --card-surface:linear-gradient(145deg,#fffefa,#fff8ed 58%,#edf5fc);
 }
 
 * {
@@ -65,9 +50,7 @@ body.light {
   padding:0;
 }
 
-html {
-  scroll-behavior:smooth;
-}
+html { scroll-behavior:smooth; }
 
 body {
   background:var(--bg);
@@ -77,13 +60,8 @@ body {
   transition:background .3s,color .3s;
 }
 
-button,textarea,input,select {
-  font-family:inherit;
-}
-
-button {
-  cursor:pointer;
-}
+button,textarea,input,select { font-family:inherit; }
+button { cursor:pointer; }
 
 .container {
   width:min(1120px,92%);
@@ -247,19 +225,11 @@ nav {
   animation:pageIn .4s ease;
 }
 
-.page.active {
-  display:block;
-}
+.page.active { display:block; }
 
 @keyframes pageIn {
-  from {
-    opacity:0;
-    transform:translateY(10px);
-  }
-  to {
-    opacity:1;
-    transform:translateY(0);
-  }
+  from { opacity:0;transform:translateY(10px); }
+  to { opacity:1;transform:translateY(0); }
 }
 
 /* HERO */
@@ -328,6 +298,12 @@ nav {
 .btn-primary:hover {
   transform:translateY(-3px);
   box-shadow:0 8px 25px #d9a84d55,0 0 18px #25caff33;
+}
+
+.btn-primary:disabled {
+  opacity:.65;
+  cursor:wait;
+  transform:none;
 }
 
 .btn-secondary {
@@ -436,10 +412,10 @@ nav {
   animation:particleFloat 3s ease-in-out infinite;
 }
 
-.p1 { top:8%; right:25%; }
-.p2 { bottom:15%; left:15%; animation-delay:.7s; }
-.p3 { top:45%; right:2%; animation-delay:1.2s; }
-.p4 { bottom:5%; right:50%; animation-delay:1.8s; }
+.p1 { top:8%;right:25%; }
+.p2 { bottom:15%;left:15%;animation-delay:.7s; }
+.p3 { top:45%;right:2%;animation-delay:1.2s; }
+.p4 { bottom:5%;right:50%;animation-delay:1.8s; }
 
 .orb-caption {
   position:absolute;
@@ -474,14 +450,8 @@ nav {
 }
 
 @keyframes particleFloat {
-  0%,100% {
-    opacity:.3;
-    transform:translateY(0) scale(.7);
-  }
-  50% {
-    opacity:1;
-    transform:translateY(-5px) scale(1.2);
-  }
+  0%,100% { opacity:.3;transform:translateY(0) scale(.7); }
+  50% { opacity:1;transform:translateY(-5px) scale(1.2); }
 }
 
 @keyframes logoGlow {
@@ -491,9 +461,7 @@ nav {
 
 /* SECTION */
 
-.section {
-  padding:35px 0;
-}
+.section { padding:35px 0; }
 
 .section-heading {
   text-align:center;
@@ -666,17 +634,35 @@ nav {
 .response-box {
   display:none;
   background:var(--bg);
-  border:1px solid transparent;
-  border-image:var(--card-gradient) 1;
+  border:1px solid var(--border);
   border-radius:12px;
   padding:15px;
   margin-top:15px;
   line-height:2;
   font-size:13px;
+  white-space:pre-wrap;
+  overflow-wrap:anywhere;
 }
 
-.response-box.show {
+.response-box.show { display:block; }
+
+.navi-label {
   display:block;
+  color:var(--gold);
+  font-size:12px;
+  font-weight:bold;
+  margin-bottom:8px;
+}
+
+.navi-status {
+  color:var(--muted);
+  font-size:11px;
+  margin-top:12px;
+  line-height:1.9;
+}
+
+#requestResponse {
+  min-height:55px;
 }
 
 /* STORY MAKER */
@@ -750,10 +736,7 @@ nav {
   margin-top:18px;
   padding:25px;
   border-radius:16px;
-  background:
-    radial-gradient(circle at top left,rgba(37,202,255,.18),transparent 48%),
-    radial-gradient(circle at bottom right,rgba(229,184,94,.2),transparent 50%),
-    linear-gradient(145deg,#101a2b,#080d19);
+  background:radial-gradient(circle at top left,rgba(37,202,255,.18),transparent 48%),radial-gradient(circle at bottom right,rgba(229,184,94,.2),transparent 50%),linear-gradient(145deg,#101a2b,#080d19);
   border:1px solid rgba(229,184,94,.5);
   box-shadow:inset 0 0 25px rgba(37,202,255,.05),0 0 15px rgba(229,184,94,.06);
   display:flex;
@@ -838,34 +821,12 @@ footer strong {
   display:inline-block;
 }
 
-/* =========================================
-   NAVA LIGHT MODE — ENERGETIC LUXURY
-========================================= */
-
-/* زمینه روشن و پویا */
+/* LIGHT MODE */
 
 body.light {
-  background:
-    radial-gradient(
-      circle at 8% 12%,
-      rgba(255,179,66,.13),
-      transparent 27%
-    ),
-    radial-gradient(
-      circle at 92% 35%,
-      rgba(44,139,225,.10),
-      transparent 28%
-    ),
-    radial-gradient(
-      circle at 50% 90%,
-      rgba(239,100,76,.07),
-      transparent 30%
-    ),
-    var(--bg);
+  background:radial-gradient(circle at 8% 12%,rgba(255,179,66,.13),transparent 27%),radial-gradient(circle at 92% 35%,rgba(44,139,225,.10),transparent 28%),radial-gradient(circle at 50% 90%,rgba(239,100,76,.07),transparent 30%),var(--bg);
   background-attachment:fixed;
 }
-
-/* هدر */
 
 body.light header {
   background:rgba(255,251,243,.88);
@@ -878,153 +839,77 @@ body.light .brand-name {
   text-shadow:0 2px 12px rgba(239,174,61,.18);
 }
 
-/* منوی بالا */
-
 body.light .nav-btn:hover,
 body.light .nav-btn.active {
   color:#bd5a32;
-  background:linear-gradient(
-    110deg,
-    rgba(246,179,63,.19),
-    rgba(239,105,72,.10),
-    rgba(37,137,218,.10)
-  );
+  background:linear-gradient(110deg,rgba(246,179,63,.19),rgba(239,105,72,.10),rgba(37,137,218,.10));
   border-color:rgba(217,145,47,.35);
   box-shadow:0 4px 16px rgba(230,151,50,.10);
 }
 
-/* برچسب معرفی */
-
 body.light .eyebrow {
   color:#b85b31;
-  background:linear-gradient(
-    110deg,
-    #fff0d5,
-    #ffe8dc,
-    #eaf3ff
-  );
+  background:linear-gradient(110deg,#fff0d5,#ffe8dc,#eaf3ff);
   border-color:rgba(218,140,48,.35);
 }
 
-/* عنوان اصلی */
-
 body.light .hero h1 span {
-  background:linear-gradient(
-    90deg,
-    #d18a20,
-    #ed6846 48%,
-    #287fd0 85%,
-    #d18a20
-  );
+  background:linear-gradient(90deg,#d18a20,#ed6846 48%,#287fd0 85%,#d18a20);
   -webkit-background-clip:text;
   background-clip:text;
   color:transparent;
 }
 
-/* دکمه اصلی */
-
 body.light .btn-primary {
-  background:linear-gradient(
-    110deg,
-    #f6c34f,
-    #f18a3e 48%,
-    #e95c4b
-  );
+  background:linear-gradient(110deg,#f6c34f,#f18a3e 48%,#e95c4b);
   color:#fff;
   box-shadow:0 7px 19px rgba(224,112,52,.19);
 }
 
 body.light .btn-primary:hover {
-  box-shadow:
-    0 10px 25px rgba(224,112,52,.25),
-    0 0 18px rgba(242,181,57,.18);
+  box-shadow:0 10px 25px rgba(224,112,52,.25),0 0 18px rgba(242,181,57,.18);
 }
-
-/* دکمه ثانویه */
 
 body.light .btn-secondary {
   color:#1c5f9c;
-  background-image:
-    linear-gradient(#fffdf8,#fff8ed),
-    linear-gradient(120deg,#e8ae39,#ee7650,#318bdc);
+  background-image:linear-gradient(#fffdf8,#fff8ed),linear-gradient(120deg,#e8ae39,#ee7650,#318bdc);
 }
 
-/* تیتر بخش‌ها */
-
 body.light .section-heading h2 span {
-  background:linear-gradient(
-    90deg,
-    #c6811e,
-    #ed6747,
-    #247bc9
-  );
+  background:linear-gradient(90deg,#c6811e,#ed6747,#247bc9);
   -webkit-background-clip:text;
   background-clip:text;
   color:transparent;
 }
-
-/* کارت‌های خدمات */
 
 body.light .service-card {
   box-shadow:0 7px 22px rgba(43,54,75,.06);
 }
 
 body.light .service-card::after {
-  background:radial-gradient(
-    circle,
-    rgba(244,139,63,.19),
-    transparent 70%
-  );
+  background:radial-gradient(circle,rgba(244,139,63,.19),transparent 70%);
 }
 
 body.light .service-card:hover {
-  box-shadow:
-    0 15px 30px rgba(49,59,78,.11),
-    0 0 20px rgba(239,131,61,.13);
+  box-shadow:0 15px 30px rgba(49,59,78,.11),0 0 20px rgba(239,131,61,.13);
 }
 
-body.light .service-card h3 {
-  color:#1b3453;
-}
-
-body.light .service-card p {
-  color:#687487;
-}
-
-/* آیکون‌های خدمات */
+body.light .service-card h3 { color:#1b3453; }
+body.light .service-card p { color:#687487; }
 
 body.light .service-icon {
   color:#d16b30;
-  background:linear-gradient(
-    135deg,
-    #fff0ce,
-    #ffe5dc 55%,
-    #e5f1ff
-  );
+  background:linear-gradient(135deg,#fff0ce,#ffe5dc 55%,#e5f1ff);
   border:1px solid rgba(211,139,43,.42);
-  box-shadow:
-    inset 0 0 12px rgba(255,255,255,.8),
-    0 5px 13px rgba(220,130,54,.10);
+  box-shadow:inset 0 0 12px rgba(255,255,255,.8),0 5px 13px rgba(220,130,54,.10);
 }
-
-/* پنل درخواست */
 
 body.light .request-panel::before {
-  background:linear-gradient(
-    145deg,
-    #fffefa,
-    #fff5e9 65%,
-    #edf5fc
-  );
+  background:linear-gradient(145deg,#fffefa,#fff5e9 65%,#edf5fc);
 }
 
-body.light .request-panel h2 {
-  color:#bd6530;
-}
-
-body.light .field-label {
-  color:#b96b28;
-}
+body.light .request-panel h2 { color:#bd6530; }
+body.light .field-label { color:#b96b28; }
 
 body.light .request-select,
 body.light .request-textarea,
@@ -1038,12 +923,8 @@ body.light .request-select:focus,
 body.light .request-textarea:focus,
 body.light .story-input:focus {
   border-color:#e68b43;
-  box-shadow:
-    0 0 0 3px rgba(238,139,65,.12),
-    0 0 15px rgba(38,133,208,.08);
+  box-shadow:0 0 0 3px rgba(238,139,65,.12),0 0 15px rgba(38,133,208,.08);
 }
-
-/* پیام‌ها و پاسخ‌ها */
 
 body.light .response-box {
   background:linear-gradient(120deg,#fff8e9,#eef6ff);
@@ -1052,94 +933,44 @@ body.light .response-box {
   color:#263a56;
 }
 
-/* استوری‌ساز */
-
 body.light .tool-card-inner {
-  background:linear-gradient(
-    145deg,
-    #fffefa,
-    #fff4e7 58%,
-    #edf5ff
-  );
+  background:linear-gradient(145deg,#fffefa,#fff4e7 58%,#edf5ff);
 }
 
-body.light .tool-card h1 {
-  color:#bd6530;
-}
+body.light .tool-card h1 { color:#bd6530; }
 
 body.light .story-preview {
-  background:
-    radial-gradient(
-      circle at top left,
-      rgba(37,137,218,.18),
-      transparent 48%
-    ),
-    radial-gradient(
-      circle at bottom right,
-      rgba(242,155,47,.22),
-      transparent 50%
-    ),
-    linear-gradient(145deg,#253c59,#14243c);
+  background:radial-gradient(circle at top left,rgba(37,137,218,.18),transparent 48%),radial-gradient(circle at bottom right,rgba(242,155,47,.22),transparent 50%),linear-gradient(145deg,#253c59,#14243c);
   border:1px solid rgba(224,163,67,.65);
-  box-shadow:
-    inset 0 0 25px rgba(37,137,218,.08),
-    0 0 18px rgba(229,154,52,.10);
+  box-shadow:inset 0 0 25px rgba(37,137,218,.08),0 0 18px rgba(229,154,52,.10);
 }
 
-/* صفحه موسیقی */
-
 body.light .coming-card-inner {
-  background:linear-gradient(
-    145deg,
-    #fffefa,
-    #fff0e3 60%,
-    #edf5ff
-  );
+  background:linear-gradient(145deg,#fffefa,#fff0e3 60%,#edf5ff);
 }
 
 body.light .coming-icon {
-  background:linear-gradient(
-    120deg,
-    #e8a72e,
-    #ed6849,
-    #287fd0
-  );
+  background:linear-gradient(120deg,#e8a72e,#ed6849,#287fd0);
   -webkit-background-clip:text;
   background-clip:text;
   color:transparent;
 }
 
 body.light .coming-card h1 {
-  background:linear-gradient(
-    90deg,
-    #c6811e,
-    #ed6849,
-    #287fd0
-  );
+  background:linear-gradient(90deg,#c6811e,#ed6849,#287fd0);
   -webkit-background-clip:text;
   background-clip:text;
   color:transparent;
 }
 
-/* فوتر */
-
-body.light footer {
-  border-top-color:rgba(193,127,37,.25);
-}
+body.light footer { border-top-color:rgba(193,127,37,.25); }
 
 body.light footer strong {
-  background:linear-gradient(
-    90deg,
-    #c6811e,
-    #ed6849,
-    #287fd0
-  );
+  background:linear-gradient(90deg,#c6811e,#ed6849,#287fd0);
   -webkit-background-clip:text;
   background-clip:text;
   color:transparent;
 }
-
-/* دکمه تغییر تم */
 
 body.light .theme-btn:hover {
   border-color:#e88b43;
@@ -1155,82 +986,27 @@ body.light .theme-btn:hover {
     padding-top:40px;
   }
 
-  .hero p {
-    margin:auto;
-  }
-
-  .hero-buttons {
-    justify-content:center;
-  }
-
-  .orb-stage {
-    min-height:250px;
-  }
-
-  .services-grid {
-    grid-template-columns:repeat(2,1fr);
-  }
+  .hero p { margin:auto; }
+  .hero-buttons { justify-content:center; }
+  .orb-stage { min-height:250px; }
+  .services-grid { grid-template-columns:repeat(2,1fr); }
 }
 
 @media(max-width:480px) {
-  .header-inner {
-    min-height:76px;
-  }
-
-  .brand-name {
-    font-size:21px;
-  }
-
-  .brand-sub {
-    font-size:7px;
-    letter-spacing:.3px;
-  }
-
-  .brand-tagline {
-    font-size:8px;
-    letter-spacing:.5px;
-  }
-
-  .logo-orb {
-    width:36px;
-    height:36px;
-  }
-
-  .theme-btn {
-    padding:9px 10px;
-  }
-
-  .hero h1 {
-    font-size:30px;
-  }
-
-  .services-grid {
-    gap:10px;
-  }
-
-  .service-card {
-    padding:1px;
-  }
-
-  .service-card h3 {
-    font-size:13px;
-  }
-
-  .service-card p {
-    font-size:11px;
-  }
-
-  .request-content,.tool-card-inner {
-    padding:18px;
-  }
-
-  .coming-card-inner {
-    padding:45px 17px;
-  }
-
-  .brand {
-    transform:scale(.94);
-  }
+  .header-inner { min-height:76px; }
+  .brand-name { font-size:21px; }
+  .brand-sub { font-size:7px;letter-spacing:.3px; }
+  .brand-tagline { font-size:8px;letter-spacing:.5px; }
+  .logo-orb { width:36px;height:36px; }
+  .theme-btn { padding:9px 10px; }
+  .hero h1 { font-size:30px; }
+  .services-grid { gap:10px; }
+  .service-card { padding:1px; }
+  .service-card h3 { font-size:13px; }
+  .service-card p { font-size:11px; }
+  .request-content,.tool-card-inner { padding:18px; }
+  .coming-card-inner { padding:45px 17px; }
+  .brand { transform:scale(.94); }
 }
 
 @media(prefers-reduced-motion:reduce) {
@@ -1249,25 +1025,16 @@ body.light .theme-btn:hover {
   <div class="container">
     <div class="header-inner">
 
-      <!-- LOGO ON THE RIGHT -->
       <div class="logo-orb"></div>
 
-      <!-- CENTER BRAND -->
       <div class="brand">
         <div>
           <div class="brand-name">NAVA</div>
-
-          <div class="brand-sub">
-            ONE VISION. ONE MISSION. ONE NAVA.
-          </div>
-
-          <div class="brand-tagline">
-            THE FUTURE HAS A NAME.
-          </div>
+          <div class="brand-sub">ONE VISION. ONE MISSION. ONE NAVA.</div>
+          <div class="brand-tagline">THE FUTURE HAS A NAME.</div>
         </div>
       </div>
 
-      <!-- THEME BUTTON ON THE LEFT -->
       <div class="header-actions">
         <button class="theme-btn" id="themeToggle" aria-label="تغییر تم">☀️</button>
       </div>
@@ -1365,10 +1132,11 @@ body.light .theme-btn:hover {
 
     <div class="request-panel" id="requestSection">
       <div class="request-content">
-        <h2>با نوا صحبت کن</h2>
+
+        <h2>با ناوی صحبت کن</h2>
         <p>
-          ایده یا خواسته‌ات را بنویس. فعلاً این بخش برای دریافت و دسته‌بندی اولیه درخواست‌ها آماده است؛
-          اتصال دستیار هوش مصنوعی در مرحله بعد انجام می‌شود.
+          من ناوی هستم؛ مسیریاب ایده‌های نوا.
+          موضوعت را انتخاب کن و درخواستت را بنویس تا با هم آن را بررسی کنیم.
         </p>
 
         <label class="field-label" for="serviceSelect">موضوع درخواست</label>
@@ -1382,18 +1150,23 @@ body.light .theme-btn:hover {
           <option value="سایر موارد">سایر موارد</option>
         </select>
 
-        <label class="field-label" for="userRequest">توضیح ایده یا درخواستت</label>
+        <label class="field-label" for="userRequest">پیامت برای ناوی</label>
         <textarea
           class="request-textarea"
           id="userRequest"
-          placeholder="مثلاً برای فروشگاه پوشاکم یک لوگوی مدرن و لوکس می‌خواهم..."
+          placeholder="سلام ناوی، می‌خواهم برای کسب‌وکارم یک ایده تازه پیدا کنم..."
         ></textarea>
 
-        <button class="btn-primary" id="sendRequest">
-          ثبت درخواست
+        <button class="btn-primary" id="sendRequest" type="button">
+          ارسال پیام به ناوی
         </button>
 
+        <div class="navi-status" id="naviStatus">
+          ناوی آماده گفت‌وگو با توست.
+        </div>
+
         <div class="response-box" id="requestResponse" aria-live="polite"></div>
+
       </div>
     </div>
 
@@ -1467,7 +1240,9 @@ body.light .theme-btn:hover {
 </footer>
 
 <script>
-/* PAGE NAVIGATION */
+/* =========================================
+   PAGE NAVIGATION
+========================================= */
 
 const navButtons = document.querySelectorAll(".nav-btn");
 const pages = document.querySelectorAll(".page");
@@ -1493,7 +1268,9 @@ navButtons.forEach(button => {
   });
 });
 
-/* THEME */
+/* =========================================
+   THEME
+========================================= */
 
 const themeToggle = document.getElementById("themeToggle");
 const savedTheme = localStorage.getItem("nava-theme");
@@ -1512,12 +1289,24 @@ themeToggle.addEventListener("click",() => {
   themeToggle.textContent = isLight ? "🌙" : "☀️";
 });
 
-/* REQUEST SECTION */
+/* =========================================
+   NAVA NAVI — REAL API CONNECTION
+========================================= */
+
+const NAVI_API = "https://nava-music-api.honrrpower.workers.dev/navi-chat";
 
 const serviceSelect = document.getElementById("serviceSelect");
 const userRequest = document.getElementById("userRequest");
 const sendRequest = document.getElementById("sendRequest");
 const requestResponse = document.getElementById("requestResponse");
+const naviStatus = document.getElementById("naviStatus");
+
+/*
+  تاریخچه مکالمه در حافظه همین صفحه نگهداری می‌شود.
+  با بارگذاری مجدد صفحه، مکالمه از ابتدا شروع می‌شود.
+*/
+
+const naviHistory = [];
 
 function chooseService(service) {
   serviceSelect.value = service;
@@ -1533,34 +1322,153 @@ function scrollToRequest() {
   setTimeout(() => userRequest.focus(),450);
 }
 
-sendRequest.addEventListener("click",() => {
-  const service = serviceSelect.value;
-  const request = userRequest.value.trim();
+/* نمایش امن پاسخ ناوی */
 
-  if (!request) {
-    requestResponse.textContent = "لطفاً ابتدا توضیح درخواستت را بنویس.";
-    requestResponse.classList.add("show");
+function showNaviReply(reply) {
+  requestResponse.textContent = reply;
+  requestResponse.classList.add("show");
+}
+
+/* ارسال پیام به NAVI */
+
+async function sendMessageToNavi() {
+  const message = userRequest.value.trim();
+
+  if (!message) {
+    showNaviReply("لطفاً ابتدا پیامت را بنویس.");
+    userRequest.focus();
     return;
   }
 
-  requestResponse.innerHTML = "";
+  const selectedService = serviceSelect.value;
 
-  const title = document.createElement("strong");
-  title.textContent = "درخواستت ثبت شد.";
+  const finalMessage =
+    selectedService && selectedService !== "انتخاب نشده"
+      ? "موضوع انتخاب‌شده: " + selectedService +
+        "\n\nپیام کاربر: " + message
+      : message;
 
-  const detail = document.createElement("p");
-  detail.textContent =
-    "موضوع: " + service + " | متن درخواست: " + request;
+  /*
+    اطلاعات صفحه فعلی برای درک بهتر درخواست
+    به NAVI فرستاده می‌شود.
+  */
 
-  const note = document.createElement("p");
-  note.textContent =
-    "این نسخه هنوز به دستیار هوش مصنوعی متصل نیست. اطلاعات فعلاً فقط در همین صفحه نمایش داده می‌شود.";
+  const pageContext = [
+    "عنوان صفحه: " + document.title,
+    "مسیر صفحه: " + window.location.pathname,
+    "محتوای قابل مشاهده صفحه:",
+    document.body.innerText.slice(0,2500)
+  ].join("\n");
 
-  requestResponse.append(title,detail,note);
-  requestResponse.classList.add("show");
+  sendRequest.disabled = true;
+  sendRequest.textContent = "ناوی در حال پاسخ‌گویی...";
+  naviStatus.textContent = "پیامت ارسال شد؛ ناوی در حال بررسی آن است...";
+
+  showNaviReply("در حال دریافت پاسخ از ناوی...");
+
+  try {
+    const response = await fetch(NAVI_API,{
+      method:"POST",
+      headers:{
+        "Content-Type":"application/json"
+      },
+      body:JSON.stringify({
+        message:finalMessage,
+        page:window.location.pathname,
+        pageContext:pageContext,
+        history:naviHistory
+      })
+    });
+
+    let data;
+
+    try {
+      data = await response.json();
+    } catch (parseError) {
+      throw new Error("پاسخ سرور قابل خواندن نیست.");
+    }
+
+    if (!response.ok || !data.success) {
+      const errorMessage =
+        data.diagnostic ||
+        data.error ||
+        "ارتباط با ناوی با مشکل مواجه شد.";
+
+      throw new Error(errorMessage);
+    }
+
+    const reply = String(data.reply || "").trim();
+
+    if (!reply) {
+      throw new Error("ناوی پاسخ خالی ارسال کرده است.");
+    }
+
+    /*
+      پیام کاربر و پاسخ ناوی به تاریخچه اضافه می‌شوند.
+      Worker نقش assistant را به model تبدیل می‌کند.
+    */
+
+    naviHistory.push(
+      {
+        role:"user",
+        content:finalMessage
+      },
+      {
+        role:"assistant",
+        content:reply
+      }
+    );
+
+    /*
+      حداکثر ۱۰ پیام اخیر در حافظه نگهداری می‌شود.
+    */
+
+    if (naviHistory.length > 10) {
+      naviHistory.splice(0,naviHistory.length - 10);
+    }
+
+    showNaviReply(reply);
+
+    userRequest.value = "";
+    naviStatus.textContent = "ناوی آماده ادامه گفت‌وگوست.";
+
+  } catch (error) {
+    console.error("NAVI connection error:",error);
+
+    showNaviReply(
+      "فعلاً نتوانستم پاسخ دریافت کنم.\n\n" +
+      "جزئیات خطا: " +
+      (error.message || "خطای نامشخص")
+    );
+
+    naviStatus.textContent =
+      "ارتباط با ناوی برقرار نشد. می‌توانی دوباره تلاش کنی.";
+
+  } finally {
+    sendRequest.disabled = false;
+    sendRequest.textContent = "ارسال پیام به ناوی";
+  }
+}
+
+/* کلیک روی دکمه ارسال */
+
+sendRequest.addEventListener("click",sendMessageToNavi);
+
+/* ارسال با Ctrl + Enter یا کلیدهای معادل */
+
+userRequest.addEventListener("keydown",event => {
+  if (event.key === "Enter" && (event.ctrlKey || event.metaKey)) {
+    event.preventDefault();
+
+    if (!sendRequest.disabled) {
+      sendMessageToNavi();
+    }
+  }
 });
 
-/* STORY MAKER */
+/* =========================================
+   STORY MAKER
+========================================= */
 
 const storyInput = document.getElementById("storyInput");
 const previewText = document.getElementById("previewText");
@@ -1607,4 +1515,3 @@ copyStory.addEventListener("click",async () => {
 
 </body>
 </html>
- 
