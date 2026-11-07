@@ -151,6 +151,78 @@ nav{display:flex;gap:8px;padding:0 0 13px;overflow-x:auto}
 .navi-history-refresh{border:1px solid var(--border);background:transparent;color:var(--muted);padding:7px 11px;border-radius:9px;font-size:11px}
 .navi-history-refresh:disabled{opacity:.5;cursor:wait}
 
+/* NAVI MEMORY MANAGEMENT */
+.navi-memory-panel{
+  margin:18px 0 22px;
+  border:1px solid var(--border);
+  border-radius:15px;
+  background:var(--bg);
+  overflow:hidden;
+}
+.navi-memory-toggle{
+  width:100%;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding:15px;
+  color:var(--gold);
+  background:linear-gradient(110deg,rgba(229,184,94,.10),rgba(37,202,255,.06));
+  border:0;
+  text-align:right;
+  font-size:13px;
+  font-weight:bold;
+}
+.navi-memory-toggle:hover{background:linear-gradient(110deg,rgba(229,184,94,.16),rgba(37,202,255,.10))}
+.navi-memory-toggle:disabled{opacity:.6;cursor:wait}
+.navi-memory-arrow{font-size:16px;transition:transform .2s}
+.navi-memory-toggle[aria-expanded="true"] .navi-memory-arrow{transform:rotate(180deg)}
+.navi-memory-content{padding:14px}
+.navi-memory-content[hidden]{display:none!important}
+.navi-memory-description{font-size:11px;color:var(--muted);line-height:2;margin-bottom:13px}
+.navi-memory-toolbar{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:13px}
+.navi-memory-status{font-size:11px;color:var(--muted);line-height:1.9}
+.navi-memory-refresh{
+  border:1px solid var(--border);background:transparent;color:var(--muted);
+  padding:8px 12px;border-radius:9px;font-size:11px;
+}
+.navi-memory-refresh:hover{border-color:var(--blue);color:var(--blue)}
+.navi-memory-refresh:disabled{opacity:.5;cursor:wait}
+.navi-memory-list{display:flex;flex-direction:column;gap:12px}
+.navi-memory-empty{
+  color:var(--muted);font-size:12px;line-height:2;text-align:center;
+  padding:20px 8px;border:1px dashed var(--border);border-radius:11px;
+}
+.navi-memory-card{
+  border:1px solid var(--border);border-radius:12px;
+  padding:13px;background:linear-gradient(145deg,rgba(229,184,94,.045),rgba(37,202,255,.035));
+}
+.navi-memory-key{font-size:12px;color:var(--gold);font-weight:bold;margin-bottom:8px;overflow-wrap:anywhere}
+.navi-memory-value{font-size:12px;line-height:2;color:var(--text);white-space:pre-wrap;overflow-wrap:anywhere}
+.navi-memory-meta{display:flex;gap:12px;flex-wrap:wrap;color:var(--muted);font-size:10px;margin-top:10px}
+.navi-memory-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.navi-memory-edit,.navi-memory-delete,.navi-memory-save,.navi-memory-cancel{
+  padding:8px 12px;border-radius:9px;font-size:11px;border:1px solid var(--border);
+  background:transparent;color:var(--text);
+}
+.navi-memory-edit:hover,.navi-memory-save:hover{border-color:var(--blue);color:var(--blue)}
+.navi-memory-delete{color:#ff8585;border-color:rgba(255,133,133,.3)}
+.navi-memory-delete:hover{background:rgba(255,80,80,.08);border-color:#ff8585}
+.navi-memory-save{color:var(--gold)}
+.navi-memory-cancel{color:var(--muted)}
+.navi-memory-edit:disabled,.navi-memory-delete:disabled,
+.navi-memory-save:disabled,.navi-memory-cancel:disabled{opacity:.5;cursor:wait}
+.navi-memory-editor{
+  width:100%;min-height:110px;resize:vertical;margin-top:10px;
+  padding:12px;border-radius:10px;border:1px solid var(--border);
+  background:var(--bg);color:var(--text);outline:none;
+  font-size:12px;line-height:2;
+}
+.navi-memory-editor:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,202,255,.08)}
+.navi-memory-error{color:#ff8585;font-size:11px;line-height:2;margin-top:10px;white-space:pre-wrap}
+.navi-memory-error:empty{display:none}
+.navi-memory-success{color:#65c99a;font-size:11px;line-height:2;margin-top:10px}
+
 /* STORY MAKER */
 .tool-page{padding:40px 0 65px;max-width:850px;margin:auto}
 .tool-card{position:relative;overflow:hidden;background:var(--card-gradient);border:1px solid transparent;border-radius:20px;padding:1px;box-shadow:var(--shadow)}
@@ -194,8 +266,8 @@ body.light .service-icon{color:#d16b30;background:linear-gradient(135deg,#fff0ce
 body.light .request-panel:before{background:linear-gradient(145deg,#fffefa,#fff5e9 65%,#edf5fc)}
 body.light .request-panel h2{color:#bd6530}
 body.light .field-label{color:#b96b28}
-body.light .request-select,body.light .request-textarea,body.light .story-input,body.light .navi-password{background:#fffdf8;color:#17243b;border-color:rgba(193,127,37,.30)}
-body.light .request-select:focus,body.light .request-textarea:focus,body.light .story-input:focus,body.light .navi-password:focus{border-color:#e68b43;box-shadow:0 0 0 3px rgba(238,139,65,.12),0 0 15px rgba(38,133,208,.08)}
+body.light .request-select,body.light .request-textarea,body.light .story-input,body.light .navi-password,body.light .navi-memory-editor{background:#fffdf8;color:#17243b;border-color:rgba(193,127,37,.30)}
+body.light .request-select:focus,body.light .request-textarea:focus,body.light .story-input:focus,body.light .navi-password:focus,body.light .navi-memory-editor:focus{border-color:#e68b43;box-shadow:0 0 0 3px rgba(238,139,65,.12),0 0 15px rgba(38,133,208,.08)}
 body.light .response-box{background:linear-gradient(120deg,#fff8e9,#eef6ff);border:1px solid rgba(218,145,50,.35);border-radius:12px;color:#263a56}
 body.light .tool-card-inner{background:linear-gradient(145deg,#fffefa,#fff4e7 58%,#edf5ff)}
 body.light .tool-card h1{color:#bd6530}
@@ -206,6 +278,8 @@ body.light .coming-card h1{background:linear-gradient(90deg,#c6811e,#ed6849,#287
 body.light footer{border-top-color:rgba(193,127,37,.25)}
 body.light footer strong{background:linear-gradient(90deg,#c6811e,#ed6849,#287fd0);-webkit-background-clip:text;background-clip:text;color:transparent}
 body.light .theme-btn:hover{border-color:#e88b43;box-shadow:0 0 15px rgba(239,137,60,.18)}
+body.light .navi-memory-card{background:linear-gradient(145deg,rgba(255,244,220,.75),rgba(235,246,255,.65))}
+body.light .navi-memory-value{color:#263a56}
 
 /* RESPONSIVE */
 @media(max-width:800px){
@@ -225,6 +299,7 @@ body.light .theme-btn:hover{border-color:#e88b43;box-shadow:0 0 15px rgba(239,13
   .coming-card-inner{padding:45px 17px}.brand{transform:scale(.94)}
   .navi-message.user{margin-left:2%}
   .navi-message.assistant{margin-right:2%}
+  .navi-memory-content{padding:11px}
 }
 @media(prefers-reduced-motion:reduce){
   *,*:before,*:after{animation-duration:.01ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important}
@@ -354,6 +429,45 @@ body.light .theme-btn:hover{border-color:#e88b43;box-shadow:0 0 15px rgba(239,13
             </div>
           </div>
 
+          <!-- مدیریت حافظه ناوی -->
+          <section class="navi-memory-panel" id="naviMemoryPanel">
+            <button
+              class="navi-memory-toggle"
+              id="naviMemoryToggle"
+              type="button"
+              aria-expanded="false"
+              aria-controls="naviMemoryContent"
+            >
+              <span>🧠 مدیریت حافظه ناوی</span>
+              <span class="navi-memory-arrow" aria-hidden="true">⌄</span>
+            </button>
+
+            <div class="navi-memory-content" id="naviMemoryContent" hidden>
+              <p class="navi-memory-description">
+                اطلاعات ثبت‌شده در حافظه ناوی را اینجا می‌بینی.
+                می‌توانی هر مورد را ویرایش یا حذف کنی.
+              </p>
+
+              <div class="navi-memory-toolbar">
+                <span class="navi-memory-status" id="naviMemoryStatus">
+                  برای دریافت حافظه‌ها، دکمه تازه‌سازی را بزن.
+                </span>
+                <button
+                  class="navi-memory-refresh"
+                  id="naviMemoryRefresh"
+                  type="button"
+                >تازه‌سازی حافظه‌ها</button>
+              </div>
+
+              <div class="navi-memory-error" id="naviMemoryError" role="alert"></div>
+              <div class="navi-memory-list" id="naviMemoryList" aria-live="polite">
+                <div class="navi-memory-empty">
+                  هنوز حافظه‌ای بارگذاری نشده است.
+                </div>
+              </div>
+            </div>
+          </section>
+
           <label class="field-label" for="serviceSelect">موضوع درخواست</label>
           <select class="request-select" id="serviceSelect">
             <option value="انتخاب نشده">انتخاب موضوع</option>
@@ -427,6 +541,7 @@ body.light .theme-btn:hover{border-color:#e88b43;box-shadow:0 0 15px rgba(239,13
     <p>One Vision. One Mission. One NAVA.</p>
   </div>
 </footer>
+
 <script>
 /* =========================================
    PAGE NAVIGATION
@@ -492,6 +607,7 @@ const NAVI_BASE = "https://nava-music-api.honrrpower.workers.dev";
 const NAVI_LOGIN_API = NAVI_BASE + "/navi-login";
 const NAVI_API = NAVI_BASE + "/navi-chat";
 const NAVI_HISTORY_API = NAVI_BASE + "/navi-history";
+const NAVI_MEMORY_API = NAVI_BASE + "/navi-memory";
 
 const NAVI_SESSION_KEY = "nava_navi_session";
 const NAVI_EXPIRY_KEY = "nava_navi_expiry";
@@ -517,6 +633,20 @@ const naviStatus = document.getElementById("naviStatus");
 const naviHistoryList = document.getElementById("naviHistoryList");
 const naviHistoryCount = document.getElementById("naviHistoryCount");
 const naviHistoryRefresh = document.getElementById("naviHistoryRefresh");
+
+/* حافظه ناوی */
+const naviMemoryToggle = document.getElementById("naviMemoryToggle");
+const naviMemoryContent = document.getElementById("naviMemoryContent");
+const naviMemoryRefresh = document.getElementById("naviMemoryRefresh");
+const naviMemoryStatus = document.getElementById("naviMemoryStatus");
+const naviMemoryError = document.getElementById("naviMemoryError");
+const naviMemoryList = document.getElementById("naviMemoryList");
+
+let naviMemory = [];
+let naviMemoryLoading = false;
+let naviMemoryLoadPromise = null;
+let naviMemoryLoaded = false;
+let naviMemoryBusy = false;
 
 /*
   تاریخچه اصلی باید در D1 ذخیره شود.
@@ -619,6 +749,11 @@ function clearNaviSession() {
   */
 
   naviHistory = [];
+  naviMemory = [];
+  naviMemoryLoaded = false;
+  naviMemoryLoading = false;
+  naviMemoryLoadPromise = null;
+  naviMemoryBusy = false;
 
   if (naviChatArea) naviChatArea.hidden = true;
   if (naviLoginPanel) naviLoginPanel.hidden = false;
@@ -636,6 +771,8 @@ function clearNaviSession() {
   if (naviStatus) {
     naviStatus.textContent = "برای شروع گفت‌وگو وارد شو.";
   }
+
+  resetNaviMemoryPanel();
 }
 
 function showNaviChat() {
@@ -752,9 +889,6 @@ function renderNaviHistory(messages) {
     label.textContent = role === "user" ? "شما" : "ناوی";
 
     const content = document.createElement("div");
-
-    // پیام‌ها فقط با textContent نمایش داده می‌شوند.
-    // بنابراین متن ذخیره‌شده نمی‌تواند HTML یا اسکریپت اجرا کند.
     content.textContent = String(item.content || "");
 
     message.appendChild(label);
@@ -780,11 +914,6 @@ async function loadNaviHistory() {
   if (!token) {
     return false;
   }
-
-  /*
-    اگر درخواست قبلی هنوز در حال اجراست،
-    به‌جای ارسال درخواست تکراری همان Promise را برمی‌گردانیم.
-  */
 
   if (naviHistoryLoading && naviHistoryLoadPromise) {
     return naviHistoryLoadPromise;
@@ -813,7 +942,6 @@ async function loadNaviHistory() {
         throw new Error("پاسخ تاریخچه قابل خواندن نیست.");
       }
 
-      // اگر در زمان دریافت، کاربر خارج شده باشد، پاسخ قدیمی را نادیده بگیر.
       if (getNaviToken() !== token) {
         return false;
       }
@@ -849,13 +977,7 @@ async function loadNaviHistory() {
     } catch (error) {
       console.error("NAVI history error:", error);
 
-      /*
-        خطای تاریخچه نباید باعث خروج کاربر شود.
-        اگر پیام محلی داریم، آن‌ها را حفظ و نمایش می‌دهیم.
-      */
-
       renderNaviHistory(naviHistory);
-
       naviHistoryCount.textContent = "حافظه آنلاین در دسترس نیست";
 
       if (naviHistory.length === 0) {
@@ -888,13 +1010,6 @@ async function loadNaviHistory() {
    LOCAL HISTORY FALLBACK
 ========================================= */
 
-/*
-  اگر پاسخ ناوی با موفقیت دریافت شود اما تازه‌سازی تاریخچه
-  شکست بخورد، پیام‌ها موقتاً در حافظه همین صفحه نگه داشته می‌شوند.
-
-  این ذخیره موقت جایگزین D1 نیست و با بستن صفحه از بین می‌رود.
-*/
-
 function appendLocalNaviMessages(userMessage, assistantMessage) {
   const additions = [];
 
@@ -919,6 +1034,547 @@ function appendLocalNaviMessages(userMessage, assistantMessage) {
 
   renderNaviHistory(naviHistory);
 }
+
+/* =========================================
+   NAVI MEMORY — HELPERS
+========================================= */
+
+function setNaviMemoryStatus(message) {
+  naviMemoryStatus.textContent = message;
+}
+
+function showNaviMemoryError(message) {
+  naviMemoryError.textContent = message || "";
+}
+
+function resetNaviMemoryPanel() {
+  naviMemoryToggle.setAttribute("aria-expanded", "false");
+  naviMemoryContent.hidden = true;
+
+  naviMemoryList.replaceChildren();
+
+  const empty = document.createElement("div");
+  empty.className = "navi-memory-empty";
+  empty.textContent = "برای مشاهده حافظه‌ها وارد ناوی شو.";
+
+  naviMemoryList.appendChild(empty);
+
+  naviMemoryStatus.textContent = "حافظه‌ها بارگذاری نشده‌اند.";
+  naviMemoryError.textContent = "";
+
+  naviMemoryRefresh.disabled = false;
+  naviMemoryRefresh.textContent = "تازه‌سازی حافظه‌ها";
+}
+
+function formatNaviMemoryDate(value) {
+  if (!value) return "";
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return String(value);
+  }
+
+  try {
+    return new Intl.DateTimeFormat("fa-IR", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit"
+    }).format(date);
+  } catch (error) {
+    return date.toLocaleString();
+  }
+}
+
+function normalizeNaviMemories(data) {
+  let source = [];
+
+  if (Array.isArray(data)) {
+    source = data;
+  } else if (data && Array.isArray(data.memories)) {
+    source = data.memories;
+  } else if (data && data.data && Array.isArray(data.data.memories)) {
+    source = data.data.memories;
+  }
+
+  return source
+    .filter(item => item && typeof item === "object")
+    .map(item => ({
+      id: Number(item.id),
+      memory_key: String(item.memory_key ?? "بدون عنوان"),
+      memory_value: String(item.memory_value ?? ""),
+      source: String(item.source ?? ""),
+      created_at: item.created_at ?? "",
+      updated_at: item.updated_at ?? ""
+    }))
+    .filter(item => Number.isSafeInteger(item.id) && item.id > 0);
+}
+
+/* =========================================
+   NAVI MEMORY — SAFE RENDERING
+========================================= */
+
+/*
+  محتوای حافظه‌ها از دیتابیس می‌آید.
+  برای جلوگیری از اجرای HTML یا اسکریپت احتمالی،
+  تمام متن‌ها با textContent در DOM قرار می‌گیرند.
+  هیچ مقدار دیتابیسی با innerHTML تزریق نمی‌شود.
+*/
+
+function renderNaviMemories(memories) {
+  naviMemoryList.replaceChildren();
+
+  if (!Array.isArray(memories) || memories.length === 0) {
+    const empty = document.createElement("div");
+    empty.className = "navi-memory-empty";
+    empty.textContent = "در حال حاضر حافظه‌ای برای نمایش وجود ندارد.";
+    naviMemoryList.appendChild(empty);
+    return;
+  }
+
+  const fragment = document.createDocumentFragment();
+
+  memories.forEach(memory => {
+    const card = document.createElement("article");
+    card.className = "navi-memory-card";
+    card.dataset.memoryId = String(memory.id);
+
+    const key = document.createElement("div");
+    key.className = "navi-memory-key";
+    key.textContent = memory.memory_key;
+
+    const value = document.createElement("div");
+    value.className = "navi-memory-value";
+    value.textContent = memory.memory_value || "محتوای این حافظه خالی است.";
+
+    const meta = document.createElement("div");
+    meta.className = "navi-memory-meta";
+
+    if (memory.source) {
+      const source = document.createElement("span");
+      source.textContent = "منبع: " + memory.source;
+      meta.appendChild(source);
+    }
+
+    const dateValue = memory.updated_at || memory.created_at;
+
+    if (dateValue) {
+      const date = document.createElement("span");
+      date.textContent = "آخرین ثبت: " + formatNaviMemoryDate(dateValue);
+      meta.appendChild(date);
+    }
+
+    const actions = document.createElement("div");
+    actions.className = "navi-memory-actions";
+
+    const editButton = document.createElement("button");
+    editButton.type = "button";
+    editButton.className = "navi-memory-edit";
+    editButton.textContent = "ویرایش";
+
+    editButton.addEventListener("click", () => {
+      openNaviMemoryEditor(memory, card);
+    });
+
+    const deleteButton = document.createElement("button");
+    deleteButton.type = "button";
+    deleteButton.className = "navi-memory-delete";
+    deleteButton.textContent = "حذف";
+
+    deleteButton.addEventListener("click", () => {
+      deleteNaviMemory(memory.id, deleteButton);
+    });
+
+    actions.append(editButton, deleteButton);
+    card.append(key, value, meta, actions);
+    fragment.appendChild(card);
+  });
+
+  naviMemoryList.appendChild(fragment);
+}
+
+/* =========================================
+   NAVI MEMORY — LOAD FROM WORKER
+========================================= */
+
+async function loadNaviMemories(forceRefresh = false) {
+  const token = getNaviToken();
+
+  if (!token) {
+    setNaviMemoryStatus("برای مشاهده حافظه‌ها دوباره وارد ناوی شو.");
+    return false;
+  }
+
+  if (naviMemoryLoading && naviMemoryLoadPromise) {
+    return naviMemoryLoadPromise;
+  }
+
+  if (naviMemoryLoaded && !forceRefresh) {
+    return true;
+  }
+
+  naviMemoryLoading = true;
+  naviMemoryRefresh.disabled = true;
+  naviMemoryRefresh.textContent = "در حال دریافت...";
+  setNaviMemoryStatus("در حال دریافت حافظه‌های ناوی...");
+  showNaviMemoryError("");
+
+  naviMemoryLoadPromise = (async () => {
+    try {
+      const response = await fetch(NAVI_MEMORY_API, {
+        method: "GET",
+        headers: {
+          "Authorization": "Bearer " + token
+        },
+        cache: "no-store"
+      });
+
+      let data;
+
+      try {
+        data = await response.json();
+      } catch (error) {
+        throw new Error("پاسخ حافظه‌ها از سرور قابل خواندن نیست.");
+      }
+
+      // پاسخ مربوط به نشست قبلی نباید روی نشست جدید اثر بگذارد.
+      if (getNaviToken() !== token) {
+        return false;
+      }
+
+      if (response.status === 401 || response.status === 403) {
+        clearNaviSession();
+        showLoginError(
+          "نشست ناوی معتبر نیست یا پایان یافته است. دوباره وارد شو."
+        );
+        throw new Error("دسترسی به حافظه تأیید نشد. دوباره وارد ناوی شو.");
+      }
+
+      if (!response.ok || (data && data.success === false)) {
+        throw new Error(
+          (data && (data.error || data.diagnostic)) ||
+          "دریافت حافظه‌های ناوی ناموفق بود."
+        );
+      }
+
+      naviMemory = normalizeNaviMemories(data);
+      naviMemoryLoaded = true;
+
+      renderNaviMemories(naviMemory);
+
+      setNaviMemoryStatus(
+        naviMemory.length
+          ? naviMemory.length + " مورد حافظه ثبت شده است."
+          : "هنوز حافظه‌ای ثبت نشده است."
+      );
+
+      return true;
+
+    } catch (error) {
+      console.error("NAVI memory load error:", error);
+
+      showNaviMemoryError(
+        error.message || "دریافت حافظه‌ها با خطا مواجه شد."
+      );
+
+      if (!naviMemoryLoaded) {
+        naviMemoryList.replaceChildren();
+
+        const empty = document.createElement("div");
+        empty.className = "navi-memory-empty";
+        empty.textContent = "دریافت حافظه‌ها انجام نشد. دوباره تلاش کن.";
+
+        naviMemoryList.appendChild(empty);
+      }
+
+      setNaviMemoryStatus("اتصال به بخش حافظه برقرار نشد.");
+      return false;
+
+    } finally {
+      naviMemoryLoading = false;
+      naviMemoryLoadPromise = null;
+
+      naviMemoryRefresh.disabled = false;
+      naviMemoryRefresh.textContent = "تازه‌سازی حافظه‌ها";
+    }
+  })();
+
+  return naviMemoryLoadPromise;
+}
+
+/* =========================================
+   NAVI MEMORY — INLINE EDITOR
+========================================= */
+
+function openNaviMemoryEditor(memory, card) {
+  if (naviMemoryBusy) return;
+
+  // اگر ویرایشگر دیگری باز است، ابتدا آن را ببند.
+  const previousEditor = naviMemoryList.querySelector(".navi-memory-editor");
+
+  if (previousEditor) {
+    loadNaviMemories(true);
+    return;
+  }
+
+  const valueElement = card.querySelector(".navi-memory-value");
+  const actions = card.querySelector(".navi-memory-actions");
+
+  if (!valueElement || !actions) return;
+
+  const editor = document.createElement("textarea");
+  editor.className = "navi-memory-editor";
+  editor.value = memory.memory_value;
+  editor.setAttribute("aria-label", "ویرایش محتوای حافظه");
+
+  const editorActions = document.createElement("div");
+  editorActions.className = "navi-memory-actions";
+
+  const saveButton = document.createElement("button");
+  saveButton.type = "button";
+  saveButton.className = "navi-memory-save";
+  saveButton.textContent = "ذخیره تغییرات";
+
+  const cancelButton = document.createElement("button");
+  cancelButton.type = "button";
+  cancelButton.className = "navi-memory-cancel";
+  cancelButton.textContent = "انصراف";
+
+  saveButton.addEventListener("click", () => {
+    updateNaviMemory(memory.id, editor.value, saveButton, editor);
+  });
+
+  cancelButton.addEventListener("click", () => {
+    editor.remove();
+    editorActions.remove();
+    valueElement.hidden = false;
+    actions.hidden = false;
+  });
+
+  valueElement.hidden = true;
+  actions.hidden = true;
+
+  card.insertBefore(editor, actions);
+  card.insertBefore(editorActions, actions);
+  editorActions.append(saveButton, cancelButton);
+
+  editor.focus();
+}
+
+/* =========================================
+   NAVI MEMORY — UPDATE
+========================================= */
+
+async function updateNaviMemory(id, memoryValue, button, editor) {
+  const token = getNaviToken();
+
+  if (!token) {
+    clearNaviSession();
+    showLoginError("نشست ناوی پایان یافته است. دوباره وارد شو.");
+    return;
+  }
+
+  const cleanValue = String(memoryValue || "").trim();
+
+  if (!cleanValue) {
+    showNaviMemoryError("محتوای حافظه نمی‌تواند خالی باشد.");
+    editor.focus();
+    return;
+  }
+
+  if (!Number.isSafeInteger(Number(id)) || Number(id) <= 0) {
+    showNaviMemoryError("شناسه این حافظه معتبر نیست.");
+    return;
+  }
+
+  if (naviMemoryBusy) return;
+
+  naviMemoryBusy = true;
+  button.disabled = true;
+  button.textContent = "در حال ذخیره...";
+  showNaviMemoryError("");
+  setNaviMemoryStatus("در حال ذخیره تغییرات حافظه...");
+
+  try {
+    const response = await fetch(NAVI_MEMORY_API, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + token
+      },
+      body: JSON.stringify({
+        action: "update",
+        id: Number(id),
+        memory_value: cleanValue
+      })
+    });
+
+    let data;
+
+    try {
+      data = await response.json();
+    } catch (error) {
+      throw new Error("پاسخ سرور هنگام ذخیره حافظه قابل خواندن نیست.");
+    }
+
+    if (getNaviToken() !== token) {
+      return;
+    }
+
+    if (response.status === 401 || response.status === 403) {
+      clearNaviSession();
+      showLoginError("نشست ناوی معتبر نیست. دوباره وارد شو.");
+      throw new Error("دسترسی تأیید نشد. دوباره وارد ناوی شو.");
+    }
+
+    if (!response.ok || (data && data.success === false)) {
+      throw new Error(
+        (data && (data.error || data.diagnostic)) ||
+        "ذخیره تغییرات حافظه ناموفق بود."
+      );
+    }
+
+    setNaviMemoryStatus("تغییرات ذخیره شد؛ در حال دریافت نسخه به‌روز...");
+    await loadNaviMemories(true);
+
+    if (getNaviToken()) {
+      setNaviMemoryStatus("حافظه با موفقیت به‌روزرسانی شد.");
+    }
+
+  } catch (error) {
+    console.error("NAVI memory update error:", error);
+
+    showNaviMemoryError(
+      error.message || "ویرایش حافظه انجام نشد."
+    );
+
+    if (getNaviToken()) {
+      button.disabled = false;
+      button.textContent = "ذخیره تغییرات";
+    }
+
+  } finally {
+    naviMemoryBusy = false;
+  }
+}
+
+/* =========================================
+   NAVI MEMORY — DELETE
+========================================= */
+
+async function deleteNaviMemory(id, button) {
+  const token = getNaviToken();
+
+  if (!token) {
+    clearNaviSession();
+    showLoginError("نشست ناوی پایان یافته است. دوباره وارد شو.");
+    return;
+  }
+
+  if (!Number.isSafeInteger(Number(id)) || Number(id) <= 0) {
+    showNaviMemoryError("شناسه این حافظه معتبر نیست.");
+    return;
+  }
+
+  if (naviMemoryBusy) return;
+
+  const confirmed = window.confirm(
+    "آیا مطمئنی می‌خواهی این حافظه را حذف کنی؟\nاین عملیات قابل بازگشت نیست."
+  );
+
+  if (!confirmed) return;
+
+  naviMemoryBusy = true;
+  button.disabled = true;
+  button.textContent = "در حال حذف...";
+  showNaviMemoryError("");
+  setNaviMemoryStatus("در حال حذف حافظه...");
+
+  try {
+    const response = await fetch(NAVI_MEMORY_API, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + token
+      },
+      body: JSON.stringify({
+        action: "delete",
+        id: Number(id)
+      })
+    });
+
+    let data;
+
+    try {
+      data = await response.json();
+    } catch (error) {
+      throw new Error("پاسخ سرور هنگام حذف حافظه قابل خواندن نیست.");
+    }
+
+    if (getNaviToken() !== token) {
+      return;
+    }
+
+    if (response.status === 401 || response.status === 403) {
+      clearNaviSession();
+      showLoginError("نشست ناوی معتبر نیست. دوباره وارد شو.");
+      throw new Error("دسترسی تأیید نشد. دوباره وارد ناوی شو.");
+    }
+
+    if (!response.ok || (data && data.success === false)) {
+      throw new Error(
+        (data && (data.error || data.diagnostic)) ||
+        "حذف حافظه ناموفق بود."
+      );
+    }
+
+    setNaviMemoryStatus("حافظه حذف شد؛ در حال تازه‌سازی فهرست...");
+    await loadNaviMemories(true);
+
+    if (getNaviToken()) {
+      setNaviMemoryStatus("حافظه با موفقیت حذف شد.");
+    }
+
+  } catch (error) {
+    console.error("NAVI memory delete error:", error);
+
+    showNaviMemoryError(
+      error.message || "حذف حافظه انجام نشد."
+    );
+
+    if (getNaviToken()) {
+      button.disabled = false;
+      button.textContent = "حذف";
+    }
+
+  } finally {
+    naviMemoryBusy = false;
+  }
+}
+
+/* =========================================
+   NAVI MEMORY — PANEL EVENTS
+========================================= */
+
+naviMemoryToggle.addEventListener("click", async () => {
+  const isOpening = naviMemoryContent.hidden;
+
+  naviMemoryContent.hidden = !isOpening;
+  naviMemoryToggle.setAttribute(
+    "aria-expanded",
+    isOpening ? "true" : "false"
+  );
+
+  if (isOpening && !naviMemoryLoaded) {
+    await loadNaviMemories();
+  }
+});
+
+naviMemoryRefresh.addEventListener("click", () => {
+  loadNaviMemories(true);
+});
 
 /* =========================================
    RESTORE SESSION ON PAGE OPEN
@@ -986,11 +1642,11 @@ naviLoginForm.addEventListener("submit", async (event) => {
 
     naviPassword.value = "";
     naviHistory = [];
+    naviMemory = [];
+    naviMemoryLoaded = false;
 
     showNaviChat();
 
-    // تاریخچه از سرور بازیابی می‌شود.
-    // خطای تاریخچه نباید ورود موفق را لغو کند.
     const historyLoaded = await loadNaviHistory();
 
     if (!historyLoaded && getNaviToken()) {
@@ -1020,6 +1676,7 @@ naviLogout.addEventListener("click", () => {
   /*
     فقط توکن و نشست مرورگر پاک می‌شوند.
     تاریخچه ذخیره‌شده در D1 حذف نمی‌شود.
+    اطلاعات حافظه نیز از دیتابیس حذف نمی‌شوند.
   */
 
   clearNaviSession();
@@ -1151,19 +1808,12 @@ async function sendMessageToNavi() {
       throw new Error("ناوی پاسخ خالی ارسال کرده است.");
     }
 
-    // پاسخ موفق ناوی بلافاصله به کاربر نمایش داده می‌شود.
     showNaviReply(reply);
     userRequest.value = "";
 
     setNaviStatus(
       "پاسخ ناوی دریافت شد؛ در حال به‌روزرسانی تاریخچه..."
     );
-
-    /*
-      ابتدا تلاش می‌کنیم تاریخچه تازه را از D1 بخوانیم.
-      اگر موفق بود، همان تاریخچه سرور منبع نمایش خواهد بود.
-      اگر ناموفق بود، پیام‌های همین نوبت را محلی اضافه می‌کنیم.
-    */
 
     const historyUpdated = await loadNaviHistory();
 
@@ -1271,4 +1921,4 @@ copyStory.addEventListener("click", async () => {
 </script>
 
 </body>
-</html>
+  </html>
