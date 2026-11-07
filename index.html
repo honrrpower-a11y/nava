@@ -123,20 +123,10 @@ nav{display:flex;gap:8px;padding:0 0 13px;overflow-x:auto}
 #requestResponse{min-height:55px}
 
 /* NAVI LOGIN */
-.navi-auth-panel{
-  border:1px solid var(--border);
-  border-radius:16px;
-  padding:20px;
-  margin:18px 0;
-  background:linear-gradient(145deg,rgba(229,184,94,.07),rgba(37,202,255,.04));
-}
+.navi-auth-panel{border:1px solid var(--border);border-radius:16px;padding:20px;margin:18px 0;background:linear-gradient(145deg,rgba(229,184,94,.07),rgba(37,202,255,.04))}
 .navi-auth-panel h3{color:var(--gold);font-size:16px;margin-bottom:10px}
 .navi-auth-panel p{color:var(--muted);font-size:12px;line-height:2;margin-bottom:14px}
-.navi-password{
-  width:100%;padding:14px;background:var(--bg);color:var(--text);
-  border:1px solid var(--border);border-radius:12px;outline:none;
-  margin-bottom:12px;direction:ltr;text-align:left;
-}
+.navi-password{width:100%;padding:14px;background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:12px;outline:none;margin-bottom:12px;direction:ltr;text-align:left}
 .navi-password:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,202,255,.09)}
 .navi-auth-error{display:none;color:#ff8585;font-size:12px;line-height:1.9;margin-top:10px;white-space:pre-wrap}
 .navi-auth-error.show{display:block}
@@ -144,6 +134,79 @@ nav{display:flex;gap:8px;padding:0 0 13px;overflow-x:auto}
 .navi-chat-toolbar{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin:14px 0}
 .navi-logout{background:transparent;border:1px solid var(--border);color:var(--muted);padding:8px 12px;border-radius:10px;font-size:12px}
 .navi-logout:hover{border-color:#e57373;color:#e57373}
+
+/* NAVI PERSISTENT CHAT HISTORY */
+.navi-history{
+  margin:16px 0 20px;
+  padding:15px;
+  border:1px solid var(--border);
+  border-radius:15px;
+  background:var(--bg);
+}
+.navi-history-heading{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:10px;
+  margin-bottom:13px;
+}
+.navi-history-heading strong{color:var(--gold);font-size:13px}
+.navi-history-count{font-size:10px;color:var(--muted)}
+.navi-history-list{
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+  max-height:430px;
+  overflow-y:auto;
+  padding:3px;
+}
+.navi-history-empty{
+  color:var(--muted);
+  font-size:12px;
+  line-height:2;
+  text-align:center;
+  padding:18px 5px;
+}
+.navi-message{
+  padding:12px 14px;
+  border-radius:12px;
+  line-height:2;
+  font-size:12px;
+  white-space:pre-wrap;
+  overflow-wrap:anywhere;
+}
+.navi-message.user{
+  background:linear-gradient(120deg,rgba(229,184,94,.13),rgba(229,184,94,.05));
+  border:1px solid rgba(229,184,94,.2);
+  margin-left:8%;
+}
+.navi-message.assistant{
+  background:linear-gradient(120deg,rgba(37,202,255,.09),rgba(40,120,255,.06));
+  border:1px solid rgba(37,202,255,.18);
+  margin-right:8%;
+}
+.navi-message-label{
+  display:block;
+  font-size:10px;
+  font-weight:bold;
+  color:var(--gold);
+  margin-bottom:5px;
+}
+.navi-message.assistant .navi-message-label{color:var(--blue)}
+.navi-history-actions{
+  display:flex;
+  justify-content:flex-start;
+  margin-top:10px;
+}
+.navi-history-refresh{
+  border:1px solid var(--border);
+  background:transparent;
+  color:var(--muted);
+  padding:7px 11px;
+  border-radius:9px;
+  font-size:11px;
+}
+.navi-history-refresh:disabled{opacity:.5;cursor:wait}
 
 /* STORY MAKER */
 .tool-page{padding:40px 0 65px;max-width:850px;margin:auto}
@@ -217,6 +280,8 @@ body.light .theme-btn:hover{border-color:#e88b43;box-shadow:0 0 15px rgba(239,13
   .service-card p{font-size:11px}
   .request-content,.tool-card-inner{padding:18px}
   .coming-card-inner{padding:45px 17px}.brand{transform:scale(.94)}
+  .navi-message.user{margin-left:2%}
+  .navi-message.assistant{margin-right:2%}
 }
 @media(prefers-reduced-motion:reduce){
   *,*:before,*:after{animation-duration:.01ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important}
@@ -313,32 +378,38 @@ body.light .theme-btn:hover{border-color:#e88b43;box-shadow:0 0 15px rgba(239,13
           موضوعت را انتخاب کن و درخواستت را بنویس تا با هم آن را بررسی کنیم.
         </p>
 
-        <!-- فرم ورود؛ فقط برای دسترسی به ناوی -->
         <div class="navi-auth-panel" id="naviLoginPanel">
           <h3>ورود اختصاصی به ناوی</h3>
           <p>برای شروع گفت‌وگو با ناوی، رمز ورود اختصاصی را وارد کن.</p>
           <form id="naviLoginForm">
             <label class="field-label" for="naviPassword">رمز ورود</label>
-            <input
-              class="navi-password"
-              id="naviPassword"
-              type="password"
-              placeholder="رمز اختصاصی ناوی"
-              autocomplete="current-password"
-              required
-            >
-            <button class="btn-primary" id="naviLoginButton" type="submit">
-              ورود به ناوی
-            </button>
+            <input class="navi-password" id="naviPassword" type="password"
+              placeholder="رمز اختصاصی ناوی" autocomplete="current-password" required>
+            <button class="btn-primary" id="naviLoginButton" type="submit">ورود به ناوی</button>
           </form>
           <div class="navi-auth-error" id="naviLoginError" role="alert"></div>
         </div>
 
-        <!-- محیط گفت‌وگو؛ پس از ورود نمایش داده می‌شود -->
         <div class="navi-chat-area" id="naviChatArea" hidden>
           <div class="navi-chat-toolbar">
             <span class="navi-status" id="naviLoginStatus">نشست امن ناوی فعال است.</span>
             <button class="navi-logout" id="naviLogout" type="button">خروج از ناوی</button>
+          </div>
+
+          <!-- تاریخچه پایدار گفت‌وگو -->
+          <div class="navi-history" id="naviHistoryPanel">
+            <div class="navi-history-heading">
+              <strong>گفت‌وگوهای قبلی با ناوی</strong>
+              <span class="navi-history-count" id="naviHistoryCount">در حال بارگذاری...</span>
+            </div>
+            <div class="navi-history-list" id="naviHistoryList" aria-live="polite">
+              <div class="navi-history-empty">در حال دریافت تاریخچه گفت‌وگو...</div>
+            </div>
+            <div class="navi-history-actions">
+              <button class="navi-history-refresh" id="naviHistoryRefresh" type="button">
+                تازه‌سازی تاریخچه
+              </button>
+            </div>
           </div>
 
           <label class="field-label" for="serviceSelect">موضوع درخواست</label>
@@ -353,15 +424,10 @@ body.light .theme-btn:hover{border-color:#e88b43;box-shadow:0 0 15px rgba(239,13
           </select>
 
           <label class="field-label" for="userRequest">پیامت برای ناوی</label>
-          <textarea
-            class="request-textarea"
-            id="userRequest"
-            placeholder="سلام ناوی، می‌خواهم برای کسب‌وکارم یک ایده تازه پیدا کنم..."
-          ></textarea>
+          <textarea class="request-textarea" id="userRequest"
+            placeholder="سلام ناوی، می‌خواهم برای کسب‌وکارم یک ایده تازه پیدا کنم..."></textarea>
 
-          <button class="btn-primary" id="sendRequest" type="button">
-            ارسال پیام به ناوی
-          </button>
+          <button class="btn-primary" id="sendRequest" type="button">ارسال پیام به ناوی</button>
           <div class="navi-status" id="naviStatus">ناوی آماده گفت‌وگو با توست.</div>
           <div class="response-box" id="requestResponse" aria-live="polite"></div>
         </div>
@@ -419,6 +485,7 @@ body.light .theme-btn:hover{border-color:#e88b43;box-shadow:0 0 15px rgba(239,13
     <p>One Vision. One Mission. One NAVA.</p>
   </div>
 </footer>
+
 <script>
 /* =========================================
    PAGE NAVIGATION
@@ -440,9 +507,7 @@ function showPage(pageId) {
 }
 
 navButtons.forEach(button => {
-  button.addEventListener("click", () => {
-    showPage(button.dataset.page);
-  });
+  button.addEventListener("click", () => showPage(button.dataset.page));
 });
 
 /* =========================================
@@ -459,20 +524,19 @@ if (savedTheme === "light") {
 
 themeToggle.addEventListener("click", () => {
   document.body.classList.toggle("light");
-
   const isLight = document.body.classList.contains("light");
-
   localStorage.setItem("nava-theme", isLight ? "light" : "dark");
   themeToggle.textContent = isLight ? "🌙" : "☀️";
 });
 
 /* =========================================
-   NAVI — SECURE LOGIN CONFIGURATION
+   NAVI — API CONFIGURATION
 ========================================= */
 
 const NAVI_BASE = "https://nava-music-api.honrrpower.workers.dev";
 const NAVI_LOGIN_API = NAVI_BASE + "/navi-login";
 const NAVI_API = NAVI_BASE + "/navi-chat";
+const NAVI_HISTORY_API = NAVI_BASE + "/navi-history";
 
 const NAVI_SESSION_KEY = "nava_navi_session";
 const NAVI_EXPIRY_KEY = "nava_navi_expiry";
@@ -492,12 +556,17 @@ const sendRequest = document.getElementById("sendRequest");
 const requestResponse = document.getElementById("requestResponse");
 const naviStatus = document.getElementById("naviStatus");
 
+const naviHistoryList = document.getElementById("naviHistoryList");
+const naviHistoryCount = document.getElementById("naviHistoryCount");
+const naviHistoryRefresh = document.getElementById("naviHistoryRefresh");
+
 /*
-  تاریخچه مکالمه فقط در حافظه همین صفحه نگهداری می‌شود.
-  با بارگذاری مجدد صفحه، تاریخچه از ابتدا شروع می‌شود.
+  تاریخچه اصلی از این پس در D1 نگهداری می‌شود.
+  این آرایه فقط نسخه جاری تاریخچه برای ارسال به Worker است.
 */
 
 let naviHistory = [];
+let naviHistoryLoading = false;
 
 /* =========================================
    SESSION MANAGEMENT
@@ -535,22 +604,24 @@ function clearNaviSession() {
 
   naviHistory = [];
 
-  if (naviChatArea) {
-    naviChatArea.hidden = true;
-  }
-
-  if (naviLoginPanel) {
-    naviLoginPanel.hidden = false;
-  }
-
-  if (naviPassword) {
-    naviPassword.value = "";
-  }
+  if (naviChatArea) naviChatArea.hidden = true;
+  if (naviLoginPanel) naviLoginPanel.hidden = false;
+  if (naviPassword) naviPassword.value = "";
 
   if (requestResponse) {
     requestResponse.textContent = "";
     requestResponse.classList.remove("show");
   }
+
+  if (naviHistoryList) {
+    naviHistoryList.replaceChildren();
+    const empty = document.createElement("div");
+    empty.className = "navi-history-empty";
+    empty.textContent = "برای دیدن تاریخچه وارد ناوی شو.";
+    naviHistoryList.appendChild(empty);
+  }
+
+  if (naviHistoryCount) naviHistoryCount.textContent = "بدون ورود";
 
   if (naviStatus) {
     naviStatus.textContent = "برای شروع گفت‌وگو وارد شو.";
@@ -565,7 +636,7 @@ function showNaviChat() {
   naviLoginError.classList.remove("show");
 
   naviLoginStatus.textContent = "نشست امن ناوی فعال است.";
-  naviStatus.textContent = "ناوی آماده ادامه گفت‌وگوست.";
+  naviStatus.textContent = "در حال بازیابی گفت‌وگوهای قبلی...";
 }
 
 function showLoginError(message) {
@@ -573,12 +644,143 @@ function showLoginError(message) {
   naviLoginError.classList.add("show");
 }
 
-/* بررسی نشست هنگام باز شدن سایت */
+/* =========================================
+   NAVI HISTORY — SAFE RENDERING
+========================================= */
+
+function renderNaviHistory(messages) {
+  naviHistoryList.replaceChildren();
+
+  if (!Array.isArray(messages) || messages.length === 0) {
+    const empty = document.createElement("div");
+    empty.className = "navi-history-empty";
+    empty.textContent = "هنوز گفت‌وگویی ذخیره نشده است. اولین پیام را برای ناوی بفرست.";
+    naviHistoryList.appendChild(empty);
+    naviHistoryCount.textContent = "۰ پیام";
+    return;
+  }
+
+  const fragment = document.createDocumentFragment();
+
+  messages.forEach(item => {
+    const role = item.role === "user" ? "user" : "assistant";
+    const message = document.createElement("div");
+    message.className = "navi-message " + role;
+
+    const label = document.createElement("span");
+    label.className = "navi-message-label";
+    label.textContent = role === "user" ? "شما" : "ناوی";
+
+    const content = document.createElement("div");
+    content.textContent = String(item.content || "");
+
+    message.appendChild(label);
+    message.appendChild(content);
+    fragment.appendChild(message);
+  });
+
+  naviHistoryList.appendChild(fragment);
+  naviHistoryCount.textContent = messages.length + " پیام";
+
+  // پس از دریافت تاریخچه، آخرین پیام در دسترس قرار می‌گیرد.
+  naviHistoryList.scrollTop = naviHistoryList.scrollHeight;
+}
+
+async function loadNaviHistory() {
+  const token = getNaviToken();
+
+  if (!token) {
+    return false;
+  }
+
+  if (naviHistoryLoading) {
+    return false;
+  }
+
+  naviHistoryLoading = true;
+  naviHistoryRefresh.disabled = true;
+  naviHistoryRefresh.textContent = "در حال دریافت...";
+
+  naviHistoryCount.textContent = "در حال بارگذاری...";
+
+  try {
+    const response = await fetch(NAVI_HISTORY_API, {
+      method: "GET",
+      headers: {
+        "Authorization": "Bearer " + token
+      },
+      cache: "no-store"
+    });
+
+    let data;
+
+    try {
+      data = await response.json();
+    } catch (error) {
+      throw new Error("پاسخ تاریخچه قابل خواندن نیست.");
+    }
+
+    if (response.status === 401 || response.status === 403) {
+      clearNaviSession();
+      showLoginError("نشست ناوی معتبر نیست یا پایان یافته است. دوباره وارد شو.");
+      return false;
+    }
+
+    if (!response.ok || !data.success) {
+      throw new Error(data.error || "دریافت تاریخچه ناموفق بود.");
+    }
+
+    const messages = Array.isArray(data.messages) ? data.messages : [];
+
+    naviHistory = messages.map(item => ({
+      role: item.role,
+      content: String(item.content || "")
+    }));
+
+    renderNaviHistory(naviHistory);
+
+    naviStatus.textContent = naviHistory.length
+      ? "گفت‌وگوهای قبلی بازیابی شدند؛ می‌توانی ادامه بدهی."
+      : "ناوی آماده شروع اولین گفت‌وگوست.";
+
+    return true;
+
+  } catch (error) {
+    console.error("NAVI history error:", error);
+
+    naviHistoryCount.textContent = "خطا در دریافت";
+    naviHistoryList.replaceChildren();
+
+    const errorBox = document.createElement("div");
+    errorBox.className = "navi-history-empty";
+    errorBox.textContent =
+      "دریافت تاریخچه ممکن نشد: " +
+      (error.message || "خطای نامشخص") +
+      "\nمی‌توانی دوباره تلاش کنی.";
+
+    naviHistoryList.appendChild(errorBox);
+
+    naviStatus.textContent =
+      "اتصال به حافظه ناوی برقرار نشد. تاریخچه را دوباره تازه‌سازی کن.";
+
+    return false;
+
+  } finally {
+    naviHistoryLoading = false;
+    naviHistoryRefresh.disabled = false;
+    naviHistoryRefresh.textContent = "تازه‌سازی تاریخچه";
+  }
+}
+
+/* =========================================
+   RESTORE SESSION ON PAGE OPEN
+========================================= */
 
 const existingNaviToken = getNaviToken();
 
 if (existingNaviToken) {
   showNaviChat();
+  loadNaviHistory();
 } else {
   clearNaviSession();
 }
@@ -607,9 +809,7 @@ naviLoginForm.addEventListener("submit", async (event) => {
       headers: {
         "Content-Type": "application/json"
       },
-      body: JSON.stringify({
-        password: password
-      })
+      body: JSON.stringify({ password })
     });
 
     let data;
@@ -632,14 +832,7 @@ naviLoginForm.addEventListener("submit", async (event) => {
       throw new Error("سرور توکن ورود را ارسال نکرده است.");
     }
 
-    /*
-      طبق قرارداد Worker:
-      expiresIn بر حسب ثانیه است.
-      مقدار پیش‌فرض ۱۲ ساعت فقط برای سازگاری است.
-    */
-
     const expiresIn = Number(data.expiresIn || 43200);
-
     saveNaviSession(data.token, expiresIn);
 
     naviPassword.value = "";
@@ -647,12 +840,12 @@ naviLoginForm.addEventListener("submit", async (event) => {
 
     showNaviChat();
 
+    // پس از ورود موفق، تاریخچه دائمی از D1 خوانده می‌شود.
+    await loadNaviHistory();
+
   } catch (error) {
     console.error("NAVI login error:", error);
-
-    showLoginError(
-      error.message || "ورود ناموفق بود. دوباره تلاش کن."
-    );
+    showLoginError(error.message || "ورود ناموفق بود. دوباره تلاش کن.");
 
   } finally {
     naviLoginButton.disabled = false;
@@ -665,6 +858,12 @@ naviLoginForm.addEventListener("submit", async (event) => {
 ========================================= */
 
 naviLogout.addEventListener("click", () => {
+  /*
+    فقط توکن و نشست محلی پاک می‌شوند.
+    هیچ دستور DELETE به دیتابیس ارسال نمی‌شود.
+    بنابراین تاریخچه دائمی محفوظ می‌ماند.
+  */
+
   clearNaviSession();
 
   naviLoginError.textContent = "";
@@ -702,6 +901,8 @@ function showNaviReply(reply) {
   requestResponse.textContent = reply;
   requestResponse.classList.add("show");
 }
+
+naviHistoryRefresh.addEventListener("click", loadNaviHistory);
 
 /* =========================================
    NAVI CHAT — AUTHENTICATED REQUEST
@@ -756,7 +957,10 @@ async function sendMessageToNavi() {
         message: finalMessage,
         page: window.location.pathname,
         pageContext: pageContext,
-        history: naviHistory
+
+        // Worker نسخه جدید، تاریخچه اصلی را مستقیماً از D1 می‌خواند.
+        // این فیلد برای سازگاری با نسخه‌های قبلی باقی مانده است.
+        history: naviHistory.slice(-10)
       })
     });
 
@@ -768,17 +972,9 @@ async function sendMessageToNavi() {
       throw new Error("پاسخ سرور قابل خواندن نیست.");
     }
 
-    /*
-      اگر سرور نشست را رد کند، نشست محلی پاک می‌شود.
-    */
-
     if (response.status === 401 || response.status === 403) {
       clearNaviSession();
-
-      showLoginError(
-        "نشست ناوی معتبر نیست یا پایان یافته است. دوباره وارد شو."
-      );
-
+      showLoginError("نشست ناوی معتبر نیست یا پایان یافته است. دوباره وارد شو.");
       throw new Error("دسترسی تأیید نشد؛ لطفاً دوباره وارد شو.");
     }
 
@@ -796,33 +992,22 @@ async function sendMessageToNavi() {
       throw new Error("ناوی پاسخ خالی ارسال کرده است.");
     }
 
-    naviHistory.push(
-      {
-        role: "user",
-        content: finalMessage
-      },
-      {
-        role: "assistant",
-        content: reply
-      }
-    );
-
-    if (naviHistory.length > 10) {
-      naviHistory.splice(0, naviHistory.length - 10);
-    }
+    /*
+      Worker پیام کاربر و پاسخ ناوی را در D1 ذخیره می‌کند.
+      پس از دریافت پاسخ، تاریخچه را از منبع اصلی دوباره می‌خوانیم.
+    */
 
     showNaviReply(reply);
-
     userRequest.value = "";
+
+    naviStatus.textContent = "پاسخ ناوی دریافت شد؛ در حال به‌روزرسانی تاریخچه...";
+
+    await loadNaviHistory();
+
     naviStatus.textContent = "ناوی آماده ادامه گفت‌وگوست.";
 
   } catch (error) {
     console.error("NAVI connection error:", error);
-
-    /*
-      اگر نشست به علت 401 یا 403 پاک شده باشد،
-      پیام خطای ورود را در پنل ورود نشان می‌دهیم.
-    */
 
     if (!getNaviToken()) {
       showNaviReply(
@@ -846,11 +1031,9 @@ async function sendMessageToNavi() {
 }
 
 /* ارسال پیام با دکمه */
-
 sendRequest.addEventListener("click", sendMessageToNavi);
 
 /* ارسال با Ctrl + Enter یا معادل آن */
-
 userRequest.addEventListener("keydown", (event) => {
   if (event.key === "Enter" && (event.ctrlKey || event.metaKey)) {
     event.preventDefault();
@@ -910,3 +1093,4 @@ copyStory.addEventListener("click", async () => {
 
 </body>
 </html>
+ 
