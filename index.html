@@ -136,76 +136,19 @@ nav{display:flex;gap:8px;padding:0 0 13px;overflow-x:auto}
 .navi-logout:hover{border-color:#e57373;color:#e57373}
 
 /* NAVI PERSISTENT CHAT HISTORY */
-.navi-history{
-  margin:16px 0 20px;
-  padding:15px;
-  border:1px solid var(--border);
-  border-radius:15px;
-  background:var(--bg);
-}
-.navi-history-heading{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  gap:10px;
-  margin-bottom:13px;
-}
+.navi-history{margin:16px 0 20px;padding:15px;border:1px solid var(--border);border-radius:15px;background:var(--bg)}
+.navi-history-heading{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:13px}
 .navi-history-heading strong{color:var(--gold);font-size:13px}
 .navi-history-count{font-size:10px;color:var(--muted)}
-.navi-history-list{
-  display:flex;
-  flex-direction:column;
-  gap:12px;
-  max-height:430px;
-  overflow-y:auto;
-  padding:3px;
-}
-.navi-history-empty{
-  color:var(--muted);
-  font-size:12px;
-  line-height:2;
-  text-align:center;
-  padding:18px 5px;
-}
-.navi-message{
-  padding:12px 14px;
-  border-radius:12px;
-  line-height:2;
-  font-size:12px;
-  white-space:pre-wrap;
-  overflow-wrap:anywhere;
-}
-.navi-message.user{
-  background:linear-gradient(120deg,rgba(229,184,94,.13),rgba(229,184,94,.05));
-  border:1px solid rgba(229,184,94,.2);
-  margin-left:8%;
-}
-.navi-message.assistant{
-  background:linear-gradient(120deg,rgba(37,202,255,.09),rgba(40,120,255,.06));
-  border:1px solid rgba(37,202,255,.18);
-  margin-right:8%;
-}
-.navi-message-label{
-  display:block;
-  font-size:10px;
-  font-weight:bold;
-  color:var(--gold);
-  margin-bottom:5px;
-}
+.navi-history-list{display:flex;flex-direction:column;gap:12px;max-height:430px;overflow-y:auto;padding:3px}
+.navi-history-empty{color:var(--muted);font-size:12px;line-height:2;text-align:center;padding:18px 5px}
+.navi-message{padding:12px 14px;border-radius:12px;line-height:2;font-size:12px;white-space:pre-wrap;overflow-wrap:anywhere}
+.navi-message.user{background:linear-gradient(120deg,rgba(229,184,94,.13),rgba(229,184,94,.05));border:1px solid rgba(229,184,94,.2);margin-left:8%}
+.navi-message.assistant{background:linear-gradient(120deg,rgba(37,202,255,.09),rgba(40,120,255,.06));border:1px solid rgba(37,202,255,.18);margin-right:8%}
+.navi-message-label{display:block;font-size:10px;font-weight:bold;color:var(--gold);margin-bottom:5px}
 .navi-message.assistant .navi-message-label{color:var(--blue)}
-.navi-history-actions{
-  display:flex;
-  justify-content:flex-start;
-  margin-top:10px;
-}
-.navi-history-refresh{
-  border:1px solid var(--border);
-  background:transparent;
-  color:var(--muted);
-  padding:7px 11px;
-  border-radius:9px;
-  font-size:11px;
-}
+.navi-history-actions{display:flex;justify-content:flex-start;margin-top:10px}
+.navi-history-refresh{border:1px solid var(--border);background:transparent;color:var(--muted);padding:7px 11px;border-radius:9px;font-size:11px}
 .navi-history-refresh:disabled{opacity:.5;cursor:wait}
 
 /* STORY MAKER */
@@ -288,7 +231,6 @@ body.light .theme-btn:hover{border-color:#e88b43;box-shadow:0 0 15px rgba(239,13
 }
 </style>
 </head>
-
 <body>
 
 <header>
@@ -485,7 +427,6 @@ body.light .theme-btn:hover{border-color:#e88b43;box-shadow:0 0 15px rgba(239,13
     <p>One Vision. One Mission. One NAVA.</p>
   </div>
 </footer>
-
 <script>
 /* =========================================
    PAGE NAVIGATION
@@ -515,7 +456,14 @@ navButtons.forEach(button => {
 ========================================= */
 
 const themeToggle = document.getElementById("themeToggle");
-const savedTheme = localStorage.getItem("nava-theme");
+
+let savedTheme = "dark";
+
+try {
+  savedTheme = localStorage.getItem("nava-theme") || "dark";
+} catch (error) {
+  console.warn("Theme storage is unavailable.");
+}
 
 if (savedTheme === "light") {
   document.body.classList.add("light");
@@ -524,8 +472,15 @@ if (savedTheme === "light") {
 
 themeToggle.addEventListener("click", () => {
   document.body.classList.toggle("light");
+
   const isLight = document.body.classList.contains("light");
-  localStorage.setItem("nava-theme", isLight ? "light" : "dark");
+
+  try {
+    localStorage.setItem("nava-theme", isLight ? "light" : "dark");
+  } catch (error) {
+    console.warn("Could not save theme preference.");
+  }
+
   themeToggle.textContent = isLight ? "🌙" : "☀️";
 });
 
@@ -540,6 +495,9 @@ const NAVI_HISTORY_API = NAVI_BASE + "/navi-history";
 
 const NAVI_SESSION_KEY = "nava_navi_session";
 const NAVI_EXPIRY_KEY = "nava_navi_expiry";
+
+const NAVI_MAX_DISPLAY_MESSAGES = 100;
+const NAVI_CONTEXT_MESSAGES = 10;
 
 const naviLoginPanel = document.getElementById("naviLoginPanel");
 const naviChatArea = document.getElementById("naviChatArea");
@@ -561,22 +519,66 @@ const naviHistoryCount = document.getElementById("naviHistoryCount");
 const naviHistoryRefresh = document.getElementById("naviHistoryRefresh");
 
 /*
-  تاریخچه اصلی از این پس در D1 نگهداری می‌شود.
-  این آرایه فقط نسخه جاری تاریخچه برای ارسال به Worker است.
+  تاریخچه اصلی باید در D1 ذخیره شود.
+  این آرایه فقط نسخه محلی پیام‌های دریافت‌شده است.
+  Worker باید تاریخچه اصلی را از D1 بخواند.
 */
 
 let naviHistory = [];
 let naviHistoryLoading = false;
+let naviHistoryLoadPromise = null;
+
+/* =========================================
+   GENERAL HELPERS
+========================================= */
+
+function setNaviStatus(message) {
+  naviStatus.textContent = message;
+}
+
+function showNaviReply(reply) {
+  requestResponse.textContent = String(reply || "");
+  requestResponse.classList.add("show");
+}
+
+function showLoginError(message) {
+  naviLoginError.textContent = message;
+  naviLoginError.classList.add("show");
+}
+
+function clearLoginError() {
+  naviLoginError.textContent = "";
+  naviLoginError.classList.remove("show");
+}
+
+function showEmptyHistory(message, countText) {
+  naviHistoryList.replaceChildren();
+
+  const empty = document.createElement("div");
+  empty.className = "navi-history-empty";
+  empty.textContent = message;
+
+  naviHistoryList.appendChild(empty);
+  naviHistoryCount.textContent = countText || "";
+}
 
 /* =========================================
    SESSION MANAGEMENT
 ========================================= */
 
 function getNaviToken() {
-  const token = sessionStorage.getItem(NAVI_SESSION_KEY);
-  const expiry = Number(sessionStorage.getItem(NAVI_EXPIRY_KEY) || 0);
+  let token = null;
+  let expiry = 0;
 
-  if (!token || !expiry || Date.now() >= expiry) {
+  try {
+    token = sessionStorage.getItem(NAVI_SESSION_KEY);
+    expiry = Number(sessionStorage.getItem(NAVI_EXPIRY_KEY) || 0);
+  } catch (error) {
+    console.error("NAVI session storage error:", error);
+    return null;
+  }
+
+  if (!token || !expiry || !Number.isFinite(expiry) || Date.now() >= expiry) {
     clearNaviSession();
     return null;
   }
@@ -591,16 +593,30 @@ function saveNaviSession(token, expiresIn) {
     throw new Error("اطلاعات نشست دریافتی از سرور معتبر نیست.");
   }
 
-  sessionStorage.setItem(NAVI_SESSION_KEY, token);
-  sessionStorage.setItem(
-    NAVI_EXPIRY_KEY,
-    String(Date.now() + duration * 1000)
-  );
+  try {
+    sessionStorage.setItem(NAVI_SESSION_KEY, token);
+    sessionStorage.setItem(
+      NAVI_EXPIRY_KEY,
+      String(Date.now() + duration * 1000)
+    );
+  } catch (error) {
+    throw new Error("ذخیره نشست در مرورگر ممکن نیست. فضای ذخیره‌سازی مرورگر را بررسی کن.");
+  }
 }
 
 function clearNaviSession() {
-  sessionStorage.removeItem(NAVI_SESSION_KEY);
-  sessionStorage.removeItem(NAVI_EXPIRY_KEY);
+  try {
+    sessionStorage.removeItem(NAVI_SESSION_KEY);
+    sessionStorage.removeItem(NAVI_EXPIRY_KEY);
+  } catch (error) {
+    console.warn("Could not clear local session storage.");
+  }
+
+  /*
+    خروج فقط نشست محلی را پاک می‌کند.
+    هیچ درخواست حذف یا DELETE به D1 ارسال نمی‌شود.
+    تاریخچه دائمی در دیتابیس محفوظ می‌ماند.
+  */
 
   naviHistory = [];
 
@@ -614,14 +630,8 @@ function clearNaviSession() {
   }
 
   if (naviHistoryList) {
-    naviHistoryList.replaceChildren();
-    const empty = document.createElement("div");
-    empty.className = "navi-history-empty";
-    empty.textContent = "برای دیدن تاریخچه وارد ناوی شو.";
-    naviHistoryList.appendChild(empty);
+    showEmptyHistory("برای دیدن تاریخچه وارد ناوی شو.", "بدون ورود");
   }
-
-  if (naviHistoryCount) naviHistoryCount.textContent = "بدون ورود";
 
   if (naviStatus) {
     naviStatus.textContent = "برای شروع گفت‌وگو وارد شو.";
@@ -632,38 +642,108 @@ function showNaviChat() {
   naviLoginPanel.hidden = true;
   naviChatArea.hidden = false;
 
-  naviLoginError.textContent = "";
-  naviLoginError.classList.remove("show");
+  clearLoginError();
 
   naviLoginStatus.textContent = "نشست امن ناوی فعال است.";
-  naviStatus.textContent = "در حال بازیابی گفت‌وگوهای قبلی...";
-}
-
-function showLoginError(message) {
-  naviLoginError.textContent = message;
-  naviLoginError.classList.add("show");
+  setNaviStatus("در حال بازیابی گفت‌وگوهای قبلی...");
 }
 
 /* =========================================
-   NAVI HISTORY — SAFE RENDERING
+   HISTORY NORMALIZATION
+========================================= */
+
+/*
+  این تابع چند ساختار متداول پاسخ Worker را پشتیبانی می‌کند:
+
+  1. { success: true, messages: [...] }
+  2. { success: true, history: [...] }
+  3. { success: true, data: { messages: [...] } }
+  4. آرایه مستقیم پیام‌ها
+
+  نقش model نیز به assistant تبدیل می‌شود.
+*/
+
+function normalizeNaviHistory(data) {
+  let source = [];
+
+  if (Array.isArray(data)) {
+    source = data;
+  } else if (data && Array.isArray(data.messages)) {
+    source = data.messages;
+  } else if (data && Array.isArray(data.history)) {
+    source = data.history;
+  } else if (data && data.data && Array.isArray(data.data.messages)) {
+    source = data.data.messages;
+  } else if (data && data.data && Array.isArray(data.data.history)) {
+    source = data.data.history;
+  }
+
+  const normalized = source
+    .map(item => {
+      if (!item || typeof item !== "object") {
+        return null;
+      }
+
+      const content = String(
+        item.content ??
+        item.message ??
+        item.text ??
+        ""
+      ).trim();
+
+      if (!content) {
+        return null;
+      }
+
+      const originalRole = String(item.role || "").toLowerCase();
+
+      let role = "assistant";
+
+      if (originalRole === "user" || originalRole === "human") {
+        role = "user";
+      } else if (
+        originalRole === "assistant" ||
+        originalRole === "model" ||
+        originalRole === "ai" ||
+        originalRole === "navi"
+      ) {
+        role = "assistant";
+      }
+
+      return {
+        role,
+        content
+      };
+    })
+    .filter(Boolean);
+
+  return normalized.slice(-NAVI_MAX_DISPLAY_MESSAGES);
+}
+
+/* =========================================
+   HISTORY — SAFE RENDERING
 ========================================= */
 
 function renderNaviHistory(messages) {
+  const safeMessages = Array.isArray(messages)
+    ? messages.slice(-NAVI_MAX_DISPLAY_MESSAGES)
+    : [];
+
   naviHistoryList.replaceChildren();
 
-  if (!Array.isArray(messages) || messages.length === 0) {
-    const empty = document.createElement("div");
-    empty.className = "navi-history-empty";
-    empty.textContent = "هنوز گفت‌وگویی ذخیره نشده است. اولین پیام را برای ناوی بفرست.";
-    naviHistoryList.appendChild(empty);
-    naviHistoryCount.textContent = "۰ پیام";
+  if (safeMessages.length === 0) {
+    showEmptyHistory(
+      "هنوز گفت‌وگویی ذخیره نشده است. اولین پیام را برای ناوی بفرست.",
+      "۰ پیام"
+    );
     return;
   }
 
   const fragment = document.createDocumentFragment();
 
-  messages.forEach(item => {
+  safeMessages.forEach(item => {
     const role = item.role === "user" ? "user" : "assistant";
+
     const message = document.createElement("div");
     message.className = "navi-message " + role;
 
@@ -672,6 +752,9 @@ function renderNaviHistory(messages) {
     label.textContent = role === "user" ? "شما" : "ناوی";
 
     const content = document.createElement("div");
+
+    // پیام‌ها فقط با textContent نمایش داده می‌شوند.
+    // بنابراین متن ذخیره‌شده نمی‌تواند HTML یا اسکریپت اجرا کند.
     content.textContent = String(item.content || "");
 
     message.appendChild(label);
@@ -680,11 +763,16 @@ function renderNaviHistory(messages) {
   });
 
   naviHistoryList.appendChild(fragment);
-  naviHistoryCount.textContent = messages.length + " پیام";
 
-  // پس از دریافت تاریخچه، آخرین پیام در دسترس قرار می‌گیرد.
+  naviHistoryCount.textContent =
+    safeMessages.length + " پیام";
+
   naviHistoryList.scrollTop = naviHistoryList.scrollHeight;
 }
+
+/* =========================================
+   HISTORY — LOAD FROM D1
+========================================= */
 
 async function loadNaviHistory() {
   const token = getNaviToken();
@@ -693,83 +781,143 @@ async function loadNaviHistory() {
     return false;
   }
 
-  if (naviHistoryLoading) {
-    return false;
+  /*
+    اگر درخواست قبلی هنوز در حال اجراست،
+    به‌جای ارسال درخواست تکراری همان Promise را برمی‌گردانیم.
+  */
+
+  if (naviHistoryLoading && naviHistoryLoadPromise) {
+    return naviHistoryLoadPromise;
   }
 
   naviHistoryLoading = true;
   naviHistoryRefresh.disabled = true;
   naviHistoryRefresh.textContent = "در حال دریافت...";
-
   naviHistoryCount.textContent = "در حال بارگذاری...";
 
-  try {
-    const response = await fetch(NAVI_HISTORY_API, {
-      method: "GET",
-      headers: {
-        "Authorization": "Bearer " + token
-      },
-      cache: "no-store"
-    });
-
-    let data;
-
+  naviHistoryLoadPromise = (async () => {
     try {
-      data = await response.json();
+      const response = await fetch(NAVI_HISTORY_API, {
+        method: "GET",
+        headers: {
+          "Authorization": "Bearer " + token
+        },
+        cache: "no-store"
+      });
+
+      let data;
+
+      try {
+        data = await response.json();
+      } catch (error) {
+        throw new Error("پاسخ تاریخچه قابل خواندن نیست.");
+      }
+
+      // اگر در زمان دریافت، کاربر خارج شده باشد، پاسخ قدیمی را نادیده بگیر.
+      if (getNaviToken() !== token) {
+        return false;
+      }
+
+      if (response.status === 401 || response.status === 403) {
+        clearNaviSession();
+        showLoginError(
+          "نشست ناوی معتبر نیست یا پایان یافته است. دوباره وارد شو."
+        );
+        return false;
+      }
+
+      if (!response.ok || (data && data.success === false)) {
+        throw new Error(
+          (data && (data.error || data.diagnostic)) ||
+          "دریافت تاریخچه ناموفق بود."
+        );
+      }
+
+      const messages = normalizeNaviHistory(data);
+
+      naviHistory = messages;
+      renderNaviHistory(naviHistory);
+
+      setNaviStatus(
+        naviHistory.length
+          ? "گفت‌وگوهای قبلی بازیابی شدند؛ می‌توانی ادامه بدهی."
+          : "ناوی آماده شروع اولین گفت‌وگوست."
+      );
+
+      return true;
+
     } catch (error) {
-      throw new Error("پاسخ تاریخچه قابل خواندن نیست.");
-    }
+      console.error("NAVI history error:", error);
 
-    if (response.status === 401 || response.status === 403) {
-      clearNaviSession();
-      showLoginError("نشست ناوی معتبر نیست یا پایان یافته است. دوباره وارد شو.");
+      /*
+        خطای تاریخچه نباید باعث خروج کاربر شود.
+        اگر پیام محلی داریم، آن‌ها را حفظ و نمایش می‌دهیم.
+      */
+
+      renderNaviHistory(naviHistory);
+
+      naviHistoryCount.textContent = "حافظه آنلاین در دسترس نیست";
+
+      if (naviHistory.length === 0) {
+        showEmptyHistory(
+          "دریافت تاریخچه از سرور ممکن نشد.\n" +
+          "می‌توانی دوباره تلاش کنی.",
+          "خطا در دریافت"
+        );
+      }
+
+      setNaviStatus(
+        "اتصال به حافظه ناوی برقرار نشد. پاسخ‌گویی ناوی همچنان قابل استفاده است."
+      );
+
       return false;
+
+    } finally {
+      naviHistoryLoading = false;
+      naviHistoryLoadPromise = null;
+
+      naviHistoryRefresh.disabled = false;
+      naviHistoryRefresh.textContent = "تازه‌سازی تاریخچه";
     }
+  })();
 
-    if (!response.ok || !data.success) {
-      throw new Error(data.error || "دریافت تاریخچه ناموفق بود.");
-    }
+  return naviHistoryLoadPromise;
+}
 
-    const messages = Array.isArray(data.messages) ? data.messages : [];
+/* =========================================
+   LOCAL HISTORY FALLBACK
+========================================= */
 
-    naviHistory = messages.map(item => ({
-      role: item.role,
-      content: String(item.content || "")
-    }));
+/*
+  اگر پاسخ ناوی با موفقیت دریافت شود اما تازه‌سازی تاریخچه
+  شکست بخورد، پیام‌ها موقتاً در حافظه همین صفحه نگه داشته می‌شوند.
 
-    renderNaviHistory(naviHistory);
+  این ذخیره موقت جایگزین D1 نیست و با بستن صفحه از بین می‌رود.
+*/
 
-    naviStatus.textContent = naviHistory.length
-      ? "گفت‌وگوهای قبلی بازیابی شدند؛ می‌توانی ادامه بدهی."
-      : "ناوی آماده شروع اولین گفت‌وگوست.";
+function appendLocalNaviMessages(userMessage, assistantMessage) {
+  const additions = [];
 
-    return true;
-
-  } catch (error) {
-    console.error("NAVI history error:", error);
-
-    naviHistoryCount.textContent = "خطا در دریافت";
-    naviHistoryList.replaceChildren();
-
-    const errorBox = document.createElement("div");
-    errorBox.className = "navi-history-empty";
-    errorBox.textContent =
-      "دریافت تاریخچه ممکن نشد: " +
-      (error.message || "خطای نامشخص") +
-      "\nمی‌توانی دوباره تلاش کنی.";
-
-    naviHistoryList.appendChild(errorBox);
-
-    naviStatus.textContent =
-      "اتصال به حافظه ناوی برقرار نشد. تاریخچه را دوباره تازه‌سازی کن.";
-
-    return false;
-
-  } finally {
-    naviHistoryLoading = false;
-    naviHistoryRefresh.disabled = false;
-    naviHistoryRefresh.textContent = "تازه‌سازی تاریخچه";
+  if (userMessage) {
+    additions.push({
+      role: "user",
+      content: String(userMessage)
+    });
   }
+
+  if (assistantMessage) {
+    additions.push({
+      role: "assistant",
+      content: String(assistantMessage)
+    });
+  }
+
+  naviHistory = [
+    ...naviHistory,
+    ...additions
+  ].slice(-NAVI_MAX_DISPLAY_MESSAGES);
+
+  renderNaviHistory(naviHistory);
 }
 
 /* =========================================
@@ -801,7 +949,7 @@ naviLoginForm.addEventListener("submit", async (event) => {
 
   naviLoginButton.disabled = true;
   naviLoginButton.textContent = "در حال بررسی رمز...";
-  naviLoginError.classList.remove("show");
+  clearLoginError();
 
   try {
     const response = await fetch(NAVI_LOGIN_API, {
@@ -816,7 +964,7 @@ naviLoginForm.addEventListener("submit", async (event) => {
 
     try {
       data = await response.json();
-    } catch (parseError) {
+    } catch (error) {
       throw new Error("پاسخ سرور ورود قابل خواندن نیست.");
     }
 
@@ -833,6 +981,7 @@ naviLoginForm.addEventListener("submit", async (event) => {
     }
 
     const expiresIn = Number(data.expiresIn || 43200);
+
     saveNaviSession(data.token, expiresIn);
 
     naviPassword.value = "";
@@ -840,12 +989,22 @@ naviLoginForm.addEventListener("submit", async (event) => {
 
     showNaviChat();
 
-    // پس از ورود موفق، تاریخچه دائمی از D1 خوانده می‌شود.
-    await loadNaviHistory();
+    // تاریخچه از سرور بازیابی می‌شود.
+    // خطای تاریخچه نباید ورود موفق را لغو کند.
+    const historyLoaded = await loadNaviHistory();
+
+    if (!historyLoaded && getNaviToken()) {
+      setNaviStatus(
+        "وارد ناوی شدی؛ اما دریافت تاریخچه فعلاً ممکن نیست. می‌توانی دوباره تلاش کنی."
+      );
+    }
 
   } catch (error) {
     console.error("NAVI login error:", error);
-    showLoginError(error.message || "ورود ناموفق بود. دوباره تلاش کن.");
+
+    showLoginError(
+      error.message || "ورود ناموفق بود. دوباره تلاش کن."
+    );
 
   } finally {
     naviLoginButton.disabled = false;
@@ -859,18 +1018,15 @@ naviLoginForm.addEventListener("submit", async (event) => {
 
 naviLogout.addEventListener("click", () => {
   /*
-    فقط توکن و نشست محلی پاک می‌شوند.
-    هیچ دستور DELETE به دیتابیس ارسال نمی‌شود.
-    بنابراین تاریخچه دائمی محفوظ می‌ماند.
+    فقط توکن و نشست مرورگر پاک می‌شوند.
+    تاریخچه ذخیره‌شده در D1 حذف نمی‌شود.
   */
 
   clearNaviSession();
-
-  naviLoginError.textContent = "";
-  naviLoginError.classList.remove("show");
+  clearLoginError();
 
   naviLoginStatus.textContent = "از نشست ناوی خارج شدی.";
-  naviStatus.textContent = "برای شروع گفت‌وگو دوباره وارد شو.";
+  setNaviStatus("برای شروع گفت‌وگو دوباره وارد شو.");
 });
 
 /* =========================================
@@ -897,12 +1053,9 @@ function scrollToRequest() {
   }, 450);
 }
 
-function showNaviReply(reply) {
-  requestResponse.textContent = reply;
-  requestResponse.classList.add("show");
-}
-
-naviHistoryRefresh.addEventListener("click", loadNaviHistory);
+naviHistoryRefresh.addEventListener("click", () => {
+  loadNaviHistory();
+});
 
 /* =========================================
    NAVI CHAT — AUTHENTICATED REQUEST
@@ -942,8 +1095,8 @@ async function sendMessageToNavi() {
 
   sendRequest.disabled = true;
   sendRequest.textContent = "ناوی در حال پاسخ‌گویی...";
-  naviStatus.textContent = "پیامت ارسال شد؛ ناوی در حال بررسی آن است...";
 
+  setNaviStatus("پیامت ارسال شد؛ ناوی در حال بررسی آن است...");
   showNaviReply("در حال دریافت پاسخ از ناوی...");
 
   try {
@@ -958,9 +1111,11 @@ async function sendMessageToNavi() {
         page: window.location.pathname,
         pageContext: pageContext,
 
-        // Worker نسخه جدید، تاریخچه اصلی را مستقیماً از D1 می‌خواند.
-        // این فیلد برای سازگاری با نسخه‌های قبلی باقی مانده است.
-        history: naviHistory.slice(-10)
+        /*
+          تاریخچه اصلی باید از D1 در Worker خوانده شود.
+          این آرایه فقط برای سازگاری با نسخه‌های قبلی باقی مانده است.
+        */
+        history: naviHistory.slice(-NAVI_CONTEXT_MESSAGES)
       })
     });
 
@@ -968,13 +1123,17 @@ async function sendMessageToNavi() {
 
     try {
       data = await response.json();
-    } catch (parseError) {
+    } catch (error) {
       throw new Error("پاسخ سرور قابل خواندن نیست.");
     }
 
     if (response.status === 401 || response.status === 403) {
       clearNaviSession();
-      showLoginError("نشست ناوی معتبر نیست یا پایان یافته است. دوباره وارد شو.");
+
+      showLoginError(
+        "نشست ناوی معتبر نیست یا پایان یافته است. دوباره وارد شو."
+      );
+
       throw new Error("دسترسی تأیید نشد؛ لطفاً دوباره وارد شو.");
     }
 
@@ -992,19 +1151,31 @@ async function sendMessageToNavi() {
       throw new Error("ناوی پاسخ خالی ارسال کرده است.");
     }
 
-    /*
-      Worker پیام کاربر و پاسخ ناوی را در D1 ذخیره می‌کند.
-      پس از دریافت پاسخ، تاریخچه را از منبع اصلی دوباره می‌خوانیم.
-    */
-
+    // پاسخ موفق ناوی بلافاصله به کاربر نمایش داده می‌شود.
     showNaviReply(reply);
     userRequest.value = "";
 
-    naviStatus.textContent = "پاسخ ناوی دریافت شد؛ در حال به‌روزرسانی تاریخچه...";
+    setNaviStatus(
+      "پاسخ ناوی دریافت شد؛ در حال به‌روزرسانی تاریخچه..."
+    );
 
-    await loadNaviHistory();
+    /*
+      ابتدا تلاش می‌کنیم تاریخچه تازه را از D1 بخوانیم.
+      اگر موفق بود، همان تاریخچه سرور منبع نمایش خواهد بود.
+      اگر ناموفق بود، پیام‌های همین نوبت را محلی اضافه می‌کنیم.
+    */
 
-    naviStatus.textContent = "ناوی آماده ادامه گفت‌وگوست.";
+    const historyUpdated = await loadNaviHistory();
+
+    if (historyUpdated) {
+      setNaviStatus("پاسخ دریافت شد و تاریخچه گفت‌وگو به‌روز است.");
+    } else if (getNaviToken()) {
+      appendLocalNaviMessages(finalMessage, reply);
+
+      setNaviStatus(
+        "پاسخ ناوی دریافت شد؛ اما اتصال به حافظه آنلاین برقرار نشد. پیام این نوبت فعلاً در همین صفحه حفظ شده است."
+      );
+    }
 
   } catch (error) {
     console.error("NAVI connection error:", error);
@@ -1020,8 +1191,9 @@ async function sendMessageToNavi() {
         (error.message || "خطای نامشخص")
       );
 
-      naviStatus.textContent =
-        "ارتباط با ناوی برقرار نشد. می‌توانی دوباره تلاش کنی.";
+      setNaviStatus(
+        "ارتباط با ناوی برقرار نشد. می‌توانی دوباره تلاش کنی."
+      );
     }
 
   } finally {
@@ -1067,6 +1239,8 @@ clearStory.addEventListener("click", () => {
   storyInput.value = "";
   previewText.textContent = "متن استوری تو اینجا نمایش داده می‌شود";
   previewText.classList.add("empty");
+
+  storyMessage.textContent = "";
   storyMessage.classList.remove("show");
 });
 
@@ -1080,8 +1254,13 @@ copyStory.addEventListener("click", async () => {
   }
 
   try {
+    if (!navigator.clipboard || !navigator.clipboard.writeText) {
+      throw new Error("Clipboard API unavailable");
+    }
+
     await navigator.clipboard.writeText(text);
     storyMessage.textContent = "متن استوری کپی شد.";
+
   } catch (error) {
     storyMessage.textContent =
       "کپی خودکار در این مرورگر ممکن نیست؛ متن را دستی انتخاب کن.";
@@ -1093,4 +1272,3 @@ copyStory.addEventListener("click", async () => {
 
 </body>
 </html>
- 
