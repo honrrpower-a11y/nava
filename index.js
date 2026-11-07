@@ -19,7 +19,7 @@ function json(data, status, origin) {
       "Content-Type": "application/json; charset=utf-8",
       "Access-Control-Allow-Origin": origin,
       "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-      "Access-Control-Allow-Headers": "Content-Type, X-Nava-Test-Token",
+      "Access-Control-Allow-Headers": "Content-Type, X-Nava-Test-Token, Authorization",
       "Cache-Control": "no-store",
       "Vary": "Origin"
     }
@@ -745,7 +745,6 @@ function prepareNaviHistory(history, currentMessage) {
 
     let role = String(item.role || "").toLowerCase();
 
-    // تبدیل نقش assistant به model برای Gemini
     if (role === "assistant") {
       role = "model";
     }
@@ -765,7 +764,6 @@ function prepareNaviHistory(history, currentMessage) {
 
     const previousMessage = contents[contents.length - 1];
 
-    // ادغام پیام‌های پشت سر هم با نقش یکسان
     if (previousMessage && previousMessage.role === role) {
       previousMessage.parts[0].text += "\n" + historyText;
     } else {
@@ -778,7 +776,6 @@ function prepareNaviHistory(history, currentMessage) {
     }
   }
 
-  // تاریخچه Gemini باید با پیام کاربر شروع شود
   while (
     contents.length > 0 &&
     contents[0].role !== "user"
@@ -786,8 +783,6 @@ function prepareNaviHistory(history, currentMessage) {
     contents.shift();
   }
 
-  // جلوگیری از ارسال دوباره پیام جاری،
-  // در صورتی که فرانت‌اند آن را قبلاً داخل history گذاشته باشد.
   const lastMessage = contents[contents.length - 1];
 
   if (
@@ -798,7 +793,6 @@ function prepareNaviHistory(history, currentMessage) {
     return contents;
   }
 
-  // افزودن پیام جدید کاربر
   if (lastMessage && lastMessage.role === "user") {
     lastMessage.parts[0].text += "\n" + currentMessage;
   } else {
@@ -814,6 +808,161 @@ function prepareNaviHistory(history, currentMessage) {
 }
 
 // ==========================================
+// NAVI PRIVATE AUTH - Secure Session
+// ==========================================
+
+function base64UrlEncode(bytes) {
+  let binary = "";
+
+  for (const byte of bytes) {
+    binary += String.fromCharCode(byte);
+  }
+
+  return btoa(binary)
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=+$/g, "");
+}
+
+function base64UrlDecode(value) {
+  const normalized = value
+    .replace(/-/g, "+")
+    .replace(/_/g, "/");
+
+  const binary = atob(
+    normalized + "=".repeat((4 - normalized.length % 4) % 4)
+  );
+
+  return Uint8Array.from(
+    binary,
+    c => c.charCodeAt(0)
+  );
+}
+
+async function getNaviSigningKey(secret) {
+  return crypto.subtle.importKey(
+    "raw",
+    new TextEncoder().encode(secret),
+    {
+      name: "HMAC",
+      hash: "SHA-256"
+    },
+    false,
+    ["sign", "verify"]
+  );
+}
+
+async function createNaviSession(secret) {
+  const now = Math.floor(Date.now() / 1000);
+
+  const payload = {
+    iss: "nava-navi",
+    sub: "owner",
+    iat: now,
+    exp: now + 12 * 60 * 60
+  };
+
+  const payloadPart = base64UrlEncode(
+    new TextEncoder().encode(JSON.stringify(payload))
+  );
+
+  const key = await getNaviSigningKey(secret);
+
+  const signature = await crypto.subtle.sign(
+    "HMAC",
+    key,
+    new TextEncoder().encode(payloadPart)
+  );
+
+  return payloadPart + "." + base64UrlEncode(
+    new Uint8Array(signature)
+  );
+}
+
+async function verifyNaviSession(token, secret) {
+  try {
+    if (
+      typeof token !== "string" ||
+      token.length > 2000
+    ) {
+      return false;
+    }
+
+    const parts = token.split(".");
+
+    if (parts.length !== 2) return false;
+
+    const [payloadPart, signaturePart] = parts;
+
+    const key = await getNaviSigningKey(secret);
+
+    const valid = await crypto.subtle.verify(
+      "HMAC",
+      key,
+      base64UrlDecode(signaturePart),
+      new TextEncoder().encode(payloadPart)
+    );
+
+    if (!valid) return false;
+
+    const payload = JSON.parse(
+      new TextDecoder().decode(
+        base64UrlDecode(payloadPart)
+      )
+    );
+
+    const now = Math.floor(Date.now() / 1000);
+
+    return (
+      payload.iss === "nava-navi" &&
+      payload.sub === "owner" &&
+      Number.isFinite(payload.exp) &&
+      payload.exp > now &&
+      Number.isFinite(payload.iat) &&
+      payload.iat <= now + 60
+    );
+
+  } catch {
+    return false;
+  }
+}
+
+async function verifyNaviPassword(inputPassword, realPassword) {
+  if (
+    typeof inputPassword !== "string" ||
+    typeof realPassword !== "string" ||
+    inputPassword.length < 1 ||
+    inputPassword.length > 256
+  ) {
+    return false;
+  }
+
+  const encoder = new TextEncoder();
+
+  const inputHash = new Uint8Array(
+    await crypto.subtle.digest(
+      "SHA-256",
+      encoder.encode(inputPassword)
+    )
+  );
+
+  const realHash = new Uint8Array(
+    await crypto.subtle.digest(
+      "SHA-256",
+      encoder.encode(realPassword)
+    )
+  );
+
+  let difference = 0;
+
+  for (let i = 0; i < inputHash.length; i++) {
+    difference |= inputHash[i] ^ realHash[i];
+  }
+
+  return difference === 0;
+}
+
+// ==========================================
 // Worker
 // ==========================================
 
@@ -824,16 +973,20 @@ export default {
     const corsOrigin =
       origin === ALLOWED_ORIGIN
         ? ALLOWED_ORIGIN
-        : "*";
+        : "null";
 
     // CORS
     if (request.method === "OPTIONS") {
+      if (origin !== ALLOWED_ORIGIN) {
+        return new Response(null, { status: 403 });
+      }
+
       return new Response(null, {
         status: 204,
         headers: {
-          "Access-Control-Allow-Origin": corsOrigin,
+          "Access-Control-Allow-Origin": ALLOWED_ORIGIN,
           "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-          "Access-Control-Allow-Headers": "Content-Type, X-Nava-Test-Token",
+          "Access-Control-Allow-Headers": "Content-Type, X-Nava-Test-Token, Authorization",
           "Access-Control-Max-Age": "86400",
           "Vary": "Origin"
         }
@@ -841,6 +994,76 @@ export default {
     }
 
     const url = new URL(request.url);
+
+    // ======================================
+    // NAVI PRIVATE LOGIN
+    // ======================================
+
+    if (
+      url.pathname === "/navi-login" &&
+      request.method === "POST"
+    ) {
+      if (origin !== ALLOWED_ORIGIN) {
+        return json({
+          success: false,
+          error: "مبدأ درخواست مجاز نیست."
+        }, 403, corsOrigin);
+      }
+
+      if (
+        !env.NAVI_OWNER_PASSWORD ||
+        !env.NAVI_SESSION_SECRET
+      ) {
+        return json({
+          success: false,
+          error: "تنظیمات ورود ناوی کامل نیست."
+        }, 500, corsOrigin);
+      }
+
+      let input;
+
+      try {
+        input = await request.json();
+      } catch {
+        return json({
+          success: false,
+          error: "اطلاعات ورود معتبر نیست."
+        }, 400, corsOrigin);
+      }
+
+      const password = input?.password;
+
+      const passwordValid = await verifyNaviPassword(
+        password,
+        env.NAVI_OWNER_PASSWORD
+      );
+
+      if (!passwordValid) {
+        return json({
+          success: false,
+          error: "رمز ورود صحیح نیست."
+        }, 401, corsOrigin);
+      }
+
+      try {
+        const token = await createNaviSession(
+          env.NAVI_SESSION_SECRET
+        );
+
+        return json({
+          success: true,
+          token,
+          expiresIn: 43200,
+          assistant: "NAVI"
+        }, 200, corsOrigin);
+
+      } catch {
+        return json({
+          success: false,
+          error: "ساخت نشست ورود ناموفق بود."
+        }, 500, corsOrigin);
+      }
+    }
 
     // ======================================
     // وضعیت Worker
@@ -853,7 +1076,7 @@ export default {
       return json({
         success: true,
         message: "Nava Worker is running",
-        version: "nava-navi-0.2",
+        version: "nava-navi-0.3",
         timestamp: new Date().toISOString()
       }, 200, corsOrigin);
     }
@@ -1218,7 +1441,7 @@ not generic background music.
               "Content-Length": String(bytes.length),
               "Access-Control-Allow-Origin": corsOrigin,
               "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-              "Access-Control-Allow-Headers": "Content-Type, X-Nava-Test-Token",
+              "Access-Control-Allow-Headers": "Content-Type, X-Nava-Test-Token, Authorization",
               "Cache-Control": "no-store",
               "X-Nava-Provider": "ACE-Step",
               "X-Nava-Model": ACE_MODEL,
@@ -1260,22 +1483,51 @@ not generic background music.
       }
     }
 
-    // ======================================
-    // NAVI v0.2 - دستیار هوشمند نوا
-    // اصلاح تاریخچه و تشخیص صفحه فعلی
+    // ادامه Worker در قسمت دوم    // ======================================
+    // NAVI v0.3 - دستیار خصوصی نوا
+    // احراز هویت و اتصال به Gemini
     // ======================================
 
     if (
       url.pathname === "/navi-chat" &&
       request.method === "POST"
     ) {
-      // کنترل مبدأ درخواست
-      // توجه: کنترل Origin به‌تنهایی احراز هویت کامل نیست.
-      if (origin && origin !== ALLOWED_ORIGIN) {
+      // فقط سایت رسمی نوا مجاز است
+      if (origin !== ALLOWED_ORIGIN) {
         return json({
           success: false,
           error: "دسترسی غیرمجاز است."
         }, 403, corsOrigin);
+      }
+
+      // بررسی تنظیمات امنیتی
+      if (!env.NAVI_SESSION_SECRET) {
+        return json({
+          success: false,
+          error: "کلید امنیتی ناوی تنظیم نشده است."
+        }, 500, corsOrigin);
+      }
+
+      // دریافت توکن ورود
+      const authorization =
+        request.headers.get("Authorization") || "";
+
+      const sessionToken = authorization.startsWith("Bearer ")
+        ? authorization.slice(7).trim()
+        : "";
+
+      // اعتبارسنجی نشست
+      const sessionValid = await verifyNaviSession(
+        sessionToken,
+        env.NAVI_SESSION_SECRET
+      );
+
+      if (!sessionValid) {
+        return json({
+          success: false,
+          error: "نشست ورود معتبر نیست یا منقضی شده است.",
+          code: "NAVI_AUTH_REQUIRED"
+        }, 401, corsOrigin);
       }
 
       const apiKey = env.GEMINI_API_KEY;
@@ -1334,7 +1586,7 @@ not generic background music.
         3000
       );
 
-      // آماده‌سازی تاریخچه و تبدیل assistant به model
+      // آماده‌سازی تاریخچه
       const contents = prepareNaviHistory(
         input.history,
         message
@@ -1503,7 +1755,7 @@ Your purpose is to help the user move from ideas to real results.
           success: true,
           reply,
           assistant: "NAVI",
-          version: "0.2"
+          version: "0.3"
         }, 200, corsOrigin);
 
       } catch (e) {
@@ -2108,3 +2360,4 @@ ${musicLyrics}
     }, 404, corsOrigin);
   }
 };
+  
