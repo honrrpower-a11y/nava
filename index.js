@@ -1088,6 +1088,45 @@ async function verifyNaviPassword(inputPassword, realPassword) {
   return difference === 0;
 }
 
+// ==========================================
+// بررسی نشست NAVI برای مسیرهای محافظت‌شده
+// ==========================================
+
+async function authorizeNaviRequest(request, env) {
+  if (!env.NAVI_SESSION_SECRET) {
+    return {
+      valid: false,
+      status: 500,
+      error: "تنظیمات امنیتی ناوی کامل نیست."
+    };
+  }
+
+  const authorization =
+    request.headers.get("Authorization") || "";
+
+  const sessionToken = authorization.startsWith("Bearer ")
+    ? authorization.slice(7).trim()
+    : "";
+
+  const sessionValid = await verifyNaviSession(
+    sessionToken,
+    env.NAVI_SESSION_SECRET
+  );
+
+  if (!sessionValid) {
+    return {
+      valid: false,
+      status: 401,
+      error: "نشست ورود معتبر نیست یا منقضی شده است.",
+      code: "NAVI_AUTH_REQUIRED"
+    };
+  }
+
+  return {
+    valid: true
+  };
+}
+
 export default {
   async fetch(request, env) {
     const origin = request.headers.get("Origin") || "";
@@ -1196,7 +1235,7 @@ export default {
       return json({
         success: true,
         message: "Nava Worker is running",
-        version: "nava-navi-0.5",
+        version: "nava-navi-0.6",
         timestamp: new Date().toISOString()
       }, 200, corsOrigin);
     }
@@ -1216,31 +1255,14 @@ export default {
         }, 403, corsOrigin);
       }
 
-      if (!env.NAVI_SESSION_SECRET) {
+      const auth = await authorizeNaviRequest(request, env);
+
+      if (!auth.valid) {
         return json({
           success: false,
-          error: "تنظیمات امنیتی ناوی کامل نیست."
-        }, 500, corsOrigin);
-      }
-
-      const authorization =
-        request.headers.get("Authorization") || "";
-
-      const sessionToken = authorization.startsWith("Bearer ")
-        ? authorization.slice(7).trim()
-        : "";
-
-      const sessionValid = await verifyNaviSession(
-        sessionToken,
-        env.NAVI_SESSION_SECRET
-      );
-
-      if (!sessionValid) {
-        return json({
-          success: false,
-          error: "نشست ورود معتبر نیست.",
-          code: "NAVI_AUTH_REQUIRED"
-        }, 401, corsOrigin);
+          error: auth.error,
+          code: auth.code
+        }, auth.status, corsOrigin);
       }
 
       if (!env.NAVA_DB) {
@@ -1284,6 +1306,229 @@ export default {
     }
 
     // ======================================
+    // NAVI - مدیریت حافظه بلندمدت
+    // GET: مشاهده حافظه‌ها
+    // POST: ویرایش یا حذف حافظه
+    // ======================================
+
+    if (
+      url.pathname === "/navi-memory" &&
+      (request.method === "GET" || request.method === "POST")
+    ) {
+      if (origin !== ALLOWED_ORIGIN) {
+        return json({
+          success: false,
+          error: "دسترسی غیرمجاز است."
+        }, 403, corsOrigin);
+      }
+
+      const auth = await authorizeNaviRequest(request, env);
+
+      if (!auth.valid) {
+        return json({
+          success: false,
+          error: auth.error,
+          code: auth.code
+        }, auth.status, corsOrigin);
+      }
+
+      if (!env.NAVA_DB) {
+        return json({
+          success: false,
+          error: "اتصال دیتابیس NAVI تنظیم نشده است."
+        }, 500, corsOrigin);
+      }
+
+      try {
+        await ensureNaviMainThread(env.NAVA_DB);
+
+        // مشاهده حافظه‌ها
+        if (request.method === "GET") {
+          const result = await env.NAVA_DB.prepare(`
+            SELECT
+              id,
+              memory_key,
+              memory_value,
+              source,
+              created_at,
+              updated_at
+            FROM navi_memory_facts_v1
+            WHERE owner_id = ?
+              AND status = 'approved'
+            ORDER BY updated_at DESC
+            LIMIT 200
+          `).bind(NAVI_OWNER_ID).all();
+
+          return json({
+            success: true,
+            memories: result.results || [],
+            count: (result.results || []).length
+          }, 200, corsOrigin);
+        }
+
+        // ویرایش یا حذف حافظه
+        let input;
+
+        try {
+          input = await request.json();
+        } catch {
+          return json({
+            success: false,
+            error: "اطلاعات ارسالی معتبر نیست."
+          }, 400, corsOrigin);
+        }
+
+        if (
+          !input ||
+          typeof input !== "object" ||
+          Array.isArray(input)
+        ) {
+          return json({
+            success: false,
+            error: "ساختار اطلاعات ارسالی معتبر نیست."
+          }, 400, corsOrigin);
+        }
+
+        const id = Number(input.id);
+        const action = String(input.action || "").toLowerCase();
+
+        if (
+          !Number.isSafeInteger(id) ||
+          id <= 0
+        ) {
+          return json({
+            success: false,
+            error: "شناسه حافظه معتبر نیست."
+          }, 400, corsOrigin);
+        }
+
+        if (action === "update") {
+          const memoryValue = safeNaviText(
+            input.memory_value,
+            1000
+          );
+
+          if (!memoryValue) {
+            return json({
+              success: false,
+              error: "متن حافظه نمی‌تواند خالی باشد."
+            }, 400, corsOrigin);
+          }
+
+          const existing = await env.NAVA_DB.prepare(`
+            SELECT id
+            FROM navi_memory_facts_v1
+            WHERE id = ?
+              AND owner_id = ?
+              AND status = 'approved'
+            LIMIT 1
+          `).bind(
+            id,
+            NAVI_OWNER_ID
+          ).first();
+
+          if (!existing) {
+            return json({
+              success: false,
+              error: "این یادداشت در حافظه پیدا نشد."
+            }, 404, corsOrigin);
+          }
+
+          const duplicate = await env.NAVA_DB.prepare(`
+            SELECT id
+            FROM navi_memory_facts_v1
+            WHERE owner_id = ?
+              AND memory_value = ?
+              AND status = 'approved'
+              AND id != ?
+            LIMIT 1
+          `).bind(
+            NAVI_OWNER_ID,
+            memoryValue,
+            id
+          ).first();
+
+          if (duplicate) {
+            return json({
+              success: false,
+              error: "یادداشت مشابهی از قبل در حافظه وجود دارد."
+            }, 409, corsOrigin);
+          }
+
+          await env.NAVA_DB.prepare(`
+            UPDATE navi_memory_facts_v1
+            SET
+              memory_value = ?,
+              updated_at = datetime('now')
+            WHERE id = ?
+              AND owner_id = ?
+              AND status = 'approved'
+          `).bind(
+            memoryValue,
+            id,
+            NAVI_OWNER_ID
+          ).run();
+
+          return json({
+            success: true,
+            message: "یادداشت با موفقیت ویرایش شد.",
+            action: "update",
+            id
+          }, 200, corsOrigin);
+        }
+
+        if (action === "delete") {
+          const existing = await env.NAVA_DB.prepare(`
+            SELECT id
+            FROM navi_memory_facts_v1
+            WHERE id = ?
+              AND owner_id = ?
+              AND status = 'approved'
+            LIMIT 1
+          `).bind(
+            id,
+            NAVI_OWNER_ID
+          ).first();
+
+          if (!existing) {
+            return json({
+              success: false,
+              error: "این یادداشت در حافظه پیدا نشد."
+            }, 404, corsOrigin);
+          }
+
+          await env.NAVA_DB.prepare(`
+            DELETE FROM navi_memory_facts_v1
+            WHERE id = ?
+              AND owner_id = ?
+              AND status = 'approved'
+          `).bind(
+            id,
+            NAVI_OWNER_ID
+          ).run();
+
+          return json({
+            success: true,
+            message: "یادداشت از حافظه حذف شد.",
+            action: "delete",
+            id
+          }, 200, corsOrigin);
+        }
+
+        return json({
+          success: false,
+          error: "عملیات درخواستی پشتیبانی نمی‌شود."
+        }, 400, corsOrigin);
+
+      } catch {
+        return json({
+          success: false,
+          error: "مدیریت حافظه NAVI ناموفق بود."
+        }, 500, corsOrigin);
+      }
+    }
+
+    // ======================================
     // NAVI - گفت‌وگوی هوشمند و حافظه پایدار
     // ======================================
 
@@ -1298,31 +1543,14 @@ export default {
         }, 403, corsOrigin);
       }
 
-      if (!env.NAVI_SESSION_SECRET) {
+      const auth = await authorizeNaviRequest(request, env);
+
+      if (!auth.valid) {
         return json({
           success: false,
-          error: "کلید امنیتی ناوی تنظیم نشده است."
-        }, 500, corsOrigin);
-      }
-
-      const authorization =
-        request.headers.get("Authorization") || "";
-
-      const sessionToken = authorization.startsWith("Bearer ")
-        ? authorization.slice(7).trim()
-        : "";
-
-      const sessionValid = await verifyNaviSession(
-        sessionToken,
-        env.NAVI_SESSION_SECRET
-      );
-
-      if (!sessionValid) {
-        return json({
-          success: false,
-          error: "نشست ورود معتبر نیست یا منقضی شده است.",
-          code: "NAVI_AUTH_REQUIRED"
-        }, 401, corsOrigin);
+          error: auth.error,
+          code: auth.code
+        }, auth.status, corsOrigin);
       }
 
       const apiKey = env.GEMINI_API_KEY;
@@ -1412,7 +1640,6 @@ export default {
               : "انجام شد. این اطلاعات با تأیید مستقیم تو در حافظه بلندمدتم ذخیره شد و در گفتگوهای بعدی از آن استفاده می‌کنم.";
           }
 
-          // ذخیره دستور و پاسخ در تاریخچه
           await saveNaviConversation(
             env.NAVA_DB,
             message,
@@ -1423,7 +1650,7 @@ export default {
             success: true,
             reply,
             assistant: "NAVI",
-            version: "0.5",
+            version: "0.6",
             memory: {
               commandRecognized: true,
               saved: Boolean(memoryCommand.value),
@@ -1434,7 +1661,7 @@ export default {
             }
           }, 200, corsOrigin);
 
-        } catch (e) {
+        } catch {
           return json({
             success: false,
             error: "ذخیره اطلاعات در حافظه بلندمدت ناوی ناموفق بود."
@@ -1468,7 +1695,6 @@ export default {
         }, 500, corsOrigin);
       }
 
-      // تاریخچه D1 منبع اصلی است.
       const contents = prepareNaviHistory(
         dbHistory,
         message
@@ -1653,10 +1879,6 @@ Your purpose is to help the user move from ideas to real results.
           }, 502, corsOrigin);
         }
 
-        // ======================================
-        // ذخیره پیام‌ها پس از پاسخ موفق Gemini
-        // ======================================
-
         try {
           await saveNaviConversation(
             env.NAVA_DB,
@@ -1675,7 +1897,7 @@ Your purpose is to help the user move from ideas to real results.
           success: true,
           reply,
           assistant: "NAVI",
-          version: "0.5"
+          version: "0.6"
         }, 200, corsOrigin);
 
       } catch (e) {
@@ -2656,5 +2878,3 @@ ${musicLyrics}
     }, 404, corsOrigin);
   }
 };
-
- 
