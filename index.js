@@ -1121,8 +1121,6 @@ async function saveNaviMemoryFact(
     id: insertResult.meta?.last_row_id || null,
     memoryKey: cleanKey
   };
-}
-
 // ==========================================
 // ذخیره تاریخچه گفت‌وگو
 // ==========================================
