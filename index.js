@@ -1075,21 +1075,7 @@ async function saveNaviMemoryFact(
   };
 }
 
-  // بررسی وجود قبلی همان کلید
-  const keyExisting = await db.prepare(`
-    SELECT id, memory_value
-    FROM navi_memory_facts_v1
-    WHERE owner_id = ?
-      AND memory_key = ?
-      AND status = 'approved'
-    ORDER BY updated_at DESC
-    LIMIT 1
-  `).bind(
-    NAVI_OWNER_ID,
-    cleanKey
-  ).first();
-
-  // اگر کلید قبلاً وجود داشته باشد، مقدار آن به‌روزرسانی می‌شود
+// اگر کلید قبلاً وجود داشته باشد، مقدار آن به‌روزرسانی می‌شود
   if (keyExisting) {
     await db.prepare(`
       UPDATE navi_memory_facts_v1
