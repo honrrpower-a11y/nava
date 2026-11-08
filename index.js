@@ -954,38 +954,127 @@ async function saveNaviMemoryFact(
   memoryKey = "یادداشت کاربر",
   source = "user_command"
 ) {
-  const cleanValue = safeNaviText(value, 1000);
-  const cleanKey = safeNaviText(memoryKey, 150);
-  const cleanSource = safeNaviText(source, 50);
+  const ownerId = NAVI_OWNER_ID;
+  const cleanValue = String(value || "").trim();
 
-  if (!cleanValue || !cleanKey) {
-    throw new Error("اطلاعات حافظه نمی‌تواند خالی باشد.");
+  if (!cleanValue) {
+    throw new Error("Memory value cannot be empty.");
   }
 
-  // بررسی وجود همان کلید و همان مقدار
-  const exactExisting = await db.prepare(`
-    SELECT id
-    FROM navi_memory_facts_v1
-    WHERE owner_id = ?
-      AND memory_key = ?
-      AND memory_value = ?
-      AND status = 'approved'
-    LIMIT 1
-  `).bind(
-    NAVI_OWNER_ID,
-    cleanKey,
-    cleanValue
-  ).first();
+  // تشخیص هویت دستیار؛ نباید با اطلاعات کاربر اشتباه شود.
+  const isAssistantIdentity =
+    /(?:نام|اسم)\s*(?:دستیار|هوشمند)/u.test(cleanValue) &&
+    /ناوی/u.test(cleanValue);
 
-  if (exactExisting) {
-    return {
-      duplicate: true,
-      updated: false,
-      inserted: false,
-      id: exactExisting.id,
-      memoryKey: cleanKey
-    };
+  const finalKey = isAssistantIdentity
+    ? "هویت دستیار"
+    : String(memoryKey || "یادداشت کاربر").trim();
+
+  // فقط این دو کلید اجازه به‌روزرسانی دارند.
+  const isProtectedProfileKey = [
+    "نام کاربر",
+    "هویت دستیار"
+  ].includes(finalKey);
+
+  // اطلاعات هویتی: بررسی رکورد قبلی با همان کلید.
+  if (isProtectedProfileKey) {
+    const existing = await db
+      .prepare(`
+        SELECT id, memory_value
+        FROM navi_memory_facts_v1
+        WHERE owner_id = ?
+          AND memory_key = ?
+          AND status = 'approved'
+        ORDER BY id DESC
+        LIMIT 1
+      `)
+      .bind(ownerId, finalKey)
+      .first();
+
+    if (existing) {
+      if (existing.memory_value === cleanValue) {
+        return {
+          duplicate: true,
+          updated: false,
+          inserted: false,
+          memoryKey: finalKey
+        };
+      }
+
+      await db
+        .prepare(`
+          UPDATE navi_memory_facts_v1
+          SET memory_value = ?,
+              source = ?,
+              status = 'approved'
+          WHERE id = ?
+            AND owner_id = ?
+        `)
+        .bind(
+          cleanValue,
+          source,
+          existing.id,
+          ownerId
+        )
+        .run();
+
+      return {
+        duplicate: false,
+        updated: true,
+        inserted: false,
+        memoryKey: finalKey
+      };
+    }
+  } else {
+    // یادداشت عمومی: فقط تکرار دقیق را تشخیص بده.
+    const existing = await db
+      .prepare(`
+        SELECT id
+        FROM navi_memory_facts_v1
+        WHERE owner_id = ?
+          AND memory_value = ?
+          AND status = 'approved'
+        LIMIT 1
+      `)
+      .bind(ownerId, cleanValue)
+      .first();
+
+    if (existing) {
+      return {
+        duplicate: true,
+        updated: false,
+        inserted: false,
+        memoryKey: finalKey
+      };
+    }
   }
+
+  // هر یادداشت عمومی کلید مستقل می‌گیرد.
+  const uniqueKey = isProtectedProfileKey
+    ? finalKey
+    : `${finalKey} ${Date.now()}-${crypto.randomUUID().slice(0, 8)}`;
+
+  await db
+    .prepare(`
+      INSERT INTO navi_memory_facts_v1
+        (owner_id, memory_key, memory_value, source, status)
+      VALUES (?, ?, ?, ?, 'approved')
+    `)
+    .bind(
+      ownerId,
+      uniqueKey,
+      cleanValue,
+      source
+    )
+    .run();
+
+  return {
+    duplicate: false,
+    updated: false,
+    inserted: true,
+    memoryKey: uniqueKey
+  };
+}
 
   // بررسی وجود قبلی همان کلید
   const keyExisting = await db.prepare(`
