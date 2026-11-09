@@ -30,6 +30,7 @@ let naviHistoryLoadPromise = null;
 
 // Memory state
 let naviMemory = [];
+let naviProposals = [];
 let naviMemoryLoaded = false;
 let naviMemoryLoading = false;
 let naviMemoryLoadPromise = null;
@@ -221,6 +222,7 @@ function clearNaviSession() {
 
   naviHistory = [];
   naviMemory = [];
+  naviProposals = [];
   naviMemoryLoaded = false;
   naviMemoryLoading = false;
   naviMemoryLoadPromise = null;
@@ -643,6 +645,239 @@ function renderNaviMemories(memories) {
 }
 
 
+
+function normalizeNaviProposals(data) {
+  const source = data && Array.isArray(data.proposals)
+    ? data.proposals
+    : data && data.data && Array.isArray(data.data.proposals)
+      ? data.data.proposals
+      : [];
+
+  return source
+    .filter(item => item && typeof item === "object")
+    .map(item => ({
+      id: Number(item.id),
+      memory_key: String(item.memory_key ?? "پیشنهاد ناوی"),
+      memory_value: String(item.memory_value ?? ""),
+      source: String(item.source ?? ""),
+      created_at: item.created_at ?? "",
+      updated_at: item.updated_at ?? ""
+    }))
+    .filter(item => Number.isSafeInteger(item.id) && item.id > 0);
+}
+
+function renderNaviMemoryProposals(proposals) {
+  const heading = document.createElement("div");
+  heading.className = "navi-memory-section-title";
+  heading.textContent = "پیشنهادهای ناوی — در انتظار تأیید تو";
+  naviMemoryList.appendChild(heading);
+
+  if (!Array.isArray(proposals) || proposals.length === 0) {
+    const empty = document.createElement("div");
+    empty.className = "navi-memory-empty";
+    empty.textContent = "پیشنهاد تازه‌ای برای بررسی وجود ندارد.";
+    naviMemoryList.appendChild(empty);
+    return;
+  }
+
+  proposals.forEach(proposal => {
+    const card = document.createElement("article");
+    card.className = "navi-memory-card navi-memory-proposal";
+    card.dataset.proposalId = String(proposal.id);
+
+    const key = document.createElement("div");
+    key.className = "navi-memory-key";
+    key.textContent = proposal.memory_key;
+
+    const value = document.createElement("div");
+    value.className = "navi-memory-value";
+    value.textContent = proposal.memory_value || "متن این پیشنهاد خالی است.";
+
+    const meta = document.createElement("div");
+    meta.className = "navi-memory-meta";
+    if (proposal.source) {
+      const source = document.createElement("span");
+      source.textContent = "منبع: " + proposal.source;
+      meta.appendChild(source);
+    }
+    if (proposal.created_at) {
+      const date = document.createElement("span");
+      date.textContent = "ثبت پیشنهاد: " + formatNaviMemoryDate(proposal.created_at);
+      meta.appendChild(date);
+    }
+
+    const actions = document.createElement("div");
+    actions.className = "navi-memory-actions";
+
+    const edit = document.createElement("button");
+    edit.type = "button";
+    edit.className = "navi-memory-edit";
+    edit.textContent = "بررسی و ویرایش";
+    edit.addEventListener("click", () => openNaviProposalEditor(proposal, card));
+
+    const approve = document.createElement("button");
+    approve.type = "button";
+    approve.className = "navi-memory-approve";
+    approve.textContent = "تأیید";
+    approve.addEventListener("click", () => submitNaviProposalAction(proposal.id, "approve", null, approve));
+
+    const reject = document.createElement("button");
+    reject.type = "button";
+    reject.className = "navi-memory-reject";
+    reject.textContent = "رد پیشنهاد";
+    reject.addEventListener("click", () => {
+      if (window.confirm("این پیشنهاد رد شود؟")) {
+        submitNaviProposalAction(proposal.id, "reject", null, reject);
+      }
+    });
+
+    actions.append(edit, approve, reject);
+    card.append(key, value, meta, actions);
+    naviMemoryList.appendChild(card);
+  });
+}
+
+function openNaviProposalEditor(proposal, card) {
+  if (naviMemoryBusy) return;
+  const previous = naviMemoryList.querySelector(".navi-memory-proposal-editor");
+  if (previous) {
+    previous.focus();
+    return;
+  }
+
+  const value = card.querySelector(".navi-memory-value");
+  const actions = card.querySelector(".navi-memory-actions");
+  if (!value || !actions) return;
+
+  const editor = document.createElement("textarea");
+  editor.className = "navi-memory-editor navi-memory-proposal-editor";
+  editor.value = proposal.memory_value;
+  editor.setAttribute("aria-label", "ویرایش پیشنهاد حافظه");
+
+  const editorActions = document.createElement("div");
+  editorActions.className = "navi-memory-actions";
+
+  const save = document.createElement("button");
+  save.type = "button";
+  save.className = "navi-memory-save";
+  save.textContent = "ذخیره ویرایش";
+  save.addEventListener("click", async () => {
+    const ok = await submitNaviProposalAction(proposal.id, "update_pending", editor.value, save);
+    if (ok) {
+      editor.remove();
+      editorActions.remove();
+    }
+  });
+
+  const approve = document.createElement("button");
+  approve.type = "button";
+  approve.className = "navi-memory-approve";
+  approve.textContent = "تأیید و ذخیره";
+  approve.addEventListener("click", () => {
+    submitNaviProposalAction(proposal.id, "approve", editor.value, approve);
+  });
+
+  const cancel = document.createElement("button");
+  cancel.type = "button";
+  cancel.className = "navi-memory-cancel";
+  cancel.textContent = "انصراف";
+  cancel.addEventListener("click", () => {
+    editor.remove();
+    editorActions.remove();
+    value.hidden = false;
+    actions.hidden = false;
+  });
+
+  value.hidden = true;
+  actions.hidden = true;
+  card.insertBefore(editor, actions);
+  card.insertBefore(editorActions, actions);
+  editorActions.append(save, approve, cancel);
+  editor.focus();
+}
+
+async function submitNaviProposalAction(id, action, memoryValue, button) {
+  const token = getNaviToken();
+  if (!token) {
+    clearNaviSession();
+    showLoginError("نشست ناوی پایان یافته است. دوباره وارد شو.");
+    return false;
+  }
+  if (!Number.isSafeInteger(Number(id)) || Number(id) <= 0) {
+    showNaviMemoryError("شناسه پیشنهاد معتبر نیست.");
+    return false;
+  }
+
+  const cleanValue = typeof memoryValue === "string" ? memoryValue.trim() : null;
+  if ((action === "update_pending" || (action === "approve" && cleanValue !== null)) && !cleanValue) {
+    showNaviMemoryError("متن پیشنهاد نمی‌تواند خالی باشد.");
+    return false;
+  }
+  if (naviMemoryBusy) return false;
+
+  const requestVersion = naviSessionVersion;
+  naviMemoryBusy = true;
+  if (button) {
+    button.disabled = true;
+    button.textContent = "در حال انجام...";
+  }
+  showNaviMemoryError("");
+  setNaviMemoryStatus("در حال بررسی پیشنهاد حافظه...");
+
+  try {
+    const payload = { action, id: Number(id) };
+    if (cleanValue !== null) payload.memory_value = cleanValue;
+
+    const response = await fetch(NAVI_MEMORY_API, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + token
+      },
+      body: JSON.stringify(payload)
+    });
+
+    let data;
+    try {
+      data = await response.json();
+    } catch (error) {
+      throw new Error("پاسخ سرور هنگام بررسی پیشنهاد قابل خواندن نیست.");
+    }
+
+    if (getNaviToken() !== token || naviSessionVersion !== requestVersion) return false;
+
+    if (response.status === 401 || response.status === 403) {
+      clearNaviSession();
+      showLoginError("نشست ناوی معتبر نیست. دوباره وارد شو.");
+      throw new Error("دسترسی تأیید نشد. دوباره وارد ناوی شو.");
+    }
+    if (!response.ok || (data && data.success === false)) {
+      throw new Error((data && (data.error || data.diagnostic)) || "بررسی پیشنهاد ناموفق بود.");
+    }
+
+    await loadNaviMemories(true);
+    if (naviSessionVersion === requestVersion) {
+      setNaviMemoryStatus(
+        action === "approve" ? "پیشنهاد با تأیید تو به حافظه اضافه شد."
+          : action === "reject" ? "پیشنهاد رد شد."
+          : "ویرایش پیشنهاد ذخیره شد."
+      );
+    }
+    return true;
+  } catch (error) {
+    if (naviSessionVersion !== requestVersion) return false;
+    console.error("NAVI proposal review error:", error);
+    showNaviMemoryError(error.message || "بررسی پیشنهاد انجام نشد.");
+    return false;
+  } finally {
+    if (naviSessionVersion === requestVersion) {
+      naviMemoryBusy = false;
+      if (button && button.isConnected) button.disabled = false;
+    }
+  }
+}
+
+
 /* =========================================
    NAVI MEMORY — LOAD FROM WORKER
 ========================================= */
@@ -708,14 +943,15 @@ async function loadNaviMemories(forceRefresh = false) {
       }
 
       naviMemory = normalizeNaviMemories(data);
+      naviProposals = normalizeNaviProposals(data);
       naviMemoryLoaded = true;
 
       renderNaviMemories(naviMemory);
+      renderNaviMemoryProposals(naviProposals);
 
       setNaviMemoryStatus(
-        naviMemory.length
-          ? naviMemory.length + " مورد حافظه ثبت شده است."
-          : "هنوز حافظه‌ای ثبت نشده است."
+        naviMemory.length + " حافظه تأییدشده · " +
+        naviProposals.length + " پیشنهاد در انتظار بررسی"
       );
 
       return true;
