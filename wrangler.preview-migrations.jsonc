@@ -1,0 +1,10 @@
+{
+  "d1_databases": [
+    {
+      "binding": "PREVIEW_DB",
+      "database_name": "nava-memory-preview",
+      "database_id": "b48b0390-f292-4ecf-b36d-31eb2aff3958",
+      "migrations_dir": "migrations"
+    }
+  ]
+}
