@@ -1,3 +1,4 @@
+
 "use strict";
 
 /* =========================================
@@ -90,40 +91,42 @@ navButtons.forEach(button => {
 /* NAVA THEME */
 
 function applyNavaTheme(theme) {
-    const isLight = theme === "light";
+  const isLight = theme === "light";
 
-    document.body.classList.toggle("light", isLight);
+  document.body.classList.toggle("light", isLight);
 
-    localStorage.setItem("nava-theme", isLight ? "light" : "dark");
+  localStorage.setItem("nava-theme", isLight ? "light" : "dark");
 
-    const button = document.getElementById("themeToggle");
+  const button = document.getElementById("themeToggle");
 
-    if (button) {
-        button.textContent = isLight ? "🌙" : "☀️";
-        button.setAttribute(
-            "aria-label",
-            isLight ? "فعال‌کردن حالت شب" : "فعال‌کردن حالت روز"
-        );
-    }
+  if (button) {
+    button.textContent = isLight ? "🌙" : "☀️";
+    button.setAttribute(
+      "aria-label",
+      isLight ? "فعال‌کردن حالت شب" : "فعال‌کردن حالت روز"
+    );
+  }
 }
 
 function initNavaTheme() {
-    const button = document.getElementById("themeToggle");
+  const button = document.getElementById("themeToggle");
 
-    if (!button) return;
+  if (!button) return;
 
-    const savedTheme = localStorage.getItem("nava-theme") || "dark";
+  const savedTheme = localStorage.getItem("nava-theme") || "dark";
 
-    applyNavaTheme(savedTheme);
+  applyNavaTheme(savedTheme);
 
-    button.addEventListener("click", function () {
-        const isLight = document.body.classList.contains("light");
+  button.addEventListener("click", function () {
+    const isLight = document.body.classList.contains("light");
 
-        applyNavaTheme(isLight ? "dark" : "light");
-    });
+    applyNavaTheme(isLight ? "dark" : "light");
+  });
 }
 
 initNavaTheme();
+
+
 /* =========================================
    GENERAL HELPERS
 ========================================= */
@@ -157,6 +160,7 @@ function showEmptyHistory(message, countText) {
   naviHistoryList.appendChild(empty);
   naviHistoryCount.textContent = countText || "";
 }
+
 
 /* =========================================
    SESSION MANAGEMENT
@@ -252,6 +256,7 @@ function showNaviChat() {
   setNaviStatus("در حال بازیابی گفت‌وگوهای قبلی...");
 }
 
+
 /* =========================================
    HISTORY NORMALIZATION
 ========================================= */
@@ -306,6 +311,7 @@ function normalizeNaviHistory(data) {
   return normalized.slice(-NAVI_MAX_DISPLAY_MESSAGES);
 }
 
+
 /* =========================================
    HISTORY — SAFE RENDERING
 ========================================= */
@@ -348,6 +354,7 @@ function renderNaviHistory(messages) {
   naviHistoryCount.textContent = safeMessages.length + " پیام";
   naviHistoryList.scrollTop = naviHistoryList.scrollHeight;
 }
+
 
 /* =========================================
    HISTORY — LOAD FROM D1
@@ -450,6 +457,7 @@ async function loadNaviHistory() {
   return naviHistoryLoadPromise;
 }
 
+
 /* =========================================
    LOCAL HISTORY FALLBACK
 ========================================= */
@@ -478,6 +486,7 @@ function appendLocalNaviMessages(userMessage, assistantMessage) {
 
   renderNaviHistory(naviHistory);
 }
+
 
 /* =========================================
    NAVI MEMORY — HELPERS
@@ -556,6 +565,7 @@ function normalizeNaviMemories(data) {
     .filter(item => Number.isSafeInteger(item.id) && item.id > 0);
 }
 
+
 /* =========================================
    NAVI MEMORY — SAFE RENDERING
 ========================================= */
@@ -631,6 +641,7 @@ function renderNaviMemories(memories) {
 
   naviMemoryList.appendChild(fragment);
 }
+
 
 /* =========================================
    NAVI MEMORY — LOAD FROM WORKER
@@ -744,6 +755,7 @@ async function loadNaviMemories(forceRefresh = false) {
   return naviMemoryLoadPromise;
 }
 
+
 /* =========================================
    NAVI MEMORY — INLINE EDITOR
 ========================================= */
@@ -805,6 +817,7 @@ function openNaviMemoryEditor(memory, card) {
 
   editor.focus();
 }
+
 
 /* =========================================
    NAVI MEMORY — UPDATE
@@ -915,6 +928,7 @@ async function updateNaviMemory(id, memoryValue, button, editor) {
   }
 }
 
+
 /* =========================================
    NAVI MEMORY — DELETE
 ========================================= */
@@ -1021,6 +1035,7 @@ async function deleteNaviMemory(id, button) {
   }
 }
 
+
 /* =========================================
    NAVI MEMORY — PANEL EVENTS
 ========================================= */
@@ -1043,6 +1058,7 @@ naviMemoryRefresh.addEventListener("click", () => {
   loadNaviMemories(true);
 });
 
+
 /* =========================================
    RESTORE SESSION ON PAGE OPEN
 ========================================= */
@@ -1055,6 +1071,7 @@ if (existingNaviToken) {
 } else {
   clearNaviSession();
 }
+
 
 /* =========================================
    NAVI LOGIN
@@ -1136,6 +1153,7 @@ naviLoginForm.addEventListener("submit", async event => {
   }
 });
 
+
 /* =========================================
    NAVI LOGOUT
 ========================================= */
@@ -1147,6 +1165,7 @@ naviLogout.addEventListener("click", () => {
   naviLoginStatus.textContent = "از نشست ناوی خارج شدی.";
   setNaviStatus("برای شروع گفت‌وگو دوباره وارد شو.");
 });
+
 
 /* =========================================
    NAVI PAGE HELPERS
@@ -1175,6 +1194,7 @@ function scrollToRequest() {
 naviHistoryRefresh.addEventListener("click", () => {
   loadNaviHistory();
 });
+
 
 /* =========================================
    NAVI CHAT — AUTHENTICATED REQUEST
@@ -1299,6 +1319,16 @@ async function sendMessageToNavi() {
       );
     }
 
+    /* =====================================
+       NEW: AUTOMATIC MEMORY REFRESH
+       After every successful NAVI response,
+       refresh memory if the panel was loaded.
+    ===================================== */
+
+    if (naviMemoryLoaded && !naviMemoryBusy) {
+      await loadNaviMemories(true);
+    }
+
   } catch (error) {
     if (naviSessionVersion !== requestVersion) return;
 
@@ -1339,6 +1369,7 @@ userRequest.addEventListener("keydown", event => {
     }
   }
 });
+
 
 /* =========================================
    STORY MAKER
@@ -1392,3 +1423,4 @@ copyStory.addEventListener("click", async () => {
 
   storyMessage.classList.add("show");
 });
+ 
