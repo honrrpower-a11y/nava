@@ -1,7 +1,5 @@
 import { NAVI_MEMORY_API, state, getNaviToken, clearNaviSession, showLoginError, naviMemoryToggle, naviMemoryContent, naviMemoryList, naviMemoryStatus, naviMemoryError, naviMemoryRefresh } from "./navi-core.js";
 
-import { loadNaviHistory } from "./navi-history.js";
-
 export function setNaviMemoryStatus(message) {
   naviMemoryStatus.textContent = message;
 }
@@ -245,7 +243,7 @@ export function renderNaviMemories(memories, proposals = []) {
   });
 }
 
-async function manageNaviProposal(id, action, memoryValue, button) {
+export async function manageNaviProposal(id, action, memoryValue, button) {
   const token = getNaviToken();
   if (!token) {
     clearNaviSession();
@@ -316,7 +314,7 @@ async function manageNaviProposal(id, action, memoryValue, button) {
    NAVI MEMORY — LOAD FROM WORKER
 ========================================= */
 
-async function loadNaviMemories(forceRefresh = false) {
+export async function loadNaviMemories(forceRefresh = false) {
   const token = getNaviToken();
 
   if (!token) {
@@ -503,7 +501,7 @@ export function openNaviMemoryEditor(memory, card) {
    NAVI MEMORY — UPDATE
 ========================================= */
 
-async function updateNaviMemory(id, memoryValue, button, editor) {
+export async function updateNaviMemory(id, memoryValue, button, editor) {
   const token = getNaviToken();
 
   if (!token) {
@@ -613,7 +611,7 @@ async function updateNaviMemory(id, memoryValue, button, editor) {
    NAVI MEMORY — DELETE
 ========================================= */
 
-async function deleteNaviMemory(id, button) {
+export async function deleteNaviMemory(id, button) {
   const token = getNaviToken();
 
   if (!token) {
