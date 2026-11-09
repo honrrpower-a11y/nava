@@ -305,7 +305,16 @@ export async function manageNaviProposal(id, action, memoryValue, button) {
       button.textContent = oldLabel;
     }
   } finally {
-    if (state.naviSessionVersion === requestVersion) state.naviMemoryBusy = false;
+    if (state.naviSessionVersion === requestVersion) {
+      state.naviMemoryBusy = false;
+
+      // اگر تازه‌سازی فهرست شکست خورد و کارت قبلی هنوز در صفحه است،
+      // دکمه را در حالت «در حال انجام» قفل نگذار.
+      if (button && button.isConnected) {
+        button.disabled = false;
+        button.textContent = oldLabel;
+      }
+    }
   }
 }
 
@@ -602,6 +611,12 @@ export async function updateNaviMemory(id, memoryValue, button, editor) {
   } finally {
     if (state.naviSessionVersion === requestVersion) {
       state.naviMemoryBusy = false;
+
+      // در صورت خطا در تازه‌سازی، کنترل ویرایش در صفحه قفل نماند.
+      if (button && button.isConnected) {
+        button.disabled = false;
+        button.textContent = "ذخیره تغییرات";
+      }
     }
   }
 }
@@ -709,6 +724,12 @@ export async function deleteNaviMemory(id, button) {
   } finally {
     if (state.naviSessionVersion === requestVersion) {
       state.naviMemoryBusy = false;
+
+      // اگر فهرست پس از حذف تازه نشد، دکمه حذف را آزاد نگه دار.
+      if (button && button.isConnected) {
+        button.disabled = false;
+        button.textContent = "حذف";
+      }
     }
   }
 }
