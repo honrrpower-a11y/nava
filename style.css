@@ -269,3 +269,48 @@ body.light .navi-memory-value{color:#263a56}
     scroll-behavior:auto!important
   }
          }
+
+
+/* NAVI pending memory proposal review */
+.navi-memory-section-title{
+  margin:18px 0 10px;
+  padding:10px 12px;
+  border-right:3px solid var(--gold);
+  border-radius:8px;
+  background:rgba(229,184,94,.08);
+  color:var(--gold);
+  font-size:12px;
+  font-weight:700;
+}
+.navi-memory-proposal{
+  border-color:rgba(229,184,94,.42);
+  background:linear-gradient(145deg,rgba(229,184,94,.09),rgba(37,202,255,.035));
+}
+.navi-memory-approve,.navi-memory-reject{
+  padding:8px 12px;
+  border-radius:9px;
+  font-size:11px;
+  border:1px solid var(--border);
+  background:transparent;
+  color:var(--text);
+}
+.navi-memory-approve{
+  color:#65c99a;
+  border-color:rgba(101,201,154,.45);
+}
+.navi-memory-approve:hover{
+  background:rgba(101,201,154,.09);
+  border-color:#65c99a;
+}
+.navi-memory-reject{
+  color:#ff8585;
+  border-color:rgba(255,133,133,.35);
+}
+.navi-memory-reject:hover{
+  background:rgba(255,80,80,.08);
+  border-color:#ff8585;
+}
+.navi-memory-approve:disabled,.navi-memory-reject:disabled{
+  opacity:.5;
+  cursor:wait;
+}
