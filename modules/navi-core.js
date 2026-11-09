@@ -215,6 +215,8 @@ export function clearNaviSession() {
   */
 
   state.naviHistory = [];
+  state.naviHistoryLoading = false;
+  state.naviHistoryLoadPromise = null;
   state.naviMemory = [];
   state.naviProposals = [];
   state.naviMemoryLoaded = false;
