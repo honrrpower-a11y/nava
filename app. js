@@ -23,38 +23,32 @@ navButtons.forEach(button => {
   button.addEventListener("click", () => showPage(button.dataset.page));
 });
 
-/* =========================================
-   THEME
-========================================= */
-
+// NAVА THEME
 const themeToggle = document.getElementById("themeToggle");
 
-let savedTheme = "dark";
+function applyNavaTheme(theme) {
+    document.body.classList.toggle("light", theme === "light");
 
-try {
-  savedTheme = localStorage.getItem("nava-theme") || "dark";
-} catch (error) {
-  console.warn("Theme storage is unavailable.");
+    localStorage.setItem("nava-theme", theme);
+
+    if (themeToggle) {
+        themeToggle.textContent = theme === "light" ? "🌙" : "☀️";
+    }
 }
 
-if (savedTheme === "light") {
-  document.body.classList.add("light");
-  themeToggle.textContent = "🌙";
+if (themeToggle) {
+    const savedTheme = localStorage.getItem("nava-theme") || "dark";
+
+    applyNavaTheme(savedTheme);
+
+    themeToggle.addEventListener("click", () => {
+        const nextTheme = document.body.classList.contains("light")
+            ? "dark"
+            : "light";
+
+        applyNavaTheme(nextTheme);
+    });
 }
-
-themeToggle.addEventListener("click", () => {
-  document.body.classList.toggle("light");
-
-  const isLight = document.body.classList.contains("light");
-
-  try {
-    localStorage.setItem("nava-theme", isLight ? "light" : "dark");
-  } catch (error) {
-    console.warn("Could not save theme preference.");
-  }
-
-  themeToggle.textContent = isLight ? "🌙" : "☀️";
-});
 
 /* =========================================
    NAVI — API CONFIGURATION
