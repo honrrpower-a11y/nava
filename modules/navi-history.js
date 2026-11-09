@@ -1,4 +1,4 @@
-import { NAVI_HISTORY_API, NAVI_MAX_DISPLAY_MESSAGES, NAVI_CONTEXT_MESSAGES, state, getNaviToken, clearNaviSession, showLoginError, setNaviStatus, naviHistoryList, naviHistoryCount, naviHistoryRefresh } from "./navi-core.js";
+import { NAVI_HISTORY_API, NAVI_MAX_DISPLAY_MESSAGES, NAVI_CONTEXT_MESSAGES, state, getNaviToken, clearNaviSession, showLoginError, setNaviStatus, showEmptyHistory, naviHistoryList, naviHistoryCount, naviHistoryRefresh } from "./navi-core.js";
 
 export function normalizeNaviHistory(data) {
   let source = [];
@@ -99,7 +99,7 @@ export function renderNaviHistory(messages) {
    HISTORY — LOAD FROM D1
 ========================================= */
 
-async function loadNaviHistory() {
+export async function loadNaviHistory() {
   const token = getNaviToken();
 
   if (!token) return false;
