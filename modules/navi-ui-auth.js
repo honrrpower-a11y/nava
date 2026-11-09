@@ -3,7 +3,7 @@ import { loadNaviHistory } from "./navi-history.js";
 
 /* NAVI LOGIN */
 
-function handleNaviLogin(event) {
+async function handleNaviLogin(event) {
   event.preventDefault();
 
   const password = naviPassword.value.trim();
