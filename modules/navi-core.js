@@ -6,15 +6,29 @@
 ========================================= */
 
 // API
-export const NAVI_BASE = "https://nava-music-api.honrrpower.workers.dev";
+// Production remains the default. Add ?navi-preview=1 to the site URL
+// to route NAVI requests to this branch's isolated Cloudflare Worker Preview.
+const NAVI_PRODUCTION_BASE = "https://nava-music-api.honrrpower.workers.dev";
+const NAVI_PREVIEW_BASE = "https://navi-frontend-modularization-nava-music-api.honrrpower.workers.dev";
+export const NAVI_PREVIEW_MODE =
+  new URLSearchParams(window.location.search).get("navi-preview") === "1";
+export const NAVI_BASE = NAVI_PREVIEW_MODE
+  ? NAVI_PREVIEW_BASE
+  : NAVI_PRODUCTION_BASE;
+
 export const NAVI_LOGIN_API = NAVI_BASE + "/navi-login";
 export const NAVI_API = NAVI_BASE + "/navi-chat";
 export const NAVI_HISTORY_API = NAVI_BASE + "/navi-history";
 export const NAVI_MEMORY_API = NAVI_BASE + "/navi-memory";
 
-// Session
-export const NAVI_SESSION_KEY = "nava_navi_session";
-export const NAVI_EXPIRY_KEY = "nava_navi_expiry";
+// Keep Preview and Production sessions separate. A Production token must
+// never be reused against the isolated Preview Worker (or vice versa).
+export const NAVI_SESSION_KEY = NAVI_PREVIEW_MODE
+  ? "nava_navi_session_preview"
+  : "nava_navi_session";
+export const NAVI_EXPIRY_KEY = NAVI_PREVIEW_MODE
+  ? "nava_navi_expiry_preview"
+  : "nava_navi_expiry";
 
 // Limits
 export const NAVI_MAX_DISPLAY_MESSAGES = 100;
