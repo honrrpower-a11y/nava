@@ -648,6 +648,12 @@ function renderApprovedNaviMemories(memories) {
 function renderNaviMemories(memories, proposals = []) {
   renderApprovedNaviMemories(memories);
 
+  if ((!Array.isArray(memories) || memories.length === 0) &&
+      Array.isArray(proposals) && proposals.length > 0) {
+    const emptyState = naviMemoryList.querySelector(".navi-memory-empty");
+    if (emptyState) emptyState.remove();
+  }
+
   if (!Array.isArray(proposals) || proposals.length === 0) return;
 
   const heading = document.createElement("div");
