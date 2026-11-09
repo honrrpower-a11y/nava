@@ -23,91 +23,43 @@ navButtons.forEach(button => {
   button.addEventListener("click", () => showPage(button.dataset.page));
 });
 
-// NAVА THEME
-const themeToggle = document.getElementById("themeToggle");
+/* NAVA THEME */
 
 function applyNavaTheme(theme) {
-    document.body.classList.toggle("light", theme === "light");
+    const isLight = theme === "light";
 
-    localStorage.setItem("nava-theme", theme);
+    document.body.classList.toggle("light", isLight);
 
-    if (themeToggle) {
-        themeToggle.textContent = theme === "light" ? "🌙" : "☀️";
+    localStorage.setItem("nava-theme", isLight ? "light" : "dark");
+
+    const button = document.getElementById("themeToggle");
+
+    if (button) {
+        button.textContent = isLight ? "🌙" : "☀️";
+        button.setAttribute(
+            "aria-label",
+            isLight ? "فعال‌کردن حالت شب" : "فعال‌کردن حالت روز"
+        );
     }
 }
 
-if (themeToggle) {
+function initNavaTheme() {
+    const button = document.getElementById("themeToggle");
+
+    if (!button) return;
+
     const savedTheme = localStorage.getItem("nava-theme") || "dark";
 
     applyNavaTheme(savedTheme);
 
-    themeToggle.addEventListener("click", () => {
-        const nextTheme = document.body.classList.contains("light")
-            ? "dark"
-            : "light";
+    button.addEventListener("click", function () {
+        const isLight = document.body.classList.contains("light");
 
-        applyNavaTheme(nextTheme);
+        applyNavaTheme(isLight ? "dark" : "light");
     });
 }
 
-/* =========================================
-   NAVI — API CONFIGURATION
-========================================= */
-
-const NAVI_BASE = "https://nava-music-api.honrrpower.workers.dev";
-const NAVI_LOGIN_API = NAVI_BASE + "/navi-login";
-const NAVI_API = NAVI_BASE + "/navi-chat";
-const NAVI_HISTORY_API = NAVI_BASE + "/navi-history";
-const NAVI_MEMORY_API = NAVI_BASE + "/navi-memory";
-
-const NAVI_SESSION_KEY = "nava_navi_session";
-const NAVI_EXPIRY_KEY = "nava_navi_expiry";
-
-const NAVI_MAX_DISPLAY_MESSAGES = 100;
-const NAVI_CONTEXT_MESSAGES = 10;
-
-const naviLoginPanel = document.getElementById("naviLoginPanel");
-const naviChatArea = document.getElementById("naviChatArea");
-const naviLoginForm = document.getElementById("naviLoginForm");
-const naviPassword = document.getElementById("naviPassword");
-const naviLoginButton = document.getElementById("naviLoginButton");
-const naviLoginError = document.getElementById("naviLoginError");
-const naviLoginStatus = document.getElementById("naviLoginStatus");
-const naviLogout = document.getElementById("naviLogout");
-
-const serviceSelect = document.getElementById("serviceSelect");
-const userRequest = document.getElementById("userRequest");
-const sendRequest = document.getElementById("sendRequest");
-const requestResponse = document.getElementById("requestResponse");
-const naviStatus = document.getElementById("naviStatus");
-
-const naviHistoryList = document.getElementById("naviHistoryList");
-const naviHistoryCount = document.getElementById("naviHistoryCount");
-const naviHistoryRefresh = document.getElementById("naviHistoryRefresh");
-
-const naviMemoryToggle = document.getElementById("naviMemoryToggle");
-const naviMemoryContent = document.getElementById("naviMemoryContent");
-const naviMemoryRefresh = document.getElementById("naviMemoryRefresh");
-const naviMemoryStatus = document.getElementById("naviMemoryStatus");
-const naviMemoryError = document.getElementById("naviMemoryError");
-const naviMemoryList = document.getElementById("naviMemoryList");
-
-let naviMemory = [];
-let naviMemoryLoading = false;
-let naviMemoryLoadPromise = null;
-let naviMemoryLoaded = false;
-let naviMemoryBusy = false;
-
-let naviHistory = [];
-let naviHistoryLoading = false;
-let naviHistoryLoadPromise = null;
-
-/*
-  هر بار ورود یا خروج، شماره نشست تغییر می‌کند.
-  پاسخ درخواست‌های نشست قبلی اجازه تغییر رابط نشست جدید را ندارد.
-*/
-let naviSessionVersion = 0;
-
+initNavaTheme();
 /* =========================================
    GENERAL HELPERS
 ========================================= */
