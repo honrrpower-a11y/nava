@@ -872,7 +872,14 @@ async function submitNaviProposalAction(id, action, memoryValue, button) {
   } finally {
     if (naviSessionVersion === requestVersion) {
       naviMemoryBusy = false;
-      if (button && button.isConnected) button.disabled = false;
+      if (button && button.isConnected) {
+        button.disabled = false;
+        button.textContent = action === "reject"
+          ? "رد پیشنهاد"
+          : action === "approve"
+            ? "تأیید"
+            : "ذخیره ویرایش";
+      }
     }
   }
 }
@@ -1364,6 +1371,7 @@ naviLoginForm.addEventListener("submit", async event => {
     naviPassword.value = "";
     naviHistory = [];
     naviMemory = [];
+    naviProposals = [];
     naviMemoryLoaded = false;
 
     showNaviChat();
