@@ -21,16 +21,16 @@ export const NAVI_MAX_DISPLAY_MESSAGES = 100;
 export const NAVI_CONTEXT_MESSAGES = 10;
 
 export const state = {
-  state.naviSessionVersion: 0,
-  state.naviHistory: [],
-  state.naviHistoryLoading: false,
-  state.naviHistoryLoadPromise: null,
-  state.naviMemory: [],
-  state.naviProposals: [],
-  state.naviMemoryLoaded: false,
-  state.naviMemoryLoading: false,
-  state.naviMemoryLoadPromise: null,
-  state.naviMemoryBusy: false
+  naviSessionVersion: 0,
+  naviHistory: [],
+  naviHistoryLoading: false,
+  naviHistoryLoadPromise: null,
+  naviMemory: [],
+  naviProposals: [],
+  naviMemoryLoaded: false,
+  naviMemoryLoading: false,
+  naviMemoryLoadPromise: null,
+  naviMemoryBusy: false
 };
 
 // DOM elements — NAVI
