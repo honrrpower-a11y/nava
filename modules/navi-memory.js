@@ -1,24 +1,39 @@
-
-// حافظه و تاریخچه پایدار NAVI در Cloudflare D1
+// NAVI - Persistent Memory and Conversation History
+// Version: 1.0
 
 import { safeNaviText } from "./shared.js";
 
-// ==========================================
-// تنظیمات حافظه پایدار NAVI
-// ==========================================
+// ======================================
+// CONSTANTS
+// ======================================
 
 export const NAVI_MAIN_THREAD_ID = "owner-main";
 export const NAVI_OWNER_ID = "owner";
 
 const MEMORY_VALUE_LIMIT = 1000;
 const MEMORY_KEY_LIMIT = 150;
+const MEMORY_LIST_LIMIT = 200;
 
-// ==========================================
-// ابزارهای عمومی
-// ==========================================
+// ======================================
+// TEXT HELPERS
+// ======================================
+
+function normalizeMemoryText(value) {
+  return String(value || "")
+    .normalize("NFKC")
+    .replace(/[ي]/g, "ی")
+    .replace(/[ك]/g, "ک")
+    .replace(/[\u064B-\u065F\u0670]/g, "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .toLowerCase();
+}
 
 function cleanMemoryValue(value) {
-  return safeNaviText(value || "", MEMORY_VALUE_LIMIT);
+  return safeNaviText(
+    value || "",
+    MEMORY_VALUE_LIMIT
+  );
 }
 
 function cleanMemoryTitle(value) {
@@ -29,18 +44,60 @@ function cleanMemoryTitle(value) {
 }
 
 function createUniqueMemoryKey(title) {
-  return `${title} ${Date.now()}-${crypto.randomUUID().slice(0, 8)}`;
+  const base = cleanMemoryTitle(title)
+    .replace(/[^\p{L}\p{N}\s_-]/gu, "")
+    .trim()
+    .slice(0, 100) || "یادداشت";
+
+  return `${base}-${crypto.randomUUID()}`;
 }
 
-// ==========================================
-// ایجاد گفت‌وگوی اصلی
-// ==========================================
+function containsSensitiveMemory(value) {
+  const text = String(value || "");
+
+  const patterns = [
+    /\bpassword\b/i,
+    /\bpasswd\b/i,
+    /\bapi[_ -]?key\b/i,
+    /\baccess[_ -]?token\b/i,
+    /\brefresh[_ -]?token\b/i,
+    /\bsecret[_ -]?key\b/i,
+    /\bprivate[_ -]?key\b/i,
+    /\bclient[_ -]?secret\b/i,
+
+    /رمز\s*(عبور|ورود)/i,
+    /کلمه\s*عبور/i,
+    /کلید\s*خصوصی/i,
+    /توکن\s*(دسترسی|ورود|امنیتی)/i,
+    /کلید\s*ای‌پی‌آی/i,
+    /شماره\s*کارت/i,
+    /شماره\s*حساب/i,
+    /اطلاعات\s*بانکی/i,
+    /رمز\s*دوم/i,
+    /cvv2/i
+  ];
+
+  return patterns.some(pattern => pattern.test(text));
+}
+
+// ======================================
+// DATABASE THREAD
+// ======================================
 
 export async function ensureNaviMainThread(db) {
+  if (!db) {
+    throw new Error("NAVI database is unavailable.");
+  }
+
   await db.prepare(`
-    INSERT OR IGNORE INTO navi_chat_threads_v1
-    (thread_id, owner_id, title)
-    VALUES (?, ?, ?)
+    INSERT OR IGNORE INTO navi_chat_threads_v1 (
+      thread_id,
+      owner_id,
+      title,
+      created_at,
+      updated_at
+    )
+    VALUES (?, ?, ?, datetime('now'), datetime('now'))
   `).bind(
     NAVI_MAIN_THREAD_ID,
     NAVI_OWNER_ID,
@@ -48,11 +105,14 @@ export async function ensureNaviMainThread(db) {
   ).run();
 }
 
-// ==========================================
-// خواندن تاریخچه از D1
-// ==========================================
+// ======================================
+// CONVERSATION HISTORY
+// ======================================
 
-export async function getNaviDbHistory(db, limit = 10) {
+export async function getNaviDbHistory(
+  db,
+  limit = 10
+) {
   const safeLimit = Math.max(
     1,
     Math.min(Number(limit) || 10, 100)
@@ -69,103 +129,75 @@ export async function getNaviDbHistory(db, limit = 10) {
     safeLimit
   ).all();
 
-  return (result.results || []).reverse().map(row => ({
-    role: row.role,
-    content: row.content,
-    created_at: row.created_at
-  }));
+  return (result.results || [])
+    .reverse()
+    .map(row => ({
+      role: row.role,
+      content: row.content,
+      createdAt: row.created_at
+    }));
 }
 
-// ==========================================
-// آماده‌سازی تاریخچه برای Gemini
-// ==========================================
+export function prepareNaviHistory(
+  history,
+  currentMessage
+) {
+  const messages = [];
 
-export function prepareNaviHistory(history, currentMessage) {
-  const rawHistory = Array.isArray(history)
-    ? history.slice(-10)
-    : [];
+  for (const item of history || []) {
+    if (!item) continue;
 
-  const contents = [];
+    const role = item.role === "assistant"
+      ? "model"
+      : item.role === "user"
+        ? "user"
+        : null;
 
-  for (const item of rawHistory) {
-    if (!item || typeof item !== "object") continue;
-
-    let role = String(item.role || "").toLowerCase();
-
-    if (role === "assistant") role = "model";
-
-    if (role !== "user" && role !== "model") continue;
-
-    const historyText = safeNaviText(
-      item.content || item.text || "",
-      2000
+    const content = safeNaviText(
+      item.content || "",
+      10000
     );
 
-    if (!historyText) continue;
+    if (!role || !content) continue;
 
-    const previousMessage = contents[contents.length - 1];
+    const previous = messages[messages.length - 1];
 
-    if (previousMessage && previousMessage.role === role) {
-      previousMessage.parts[0].text += "\n" + historyText;
+    if (previous && previous.role === role) {
+      previous.parts[0].text += "\n" + content;
     } else {
-      contents.push({
+      messages.push({
         role,
-        parts: [{ text: historyText }]
+        parts: [{ text: content }]
       });
     }
   }
 
-  while (
-    contents.length > 0 &&
-    contents[0].role !== "user"
-  ) {
-    contents.shift();
+  const current = safeNaviText(
+    currentMessage || "",
+    4000
+  );
+
+  if (current) {
+    const previous = messages[messages.length - 1];
+
+    if (previous?.role === "user") {
+      previous.parts[0].text += "\n" + current;
+    } else {
+      messages.push({
+        role: "user",
+        parts: [{ text: current }]
+      });
+    }
   }
 
-  const lastMessage = contents[contents.length - 1];
-
-  if (
-    lastMessage &&
-    lastMessage.role === "user" &&
-    lastMessage.parts[0].text.trim() === currentMessage.trim()
-  ) {
-    return contents;
-  }
-
-  if (lastMessage && lastMessage.role === "user") {
-    lastMessage.parts[0].text += "\n" + currentMessage;
-  } else {
-    contents.push({
-      role: "user",
-      parts: [{ text: currentMessage }]
-    });
-  }
-
-  return contents;
+  return messages;
 }
 
-// ==========================================
-// خواندن حافظه‌های تأییدشده
-// ==========================================
+// ======================================
+// APPROVED MEMORY
+// ======================================
 
 export async function getNaviApprovedMemory(db) {
-  const result = await db.prepare(`
-    SELECT memory_key, memory_value
-    FROM navi_memory_facts_v1
-    WHERE owner_id = ?
-      AND status = 'approved'
-    ORDER BY updated_at DESC, id DESC
-    LIMIT 100
-  `).bind(NAVI_OWNER_ID).all();
-
-  return result.results || [];
-}
-
-// ==========================================
-// خواندن پیشنهادهای منتظر تأیید
-// ==========================================
-
-export async function getNaviPendingMemory(db) {
   const result = await db.prepare(`
     SELECT
       id,
@@ -176,125 +208,142 @@ export async function getNaviPendingMemory(db) {
       updated_at
     FROM navi_memory_facts_v1
     WHERE owner_id = ?
-      AND status = 'pending'
-    ORDER BY created_at DESC, id DESC
-    LIMIT 100
-  `).bind(NAVI_OWNER_ID).all();
+      AND status = 'approved'
+    ORDER BY updated_at DESC, id DESC
+    LIMIT ?
+  `).bind(
+    NAVI_OWNER_ID,
+    MEMORY_LIST_LIMIT
+  ).all();
 
   return result.results || [];
 }
 
-// ==========================================
-// تشخیص دستور صریح ذخیره حافظه
-// ==========================================
+// ======================================
+// PENDING MEMORY PROPOSALS
+// ======================================
+
+export async function getNaviPendingMemory(db) {
+  const result = await db.prepare(`
+    SELECT
+      id,
+      memory_key,
+      memory_value,
+      source,
+      status,
+      created_at,
+      updated_at
+    FROM navi_memory_facts_v1
+    WHERE owner_id = ?
+      AND status = 'pending'
+    ORDER BY created_at DESC, id DESC
+    LIMIT ?
+  `).bind(
+    NAVI_OWNER_ID,
+    MEMORY_LIST_LIMIT
+  ).all();
+
+  return result.results || [];
+}
+
+// ======================================
+// MEMORY COMMAND PARSER
+// ======================================
 
 export function parseNaviMemoryCommand(message) {
-  const text = safeNaviText(message, 4000);
+  const text = safeNaviText(message || "", 4000).trim();
 
-  // حالت اول: «به خاطر بسپار»
-
-  const rememberMatch = text.match(
-    /^\s*(?:ناوی[،,:؛]?\s*)?(?:لطفاً\s*)?به\s+خاطر\s+بسپار(?:\s+که)?\s*[:：،-]?\s*/u
-  );
-
-  if (rememberMatch) {
-    const value = safeNaviText(
-      text.slice(rememberMatch[0].length),
-      MEMORY_VALUE_LIMIT
-    );
-
+  if (!text) {
     return {
-      isCommand: true,
-      value,
-      memoryKey: "یادداشت کاربر",
-      memoryValue: value,
-      source: "user_command",
-      type: "explicit"
+      isCommand: false,
+      value: ""
     };
   }
 
-  // حالت دوم: دستور ثبت در حافظه بلندمدت
-
-  const saveMatch = text.match(
-    /^\s*(?:ناوی[،,:؛]?\s*)?(?:لطفاً\s*)?(?:این\s+)?(?:اطلاعات|مطلب|نکته|موضوع|مورد|رو|را)\s*(?:را|رو)?\s*(?:در|به)\s+حافظه\s+(?:بلندمدت|دائمی)(?:\s+خود)?\s*(?:ثبت|ذخیره|اضافه)\s*(?:کن|بکن|نمای)\s*[:：،-]?\s*/u
-  );
-
-  if (saveMatch) {
-    const value = safeNaviText(
-      text.slice(saveMatch[0].length),
-      MEMORY_VALUE_LIMIT
-    );
-
-    return {
-      isCommand: true,
-      value,
-      memoryKey: "یادداشت کاربر",
-      memoryValue: value,
-      source: "user_command",
+  const patterns = [
+    {
+      regex: /(?:به خاطر بسپار|یادت باشه|یادت بمونه)\s*[:،]?\s*(.+)$/i,
       type: "explicit"
-    };
-  }
-
-  // حالت سوم: «ثبت کن» یا «ذخیره کن»
-
-  const shortSaveMatch = text.match(
-    /^\s*(?:ناوی[،,:؛]?\s*)?(?:لطفاً\s*)?(?:ثبت|ذخیره)\s+کن(?:\s+که)?\s*[:：،-]?\s*/u
-  );
-
-  if (shortSaveMatch) {
-    const value = safeNaviText(
-      text.slice(shortSaveMatch[0].length),
-      MEMORY_VALUE_LIMIT
-    );
-
-    return {
-      isCommand: true,
-      value,
-      memoryKey: "یادداشت کاربر",
-      memoryValue: value,
-      source: "user_command",
+    },
+    {
+      regex: /(?:اطلاعات|مطلب|نکته)\s+(.+?)\s+را\s+(?:در حافظه(?: بلندمدت| دائمی)?|برای همیشه)\s+(?:ثبت|ذخیره)\s+کن/i,
       type: "explicit"
-    };
-  }
+    },
+    {
+      regex: /(?:ثبت کن|ذخیره کن)\s*[:،]?\s*(.+)$/i,
+      type: "explicit"
+    },
+    {
+      regex: /(?:اسم|نام)\s+من\s+(.+?)\s+(?:است|هست)$/i,
+      type: "profile"
+    }
+  ];
 
-  // حالت چهارم: معرفی صریح نام کاربر
+  for (const item of patterns) {
+    const match = text.match(item.regex);
 
-  const nameMatch = text.match(
-    /^\s*(?:اسم|نام)\s+من\s+(?:هم\s+)?([آ-یءاأإؤئ‌\-]{2,40})\s*(?:است|هست|می‌باشد|میباشد)?[.!؟،؛\s]*$/u
-  );
+    if (match) {
+      const value = cleanMemoryValue(match[1]);
 
-  if (nameMatch) {
-    const userName = safeNaviText(
-      nameMatch[1].replace(/\s+/g, " "),
-      60
-    );
-
-    if (userName) {
       return {
         isCommand: true,
-        value: userName,
-        memoryKey: "نام کاربر",
-        memoryValue: userName,
-        source: "user_statement",
-        type: "profile"
+        type: item.type,
+        value,
+        memoryValue: value,
+        memoryKey: item.type === "profile"
+          ? "نام کاربر"
+          : "یادداشت کاربر",
+        source: "user_command"
       };
     }
   }
 
+  if (
+    /(?:به خاطر بسپار|یادت باشه|یادت بمونه|ذخیره کن|ثبت کن)/i.test(text)
+  ) {
+    return {
+      isCommand: true,
+      type: "explicit",
+      value: ""
+    };
+  }
+
   return {
     isCommand: false,
-    value: "",
-    memoryKey: "",
-    memoryValue: "",
-    source: "",
-    type: ""
+    value: ""
   };
 }
 
-// ==========================================
-// ذخیره پیشنهاد هوشمند حافظه
-// وضعیت اولیه: pending
-// ==========================================
+// ======================================
+// DUPLICATE DETECTION
+// ======================================
+
+async function findMemoryDuplicate(
+  db,
+  value,
+  excludeId = null
+) {
+  const result = await db.prepare(`
+    SELECT id, memory_value, status
+    FROM navi_memory_facts_v1
+    WHERE owner_id = ?
+      AND status IN ('approved', 'pending')
+      AND id != ?
+  `).bind(
+    NAVI_OWNER_ID,
+    Number(excludeId) || -1
+  ).all();
+
+  const normalized = normalizeMemoryText(value);
+
+  return (result.results || []).find(item =>
+    normalizeMemoryText(item.memory_value) === normalized
+  ) || null;
+}
+
+// ======================================
+// CREATE PENDING PROPOSAL
+// ======================================
 
 export async function createNaviMemoryProposal(
   db,
@@ -302,111 +351,89 @@ export async function createNaviMemoryProposal(
   title = "یادداشت کاربر",
   source = "navi_suggestion"
 ) {
-  const ownerId = NAVI_OWNER_ID;
+  const memoryValue = cleanMemoryValue(value);
+  const memoryTitle = cleanMemoryTitle(title);
+  const memorySource = safeNaviText(source, 100) || "navi";
 
-  const cleanValue = cleanMemoryValue(value);
-  const cleanTitle = cleanMemoryTitle(title);
-
-  if (!cleanValue) {
+  if (!memoryValue || memoryValue.length < 8) {
     return {
       inserted: false,
-      duplicate: false,
-      error: "empty_value"
+      invalid: true
     };
   }
 
-  // پیشنهاد نباید اطلاعات حساس و محرمانه را وارد حافظه کند.
-
-  const sensitivePatterns = [
-    /api[_\s-]?key\s*[:=]/iu,
-    /password\s*[:=]/iu,
-    /secret\s*[:=]/iu,
-    /access[_\s-]?token\s*[:=]/iu,
-    /refresh[_\s-]?token\s*[:=]/iu,
-    /-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----/u
-  ];
-
-  if (sensitivePatterns.some(pattern => pattern.test(cleanValue))) {
+  if (containsSensitiveMemory(memoryValue)) {
     return {
       inserted: false,
-      duplicate: false,
-      skipped: true,
-      reason: "sensitive_information"
+      sensitive: true
     };
   }
 
-  // جلوگیری از پیشنهاد تکراری در حافظه تأییدشده یا در انتظار تأیید.
+  const duplicate = await findMemoryDuplicate(
+    db,
+    memoryValue
+  );
 
-  const existing = await db.prepare(`
-    SELECT id, status
-    FROM navi_memory_facts_v1
-    WHERE owner_id = ?
-      AND memory_value = ?
-      AND status IN ('approved', 'pending')
-    LIMIT 1
-  `).bind(
-    ownerId,
-    cleanValue
-  ).first();
-
-  if (existing) {
+  if (duplicate) {
     return {
       inserted: false,
       duplicate: true,
-      existingStatus: existing.status,
-      id: existing.id
+      existingId: duplicate.id,
+      existingStatus: duplicate.status
     };
   }
 
-  const uniqueKey = createUniqueMemoryKey(cleanTitle);
+  const memoryKey = createUniqueMemoryKey(
+    memoryTitle
+  );
 
-  await db.prepare(`
-    INSERT INTO navi_memory_facts_v1
-      (owner_id, memory_key, memory_value, source, status)
-    VALUES (?, ?, ?, ?, 'pending')
+  const result = await db.prepare(`
+    INSERT INTO navi_memory_facts_v1 (
+      owner_id,
+      memory_key,
+      memory_value,
+      source,
+      status,
+      created_at,
+      updated_at
+    )
+    VALUES (?, ?, ?, ?, 'pending', datetime('now'), datetime('now'))
   `).bind(
-    ownerId,
-    uniqueKey,
-    cleanValue,
-    source
+    NAVI_OWNER_ID,
+    memoryKey,
+    memoryValue,
+    memorySource
   ).run();
 
-  const created = await db.prepare(`
-    SELECT id, memory_key, memory_value, source, created_at, updated_at
-    FROM navi_memory_facts_v1
-    WHERE owner_id = ?
-      AND memory_key = ?
-      AND status = 'pending'
-    LIMIT 1
-  `).bind(
-    ownerId,
-    uniqueKey
-  ).first();
+  if (!result.success) {
+    throw new Error("Could not create memory proposal.");
+  }
 
   return {
     inserted: true,
-    duplicate: false,
-    id: created?.id || null,
-    memoryKey: uniqueKey,
-    memoryValue: cleanValue,
-    title: cleanTitle
+    id: result.meta?.last_row_id || null,
+    title: memoryTitle,
+    memoryKey,
+    memoryValue
   };
 }
 
-// ==========================================
-// تأیید پیشنهاد حافظه
-// pending -> approved
-// ==========================================
+// ======================================
+// APPROVE PENDING PROPOSAL
+// ======================================
 
 export async function approveNaviMemoryProposal(
   db,
   id,
   editedValue = null
 ) {
-  const memoryId = Number(id);
+  const proposalId = Number(id);
 
-  if (!Number.isSafeInteger(memoryId) || memoryId <= 0) {
-    throw new Error("Invalid memory proposal ID.");
+  if (
+    !Number.isSafeInteger(proposalId) ||
+    proposalId <= 0
+  ) {
+    return { notFound: true };
   }
 
   const existing = await db.prepare(`
@@ -417,47 +444,34 @@ export async function approveNaviMemoryProposal(
       AND status = 'pending'
     LIMIT 1
   `).bind(
-    memoryId,
+    proposalId,
     NAVI_OWNER_ID
   ).first();
 
   if (!existing) {
-    return {
-      success: false,
-      notFound: true
-    };
+    return { notFound: true };
   }
 
-  const finalValue = editedValue === null
-    ? existing.memory_value
+  const memoryValue = editedValue === null
+    ? cleanMemoryValue(existing.memory_value)
     : cleanMemoryValue(editedValue);
 
-  if (!finalValue) {
-    throw new Error("Memory value cannot be empty.");
+  if (!memoryValue) {
+    return { invalid: true };
   }
 
-  // جلوگیری از تأیید نسخه تکراری
+  if (containsSensitiveMemory(memoryValue)) {
+    return { sensitive: true };
+  }
 
-  const duplicate = await db.prepare(`
-    SELECT id
-    FROM navi_memory_facts_v1
-    WHERE owner_id = ?
-      AND memory_value = ?
-      AND status = 'approved'
-      AND id != ?
-    LIMIT 1
-  `).bind(
-    NAVI_OWNER_ID,
-    finalValue,
-    memoryId
-  ).first();
+  const duplicate = await findMemoryDuplicate(
+    db,
+    memoryValue,
+    proposalId
+  );
 
   if (duplicate) {
-    return {
-      success: false,
-      duplicate: true,
-      duplicateId: duplicate.id
-    };
+    return { duplicate: true };
   }
 
   const result = await db.prepare(`
@@ -470,29 +484,37 @@ export async function approveNaviMemoryProposal(
       AND owner_id = ?
       AND status = 'pending'
   `).bind(
-    finalValue,
-    memoryId,
+    memoryValue,
+    proposalId,
     NAVI_OWNER_ID
   ).run();
 
+  if (!result.success || !result.meta?.changes) {
+    return { notFound: true };
+  }
+
   return {
     success: true,
-    id: memoryId,
-    memoryValue: finalValue,
-    changes: result.meta?.changes || 0
+    id: proposalId,
+    memoryValue
   };
 }
 
-// ==========================================
-// رد پیشنهاد حافظه
-// pending -> archived
-// ==========================================
+// ======================================
+// REJECT PROPOSAL
+// ======================================
 
-export async function rejectNaviMemoryProposal(db, id) {
-  const memoryId = Number(id);
+export async function rejectNaviMemoryProposal(
+  db,
+  id
+) {
+  const proposalId = Number(id);
 
-  if (!Number.isSafeInteger(memoryId) || memoryId <= 0) {
-    throw new Error("Invalid memory proposal ID.");
+  if (
+    !Number.isSafeInteger(proposalId) ||
+    proposalId <= 0
+  ) {
+    return { success: false };
   }
 
   const result = await db.prepare(`
@@ -504,35 +526,39 @@ export async function rejectNaviMemoryProposal(db, id) {
       AND owner_id = ?
       AND status = 'pending'
   `).bind(
-    memoryId,
+    proposalId,
     NAVI_OWNER_ID
   ).run();
 
   return {
-    success: (result.meta?.changes || 0) > 0,
-    id: memoryId,
-    changes: result.meta?.changes || 0
+    success: Boolean(
+      result.success && result.meta?.changes
+    )
   };
 }
 
-// ==========================================
-// ویرایش پیشنهاد قبل از تأیید
-// ==========================================
+// ======================================
+// UPDATE PENDING PROPOSAL
+// ======================================
 
 export async function updateNaviMemoryProposal(
   db,
   id,
   value
 ) {
-  const memoryId = Number(id);
-  const cleanValue = cleanMemoryValue(value);
+  const proposalId = Number(id);
+  const memoryValue = cleanMemoryValue(value);
 
-  if (!Number.isSafeInteger(memoryId) || memoryId <= 0) {
-    throw new Error("Invalid memory proposal ID.");
+  if (
+    !Number.isSafeInteger(proposalId) ||
+    proposalId <= 0 ||
+    !memoryValue
+  ) {
+    return { notFound: true };
   }
 
-  if (!cleanValue) {
-    throw new Error("Memory value cannot be empty.");
+  if (containsSensitiveMemory(memoryValue)) {
+    return { sensitive: true };
   }
 
   const existing = await db.prepare(`
@@ -543,39 +569,25 @@ export async function updateNaviMemoryProposal(
       AND status = 'pending'
     LIMIT 1
   `).bind(
-    memoryId,
+    proposalId,
     NAVI_OWNER_ID
   ).first();
 
   if (!existing) {
-    return {
-      success: false,
-      notFound: true
-    };
+    return { notFound: true };
   }
 
-  const duplicate = await db.prepare(`
-    SELECT id
-    FROM navi_memory_facts_v1
-    WHERE owner_id = ?
-      AND memory_value = ?
-      AND status IN ('approved', 'pending')
-      AND id != ?
-    LIMIT 1
-  `).bind(
-    NAVI_OWNER_ID,
-    cleanValue,
-    memoryId
-  ).first();
+  const duplicate = await findMemoryDuplicate(
+    db,
+    memoryValue,
+    proposalId
+  );
 
   if (duplicate) {
-    return {
-      success: false,
-      duplicate: true
-    };
+    return { duplicate: true };
   }
 
-  await db.prepare(`
+  const result = await db.prepare(`
     UPDATE navi_memory_facts_v1
     SET
       memory_value = ?,
@@ -584,177 +596,218 @@ export async function updateNaviMemoryProposal(
       AND owner_id = ?
       AND status = 'pending'
   `).bind(
-    cleanValue,
-    memoryId,
+    memoryValue,
+    proposalId,
     NAVI_OWNER_ID
   ).run();
 
+  if (!result.success || !result.meta?.changes) {
+    return { notFound: true };
+  }
+
   return {
     success: true,
-    id: memoryId
+    id: proposalId
   };
 }
 
-// ==========================================
-// ذخیره یا به‌روزرسانی حافظه تأییدشده
-// دستور صریح کاربر
-// ==========================================
+// ======================================
+// SAVE EXPLICIT MEMORY FACT
+// ======================================
 
 export async function saveNaviMemoryFact(
   db,
   value,
-  memoryKey = "یادداشت کاربر",
+  key = "یادداشت کاربر",
   source = "user_command"
 ) {
-  const ownerId = NAVI_OWNER_ID;
-  const cleanValue = cleanMemoryValue(value);
+  const memoryValue = cleanMemoryValue(value);
+  const memoryKey = cleanMemoryTitle(key);
+  const memorySource = safeNaviText(source, 100) || "user_command";
 
-  if (!cleanValue) {
-    throw new Error("Memory value cannot be empty.");
+  if (!memoryValue) {
+    throw new Error("Memory value is empty.");
   }
 
-  // تشخیص هویت دستیار
+  if (containsSensitiveMemory(memoryValue)) {
+    throw new Error("Sensitive information cannot be stored.");
+  }
 
-  const isAssistantIdentity =
-    /(?:نام|اسم)\s*(?:دستیار|هوشمند)/u.test(cleanValue) &&
-    /ناوی/u.test(cleanValue);
+  // نام کاربر و هویت دستیار کلیدهای ثابت هستند.
+  // در صورت درخواست صریح، مقدار قبلی به‌روزرسانی می‌شود.
 
-  const finalKey = isAssistantIdentity
-    ? "هویت دستیار"
-    : cleanMemoryTitle(memoryKey);
-
-  // کلیدهای پروفایل
-
-  const isProtectedProfileKey = [
+  const protectedKeys = [
     "نام کاربر",
     "هویت دستیار"
-  ].includes(finalKey);
+  ];
 
-  if (isProtectedProfileKey) {
+  if (protectedKeys.includes(memoryKey)) {
     const existing = await db.prepare(`
       SELECT id, memory_value
       FROM navi_memory_facts_v1
       WHERE owner_id = ?
         AND memory_key = ?
         AND status = 'approved'
-      ORDER BY id DESC
       LIMIT 1
     `).bind(
-      ownerId,
-      finalKey
+      NAVI_OWNER_ID,
+      memoryKey
     ).first();
 
     if (existing) {
-      if (existing.memory_value === cleanValue) {
+      if (
+        normalizeMemoryText(existing.memory_value) ===
+        normalizeMemoryText(memoryValue)
+      ) {
         return {
           duplicate: true,
-          updated: false,
-          inserted: false,
-          memoryKey: finalKey
+          memoryKey
         };
       }
 
-      await db.prepare(`
+      const update = await db.prepare(`
         UPDATE navi_memory_facts_v1
         SET
           memory_value = ?,
           source = ?,
-          updated_at = datetime('now'),
-          status = 'approved'
+          updated_at = datetime('now')
         WHERE id = ?
           AND owner_id = ?
+          AND status = 'approved'
       `).bind(
-        cleanValue,
-        source,
+        memoryValue,
+        memorySource,
         existing.id,
-        ownerId
+        NAVI_OWNER_ID
       ).run();
 
-      return {
-        duplicate: false,
-        updated: true,
-        inserted: false,
-        memoryKey: finalKey
-      };
-    }
-  } else {
-    const existing = await db.prepare(`
-      SELECT id
-      FROM navi_memory_facts_v1
-      WHERE owner_id = ?
-        AND memory_value = ?
-        AND status = 'approved'
-      LIMIT 1
-    `).bind(
-      ownerId,
-      cleanValue
-    ).first();
+      if (!update.success || !update.meta?.changes) {
+        throw new Error("Could not update approved memory.");
+      }
 
-    if (existing) {
       return {
-        duplicate: true,
-        updated: false,
-        inserted: false,
-        memoryKey: finalKey
+        updated: true,
+        id: existing.id,
+        memoryKey
       };
     }
   }
 
-  const uniqueKey = isProtectedProfileKey
-    ? finalKey
-    : createUniqueMemoryKey(finalKey);
+  const duplicate = await findMemoryDuplicate(
+    db,
+    memoryValue
+  );
 
-  await db.prepare(`
-    INSERT INTO navi_memory_facts_v1
-      (owner_id, memory_key, memory_value, source, status)
-    VALUES (?, ?, ?, ?, 'approved')
+  if (duplicate) {
+    return {
+      duplicate: true,
+      existingId: duplicate.id,
+      existingStatus: duplicate.status
+    };
+  }
+
+  const uniqueKey = createUniqueMemoryKey(memoryKey);
+
+  const result = await db.prepare(`
+    INSERT INTO navi_memory_facts_v1 (
+      owner_id,
+      memory_key,
+      memory_value,
+      source,
+      status,
+      created_at,
+      updated_at
+    )
+    VALUES (?, ?, ?, ?, 'approved', datetime('now'), datetime('now'))
   `).bind(
-    ownerId,
+    NAVI_OWNER_ID,
     uniqueKey,
-    cleanValue,
-    source
+    memoryValue,
+    memorySource
   ).run();
 
+  if (!result.success) {
+    throw new Error("Could not save approved memory.");
+  }
+
   return {
-    duplicate: false,
-    updated: false,
     inserted: true,
+    id: result.meta?.last_row_id || null,
     memoryKey: uniqueKey
   };
 }
 
-// ==========================================
-// ذخیره تاریخچه گفت‌وگو
-// ==========================================
+// ======================================
+// SAVE CONVERSATION
+// ======================================
 
 export async function saveNaviConversation(
   db,
   userMessage,
   assistantMessage
 ) {
-  await db.batch([
+  const userText = safeNaviText(
+    userMessage || "",
+    4000
+  );
+
+  const assistantText = safeNaviText(
+    assistantMessage || "",
+    10000
+  );
+
+  if (!userText || !assistantText) {
+    throw new Error("Conversation messages cannot be empty.");
+  }
+
+  const statements = [
     db.prepare(`
-      INSERT INTO navi_chat_messages_v1
-      (thread_id, role, content)
-      VALUES (?, 'user', ?)
+      INSERT INTO navi_chat_messages_v1 (
+        thread_id,
+        role,
+        content,
+        created_at
+      )
+      VALUES (?, 'user', ?, datetime('now'))
     `).bind(
       NAVI_MAIN_THREAD_ID,
-      userMessage
+      userText
     ),
 
     db.prepare(`
-      INSERT INTO navi_chat_messages_v1
-      (thread_id, role, content)
-      VALUES (?, 'assistant', ?)
+      INSERT INTO navi_chat_messages_v1 (
+        thread_id,
+        role,
+        content,
+        created_at
+      )
+      VALUES (?, 'assistant', ?, datetime('now'))
     `).bind(
       NAVI_MAIN_THREAD_ID,
-      assistantMessage
+      assistantText
     ),
 
     db.prepare(`
       UPDATE navi_chat_threads_v1
       SET updated_at = datetime('now')
       WHERE thread_id = ?
-    `).bind(NAVI_MAIN_THREAD_ID)
-  ]);
-}
+        AND owner_id = ?
+    `).bind(
+      NAVI_MAIN_THREAD_ID,
+      NAVI_OWNER_ID
+    )
+  ];
+
+  const results = await db.batch(statements);
+
+  if (
+    !Array.isArray(results) ||
+    results.some(result => !result.success)
+  ) {
+    throw new Error("Could not save NAVI conversation.");
+  }
+
+  return {
+    success: true
+  };
+    }
