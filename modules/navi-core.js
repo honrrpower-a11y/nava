@@ -236,6 +236,14 @@ export function clearNaviSession() {
   if (naviHistoryList) {
     showEmptyHistory("برای دیدن تاریخچه وارد ناوی شو.", "بدون ورود");
   }
+  if (naviHistoryRefresh) {
+    naviHistoryRefresh.disabled = false;
+    naviHistoryRefresh.textContent = "تازه‌سازی تاریخچه";
+  }
+  if (sendRequest) {
+    sendRequest.disabled = false;
+    sendRequest.textContent = "ارسال پیام به ناوی";
+  }
 
   if (naviStatus) {
     naviStatus.textContent = "برای شروع گفت‌وگو وارد شو.";
