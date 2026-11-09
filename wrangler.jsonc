@@ -9,5 +9,14 @@
       "database_name": "nava-memory",
       "database_id": "56f30fed-a03b-4e36-a320-cbef3dfeaf12"
     }
-  ]
+  ],
+  "previews": {
+    "d1_databases": [
+      {
+        "binding": "NAVA_DB",
+        "database_name": "nava-memory-preview",
+        "database_id": "b48b0390-f292-4ecf-b36d-31eb2aff3958"
+      }
+    ]
+  }
 }
