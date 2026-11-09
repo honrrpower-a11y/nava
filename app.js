@@ -1357,6 +1357,12 @@ function scrollToRequest() {
   }, 450);
 }
 
+
+// Keep existing inline HTML navigation controls working with module scope.
+window.showPage = showPage;
+window.chooseService = chooseService;
+window.scrollToRequest = scrollToRequest;
+
 naviHistoryRefresh.addEventListener("click", () => {
   loadNaviHistory();
 });
