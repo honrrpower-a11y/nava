@@ -1,6 +1,70 @@
 "use strict";
 
 /* =========================================
+   NAVA CONFIG + DOM + STATE
+========================================= */
+
+// API
+const NAVI_BASE = "https://nava-music-api.honrrpower.workers.dev";
+const NAVI_LOGIN_API = NAVI_BASE + "/navi-login";
+const NAVI_API = NAVI_BASE + "/navi-chat";
+const NAVI_HISTORY_API = NAVI_BASE + "/navi-history";
+const NAVI_MEMORY_API = NAVI_BASE + "/navi-memory";
+
+// Session
+const NAVI_SESSION_KEY = "nava_navi_session";
+const NAVI_EXPIRY_KEY = "nava_navi_expiry";
+
+// Limits
+const NAVI_MAX_DISPLAY_MESSAGES = 100;
+const NAVI_CONTEXT_MESSAGES = 10;
+
+// Session state
+let naviSessionVersion = 0;
+
+// History state
+let naviHistory = [];
+let naviHistoryLoading = false;
+let naviHistoryLoadPromise = null;
+
+// Memory state
+let naviMemory = [];
+let naviMemoryLoaded = false;
+let naviMemoryLoading = false;
+let naviMemoryLoadPromise = null;
+let naviMemoryBusy = false;
+
+// DOM elements — NAVI
+const naviLoginPanel = document.getElementById("naviLoginPanel");
+const naviLoginForm = document.getElementById("naviLoginForm");
+const naviPassword = document.getElementById("naviPassword");
+const naviLoginButton = document.getElementById("naviLoginButton");
+const naviLoginError = document.getElementById("naviLoginError");
+const naviLoginStatus = document.getElementById("naviLoginStatus");
+const naviChatArea = document.getElementById("naviChatArea");
+const naviLogout = document.getElementById("naviLogout");
+
+const naviStatus = document.getElementById("naviStatus");
+const requestResponse = document.getElementById("requestResponse");
+const serviceSelect = document.getElementById("serviceSelect");
+const userRequest = document.getElementById("userRequest");
+const sendRequest = document.getElementById("sendRequest");
+
+// DOM elements — History
+const naviHistoryList = document.getElementById("naviHistoryList");
+const naviHistoryCount = document.getElementById("naviHistoryCount");
+const naviHistoryRefresh = document.getElementById("naviHistoryRefresh");
+
+// DOM elements — Memory
+const naviMemoryToggle = document.getElementById("naviMemoryToggle");
+const naviMemoryContent = document.getElementById("naviMemoryContent");
+const naviMemoryList = document.getElementById("naviMemoryList");
+const naviMemoryStatus = document.getElementById("naviMemoryStatus");
+const naviMemoryError = document.getElementById("naviMemoryError");
+const naviMemoryRefresh = document.getElementById("naviMemoryRefresh");
+
+
+/* =========================================
    PAGE NAVIGATION
 ========================================= */
 
