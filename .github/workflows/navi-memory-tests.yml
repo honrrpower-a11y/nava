@@ -7,7 +7,7 @@ on:
     paths:
       - "modules/navi-memory.js"
       - "modules/shared.js"
-      - "tests/navi-memory.test.mjs"
+      - "tests/*.test.mjs"
       - ".github/workflows/navi-memory-tests.yml"
   pull_request:
     branches:
@@ -24,7 +24,7 @@ jobs:
         with:
           node-version: 22
       - name: Run NAVI memory tests
-        run: node --experimental-default-type=module --test tests/navi-memory.test.mjs
+        run: node --experimental-default-type=module --test tests/*.test.mjs
       - name: Check NAVI module syntax
         run: |
           node --experimental-default-type=module --check modules/navi-memory.js
