@@ -616,35 +616,12 @@ function renderNaviMemories(memories) {
     card.className = "navi-memory-card";
     card.dataset.memoryId = String(memory.id);
 
-    const key = document.createElement("div");
-    key.className = "navi-memory-key";
-
-    const rawMemoryTitle = String(memory.memory_key ?? "").trim();
-    // Remove technical record IDs even when the backend appends them to a human title.
-    const memoryTitle = rawMemoryTitle
-      .replace(/\s*\d{13}-[a-f0-9]{8}\s*/gi, " ")
-      .replace(/\s+/g, " ")
-      .trim();
-    const looksLikeTechnicalId =
-      !memoryTitle ||
-      /^\d{8,}$/.test(memoryTitle) ||
-      /^[a-f0-9-]{20,}$/i.test(memoryTitle) ||
-      /^(?:memory|fact|record)[_-]?\d+$/i.test(memoryTitle);
-
-    key.textContent = looksLikeTechnicalId ? "یادداشت کاربر" : memoryTitle;
-
     const value = document.createElement("div");
     value.className = "navi-memory-value";
     value.textContent = memory.memory_value || "محتوای این حافظه خالی است.";
 
     const meta = document.createElement("div");
     meta.className = "navi-memory-meta";
-
-    if (memory.source) {
-      const source = document.createElement("span");
-      source.textContent = "منبع: " + memory.source;
-      meta.appendChild(source);
-    }
 
     const dateValue = memory.updated_at || memory.created_at;
 
@@ -676,7 +653,7 @@ function renderNaviMemories(memories) {
     });
 
     actions.append(editButton, deleteButton);
-    card.append(key, value, meta, actions);
+    card.append(value, meta, actions);
     fragment.appendChild(card);
   });
 
