@@ -455,7 +455,8 @@ async function handleHistory({
   request,
   env,
   origin,
-  corsOrigin
+  corsOrigin,
+  url
 }) {
   const auth = await authorize(
     request,
@@ -477,13 +478,23 @@ async function handleHistory({
   try {
     await ensureNaviMainThread(env.NAVA_DB);
 
+    const requestedThreadId = String(url.searchParams.get("thread_id") || NAVI_MAIN_THREAD_ID);
+    const thread = await env.NAVA_DB.prepare(`
+      SELECT thread_id FROM navi_chat_threads_v1
+      WHERE thread_id = ? AND owner_id = ? LIMIT 1
+    `).bind(requestedThreadId, NAVI_OWNER_ID).first();
+
+    if (!thread) {
+      return errorResponse("این گفت‌وگو پیدا نشد.", 404, corsOrigin);
+    }
+
     const result = await env.NAVA_DB.prepare(`
       SELECT role, content, created_at
       FROM navi_chat_messages_v1
       WHERE thread_id = ?
       ORDER BY id DESC
       LIMIT 100
-    `).bind(NAVI_MAIN_THREAD_ID).all();
+    `).bind(requestedThreadId).all();
 
     const messages = (result.results || [])
       .reverse()
@@ -495,6 +506,7 @@ async function handleHistory({
 
     return successResponse({
       messages,
+      threadId: requestedThreadId,
       assistant: "NAVI",
       version: NAVI_VERSION
     }, corsOrigin);
@@ -888,7 +900,8 @@ async function handleExplicitMemoryCommand(
   message,
   memoryCommand,
   env,
-  corsOrigin
+  corsOrigin,
+  threadId = NAVI_MAIN_THREAD_ID
 ) {
   try {
     await ensureNaviMainThread(env.NAVA_DB);
@@ -949,7 +962,8 @@ async function handleExplicitMemoryCommand(
       await saveNaviConversation(
         env.NAVA_DB,
         message,
-        reply
+        reply,
+        threadId
       );
     } catch (error) {
       conversationSaved = false;
@@ -1311,13 +1325,27 @@ async function handleChat({
   );
 
   if (memoryCommand.isCommand) {
+    const requestedThreadId = String(input.threadId || NAVI_MAIN_THREAD_ID);
+    const validThread = await env.NAVA_DB.prepare(`
+      SELECT thread_id FROM navi_chat_threads_v1
+      WHERE thread_id = ? AND owner_id = ? LIMIT 1
+    `).bind(requestedThreadId, NAVI_OWNER_ID).first();
+    if (!validThread) return errorResponse("گفت‌وگوی انتخاب‌شده معتبر نیست.", 404, corsOrigin);
     return handleExplicitMemoryCommand(
       message,
       memoryCommand,
       env,
-      corsOrigin
+      corsOrigin,
+      requestedThreadId
     );
   }
+
+  const requestedThreadId = String(input.threadId || NAVI_MAIN_THREAD_ID);
+  const activeThread = await env.NAVA_DB.prepare(`
+    SELECT thread_id FROM navi_chat_threads_v1
+    WHERE thread_id = ? AND owner_id = ? LIMIT 1
+  `).bind(requestedThreadId, NAVI_OWNER_ID).first();
+  if (!activeThread) return errorResponse("گفت‌وگوی انتخاب‌شده معتبر نیست.", 404, corsOrigin);
 
   // ----------------------------------
   // LOAD HISTORY AND APPROVED MEMORY
@@ -1333,7 +1361,7 @@ async function handleChat({
       historyResult,
       memoryResult
     ] = await Promise.all([
-      getNaviDbHistory(env.NAVA_DB, 10),
+      getNaviDbHistory(env.NAVA_DB, 10, requestedThreadId),
       getNaviApprovedMemory(env.NAVA_DB)
     ]);
 
@@ -1487,7 +1515,8 @@ async function handleChat({
     await saveNaviConversation(
       env.NAVA_DB,
       message,
-      reply
+      reply,
+      requestedThreadId
     );
 
   } catch (error) {
@@ -1557,8 +1586,16 @@ export async function handleNaviRoute({
         request,
         env,
         origin,
-        corsOrigin
+        corsOrigin,
+        url
       });
+    }
+
+    if (
+      url.pathname === "/navi-threads" &&
+      (request.method === "GET" || request.method === "POST")
+    ) {
+      return await handleThreads({ request, env, origin, corsOrigin });
     }
 
     if (
