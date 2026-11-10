@@ -260,6 +260,40 @@ export function parseNaviMemoryCommand(message) {
     };
   }
 
+  // درخواست تکمیل یک حافظه موجود؛ متن بعد از جداکننده، محتوای تازه است.
+  const supplementMatch = text.match(
+    /^(?:یه|یک)\\s+(?:نکته|مورد)\\s+دیگه\\s+هم\\s+(?:بهش|به\\s+قبلی)\\s+اضافه\\s+کن\\s*[؛;:،-]\\s*(.+)$/i
+  ) || text.match(
+    /^(?:این\\s+رو|این\\s+را)\\s+هم\\s+به\\s+قبلی\\s+اضافه\\s+کن\\s*[؛;:،-]\\s*(.+)$/i
+  );
+
+  if (supplementMatch?.[1]?.trim()) {
+    const value = cleanMemoryValue(supplementMatch[1]);
+    const responsePreference = /(?:پاسخ|جواب)/i.test(value) &&
+      /(?:کوتاه|مختصر|خلاصه|موجز|کاربردی|مستقیم|واضح|روشن|توضیح|اضافه.?گویی)/i.test(value);
+
+    return {
+      isCommand: true,
+      type: "explicit",
+      command: "supplement",
+      value,
+      memoryValue: value,
+      memoryKey: responsePreference
+        ? "ترجیحات پاسخ‌گویی"
+        : "یادداشت کاربر",
+      source: "user_command"
+    };
+  }
+
+  if (/^(?:یه|یک)\\s+(?:نکته|مورد)\\s+دیگه\\s+هم\\s+(?:بهش|به\\s+قبلی)\\s+اضافه\\s+کن\\s*$/i.test(text)) {
+    return {
+      isCommand: true,
+      type: "explicit",
+      command: "supplement",
+      value: ""
+    };
+  }
+
   /*
     درخواست ذخیره باید از منظور کاربر تشخیص داده شود،
     نه فقط از یک عبارت ثابت. الگوها شکل‌های محاوره‌ای
@@ -456,6 +490,17 @@ function areMemoryValuesSemanticallySimilar(first, second) {
     overlapRatio >= 0.75 &&
     jaccardRatio >= 0.5 &&
     (smallerSize >= 2 && largerSize <= smallerSize + 3);
+}
+
+function isResponsePreferenceMemory(value) {
+  const tokens = new Set(getMemoryMeaningTokens(value));
+  const hasResponseTopic = tokens.has("پاسخ") || tokens.has("جواب");
+  const styleTerms = [
+    "کوتاه", "کاربردی", "مستقیم", "واضح", "روشن",
+    "توضیح", "اضافی", "اضافهگویی", "مختصر", "خلاصه", "موجز"
+  ];
+  return hasResponseTopic &&
+    styleTerms.some(token => tokens.has(token));
 }
 
 function mergeMemoryValues(existingValue, incomingValue) {
@@ -951,6 +996,65 @@ export async function saveNaviMemoryFact(
         updated: true,
         id: existing.id,
         memoryKey
+      };
+    }
+  }
+
+  // درخواست صریح «تکمیل ترجیحات پاسخ‌گویی» باید به همان حافظه قبلی متصل شود،
+  // حتی اگر جمله تازه از نظر واژه‌به‌واژه با مقدار قبلی شباهت کمی داشته باشد.
+  if (memoryKey === "ترجیحات پاسخ‌گویی" &&
+      isResponsePreferenceMemory(memoryValue)) {
+    const candidates = await db.prepare(`
+      SELECT id, memory_key, memory_value, status
+      FROM navi_memory_facts_v1
+      WHERE owner_id = ?
+        AND status IN ('approved', 'pending')
+      ORDER BY updated_at DESC, id DESC
+    `).bind(NAVI_OWNER_ID).all();
+
+    const related = (candidates.results || []).find(item =>
+      isResponsePreferenceMemory(item.memory_value)
+    );
+
+    if (related) {
+      const mergedValue = mergeMemoryValues(
+        related.memory_value,
+        memoryValue
+      );
+
+      if (normalizeMemoryText(mergedValue) ===
+          normalizeMemoryText(related.memory_value)) {
+        return {
+          duplicate: true,
+          existingId: related.id,
+          existingStatus: related.status,
+          memoryKey: related.memory_key
+        };
+      }
+
+      const update = await db.prepare(`
+        UPDATE navi_memory_facts_v1
+        SET memory_value = ?, source = ?, status = 'approved',
+            updated_at = datetime('now')
+        WHERE id = ? AND owner_id = ? AND status IN ('approved', 'pending')
+      `).bind(
+        mergedValue,
+        memorySource,
+        related.id,
+        NAVI_OWNER_ID
+      ).run();
+
+      if (!update.success || !update.meta?.changes) {
+        throw new Error("Could not supplement response preference memory.");
+      }
+
+      return {
+        merged: true,
+        updated: related.status === "approved",
+        id: related.id,
+        existingStatus: related.status,
+        memoryKey: related.memory_key,
+        memoryValue: mergedValue
       };
     }
   }
