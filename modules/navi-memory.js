@@ -399,6 +399,9 @@ function getMemoryMeaningTokens(value) {
 
   const synonyms = new Map([
     ["جواب", "پاسخ"],
+    ["جوابها", "پاسخ"],
+    ["جوابهای", "پاسخ"],
+    ["جوابهات", "پاسخ"],
     ["جوابات", "پاسخ"],
     ["جوابهات", "پاسخ"],
     ["پاسخهات", "پاسخ"],
@@ -417,8 +420,11 @@ function getMemoryMeaningTokens(value) {
     .replace(/[^\p{L}\p{N}\s]/gu, " ")
     .split(/\s+/)
     .map(token => {
+      const directAlias = synonyms.get(token);
+      if (directAlias) return directAlias;
+
       let normalized = token
-        .replace(/(?:های|ها|هایی)$/u, "")
+        .replace(/(?:هایی|های|ها)$/u, "")
         .replace(/(?:هاتون|هات|هایت|هاش|هایش)$/u, "")
         .replace(/(?:تر|ترین)$/u, "");
 
