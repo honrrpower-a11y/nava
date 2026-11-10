@@ -566,8 +566,8 @@ async function handleMemory({
         // کاراکترهای LIKE escape می‌شوند تا ورودی کاربر wildcard ناخواسته نسازد.
         const escaped = search.replace(/[\\%_]/g, character => "\\" + character);
         const pattern = "%" + escaped + "%";
-        const approvedWhere = "owner_id = ? AND status = 'approved' AND (memory_key LIKE ? ESCAPE '\\\\' OR memory_value LIKE ? ESCAPE '\\\\' OR source LIKE ? ESCAPE '\\\\')";
-        const pendingWhere = "owner_id = ? AND status = 'pending' AND (memory_key LIKE ? ESCAPE '\\\\' OR memory_value LIKE ? ESCAPE '\\\\' OR source LIKE ? ESCAPE '\\\\')";
+        const approvedWhere = "owner_id = ? AND status = 'approved' AND (memory_key LIKE ? ESCAPE '\\' OR memory_value LIKE ? ESCAPE '\\' OR source LIKE ? ESCAPE '\\')";
+        const pendingWhere = "owner_id = ? AND status = 'pending' AND (memory_key LIKE ? ESCAPE '\\' OR memory_value LIKE ? ESCAPE '\\' OR source LIKE ? ESCAPE '\\')";
         const approvedBindings = [NAVI_OWNER_ID, pattern, pattern, pattern];
         const pendingBindings = [NAVI_OWNER_ID, pattern, pattern, pattern];
         const [approvedRows, pendingRows, approvedTotal, pendingTotal] = await Promise.all([
