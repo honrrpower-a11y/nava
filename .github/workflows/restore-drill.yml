@@ -28,7 +28,7 @@ jobs:
 
     env:
       BACKUP_ENCRYPTION_PASSPHRASE: ${{ secrets.BACKUP_ENCRYPTION_PASSPHRASE }}
-      BACKUP_RUN_ID: ${{ env.BACKUP_RUN_ID }}
+      BACKUP_RUN_ID: ${{ github.event.inputs.backup_run_id || '42791295233' }}
 
     steps:
       - name: Validate inputs and required secret
@@ -47,19 +47,19 @@ jobs:
       - name: Download source backup artifact
         uses: actions/download-artifact@v4
         with:
-          name: nava-source-${{ env.BACKUP_RUN_ID }}
+          name: nava-source-${{ github.event.inputs.backup_run_id || '42791295233' }}
           path: restore-input/source
           repository: ${{ github.repository }}
-          run-id: ${{ env.BACKUP_RUN_ID }}
+          run-id: ${{ github.event.inputs.backup_run_id || '42791295233' }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Download encrypted database artifact
         uses: actions/download-artifact@v4
         with:
-          name: navi-database-encrypted-${{ env.BACKUP_RUN_ID }}
+          name: navi-database-encrypted-${{ github.event.inputs.backup_run_id || '42791295233' }}
           path: restore-input/database
           repository: ${{ github.repository }}
-          run-id: ${{ env.BACKUP_RUN_ID }}
+          run-id: ${{ github.event.inputs.backup_run_id || '42791295233' }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Verify and inspect Git source backup
