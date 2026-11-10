@@ -787,7 +787,12 @@ function normalizeNaviProposals(data) {
       memory_value: String(item.memory_value ?? ""),
       source: String(item.source ?? ""),
       created_at: item.created_at ?? "",
-      updated_at: item.updated_at ?? ""
+      updated_at: item.updated_at ?? "",
+      conflictWith: item.conflictWith && typeof item.conflictWith === "object" ? {
+        id: Number(item.conflictWith.id),
+        memory_key: String(item.conflictWith.memory_key ?? ""),
+        memory_value: String(item.conflictWith.memory_value ?? "")
+      } : null
     }))
     .filter(item => Number.isSafeInteger(item.id) && item.id > 0);
 }
@@ -866,11 +871,9 @@ function showNaviMemoryDialog({
 
 function renderNaviMemoryProposals(proposals) {
   if (!naviMemoryProposalList) return;
-
   naviMemoryProposalList.replaceChildren();
   const visibleProposals = (Array.isArray(proposals) ? proposals : []).filter(matchesNaviMemorySearch);
-
-  if (visibleProposals.length === 0) {
+  if (!visibleProposals.length) {
     const empty = document.createElement("div");
     empty.className = "navi-memory-empty";
     empty.textContent = naviMemorySearchTerm ? "پیشنهادی با این عبارت پیدا نشد." : "پیشنهاد تازه‌ای برای بررسی وجود ندارد.";
@@ -882,15 +885,12 @@ function renderNaviMemoryProposals(proposals) {
     const card = document.createElement("article");
     card.className = "navi-memory-card navi-memory-proposal";
     card.dataset.proposalId = String(proposal.id);
-
     const title = document.createElement("div");
     title.className = "navi-memory-key";
     title.textContent = String(proposal.memory_key || "پیشنهاد حافظه").replace(/-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i, "");
-
     const value = document.createElement("div");
     value.className = "navi-memory-value";
     value.textContent = proposal.memory_value || "متن این پیشنهاد خالی است.";
-
     const meta = document.createElement("div");
     meta.className = "navi-memory-meta";
     if (proposal.source) {
@@ -903,39 +903,63 @@ function renderNaviMemoryProposals(proposals) {
       date.textContent = "ثبت پیشنهاد: " + formatNaviMemoryDate(proposal.created_at);
       meta.appendChild(date);
     }
-
     const actions = document.createElement("div");
     actions.className = "navi-memory-actions";
-
     const edit = document.createElement("button");
     edit.type = "button";
     edit.className = "navi-memory-edit";
     edit.textContent = "بررسی و ویرایش";
     edit.addEventListener("click", () => openNaviProposalEditor(proposal, card));
 
+    if (proposal.conflictWith && Number.isSafeInteger(proposal.conflictWith.id)) {
+      const conflict = document.createElement("section");
+      conflict.className = "navi-memory-conflict";
+      const heading = document.createElement("strong");
+      heading.textContent = "⚠️ تعارض با حافظه تأییدشده";
+      const previous = document.createElement("div");
+      previous.className = "navi-memory-conflict-value";
+      previous.textContent = proposal.conflictWith.memory_value;
+      const explanation = document.createElement("p");
+      explanation.textContent = "این نسخه قبلاً در پروفایل تأیید شده است. تصمیم نهایی با توست:";
+      conflict.append(heading, previous, explanation);
+
+      const replace = document.createElement("button");
+      replace.type = "button";
+      replace.className = "navi-memory-conflict-replace";
+      replace.textContent = "جایگزینی نسخه قبلی";
+      replace.addEventListener("click", () => submitNaviProposalAction(proposal.id,"resolve_conflict",null,replace,proposal.conflictWith.id,"replace"));
+
+      const both = document.createElement("button");
+      both.type = "button";
+      both.className = "navi-memory-conflict-both";
+      both.textContent = "حفظ هر دو نسخه";
+      both.addEventListener("click", () => submitNaviProposalAction(proposal.id,"resolve_conflict",null,both,proposal.conflictWith.id,"keep_both"));
+
+      const keep = document.createElement("button");
+      keep.type = "button";
+      keep.className = "navi-memory-conflict-keep";
+      keep.textContent = "حفظ نسخه قبلی";
+      keep.addEventListener("click", () => submitNaviProposalAction(proposal.id,"resolve_conflict",null,keep,proposal.conflictWith.id,"keep_existing"));
+
+      actions.append(edit, replace, both, keep);
+      card.append(title, value, conflict, meta, actions);
+      naviMemoryProposalList.appendChild(card);
+      return;
+    }
+
     const approve = document.createElement("button");
     approve.type = "button";
     approve.className = "navi-memory-approve";
     approve.textContent = "تأیید";
-    approve.addEventListener("click", () => submitNaviProposalAction(proposal.id, "approve", null, approve));
-
+    approve.addEventListener("click", () => submitNaviProposalAction(proposal.id,"approve",null,approve));
     const reject = document.createElement("button");
     reject.type = "button";
     reject.className = "navi-memory-reject";
     reject.textContent = "رد پیشنهاد";
     reject.addEventListener("click", async () => {
-      const confirmed = await showNaviMemoryDialog({
-        title: "NAVA",
-        message: "آیا از رد این پیشنهاد حافظه مطمئن هستی؟",
-        confirmText: "بله، رد شود",
-        cancelText: "انصراف",
-        danger: true
-      });
-      if (confirmed) {
-        submitNaviProposalAction(proposal.id, "reject", null, reject);
-      }
+      const confirmed = await showNaviMemoryDialog({ title: "NAVA", message: "آیا از رد این پیشنهاد حافظه مطمئن هستی؟", confirmText: "بله، رد شود", cancelText: "انصراف", danger: true });
+      if (confirmed) submitNaviProposalAction(proposal.id,"reject",null,reject);
     });
-
     actions.append(edit, approve, reject);
     card.append(title, value, meta, actions);
     naviMemoryProposalList.appendChild(card);
@@ -1001,7 +1025,7 @@ function openNaviProposalEditor(proposal, card) {
   editor.focus();
 }
 
-async function submitNaviProposalAction(id, action, memoryValue, button) {
+async function submitNaviProposalAction(id, action, memoryValue, button, conflictWithId = null, resolution = null) {
   const token = getNaviToken();
   if (!token) {
     clearNaviSession();
@@ -1032,6 +1056,10 @@ async function submitNaviProposalAction(id, action, memoryValue, button) {
   try {
     const payload = { action, id: Number(id) };
     if (cleanValue !== null) payload.memory_value = cleanValue;
+    if (action === "resolve_conflict") {
+      payload.conflict_with_id = Number(conflictWithId);
+      payload.resolution = resolution;
+    }
 
     const response = await fetch(NAVI_MEMORY_API, {
       method: "POST",
