@@ -197,7 +197,8 @@ export function prepareNaviHistory(
 // APPROVED MEMORY
 // ======================================
 
-export async function getNaviApprovedMemory(db) {
+export async function getNaviApprovedMemory(db, offset = 0) {
+  const safeOffset = Math.max(0, Math.floor(Number(offset) || 0));
   const result = await db.prepare(`
     SELECT
       id,
@@ -210,10 +211,11 @@ export async function getNaviApprovedMemory(db) {
     WHERE owner_id = ?
       AND status = 'approved'
     ORDER BY updated_at DESC, id DESC
-    LIMIT ?
+    LIMIT ? OFFSET ?
   `).bind(
     NAVI_OWNER_ID,
-    MEMORY_LIST_LIMIT
+    MEMORY_LIST_LIMIT,
+    safeOffset
   ).all();
 
   return result.results || [];
@@ -223,7 +225,8 @@ export async function getNaviApprovedMemory(db) {
 // PENDING MEMORY PROPOSALS
 // ======================================
 
-export async function getNaviPendingMemory(db) {
+export async function getNaviPendingMemory(db, offset = 0) {
+  const safeOffset = Math.max(0, Math.floor(Number(offset) || 0));
   const result = await db.prepare(`
     SELECT
       id,
@@ -237,10 +240,11 @@ export async function getNaviPendingMemory(db) {
     WHERE owner_id = ?
       AND status = 'pending'
     ORDER BY created_at DESC, id DESC
-    LIMIT ?
+    LIMIT ? OFFSET ?
   `).bind(
     NAVI_OWNER_ID,
-    MEMORY_LIST_LIMIT
+    MEMORY_LIST_LIMIT,
+    safeOffset
   ).all();
 
   return result.results || [];
