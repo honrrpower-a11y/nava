@@ -35,7 +35,7 @@ const NAVI_VERSION = "1.0";
 const NAVI_MAX_MESSAGE = 4000;
 const NAVI_MAX_PAGE_CONTEXT = 3000;
 const NAVI_MAX_MEMORY_VALUE = 1000;
-const NAVI_MAX_PROPOSALS = 2; // حداکثر پیشنهاد در هر پاسخ؛ محدودیت فهرست مدیریت نیست.
+const NAVI_MAX_PROPOSALS = 4; // سقف پیشنهادهای تازه در هر پاسخ؛ فهرست مدیریت مستقل است.
 const NAVI_GEMINI_TIMEOUT = 60000;
 
 // ======================================
@@ -1100,7 +1100,7 @@ Do not propose:
 Do not propose a memory just to fill the array.
 Zero proposals is normal.
 
-Return no more than two proposals.
+Return no more than four proposals.
 Each proposal must be one clear, self-contained fact.
 Do not combine unrelated facts.
 Do not rewrite uncertain statements as confirmed facts.
