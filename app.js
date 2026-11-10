@@ -1672,13 +1672,60 @@ async function sendMessageToNavi() {
     }
 
     /* =====================================
-       NEW: AUTOMATIC MEMORY REFRESH
-       After every successful NAVI response,
-       refresh memory if the panel was loaded.
+       AUTOMATIC MEMORY REFRESH + DIAGNOSTICS
+       Refresh after every successful reply,
+       even if the profile panel was not opened.
     ===================================== */
 
-    if (naviMemoryLoaded && !naviMemoryBusy) {
-      await loadNaviMemories(true);
+    const memoryResult = data.memory && typeof data.memory === "object"
+      ? data.memory
+      : null;
+
+    if (!naviMemoryBusy) {
+      const memoryRefreshed = await loadNaviMemories(true);
+
+      if (
+        memoryRefreshed &&
+        memoryResult &&
+        !memoryResult.commandRecognized
+      ) {
+        if (Number(memoryResult.proposalsCreated) > 0) {
+          setNaviMemoryStatus(
+            "ناوی " + memoryResult.proposalsCreated +
+            " پیشنهاد تازه ثبت کرد؛ برای بررسی به بخش پیشنهادها برو."
+          );
+        } else if (memoryResult.responseStructured === false) {
+          setNaviMemoryStatus(
+            "این پاسخ ناوی به قالب ساختاریافته حافظه نرسید؛ پیشنهادی ثبت نشد."
+          );
+        } else if (Number(memoryResult.proposalsReceived) === 0) {
+          setNaviMemoryStatus(
+            "این بار ناوی اطلاعات ماندگاری برای پیشنهاد تشخیص نداد."
+          );
+        } else if (Number(memoryResult.proposalsSkippedDuplicate) > 0) {
+          setNaviMemoryStatus(
+            "پیشنهاد دریافتی تکراری بود و چون قبلاً ثبت شده، مورد تازه‌ای ساخته نشد."
+          );
+        } else if (Number(memoryResult.proposalsSkippedInvalid) > 0 ||
+                   Number(memoryResult.proposalsSkippedSensitive) > 0) {
+          setNaviMemoryStatus(
+            "پیشنهاد ناوی به دلیل معتبر نبودن یا حساس بودن ذخیره نشد."
+          );
+        } else if (memoryResult.proposalProcessingFailed) {
+          setNaviMemoryStatus(
+            "ناوی پیشنهاد تولید کرد، اما ثبت آن در حافظه با خطا روبه‌رو شد."
+          );
+        }
+      } else if (
+        memoryRefreshed &&
+        memoryResult &&
+        memoryResult.commandRecognized &&
+        memoryResult.saved
+      ) {
+        setNaviMemoryStatus(
+          "اطلاعات در حافظه تأییدشده ذخیره شد؛ در بخش پیشنهادها قرار نمی‌گیرد."
+        );
+      }
     }
 
   } catch (error) {
