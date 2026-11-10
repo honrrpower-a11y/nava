@@ -67,6 +67,26 @@ const naviMemoryStatus = document.getElementById("naviMemoryStatus");
 const naviMemoryError = document.getElementById("naviMemoryError");
 const naviMemoryRefresh = document.getElementById("naviMemoryRefresh");
 
+/* NAVI HISTORY — RELIABLE COLLAPSIBLE PANEL CLICK */
+document.addEventListener("click", event => {
+  const target = event.target;
+  if (!(target instanceof Element)) return;
+
+  const toggle = target.closest("#naviHistoryToggle");
+  if (!toggle) return;
+
+  const content = document.getElementById("naviHistoryContent");
+  if (!content) {
+    console.error("NAVI history panel content was not found.");
+    return;
+  }
+
+  const isOpening = content.hidden;
+  content.hidden = !isOpening;
+  toggle.setAttribute("aria-expanded", isOpening ? "true" : "false");
+}, true);
+
+
 
 /* =========================================
    PAGE NAVIGATION
@@ -1385,17 +1405,6 @@ naviMemoryToggle.addEventListener("click", async () => {
   if (isOpening && !naviMemoryLoaded) {
     await loadNaviMemories();
   }
-});
-
-// NAVI HISTORY — COLLAPSIBLE PANEL
-naviHistoryToggle.addEventListener("click", () => {
-  const isOpening = naviHistoryContent.hidden;
-
-  naviHistoryContent.hidden = !isOpening;
-  naviHistoryToggle.setAttribute(
-    "aria-expanded",
-    isOpening ? "true" : "false"
-  );
 });
 
 naviHistoryRefresh.addEventListener("click", () => {
