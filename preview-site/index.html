@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#080d19">
+  <meta name="description" content="NAVA؛ استودیوی هوشمند برای ساخت، طراحی و رشد کسب‌وکارها">
+  <title>NAVA | One Vision. One Mission. One NAVA.</title>
+  <link rel="stylesheet" href="style.css">
+  <script type="module" src="app.js"></script>
+</head>
+<body>
+
+<header>
+  <div class="container">
+    <div class="header-inner">
+      <div class="logo-orb"></div>
+      <div class="brand">
+        <div>
+          <div class="brand-name">NAVA</div>
+          <div class="brand-sub">ONE VISION. ONE MISSION. ONE NAVA.</div>
+          <div class="brand-tagline">THE FUTURE HAS A NAME.</div>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button class="theme-btn" id="themeToggle" aria-label="تغییر تم">☀️</button>
+      </div>
+    </div>
+    <nav>
+      <button class="nav-btn active" data-page="homePage">خانه و دستیار نوا</button>
+      <button class="nav-btn" data-page="storyPage">استوری‌ساز</button>
+      <button class="nav-btn" data-page="musicPage">موسیقی</button>
+    </nav>
+  </div>
+</header>
+
+<main class="container">
+
+  <section class="page active" id="homePage">
+    <div class="hero">
+      <div class="hero-content">
+        <div class="eyebrow">استودیوی هوشمند خلاقیت</div>
+        <h1>ایده‌ات را به<br><span>یک اثر ماندگار</span><br>تبدیل کن.</h1>
+        <p>
+          نوا، فضای خلاقانه تو برای طراحی، تولید محتوا،
+          ساخت هویت برند و توسعه ایده‌هاست.
+          از یک فکر ساده شروع کن؛ مسیر ساختنش را با هم پیش می‌بریم.
+        </p>
+        <div class="hero-buttons">
+          <button class="btn-primary" onclick="scrollToRequest()">شروع یک ایده جدید</button>
+          <button class="btn-secondary" onclick="showPage('storyPage')">ورود به استوری‌ساز</button>
+        </div>
+      </div>
+      <div class="orb-stage">
+        <div class="orb-large">
+          <span class="orb-blue-ring"></span>
+          <div class="orb-dot"></div>
+          <span class="orb-particle p1"></span>
+          <span class="orb-particle p2"></span>
+          <span class="orb-particle p3"></span>
+          <span class="orb-particle p4"></span>
+        </div>
+        <div class="orb-caption">NAVA INTELLIGENCE</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-heading">
+        <h2>دنیای <span>خلاقیت نوا</span></h2>
+        <p>از کدام مسیر می‌خواهی شروع کنی؟</p>
+      </div>
+      <div class="services-grid">
+        <div class="service-card" onclick="chooseService('طراحی لوگو')">
+          <div class="service-icon">✦</div>
+          <h3>طراحی لوگو</h3>
+          <p>خلق نشانه‌ای متمایز برای هویت بصری برند</p>
+        </div>
+        <div class="service-card" onclick="chooseService('تولید محتوا')">
+          <div class="service-icon">✧</div>
+          <h3>تولید محتوا</h3>
+          <p>ایده‌پردازی و ساخت محتوای جذاب و کاربردی</p>
+        </div>
+        <div class="service-card" onclick="chooseService('تبلیغات')">
+          <div class="service-icon">◈</div>
+          <h3>تبلیغات</h3>
+          <p>طراحی پیام و مسیر معرفی محصولات و خدمات</p>
+        </div>
+        <div class="service-card" onclick="chooseService('هویت برند')">
+          <div class="service-icon">◇</div>
+          <h3>هویت برند</h3>
+          <p>ساخت شخصیت و زبان بصری یک کسب‌وکار</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="request-panel" id="requestSection">
+      <div class="request-content">
+        <h2>با ناوی صحبت کن</h2>
+        <p>
+          من ناوی هستم؛ مسیریاب ایده‌های نوا.
+          موضوعت را انتخاب کن و درخواستت را بنویس تا با هم آن را بررسی کنیم.
+        </p>
+
+        <div class="navi-auth-panel" id="naviLoginPanel">
+          <h3>ورود اختصاصی به ناوی</h3>
+          <p>برای شروع گفت‌وگو با ناوی، رمز ورود اختصاصی را وارد کن.</p>
+          <form id="naviLoginForm">
+            <label class="field-label" for="naviPassword">رمز ورود</label>
+            <input class="navi-password" id="naviPassword" type="password"
+              placeholder="رمز اختصاصی ناوی" autocomplete="current-password" required>
+            <button class="btn-primary" id="naviLoginButton" type="submit">ورود به ناوی</button>
+          </form>
+          <div class="navi-auth-error" id="naviLoginError" role="alert"></div>
+        </div>
+
+        <div class="navi-chat-area" id="naviChatArea" hidden>
+          <div class="navi-chat-toolbar">
+            <span class="navi-status" id="naviLoginStatus">نشست امن ناوی فعال است.</span>
+            <button class="navi-logout" id="naviLogout" type="button">خروج از ناوی</button>
+          </div>
+
+          <div class="navi-history" id="naviHistoryPanel">
+            <div class="navi-history-heading">
+              <strong>گفت‌وگوهای قبلی با ناوی</strong>
+              <span class="navi-history-count" id="naviHistoryCount">در حال بارگذاری...</span>
+            </div>
+            <div class="navi-history-list" id="naviHistoryList" aria-live="polite">
+              <div class="navi-history-empty">در حال دریافت تاریخچه گفت‌وگو...</div>
+            </div>
+            <div class="navi-history-actions">
+              <button class="navi-history-refresh" id="naviHistoryRefresh" type="button">
+                تازه‌سازی تاریخچه
+              </button>
+            </div>
+          </div>
+
+          <section class="navi-memory-panel" id="naviMemoryPanel">
+            <button class="navi-memory-toggle" id="naviMemoryToggle"
+              type="button" aria-expanded="false" aria-controls="naviMemoryContent">
+              <span>🧠 مدیریت حافظه ناوی</span>
+              <span class="navi-memory-arrow" aria-hidden="true">⌄</span>
+            </button>
+
+            <div class="navi-memory-content" id="naviMemoryContent" hidden>
+              <p class="navi-memory-description">
+                اطلاعات ثبت‌شده در حافظه ناوی را اینجا می‌بینی.
+                می‌توانی هر مورد را ویرایش یا حذف کنی.
+              </p>
+
+              <div class="navi-memory-toolbar">
+                <span class="navi-memory-status" id="naviMemoryStatus">
+                  برای دریافت حافظه‌ها، دکمه تازه‌سازی را بزن.
+                </span>
+                <button class="navi-memory-refresh" id="naviMemoryRefresh" type="button">
+                  تازه‌سازی حافظه‌ها
+                </button>
+              </div>
+
+              <div class="navi-memory-error" id="naviMemoryError" role="alert"></div>
+              <div class="navi-memory-list" id="naviMemoryList" aria-live="polite">
+                <div class="navi-memory-empty">هنوز حافظه‌ای بارگذاری نشده است.</div>
+              </div>
+            </div>
+          </section>
+
+          <label class="field-label" for="serviceSelect">موضوع درخواست</label>
+          <select class="request-select" id="serviceSelect">
+            <option value="انتخاب نشده">انتخاب موضوع</option>
+            <option value="طراحی لوگو">طراحی لوگو</option>
+            <option value="تولید محتوا">تولید محتوا</option>
+            <option value="تبلیغات">تبلیغات</option>
+            <option value="هویت برند">هویت برند</option>
+            <option value="ایده‌پردازی">ایده‌پردازی</option>
+            <option value="سایر موارد">سایر موارد</option>
+          </select>
+
+          <label class="field-label" for="userRequest">پیامت برای ناوی</label>
+          <textarea class="request-textarea" id="userRequest"
+            placeholder="سلام ناوی، می‌خواهم برای کسب‌وکارم یک ایده تازه پیدا کنم..."></textarea>
+
+          <button class="btn-primary" id="sendRequest" type="button">ارسال پیام به ناوی</button>
+          <div class="navi-status" id="naviStatus">ناوی آماده گفت‌وگو با توست.</div>
+          <div class="response-box" id="requestResponse" aria-live="polite"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="page" id="storyPage">
+    <div class="tool-page">
+      <div class="tool-card">
+        <div class="tool-card-inner">
+          <h1>استوری‌ساز نوا</h1>
+          <p>
+            متن موردنظرت را وارد کن تا پیش‌نمایش ساده آن را برای استوری ببینی.
+            این نسخه فعلاً پیش‌نمایش متنی است.
+          </p>
+          <label class="field-label" for="storyInput">متن استوری</label>
+          <textarea class="story-input" id="storyInput"
+            placeholder="متن استوری خود را اینجا بنویس..."></textarea>
+          <label class="field-label">پیش‌نمایش استوری</label>
+          <div class="story-preview empty" id="previewText">
+            متن استوری تو اینجا نمایش داده می‌شود
+          </div>
+          <div class="story-actions">
+            <button class="btn-secondary" id="clearStory">پاک کردن متن</button>
+            <button class="btn-primary" id="copyStory">کپی متن</button>
+          </div>
+          <div class="response-box" id="storyMessage" aria-live="polite"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="page" id="musicPage">
+    <div class="coming-card">
+      <div class="coming-card-inner">
+        <div class="coming-icon">♫</div>
+        <h1>استودیوی موسیقی نوا</h1>
+        <p>
+          این بخش در حال توسعه است.<br>
+          به‌زودی مسیر تازه‌ای برای خلق موسیقی و تجربه‌های صوتی در نوا فعال خواهد شد.
+        </p>
+        <div class="coming-actions">
+          <button class="btn-secondary" onclick="showPage('homePage')">
+            بازگشت به صفحه اصلی
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="container">
+    <strong>NAVA</strong>
+    <p>استودیوی هوشمند خلاقیت و رشد</p>
+    <p>Create. Design. Grow.</p>
+    <p>One Vision. One Mission. One NAVA.</p>
+  </div>
+</footer>
+
+</body>
+</html>
