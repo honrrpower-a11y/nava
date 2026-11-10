@@ -7,7 +7,7 @@
   <meta name="description" content="NAVA؛ استودیوی هوشمند برای ساخت، طراحی و رشد کسب‌وکارها">
   <title>NAVA | One Vision. One Mission. One NAVA.</title>
   <link rel="stylesheet" href="style.css">
-  <script src="app.js?v=memory-review-1" defer></script>
+  <script src="app.js?v=navi-input-2" defer></script>
 </head>
 <body>
 
@@ -174,21 +174,38 @@
             </div>
           </section>
 
-          <label class="field-label" for="serviceSelect">موضوع درخواست</label>
+          <section class="navi-settings-panel" aria-label="تنظیمات گفت‌وگو">
+            <div class="navi-settings-heading"><strong>تنظیمات پاسخ ناوی</strong><span>در هر گفت‌وگو قابل تغییر است</span></div>
+            <div class="navi-settings-grid">
+              <label class="navi-setting-field" for="naviResponseMode"><span>میزان جزئیات</span>
+                <select id="naviResponseMode" class="request-select">
+                  <option value="balanced" selected>متعادل</option><option value="concise">کوتاه و مستقیم</option><option value="detailed">کامل و عمیق</option>
+                </select>
+              </label>
+              <label class="navi-setting-field" for="naviTone"><span>لحن پاسخ</span>
+                <select id="naviTone" class="request-select">
+                  <option value="natural" selected>طبیعی و دوستانه</option><option value="professional">حرفه‌ای و رسمی</option><option value="creative">خلاق و ایده‌پرداز</option>
+                </select>
+              </label>
+            </div>
+            <label class="navi-setting-field navi-creativity-field" for="naviCreativity">
+              <span>میزان خلاقیت پاسخ <output id="naviCreativityValue">متعادل</output></span>
+              <input id="naviCreativity" type="range" min="0" max="100" value="55">
+              <small>مقدار کمتر: دقیق‌تر؛ مقدار بیشتر: ایده‌پردازانه‌تر</small>
+            </label>
+          </section>
+          <label class="field-label" for="serviceSelect">موضوع درخواست (اختیاری)</label>
           <select class="request-select" id="serviceSelect">
-            <option value="انتخاب نشده">انتخاب موضوع</option>
-            <option value="طراحی لوگو">طراحی لوگو</option>
-            <option value="تولید محتوا">تولید محتوا</option>
-            <option value="تبلیغات">تبلیغات</option>
-            <option value="هویت برند">هویت برند</option>
-            <option value="ایده‌پردازی">ایده‌پردازی</option>
-            <option value="سایر موارد">سایر موارد</option>
+            <option value="انتخاب نشده">انتخاب موضوع</option><option value="طراحی لوگو">طراحی لوگو</option><option value="تولید محتوا">تولید محتوا</option><option value="تبلیغات">تبلیغات</option><option value="هویت برند">هویت برند</option><option value="ایده‌پردازی">ایده‌پردازی</option><option value="سایر موارد">سایر موارد</option>
           </select>
-
           <label class="field-label" for="userRequest">پیامت برای ناوی</label>
-          <textarea class="request-textarea" id="userRequest"
-            placeholder="سلام ناوی، می‌خواهم برای کسب‌وکارم یک ایده تازه پیدا کنم..."></textarea>
-
+          <textarea class="request-textarea" id="userRequest" placeholder="هر چیزی که می‌خواهی با ناوی بررسی کنی بنویس..."></textarea>
+          <div class="navi-composer-tools">
+            <label class="navi-attach-button" for="naviAttachments">＋ افزودن فایل، تصویر یا صدا</label>
+            <input id="naviAttachments" type="file" accept="image/jpeg,image/png,image/webp,application/pdf,audio/mpeg,audio/mp4,audio/wav,audio/ogg,audio/aac,audio/flac" multiple hidden>
+            <span class="navi-attachment-hint">حداکثر ۳ فایل؛ هر فایل تا ۵ مگابایت</span>
+          </div>
+          <div id="naviAttachmentList" class="navi-attachment-list" aria-live="polite"></div>
           <button class="btn-primary" id="sendRequest" type="button">ارسال پیام به ناوی</button>
           <div class="navi-status" id="naviStatus">ناوی آماده گفت‌وگو با توست.</div>
           <div class="response-box" id="requestResponse" aria-live="polite"></div>
