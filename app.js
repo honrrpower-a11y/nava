@@ -618,7 +618,15 @@ function renderNaviMemories(memories) {
 
     const key = document.createElement("div");
     key.className = "navi-memory-key";
-    key.textContent = memory.memory_key;
+
+    const memoryTitle = String(memory.memory_key ?? "").trim();
+    const looksLikeTechnicalId =
+      !memoryTitle ||
+      /^\d{8,}$/.test(memoryTitle) ||
+      /^[a-f0-9-]{24,}$/i.test(memoryTitle) ||
+      /^(?:memory|fact|record)[_-]?\d+$/i.test(memoryTitle);
+
+    key.textContent = looksLikeTechnicalId ? "یادداشت کاربر" : memoryTitle;
 
     const value = document.createElement("div");
     value.className = "navi-memory-value";
@@ -663,7 +671,7 @@ function renderNaviMemories(memories) {
     });
 
     actions.append(editButton, deleteButton);
-    card.append(value, meta, actions);
+    card.append(key, value, meta, actions);
     fragment.appendChild(card);
   });
 
