@@ -1498,6 +1498,7 @@ async function deleteNaviThread(thread) {
     if (deletingActive) {
       naviActiveThreadId = naviThreads[0]?.thread_id || "owner-main";
       sessionStorage.setItem("nava_navi_active_thread" + (NAVI_PREVIEW_MODE ? "_preview" : ""), naviActiveThreadId);
+      renderNaviThreads();
       naviHistory = [];
       requestResponse.textContent = "";
       requestResponse.classList.remove("show");
