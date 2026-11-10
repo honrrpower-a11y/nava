@@ -1091,7 +1091,18 @@ async function loadNaviMemories(forceRefresh = false) {
       if (naviMemoryCounts) {
         const approvedCount = Number(data.count ?? naviMemory.length);
         const pendingCount = Number(data.proposalCount ?? naviProposals.length);
-        naviMemoryCounts.textContent = "تأییدشده: " + approvedCount + "  |  در انتظار بررسی: " + pendingCount;
+        const returnedApproved = Number(data.returnedCount ?? naviMemory.length);
+        const returnedPending = Number(data.returnedProposalCount ?? naviProposals.length);
+        const approvedLabel = returnedApproved < approvedCount
+          ? "تأییدشده: " + returnedApproved + " از " + approvedCount
+          : "تأییدشده: " + approvedCount;
+        const pendingLabel = returnedPending < pendingCount
+          ? "در انتظار بررسی: " + returnedPending + " از " + pendingCount
+          : "در انتظار بررسی: " + pendingCount;
+        naviMemoryCounts.textContent = approvedLabel + "  |  " + pendingLabel +
+          (returnedApproved < approvedCount || returnedPending < pendingCount
+            ? " — برای مشاهده همه موارد، بارگذاری صفحه‌بندی‌شده لازم است."
+            : "");
       }
       naviMemoryLoaded = true;
 
