@@ -666,7 +666,7 @@ async function handleMemory({
         );
       }
 
-      await env.NAVA_DB.prepare(`
+      const updateResult = await env.NAVA_DB.prepare(`
         UPDATE navi_memory_facts_v1
         SET memory_value = ?,
             updated_at = datetime('now')
@@ -679,10 +679,23 @@ async function handleMemory({
         NAVI_OWNER_ID
       ).run();
 
+      // Confirm that exactly the requested approved record was updated.
+      // Never report success when the database did not change that row.
+      if (
+        !updateResult?.success ||
+        Number(updateResult.meta?.changes || 0) !== 1
+      ) {
+        return errorResponse(
+          "این یادداشت تغییر نکرد؛ فهرست حافظه را تازه‌سازی و دوباره تلاش کن.",
+          409,
+          corsOrigin
+        );
+      }
+
       return successResponse({
         action: "update",
         id,
-        message: "یادداشت با موفقیت ویرایش شد."
+        message: "فقط همین یادداشت با موفقیت ویرایش شد."
       }, corsOrigin);
     }
 
@@ -701,9 +714,9 @@ async function handleMemory({
         NAVI_OWNER_ID
       ).run();
 
-      if (!result.success || !result.meta?.changes) {
+      if (!result?.success || Number(result.meta?.changes || 0) !== 1) {
         return errorResponse(
-          "این یادداشت پیدا نشد.",
+          "این یادداشت پیدا نشد یا قبلاً حذف شده است.",
           404,
           corsOrigin
         );
@@ -712,7 +725,7 @@ async function handleMemory({
       return successResponse({
         action: "delete",
         id,
-        message: "یادداشت از حافظه حذف شد."
+        message: "فقط همین یادداشت از حافظه حذف شد."
       }, corsOrigin);
     }
 
