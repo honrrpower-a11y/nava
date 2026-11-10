@@ -7,7 +7,7 @@
   <meta name="description" content="NAVA؛ استودیوی هوشمند برای ساخت، طراحی و رشد کسب‌وکارها">
   <title>NAVA | One Vision. One Mission. One NAVA.</title>
   <link rel="stylesheet" href="style.css">
-  <script src="app.js?v=navi-delete-thread-1" defer></script>
+  <script src="app.js?v=navi-thread-toolbar-2" defer></script>
 </head>
 <body>
 
@@ -121,7 +121,10 @@
 
           <section class="navi-memory-panel" id="naviHistoryPanel">
             <div class="navi-thread-toolbar">
-              <button class="navi-new-thread" id="naviNewThread" type="button">＋ گفت‌وگوی جدید</button>
+              <div class="navi-thread-toolbar-actions">
+                <button class="navi-new-thread" id="naviNewThread" type="button">＋ گفت‌وگوی جدید</button>
+                <button class="navi-delete-thread-current" id="naviDeleteThread" type="button" disabled>حذف گفت‌وگو</button>
+              </div>
             </div>
             <div class="navi-thread-list" id="naviThreadList" aria-label="فهرست گفت‌وگوها"></div>
             <button class="navi-memory-toggle" id="naviHistoryToggle"
