@@ -69,6 +69,7 @@ const naviHistoryList = document.getElementById("naviHistoryList");
 const naviHistoryCount = document.getElementById("naviHistoryCount");
 const naviHistoryRefresh = document.getElementById("naviHistoryRefresh");
 const naviNewThreadButton = document.getElementById("naviNewThread");
+const naviDeleteThreadButton = document.getElementById("naviDeleteThread");
 const naviThreadList = document.getElementById("naviThreadList");
 
 // DOM elements — Memory
@@ -1451,13 +1452,15 @@ async function loadNaviThreads() {
 function renderNaviThreads() {
   if (!naviThreadList) return;
   naviThreadList.replaceChildren();
+  if (naviDeleteThreadButton) {
+    naviDeleteThreadButton.disabled = !naviThreads.some(item => item.thread_id === naviActiveThreadId);
+  }
   naviThreads.forEach(thread => {
-    const item = document.createElement("div");
-    item.className = "navi-thread-row";
     const button = document.createElement("button");
     button.type = "button";
     button.className = "navi-thread-item" + (thread.thread_id === naviActiveThreadId ? " active" : "");
     button.textContent = thread.title || "گفت‌وگو";
+    button.title = thread.title || "گفت‌وگو";
     button.addEventListener("click", async () => {
       naviActiveThreadId = thread.thread_id;
       sessionStorage.setItem("nava_navi_active_thread" + (NAVI_PREVIEW_MODE ? "_preview" : ""), naviActiveThreadId);
@@ -1468,23 +1471,17 @@ function renderNaviThreads() {
       await loadNaviHistory();
       setNaviStatus("گفت‌وگوی انتخاب‌شده آماده ادامه است.");
     });
-    const deleteButton = document.createElement("button");
-    deleteButton.type = "button";
-    deleteButton.className = "navi-delete-thread";
-    deleteButton.textContent = "حذف گفتگو";
-    deleteButton.setAttribute("aria-label", "حذف " + (thread.title || "گفت‌وگو"));
-    deleteButton.addEventListener("click", () => deleteNaviThread(thread));
-    item.append(button, deleteButton);
-    naviThreadList.appendChild(item);
+    naviThreadList.appendChild(button);
   });
 }
 
-async function deleteNaviThread(thread) {
-  if (!thread?.thread_id) return;
-  const title = thread.title || "این گفت‌وگو";
-  if (!window.confirm("گفت‌وگوی «" + title + "» و تمام پیام‌های آن حذف شود؟ این کار قابل بازگشت نیست.")) return;
+async function deleteNaviThread() {
+  const thread = naviThreads.find(item => item.thread_id === naviActiveThreadId);
+  if (!thread) return;
+  if (!window.confirm("گفت‌وگوی «" + (thread.title || "بدون عنوان") + "» و تمام پیام‌های آن حذف شود؟")) return;
   const token = getNaviToken();
   if (!token) return;
+  naviDeleteThreadButton.disabled = true;
   try {
     const response = await fetch(NAVI_THREADS_API, {
       method: "POST",
@@ -1493,20 +1490,21 @@ async function deleteNaviThread(thread) {
     });
     const data = await response.json();
     if (!response.ok || !data.success) throw new Error(data.error || "حذف گفت‌وگو ناموفق بود.");
-    const deletingActive = naviActiveThreadId === thread.thread_id;
     await loadNaviThreads();
-    if (deletingActive) {
+    if (!naviThreads.some(item => item.thread_id === naviActiveThreadId)) {
       naviActiveThreadId = naviThreads[0]?.thread_id || "owner-main";
       sessionStorage.setItem("nava_navi_active_thread" + (NAVI_PREVIEW_MODE ? "_preview" : ""), naviActiveThreadId);
-      renderNaviThreads();
       naviHistory = [];
       requestResponse.textContent = "";
       requestResponse.classList.remove("show");
       await loadNaviHistory();
     }
-    setNaviStatus("گفت‌وگو حذف شد.");
+    renderNaviThreads();
+    setNaviStatus("گفت‌وگوی انتخاب‌شده حذف شد.");
   } catch (error) {
     showNaviReply(error.message || "حذف گفت‌وگو ناموفق بود.");
+  } finally {
+    naviDeleteThreadButton.disabled = false;
   }
 }
 
@@ -1541,6 +1539,7 @@ async function createNaviThread() {
 }
 
 naviNewThreadButton?.addEventListener("click", createNaviThread);
+naviDeleteThreadButton?.addEventListener("click", deleteNaviThread);
 
 naviMemoryRefresh.addEventListener("click", () => {
   loadNaviMemories(true);
