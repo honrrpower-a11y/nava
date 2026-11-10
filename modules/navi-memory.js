@@ -414,6 +414,9 @@ export function parseNaviMemoryCommand(message) {
 function normalizeMemoryKey(value) {
   return normalizeMemoryText(value)
     .replace(/-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i, "")
+    .replace(/[‌‍ـ]/g, "")
+    .replace(/[^\p{L}\p{N}\s]/gu, " ")
+    .replace(/\s+/g, " ")
     .trim();
 }
 
@@ -630,8 +633,9 @@ async function findMemoryDuplicate(
     // هویت‌های ثابت فقط با همان کلید ثابت تطبیق داده می‌شوند.
     if (protectedKey) return itemKey === normalizedKey;
 
-    // متن کاملاً یکسان را حتی با عنوان متفاوت دوباره ثبت نکن.
-    if (existingValue === normalized) return true;
+    // متن یکسان فقط در همان دسته تکراری محسوب می‌شود؛
+    // عنوان متفاوت می‌تواند نشان‌دهنده دو کاربرد مستقل باشد.
+    if (itemKey === normalizedKey && existingValue === normalized) return true;
 
     // شباهت معنایی فقط در یک دسته/عنوان یکسان مجاز است؛
     // تا دو پروژه یا تصمیم متفاوت با چند واژه مشترک ادغام نشوند.
