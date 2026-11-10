@@ -17,7 +17,7 @@ concurrency:
 
 jobs:
   deploy-preview:
-    if: github.ref == 'refs/heads/navi-main-completion' && inputs.confirmation == 'DEPLOY_PREVIEW_ONLY'
+    if: inputs.confirmation == 'DEPLOY_PREVIEW_ONLY'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout preview branch
