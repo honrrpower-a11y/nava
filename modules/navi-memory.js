@@ -488,7 +488,7 @@ function areMemoryValuesContradictory(first, second) {
   const hasOpposite = pairs.some(([negative, positive]) => (negative.test(a) && positive.test(b)) || (positive.test(a) && negative.test(b)));
   if (!hasOpposite) return false;
   const polarity = /نمی\s*خواهم|نمی\s*خوام|نمیخوام|دوست ندارم|علاقه ندارم|ترجیح نمی\s*دهم|ترجیح نمیدم|می\s*خواهم|می\s*خوام|میخوام|دوست دارم|علاقه دارم|ترجیح می\s*دهم|ترجیح میدم|نمی\s*پسندم|نمیپسندم|می\s*پسندم|میپسندم|غیرفعال|خاموش|بسته است|فعال|روشن|باز است|ممنوع|نباید|انجام نده|استفاده نکن|مجاز|باید|انجام بده|استفاده کن|ندارم|وجود ندارد|دارم|وجود دارد|کوتاه|مختصر|خلاصه|موجز|مفصل|طولانی|با جزئیات|جزئیات کامل|مردانه|صدای مرد|خواننده مرد|زنانه|صدای زن|خواننده زن/gu;
-  const stop = new Set(["من","تو","برای","که","این","اون","آن","را","رو","به","از","در","با","هم","هست","است","می","کنم","کنید","ترجیح"]);
+  const stop = new Set(["من","تو","برای","که","این","اون","آن","را","رو","به","از","در","با","هم","هست","است","باشد","بود","شود","بشود","می","کنم","کنید","ترجیح","حالت","قابلیت","گزینه","تنظیم","بخش","موضوع","مورد","سیستم","سامانه","سرویس"]);
   const tokens = value => new Set(value.replace(polarity, " ").split(/\s+/u).map(token => token.trim()).filter(token => token.length > 1 && !stop.has(token)));
   const left = tokens(a), right = tokens(b);
   for (const token of left) if (right.has(token)) return true;
