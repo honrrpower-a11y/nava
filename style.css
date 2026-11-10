@@ -383,14 +383,13 @@ body.light .navi-memory-value{color:#263a56}
 
 /* NAVI CONVERSATION THREADS */
 .navi-thread-toolbar{display:flex;justify-content:flex-start;margin:12px 0}
-.navi-thread-row{display:flex;align-items:center;gap:6px;min-width:0}
-.navi-thread-row .navi-thread-item{flex:1;min-width:0;text-align:right}
-.navi-delete-thread{flex:0 0 auto;border:1px solid rgba(220,90,90,.35);background:rgba(220,70,70,.07);color:#d98282;padding:7px 9px;border-radius:8px;font-size:10px;font-weight:700}
-.navi-delete-thread:hover{border-color:#d98282;background:rgba(220,70,70,.13)}
-.navi-delete-thread:disabled{opacity:.5;cursor:wait}
+.navi-thread-toolbar-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .navi-new-thread{border:1px solid var(--border);background:linear-gradient(110deg,rgba(229,184,94,.14),rgba(37,202,255,.08));color:var(--gold);padding:9px 14px;border-radius:10px;font-size:12px;font-weight:bold}
 .navi-new-thread:hover{border-color:var(--blue);color:var(--blue)}
 .navi-new-thread:disabled{opacity:.55;cursor:wait}
-.navi-thread-list{display:flex;flex-wrap:wrap;gap:7px;margin:0 0 12px}
-.navi-thread-item{border:1px solid var(--border);background:var(--panel);color:var(--muted);padding:7px 10px;border-radius:9px;font-size:11px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.navi-delete-thread-current{border:1px solid rgba(220,90,90,.4);background:rgba(220,70,70,.07);color:#d98282;padding:9px 14px;border-radius:10px;font-size:12px;font-weight:700}
+.navi-delete-thread-current:hover{border-color:#d98282;background:rgba(220,70,70,.13)}
+.navi-delete-thread-current:disabled{opacity:.4;cursor:not-allowed}
+.navi-thread-list{display:flex;flex-direction:column;gap:7px;margin:0 0 12px}
+.navi-thread-item{width:100%;border:1px solid var(--border);background:var(--panel);color:var(--muted);padding:9px 12px;border-radius:9px;font-size:12px;text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .navi-thread-item.active{border-color:var(--gold);color:var(--gold);background:rgba(229,184,94,.10)}
