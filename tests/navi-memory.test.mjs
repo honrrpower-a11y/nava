@@ -25,7 +25,7 @@ class MockD1 {
   prepare(sql) {
     const db = this;
     let values = [];
-    const normalized = sql.replace(/\\s+/g, " ").trim().toLowerCase();
+    const normalized = sql.replace(/\s+/g, " ").trim().toLowerCase();
 
     const statement = {
       bind(...args) {
