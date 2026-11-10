@@ -1124,6 +1124,17 @@ export async function saveNaviMemoryFact(
     // A direct user memory command is an authoritative correction:
     // replace the matched fact instead of concatenating contradictory
     // values (for example, favorite color: red -> blue).
+    const pendingResult = await db.prepare(`
+      SELECT id, memory_value
+      FROM navi_memory_facts_v1
+      WHERE owner_id = ? AND status = 'pending' AND id != ?
+    `).bind(NAVI_OWNER_ID, duplicate.id).all();
+
+    const relatedPending = (pendingResult.results || []).filter(item =>
+      normalizeMemoryText(item.memory_value) === normalizeMemoryText(memoryValue) ||
+      areMemoryValuesSemanticallySimilar(item.memory_value, memoryValue)
+    );
+
     const statements = [
       db.prepare(`
         UPDATE navi_memory_facts_v1
@@ -1136,16 +1147,11 @@ export async function saveNaviMemoryFact(
         duplicate.id,
         NAVI_OWNER_ID
       ),
-      db.prepare(`
+      ...relatedPending.map(item => db.prepare(`
         UPDATE navi_memory_facts_v1
         SET status = 'archived', updated_at = datetime('now')
-        WHERE owner_id = ?
-          AND id != ?
-          AND status = 'pending'
-      `).bind(
-        NAVI_OWNER_ID,
-        duplicate.id
-      )
+        WHERE id = ? AND owner_id = ? AND status = 'pending'
+      `).bind(item.id, NAVI_OWNER_ID))
     ];
 
     const results = await db.batch(statements);
@@ -1158,7 +1164,7 @@ export async function saveNaviMemoryFact(
     }
 
     return {
-      updated: duplicate.status === 'approved',
+      updated: true,
       replaced: true,
       id: duplicate.id,
       existingStatus: duplicate.status,
