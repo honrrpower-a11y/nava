@@ -1,0 +1,98 @@
+name: Daily Nava Backup
+
+on:
+  schedule:
+    - cron: "30 3 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nava-daily-backup
+  cancel-in-progress: false
+
+jobs:
+  backup:
+    name: Back up source and NAVI database
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      BACKUP_ENCRYPTION_PASSPHRASE: ${{ secrets.BACKUP_ENCRYPTION_PASSPHRASE }}
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validate required secrets
+        shell: bash
+        run: |
+          set -euo pipefail
+          for name in CLOUDFLARE_API_TOKEN CLOUDFLARE_ACCOUNT_ID BACKUP_ENCRYPTION_PASSPHRASE; do
+            if [ -z "${!name:-}" ]; then
+              echo "::error::Missing GitHub Actions secret: $name"
+              exit 1
+            fi
+          done
+          if [ "${#BACKUP_ENCRYPTION_PASSPHRASE}" -lt 24 ]; then
+            echo "::error::BACKUP_ENCRYPTION_PASSPHRASE must contain at least 24 characters."
+            exit 1
+          fi
+
+      - name: Create and verify full Git history backup
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p backup-output
+          git bundle create backup-output/nava-source.bundle --all
+          git bundle verify backup-output/nava-source.bundle
+          sha256sum backup-output/nava-source.bundle > backup-output/nava-source.bundle.sha256
+
+      - name: Export Cloudflare D1 database
+        shell: bash
+        run: |
+          set -euo pipefail
+          npx --yes wrangler@4 d1 export nava-memory --remote --output=backup-output/nava-memory.sql
+          test -s backup-output/nava-memory.sql
+          sha256sum backup-output/nava-memory.sql > backup-output/nava-memory.sql.sha256
+
+      - name: Encrypt and verify database backup
+        shell: bash
+        run: |
+          set -euo pipefail
+          openssl enc -aes-256-cbc -salt -pbkdf2 -iter 200000 \
+            -in backup-output/nava-memory.sql \
+            -out backup-output/nava-memory.sql.enc \
+            -pass env:BACKUP_ENCRYPTION_PASSPHRASE
+          openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 \
+            -in backup-output/nava-memory.sql.enc \
+            -out backup-output/nava-memory.verify.sql \
+            -pass env:BACKUP_ENCRYPTION_PASSPHRASE
+          cmp backup-output/nava-memory.sql backup-output/nava-memory.verify.sql
+          rm backup-output/nava-memory.sql backup-output/nava-memory.verify.sql
+          sha256sum backup-output/nava-memory.sql.enc > backup-output/nava-memory.sql.enc.sha256
+
+      - name: Upload source backup (90 days)
+        uses: actions/upload-artifact@v4
+        with:
+          name: nava-source-${{ github.run_id }}
+          path: |
+            backup-output/nava-source.bundle
+            backup-output/nava-source.bundle.sha256
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Upload encrypted NAVI database backup (90 days)
+        uses: actions/upload-artifact@v4
+        with:
+          name: navi-database-encrypted-${{ github.run_id }}
+          path: |
+            backup-output/nava-memory.sql.enc
+            backup-output/nava-memory.sql.enc.sha256
+          if-no-files-found: error
+          retention-days: 90
