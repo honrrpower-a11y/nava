@@ -901,15 +901,27 @@ function renderNaviMemoryProposals(proposals) {
     if (proposal.conflictWith && Number.isSafeInteger(proposal.conflictWith.id)) {
       const conflict=document.createElement("section"); conflict.className="navi-memory-conflict";
       const heading=document.createElement("strong"); heading.textContent="⚠️ تعارض با حافظه تأییدشده";
+      const previousLabel=document.createElement("span"); previousLabel.className="navi-memory-conflict-label"; previousLabel.textContent="نسخه قبلیِ تأییدشده";
       const previous=document.createElement("div"); previous.className="navi-memory-conflict-value"; previous.textContent=proposal.conflictWith.memory_value;
-      const explanation=document.createElement("p"); explanation.textContent="این نسخه قبلاً در پروفایل تأیید شده است. تصمیم نهایی با توست:";
-      conflict.append(heading,previous,explanation);
+      const currentLabel=document.createElement("span"); currentLabel.className="navi-memory-conflict-label"; currentLabel.textContent="پیشنهاد جدید";
+      const explanation=document.createElement("p"); explanation.textContent="این دو نسخه با هم تعارض دارند. تصمیم نهایی با توست:";
+      value.before(currentLabel);
+      conflict.append(heading,previousLabel,previous,explanation);
       const replace=document.createElement("button"); replace.type="button"; replace.className="navi-memory-conflict-replace"; replace.textContent="جایگزینی نسخه قبلی";
-      replace.addEventListener("click",()=>submitNaviProposalAction(proposal.id,"resolve_conflict",null,replace,proposal.conflictWith.id,"replace"));
+      replace.addEventListener("click",async()=>{
+        const confirmed=await showNaviMemoryDialog({title:"جایگزینی حافظه",message:"نسخه تأییدشده فعلی با پیشنهاد جدید جایگزین می‌شود. این تغییر را تأیید می‌کنی؟",confirmText:"بله، جایگزین شود",cancelText:"انصراف",danger:true});
+        if(confirmed) await submitNaviProposalAction(proposal.id,"resolve_conflict",null,replace,proposal.conflictWith.id,"replace");
+      });
       const both=document.createElement("button"); both.type="button"; both.className="navi-memory-conflict-both"; both.textContent="حفظ هر دو نسخه";
-      both.addEventListener("click",()=>submitNaviProposalAction(proposal.id,"resolve_conflict",null,both,proposal.conflictWith.id,"keep_both"));
+      both.addEventListener("click",async()=>{
+        const confirmed=await showNaviMemoryDialog({title:"حفظ هر دو نسخه",message:"هر دو نسخه متناقض به‌عنوان حافظه تأییدشده نگه داشته می‌شوند. ادامه می‌دهی؟",confirmText:"بله، هر دو بمانند",cancelText:"انصراف"});
+        if(confirmed) await submitNaviProposalAction(proposal.id,"resolve_conflict",null,both,proposal.conflictWith.id,"keep_both");
+      });
       const keep=document.createElement("button"); keep.type="button"; keep.className="navi-memory-conflict-keep"; keep.textContent="حفظ نسخه قبلی";
-      keep.addEventListener("click",()=>submitNaviProposalAction(proposal.id,"resolve_conflict",null,keep,proposal.conflictWith.id,"keep_existing"));
+      keep.addEventListener("click",async()=>{
+        const confirmed=await showNaviMemoryDialog({title:"حفظ نسخه قبلی",message:"پیشنهاد جدید بایگانی می‌شود و حافظه قبلی باقی می‌ماند. ادامه می‌دهی؟",confirmText:"بله، نسخه قبلی بماند",cancelText:"انصراف"});
+        if(confirmed) await submitNaviProposalAction(proposal.id,"resolve_conflict",null,keep,proposal.conflictWith.id,"keep_existing");
+      });
       actions.append(edit,replace,both,keep); card.append(title,value,conflict,meta,actions); naviMemoryProposalList.appendChild(card); return;
     }
     const approve=document.createElement("button"); approve.type="button"; approve.className="navi-memory-approve"; approve.textContent="تأیید";
