@@ -63,6 +63,7 @@ const naviHistoryRefresh = document.getElementById("naviHistoryRefresh");
 const naviMemoryToggle = document.getElementById("naviMemoryToggle");
 const naviMemoryContent = document.getElementById("naviMemoryContent");
 const naviMemoryList = document.getElementById("naviMemoryList");
+const naviMemoryProposalList = document.getElementById("naviMemoryProposalList");
 const naviMemoryStatus = document.getElementById("naviMemoryStatus");
 const naviMemoryError = document.getElementById("naviMemoryError");
 const naviMemoryRefresh = document.getElementById("naviMemoryRefresh");
@@ -540,6 +541,14 @@ function resetNaviMemoryPanel() {
 
   naviMemoryList.appendChild(empty);
 
+  if (naviMemoryProposalList) {
+    naviMemoryProposalList.replaceChildren();
+    const proposalEmpty = document.createElement("div");
+    proposalEmpty.className = "navi-memory-empty";
+    proposalEmpty.textContent = "پیشنهاد تازه‌ای برای بررسی وجود ندارد.";
+    naviMemoryProposalList.appendChild(proposalEmpty);
+  }
+
   naviMemoryStatus.textContent = "حافظه‌ها بارگذاری نشده‌اند.";
   naviMemoryError.textContent = "";
 
@@ -752,16 +761,15 @@ function showNaviMemoryDialog({
 }
 
 function renderNaviMemoryProposals(proposals) {
-  const heading = document.createElement("div");
-  heading.className = "navi-memory-section-title";
-  heading.textContent = "پیشنهادهای ناوی — در انتظار تأیید تو";
-  naviMemoryList.appendChild(heading);
+  if (!naviMemoryProposalList) return;
+
+  naviMemoryProposalList.replaceChildren();
 
   if (!Array.isArray(proposals) || proposals.length === 0) {
     const empty = document.createElement("div");
     empty.className = "navi-memory-empty";
     empty.textContent = "پیشنهاد تازه‌ای برای بررسی وجود ندارد.";
-    naviMemoryList.appendChild(empty);
+    naviMemoryProposalList.appendChild(empty);
     return;
   }
 
@@ -821,7 +829,7 @@ function renderNaviMemoryProposals(proposals) {
 
     actions.append(edit, approve, reject);
     card.append(value, meta, actions);
-    naviMemoryList.appendChild(card);
+    naviMemoryProposalList.appendChild(card);
   });
 }
 
@@ -1051,6 +1059,7 @@ async function loadNaviMemories(forceRefresh = false) {
       naviMemoryLoaded = true;
 
       renderNaviMemories(naviMemory);
+      renderNaviMemoryProposals(naviProposals);
 
       setNaviMemoryStatus(
         naviMemory.length
