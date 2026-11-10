@@ -265,6 +265,11 @@ function clearNaviSession() {
   naviMemoryLoading = false;
   naviMemoryLoadPromise = null;
   naviMemoryBusy = false;
+  naviMemoryPageLoading = false;
+  naviApprovedOffset = 0;
+  naviPendingOffset = 0;
+  naviApprovedTotal = 0;
+  naviPendingTotal = 0;
 
   if (naviChatArea) naviChatArea.hidden = true;
   if (naviLoginPanel) naviLoginPanel.hidden = false;
@@ -565,6 +570,12 @@ function resetNaviMemoryPanel() {
   }
 
   naviMemoryStatus.textContent = "حافظه‌ها بارگذاری نشده‌اند.";
+  naviMemoryPageLoading = false;
+  naviApprovedOffset = 0;
+  naviPendingOffset = 0;
+  naviApprovedTotal = 0;
+  naviPendingTotal = 0;
+  updateNaviMemoryPagination();
   naviMemoryError.textContent = "";
   if (naviMemoryCounts) naviMemoryCounts.textContent = "";
   if (naviMemorySearchInput) naviMemorySearchInput.value = "";
@@ -598,8 +609,13 @@ function updateNaviMemoryPagination() {
 
 async function loadMoreNaviMemory(kind) {
   if (naviMemoryPageLoading || !["approved", "pending"].includes(kind)) return;
+
   const token = getNaviToken();
-  if (!token) return;
+  if (!token) {
+    clearNaviSession();
+    return;
+  }
+
   const offset = kind === "approved" ? naviApprovedOffset : naviPendingOffset;
   const total = kind === "approved" ? naviApprovedTotal : naviPendingTotal;
   if (offset >= total) return;
@@ -618,10 +634,24 @@ async function loadMoreNaviMemory(kind) {
       headers: { "Authorization": "Bearer " + token },
       cache: "no-store"
     });
-    const data = await response.json();
+
+    let data;
+    try {
+      data = await response.json();
+    } catch (error) {
+      throw new Error("پاسخ سرور هنگام دریافت موارد بیشتر قابل خواندن نیست.");
+    }
+
     if (getNaviToken() !== token || naviSessionVersion !== requestVersion) return;
-    if (!response.ok || data.success === false) {
-      throw new Error(data.error || "بارگذاری موارد بیشتر ناموفق بود.");
+
+    if (response.status === 401 || response.status === 403) {
+      clearNaviSession();
+      showLoginError("نشست ناوی معتبر نیست یا پایان یافته است. دوباره وارد شو.");
+      return;
+    }
+
+    if (!response.ok || !data || data.success === false) {
+      throw new Error(data?.error || "بارگذاری موارد بیشتر ناموفق بود.");
     }
 
     if (kind === "approved") {
@@ -640,61 +670,27 @@ async function loadMoreNaviMemory(kind) {
 
     naviApprovedTotal = Number(data.count ?? naviApprovedTotal);
     naviPendingTotal = Number(data.proposalCount ?? naviPendingTotal);
+
+    // اگر سرور صفحه خالی برگرداند، از درخواست بی‌پایان جلوگیری کن.
+    if (kind === "approved" && !Number(data.returnedCount ?? 0)) {
+      naviApprovedOffset = naviApprovedTotal;
+    }
+    if (kind === "pending" && !Number(data.returnedProposalCount ?? 0)) {
+      naviPendingOffset = naviPendingTotal;
+    }
+
     setNaviMemoryStatus("فهرست حافظه‌ها به‌روزرسانی شد.");
   } catch (error) {
-    showNaviMemoryError(error.message || "بارگذاری موارد بیشتر انجام نشد.");
+    if (naviSessionVersion === requestVersion) {
+      showNaviMemoryError(error.message || "بارگذاری موارد بیشتر انجام نشد.");
+    }
   } finally {
-    naviMemoryPageLoading = false;
-    updateNaviMemoryPagination();
+    if (naviSessionVersion === requestVersion) {
+      naviMemoryPageLoading = false;
+      updateNaviMemoryPagination();
+    }
   }
 }
-
-function formatNaviMemoryDate(value) {
-  if (!value) return "";
-
-  const date = new Date(value);
-
-  if (Number.isNaN(date.getTime())) {
-    return String(value);
-  }
-
-  try {
-    return new Intl.DateTimeFormat("fa-IR", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit"
-    }).format(date);
-  } catch (error) {
-    return date.toLocaleString();
-  }
-}
-
-function normalizeNaviMemories(data) {
-  let source = [];
-
-  if (Array.isArray(data)) {
-    source = data;
-  } else if (data && Array.isArray(data.memories)) {
-    source = data.memories;
-  } else if (data && data.data && Array.isArray(data.data.memories)) {
-    source = data.data.memories;
-  }
-
-  return source
-    .filter(item => item && typeof item === "object")
-    .map(item => ({
-      id: Number(item.id),
-      memory_key: String(item.memory_key ?? "یادداشت کاربر").replace(/-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i, ""),
-      memory_value: String(item.memory_value ?? ""),
-      source: String(item.source ?? ""),
-      created_at: item.created_at ?? "",
-      updated_at: item.updated_at ?? ""
-    }))
-    .filter(item => Number.isSafeInteger(item.id) && item.id > 0);
-}
-
 
 /* =========================================
    NAVI MEMORY — SAFE RENDERING
