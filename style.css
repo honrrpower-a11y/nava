@@ -448,15 +448,3 @@ body.light .navi-memory-value{color:#263a56}
 .navi-memory-conflict-keep{border-color:var(--border);color:var(--muted)}
 .navi-memory-conflict button:disabled{opacity:.5;cursor:wait}
 body.light .navi-memory-conflict{background:rgba(220,155,70,.09)}
-
-/* NAVI memory conflict resolution */
-.navi-memory-conflict{margin-top:12px;padding:12px;border:1px solid rgba(220,155,70,.5);border-right:3px solid #d99b45;border-radius:10px;background:rgba(220,155,70,.08);display:grid;gap:9px}
-.navi-memory-conflict strong{font-size:12px;color:#d99b45}
-.navi-memory-conflict-value{padding:9px;border-radius:8px;background:rgba(120,130,145,.10);font-size:12px;line-height:1.9;white-space:pre-wrap;overflow-wrap:anywhere}
-.navi-memory-conflict p{margin:0;color:var(--muted);font-size:11px;line-height:1.8}
-.navi-memory-conflict-replace,.navi-memory-conflict-both,.navi-memory-conflict-keep{padding:8px 11px;border:1px solid var(--border);border-radius:8px;background:transparent;color:var(--text);font-size:11px}
-.navi-memory-conflict-replace{border-color:rgba(220,155,70,.6);color:#d99b45}
-.navi-memory-conflict-both{border-color:rgba(70,170,130,.55);color:#55b58b}
-.navi-memory-conflict-keep{border-color:var(--border);color:var(--muted)}
-.navi-memory-conflict button:disabled{opacity:.5;cursor:wait}
-body.light .navi-memory-conflict{background:rgba(220,155,70,.09)}
