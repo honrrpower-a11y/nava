@@ -69,7 +69,7 @@ class OperationsMockD1 {
             if (query.includes("id != ?") && Number(row.id) === Number(args[1])) return false;
             return true;
           }).sort((a,b) => Number(b.id)-Number(a.id));
-          if (query.includes("limit ? offset ?")) rows = rows.slice(Number(args[1]) || 0, (Number(args[1]) || 0) + (Number(args[2]) || 200));
+          if (query.includes("limit ? offset ?")) rows = rows.slice(Number(args[2]) || 0, (Number(args[2]) || 0) + (Number(args[1]) || 200));
           return { results: rows.map(row => ({ ...row })) };
         }
         if (query.includes("from navi_chat_messages_v1")) {
