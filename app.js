@@ -1689,7 +1689,28 @@ async function sendMessageToNavi() {
         memoryResult &&
         !memoryResult.commandRecognized
       ) {
-        if (Number(memoryResult.proposalsCreated) > 0) {
+        if (
+          Number(memoryResult.proposalsMergedIntoPending) > 0 ||
+          Number(memoryResult.proposalsMergeCandidates) > 0
+        ) {
+          const mergeMessages = [];
+
+          if (Number(memoryResult.proposalsMergedIntoPending) > 0) {
+            mergeMessages.push(
+              "اطلاعات مکمل با پیشنهاد قبلی ادغام شد."
+            );
+          }
+
+          if (Number(memoryResult.proposalsMergeCandidates) > 0) {
+            mergeMessages.push(
+              "برای تکمیل یک حافظه تأییدشده، پیشنهاد تازه‌ای ساخته شد؛ پس از بررسی آن را تأیید کن."
+            );
+          }
+
+          setNaviMemoryStatus(
+            "ناوی: " + mergeMessages.join(" ")
+          );
+        } else if (Number(memoryResult.proposalsCreated) > 0) {
           setNaviMemoryStatus(
             "ناوی " + memoryResult.proposalsCreated +
             " پیشنهاد تازه ثبت کرد؛ برای بررسی به بخش پیشنهادها برو."
