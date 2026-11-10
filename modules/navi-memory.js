@@ -126,7 +126,7 @@ export async function getNaviDbHistory(
     ORDER BY id DESC
     LIMIT ?
   `).bind(
-    NAVI_MAIN_THREAD_ID,
+    threadId,
     safeLimit
   ).all();
 
@@ -1204,7 +1204,7 @@ export async function saveNaviConversation(
       WHERE thread_id = ?
         AND owner_id = ?
     `).bind(
-      NAVI_MAIN_THREAD_ID,
+      threadId,
       NAVI_OWNER_ID
     )
   ];
