@@ -867,7 +867,7 @@ function renderNaviMemoryProposals(proposals) {
 
 function openNaviProposalEditor(proposal, card) {
   if (naviMemoryBusy) return;
-  const previous = naviMemoryList.querySelector(".navi-memory-proposal-editor");
+  const previous = naviMemoryProposalList.querySelector(".navi-memory-proposal-editor");
   if (previous) {
     previous.focus();
     return;
