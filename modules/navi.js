@@ -667,7 +667,7 @@ async function handleMemory({
       }
 
       const existing = await env.NAVA_DB.prepare(`
-        SELECT id
+        SELECT id, memory_key
         FROM navi_memory_facts_v1
         WHERE id = ?
           AND owner_id = ?
@@ -687,11 +687,11 @@ async function handleMemory({
       }
 
       const duplicate = await env.NAVA_DB.prepare(`
-        SELECT id
+        SELECT id, status
         FROM navi_memory_facts_v1
         WHERE owner_id = ?
           AND memory_value = ?
-          AND status = 'approved'
+          AND status IN ('approved', 'pending')
           AND id != ?
         LIMIT 1
       `).bind(
@@ -708,7 +708,7 @@ async function handleMemory({
         );
       }
 
-      await env.NAVA_DB.prepare(`
+      const updateResult = await env.NAVA_DB.prepare(`
         UPDATE navi_memory_facts_v1
         SET memory_value = ?,
             updated_at = datetime('now')
@@ -720,6 +720,14 @@ async function handleMemory({
         id,
         NAVI_OWNER_ID
       ).run();
+
+      if (!updateResult.success || !updateResult.meta?.changes) {
+        return errorResponse(
+          "ویرایش حافظه ثبت نشد؛ وضعیت قبلی حفظ شد.",
+          409,
+          corsOrigin
+        );
+      }
 
       return successResponse({
         action: "update",
