@@ -1577,6 +1577,34 @@ async function handleThreads({ request, env, origin, corsOrigin }) {
     }
     let input;
     try { input = await request.json(); } catch { return errorResponse("اطلاعات ارسالی معتبر نیست.", 400, corsOrigin); }
+    if (input?.action === "delete") {
+      const threadId = String(input.threadId || "");
+      if (!threadId) return errorResponse("شناسه گفت‌وگو مشخص نیست.", 400, corsOrigin);
+      const thread = await env.NAVA_DB.prepare(`
+        SELECT thread_id FROM navi_chat_threads_v1
+        WHERE thread_id = ? AND owner_id = ? LIMIT 1
+      `).bind(threadId, NAVI_OWNER_ID).first();
+      if (!thread) return errorResponse("این گفت‌وگو پیدا نشد.", 404, corsOrigin);
+      const deleteMessages = await env.NAVA_DB.prepare(`
+        DELETE FROM navi_chat_messages_v1 WHERE thread_id = ?
+      `).bind(threadId).run();
+      if (!deleteMessages.success) throw new Error("Could not delete conversation messages.");
+      if (threadId !== NAVI_MAIN_THREAD_ID) {
+        const deleteThread = await env.NAVA_DB.prepare(`
+          DELETE FROM navi_chat_threads_v1 WHERE thread_id = ? AND owner_id = ?
+        `).bind(threadId, NAVI_OWNER_ID).run();
+        if (!deleteThread.success || deleteThread.meta?.changes !== 1) {
+          throw new Error("Could not delete conversation thread.");
+        }
+      } else {
+        await env.NAVA_DB.prepare(`
+          UPDATE navi_chat_threads_v1
+          SET title = 'گفت‌وگوی اصلی', updated_at = datetime('now')
+          WHERE thread_id = ? AND owner_id = ?
+        `).bind(threadId, NAVI_OWNER_ID).run();
+      }
+      return successResponse({ deleted: true, threadId }, corsOrigin);
+    }
     const title = safeNaviText(input?.title || "گفت‌وگوی جدید", 80) || "گفت‌وگوی جدید";
     const threadId = "thread-" + crypto.randomUUID();
     const result = await env.NAVA_DB.prepare(`
