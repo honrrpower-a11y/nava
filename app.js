@@ -53,6 +53,8 @@ const userRequest = document.getElementById("userRequest");
 const sendRequest = document.getElementById("sendRequest");
 
 // DOM elements — History
+const naviHistoryToggle = document.getElementById("naviHistoryToggle");
+const naviHistoryContent = document.getElementById("naviHistoryContent");
 const naviHistoryList = document.getElementById("naviHistoryList");
 const naviHistoryCount = document.getElementById("naviHistoryCount");
 const naviHistoryRefresh = document.getElementById("naviHistoryRefresh");
@@ -239,6 +241,10 @@ function clearNaviSession() {
 
   if (naviHistoryList) {
     showEmptyHistory("برای دیدن تاریخچه وارد ناوی شو.", "بدون ورود");
+  }
+  if (naviHistoryContent && naviHistoryToggle) {
+    naviHistoryContent.hidden = true;
+    naviHistoryToggle.setAttribute("aria-expanded", "false");
   }
 
   if (naviStatus) {
@@ -1518,6 +1524,16 @@ function scrollToRequest() {
     }
   }, 450);
 }
+
+naviHistoryToggle.addEventListener("click", () => {
+  const isOpening = naviHistoryContent.hidden;
+
+  naviHistoryContent.hidden = !isOpening;
+  naviHistoryToggle.setAttribute(
+    "aria-expanded",
+    isOpening ? "true" : "false"
+  );
+});
 
 naviHistoryRefresh.addEventListener("click", () => {
   loadNaviHistory();
