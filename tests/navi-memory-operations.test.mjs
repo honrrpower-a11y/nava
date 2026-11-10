@@ -156,7 +156,7 @@ test("rejects empty, too-short and sensitive proposals", async () => {
 test("approves a pending proposal and removes it from pending list", async () => {
   const db = new OperationsMockD1({ memories: pendingSeed() });
   const result = await approveNaviMemoryProposal(db, 1);
-  assert.equal(result.success, true);
+  assert.equal(result.success, true, JSON.stringify({ result, memories: db.memories }));
   assert.equal(db.memories[0].status, "approved");
   assert.equal((await getNaviPendingMemory(db)).length, 0);
   assert.equal((await getNaviApprovedMemory(db)).length, 1);
@@ -165,7 +165,7 @@ test("approves a pending proposal and removes it from pending list", async () =>
 test("rejects a proposal by archiving it without approving it", async () => {
   const db = new OperationsMockD1({ memories: pendingSeed() });
   const result = await rejectNaviMemoryProposal(db, 1);
-  assert.equal(result.success, true);
+  assert.equal(result.success, true, JSON.stringify({ result, memories: db.memories }));
   assert.equal(db.memories[0].status, "archived");
   assert.equal((await getNaviPendingMemory(db)).length, 0);
 });
