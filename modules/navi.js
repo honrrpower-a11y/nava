@@ -787,6 +787,14 @@ async function handleMemory({
         );
       }
 
+      if (result.sensitive) {
+        return errorResponse(
+          "این پیشنهاد شامل اطلاعات حساس است و ذخیره نمی‌شود.",
+          400,
+          corsOrigin
+        );
+      }
+
       return successResponse({
         action: "update_pending",
         id,
@@ -835,6 +843,30 @@ async function handleMemory({
       if (result.duplicate) {
         return errorResponse(
           "این اطلاعات از قبل در حافظه تأییدشده وجود دارد.",
+          409,
+          corsOrigin
+        );
+      }
+
+      if (result.invalid) {
+        return errorResponse(
+          "متن پیشنهاد برای ثبت معتبر نیست.",
+          400,
+          corsOrigin
+        );
+      }
+
+      if (result.sensitive) {
+        return errorResponse(
+          "این پیشنهاد شامل اطلاعات حساس است و تأیید نمی‌شود.",
+          400,
+          corsOrigin
+        );
+      }
+
+      if (!result.success) {
+        return errorResponse(
+          "تأیید پیشنهاد انجام نشد؛ وضعیت حافظه تغییر نکرد.",
           409,
           corsOrigin
         );
