@@ -46,6 +46,11 @@ export default {
     const musicResponse = await handleMusicRoute(context);
     if (musicResponse) return musicResponse;
 
+    // Serve the isolated NAVI preview UI after API routes have been checked.
+    if (env.ASSETS) {
+      return env.ASSETS.fetch(request);
+    }
+
     return json({ error: "Not found" }, 404, corsOrigin);
   }
 };
