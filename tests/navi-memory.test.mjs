@@ -60,10 +60,14 @@ class MockD1 {
         if (normalized.includes("from navi_memory_facts_v1")) {
           const status = normalized.match(/status = '([^']+)'/)?.[1];
           const ownerId = values[0];
+          const excludedId = normalized.includes("id != ?") ? Number(values[1]) : null;
+          const hasApprovedPendingFilter = normalized.includes("status in ('approved', 'pending')");
           return {
             results: db.memories
-              .filter(item => item.owner_id === ownerId && (!status || item.status === status) &&
-                (normalized.includes("status in ('approved', 'pending')") ? ["approved", "pending"].includes(item.status) : true))
+              .filter(item => item.owner_id === ownerId &&
+                (!status || item.status === status) &&
+                (!hasApprovedPendingFilter || ["approved", "pending"].includes(item.status)) &&
+                (excludedId === null || Number(item.id) !== excludedId))
               .map(item => ({ ...item }))
           };
         }
