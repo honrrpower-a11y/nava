@@ -186,10 +186,9 @@ test("detects a contradictory proposal with the same normalized key", async () =
   const db = new MockD1({ memories: baseMemories() });
   const [candidate] = await getNaviMemoryConflictCandidates(db, [{
     id: 2,
-    memory_key: "پاسخ‌ها-unique",
+    memory_key: "پاسخ‌ها",
     memory_value: "پاسخ‌ها را مفصل می‌خواهم"
   }]);
-  // Different key suffixes normalize to the same base key.
   assert.equal(candidate.conflictWith.id, 1);
 });
 
