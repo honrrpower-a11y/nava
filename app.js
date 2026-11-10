@@ -619,11 +619,16 @@ function renderNaviMemories(memories) {
     const key = document.createElement("div");
     key.className = "navi-memory-key";
 
-    const memoryTitle = String(memory.memory_key ?? "").trim();
+    const rawMemoryTitle = String(memory.memory_key ?? "").trim();
+    // Remove technical record IDs even when the backend appends them to a human title.
+    const memoryTitle = rawMemoryTitle
+      .replace(/\s*\d{13}-[a-f0-9]{8}\s*/gi, " ")
+      .replace(/\s+/g, " ")
+      .trim();
     const looksLikeTechnicalId =
       !memoryTitle ||
       /^\d{8,}$/.test(memoryTitle) ||
-      /^(?:\d{13}-[a-f0-9]{8}|[a-f0-9-]{20,})$/i.test(memoryTitle) ||
+      /^[a-f0-9-]{20,}$/i.test(memoryTitle) ||
       /^(?:memory|fact|record)[_-]?\d+$/i.test(memoryTitle);
 
     key.textContent = looksLikeTechnicalId ? "یادداشت کاربر" : memoryTitle;
