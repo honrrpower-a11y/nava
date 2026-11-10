@@ -1051,11 +1051,11 @@ async function loadNaviMemories(forceRefresh = false) {
       naviMemoryLoaded = true;
 
       renderNaviMemories(naviMemory);
-      renderNaviMemoryProposals(naviProposals);
 
       setNaviMemoryStatus(
-        naviMemory.length + " حافظه تأییدشده · " +
-        naviProposals.length + " پیشنهاد در انتظار بررسی"
+        naviMemory.length
+          ? "اطلاعات پروفایل با موفقیت به‌روز شد."
+          : "هنوز اطلاعاتی برای نمایش در پروفایل ثبت نشده است."
       );
 
       return true;
