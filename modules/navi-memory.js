@@ -735,22 +735,28 @@ export async function approveNaviMemoryProposal(
   );
 
   if (duplicate) {
-    const mergedValue = mergeMemoryValues(
-      duplicate.memory_value,
-      memoryValue
-    );
+    // When a user approves a new proposal that matches an already
+    // approved fact, treat the approval as confirmation of the newer
+    // value. Do not concatenate contradictory values (for example,
+    // favorite color: blue + green).
+    // Pending proposals may still be combined because neither is
+    // an approved source of truth yet.
+    const targetStatus = duplicate.status;
+    const replacesApprovedFact = targetStatus === "approved";
+    const nextValue = replacesApprovedFact
+      ? memoryValue
+      : mergeMemoryValues(duplicate.memory_value, memoryValue);
 
-    if (containsSensitiveMemory(mergedValue)) {
+    if (containsSensitiveMemory(nextValue)) {
       return { sensitive: true };
     }
 
-    const targetStatus = duplicate.status;
     const update = db.prepare(`
       UPDATE navi_memory_facts_v1
       SET memory_value = ?, updated_at = datetime('now')
       WHERE id = ? AND owner_id = ? AND status = ?
     `).bind(
-      mergedValue,
+      nextValue,
       duplicate.id,
       NAVI_OWNER_ID,
       targetStatus
@@ -767,15 +773,16 @@ export async function approveNaviMemoryProposal(
 
     const results = await db.batch([update, archive]);
     if (!Array.isArray(results) || results.some(item => !item.success)) {
-      throw new Error("Could not merge related memory records.");
+      throw new Error("Could not update related memory records.");
     }
 
     return {
       success: true,
-      merged: true,
+      merged: !replacesApprovedFact,
+      replaced: replacesApprovedFact,
       id: duplicate.id,
       archivedId: proposalId,
-      memoryValue: mergedValue,
+      memoryValue: nextValue,
       mergedIntoStatus: targetStatus
     };
   }
