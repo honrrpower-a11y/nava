@@ -261,6 +261,41 @@ export function parseNaviMemoryCommand(message) {
     };
   }
 
+  // جمله‌ای که ابتدا واقعیت را بیان می‌کند و در پایان می‌گوید
+  // «این را به خاطر بسپار» باید از خودِ واقعیت استخراج شود؛
+  // در غیر این صورت نقطه پایانی ممکن است به‌عنوان حافظه ذخیره شود.
+  const trailingRememberMatch = text.match(
+    /^([\\s\\S]+?)[.!؟]?\\s+(?:این|این\\s+(?:موضوع|نکته|مورد|اطلاعات))\\s+(?:رو|را)\\s+(?:به\\s+خاطر\\s+بسپار|یادت\\s+(?:بمونه|بماند|باشه|باشد))\\s*[.!؟]*$/i
+  );
+
+  if (trailingRememberMatch?.[1]) {
+    let rememberedValue = trailingRememberMatch[1]
+      .trim()
+      .replace(/[.!؟،؛:]+$/u, "")
+      .trim();
+
+    // عبارت‌های مقدمه‌ای را حذف می‌کنیم، اما خودِ واقعیت را کامل نگه می‌داریم.
+    rememberedValue = rememberedValue.replace(
+      /^(?:من\\s+)?(?:قبلاً|پیشتر)\\s+(?:به\\s+تو|بهت)\\s+(?:گفته\\s+بودم|گفتم)\\s+/u,
+      ""
+    ).replace(
+      /^(?:من\\s+)?(?:به\\s+تو|بهت)\\s+(?:گفته\\s+بودم|گفتم)\\s+/u,
+      ""
+    ).trim();
+
+    if (rememberedValue.length >= 4) {
+      return {
+        isCommand: true,
+        type: "explicit",
+        command: "remember",
+        value: cleanMemoryValue(rememberedValue),
+        memoryValue: cleanMemoryValue(rememberedValue),
+        memoryKey: "یادداشت کاربر",
+        source: "user_command"
+      };
+    }
+  }
+
   // درخواست تکمیل یک حافظه موجود؛ متن بعد از جداکننده، محتوای تازه است.
   const supplementMatch = text.match(
     /^(?:یه|یک)\s+(?:نکته|مورد)\s+دیگه\s+هم\s+(?:بهش|به\s+قبلی)\s+اضافه\s+کن\s*[؛;:،-]\s*(.+)$/i
