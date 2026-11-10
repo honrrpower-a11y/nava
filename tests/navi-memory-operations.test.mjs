@@ -28,7 +28,7 @@ class OperationsMockD1 {
 
   prepare(sql) {
     const db = this;
-    const query = sql.replace(/\\s+/g, " ").trim().toLowerCase();
+    const query = sql.replace(/\s+/g, " ").trim().toLowerCase();
     let args = [];
     const statement = {
       bind(...values) { args = values; return statement; },
