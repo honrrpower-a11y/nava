@@ -74,6 +74,9 @@ const naviMemoryProposalList = document.getElementById("naviMemoryProposalList")
 const naviMemoryStatus = document.getElementById("naviMemoryStatus");
 const naviMemoryError = document.getElementById("naviMemoryError");
 const naviMemoryRefresh = document.getElementById("naviMemoryRefresh");
+const naviMemorySearchInput = document.getElementById("naviMemorySearch");
+const naviMemoryCounts = document.getElementById("naviMemoryCounts");
+let naviMemorySearchTerm = "";
 
 /* NAVI HISTORY — RELIABLE COLLAPSIBLE PANEL CLICK */
 document.addEventListener("click", event => {
@@ -558,6 +561,9 @@ function resetNaviMemoryPanel() {
 
   naviMemoryStatus.textContent = "حافظه‌ها بارگذاری نشده‌اند.";
   naviMemoryError.textContent = "";
+  if (naviMemoryCounts) naviMemoryCounts.textContent = "";
+  if (naviMemorySearchInput) naviMemorySearchInput.value = "";
+  naviMemorySearchTerm = "";
 
   naviMemoryRefresh.disabled = false;
   naviMemoryRefresh.textContent = "تازه‌سازی حافظه‌ها";
@@ -600,7 +606,9 @@ function normalizeNaviMemories(data) {
     .filter(item => item && typeof item === "object")
     .map(item => ({
       id: Number(item.id),
+      memory_key: String(item.memory_key ?? "یادداشت کاربر").replace(/-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i, ""),
       memory_value: String(item.memory_value ?? ""),
+      source: String(item.source ?? ""),
       created_at: item.created_at ?? "",
       updated_at: item.updated_at ?? ""
     }))
@@ -612,23 +620,34 @@ function normalizeNaviMemories(data) {
    NAVI MEMORY — SAFE RENDERING
 ========================================= */
 
+function matchesNaviMemorySearch(item) {
+  if (!naviMemorySearchTerm) return true;
+  const haystack = [item.memory_key, item.memory_value, item.source].join(" ").toLocaleLowerCase("fa");
+  return haystack.includes(naviMemorySearchTerm);
+}
+
 function renderNaviMemories(memories) {
   naviMemoryList.replaceChildren();
+  const visibleMemories = (Array.isArray(memories) ? memories : []).filter(matchesNaviMemorySearch);
 
-  if (!Array.isArray(memories) || memories.length === 0) {
+  if (visibleMemories.length === 0) {
     const empty = document.createElement("div");
     empty.className = "navi-memory-empty";
-    empty.textContent = "در حال حاضر حافظه‌ای برای نمایش وجود ندارد.";
+    empty.textContent = naviMemorySearchTerm ? "موردی با این عبارت پیدا نشد." : "در حال حاضر حافظه تأییدشده‌ای برای نمایش وجود ندارد.";
     naviMemoryList.appendChild(empty);
     return;
   }
 
   const fragment = document.createDocumentFragment();
 
-  memories.forEach(memory => {
+  visibleMemories.forEach(memory => {
     const card = document.createElement("article");
     card.className = "navi-memory-card";
     card.dataset.memoryId = String(memory.id);
+
+    const title = document.createElement("div");
+    title.className = "navi-memory-key";
+    title.textContent = memory.memory_key || "یادداشت کاربر";
 
     const value = document.createElement("div");
     value.className = "navi-memory-value";
@@ -667,7 +686,7 @@ function renderNaviMemories(memories) {
     });
 
     actions.append(editButton, deleteButton);
-    card.append(value, meta, actions);
+    card.append(title, value, meta, actions);
     fragment.appendChild(card);
   });
 
@@ -771,19 +790,24 @@ function renderNaviMemoryProposals(proposals) {
   if (!naviMemoryProposalList) return;
 
   naviMemoryProposalList.replaceChildren();
+  const visibleProposals = (Array.isArray(proposals) ? proposals : []).filter(matchesNaviMemorySearch);
 
-  if (!Array.isArray(proposals) || proposals.length === 0) {
+  if (visibleProposals.length === 0) {
     const empty = document.createElement("div");
     empty.className = "navi-memory-empty";
-    empty.textContent = "پیشنهاد تازه‌ای برای بررسی وجود ندارد.";
+    empty.textContent = naviMemorySearchTerm ? "پیشنهادی با این عبارت پیدا نشد." : "پیشنهاد تازه‌ای برای بررسی وجود ندارد.";
     naviMemoryProposalList.appendChild(empty);
     return;
   }
 
-  proposals.forEach(proposal => {
+  visibleProposals.forEach(proposal => {
     const card = document.createElement("article");
     card.className = "navi-memory-card navi-memory-proposal";
     card.dataset.proposalId = String(proposal.id);
+
+    const title = document.createElement("div");
+    title.className = "navi-memory-key";
+    title.textContent = String(proposal.memory_key || "پیشنهاد حافظه").replace(/-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i, "");
 
     const value = document.createElement("div");
     value.className = "navi-memory-value";
@@ -835,7 +859,7 @@ function renderNaviMemoryProposals(proposals) {
     });
 
     actions.append(edit, approve, reject);
-    card.append(value, meta, actions);
+    card.append(title, value, meta, actions);
     naviMemoryProposalList.appendChild(card);
   });
 }
@@ -1063,6 +1087,11 @@ async function loadNaviMemories(forceRefresh = false) {
 
       naviMemory = normalizeNaviMemories(data);
       naviProposals = normalizeNaviProposals(data);
+      if (naviMemoryCounts) {
+        const approvedCount = Number(data.count ?? naviMemory.length);
+        const pendingCount = Number(data.proposalCount ?? naviProposals.length);
+        naviMemoryCounts.textContent = "تأییدشده: " + approvedCount + "  |  در انتظار بررسی: " + pendingCount;
+      }
       naviMemoryLoaded = true;
 
       renderNaviMemories(naviMemory);
@@ -1417,6 +1446,14 @@ naviHistoryRefresh.addEventListener("click", () => {
 naviMemoryRefresh.addEventListener("click", () => {
   loadNaviMemories(true);
 });
+
+if (naviMemorySearchInput) {
+  naviMemorySearchInput.addEventListener("input", () => {
+    naviMemorySearchTerm = naviMemorySearchInput.value.trim().toLocaleLowerCase("fa");
+    renderNaviMemories(naviMemory);
+    renderNaviMemoryProposals(naviProposals);
+  });
+}
 
 
 /* =========================================
