@@ -111,7 +111,8 @@ export async function ensureNaviMainThread(db) {
 
 export async function getNaviDbHistory(
   db,
-  limit = 10
+  limit = 10,
+  threadId = NAVI_MAIN_THREAD_ID
 ) {
   const safeLimit = Math.max(
     1,
@@ -1153,7 +1154,8 @@ export async function saveNaviMemoryFact(
 export async function saveNaviConversation(
   db,
   userMessage,
-  assistantMessage
+  assistantMessage,
+  threadId = NAVI_MAIN_THREAD_ID
 ) {
   const userText = safeNaviText(
     userMessage || "",
@@ -1179,7 +1181,7 @@ export async function saveNaviConversation(
       )
       VALUES (?, 'user', ?, datetime('now'))
     `).bind(
-      NAVI_MAIN_THREAD_ID,
+      threadId,
       userText
     ),
 
@@ -1192,7 +1194,7 @@ export async function saveNaviConversation(
       )
       VALUES (?, 'assistant', ?, datetime('now'))
     `).bind(
-      NAVI_MAIN_THREAD_ID,
+      threadId,
       assistantText
     ),
 
