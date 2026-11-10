@@ -1509,7 +1509,7 @@ async function deleteNaviThread() {
 }
 
 function buildNaviThreadTitle(message) {
-  let title = String(message || "").replace(/\\s+/g, " ").trim();
+  let title = String(message || "").replace(/\s+/g, " ").trim();
   title = title.replace(/[.!؟،؛,:]+$/g, "").trim();
   if (title.length > 38) title = title.slice(0, 38).replace(/\\s+\\S*$/, "").trim();
   return title || "گفت‌وگوی جدید";
