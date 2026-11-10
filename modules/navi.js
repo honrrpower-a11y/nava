@@ -1414,6 +1414,8 @@ async function handleChat({
   let proposalsSkippedDuplicate = 0;
   let proposalsSkippedInvalid = 0;
   let proposalsSkippedSensitive = 0;
+  let proposalsMergedIntoPending = 0;
+  let proposalsMergeCandidates = 0;
 
   const normalizedProposals = parsed.structured
     ? normalizeMemoryProposals(parsed.memoryProposals)
@@ -1433,8 +1435,15 @@ async function handleChat({
           id: result.id,
           title: result.title || proposal.title,
           memoryValue:
-            result.memoryValue || proposal.value
+            result.memoryValue || proposal.value,
+          mergeCandidateId: result.mergeCandidateId || null
         });
+
+        if (result.mergeCandidateId) {
+          proposalsMergeCandidates++;
+        }
+      } else if (result?.merged) {
+        proposalsMergedIntoPending++;
       } else if (result?.duplicate) {
         proposalsSkippedDuplicate++;
       } else if (result?.sensitive) {
@@ -1491,6 +1500,8 @@ async function handleChat({
       proposalsSkippedDuplicate,
       proposalsSkippedInvalid,
       proposalsSkippedSensitive,
+      proposalsMergedIntoPending,
+      proposalsMergeCandidates,
       proposals: createdProposals,
       proposalProcessingFailed
     }
