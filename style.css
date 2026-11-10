@@ -401,3 +401,9 @@ body.light .navi-memory-value{color:#263a56}
 .navi-attachment-chip button{border:0;background:transparent;color:#ff8585;font-size:15px;padding:0 3px;cursor:pointer}
 #naviCreativityValue{color:var(--gold);font-weight:bold}
 @media(max-width:560px){.navi-settings-grid{grid-template-columns:1fr}.navi-settings-heading{align-items:flex-start;flex-direction:column}}
+
+/* NAVI MEMORY MANAGEMENT IMPROVEMENTS */
+.navi-memory-counts{margin:10px 0;padding:9px 11px;border:1px solid var(--border);border-radius:9px;color:var(--gold);font-size:11px;line-height:1.8}
+.navi-memory-search-label{display:block;margin:12px 0 7px;color:var(--muted);font-size:11px}
+.navi-memory-search{display:block;width:100%;box-sizing:border-box;padding:11px 13px;border:1px solid var(--border);border-radius:10px;background:var(--bg);color:var(--text);font:inherit;font-size:12px;outline:none}
+.navi-memory-search:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(229,184,94,.08)}
