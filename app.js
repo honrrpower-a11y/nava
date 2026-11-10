@@ -77,6 +77,11 @@ const naviMemoryRefresh = document.getElementById("naviMemoryRefresh");
 const naviMemorySearchInput = document.getElementById("naviMemorySearch");
 const naviMemoryCounts = document.getElementById("naviMemoryCounts");
 let naviMemorySearchTerm = "";
+let naviApprovedOffset = 0;
+let naviPendingOffset = 0;
+let naviApprovedTotal = 0;
+let naviPendingTotal = 0;
+let naviMemoryPageLoading = false;
 
 /* NAVI HISTORY — RELIABLE COLLAPSIBLE PANEL CLICK */
 document.addEventListener("click", event => {
@@ -567,6 +572,81 @@ function resetNaviMemoryPanel() {
 
   naviMemoryRefresh.disabled = false;
   naviMemoryRefresh.textContent = "تازه‌سازی حافظه‌ها";
+}
+
+function updateNaviMemoryPagination() {
+  const approvedButton = document.getElementById("naviMemoryLoadMoreApproved");
+  const pendingButton = document.getElementById("naviMemoryLoadMorePending");
+  if (approvedButton) {
+    const remaining = Math.max(0, naviApprovedTotal - naviApprovedOffset);
+    approvedButton.hidden = remaining === 0;
+    approvedButton.disabled = naviMemoryPageLoading;
+    approvedButton.textContent = naviMemoryPageLoading ? "در حال دریافت..." : "نمایش موارد بیشتر (" + remaining + " باقی‌مانده)";
+  }
+  if (pendingButton) {
+    const remaining = Math.max(0, naviPendingTotal - naviPendingOffset);
+    pendingButton.hidden = remaining === 0;
+    pendingButton.disabled = naviMemoryPageLoading;
+    pendingButton.textContent = naviMemoryPageLoading ? "در حال دریافت..." : "نمایش پیشنهادهای بیشتر (" + remaining + " باقی‌مانده)";
+  }
+  if (naviMemoryCounts) {
+    naviMemoryCounts.textContent =
+      "تأییدشده: " + naviApprovedOffset + " از " + naviApprovedTotal +
+      "  |  در انتظار بررسی: " + naviPendingOffset + " از " + naviPendingTotal;
+  }
+}
+
+async function loadMoreNaviMemory(kind) {
+  if (naviMemoryPageLoading || !["approved", "pending"].includes(kind)) return;
+  const token = getNaviToken();
+  if (!token) return;
+  const offset = kind === "approved" ? naviApprovedOffset : naviPendingOffset;
+  const total = kind === "approved" ? naviApprovedTotal : naviPendingTotal;
+  if (offset >= total) return;
+
+  const requestVersion = naviSessionVersion;
+  naviMemoryPageLoading = true;
+  updateNaviMemoryPagination();
+
+  try {
+    const params = new URLSearchParams({
+      approvedOffset: String(kind === "approved" ? naviApprovedOffset : 0),
+      pendingOffset: String(kind === "pending" ? naviPendingOffset : 0)
+    });
+    const response = await fetch(NAVI_MEMORY_API + "?" + params.toString(), {
+      method: "GET",
+      headers: { "Authorization": "Bearer " + token },
+      cache: "no-store"
+    });
+    const data = await response.json();
+    if (getNaviToken() !== token || naviSessionVersion !== requestVersion) return;
+    if (!response.ok || data.success === false) {
+      throw new Error(data.error || "بارگذاری موارد بیشتر ناموفق بود.");
+    }
+
+    if (kind === "approved") {
+      const page = normalizeNaviMemories(data);
+      const known = new Set(naviMemory.map(item => item.id));
+      naviMemory.push(...page.filter(item => !known.has(item.id)));
+      naviApprovedOffset += page.length;
+      renderNaviMemories(naviMemory);
+    } else {
+      const page = normalizeNaviProposals(data);
+      const known = new Set(naviProposals.map(item => item.id));
+      naviProposals.push(...page.filter(item => !known.has(item.id)));
+      naviPendingOffset += page.length;
+      renderNaviMemoryProposals(naviProposals);
+    }
+
+    naviApprovedTotal = Number(data.count ?? naviApprovedTotal);
+    naviPendingTotal = Number(data.proposalCount ?? naviPendingTotal);
+    setNaviMemoryStatus("فهرست حافظه‌ها به‌روزرسانی شد.");
+  } catch (error) {
+    showNaviMemoryError(error.message || "بارگذاری موارد بیشتر انجام نشد.");
+  } finally {
+    naviMemoryPageLoading = false;
+    updateNaviMemoryPagination();
+  }
 }
 
 function formatNaviMemoryDate(value) {
@@ -1088,22 +1168,11 @@ async function loadNaviMemories(forceRefresh = false) {
 
       naviMemory = normalizeNaviMemories(data);
       naviProposals = normalizeNaviProposals(data);
-      if (naviMemoryCounts) {
-        const approvedCount = Number(data.count ?? naviMemory.length);
-        const pendingCount = Number(data.proposalCount ?? naviProposals.length);
-        const returnedApproved = Number(data.returnedCount ?? naviMemory.length);
-        const returnedPending = Number(data.returnedProposalCount ?? naviProposals.length);
-        const approvedLabel = returnedApproved < approvedCount
-          ? "تأییدشده: " + returnedApproved + " از " + approvedCount
-          : "تأییدشده: " + approvedCount;
-        const pendingLabel = returnedPending < pendingCount
-          ? "در انتظار بررسی: " + returnedPending + " از " + pendingCount
-          : "در انتظار بررسی: " + pendingCount;
-        naviMemoryCounts.textContent = approvedLabel + "  |  " + pendingLabel +
-          (returnedApproved < approvedCount || returnedPending < pendingCount
-            ? " — برای مشاهده همه موارد، بارگذاری صفحه‌بندی‌شده لازم است."
-            : "");
-      }
+      naviApprovedOffset = naviMemory.length;
+      naviPendingOffset = naviProposals.length;
+      naviApprovedTotal = Number(data.count ?? naviMemory.length);
+      naviPendingTotal = Number(data.proposalCount ?? naviProposals.length);
+      updateNaviMemoryPagination();
       naviMemoryLoaded = true;
 
       renderNaviMemories(naviMemory);
@@ -1458,6 +1527,8 @@ naviHistoryRefresh.addEventListener("click", () => {
 naviMemoryRefresh.addEventListener("click", () => {
   loadNaviMemories(true);
 });
+document.getElementById("naviMemoryLoadMoreApproved")?.addEventListener("click", () => loadMoreNaviMemory("approved"));
+document.getElementById("naviMemoryLoadMorePending")?.addEventListener("click", () => loadMoreNaviMemory("pending"));
 
 if (naviMemorySearchInput) {
   naviMemorySearchInput.addEventListener("input", () => {
