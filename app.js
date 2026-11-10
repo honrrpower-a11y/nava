@@ -1508,6 +1508,32 @@ async function deleteNaviThread() {
   }
 }
 
+function buildNaviThreadTitle(message) {
+  let title = String(message || "").replace(/\\s+/g, " ").trim();
+  title = title.replace(/[.!؟،؛,:]+$/g, "").trim();
+  if (title.length > 38) title = title.slice(0, 38).replace(/\\s+\\S*$/, "").trim();
+  return title || "گفت‌وگوی جدید";
+}
+
+async function nameNaviThreadFromFirstMessage(message) {
+  const thread = naviThreads.find(item => item.thread_id === naviActiveThreadId);
+  if (!thread || thread.thread_id === "owner-main" || Number(thread.message_count || 0) > 0) return;
+  const generic = ["گفت‌وگوی جدید", "گفتگوی جدید", "گفت‌وگو", "گفتگو"];
+  if (!generic.includes(String(thread.title || "").trim())) return;
+  const token = getNaviToken();
+  if (!token) return;
+  const title = buildNaviThreadTitle(message);
+  const response = await fetch(NAVI_THREADS_API, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token, ...NAVI_DB_HEADER },
+    body: JSON.stringify({ action: "rename", threadId: thread.thread_id, title })
+  });
+  const data = await response.json();
+  if (!response.ok || !data.success) throw new Error(data.error || "نام‌گذاری گفت‌وگو ناموفق بود.");
+  thread.title = title;
+  renderNaviThreads();
+}
+
 async function createNaviThread() {
   const token = getNaviToken();
   if (!token) return;
@@ -1789,6 +1815,16 @@ async function sendMessageToNavi() {
 
     if (!reply) {
       throw new Error("ناوی پاسخ خالی ارسال کرده است.");
+    }
+
+    const threadBeforeNaming = naviThreads.find(item => item.thread_id === naviActiveThreadId);
+    if (threadBeforeNaming && Number(threadBeforeNaming.message_count || 0) === 0) {
+      try {
+        await nameNaviThreadFromFirstMessage(finalMessage);
+        await loadNaviThreads();
+      } catch (titleError) {
+        console.warn("NAVI conversation title update failed:", titleError);
+      }
     }
 
     showNaviReply(reply);
