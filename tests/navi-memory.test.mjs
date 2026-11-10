@@ -96,11 +96,15 @@ class MockD1 {
           return { success: true, meta: { changes: row ? 1 : 0 } };
         }
         if (normalized.startsWith("update navi_memory_facts_v1 set memory_value =")) {
-          const [nextValue, id, ownerId] = values;
+          const [nextValue, ...rest] = values;
+          const hasSource = rest.length === 3;
+          const id = hasSource ? rest[1] : rest[0];
+          const ownerId = hasSource ? rest[2] : rest[1];
           const row = db.memories.find(item => Number(item.id) === Number(id) && item.owner_id === ownerId &&
             (item.status === "pending" || item.status === "approved"));
           if (row) {
             row.memory_value = nextValue;
+            if (hasSource) row.source = rest[0];
             if (normalized.includes("status = 'approved'")) row.status = "approved";
           }
           return { success: true, meta: { changes: row ? 1 : 0 } };
