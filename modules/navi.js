@@ -1577,6 +1577,19 @@ async function handleThreads({ request, env, origin, corsOrigin }) {
     }
     let input;
     try { input = await request.json(); } catch { return errorResponse("اطلاعات ارسالی معتبر نیست.", 400, corsOrigin); }
+    if (input?.action === "rename") {
+      const threadId = String(input.threadId || "");
+      const title = safeNaviText(input.title || "", 80).trim();
+      if (!threadId || !title) return errorResponse("شناسه یا عنوان گفت‌وگو معتبر نیست.", 400, corsOrigin);
+      if (threadId === NAVI_MAIN_THREAD_ID) return errorResponse("عنوان گفت‌وگوی اصلی قابل تغییر نیست.", 400, corsOrigin);
+      const renamed = await env.NAVA_DB.prepare(`
+        UPDATE navi_chat_threads_v1
+        SET title = ?, updated_at = datetime('now')
+        WHERE thread_id = ? AND owner_id = ?
+      `).bind(title, threadId, NAVI_OWNER_ID).run();
+      if (!renamed.success || renamed.meta?.changes !== 1) return errorResponse("گفت‌وگو برای نام‌گذاری پیدا نشد.", 404, corsOrigin);
+      return successResponse({ renamed: true, threadId, title }, corsOrigin);
+    }
     if (input?.action === "delete") {
       const threadId = String(input.threadId || "");
       if (!threadId) return errorResponse("شناسه گفت‌وگو مشخص نیست.", 400, corsOrigin);
