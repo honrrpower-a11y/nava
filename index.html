@@ -119,20 +119,26 @@
             <button class="navi-logout" id="naviLogout" type="button">خروج از ناوی</button>
           </div>
 
-          <div class="navi-history" id="naviHistoryPanel">
-            <div class="navi-history-heading">
-              <strong>گفت‌وگوهای قبلی با ناوی</strong>
-              <span class="navi-history-count" id="naviHistoryCount">در حال بارگذاری...</span>
+          <section class="navi-history" id="naviHistoryPanel">
+            <button class="navi-history-toggle" id="naviHistoryToggle"
+              type="button" aria-expanded="false" aria-controls="naviHistoryContent">
+              <span>💬 گفت‌وگوهای قبلی با ناوی</span>
+              <span class="navi-history-arrow" aria-hidden="true">⌄</span>
+            </button>
+            <div class="navi-history-content" id="naviHistoryContent" hidden>
+              <div class="navi-history-heading">
+                <span class="navi-history-count" id="naviHistoryCount">در حال بارگذاری...</span>
+              </div>
+              <div class="navi-history-list" id="naviHistoryList" aria-live="polite">
+                <div class="navi-history-empty">در حال دریافت تاریخچه گفت‌وگو...</div>
+              </div>
+              <div class="navi-history-actions">
+                <button class="navi-history-refresh" id="naviHistoryRefresh" type="button">
+                  تازه‌سازی تاریخچه
+                </button>
+              </div>
             </div>
-            <div class="navi-history-list" id="naviHistoryList" aria-live="polite">
-              <div class="navi-history-empty">در حال دریافت تاریخچه گفت‌وگو...</div>
-            </div>
-            <div class="navi-history-actions">
-              <button class="navi-history-refresh" id="naviHistoryRefresh" type="button">
-                تازه‌سازی تاریخچه
-              </button>
-            </div>
-          </div>
+          </section>
 
           <section class="navi-memory-panel" id="naviMemoryPanel">
             <button class="navi-memory-toggle" id="naviMemoryToggle"
