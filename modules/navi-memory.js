@@ -580,11 +580,37 @@ async function findMemoryDuplicate(
 
   const normalized = normalizeMemoryText(value);
   const normalizedKey = normalizeMemoryKey(memoryKey);
+  const genericKeys = new Set([
+    normalizeMemoryText("یادداشت کاربر"),
+    normalizeMemoryText("یادداشت"),
+    normalizeMemoryText("حافظه"),
+    ""
+  ]);
+  const hasSpecificKey =
+    Boolean(normalizedKey) && !genericKeys.has(normalizedKey);
   const protectedKey = isProtectedMemoryKey(memoryKey);
 
-  return (result.results || []).find(item => {
+  // First prefer the same stable topic key. Generated keys contain a UUID,
+  // which normalizeMemoryKey removes. This is essential when a user approves
+  // a changed value for the same topic (e.g. favorite color: red -> blue).
+  const candidates = result.results || [];
+  const sameKey = hasSpecificKey
+    ? candidates.filter(item =>
+        normalizeMemoryKey(item.memory_key) === normalizedKey
+      )
+    : [];
+
+  if (sameKey.length) {
+    // An approved fact is the current source of truth; do not accidentally
+    // merge a proposal into another pending proposal with the same title.
+    sameKey.sort((a, b) =>
+      Number(b.status === "approved") - Number(a.status === "approved")
+    );
+    return sameKey[0];
+  }
+
+  return candidates.find(item => {
     // هویت‌های ثابت با کلید شناخته می‌شوند، نه فقط متن مقدار.
-    // بنابراین «علی» و «نام کاربر علی است» یک حافظه محسوب می‌شوند.
     if (
       protectedKey &&
       normalizeMemoryKey(item.memory_key) === normalizedKey
