@@ -629,6 +629,7 @@ async function loadMoreNaviMemory(kind) {
       approvedOffset: String(kind === "approved" ? naviApprovedOffset : 0),
       pendingOffset: String(kind === "pending" ? naviPendingOffset : 0)
     });
+    if (naviMemorySearchTerm) params.set("search", naviMemorySearchTerm);
     const response = await fetch(NAVI_MEMORY_API + "?" + params.toString(), {
       method: "GET",
       headers: { "Authorization": "Bearer " + token },
@@ -1526,11 +1527,60 @@ naviMemoryRefresh.addEventListener("click", () => {
 document.getElementById("naviMemoryLoadMoreApproved")?.addEventListener("click", () => loadMoreNaviMemory("approved"));
 document.getElementById("naviMemoryLoadMorePending")?.addEventListener("click", () => loadMoreNaviMemory("pending"));
 
-if (naviMemorySearchInput) {
-  naviMemorySearchInput.addEventListener("input", () => {
-    naviMemorySearchTerm = naviMemorySearchInput.value.trim().toLocaleLowerCase("fa");
+let naviMemorySearchTimer = null;
+let naviMemorySearchVersion = 0;
+
+async function searchAllNaviMemories(term) {
+  const token = getNaviToken();
+  if (!token) return;
+  const requestVersion = naviSessionVersion;
+  const searchVersion = ++naviMemorySearchVersion;
+  const params = new URLSearchParams({ search: term, approvedOffset: "0", pendingOffset: "0" });
+  showNaviMemoryError("");
+  setNaviMemoryStatus("در حال جست‌وجو در همه حافظه‌ها...");
+  try {
+    const response = await fetch(NAVI_MEMORY_API + "?" + params.toString(), {
+      method: "GET",
+      headers: { "Authorization": "Bearer " + token },
+      cache: "no-store"
+    });
+    const data = await response.json();
+    if (searchVersion !== naviMemorySearchVersion || requestVersion !== naviSessionVersion || getNaviToken() !== token) return;
+    if (response.status === 401 || response.status === 403) {
+      clearNaviSession();
+      showLoginError("نشست ناوی معتبر نیست. دوباره وارد شو.");
+      return;
+    }
+    if (!response.ok || !data || data.success === false) throw new Error(data?.error || "جست‌وجوی حافظه ناموفق بود.");
+    naviMemory = normalizeNaviMemories(data);
+    naviProposals = normalizeNaviProposals(data);
+    naviApprovedOffset = naviMemory.length;
+    naviPendingOffset = naviProposals.length;
+    naviApprovedTotal = Number(data.count ?? naviMemory.length);
+    naviPendingTotal = Number(data.proposalCount ?? naviProposals.length);
+    updateNaviMemoryPagination();
     renderNaviMemories(naviMemory);
     renderNaviMemoryProposals(naviProposals);
+    setNaviMemoryStatus("نتایج جست‌وجو در تمام حافظه‌های ثبت‌شده نمایش داده شد.");
+  } catch (error) {
+    if (searchVersion === naviMemorySearchVersion && requestVersion === naviSessionVersion) {
+      showNaviMemoryError(error.message || "جست‌وجو انجام نشد.");
+    }
+  }
+}
+
+if (naviMemorySearchInput) {
+  naviMemorySearchInput.addEventListener("input", () => {
+    naviMemorySearchTerm = naviMemorySearchInput.value.trim().toLocaleLowerCase("fa").slice(0, 100);
+    window.clearTimeout(naviMemorySearchTimer);
+    naviMemorySearchTimer = window.setTimeout(() => {
+      if (naviMemorySearchTerm) {
+        searchAllNaviMemories(naviMemorySearchTerm);
+      } else {
+        naviMemorySearchVersion++;
+        loadNaviMemories(true);
+      }
+    }, 300);
   });
 }
 
