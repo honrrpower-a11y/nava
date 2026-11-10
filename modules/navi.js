@@ -1401,38 +1401,45 @@ async function handleChat({
 
   const createdProposals = [];
   let proposalProcessingFailed = false;
+  let proposalsSkippedDuplicate = 0;
+  let proposalsSkippedInvalid = 0;
+  let proposalsSkippedSensitive = 0;
 
-  if (parsed.structured) {
-    const proposals = normalizeMemoryProposals(
-      parsed.memoryProposals
-    );
+  const normalizedProposals = parsed.structured
+    ? normalizeMemoryProposals(parsed.memoryProposals)
+    : [];
 
-    for (const proposal of proposals) {
-      try {
-        const result = await createNaviMemoryProposal(
-          env.NAVA_DB,
-          proposal.value,
-          proposal.title,
-          "navi_suggestion"
-        );
+  for (const proposal of normalizedProposals) {
+    try {
+      const result = await createNaviMemoryProposal(
+        env.NAVA_DB,
+        proposal.value,
+        proposal.title,
+        "navi_suggestion"
+      );
 
-        if (result?.inserted) {
-          createdProposals.push({
-            id: result.id,
-            title: result.title || proposal.title,
-            memoryValue:
-              result.memoryValue || proposal.value
-          });
-        }
-
-      } catch (error) {
-        proposalProcessingFailed = true;
-
-        logError(
-          "Memory proposal creation failed",
-          error
-        );
+      if (result?.inserted) {
+        createdProposals.push({
+          id: result.id,
+          title: result.title || proposal.title,
+          memoryValue:
+            result.memoryValue || proposal.value
+        });
+      } else if (result?.duplicate) {
+        proposalsSkippedDuplicate++;
+      } else if (result?.sensitive) {
+        proposalsSkippedSensitive++;
+      } else if (result?.invalid) {
+        proposalsSkippedInvalid++;
       }
+
+    } catch (error) {
+      proposalProcessingFailed = true;
+
+      logError(
+        "Memory proposal creation failed",
+        error
+      );
     }
   }
 
@@ -1468,7 +1475,12 @@ async function handleChat({
     version: NAVI_VERSION,
 
     memory: {
+      responseStructured: parsed.structured,
+      proposalsReceived: normalizedProposals.length,
       proposalsCreated: createdProposals.length,
+      proposalsSkippedDuplicate,
+      proposalsSkippedInvalid,
+      proposalsSkippedSensitive,
       proposals: createdProposals,
       proposalProcessingFailed
     }
