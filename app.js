@@ -1387,6 +1387,21 @@ naviMemoryToggle.addEventListener("click", async () => {
   }
 });
 
+// NAVI HISTORY — COLLAPSIBLE PANEL
+naviHistoryToggle.addEventListener("click", () => {
+  const isOpening = naviHistoryContent.hidden;
+
+  naviHistoryContent.hidden = !isOpening;
+  naviHistoryToggle.setAttribute(
+    "aria-expanded",
+    isOpening ? "true" : "false"
+  );
+});
+
+naviHistoryRefresh.addEventListener("click", () => {
+  loadNaviHistory();
+});
+
 naviMemoryRefresh.addEventListener("click", () => {
   loadNaviMemories(true);
 });
@@ -1525,19 +1540,7 @@ function scrollToRequest() {
   }, 450);
 }
 
-naviHistoryToggle.addEventListener("click", () => {
-  const isOpening = naviHistoryContent.hidden;
 
-  naviHistoryContent.hidden = !isOpening;
-  naviHistoryToggle.setAttribute(
-    "aria-expanded",
-    isOpening ? "true" : "false"
-  );
-});
-
-naviHistoryRefresh.addEventListener("click", () => {
-  loadNaviHistory();
-});
 
 
 /* =========================================
