@@ -51,6 +51,13 @@ const requestResponse = document.getElementById("requestResponse");
 const serviceSelect = document.getElementById("serviceSelect");
 const userRequest = document.getElementById("userRequest");
 const sendRequest = document.getElementById("sendRequest");
+const naviAttachmentsInput = document.getElementById("naviAttachments");
+const naviAttachmentList = document.getElementById("naviAttachmentList");
+const naviResponseMode = document.getElementById("naviResponseMode");
+const naviTone = document.getElementById("naviTone");
+const naviCreativity = document.getElementById("naviCreativity");
+const naviCreativityValue = document.getElementById("naviCreativityValue");
+let naviSelectedFiles = [];
 
 // DOM elements — History
 const naviHistoryToggle = document.getElementById("naviHistoryToggle");
@@ -1552,6 +1559,42 @@ function scrollToRequest() {
    NAVI CHAT — AUTHENTICATED REQUEST
 ========================================= */
 
+
+const NAVI_ALLOWED_ATTACHMENT_TYPES = new Set(["image/jpeg","image/png","image/webp","application/pdf","audio/mpeg","audio/mp4","audio/wav","audio/ogg","audio/aac","audio/flac"]);
+const NAVI_MAX_ATTACHMENT_BYTES = 5 * 1024 * 1024;
+const NAVI_MAX_ATTACHMENTS = 3;
+function renderNaviAttachments() {
+  naviAttachmentList.replaceChildren();
+  naviSelectedFiles.forEach((file,index) => {
+    const chip=document.createElement("div"); chip.className="navi-attachment-chip";
+    const name=document.createElement("span"); name.textContent=file.name+" ("+(file.size/1048576).toFixed(1)+" MB)";
+    const remove=document.createElement("button"); remove.type="button"; remove.textContent="×"; remove.setAttribute("aria-label","حذف "+file.name);
+    remove.addEventListener("click",()=>{naviSelectedFiles.splice(index,1);renderNaviAttachments();});
+    chip.append(name,remove); naviAttachmentList.appendChild(chip);
+  });
+}
+function fileToNaviAttachment(file) {
+  return new Promise((resolve,reject)=>{
+    const reader=new FileReader();
+    reader.onload=()=>{const result=String(reader.result||"");const comma=result.indexOf(",");if(comma<0)return reject(new Error("خواندن فایل ناموفق بود."));resolve({name:file.name,mimeType:file.type,data:result.slice(comma+1)});};
+    reader.onerror=()=>reject(new Error("خواندن فایل "+file.name+" ناموفق بود."));
+    reader.readAsDataURL(file);
+  });
+}
+naviAttachmentsInput.addEventListener("change",()=>{
+  for(const file of Array.from(naviAttachmentsInput.files||[])){
+    if(naviSelectedFiles.length>=NAVI_MAX_ATTACHMENTS){showNaviReply("حداکثر سه فایل را می‌توانی هم‌زمان ارسال کنی.");break;}
+    if(!NAVI_ALLOWED_ATTACHMENT_TYPES.has(file.type)){showNaviReply("قالب فایل «"+file.name+"» پشتیبانی نمی‌شود. تصویر، PDF یا فایل صوتی انتخاب کن.");continue;}
+    if(file.size<=0||file.size>NAVI_MAX_ATTACHMENT_BYTES){showNaviReply("حجم هر فایل باید حداکثر ۵ مگابایت باشد: "+file.name);continue;}
+    if(!naviSelectedFiles.some(item=>item.name===file.name&&item.size===file.size))naviSelectedFiles.push(file);
+  }
+  naviAttachmentsInput.value="";renderNaviAttachments();
+});
+naviCreativity.addEventListener("input",()=>{
+  const value=Number(naviCreativity.value);
+  naviCreativityValue.textContent=value<35?"دقیق":value>70?"خلاق":"متعادل";
+});
+
 async function sendMessageToNavi() {
   const token = getNaviToken();
 
@@ -1563,8 +1606,8 @@ async function sendMessageToNavi() {
 
   const message = userRequest.value.trim();
 
-  if (!message) {
-    showNaviReply("لطفاً ابتدا پیامت را بنویس.");
+  if (!message && naviSelectedFiles.length === 0) {
+    showNaviReply("پیامت را بنویس یا یک فایل برای بررسی پیوست کن.");
     userRequest.focus();
     return;
   }
@@ -1572,11 +1615,11 @@ async function sendMessageToNavi() {
   const requestVersion = naviSessionVersion;
   const selectedService = serviceSelect.value;
 
-  const finalMessage =
-    selectedService && selectedService !== "انتخاب نشده"
-      ? "موضوع انتخاب‌شده: " + selectedService +
-        "\n\nپیام کاربر: " + message
-      : message;
+  const attachmentLabels = naviSelectedFiles.map(file => file.name);
+  const messageText = message || "لطفاً فایل‌های پیوست‌شده را بررسی کن.";
+  const finalMessage = (selectedService && selectedService !== "انتخاب نشده"
+    ? "موضوع انتخاب‌شده: " + selectedService + "\n\n" : "") +
+    messageText + (attachmentLabels.length ? "\n\nپیوست‌ها: " + attachmentLabels.join("، ") : "");
 
   const pageContext = [
     "عنوان صفحه: " + document.title,
@@ -1592,17 +1635,15 @@ async function sendMessageToNavi() {
   showNaviReply("در حال دریافت پاسخ از ناوی...");
 
   try {
+    const attachments = await Promise.all(naviSelectedFiles.map(fileToNaviAttachment));
     const response = await fetch(NAVI_API, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": "Bearer " + token
-      },
+      headers: {"Content-Type":"application/json","Authorization":"Bearer "+token},
       body: JSON.stringify({
-        message: finalMessage,
-        page: window.location.pathname,
-        pageContext: pageContext,
-        history: naviHistory.slice(-NAVI_CONTEXT_MESSAGES)
+        message: finalMessage, page: window.location.pathname, pageContext,
+        history: naviHistory.slice(-NAVI_CONTEXT_MESSAGES), attachments,
+        responseMode: naviResponseMode.value, tone: naviTone.value,
+        creativity: Number(naviCreativity.value)
       })
     });
 
@@ -1647,6 +1688,8 @@ async function sendMessageToNavi() {
 
     showNaviReply(reply);
     userRequest.value = "";
+    naviSelectedFiles = [];
+    renderNaviAttachments();
 
     setNaviStatus(
       "پاسخ ناوی دریافت شد؛ در حال به‌روزرسانی تاریخچه..."
