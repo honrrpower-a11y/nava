@@ -584,9 +584,7 @@ function normalizeNaviMemories(data) {
     .filter(item => item && typeof item === "object")
     .map(item => ({
       id: Number(item.id),
-      memory_key: String(item.memory_key ?? "بدون عنوان"),
       memory_value: String(item.memory_value ?? ""),
-      source: String(item.source ?? ""),
       created_at: item.created_at ?? "",
       updated_at: item.updated_at ?? ""
     }))
@@ -673,7 +671,6 @@ function normalizeNaviProposals(data) {
     .filter(item => item && typeof item === "object")
     .map(item => ({
       id: Number(item.id),
-      memory_key: String(item.memory_key ?? "پیشنهاد ناوی"),
       memory_value: String(item.memory_value ?? ""),
       source: String(item.source ?? ""),
       created_at: item.created_at ?? "",
