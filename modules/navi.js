@@ -1555,6 +1555,43 @@ async function handleChat({
 }
 
 // ======================================
+// CONVERSATION THREADS
+// ======================================
+
+async function handleThreads({ request, env, origin, corsOrigin }) {
+  const auth = await authorize(request, env, origin, corsOrigin);
+  if (!auth.valid) return auth.response;
+  if (!env.NAVA_DB) return errorResponse("اتصال دیتابیس NAVI برقرار نیست.", 500, corsOrigin);
+  try {
+    await ensureNaviMainThread(env.NAVA_DB);
+    if (request.method === "GET") {
+      const result = await env.NAVA_DB.prepare(`
+        SELECT t.thread_id, t.title, t.created_at, t.updated_at,
+          (SELECT COUNT(*) FROM navi_chat_messages_v1 m WHERE m.thread_id = t.thread_id) AS message_count
+        FROM navi_chat_threads_v1 t
+        WHERE t.owner_id = ?
+        ORDER BY CASE WHEN t.thread_id = ? THEN 0 ELSE 1 END, t.updated_at DESC
+        LIMIT 50
+      `).bind(NAVI_OWNER_ID, NAVI_MAIN_THREAD_ID).all();
+      return successResponse({ threads: result.results || [] }, corsOrigin);
+    }
+    let input;
+    try { input = await request.json(); } catch { return errorResponse("اطلاعات ارسالی معتبر نیست.", 400, corsOrigin); }
+    const title = safeNaviText(input?.title || "گفت‌وگوی جدید", 80) || "گفت‌وگوی جدید";
+    const threadId = "thread-" + crypto.randomUUID();
+    const result = await env.NAVA_DB.prepare(`
+      INSERT INTO navi_chat_threads_v1 (thread_id, owner_id, title, created_at, updated_at)
+      VALUES (?, ?, ?, datetime('now'), datetime('now'))
+    `).bind(threadId, NAVI_OWNER_ID, title).run();
+    if (!result.success) throw new Error("Could not create conversation thread.");
+    return successResponse({ thread: { thread_id: threadId, title, message_count: 0 } }, corsOrigin, 201);
+  } catch (error) {
+    logError("Conversation thread operation failed", error);
+    return errorResponse("مدیریت گفت‌وگوها ناموفق بود.", 500, corsOrigin, { diagnostic: diagnostic(error) });
+  }
+}
+
+// ======================================
 // MAIN ROUTER
 // ======================================
 
