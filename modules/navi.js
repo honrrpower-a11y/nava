@@ -555,14 +555,17 @@ async function handleMemory({
     // GET: approved + pending
 
     if (request.method === "GET") {
+      const requestUrl = new URL(request.url);
+      const approvedOffset = Math.max(0, Math.min(1000000, Number.parseInt(requestUrl.searchParams.get("approvedOffset") || "0", 10) || 0));
+      const pendingOffset = Math.max(0, Math.min(1000000, Number.parseInt(requestUrl.searchParams.get("pendingOffset") || "0", 10) || 0));
       const [
         memories,
         proposals,
         approvedCountRow,
         pendingCountRow
       ] = await Promise.all([
-        getNaviApprovedMemory(env.NAVA_DB),
-        getNaviPendingMemory(env.NAVA_DB),
+        getNaviApprovedMemory(env.NAVA_DB, approvedOffset),
+        getNaviPendingMemory(env.NAVA_DB, pendingOffset),
         env.NAVA_DB.prepare("SELECT COUNT(*) AS total FROM navi_memory_facts_v1 WHERE owner_id = ? AND status = 'approved'").bind(NAVI_OWNER_ID).first(),
         env.NAVA_DB.prepare("SELECT COUNT(*) AS total FROM navi_memory_facts_v1 WHERE owner_id = ? AND status = 'pending'").bind(NAVI_OWNER_ID).first()
       ]);
@@ -574,6 +577,9 @@ async function handleMemory({
         proposalCount: Number(pendingCountRow?.total ?? proposals.length),
         returnedCount: memories.length,
         returnedProposalCount: proposals.length,
+        approvedOffset,
+        pendingOffset,
+        pageSize: 200,
         version: NAVI_VERSION
       }, corsOrigin);
     }
