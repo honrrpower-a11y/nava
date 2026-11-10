@@ -92,7 +92,7 @@ class OperationsMockD1 {
         if (query.startsWith("update navi_memory_facts_v1")) {
           const row = db.memories.find(item => {
             // Update statements in this module always bind ID and owner near the end.
-            const id = args.find((v, i) => query.includes("where id = ?") && i >= args.length - 2);
+            const id = query.includes("set memory_value = ?, source = ?") ? args[2] : query.includes("set memory_value = ?") ? args[1] : args[0];
             return Number(item.id) === Number(id) && item.owner_id === NAVI_OWNER_ID;
           });
           if (!row) return { success: true, meta: { changes: 0 } };
