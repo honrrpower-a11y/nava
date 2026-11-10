@@ -806,6 +806,14 @@ async function handleMemory({
         );
       }
 
+      if (result.conflict) {
+        return errorResponse(
+          "این پیشنهاد با یک مورد مشابه تناقض دارد؛ برای حفظ هر دو نسخه، ابتدا آن‌ها را بررسی کن.",
+          409,
+          corsOrigin
+        );
+      }
+
       if (result.duplicate) {
         return errorResponse(
           "این اطلاعات از قبل در حافظه یا پیشنهادها وجود دارد.",
@@ -863,6 +871,14 @@ async function handleMemory({
         return errorResponse(
           "این پیشنهاد پیدا نشد یا قبلاً بررسی شده است.",
           404,
+          corsOrigin
+        );
+      }
+
+      if (result.conflict) {
+        return errorResponse(
+          "این پیشنهاد با حافظه تأییدشده تناقض دارد؛ برای جلوگیری از تغییر ناخواسته، تأیید نشد.",
+          409,
           corsOrigin
         );
       }
@@ -991,7 +1007,11 @@ async function handleExplicitMemoryCommand(
         memoryCommand.source || "user_command"
       );
 
-      if (saveResult.duplicate) {
+      if (saveResult.conflict) {
+        reply =
+          "این اطلاعات با یک مورد تأییدشده در حافظه‌ام تناقض دارد. برای جلوگیری از ثبت اشتباه، فعلاً آن را تغییر ندادم؛ لطفاً مشخص کن کدام مورد درست است.";
+
+      } else if (saveResult.duplicate) {
         reply =
           "این اطلاعات از قبل در حافظه بلندمدتم ثبت شده است.";
 
@@ -1033,6 +1053,7 @@ async function handleExplicitMemoryCommand(
         commandRecognized: true,
         saved: Boolean(saveResult),
         duplicate: Boolean(saveResult?.duplicate),
+        conflict: Boolean(saveResult?.conflict),
         updated: Boolean(saveResult?.updated),
         inserted: Boolean(saveResult?.inserted),
         memoryKey: saveResult?.memoryKey || null,
