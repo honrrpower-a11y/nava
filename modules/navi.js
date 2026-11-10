@@ -913,6 +913,10 @@ async function handleExplicitMemoryCommand(
         reply =
           "این اطلاعات از قبل در حافظه بلندمدتم ثبت شده است.";
 
+      } else if (saveResult.merged) {
+        reply =
+          "اطلاعات تازه را به همان مورد قبلی در پروفایلت اضافه و حافظه را به‌روزرسانی کردم.";
+
       } else if (saveResult.updated) {
         reply =
           "اطلاعات قبلی را با مقدار جدید به‌روزرسانی کردم.";
