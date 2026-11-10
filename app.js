@@ -413,7 +413,9 @@ async function loadNaviHistory() {
     try {
       const response = await fetch(NAVI_HISTORY_API, {
         method: "GET",
-        headers: { "Authorization": "Bearer " + token },
+        headers: { "Authorization": "Bearer " + token ,
+        ...NAVI_DB_HEADER
+      },
         cache: "no-store"
       });
 
@@ -933,6 +935,8 @@ async function submitNaviProposalAction(id, action, memoryValue, button) {
       headers: {
         "Content-Type": "application/json",
         "Authorization": "Bearer " + token
+      ,
+        ...NAVI_DB_HEADER
       },
       body: JSON.stringify(payload)
     });
@@ -1026,7 +1030,9 @@ async function loadNaviMemories(forceRefresh = false) {
     try {
       const response = await fetch(NAVI_MEMORY_API, {
         method: "GET",
-        headers: { "Authorization": "Bearer " + token },
+        headers: { "Authorization": "Bearer " + token ,
+        ...NAVI_DB_HEADER
+      },
         cache: "no-store"
       });
 
@@ -1214,6 +1220,8 @@ async function updateNaviMemory(id, memoryValue, button, editor) {
       headers: {
         "Content-Type": "application/json",
         "Authorization": "Bearer " + token
+      ,
+        ...NAVI_DB_HEADER
       },
       body: JSON.stringify({
         action: "update",
@@ -1322,6 +1330,8 @@ async function deleteNaviMemory(id, button) {
       headers: {
         "Content-Type": "application/json",
         "Authorization": "Bearer " + token
+      ,
+        ...NAVI_DB_HEADER
       },
       body: JSON.stringify({
         action: "delete",
@@ -1453,6 +1463,8 @@ naviLoginForm.addEventListener("submit", async event => {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
+      ,
+        ...NAVI_DB_HEADER
       },
       body: JSON.stringify({ password })
     });
@@ -1601,6 +1613,8 @@ async function sendMessageToNavi() {
       headers: {
         "Content-Type": "application/json",
         "Authorization": "Bearer " + token
+      ,
+        ...NAVI_DB_HEADER
       },
       body: JSON.stringify({
         message: finalMessage,
