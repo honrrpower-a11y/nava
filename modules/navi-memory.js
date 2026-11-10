@@ -318,13 +318,27 @@ export function parseNaviMemoryCommand(message) {
 // DUPLICATE DETECTION
 // ======================================
 
+function normalizeMemoryKey(value) {
+  return normalizeMemoryText(value)
+    .replace(/-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i, "")
+    .trim();
+}
+
+function isProtectedMemoryKey(value) {
+  const key = normalizeMemoryKey(value);
+
+  return key === normalizeMemoryText("نام کاربر") ||
+    key === normalizeMemoryText("هویت دستیار");
+}
+
 async function findMemoryDuplicate(
   db,
   value,
-  excludeId = null
+  excludeId = null,
+  memoryKey = null
 ) {
   const result = await db.prepare(`
-    SELECT id, memory_value, status
+    SELECT id, memory_key, memory_value, status
     FROM navi_memory_facts_v1
     WHERE owner_id = ?
       AND status IN ('approved', 'pending')
@@ -335,10 +349,21 @@ async function findMemoryDuplicate(
   ).all();
 
   const normalized = normalizeMemoryText(value);
+  const normalizedKey = normalizeMemoryKey(memoryKey);
+  const protectedKey = isProtectedMemoryKey(memoryKey);
 
-  return (result.results || []).find(item =>
-    normalizeMemoryText(item.memory_value) === normalized
-  ) || null;
+  return (result.results || []).find(item => {
+    // هویت‌های ثابت با کلید شناخته می‌شوند، نه فقط متن مقدار.
+    // بنابراین «علی» و «نام کاربر علی است» یک حافظه محسوب می‌شوند.
+    if (
+      protectedKey &&
+      normalizeMemoryKey(item.memory_key) === normalizedKey
+    ) {
+      return true;
+    }
+
+    return normalizeMemoryText(item.memory_value) === normalized;
+  }) || null;
 }
 
 // ======================================
@@ -371,7 +396,9 @@ export async function createNaviMemoryProposal(
 
   const duplicate = await findMemoryDuplicate(
     db,
-    memoryValue
+    memoryValue,
+    null,
+    memoryTitle
   );
 
   if (duplicate) {
@@ -467,7 +494,8 @@ export async function approveNaviMemoryProposal(
   const duplicate = await findMemoryDuplicate(
     db,
     memoryValue,
-    proposalId
+    proposalId,
+    existing.memory_key
   );
 
   if (duplicate) {
@@ -562,7 +590,7 @@ export async function updateNaviMemoryProposal(
   }
 
   const existing = await db.prepare(`
-    SELECT id
+    SELECT id, memory_key
     FROM navi_memory_facts_v1
     WHERE id = ?
       AND owner_id = ?
@@ -580,7 +608,8 @@ export async function updateNaviMemoryProposal(
   const duplicate = await findMemoryDuplicate(
     db,
     memoryValue,
-    proposalId
+    proposalId,
+    existing.memory_key
   );
 
   if (duplicate) {
@@ -695,7 +724,9 @@ export async function saveNaviMemoryFact(
 
   const duplicate = await findMemoryDuplicate(
     db,
-    memoryValue
+    memoryValue,
+    null,
+    memoryKey
   );
 
   if (duplicate) {
