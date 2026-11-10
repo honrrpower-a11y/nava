@@ -407,3 +407,30 @@ body.light .navi-memory-value{color:#263a56}
 .navi-memory-search-label{display:block;margin:12px 0 7px;color:var(--muted);font-size:11px}
 .navi-memory-search{display:block;width:100%;box-sizing:border-box;padding:11px 13px;border:1px solid var(--border);border-radius:10px;background:var(--bg);color:var(--text);font:inherit;font-size:12px;outline:none}
 .navi-memory-search:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(229,184,94,.08)}
+
+
+/* NAVI memory pagination */
+.navi-memory-load-more {
+  display: block;
+  width: min(100%, 360px);
+  margin: 12px auto 22px;
+  padding: 11px 16px;
+  border: 1px solid rgba(212, 175, 55, 0.42);
+  border-radius: 12px;
+  background: rgba(212, 175, 55, 0.08);
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+.navi-memory-load-more:hover:not(:disabled) {
+  background: rgba(212, 175, 55, 0.16);
+  border-color: rgba(212, 175, 55, 0.75);
+}
+.navi-memory-load-more:disabled {
+  opacity: 0.65;
+  cursor: wait;
+}
+.navi-memory-load-more[hidden] {
+  display: none;
+}
