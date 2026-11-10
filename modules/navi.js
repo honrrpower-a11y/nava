@@ -1291,9 +1291,9 @@ async function handleChat({
     NAVI_MAX_MESSAGE
   );
 
-  if (!message) {
+  if (!message && !(Array.isArray(input.attachments) && input.attachments.length)) {
     return errorResponse(
-      "لطفاً پیام خود را بنویس.",
+      "لطفاً پیام یا فایل پیوست ارسال کن.",
       400,
       corsOrigin
     );
