@@ -17,6 +17,8 @@ import {
   getNaviDbHistory,
   getNaviApprovedMemory,
   getNaviPendingMemory,
+  getNaviMemoryConflictCandidates,
+  resolveNaviMemoryConflict,
   parseNaviMemoryCommand,
   saveNaviMemoryFact,
   createNaviMemoryProposal,
@@ -589,6 +591,8 @@ async function handleMemory({
         ]);
       }
 
+      proposals = await getNaviMemoryConflictCandidates(env.NAVA_DB, proposals);
+
       return successResponse({
         memories,
         proposals,
@@ -638,6 +642,18 @@ async function handleMemory({
         400,
         corsOrigin
       );
+    }
+
+    // ----------------------------------
+    // RESOLVE MEMORY CONFLICT
+    // ----------------------------------
+
+    if (action === "resolve_conflict") {
+      const result = await resolveNaviMemoryConflict(env.NAVA_DB, id, Number(input.conflict_with_id), String(input.resolution || ""));
+      if (result.notFound || result.invalid) return errorResponse("این تعارض دیگر معتبر نیست یا انتخاب نامعتبر است؛ فهرست را تازه‌سازی کن.", 409, corsOrigin);
+      if (result.sensitive) return errorResponse("این پیشنهاد شامل اطلاعات حساس است و ذخیره نمی‌شود.", 400, corsOrigin);
+      if (!result.success) return errorResponse("حل تعارض انجام نشد و حافظه تغییر نکرد.", 409, corsOrigin);
+      return successResponse({ action: "resolve_conflict", id, resolution: result.resolution, message: "تعارض طبق انتخاب تو بررسی و اعمال شد." }, corsOrigin);
     }
 
     // ----------------------------------
