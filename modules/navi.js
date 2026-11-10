@@ -1051,7 +1051,7 @@ async function handleExplicitMemoryCommand(
       version: NAVI_VERSION,
       memory: {
         commandRecognized: true,
-        saved: Boolean(saveResult),
+        saved: Boolean(saveResult && !saveResult.conflict),
         duplicate: Boolean(saveResult?.duplicate),
         conflict: Boolean(saveResult?.conflict),
         updated: Boolean(saveResult?.updated),
