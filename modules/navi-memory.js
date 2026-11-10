@@ -531,8 +531,8 @@ export async function resolveNaviMemoryConflict(db, proposalId, existingId, reso
     ];
   } else if (resolution === "keep_both") {
     statements = [
-      db.prepare("UPDATE navi_memory_facts_v1 SET status = 'approved', updated_at = datetime('now') WHERE id = ? AND owner_id = ? AND status = 'pending' AND memory_value = ? AND EXISTS (SELECT 1 FROM navi_memory_facts_v1 WHERE id = ? AND owner_id = ? AND status = 'approved' AND memory_key = ?)")
-        .bind(pendingId, NAVI_OWNER_ID, proposal.memory_value, approvedId, NAVI_OWNER_ID, existing.memory_key)
+      db.prepare("UPDATE navi_memory_facts_v1 SET status = 'approved', updated_at = datetime('now') WHERE id = ? AND owner_id = ? AND status = 'pending' AND memory_value = ? AND EXISTS (SELECT 1 FROM navi_memory_facts_v1 WHERE id = ? AND owner_id = ? AND status = 'approved' AND memory_key = ? AND memory_value = ?)")
+        .bind(pendingId, NAVI_OWNER_ID, proposal.memory_value, approvedId, NAVI_OWNER_ID, existing.memory_key, existing.memory_value)
     ];
   } else {
     statements = [
