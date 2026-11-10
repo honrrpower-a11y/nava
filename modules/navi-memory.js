@@ -474,19 +474,20 @@ function areMemoryValuesContradictory(first, second) {
   const normalize = value => normalizeMemoryText(value).replace(/[‌ـ]/g, "").replace(/[^\p{L}\p{N}\s]/gu, " ").replace(/\s+/g, " ").trim();
   const a = normalize(first), b = normalize(second);
   const pairs = [
-    [/نمی\s*خواهم|نمی\s*خوام|نمیخوام|دوست ندارم|علاقه ندارم|ترجیح نمی\s*دهم|ترجیح نمیدم/u, /می\s*خواهم|می\s*خوام|میخوام|دوست دارم|علاقه دارم|ترجیح می\s*دهم|ترجیح میدم/u],
-    [/نمی\s*پسندم|نمیپسندم/u, /می\s*پسندم|میپسندم/u],
-    [/غیرفعال|خاموش|بسته است/u, /فعال|روشن|باز است/u],
-    [/ممنوع|نباید|انجام نده|استفاده نکن/u, /مجاز|باید|انجام بده|استفاده کن/u],
-    [/ندارم|وجود ندارد/u, /دارم|وجود دارد/u],
+    [/(?:نمی\s*خواهم|نمی\s*خوام|نمیخوام|دوست ندارم|علاقه ندارم|ترجیح نمی\s*دهم|ترجیح نمیدم)/u, /(?<!ن)می\s*خواهم|(?<!ن)می\s*خوام|(?<!ن)میخوام|دوست دارم|علاقه دارم|ترجیح می\s*دهم|ترجیح میدم/u],
+    [/نمی\s*پسندم|نمیپسندم/u, /(?<!ن)می\s*پسندم|(?<!ن)میپسندم/u],
+    [/غیرفعال|خاموش|بسته است/u, /(?<!غیر)فعال|روشن|باز است/u],
+    [/ممنوع|نباید|انجام نده|استفاده نکن/u, /مجاز|(?<!ن)باید|انجام بده|استفاده کن/u],
+    [/ندارم|وجود ندارد/u, /(?<!ن)دارم|وجود دارد/u],
     [/کوتاه|مختصر|خلاصه|موجز/u, /مفصل|طولانی|با جزئیات|جزئیات کامل/u],
     [/مردانه|صدای مرد|خواننده مرد/u, /زنانه|صدای زن|خواننده زن/u]
   ];
-  if (!pairs.some(([negative, positive]) => (negative.test(a) && positive.test(b)) || (positive.test(a) && negative.test(b)))) return false;
+  const hasOpposite = pairs.some(([negative, positive]) => (negative.test(a) && positive.test(b)) || (positive.test(a) && negative.test(b)));
+  if (!hasOpposite) return false;
   const polarity = /نمی\s*خواهم|نمی\s*خوام|نمیخوام|دوست ندارم|علاقه ندارم|ترجیح نمی\s*دهم|ترجیح نمیدم|می\s*خواهم|می\s*خوام|میخوام|دوست دارم|علاقه دارم|ترجیح می\s*دهم|ترجیح میدم|نمی\s*پسندم|نمیپسندم|می\s*پسندم|میپسندم|غیرفعال|خاموش|بسته است|فعال|روشن|باز است|ممنوع|نباید|انجام نده|استفاده نکن|مجاز|باید|انجام بده|استفاده کن|ندارم|وجود ندارد|دارم|وجود دارد|کوتاه|مختصر|خلاصه|موجز|مفصل|طولانی|با جزئیات|جزئیات کامل|مردانه|صدای مرد|خواننده مرد|زنانه|صدای زن|خواننده زن/gu;
   const stop = new Set(["من","تو","برای","که","این","اون","آن","را","رو","به","از","در","با","هم","هست","است","می","کنم","کنید","ترجیح"]);
-  const tokens = value => new Set(value.replace(polarity," ").split(/\s+/u).map(x=>x.trim()).filter(x=>x.length>1&&!stop.has(x)));
-  const left=tokens(a), right=tokens(b);
+  const tokens = value => new Set(value.replace(polarity, " ").split(/\s+/u).map(token => token.trim()).filter(token => token.length > 1 && !stop.has(token)));
+  const left = tokens(a), right = tokens(b);
   for (const token of left) if (right.has(token)) return true;
   return false;
 }
@@ -503,27 +504,43 @@ export async function getNaviMemoryConflictCandidates(db, proposals = []) {
 }
 
 export async function resolveNaviMemoryConflict(db, proposalId, existingId, resolution) {
-  const pendingId = Number(proposalId), approvedId = Number(existingId);
-  if (!Number.isSafeInteger(pendingId) || pendingId <= 0 || !Number.isSafeInteger(approvedId) || approvedId <= 0 || !["replace","keep_both","keep_existing"].includes(resolution)) return { invalid: true };
+  const pendingId = Number(proposalId);
+  const approvedId = Number(existingId);
+  if (!Number.isSafeInteger(pendingId) || pendingId <= 0 || !Number.isSafeInteger(approvedId) || approvedId <= 0 ||
+      !["replace", "keep_both", "keep_existing"].includes(resolution)) return { invalid: true };
+
   const [proposal, existing] = await Promise.all([
-    db.prepare("SELECT id, memory_value FROM navi_memory_facts_v1 WHERE id = ? AND owner_id = ? AND status = 'pending' LIMIT 1").bind(pendingId,NAVI_OWNER_ID).first(),
-    db.prepare("SELECT id FROM navi_memory_facts_v1 WHERE id = ? AND owner_id = ? AND status = 'approved' LIMIT 1").bind(approvedId,NAVI_OWNER_ID).first()
+    db.prepare("SELECT id, memory_key, memory_value FROM navi_memory_facts_v1 WHERE id = ? AND owner_id = ? AND status = 'pending' LIMIT 1").bind(pendingId, NAVI_OWNER_ID).first(),
+    db.prepare("SELECT id, memory_key, memory_value FROM navi_memory_facts_v1 WHERE id = ? AND owner_id = ? AND status = 'approved' LIMIT 1").bind(approvedId, NAVI_OWNER_ID).first()
   ]);
   if (!proposal || !existing) return { notFound: true };
   if (containsSensitiveMemory(proposal.memory_value)) return { sensitive: true };
+  if (normalizeMemoryKey(proposal.memory_key) !== normalizeMemoryKey(existing.memory_key) ||
+      !areMemoryValuesContradictory(existing.memory_value, proposal.memory_value)) return { conflict: false };
+
   let statements;
   if (resolution === "replace") {
     statements = [
-      db.prepare("UPDATE navi_memory_facts_v1 SET memory_value = ?, updated_at = datetime('now') WHERE id = ? AND owner_id = ? AND status = 'approved'").bind(proposal.memory_value,approvedId,NAVI_OWNER_ID),
-      db.prepare("UPDATE navi_memory_facts_v1 SET status = 'archived', updated_at = datetime('now') WHERE id = ? AND owner_id = ? AND status = 'pending' AND EXISTS (SELECT 1 FROM navi_memory_facts_v1 WHERE id = ? AND owner_id = ? AND status = 'approved')").bind(pendingId,NAVI_OWNER_ID,approvedId,NAVI_OWNER_ID)
+      db.prepare("UPDATE navi_memory_facts_v1 SET memory_value = ?, updated_at = datetime('now') WHERE id = ? AND owner_id = ? AND status = 'approved' AND memory_value = ?")
+        .bind(proposal.memory_value, approvedId, NAVI_OWNER_ID, existing.memory_value),
+      db.prepare("UPDATE navi_memory_facts_v1 SET status = 'archived', updated_at = datetime('now') WHERE id = ? AND owner_id = ? AND status = 'pending' AND memory_value = ? AND EXISTS (SELECT 1 FROM navi_memory_facts_v1 WHERE id = ? AND owner_id = ? AND status = 'approved' AND memory_value = ?)")
+        .bind(pendingId, NAVI_OWNER_ID, proposal.memory_value, approvedId, NAVI_OWNER_ID, proposal.memory_value)
     ];
   } else if (resolution === "keep_both") {
-    statements = [db.prepare("UPDATE navi_memory_facts_v1 SET status = 'approved', updated_at = datetime('now') WHERE id = ? AND owner_id = ? AND status = 'pending' AND EXISTS (SELECT 1 FROM navi_memory_facts_v1 WHERE id = ? AND owner_id = ? AND status = 'approved')").bind(pendingId,NAVI_OWNER_ID,approvedId,NAVI_OWNER_ID)];
+    statements = [
+      db.prepare("UPDATE navi_memory_facts_v1 SET status = 'approved', updated_at = datetime('now') WHERE id = ? AND owner_id = ? AND status = 'pending' AND memory_value = ? AND EXISTS (SELECT 1 FROM navi_memory_facts_v1 WHERE id = ? AND owner_id = ? AND status = 'approved' AND memory_key = ?)")
+        .bind(pendingId, NAVI_OWNER_ID, proposal.memory_value, approvedId, NAVI_OWNER_ID, existing.memory_key)
+    ];
   } else {
-    statements = [db.prepare("UPDATE navi_memory_facts_v1 SET status = 'archived', updated_at = datetime('now') WHERE id = ? AND owner_id = ? AND status = 'pending' AND EXISTS (SELECT 1 FROM navi_memory_facts_v1 WHERE id = ? AND owner_id = ? AND status = 'approved')").bind(pendingId,NAVI_OWNER_ID,approvedId,NAVI_OWNER_ID)];
+    statements = [
+      db.prepare("UPDATE navi_memory_facts_v1 SET status = 'archived', updated_at = datetime('now') WHERE id = ? AND owner_id = ? AND status = 'pending' AND memory_value = ? AND EXISTS (SELECT 1 FROM navi_memory_facts_v1 WHERE id = ? AND owner_id = ? AND status = 'approved' AND memory_key = ? AND memory_value = ?)")
+        .bind(pendingId, NAVI_OWNER_ID, proposal.memory_value, approvedId, NAVI_OWNER_ID, existing.memory_key, existing.memory_value)
+    ];
   }
+
   const results = await db.batch(statements);
-  if (!Array.isArray(results) || results.length !== statements.length || results.some(result => !result.success || !result.meta?.changes)) return { notFound: true };
+  if (!Array.isArray(results) || results.length !== statements.length ||
+      results.some(result => !result.success || !result.meta?.changes)) return { notFound: true };
   return { success: true, resolution };
 }
 
@@ -969,7 +986,7 @@ export async function updateNaviMemoryProposal(
     existing.memory_key
   );
 
-  if (duplicate) {
+  if (duplicate && !(duplicate.conflict && duplicate.status === "approved")) {
     return duplicate.conflict
       ? { conflict: true, existingId: duplicate.id, existingStatus: duplicate.status }
       : { duplicate: true };
