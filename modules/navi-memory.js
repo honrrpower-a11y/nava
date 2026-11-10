@@ -386,6 +386,73 @@ function isProtectedMemoryKey(value) {
     key === normalizeMemoryText("هویت دستیار");
 }
 
+function getMemoryMeaningTokens(value) {
+  const stopWords = new Set([
+    "من", "تو", "برای", "که", "این", "اون", "آن", "را", "رو",
+    "به", "از", "در", "با", "هم", "همیشه", "لطفا", "لطفاً",
+    "میخوام", "میخواهم", "میخوام", "می‌خوام", "می‌خواهم",
+    "باشه", "باشد", "هست", "است", "بشه", "شود",
+    "ترجیح", "ترجیحا", "ترجیحاً", "دوست", "دارم", "دارید",
+    "کن", "کنه", "کنید", "بکن", "بکنه", "بکنید",
+    "یادت", "بمونه", "بماند", "نگه", "دار", "داشته"
+  ]);
+
+  const synonyms = new Map([
+    ["جواب", "پاسخ"],
+    ["جوابات", "پاسخ"],
+    ["جوابهات", "پاسخ"],
+    ["پاسخهات", "پاسخ"],
+    ["پاسخها", "پاسخ"],
+    ["پاسخهای", "پاسخ"],
+    ["پاسخگویی", "پاسخ"],
+    ["پاسخگوهات", "پاسخ"],
+    ["کاربردی", "کاربردی"],
+    ["مختصر", "کوتاه"],
+    ["خلاصه", "کوتاه"],
+    ["موجز", "کوتاه"]
+  ]);
+
+  return normalizeMemoryText(value)
+    .replace(/[‌ـ]/g, "")
+    .replace(/[^\p{L}\p{N}\s]/gu, " ")
+    .split(/\s+/)
+    .map(token => {
+      let normalized = token
+        .replace(/(?:های|ها|هایی)$/u, "")
+        .replace(/(?:هاتون|هات|هایت|هاش|هایش)$/u, "")
+        .replace(/(?:تر|ترین)$/u, "");
+
+      return synonyms.get(normalized) || normalized;
+    })
+    .filter(token => token.length > 1 && !stopWords.has(token));
+}
+
+function areMemoryValuesSemanticallySimilar(first, second) {
+  const firstTokens = new Set(getMemoryMeaningTokens(first));
+  const secondTokens = new Set(getMemoryMeaningTokens(second));
+
+  if (!firstTokens.size || !secondTokens.size) {
+    return false;
+  }
+
+  let overlap = 0;
+  for (const token of firstTokens) {
+    if (secondTokens.has(token)) overlap += 1;
+  }
+
+  const smallerSize = Math.min(firstTokens.size, secondTokens.size);
+  const largerSize = Math.max(firstTokens.size, secondTokens.size);
+  const overlapRatio = overlap / smallerSize;
+  const jaccardRatio = overlap / (firstTokens.size + secondTokens.size - overlap);
+
+  // برای حافظه‌های کوتاه، حداقل دو مفهوم مشترک لازم است تا
+  // شباهت یک واژه عمومی باعث حذف اشتباهی اطلاعات متفاوت نشود.
+  return overlap >= 2 &&
+    overlapRatio >= 0.75 &&
+    jaccardRatio >= 0.5 &&
+    (smallerSize >= 2 && largerSize <= smallerSize + 3);
+}
+
 async function findMemoryDuplicate(
   db,
   value,
@@ -417,7 +484,13 @@ async function findMemoryDuplicate(
       return true;
     }
 
-    return normalizeMemoryText(item.memory_value) === normalized;
+    const existingValue = normalizeMemoryText(item.memory_value);
+
+    return existingValue === normalized ||
+      areMemoryValuesSemanticallySimilar(
+        item.memory_value,
+        value
+      );
   }) || null;
 }
 
