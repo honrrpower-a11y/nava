@@ -129,7 +129,10 @@ class MockD1 {
         continue;
       }
       if (sql.startsWith("update navi_memory_facts_v1 set status = 'archived'")) {
-        const [pendingId, ownerId, pendingValue, approvedId, approvedOwner, approvedKey, ...tail] = v;
+        const [pendingId, ownerId, pendingValue, approvedId, approvedOwner] = v;
+        const checksApprovedKey = sql.includes("and memory_key = ?");
+        const approvedKey = checksApprovedKey ? v[5] : null;
+        const approvedValue = checksApprovedKey ? v[6] : v[5];
         const pending = this.memories.find(item =>
           Number(item.id) === Number(pendingId) &&
           item.owner_id === ownerId &&
@@ -140,8 +143,8 @@ class MockD1 {
           Number(item.id) === Number(approvedId) &&
           item.owner_id === approvedOwner &&
           item.status === "approved" &&
-          item.memory_key === approvedKey &&
-          (!tail.length || item.memory_value === tail[0])
+          (!checksApprovedKey || item.memory_key === approvedKey) &&
+          item.memory_value === approvedValue
         );
         if (pending && approved) pending.status = "archived";
         results.push({ success: true, meta: { changes: pending && approved ? 1 : 0 } });
