@@ -6,15 +6,19 @@
 ========================================= */
 
 // API
-const NAVI_BASE = "https://nava-music-api.honrrpower.workers.dev";
+// Preview mode is opt-in via ?naviPreview=1; normal visitors stay on production.
+const NAVI_PREVIEW_MODE = new URLSearchParams(window.location.search).get("naviPreview") === "1";
+const NAVI_BASE = NAVI_PREVIEW_MODE
+  ? "https://nava-music-api-preview.honrrpower.workers.dev"
+  : "https://nava-music-api.honrrpower.workers.dev";
 const NAVI_LOGIN_API = NAVI_BASE + "/navi-login";
 const NAVI_API = NAVI_BASE + "/navi-chat";
 const NAVI_HISTORY_API = NAVI_BASE + "/navi-history";
 const NAVI_MEMORY_API = NAVI_BASE + "/navi-memory";
 
 // Session
-const NAVI_SESSION_KEY = "nava_navi_session";
-const NAVI_EXPIRY_KEY = "nava_navi_expiry";
+const NAVI_SESSION_KEY = "nava_navi_session" + (NAVI_PREVIEW_MODE ? "_preview" : "");
+const NAVI_EXPIRY_KEY = "nava_navi_expiry" + (NAVI_PREVIEW_MODE ? "_preview" : "");
 
 // Limits
 const NAVI_MAX_DISPLAY_MESSAGES = 100;
