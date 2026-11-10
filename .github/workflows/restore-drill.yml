@@ -28,7 +28,7 @@ jobs:
 
     env:
       BACKUP_ENCRYPTION_PASSPHRASE: ${{ secrets.BACKUP_ENCRYPTION_PASSPHRASE }}
-      BACKUP_RUN_ID: ${{ inputs.backup_run_id || '42791295233' }}
+      BACKUP_RUN_ID: ${{ env.BACKUP_RUN_ID }}
 
     steps:
       - name: Validate inputs and required secret
@@ -47,19 +47,19 @@ jobs:
       - name: Download source backup artifact
         uses: actions/download-artifact@v4
         with:
-          name: nava-source-${{ inputs.backup_run_id || '42791295233' }}
+          name: nava-source-${{ env.BACKUP_RUN_ID }}
           path: restore-input/source
           repository: ${{ github.repository }}
-          run-id: ${{ inputs.backup_run_id || '42791295233' }}
+          run-id: ${{ env.BACKUP_RUN_ID }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Download encrypted database artifact
         uses: actions/download-artifact@v4
         with:
-          name: navi-database-encrypted-${{ inputs.backup_run_id || '42791295233' }}
+          name: navi-database-encrypted-${{ env.BACKUP_RUN_ID }}
           path: restore-input/database
           repository: ${{ github.repository }}
-          run-id: ${{ inputs.backup_run_id }}
+          run-id: ${{ env.BACKUP_RUN_ID }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Verify and inspect Git source backup
@@ -69,7 +69,7 @@ jobs:
           cd restore-input/source
           test -s nava-source.bundle
           test -s nava-source.bundle.sha256
-          sha256sum -c nava-source.bundle.sha256
+          sed 's#  backup-output/#  #' nava-source.bundle.sha256 | sha256sum -c -
           git bundle verify nava-source.bundle
           git clone --quiet nava-source.bundle ../source-restored
           git -C ../source-restored log -1 --format='Restored source commit: %h %s' | tee -a "$GITHUB_STEP_SUMMARY"
@@ -83,7 +83,7 @@ jobs:
           cd restore-input/database
           test -s nava-memory.sql.enc
           test -s nava-memory.sql.enc.sha256
-          sha256sum -c nava-memory.sql.enc.sha256
+          sed 's#  backup-output/#  #' nava-memory.sql.enc.sha256 | sha256sum -c -
 
           openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 \
             -in nava-memory.sql.enc \
