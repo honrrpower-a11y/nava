@@ -470,6 +470,22 @@ function getMemoryMeaningTokens(value) {
     .filter(token => token.length > 1 && !stopWords.has(token));
 }
 
+function areMemoryValuesContradictory(first, second) {
+  const a = normalizeMemoryText(first).replace(/[‌ـ]/g, "");
+  const b = normalizeMemoryText(second).replace(/[‌ـ]/g, "");
+  const pairs = [
+    [/نمی\s*خواهم|نمی\s*خوام|نمیخوام|دوست ندارم|علاقه ندارم|ترجیح نمی\s*دهم|ترجیح نمیدم/u, /می\s*خواهم|می\s*خوام|میخوام|دوست دارم|علاقه دارم|ترجیح می\s*دهم|ترجیح میدم/u],
+    [/نمی\s*پسندم|نمیپسندم/u, /می\s*پسندم|میپسندم/u],
+    [/غیرفعال|خاموش|بسته است/u, /فعال|روشن|باز است/u],
+    [/ممنوع|نباید|انجام نده|استفاده نکن/u, /مجاز|باید|انجام بده|استفاده کن/u],
+    [/ندارم|نیست|وجود ندارد/u, /دارم|هست|وجود دارد/u]
+  ];
+  return pairs.some(([negative, positive]) =>
+    (negative.test(a) && positive.test(b)) ||
+    (positive.test(a) && negative.test(b))
+  );
+}
+
 function areMemoryValuesSemanticallySimilar(first, second) {
   const firstTokens = new Set(getMemoryMeaningTokens(first));
   const secondTokens = new Set(getMemoryMeaningTokens(second));
@@ -561,9 +577,11 @@ async function findMemoryDuplicate(
 
     // شباهت معنایی فقط در یک دسته/عنوان یکسان مجاز است؛
     // تا دو پروژه یا تصمیم متفاوت با چند واژه مشترک ادغام نشوند.
-    return Boolean(normalizedKey) &&
-      itemKey === normalizedKey &&
-      areMemoryValuesSemanticallySimilar(item.memory_value, value);
+    if (!normalizedKey || itemKey !== normalizedKey) return false;
+    if (!areMemoryValuesSemanticallySimilar(item.memory_value, value)) return false;
+    return areMemoryValuesContradictory(item.memory_value, value)
+      ? { ...item, conflict: true }
+      : true;
   }) || null;
 }
 
@@ -605,6 +623,11 @@ export async function createNaviMemoryProposal(
   );
 
   if (duplicate) {
+    if (duplicate.conflict && duplicate.status === "approved") {
+      mergeCandidateId = duplicate.id;
+    } else if (duplicate.conflict) {
+      return { inserted: false, conflict: true, existingId: duplicate.id, existingStatus: duplicate.status };
+    }
     const mergedValue = mergeMemoryValues(
       duplicate.memory_value,
       memoryValue
@@ -737,6 +760,9 @@ export async function approveNaviMemoryProposal(
   );
 
   if (duplicate) {
+    if (duplicate.conflict) {
+      return { conflict: true, existingId: duplicate.id, existingStatus: duplicate.status };
+    }
     // تأیید یک پیشنهاد نباید پیشنهاد مستقل دیگری را بی‌اجازه تأیید کند.
     if (duplicate.status === "pending") {
       return {
@@ -902,7 +928,9 @@ export async function updateNaviMemoryProposal(
   );
 
   if (duplicate) {
-    return { duplicate: true };
+    return duplicate.conflict
+      ? { conflict: true, existingId: duplicate.id, existingStatus: duplicate.status }
+      : { duplicate: true };
   }
 
   const result = await db.prepare(`
@@ -1078,6 +1106,9 @@ export async function saveNaviMemoryFact(
   );
 
   if (duplicate) {
+    if (duplicate.conflict) {
+      return { conflict: true, existingId: duplicate.id, existingStatus: duplicate.status, memoryKey };
+    }
     const mergedValue = mergeMemoryValues(
       duplicate.memory_value,
       memoryValue
