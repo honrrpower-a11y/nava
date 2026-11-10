@@ -37,7 +37,7 @@ class OperationsMockD1 {
         if (query.includes("from navi_memory_facts_v1")) {
           let rows = db.memories.filter(row => {
             let index = 0;
-            if (/where id = \\?/.test(query)) {
+            if (/where id = \?/.test(query)) {
               const id = args[index++];
               if (Number(row.id) !== Number(id)) return false;
             }
