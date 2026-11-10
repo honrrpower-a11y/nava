@@ -558,17 +558,36 @@ async function handleMemory({
       const requestUrl = new URL(request.url);
       const approvedOffset = Math.max(0, Math.min(1000000, Number.parseInt(requestUrl.searchParams.get("approvedOffset") || "0", 10) || 0));
       const pendingOffset = Math.max(0, Math.min(1000000, Number.parseInt(requestUrl.searchParams.get("pendingOffset") || "0", 10) || 0));
-      const [
-        memories,
-        proposals,
-        approvedCountRow,
-        pendingCountRow
-      ] = await Promise.all([
-        getNaviApprovedMemory(env.NAVA_DB, approvedOffset),
-        getNaviPendingMemory(env.NAVA_DB, pendingOffset),
-        env.NAVA_DB.prepare("SELECT COUNT(*) AS total FROM navi_memory_facts_v1 WHERE owner_id = ? AND status = 'approved'").bind(NAVI_OWNER_ID).first(),
-        env.NAVA_DB.prepare("SELECT COUNT(*) AS total FROM navi_memory_facts_v1 WHERE owner_id = ? AND status = 'pending'").bind(NAVI_OWNER_ID).first()
-      ]);
+      const search = String(requestUrl.searchParams.get("search") || "").trim().slice(0, 100);
+      let memories, proposals, approvedCountRow, pendingCountRow;
+
+      if (search) {
+        // جست‌وجوی سراسری فقط در رکوردهای متعلق به همین مالک انجام می‌شود.
+        // کاراکترهای LIKE escape می‌شوند تا ورودی کاربر wildcard ناخواسته نسازد.
+        const escaped = search.replace(/[\\%_]/g, character => "\\" + character);
+        const pattern = "%" + escaped + "%";
+        const approvedWhere = "owner_id = ? AND status = 'approved' AND (memory_key LIKE ? ESCAPE '\\\\' OR memory_value LIKE ? ESCAPE '\\\\' OR source LIKE ? ESCAPE '\\\\')";
+        const pendingWhere = "owner_id = ? AND status = 'pending' AND (memory_key LIKE ? ESCAPE '\\\\' OR memory_value LIKE ? ESCAPE '\\\\' OR source LIKE ? ESCAPE '\\\\')";
+        const approvedBindings = [NAVI_OWNER_ID, pattern, pattern, pattern];
+        const pendingBindings = [NAVI_OWNER_ID, pattern, pattern, pattern];
+        const [approvedRows, pendingRows, approvedTotal, pendingTotal] = await Promise.all([
+          env.NAVA_DB.prepare("SELECT id, memory_key, memory_value, source, created_at, updated_at FROM navi_memory_facts_v1 WHERE " + approvedWhere + " ORDER BY updated_at DESC, id DESC LIMIT 200 OFFSET ?").bind(...approvedBindings, approvedOffset).all(),
+          env.NAVA_DB.prepare("SELECT id, memory_key, memory_value, source, status, created_at, updated_at FROM navi_memory_facts_v1 WHERE " + pendingWhere + " ORDER BY created_at DESC, id DESC LIMIT 200 OFFSET ?").bind(...pendingBindings, pendingOffset).all(),
+          env.NAVA_DB.prepare("SELECT COUNT(*) AS total FROM navi_memory_facts_v1 WHERE " + approvedWhere).bind(...approvedBindings).first(),
+          env.NAVA_DB.prepare("SELECT COUNT(*) AS total FROM navi_memory_facts_v1 WHERE " + pendingWhere).bind(...pendingBindings).first()
+        ]);
+        memories = approvedRows.results || [];
+        proposals = pendingRows.results || [];
+        approvedCountRow = approvedTotal;
+        pendingCountRow = pendingTotal;
+      } else {
+        [memories, proposals, approvedCountRow, pendingCountRow] = await Promise.all([
+          getNaviApprovedMemory(env.NAVA_DB, approvedOffset),
+          getNaviPendingMemory(env.NAVA_DB, pendingOffset),
+          env.NAVA_DB.prepare("SELECT COUNT(*) AS total FROM navi_memory_facts_v1 WHERE owner_id = ? AND status = 'approved'").bind(NAVI_OWNER_ID).first(),
+          env.NAVA_DB.prepare("SELECT COUNT(*) AS total FROM navi_memory_facts_v1 WHERE owner_id = ? AND status = 'pending'").bind(NAVI_OWNER_ID).first()
+        ]);
+      }
 
       return successResponse({
         memories,
