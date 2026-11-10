@@ -17,6 +17,7 @@ const NAVI_BASE = "https://nava-music-api.honrrpower.workers.dev";
 const NAVI_LOGIN_API = NAVI_BASE + "/navi-login";
 const NAVI_API = NAVI_BASE + "/navi-chat";
 const NAVI_HISTORY_API = NAVI_BASE + "/navi-history";
+const NAVI_THREADS_API = NAVI_BASE + "/navi-threads";
 const NAVI_MEMORY_API = NAVI_BASE + "/navi-memory";
 
 // Session
@@ -34,6 +35,8 @@ let naviSessionVersion = 0;
 let naviHistory = [];
 let naviHistoryLoading = false;
 let naviHistoryLoadPromise = null;
+let naviThreads = [];
+let naviActiveThreadId = "owner-main";
 
 // Memory state
 let naviMemory = [];
@@ -65,6 +68,8 @@ const naviHistoryContent = document.getElementById("naviHistoryContent");
 const naviHistoryList = document.getElementById("naviHistoryList");
 const naviHistoryCount = document.getElementById("naviHistoryCount");
 const naviHistoryRefresh = document.getElementById("naviHistoryRefresh");
+const naviNewThreadButton = document.getElementById("naviNewThread");
+const naviThreadList = document.getElementById("naviThreadList");
 
 // DOM elements — Memory
 const naviMemoryToggle = document.getElementById("naviMemoryToggle");
@@ -414,7 +419,7 @@ async function loadNaviHistory() {
 
   naviHistoryLoadPromise = (async () => {
     try {
-      const response = await fetch(NAVI_HISTORY_API, {
+      const response = await fetch(NAVI_HISTORY_API + "?thread_id=" + encodeURIComponent(naviActiveThreadId), {
         method: "GET",
         headers: { "Authorization": "Bearer " + token ,
         ...NAVI_DB_HEADER
@@ -1424,6 +1429,79 @@ naviHistoryRefresh.addEventListener("click", () => {
   loadNaviHistory();
 });
 
+async function loadNaviThreads() {
+  const token = getNaviToken();
+  if (!token) return false;
+  try {
+    const response = await fetch(NAVI_THREADS_API, {
+      headers: { "Authorization": "Bearer " + token, ...NAVI_DB_HEADER },
+      cache: "no-store"
+    });
+    const data = await response.json();
+    if (!response.ok || !data.success) throw new Error(data.error || "دریافت فهرست گفت‌وگوها ناموفق بود.");
+    naviThreads = Array.isArray(data.threads) ? data.threads : [];
+    renderNaviThreads();
+    return true;
+  } catch (error) {
+    console.error("NAVI threads error:", error);
+    return false;
+  }
+}
+
+function renderNaviThreads() {
+  if (!naviThreadList) return;
+  naviThreadList.replaceChildren();
+  naviThreads.forEach(thread => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "navi-thread-item" + (thread.thread_id === naviActiveThreadId ? " active" : "");
+    button.textContent = thread.title || "گفت‌وگو";
+    button.addEventListener("click", async () => {
+      naviActiveThreadId = thread.thread_id;
+      sessionStorage.setItem("nava_navi_active_thread" + (NAVI_PREVIEW_MODE ? "_preview" : ""), naviActiveThreadId);
+      renderNaviThreads();
+      requestResponse.textContent = "";
+      requestResponse.classList.remove("show");
+      naviHistory = [];
+      await loadNaviHistory();
+      setNaviStatus("گفت‌وگوی انتخاب‌شده آماده ادامه است.");
+    });
+    naviThreadList.appendChild(button);
+  });
+}
+
+async function createNaviThread() {
+  const token = getNaviToken();
+  if (!token) return;
+  naviNewThreadButton.disabled = true;
+  naviNewThreadButton.textContent = "در حال ساخت...";
+  try {
+    const response = await fetch(NAVI_THREADS_API, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token, ...NAVI_DB_HEADER },
+      body: JSON.stringify({ title: "گفت‌وگوی جدید" })
+    });
+    const data = await response.json();
+    if (!response.ok || !data.success || !data.thread?.thread_id) throw new Error(data.error || "ساخت گفت‌وگوی جدید ناموفق بود.");
+    naviActiveThreadId = data.thread.thread_id;
+    sessionStorage.setItem("nava_navi_active_thread" + (NAVI_PREVIEW_MODE ? "_preview" : ""), naviActiveThreadId);
+    naviHistory = [];
+    requestResponse.textContent = "";
+    requestResponse.classList.remove("show");
+    await loadNaviThreads();
+    await loadNaviHistory();
+    userRequest.focus();
+    setNaviStatus("گفت‌وگوی جدید آماده است؛ تاریخچه گفت‌وگوهای قبلی جداگانه حفظ شده‌اند.");
+  } catch (error) {
+    showNaviReply(error.message || "ساخت گفت‌وگوی جدید ناموفق بود.");
+  } finally {
+    naviNewThreadButton.disabled = false;
+    naviNewThreadButton.textContent = "＋ گفت‌وگوی جدید";
+  }
+}
+
+naviNewThreadButton?.addEventListener("click", createNaviThread);
+
 naviMemoryRefresh.addEventListener("click", () => {
   loadNaviMemories(true);
 });
@@ -1437,7 +1515,12 @@ const existingNaviToken = getNaviToken();
 
 if (existingNaviToken) {
   showNaviChat();
-  loadNaviHistory();
+  loadNaviThreads().then(() => {
+    const saved = sessionStorage.getItem("nava_navi_active_thread" + (NAVI_PREVIEW_MODE ? "_preview" : ""));
+    if (saved && naviThreads.some(item => item.thread_id === saved)) naviActiveThreadId = saved;
+    renderNaviThreads();
+    loadNaviHistory();
+  });
 } else {
   clearNaviSession();
 }
@@ -1498,6 +1581,7 @@ naviLoginForm.addEventListener("submit", async event => {
 
     naviSessionVersion++;
     naviPassword.value = "";
+    naviActiveThreadId = "owner-main";
     naviHistory = [];
     naviMemory = [];
     naviProposals = [];
@@ -1505,6 +1589,7 @@ naviLoginForm.addEventListener("submit", async event => {
 
     showNaviChat();
 
+    await loadNaviThreads();
     const historyLoaded = await loadNaviHistory();
 
     if (!historyLoaded && getNaviToken()) {
@@ -1623,6 +1708,7 @@ async function sendMessageToNavi() {
         message: finalMessage,
         page: window.location.pathname,
         pageContext: pageContext,
+        threadId: naviActiveThreadId,
         history: naviHistory.slice(-NAVI_CONTEXT_MESSAGES)
       })
     });
