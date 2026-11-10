@@ -548,6 +548,8 @@ export async function createNaviMemoryProposal(
     };
   }
 
+  let mergeCandidateId = null;
+
   const duplicate = await findMemoryDuplicate(
     db,
     memoryValue,
@@ -595,6 +597,7 @@ export async function createNaviMemoryProposal(
 
     // حافظه تأییدشده بی‌اجازه تغییر نمی‌کند؛
     // پیشنهاد تازه برای تأیید کاربر ساخته می‌شود.
+    mergeCandidateId = duplicate.id;
   }
 
   const memoryKey = createUniqueMemoryKey(
@@ -628,7 +631,8 @@ export async function createNaviMemoryProposal(
     id: result.meta?.last_row_id || null,
     title: memoryTitle,
     memoryKey,
-    memoryValue
+    memoryValue,
+    mergeCandidateId
   };
 }
 
