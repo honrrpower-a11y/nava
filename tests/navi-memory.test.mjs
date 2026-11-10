@@ -116,6 +116,37 @@ class MockD1 {
         results.push({ success: true, meta: { changes: approved && pending ? 1 : 0 } });
         continue;
       }
+      if (sql.startsWith("update navi_memory_facts_v1 set memory_value =")) {
+        const [nextValue, approvedId, ownerId, previousValue] = v;
+        const row = this.memories.find(item =>
+          Number(item.id) === Number(approvedId) &&
+          item.owner_id === ownerId &&
+          item.status === "approved" &&
+          item.memory_value === previousValue
+        );
+        if (row) row.memory_value = nextValue;
+        results.push({ success: true, meta: { changes: row ? 1 : 0 } });
+        continue;
+      }
+      if (sql.startsWith("update navi_memory_facts_v1 set status = 'archived'")) {
+        const [pendingId, ownerId, pendingValue, approvedId, approvedOwner, approvedKey, ...tail] = v;
+        const pending = this.memories.find(item =>
+          Number(item.id) === Number(pendingId) &&
+          item.owner_id === ownerId &&
+          item.status === "pending" &&
+          item.memory_value === pendingValue
+        );
+        const approved = this.memories.find(item =>
+          Number(item.id) === Number(approvedId) &&
+          item.owner_id === approvedOwner &&
+          item.status === "approved" &&
+          item.memory_key === approvedKey &&
+          (!tail.length || item.memory_value === tail[0])
+        );
+        if (pending && approved) pending.status = "archived";
+        results.push({ success: true, meta: { changes: pending && approved ? 1 : 0 } });
+        continue;
+      }
       if (sql.startsWith("insert into navi_chat_messages_v1")) {
         const [threadId, content] = v;
         const role = sql.includes("values (?, 'assistant'") ? "assistant" : "user";
@@ -209,6 +240,22 @@ test("keep_both refuses a stale conflict if the approved value changed after ins
   const result = await resolveNaviMemoryConflict(db, 2, 1, "keep_both");
   assert.deepEqual(result, { notFound: true });
   assert.equal(db.memories.find(row => row.id === 2).status, "pending");
+});
+
+test("replace updates the approved fact and archives the proposal", async () => {
+  const db = new MockD1({ memories: baseMemories() });
+  const result = await resolveNaviMemoryConflict(db, 2, 1, "replace");
+  assert.deepEqual(result, { success: true, resolution: "replace" });
+  assert.equal(db.memories.find(row => row.id === 1).memory_value, "پاسخ‌ها را مفصل می‌خواهم");
+  assert.equal(db.memories.find(row => row.id === 2).status, "archived");
+});
+
+test("keep_existing archives the proposal without changing approved memory", async () => {
+  const db = new MockD1({ memories: baseMemories() });
+  const result = await resolveNaviMemoryConflict(db, 2, 1, "keep_existing");
+  assert.deepEqual(result, { success: true, resolution: "keep_existing" });
+  assert.equal(db.memories.find(row => row.id === 1).memory_value, "پاسخ‌ها را کوتاه می‌خواهم");
+  assert.equal(db.memories.find(row => row.id === 2).status, "archived");
 });
 
 test("rejects invalid conflict resolutions without touching memory", async () => {
