@@ -1,0 +1,136 @@
+name: Nava Restore Drill
+
+on:
+  workflow_dispatch:
+    inputs:
+      backup_run_id:
+        description: "GitHub Actions run ID that created the two backup artifacts"
+        required: true
+        type: string
+        default: "42791295233"
+
+permissions:
+  actions: read
+  contents: read
+
+concurrency:
+  group: nava-restore-drill
+  cancel-in-progress: false
+
+jobs:
+  restore-drill:
+    name: Verify source and restore database in isolation
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    env:
+      BACKUP_ENCRYPTION_PASSPHRASE: ${{ secrets.BACKUP_ENCRYPTION_PASSPHRASE }}
+      BACKUP_RUN_ID: ${{ inputs.backup_run_id }}
+
+    steps:
+      - name: Validate inputs and required secret
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ ! "$BACKUP_RUN_ID" =~ ^[0-9]+$ ]]; then
+            echo "::error::backup_run_id must contain digits only."
+            exit 1
+          fi
+          if [ -z "${BACKUP_ENCRYPTION_PASSPHRASE:-}" ]; then
+            echo "::error::Missing GitHub Actions secret: BACKUP_ENCRYPTION_PASSPHRASE"
+            exit 1
+          fi
+
+      - name: Download source backup artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: nava-source-${{ inputs.backup_run_id }}
+          path: restore-input/source
+          repository: ${{ github.repository }}
+          run-id: ${{ inputs.backup_run_id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Download encrypted database artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: navi-database-encrypted-${{ inputs.backup_run_id }}
+          path: restore-input/database
+          repository: ${{ github.repository }}
+          run-id: ${{ inputs.backup_run_id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Verify and inspect Git source backup
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd restore-input/source
+          test -s nava-source.bundle
+          test -s nava-source.bundle.sha256
+          sha256sum -c nava-source.bundle.sha256
+          git bundle verify nava-source.bundle
+          git clone --quiet nava-source.bundle ../source-restored
+          git -C ../source-restored log -1 --format='Restored source commit: %h %s' | tee -a "$GITHUB_STEP_SUMMARY"
+          git -C ../source-restored rev-parse --verify HEAD >/dev/null
+          echo "Source bundle verification and isolated clone: PASS" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Verify, decrypt, and restore database into temporary SQLite
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd restore-input/database
+          test -s nava-memory.sql.enc
+          test -s nava-memory.sql.enc.sha256
+          sha256sum -c nava-memory.sql.enc.sha256
+
+          openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 \
+            -in nava-memory.sql.enc \
+            -out nava-memory.restore-test.sql \
+            -pass env:BACKUP_ENCRYPTION_PASSPHRASE
+
+          test -s nava-memory.restore-test.sql
+          python3 - <<'PY'
+          import os, sqlite3, sys
+          sql_path = "nava-memory.restore-test.sql"
+          db_path = "/tmp/nava-memory-restore-test.sqlite"
+          try:
+              conn = sqlite3.connect(db_path)
+              with open(sql_path, "r", encoding="utf-8") as f:
+                  conn.executescript(f.read())
+              result = conn.execute("PRAGMA integrity_check").fetchone()[0]
+              if result != "ok":
+                  raise RuntimeError("SQLite integrity_check failed: " + str(result))
+              tables = conn.execute(
+                  "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY name"
+              ).fetchall()
+              if not tables:
+                  raise RuntimeError("Restored database contains no application tables")
+              print("SQLite integrity_check: PASS")
+              print("Application tables restored: " + str(len(tables)))
+              with open(os.environ["GITHUB_STEP_SUMMARY"], "a", encoding="utf-8") as summary:
+                  summary.write("\nDatabase artifact checksum: PASS\n")
+                  summary.write("Database decryption: PASS\n")
+                  summary.write("Isolated SQLite restore: PASS\n")
+                  summary.write("SQLite integrity_check: PASS\n")
+                  summary.write("Application tables restored: " + str(len(tables)) + "\n")
+              conn.close()
+          except Exception as exc:
+              print("Restore drill failed: " + str(exc), file=sys.stderr)
+              raise
+          finally:
+              if os.path.exists(db_path):
+                  os.remove(db_path)
+          PY
+
+          rm -f nava-memory.restore-test.sql
+
+      - name: Final safety confirmation
+        shell: bash
+        run: |
+          set -euo pipefail
+          {
+            echo ""
+            echo "## Safety"
+            echo "- No Cloudflare D1 database was created, modified, or deleted."
+            echo "- No live Worker binding or production deployment was changed."
+            echo "- The database restore was performed only in a temporary SQLite file and removed afterward."
+          } >> "$GITHUB_STEP_SUMMARY"
