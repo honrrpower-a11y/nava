@@ -10,16 +10,23 @@ import {
   getNaviPendingMemory,
   getNaviMemoryConflictCandidates,
   resolveNaviMemoryConflict,
-  saveNaviConversation
+  saveNaviConversation,
+  createNaviMemoryProposal,
+  approveNaviMemoryProposal,
+  rejectNaviMemoryProposal,
+  updateNaviMemoryProposal,
+  saveNaviMemoryFact
 } from "../modules/navi-memory.js";
 
 class MockD1 {
-  constructor({ memories = [], messages = [], beforeBatch = null } = {}) {
+  constructor({ memories = [], messages = [], beforeBatch = null, beforeRun = null } = {}) {
     this.memories = memories.map(row => ({ ...row }));
     this.messages = messages.map(row => ({ ...row }));
     this.threads = [];
     this.beforeBatch = beforeBatch;
+    this.beforeRun = beforeRun;
     this.nextMessageId = this.messages.length + 1;
+    this.nextMemoryId = this.memories.reduce((max, row) => Math.max(max, Number(row.id) || 0), 0) + 1;
   }
 
   prepare(sql) {
@@ -35,11 +42,11 @@ class MockD1 {
       async first() {
         if (normalized.includes("from navi_memory_facts_v1")) {
           const [id, ownerId] = values;
-          const status = normalized.includes("status = 'pending'") ? "pending" : "approved";
+          const status = normalized.match(/status = '([^']+)'/)?.[1];
           const row = db.memories.find(item =>
             Number(item.id) === Number(id) &&
             item.owner_id === ownerId &&
-            item.status === status
+            (!status || item.status === status)
           );
           return row ? {
             id: row.id,
@@ -51,11 +58,12 @@ class MockD1 {
       },
       async all() {
         if (normalized.includes("from navi_memory_facts_v1")) {
-          const status = normalized.includes("status = 'approved'") ? "approved" : "pending";
+          const status = normalized.match(/status = '([^']+)'/)?.[1];
           const ownerId = values[0];
           return {
             results: db.memories
-              .filter(item => item.owner_id === ownerId && item.status === status)
+              .filter(item => item.owner_id === ownerId && (!status || item.status === status) &&
+                (normalized.includes("status in ('approved', 'pending')") ? ["approved", "pending"].includes(item.status) : true))
               .map(item => ({ ...item }))
           };
         }
@@ -73,6 +81,30 @@ class MockD1 {
         throw new Error("MockD1.all received unsupported SQL: " + normalized);
       },
       async run() {
+        if (db.beforeRun) await db.beforeRun({ sql: normalized, values, database: db });
+        if (normalized.startsWith("insert into navi_memory_facts_v1")) {
+          const [ownerId, memoryKey, memoryValue, source] = values;
+          const row = { id: db.nextMemoryId++, owner_id: ownerId, memory_key: memoryKey, memory_value: memoryValue, source,
+            status: normalized.includes("'approved'") ? "approved" : "pending" };
+          db.memories.push(row);
+          return { success: true, meta: { changes: 1, last_row_id: row.id } };
+        }
+        if (normalized.startsWith("update navi_memory_facts_v1 set status = 'archived'")) {
+          const [id, ownerId] = values;
+          const row = db.memories.find(item => Number(item.id) === Number(id) && item.owner_id === ownerId && item.status === "pending");
+          if (row) row.status = "archived";
+          return { success: true, meta: { changes: row ? 1 : 0 } };
+        }
+        if (normalized.startsWith("update navi_memory_facts_v1 set memory_value =")) {
+          const [nextValue, id, ownerId] = values;
+          const row = db.memories.find(item => Number(item.id) === Number(id) && item.owner_id === ownerId &&
+            (item.status === "pending" || item.status === "approved"));
+          if (row) {
+            row.memory_value = nextValue;
+            if (normalized.includes("status = 'approved'")) row.status = "approved";
+          }
+          return { success: true, meta: { changes: row ? 1 : 0 } };
+        }
         if (normalized.startsWith("insert or ignore into navi_chat_threads_v1")) {
           const [threadId, ownerId, title] = values;
           if (!db.threads.some(row => row.thread_id === threadId)) {
@@ -276,4 +308,92 @@ test("saves both sides of a conversation and updates the thread", async () => {
     ["user", "سلام"],
     ["assistant", "سلام، خوش آمدی"]
   ]);
+});
+
+
+test("creates a pending memory proposal and returns its generated id", async () => {
+  const db = new MockD1();
+  const result = await createNaviMemoryProposal(db, "کاربر پاسخ‌های کوتاه و کاربردی را ترجیح می‌دهد", "ترجیحات پاسخ‌گویی");
+  assert.equal(result.inserted, true);
+  assert.equal(db.memories.length, 1);
+  assert.equal(db.memories[0].status, "pending");
+  assert.equal(db.memories[0].id, result.id);
+});
+
+test("does not create duplicate or invalid memory proposals", async () => {
+  const db = new MockD1({ memories: [{
+    id: 1, owner_id: NAVI_OWNER_ID, memory_key: "ترجیحات پاسخ‌گویی",
+    memory_value: "کاربر پاسخ‌های کوتاه و کاربردی را ترجیح می‌دهد", status: "pending"
+  }] });
+  const duplicate = await createNaviMemoryProposal(db, "کاربر پاسخ‌های کوتاه و کاربردی را ترجیح می‌دهد", "ترجیحات پاسخ‌گویی");
+  const invalid = await createNaviMemoryProposal(db, "کوتاه", "یادداشت کاربر");
+  assert.equal(duplicate.duplicate, true);
+  assert.equal(invalid.invalid, true);
+  assert.equal(db.memories.length, 1);
+});
+
+test("blocks sensitive data from memory proposals", async () => {
+  const db = new MockD1();
+  const result = await createNaviMemoryProposal(db, "رمز عبور حساب آزمایشی من secret", "یادداشت کاربر");
+  assert.equal(result.sensitive, true);
+  assert.equal(db.memories.length, 0);
+});
+
+test("approves a pending proposal", async () => {
+  const db = new MockD1({ memories: [{
+    id: 1, owner_id: NAVI_OWNER_ID, memory_key: "سبک پاسخ",
+    memory_value: "پاسخ‌ها را کوتاه ارائه بده", status: "pending"
+  }] });
+  const result = await approveNaviMemoryProposal(db, 1);
+  assert.equal(result.success, true);
+  assert.equal(db.memories[0].status, "approved");
+});
+
+test("rejects and archives a pending proposal", async () => {
+  const db = new MockD1({ memories: [{
+    id: 1, owner_id: NAVI_OWNER_ID, memory_key: "یادداشت",
+    memory_value: "این یک پیشنهاد آزمایشی معتبر است", status: "pending"
+  }] });
+  const result = await rejectNaviMemoryProposal(db, 1);
+  assert.equal(result.success, true);
+  assert.equal(db.memories[0].status, "archived");
+});
+
+test("edits a pending proposal without approving it", async () => {
+  const db = new MockD1({ memories: [{
+    id: 1, owner_id: NAVI_OWNER_ID, memory_key: "یادداشت",
+    memory_value: "متن اولیه پیشنهاد حافظه", status: "pending"
+  }] });
+  const result = await updateNaviMemoryProposal(db, 1, "متن اصلاح‌شده پیشنهاد حافظه");
+  assert.equal(result.success, true);
+  assert.equal(db.memories[0].memory_value, "متن اصلاح‌شده پیشنهاد حافظه");
+  assert.equal(db.memories[0].status, "pending");
+});
+
+test("saves an explicit approved memory fact", async () => {
+  const db = new MockD1();
+  const result = await saveNaviMemoryFact(db, "کاربر نام این دستیار را ناوی انتخاب کرده است", "هویت دستیار");
+  assert.equal(result.inserted, true);
+  assert.equal(db.memories[0].status, "approved");
+});
+
+test("rejects invalid memory ids and empty edits safely", async () => {
+  const db = new MockD1();
+  assert.deepEqual(await approveNaviMemoryProposal(db, "not-an-id"), { notFound: true });
+  assert.deepEqual(await rejectNaviMemoryProposal(db, 0), { success: false });
+  assert.deepEqual(await updateNaviMemoryProposal(db, 1, ""), { notFound: true });
+  assert.equal(db.memories.length, 0);
+});
+
+test("propagates database failures instead of reporting a successful save", async () => {
+  const db = new MockD1({
+    beforeRun: async ({ sql }) => {
+      if (sql.startsWith("insert into navi_memory_facts_v1")) throw new Error("simulated D1 failure");
+    }
+  });
+  await assert.rejects(
+    createNaviMemoryProposal(db, "این پیشنهاد برای آزمایش خطای دیتابیس است", "یادداشت"),
+    /simulated D1 failure/
+  );
+  assert.equal(db.memories.length, 0);
 });
