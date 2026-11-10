@@ -1078,8 +1078,18 @@ Do not rewrite uncertain statements as confirmed facts.
 Do not propose a fact that conflicts with approved memory.
 Never modify approved memory automatically.
 
-If the user explicitly asks to remember something,
-the server handles that direct request separately.
+If the user explicitly asks to remember or retain information,
+the server handles that direct request separately. Recognize natural
+Persian wording, not only fixed keywords. Examples include:
+- "می‌خوام یادت بمونه که ..."
+- "این رو تو پروفایلم نگه دار."
+- "این ترجیح رو برای دفعات بعد در نظر داشته باش."
+- "این مورد رو به پروفایلم اضافه کن."
+
+When the user simply states a stable preference without asking you
+to store it, suggest it as a pending proposal instead of saving it
+directly. If the user refers only to "این" or "اون" without stating
+what should be retained, ask what exact information they mean.
 
 OUTPUT FORMAT:
 
