@@ -8,9 +8,12 @@
 // API
 // Preview mode is opt-in via ?naviPreview=1; normal visitors stay on production.
 const NAVI_PREVIEW_MODE = new URLSearchParams(window.location.search).get("naviPreview") === "1";
-const NAVI_BASE = NAVI_PREVIEW_MODE
-  ? "https://nava-music-api-preview.honrrpower.workers.dev"
-  : "https://nava-music-api.honrrpower.workers.dev";
+// Preview mode uses the existing Worker and its existing login secrets,
+// while routing NAVI database calls to the isolated preview D1 binding only.
+const NAVI_DB_HEADER = NAVI_PREVIEW_MODE
+  ? { "X-Navi-Database": "preview" }
+  : {};
+const NAVI_BASE = "https://nava-music-api.honrrpower.workers.dev";
 const NAVI_LOGIN_API = NAVI_BASE + "/navi-login";
 const NAVI_API = NAVI_BASE + "/navi-chat";
 const NAVI_HISTORY_API = NAVI_BASE + "/navi-history";
