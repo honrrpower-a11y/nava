@@ -1452,6 +1452,8 @@ function renderNaviThreads() {
   if (!naviThreadList) return;
   naviThreadList.replaceChildren();
   naviThreads.forEach(thread => {
+    const item = document.createElement("div");
+    item.className = "navi-thread-row";
     const button = document.createElement("button");
     button.type = "button";
     button.className = "navi-thread-item" + (thread.thread_id === naviActiveThreadId ? " active" : "");
@@ -1466,8 +1468,45 @@ function renderNaviThreads() {
       await loadNaviHistory();
       setNaviStatus("گفت‌وگوی انتخاب‌شده آماده ادامه است.");
     });
-    naviThreadList.appendChild(button);
+    const deleteButton = document.createElement("button");
+    deleteButton.type = "button";
+    deleteButton.className = "navi-delete-thread";
+    deleteButton.textContent = "حذف گفتگو";
+    deleteButton.setAttribute("aria-label", "حذف " + (thread.title || "گفت‌وگو"));
+    deleteButton.addEventListener("click", () => deleteNaviThread(thread));
+    item.append(button, deleteButton);
+    naviThreadList.appendChild(item);
   });
+}
+
+async function deleteNaviThread(thread) {
+  if (!thread?.thread_id) return;
+  const title = thread.title || "این گفت‌وگو";
+  if (!window.confirm("گفت‌وگوی «" + title + "» و تمام پیام‌های آن حذف شود؟ این کار قابل بازگشت نیست.")) return;
+  const token = getNaviToken();
+  if (!token) return;
+  try {
+    const response = await fetch(NAVI_THREADS_API, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token, ...NAVI_DB_HEADER },
+      body: JSON.stringify({ action: "delete", threadId: thread.thread_id })
+    });
+    const data = await response.json();
+    if (!response.ok || !data.success) throw new Error(data.error || "حذف گفت‌وگو ناموفق بود.");
+    const deletingActive = naviActiveThreadId === thread.thread_id;
+    await loadNaviThreads();
+    if (deletingActive) {
+      naviActiveThreadId = naviThreads[0]?.thread_id || "owner-main";
+      sessionStorage.setItem("nava_navi_active_thread" + (NAVI_PREVIEW_MODE ? "_preview" : ""), naviActiveThreadId);
+      naviHistory = [];
+      requestResponse.textContent = "";
+      requestResponse.classList.remove("show");
+      await loadNaviHistory();
+    }
+    setNaviStatus("گفت‌وگو حذف شد.");
+  } catch (error) {
+    showNaviReply(error.message || "حذف گفت‌وگو ناموفق بود.");
+  }
 }
 
 async function createNaviThread() {
