@@ -51,10 +51,12 @@ export default {
       ? { ...env, NAVA_DB: env.NAVI_PREVIEW_DB }
       : env;
 
-    const context = { request, env: naviEnv, url, origin, corsOrigin };
-    const naviResponse = await handleNaviRoute(context);
+    const naviContext = { request, env: naviEnv, url, origin, corsOrigin };
+    const naviResponse = await handleNaviRoute(naviContext);
     if (naviResponse) return naviResponse;
 
+    // Keep the original production environment for all non-NAVI routes.
+    const context = { request, env, url, origin, corsOrigin };
     const lyricsResponse = await handleLyricsRoute(context);
     if (lyricsResponse) return lyricsResponse;
 
