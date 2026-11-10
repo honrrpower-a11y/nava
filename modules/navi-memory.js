@@ -550,22 +550,20 @@ async function findMemoryDuplicate(
   const protectedKey = isProtectedMemoryKey(memoryKey);
 
   return (result.results || []).find(item => {
-    // هویت‌های ثابت با کلید شناخته می‌شوند، نه فقط متن مقدار.
-    // بنابراین «علی» و «نام کاربر علی است» یک حافظه محسوب می‌شوند.
-    if (
-      protectedKey &&
-      normalizeMemoryKey(item.memory_key) === normalizedKey
-    ) {
-      return true;
-    }
-
+    const itemKey = normalizeMemoryKey(item.memory_key);
     const existingValue = normalizeMemoryText(item.memory_value);
 
-    return existingValue === normalized ||
-      areMemoryValuesSemanticallySimilar(
-        item.memory_value,
-        value
-      );
+    // هویت‌های ثابت فقط با همان کلید ثابت تطبیق داده می‌شوند.
+    if (protectedKey) return itemKey === normalizedKey;
+
+    // متن کاملاً یکسان را حتی با عنوان متفاوت دوباره ثبت نکن.
+    if (existingValue === normalized) return true;
+
+    // شباهت معنایی فقط در یک دسته/عنوان یکسان مجاز است؛
+    // تا دو پروژه یا تصمیم متفاوت با چند واژه مشترک ادغام نشوند.
+    return Boolean(normalizedKey) &&
+      itemKey === normalizedKey &&
+      areMemoryValuesSemanticallySimilar(item.memory_value, value);
   }) || null;
 }
 
