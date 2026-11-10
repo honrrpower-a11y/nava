@@ -458,6 +458,27 @@ function areMemoryValuesSemanticallySimilar(first, second) {
     (smallerSize >= 2 && largerSize <= smallerSize + 3);
 }
 
+function mergeMemoryValues(existingValue, incomingValue) {
+  const existing = cleanMemoryValue(existingValue);
+  const incoming = cleanMemoryValue(incomingValue);
+
+  if (!existing) return incoming;
+  if (!incoming) return existing;
+
+  const existingTokens = new Set(getMemoryMeaningTokens(existing));
+  const incomingTokens = new Set(getMemoryMeaningTokens(incoming));
+
+  const incomingAddsNothing = [...incomingTokens]
+    .every(token => existingTokens.has(token));
+  if (incomingAddsNothing) return existing;
+
+  const existingAddsNothing = [...existingTokens]
+    .every(token => incomingTokens.has(token));
+  if (existingAddsNothing) return incoming;
+
+  return cleanMemoryValue(existing + "؛ " + incoming);
+}
+
 async function findMemoryDuplicate(
   db,
   value,
@@ -535,12 +556,45 @@ export async function createNaviMemoryProposal(
   );
 
   if (duplicate) {
-    return {
-      inserted: false,
-      duplicate: true,
-      existingId: duplicate.id,
-      existingStatus: duplicate.status
-    };
+    const mergedValue = mergeMemoryValues(
+      duplicate.memory_value,
+      memoryValue
+    );
+
+    if (
+      normalizeMemoryText(mergedValue) ===
+      normalizeMemoryText(duplicate.memory_value)
+    ) {
+      return {
+        inserted: false,
+        duplicate: true,
+        existingId: duplicate.id,
+        existingStatus: duplicate.status
+      };
+    }
+
+    if (duplicate.status === "pending") {
+      const update = await db.prepare(`
+        UPDATE navi_memory_facts_v1
+        SET memory_value = ?, updated_at = datetime('now')
+        WHERE id = ? AND owner_id = ? AND status = 'pending'
+      `).bind(mergedValue, duplicate.id, NAVI_OWNER_ID).run();
+
+      if (!update.success || !update.meta?.changes) {
+        throw new Error("Could not merge pending memory proposal.");
+      }
+
+      return {
+        inserted: false,
+        merged: true,
+        existingId: duplicate.id,
+        existingStatus: "pending",
+        memoryValue: mergedValue
+      };
+    }
+
+    // حافظه تأییدشده بی‌اجازه تغییر نمی‌کند؛
+    // پیشنهاد تازه برای تأیید کاربر ساخته می‌شود.
   }
 
   const memoryKey = createUniqueMemoryKey(
@@ -632,7 +686,49 @@ export async function approveNaviMemoryProposal(
   );
 
   if (duplicate) {
-    return { duplicate: true };
+    const mergedValue = mergeMemoryValues(
+      duplicate.memory_value,
+      memoryValue
+    );
+
+    if (containsSensitiveMemory(mergedValue)) {
+      return { sensitive: true };
+    }
+
+    const targetStatus = duplicate.status;
+    const update = db.prepare(`
+      UPDATE navi_memory_facts_v1
+      SET memory_value = ?, updated_at = datetime('now')
+      WHERE id = ? AND owner_id = ? AND status = ?
+    `).bind(
+      mergedValue,
+      duplicate.id,
+      NAVI_OWNER_ID,
+      targetStatus
+    );
+
+    const archive = db.prepare(`
+      UPDATE navi_memory_facts_v1
+      SET status = 'archived', updated_at = datetime('now')
+      WHERE id = ? AND owner_id = ? AND status = 'pending'
+    `).bind(
+      proposalId,
+      NAVI_OWNER_ID
+    );
+
+    const results = await db.batch([update, archive]);
+    if (!Array.isArray(results) || results.some(item => !item.success)) {
+      throw new Error("Could not merge related memory records.");
+    }
+
+    return {
+      success: true,
+      merged: true,
+      id: duplicate.id,
+      archivedId: proposalId,
+      memoryValue: mergedValue,
+      mergedIntoStatus: targetStatus
+    };
   }
 
   const result = await db.prepare(`
@@ -863,10 +959,44 @@ export async function saveNaviMemoryFact(
   );
 
   if (duplicate) {
+    const mergedValue = mergeMemoryValues(
+      duplicate.memory_value,
+      memoryValue
+    );
+
+    if (
+      normalizeMemoryText(mergedValue) ===
+      normalizeMemoryText(duplicate.memory_value)
+    ) {
+      return {
+        duplicate: true,
+        existingId: duplicate.id,
+        existingStatus: duplicate.status
+      };
+    }
+
+    const update = await db.prepare(`
+      UPDATE navi_memory_facts_v1
+      SET memory_value = ?, source = ?, status = 'approved',
+          updated_at = datetime('now')
+      WHERE id = ? AND owner_id = ? AND status IN ('approved', 'pending')
+    `).bind(
+      mergedValue,
+      memorySource,
+      duplicate.id,
+      NAVI_OWNER_ID
+    ).run();
+
+    if (!update.success || !update.meta?.changes) {
+      throw new Error("Could not merge explicit memory fact.");
+    }
+
     return {
-      duplicate: true,
-      existingId: duplicate.id,
-      existingStatus: duplicate.status
+      merged: true,
+      id: duplicate.id,
+      existingStatus: duplicate.status,
+      memoryKey: duplicate.memory_key,
+      memoryValue: mergedValue
     };
   }
 
