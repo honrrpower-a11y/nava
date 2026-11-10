@@ -297,9 +297,11 @@ export function parseNaviMemoryCommand(message) {
       type: "explicit",
       emptyValue: true
     },
+    {
       regex: /(.+?)\s+(?:رو|را)\s+(?:برای دفعات بعد|از این به بعد)\s+(?:در نظر داشته باش|مدنظر قرار بده|رعایت کن)\s*$/i,
       type: "explicit"
     },
+    {
       regex: /(?:به|داخل)\s+(?:پروفایل|حافظه)(?:‌ی|ی)?(?:‌?م)?(?:\s+بلندمدت)?(?:\s+من)?\s+(?:اضافه|وارد|ثبت|ذخیره)\s+کن\s*[:،]?\s*(.+)$/i,
       type: "explicit"
     },
