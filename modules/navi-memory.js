@@ -276,10 +276,10 @@ export function parseNaviMemoryCommand(message) {
 
     // عبارت‌های مقدمه‌ای را حذف می‌کنیم، اما خودِ واقعیت را کامل نگه می‌داریم.
     rememberedValue = rememberedValue.replace(
-      /^(?:من\\s+)?(?:قبلاً|پیشتر)\\s+(?:به\\s+تو|بهت)\\s+(?:گفته\\s+بودم|گفتم)\\s+/u,
+      /^(?:من\s+)?(?:قبلاً|پیشتر)\s+(?:به\s+تو|بهت)\s+(?:گفته\s+بودم|گفتم)\s+/u,
       ""
     ).replace(
-      /^(?:من\\s+)?(?:به\\s+تو|بهت)\\s+(?:گفته\\s+بودم|گفتم)\\s+/u,
+      /^(?:من\s+)?(?:به\s+تو|بهت)\s+(?:گفته\s+بودم|گفتم)\s+/u,
       ""
     ).trim();
 
@@ -1110,14 +1110,9 @@ export async function saveNaviMemoryFact(
   );
 
   if (duplicate) {
-    const mergedValue = mergeMemoryValues(
-      duplicate.memory_value,
-      memoryValue
-    );
-
     if (
-      normalizeMemoryText(mergedValue) ===
-      normalizeMemoryText(duplicate.memory_value)
+      normalizeMemoryText(duplicate.memory_value) ===
+      normalizeMemoryText(memoryValue)
     ) {
       return {
         duplicate: true,
@@ -1126,28 +1121,49 @@ export async function saveNaviMemoryFact(
       };
     }
 
-    const update = await db.prepare(`
-      UPDATE navi_memory_facts_v1
-      SET memory_value = ?, source = ?, status = 'approved',
-          updated_at = datetime('now')
-      WHERE id = ? AND owner_id = ? AND status IN ('approved', 'pending')
-    `).bind(
-      mergedValue,
-      memorySource,
-      duplicate.id,
-      NAVI_OWNER_ID
-    ).run();
+    // A direct user memory command is an authoritative correction:
+    // replace the matched fact instead of concatenating contradictory
+    // values (for example, favorite color: red -> blue).
+    const statements = [
+      db.prepare(`
+        UPDATE navi_memory_facts_v1
+        SET memory_value = ?, source = ?, status = 'approved',
+            updated_at = datetime('now')
+        WHERE id = ? AND owner_id = ? AND status IN ('approved', 'pending')
+      `).bind(
+        memoryValue,
+        memorySource,
+        duplicate.id,
+        NAVI_OWNER_ID
+      ),
+      db.prepare(`
+        UPDATE navi_memory_facts_v1
+        SET status = 'archived', updated_at = datetime('now')
+        WHERE owner_id = ?
+          AND id != ?
+          AND status = 'pending'
+      `).bind(
+        NAVI_OWNER_ID,
+        duplicate.id
+      )
+    ];
 
-    if (!update.success || !update.meta?.changes) {
-      throw new Error("Could not merge explicit memory fact.");
+    const results = await db.batch(statements);
+    if (
+      !Array.isArray(results) ||
+      results.some(result => !result.success) ||
+      Number(results[0]?.meta?.changes || 0) !== 1
+    ) {
+      throw new Error("Could not replace corrected explicit memory fact.");
     }
 
     return {
-      merged: true,
+      updated: duplicate.status === 'approved',
+      replaced: true,
       id: duplicate.id,
       existingStatus: duplicate.status,
       memoryKey: duplicate.memory_key,
-      memoryValue: mergedValue
+      memoryValue
     };
   }
 
