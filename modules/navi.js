@@ -35,7 +35,7 @@ const NAVI_VERSION = "1.0";
 const NAVI_MAX_MESSAGE = 4000;
 const NAVI_MAX_PAGE_CONTEXT = 3000;
 const NAVI_MAX_MEMORY_VALUE = 1000;
-const NAVI_MAX_PROPOSALS = 2;
+const NAVI_MAX_PROPOSALS = 2; // حداکثر پیشنهاد در هر پاسخ؛ محدودیت فهرست مدیریت نیست.
 const NAVI_GEMINI_TIMEOUT = 60000;
 
 // ======================================
@@ -546,17 +546,23 @@ async function handleMemory({
     if (request.method === "GET") {
       const [
         memories,
-        proposals
+        proposals,
+        approvedCountRow,
+        pendingCountRow
       ] = await Promise.all([
         getNaviApprovedMemory(env.NAVA_DB),
-        getNaviPendingMemory(env.NAVA_DB)
+        getNaviPendingMemory(env.NAVA_DB),
+        env.NAVA_DB.prepare("SELECT COUNT(*) AS total FROM navi_memory_facts_v1 WHERE owner_id = ? AND status = 'approved'").bind(NAVI_OWNER_ID).first(),
+        env.NAVA_DB.prepare("SELECT COUNT(*) AS total FROM navi_memory_facts_v1 WHERE owner_id = ? AND status = 'pending'").bind(NAVI_OWNER_ID).first()
       ]);
 
       return successResponse({
         memories,
         proposals,
-        count: memories.length,
-        proposalCount: proposals.length,
+        count: Number(approvedCountRow?.total ?? memories.length),
+        proposalCount: Number(pendingCountRow?.total ?? proposals.length),
+        returnedCount: memories.length,
+        returnedProposalCount: proposals.length,
         version: NAVI_VERSION
       }, corsOrigin);
     }
