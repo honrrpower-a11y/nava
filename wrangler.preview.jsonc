@@ -1,0 +1,13 @@
+{
+  "name": "nava-music-api-preview",
+  "main": "./index.js",
+  "compatibility_date": "2026-11-01",
+  "workers_dev": true,
+  "d1_databases": [
+    {
+      "binding": "NAVA_DB",
+      "database_name": "nava-memory-preview",
+      "database_id": "b48b0390-f292-4ecf-b36d-31eb2aff3958"
+    }
+  ]
+}
