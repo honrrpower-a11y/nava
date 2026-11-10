@@ -70,7 +70,8 @@ jobs:
           test -s nava-source.bundle
           test -s nava-source.bundle.sha256
           sed 's#  backup-output/#  #' nava-source.bundle.sha256 | sha256sum -c -
-          git bundle verify nava-source.bundle
+          git init --quiet ../source-verify-repo
+          git -C ../source-verify-repo bundle verify "$GITHUB_WORKSPACE/restore-input/source/nava-source.bundle"
           git clone --quiet nava-source.bundle ../source-restored
           git -C ../source-restored log -1 --format='Restored source commit: %h %s' | tee -a "$GITHUB_STEP_SUMMARY"
           git -C ../source-restored rev-parse --verify HEAD >/dev/null
