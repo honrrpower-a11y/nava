@@ -624,11 +624,13 @@ export async function createNaviMemoryProposal(
 
   if (duplicate) {
     if (duplicate.conflict && duplicate.status === "approved") {
+      // نسخه جدید جداگانه ثبت می‌شود؛ نسخه قبلی تا تصمیم کاربر دست‌نخورده می‌ماند.
       mergeCandidateId = duplicate.id;
-    } else if (duplicate.conflict) {
-      return { inserted: false, conflict: true, existingId: duplicate.id, existingStatus: duplicate.status };
-    }
-    const mergedValue = mergeMemoryValues(
+    } else {
+      if (duplicate.conflict) {
+        return { inserted: false, conflict: true, existingId: duplicate.id, existingStatus: duplicate.status };
+      }
+      const mergedValue = mergeMemoryValues(
       duplicate.memory_value,
       memoryValue
     );
@@ -665,9 +667,10 @@ export async function createNaviMemoryProposal(
       };
     }
 
-    // حافظه تأییدشده بی‌اجازه تغییر نمی‌کند؛
-    // پیشنهاد تازه برای تأیید کاربر ساخته می‌شود.
-    mergeCandidateId = duplicate.id;
+      // حافظه تأییدشده بی‌اجازه تغییر نمی‌کند؛
+      // پیشنهاد تازه برای تأیید کاربر ساخته می‌شود.
+      mergeCandidateId = duplicate.id;
+    }
   }
 
   const memoryKey = createUniqueMemoryKey(
