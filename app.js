@@ -637,7 +637,7 @@ function renderNaviMemories(memories) {
     });
 
     actions.append(editButton, deleteButton);
-    card.append(key, value, meta, actions);
+    card.append(value, meta, actions);
     fragment.appendChild(card);
   });
 
@@ -666,6 +666,78 @@ function normalizeNaviProposals(data) {
     .filter(item => Number.isSafeInteger(item.id) && item.id > 0);
 }
 
+function showNaviMemoryDialog({
+  title = "NAVA",
+  message = "",
+  confirmText = "متوجه شدم",
+  cancelText = "",
+  danger = false
+} = {}) {
+  return new Promise(resolve => {
+    const overlay = document.createElement("div");
+    overlay.className = "navi-memory-dialog-backdrop";
+    overlay.setAttribute("role", "presentation");
+
+    const dialog = document.createElement("section");
+    dialog.className = "navi-memory-dialog";
+    dialog.setAttribute("role", "alertdialog");
+    dialog.setAttribute("aria-modal", "true");
+    dialog.setAttribute("aria-label", title);
+
+    const heading = document.createElement("h3");
+    heading.className = "navi-memory-dialog-title";
+    heading.textContent = title;
+
+    const body = document.createElement("p");
+    body.className = "navi-memory-dialog-message";
+    body.textContent = message;
+
+    const actions = document.createElement("div");
+    actions.className = "navi-memory-dialog-actions";
+
+    const confirm = document.createElement("button");
+    confirm.type = "button";
+    confirm.className = danger
+      ? "navi-memory-dialog-confirm is-danger"
+      : "navi-memory-dialog-confirm";
+    confirm.textContent = confirmText;
+
+    let cancel = null;
+    if (cancelText) {
+      cancel = document.createElement("button");
+      cancel.type = "button";
+      cancel.className = "navi-memory-dialog-cancel";
+      cancel.textContent = cancelText;
+    }
+
+    let settled = false;
+    const finish = value => {
+      if (settled) return;
+      settled = true;
+      document.removeEventListener("keydown", onKeydown);
+      overlay.remove();
+      resolve(value);
+    };
+    const onKeydown = event => {
+      if (event.key === "Escape" && cancelText) finish(false);
+    };
+
+    confirm.addEventListener("click", () => finish(true));
+    if (cancel) cancel.addEventListener("click", () => finish(false));
+    overlay.addEventListener("click", event => {
+      if (event.target === overlay && cancelText) finish(false);
+    });
+    document.addEventListener("keydown", onKeydown);
+
+    actions.append(confirm);
+    if (cancel) actions.append(cancel);
+    dialog.append(heading, body, actions);
+    overlay.append(dialog);
+    document.body.append(overlay);
+    confirm.focus();
+  });
+}
+
 function renderNaviMemoryProposals(proposals) {
   const heading = document.createElement("div");
   heading.className = "navi-memory-section-title";
@@ -684,10 +756,6 @@ function renderNaviMemoryProposals(proposals) {
     const card = document.createElement("article");
     card.className = "navi-memory-card navi-memory-proposal";
     card.dataset.proposalId = String(proposal.id);
-
-    const key = document.createElement("div");
-    key.className = "navi-memory-key";
-    key.textContent = proposal.memory_key;
 
     const value = document.createElement("div");
     value.className = "navi-memory-value";
@@ -725,8 +793,15 @@ function renderNaviMemoryProposals(proposals) {
     reject.type = "button";
     reject.className = "navi-memory-reject";
     reject.textContent = "رد پیشنهاد";
-    reject.addEventListener("click", () => {
-      if (window.confirm("این پیشنهاد رد شود؟")) {
+    reject.addEventListener("click", async () => {
+      const confirmed = await showNaviMemoryDialog({
+        title: "NAVA",
+        message: "آیا از رد این پیشنهاد حافظه مطمئن هستی؟",
+        confirmText: "بله، رد شود",
+        cancelText: "انصراف",
+        danger: true
+      });
+      if (confirmed) {
         submitNaviProposalAction(proposal.id, "reject", null, reject);
       }
     });
@@ -851,6 +926,15 @@ async function submitNaviProposalAction(id, action, memoryValue, button) {
       showLoginError("نشست ناوی معتبر نیست. دوباره وارد شو.");
       throw new Error("دسترسی تأیید نشد. دوباره وارد ناوی شو.");
     }
+    if (response.status === 409) {
+      await showNaviMemoryDialog({
+        title: "NAVA",
+        message: "این حافظه قبلاً ثبت شده است؛ مورد تکراری دوباره ذخیره نشد.",
+        confirmText: "متوجه شدم"
+      });
+      return false;
+    }
+
     if (!response.ok || (data && data.success === false)) {
       throw new Error((data && (data.error || data.diagnostic)) || "بررسی پیشنهاد ناموفق بود.");
     }
