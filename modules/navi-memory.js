@@ -605,16 +605,6 @@ export async function createNaviMemoryProposal(
   );
 
   if (duplicate) {
-    // ادغام با پیشنهاد دیگری که هنوز در انتظار بررسی است، نباید
-    // با تأیید این پیشنهاد به‌صورت ضمنی تأیید شود.
-    if (duplicate.status === "pending") {
-      return {
-        duplicate: true,
-        existingId: duplicate.id,
-        existingStatus: "pending"
-      };
-    }
-
     const mergedValue = mergeMemoryValues(
       duplicate.memory_value,
       memoryValue
@@ -747,6 +737,15 @@ export async function approveNaviMemoryProposal(
   );
 
   if (duplicate) {
+    // تأیید یک پیشنهاد نباید پیشنهاد مستقل دیگری را بی‌اجازه تأیید کند.
+    if (duplicate.status === "pending") {
+      return {
+        duplicate: true,
+        existingId: duplicate.id,
+        existingStatus: "pending"
+      };
+    }
+
     const mergedValue = mergeMemoryValues(
       duplicate.memory_value,
       memoryValue
