@@ -18,5 +18,10 @@
         "database_id": "b48b0390-f292-4ecf-b36d-31eb2aff3958"
       }
     ]
+  },
+  "assets": {
+    "directory": "./preview-site",
+    "binding": "ASSETS",
+    "run_worker_first": true
   }
 }
