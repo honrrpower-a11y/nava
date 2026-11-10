@@ -1,6 +1,9 @@
 name: Nava Restore Drill
 
 on:
+  push:
+    paths:
+      - ".github/workflows/restore-drill.yml"
   workflow_dispatch:
     inputs:
       backup_run_id:
@@ -25,7 +28,7 @@ jobs:
 
     env:
       BACKUP_ENCRYPTION_PASSPHRASE: ${{ secrets.BACKUP_ENCRYPTION_PASSPHRASE }}
-      BACKUP_RUN_ID: ${{ inputs.backup_run_id }}
+      BACKUP_RUN_ID: ${{ inputs.backup_run_id || '42791295233' }}
 
     steps:
       - name: Validate inputs and required secret
@@ -44,16 +47,16 @@ jobs:
       - name: Download source backup artifact
         uses: actions/download-artifact@v4
         with:
-          name: nava-source-${{ inputs.backup_run_id }}
+          name: nava-source-${{ inputs.backup_run_id || '42791295233' }}
           path: restore-input/source
           repository: ${{ github.repository }}
-          run-id: ${{ inputs.backup_run_id }}
+          run-id: ${{ inputs.backup_run_id || '42791295233' }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Download encrypted database artifact
         uses: actions/download-artifact@v4
         with:
-          name: navi-database-encrypted-${{ inputs.backup_run_id }}
+          name: navi-database-encrypted-${{ inputs.backup_run_id || '42791295233' }}
           path: restore-input/database
           repository: ${{ github.repository }}
           run-id: ${{ inputs.backup_run_id }}
