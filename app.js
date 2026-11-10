@@ -1586,6 +1586,8 @@ naviAttachmentsInput.addEventListener("change",()=>{
     if(naviSelectedFiles.length>=NAVI_MAX_ATTACHMENTS){showNaviReply("حداکثر سه فایل را می‌توانی هم‌زمان ارسال کنی.");break;}
     if(!NAVI_ALLOWED_ATTACHMENT_TYPES.has(file.type)){showNaviReply("قالب فایل «"+file.name+"» پشتیبانی نمی‌شود. تصویر، PDF یا فایل صوتی انتخاب کن.");continue;}
     if(file.size<=0||file.size>NAVI_MAX_ATTACHMENT_BYTES){showNaviReply("حجم هر فایل باید حداکثر ۵ مگابایت باشد: "+file.name);continue;}
+    const selectedBytes=naviSelectedFiles.reduce((total,item)=>total+item.size,0);
+    if(selectedBytes+file.size>12*1024*1024){showNaviReply("مجموع حجم فایل‌های انتخاب‌شده نباید از ۱۲ مگابایت بیشتر شود.");continue;}
     if(!naviSelectedFiles.some(item=>item.name===file.name&&item.size===file.size))naviSelectedFiles.push(file);
   }
   naviAttachmentsInput.value="";renderNaviAttachments();
