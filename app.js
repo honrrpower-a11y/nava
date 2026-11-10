@@ -807,7 +807,7 @@ function renderNaviMemoryProposals(proposals) {
     });
 
     actions.append(edit, approve, reject);
-    card.append(key, value, meta, actions);
+    card.append(value, meta, actions);
     naviMemoryList.appendChild(card);
   });
 }
