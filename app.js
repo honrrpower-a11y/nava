@@ -623,7 +623,7 @@ function renderNaviMemories(memories) {
     const looksLikeTechnicalId =
       !memoryTitle ||
       /^\d{8,}$/.test(memoryTitle) ||
-      /^[a-f0-9-]{24,}$/i.test(memoryTitle) ||
+      /^(?:\\d{13}-[a-f0-9]{8}|[a-f0-9-]{20,})$/i.test(memoryTitle) ||
       /^(?:memory|fact|record)[_-]?\d+$/i.test(memoryTitle);
 
     key.textContent = looksLikeTechnicalId ? "یادداشت کاربر" : memoryTitle;
