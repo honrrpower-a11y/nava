@@ -260,3 +260,16 @@ test("explicit negative consent wording suppresses proposals even without the wo
     true
   );
 });
+test("negative consent is checked before explicit memory commands", async () => {
+  const { parseNaviMemoryCommandSafely } = await import("../modules/navi.js");
+  const message = "می‌خواهم یک اطلاعات جدید به حافظه‌ات اضافه کنم: رنگ مورد علاقه من آبی نفتی است. آیا می‌توانی آن را به‌عنوان پیشنهاد حافظه ثبت کنی و برای تأیید نهایی از من اجازه بگیری؟ فعلاً بدون تأیید من آن را به حافظه دائمی اضافه نکن";
+  const parsed = parseNaviMemoryCommandSafely(message);
+  assert.equal(parsed.isCommand, false);
+});
+
+test("a direct remember request still reaches the explicit memory command handler", async () => {
+  const { parseNaviMemoryCommandSafely } = await import("../modules/navi.js");
+  const parsed = parseNaviMemoryCommandSafely("رنگ مورد علاقه من آبی نفتی است؛ این را به خاطر بسپار");
+  assert.equal(parsed.isCommand, true);
+  assert.match(parsed.memoryValue, /آبی نفتی/);
+});
