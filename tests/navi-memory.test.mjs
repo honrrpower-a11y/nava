@@ -308,3 +308,13 @@ test("long memory values are retained up to the configured 4000-character limit"
   assert.equal(result.inserted, true);
   assert.equal(insertedValue.length, value.length);
 });
+
+
+test("short confirmation phrases are recognized without treating ordinary replies as approval", async () => {
+  const { parseNaviConfirmationIntent } = await import("../modules/navi.js");
+  assert.equal(parseNaviConfirmationIntent("تأیید بفرما"), "approve");
+  assert.equal(parseNaviConfirmationIntent("تایید."), "approve");
+  assert.equal(parseNaviConfirmationIntent("ردش کن"), "reject");
+  assert.equal(parseNaviConfirmationIntent("بله، ممنون"), null);
+  assert.equal(parseNaviConfirmationIntent("انجام بده و فایل را هم حذف کن"), null);
+});
