@@ -105,9 +105,12 @@
           <h3>ورود اختصاصی به ناوی</h3>
           <p>برای شروع گفت‌وگو با ناوی، رمز ورود اختصاصی را وارد کن.</p>
           <form id="naviLoginForm">
-            <label class="field-label" for="naviPassword">رمز ورود</label>
+            <label class="field-label" for="naviUsername">نام کاربری</label>
+            <input class="navi-password" id="naviUsername" type="text"
+              placeholder="نام کاربری حساب" autocomplete="username" autocapitalize="none">
+            <label class="field-label" for="naviPassword">رمز عبور</label>
             <input class="navi-password" id="naviPassword" type="password"
-              placeholder="رمز اختصاصی ناوی" autocomplete="current-password" required>
+              placeholder="رمز عبور" autocomplete="current-password" required>
             <button class="btn-primary" id="naviLoginButton" type="submit">ورود به ناوی</button>
           </form>
           <div class="navi-auth-error" id="naviLoginError" role="alert"></div>
@@ -115,7 +118,7 @@
 
         <div class="navi-chat-area" id="naviChatArea" hidden>
           <div class="navi-chat-toolbar">
-            <span class="navi-status" id="naviLoginStatus">نشست امن ناوی فعال است.</span>
+            <span class="navi-status" id="naviLoginStatus">نشست امن ناوی فعال است.</span><span class="navi-user-display" id="naviUserDisplay" aria-live="polite"></span>
             <button class="navi-logout" id="naviLogout" type="button">خروج از ناوی</button>
           </div>
 
