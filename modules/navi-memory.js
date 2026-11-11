@@ -540,7 +540,7 @@ export function areMemoryValuesSemanticallySimilar(first, second) {
     [...firstTokens].some(token =>
       secondTokens.has(token) && stableTopicTokens.has(token)
     ) &&
-    overlapRatio === 1 &&
+    overlapRatio >= 0.5 &&
     jaccardRatio >= 0.3 &&
     smallerSize >= 2 &&
     largerSize <= smallerSize + 1;
