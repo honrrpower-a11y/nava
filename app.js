@@ -13,6 +13,7 @@ const NAVI_API = NAVI_BASE + "/navi-chat";
 const NAVI_HISTORY_API = NAVI_BASE + "/navi-history";
 const NAVI_THREADS_API = NAVI_BASE + "/navi-threads";
 const NAVI_MEMORY_API = NAVI_BASE + "/navi-memory";
+const NAVI_SAVE_MESSAGE_API = NAVI_BASE + "/navi-memory-save-message";
 
 // Session
 const NAVI_SESSION_KEY = "nava_navi_session";
@@ -342,7 +343,12 @@ function normalizeNaviHistory(data) {
         role = "assistant";
       }
 
-      return { role, content };
+      const messageId = Number(item.id);
+      return {
+        id: Number.isSafeInteger(messageId) && messageId > 0 ? messageId : null,
+        role,
+        content
+      };
     })
     .filter(Boolean);
 
@@ -385,12 +391,97 @@ function renderNaviHistory(messages) {
     content.textContent = String(item.content || "");
 
     message.append(label, content);
+
+    if (role === "user" && Number.isSafeInteger(item.id) && item.id > 0) {
+      const saveButton = document.createElement("button");
+      saveButton.type = "button";
+      saveButton.className = "navi-message-save";
+      saveButton.textContent = "ذخیره در حافظه";
+      saveButton.addEventListener("click", () => {
+        saveNaviHistoryMessage(item.id, saveButton);
+      });
+      message.appendChild(saveButton);
+    }
+
     fragment.appendChild(message);
   });
 
   naviHistoryList.appendChild(fragment);
   naviHistoryCount.textContent = safeMessages.length + " پیام";
   naviHistoryList.scrollTop = naviHistoryList.scrollHeight;
+}
+
+
+
+
+async function saveNaviHistoryMessage(messageId, button) {
+  const token = getNaviToken();
+
+  if (!token) {
+    clearNaviSession();
+    showNaviReply("نشست ورودت پایان یافته است. لطفاً دوباره وارد شو.");
+    return;
+  }
+
+  if (!Number.isSafeInteger(messageId) || messageId <= 0) return;
+
+  const requestVersion = naviSessionVersion;
+  button.disabled = true;
+  button.textContent = "در حال ذخیره...";
+
+  try {
+    const response = await fetch(NAVI_SAVE_MESSAGE_API, {
+      method: "POST",
+      headers: {
+        "Authorization": "Bearer " + token,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        messageId,
+        threadId: naviActiveThreadId
+      }),
+      cache: "no-store"
+    });
+
+    let data;
+    try {
+      data = await response.json();
+    } catch {
+      throw new Error("پاسخ سرور قابل خواندن نیست.");
+    }
+
+    if (getNaviToken() !== token || naviSessionVersion !== requestVersion) {
+      return;
+    }
+
+    if (response.status === 401 || response.status === 403) {
+      clearNaviSession();
+      showLoginError("نشست ناوی معتبر نیست یا پایان یافته است. دوباره وارد شو.");
+      return;
+    }
+
+    if (!response.ok || data?.success === false) {
+      throw new Error(data?.error || data?.diagnostic || "ذخیره پیام ناموفق بود.");
+    }
+
+    button.textContent = data.duplicate ? "قبلاً ذخیره شده" : "ذخیره شد";
+    button.classList.add("is-saved");
+    button.disabled = true;
+    setNaviStatus(data.message || "وضعیت ذخیره پیام در حافظه به‌روزرسانی شد.");
+
+    if (!naviMemoryContent.hidden) {
+      naviMemoryLoaded = false;
+      loadNaviMemories(true).catch(error => {
+        console.warn("NAVI memory refresh after manual save failed:", error);
+      });
+    }
+
+  } catch (error) {
+    if (naviSessionVersion !== requestVersion) return;
+    button.disabled = false;
+    button.textContent = "ذخیره در حافظه";
+    setNaviStatus("ذخیره پیام انجام نشد: " + (error.message || "خطای نامشخص"));
+  }
 }
 
 
