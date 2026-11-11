@@ -965,7 +965,8 @@ export async function approveNaviMemoryProposal(
     db,
     memoryValue,
     proposalId,
-    existing.memory_key
+    existing.memory_key,
+    ownerId
   );
 
   if (duplicate) {
@@ -1008,7 +1009,7 @@ export async function approveNaviMemoryProposal(
     );
 
     const relatedRecords = replacesApprovedFact
-      ? await findMemoryRelatedRecords(db, memoryValue, proposalId, existing.memory_key)
+      ? await findMemoryRelatedRecords(db, memoryValue, proposalId, existing.memory_key, ownerId)
       : [];
     const archiveSuperseded = relatedRecords
       .filter(item => item.status === "approved" && item.id !== duplicate.id)
@@ -1321,7 +1322,8 @@ export async function saveNaviMemoryFact(
     db,
     memoryValue,
     null,
-    memoryKey
+    memoryKey,
+    ownerId
   );
 
   if (duplicate) {
@@ -1333,7 +1335,8 @@ export async function saveNaviMemoryFact(
         db,
         memoryValue,
         null,
-        memoryKey
+        memoryKey,
+        ownerId
       );
       const superseded = relatedRecords.filter(item =>
         item.id !== duplicate.id &&
@@ -1361,7 +1364,7 @@ export async function saveNaviMemoryFact(
     // A direct user memory command is an authoritative correction:
     // replace the matched fact instead of concatenating contradictory
     // values (for example, favorite color: red -> blue).
-    const relatedRecords = await findMemoryRelatedRecords(db, memoryValue, null, memoryKey);
+    const relatedRecords = await findMemoryRelatedRecords(db, memoryValue, null, memoryKey, ownerId);
     const statements = [
       db.prepare(`
         UPDATE navi_memory_facts_v1
