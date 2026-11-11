@@ -679,6 +679,26 @@ async function findMemoryDuplicate(
   }) || null;
 }
 
+
+async function findMemoryRelatedRecords(db, value, excludeId = null, memoryKey = null) {
+  const result = await db.prepare(`
+    SELECT id, memory_key, memory_value, status
+    FROM navi_memory_facts_v1
+    WHERE owner_id = ? AND status IN ('approved', 'pending') AND id != ?
+  `).bind(NAVI_OWNER_ID, Number(excludeId) || -1).all();
+  const normalized = normalizeMemoryText(value);
+  const normalizedKey = normalizeMemoryKey(memoryKey);
+  const genericKeys = new Set(["یادداشت کاربر", "یادداشت", "حافظه", ""].map(normalizeMemoryText));
+  const hasSpecificKey = Boolean(normalizedKey) && !genericKeys.has(normalizedKey);
+  const protectedKey = isProtectedMemoryKey(memoryKey);
+  return (result.results || []).filter(item => {
+    if (hasSpecificKey && normalizeMemoryKey(item.memory_key) === normalizedKey) return true;
+    if (protectedKey) return false;
+    return normalizeMemoryText(item.memory_value) === normalized ||
+      areMemoryValuesSemanticallySimilar(item.memory_value, value);
+  });
+}
+
 // ======================================
 // CREATE PENDING PROPOSAL
 // ======================================
@@ -885,7 +905,17 @@ export async function approveNaviMemoryProposal(
       NAVI_OWNER_ID
     );
 
-    const results = await db.batch([update, archive]);
+    const relatedRecords = replacesApprovedFact
+      ? await findMemoryRelatedRecords(db, memoryValue, proposalId, existing.memory_key)
+      : [];
+    const archiveSuperseded = relatedRecords
+      .filter(item => item.status === "approved" && item.id !== duplicate.id)
+      .map(item => db.prepare(`
+        UPDATE navi_memory_facts_v1
+        SET status = 'archived', updated_at = datetime('now')
+        WHERE id = ? AND owner_id = ? AND status = 'approved'
+      `).bind(item.id, NAVI_OWNER_ID));
+    const results = await db.batch([update, archive, ...archiveSuperseded]);
     if (!Array.isArray(results) || results.some(item => !item.success)) {
       throw new Error("Could not update related memory records.");
     }
@@ -1202,17 +1232,7 @@ export async function saveNaviMemoryFact(
     // A direct user memory command is an authoritative correction:
     // replace the matched fact instead of concatenating contradictory
     // values (for example, favorite color: red -> blue).
-    const pendingResult = await db.prepare(`
-      SELECT id, memory_value
-      FROM navi_memory_facts_v1
-      WHERE owner_id = ? AND status = 'pending' AND id != ?
-    `).bind(NAVI_OWNER_ID, duplicate.id).all();
-
-    const relatedPending = (pendingResult.results || []).filter(item =>
-      normalizeMemoryText(item.memory_value) === normalizeMemoryText(memoryValue) ||
-      areMemoryValuesSemanticallySimilar(item.memory_value, memoryValue)
-    );
-
+    const relatedRecords = await findMemoryRelatedRecords(db, memoryValue, null, memoryKey);
     const statements = [
       db.prepare(`
         UPDATE navi_memory_facts_v1
@@ -1225,11 +1245,13 @@ export async function saveNaviMemoryFact(
         duplicate.id,
         NAVI_OWNER_ID
       ),
-      ...relatedPending.map(item => db.prepare(`
-        UPDATE navi_memory_facts_v1
-        SET status = 'archived', updated_at = datetime('now')
-        WHERE id = ? AND owner_id = ? AND status = 'pending'
-      `).bind(item.id, NAVI_OWNER_ID))
+      ...relatedRecords
+        .filter(item => item.id !== duplicate.id)
+        .map(item => db.prepare(`
+          UPDATE navi_memory_facts_v1
+          SET status = 'archived', updated_at = datetime('now')
+          WHERE id = ? AND owner_id = ? AND status IN ('approved', 'pending')
+        `).bind(item.id, NAVI_OWNER_ID))
     ];
 
     const results = await db.batch(statements);
