@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 
 import {
   areMemoryValuesSemanticallySimilar,
+  getNaviArchivedMemory,
   parseNaviMemoryCommand
 } from "../modules/navi-memory.js";
 
@@ -46,4 +47,32 @@ test("remember command extracts the fact instead of saving the instruction", () 
   assert.match(parsed.value, /رنگ مورد علاقه/);
   assert.match(parsed.value, /قرمز/);
   assert.doesNotMatch(parsed.value, /به خاطر بسپار/);
+});
+
+
+test("archived memory query returns only archived rows for the owner", async () => {
+  let sql = "";
+  let bound = [];
+  const db = {
+    prepare(query) {
+      sql = query;
+      return {
+        bind(...values) {
+          bound = values;
+          return {
+            async all() {
+              return { results: [{ id: 7, status: "archived", memory_value: "رنگ قرمز" }] };
+            }
+          };
+        }
+      };
+    }
+  };
+
+  const rows = await getNaviArchivedMemory(db);
+  assert.match(sql, /status = 'archived'/);
+  assert.match(sql, /owner_id = \\?/);
+  assert.deepEqual(bound, ["owner", 200]);
+  assert.equal(rows.length, 1);
+  assert.equal(rows[0].status, "archived");
 });
