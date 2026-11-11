@@ -198,7 +198,7 @@ export function prepareNaviHistory(
 export async function searchNaviConversationHistory(db, query, limit = 8, recentHistory = []) {
   const terms = [...new Set(String(query || '').normalize('NFKC')
     .replace(/[ي]/g, 'ی').replace(/[ك]/g, 'ک').toLowerCase()
-    .replace(/[^\\p{L}\\p{N}\\s]/gu, ' ').split(/\\s+/)
+    .replace(/[^\p{L}\p{N}\s]/gu, ' ').split(/\s+/)
     .filter(word => word.length > 1))];
   if (!terms.length) return [];
   const recent = new Set((recentHistory || []).map(item => String(item?.content || '').trim()).filter(Boolean));
