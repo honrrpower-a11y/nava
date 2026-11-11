@@ -273,3 +273,38 @@ test("a direct remember request still reaches the explicit memory command handle
   assert.equal(parsed.isCommand, true);
   assert.match(parsed.memoryValue, /آبی نفتی/);
 });
+
+
+test("proposal plus approval request never enters direct-save parser", async () => {
+  const { parseNaviMemoryCommandSafely } = await import("../modules/navi.js");
+  const message = "قبلاً رنگ مورد علاقه‌ام آبی نفتی بود، اما الان سبز یشمی را ترجیح می‌دهم. این تغییر را به‌عنوان پیشنهاد حافظه ثبت کن و قبل از جایگزینی اطلاعات قبلی، از من تأیید بگیر.";
+  const parsed = parseNaviMemoryCommandSafely(message);
+  assert.equal(parsed.isCommand, false);
+});
+
+test("long memory values are retained up to the configured 4000-character limit", async () => {
+  const { createNaviMemoryProposal } = await import("../modules/navi-memory.js");
+  const value = "ترجیح پایدار کاربر " + "الف".repeat(1500);
+  let insertedValue = "";
+  const db = {
+    prepare(sql) {
+      let args = [];
+      const statement = {
+        bind(...values) { args = values; return statement; },
+        async all() { return { results: [] }; },
+        async first() { return null; },
+        async run() {
+          if (/INSERT INTO navi_memory_facts_v1/.test(sql)) {
+            insertedValue = args.find(item => typeof item === "string" && item.length > 100) || "";
+            return { success: true, meta: { changes: 1, last_row_id: 41 } };
+          }
+          return { success: true, meta: { changes: 1 } };
+        }
+      };
+      return statement;
+    }
+  };
+  const result = await createNaviMemoryProposal(db, value, "آزمایش طول");
+  assert.equal(result.inserted, true);
+  assert.equal(insertedValue.length, value.length);
+});
