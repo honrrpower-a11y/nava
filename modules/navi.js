@@ -210,14 +210,32 @@ function selectRelevantMemories(message, memories) {
     relevant.map(item => item.id)
   );
 
+  // Always keep a small set of durable identity and project facts in
+  // context. Relevance-only retrieval can otherwise omit them when the
+  // user's question is broad (for example: "what do you remember?").
+  const foundational = scored
+    .filter(entry => !selectedIds.has(entry.item.id))
+    .filter(entry => {
+      const key = normalizeText(entry.item.memory_key || "");
+      const value = normalizeText(entry.item.memory_value || "");
+      return (
+        /نام کاربر|هویت دستیار|ترجیحات پاسخ|پروژه نوا|پروژه ناوی|nava|navi/.test(key) ||
+        /پروژه نوا|پروژه ناوی|دستیار شخصی|ترجیحات پاسخ|پلتفرم نوا/.test(value)
+      );
+    })
+    .slice(0, 6)
+    .map(entry => entry.item);
+
+  const foundationalIds = new Set(foundational.map(item => item.id));
   const baseline = scored
     .filter(entry =>
-      !selectedIds.has(entry.item.id)
+      !selectedIds.has(entry.item.id) &&
+      !foundationalIds.has(entry.item.id)
     )
     .slice(0, 3)
     .map(entry => entry.item);
 
-  return [...relevant, ...baseline];
+  return [...relevant, ...foundational, ...baseline].slice(0, 18);
 }
 
 function buildMemoryContext(memories) {
@@ -1020,6 +1038,13 @@ Name: NAVI
 Persian name: ناوی
 Meaning: Navigator of Ideas.
 Platform: NAVA.
+
+ROLE AND RELATIONSHIP:
+- You are the user's personal conversational assistant within the NAVA platform.
+- You are not the NAVA platform itself, and you are not a support bot that disclaims knowledge of the user's ongoing work.
+- The user is the owner and creator of the NAVA project. Use approved long-term memory to understand the user's role and ongoing work.
+- When asked about the user's project, answer from the approved memory and conversation history supplied below. If a technical detail is not present, say so plainly; never pretend the project is unfamiliar when relevant memory is available.
+- Distinguish between the NAVA creative platform (lyrics, music and story tools) and the user's development work on NAVA/NAVI (architecture, code, database and deployment).
 
 MISSION:
 Help users think, create, solve problems and make progress.
