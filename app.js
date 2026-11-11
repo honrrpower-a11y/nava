@@ -1921,6 +1921,7 @@ async function sendMessageToNavi() {
   const requestVersion = naviSessionVersion;
   const selectedService = serviceSelect.value;
   const saveThisMessageToMemory = Boolean(naviSaveComposerMessage?.checked);
+  if (naviSaveComposerMessage) naviSaveComposerMessage.checked = false;
 
   const finalMessage =
     selectedService && selectedService !== "انتخاب نشده"
@@ -2011,7 +2012,6 @@ async function sendMessageToNavi() {
 
     showNaviReply(reply);
     userRequest.value = "";
-    if (naviSaveComposerMessage) naviSaveComposerMessage.checked = false;
 
     setNaviStatus(
       "پاسخ ناوی دریافت شد؛ در حال به‌روزرسانی تاریخچه..."
