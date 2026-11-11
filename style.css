@@ -513,9 +513,9 @@ body.light .navi-composer-memory{background:#f8f1e6;border-top-color:rgba(193,12
   margin:0;
   padding:10px 13px;
   border:0;
-  border-top:1px solid var(--border);
+  border-top:1px solid rgba(229,184,94,.30);
   border-radius:0;
-  background:var(--panel);
+  background:linear-gradient(90deg,rgba(229,184,94,.045),var(--panel) 28%,var(--panel) 72%,rgba(229,184,94,.045));
   color:var(--muted);
   cursor:pointer;
   transition:background .2s,color .2s;
