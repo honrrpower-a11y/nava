@@ -566,6 +566,15 @@ function resetNaviMemoryPanel() {
     naviMemoryProposalList.appendChild(proposalEmpty);
   }
 
+  const archivedList = document.getElementById("naviMemoryArchivedList");
+  if (archivedList) {
+    archivedList.replaceChildren();
+    const archivedEmpty = document.createElement("div");
+    archivedEmpty.className = "navi-memory-empty";
+    archivedEmpty.textContent = "برای مشاهده سوابق وارد ناوی شو.";
+    archivedList.appendChild(archivedEmpty);
+  }
+
   naviMemoryStatus.textContent = "حافظه‌ها بارگذاری نشده‌اند.";
   naviMemoryError.textContent = "";
 
