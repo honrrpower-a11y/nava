@@ -564,7 +564,7 @@ async function handleCreateNaviUser({ request, env, origin, corsOrigin }) {
   const username = safeNaviText(input?.username || "", 40).trim().toLowerCase();
   const displayName = safeNaviText(input?.displayName || "", 80).trim();
   const password = typeof input?.password === "string" ? input.password : "";
-  if (!/^[a-z0-9][a-z0-9._-]{2,39}$/.test(username)) {
+  if (!/^[a-z0-9][a-z0-9._-]{2,39}$/.test(username) || username === "owner") {
     return errorResponse("نام کاربری باید ۳ تا ۴۰ نویسه و شامل حروف انگلیسی، عدد، نقطه، خط تیره یا زیرخط باشد.", 400, corsOrigin);
   }
   if (!displayName) return errorResponse("نام نمایشی را وارد کن.", 400, corsOrigin);
