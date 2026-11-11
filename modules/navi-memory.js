@@ -218,9 +218,12 @@ export async function searchNaviConversationHistory(db, query, limit = 8, recent
     }).filter(row => row.score > 0).sort((a, b) => b.score - a.score);
   const safeLimit = Math.max(1, Math.min(Number(limit) || 8, 12));
   return ranked.slice(0, safeLimit).reverse().map(row => ({
-    threadId: row.thread_id, threadTitle: row.thread_title || 'گفت‌وگوی بدون عنوان',
-    role: row.role, content: safeNaviText(row.content, 1800),
-    createdAt: row.created_at, relevance: row.score
+    threadId: row.thread_id,
+    threadTitle: row.thread_title || 'گفت‌وگوی بدون عنوان',
+    role: row.role,
+    content: safeNaviText(row.content, 1800),
+    createdAt: row.created_at || null,
+    relevance: row.score
   }));
 }
 
