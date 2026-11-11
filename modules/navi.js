@@ -585,7 +585,7 @@ async function handleHistory({
     }
 
     const result = await env.NAVA_DB.prepare(`
-      SELECT role, content, created_at
+      SELECT id, role, content, created_at
       FROM navi_chat_messages_v1
       WHERE thread_id = ?
       ORDER BY id DESC
@@ -595,6 +595,7 @@ async function handleHistory({
     const messages = (result.results || [])
       .reverse()
       .map(row => ({
+        id: Number(row.id),
         role: row.role,
         content: row.content,
         createdAt: row.created_at
@@ -618,6 +619,105 @@ async function handleHistory({
     );
   }
 }
+
+// ======================================
+// SAVE A USER MESSAGE TO APPROVED MEMORY
+// ======================================
+
+async function handleSaveMessageMemory({
+  request,
+  env,
+  origin,
+  corsOrigin
+}) {
+  const auth = await authorize(request, env, origin, corsOrigin);
+  if (!auth.valid) return auth.response;
+
+  if (!env.NAVA_DB) {
+    return errorResponse("اتصال دیتابیس NAVI تنظیم نشده است.", 500, corsOrigin);
+  }
+
+  let input;
+  try {
+    input = await request.json();
+  } catch {
+    return errorResponse("اطلاعات ارسالی معتبر نیست.", 400, corsOrigin);
+  }
+
+  if (!isObject(input)) {
+    return errorResponse("ساختار اطلاعات ارسالی معتبر نیست.", 400, corsOrigin);
+  }
+
+  const messageId = Number(input.messageId);
+  const threadId = String(input.threadId || "").trim();
+
+  if (!Number.isSafeInteger(messageId) || messageId <= 0 || !threadId || threadId.length > 128) {
+    return errorResponse("شناسه پیام یا گفت‌وگو معتبر نیست.", 400, corsOrigin);
+  }
+
+  try {
+    const row = await env.NAVA_DB.prepare(`
+      SELECT m.id, m.content
+      FROM navi_chat_messages_v1 AS m
+      INNER JOIN navi_chat_threads_v1 AS t
+        ON t.thread_id = m.thread_id
+      WHERE m.id = ?
+        AND m.thread_id = ?
+        AND m.role = 'user'
+        AND t.owner_id = ?
+      LIMIT 1
+    `).bind(messageId, threadId, NAVI_OWNER_ID).first();
+
+    if (!row) {
+      return errorResponse("پیام انتخاب‌شده پیدا نشد یا متعلق به این گفت‌وگو نیست.", 404, corsOrigin);
+    }
+
+    const memoryValue = String(row.content || "").trim();
+
+    if (memoryValue.length > NAVI_MAX_MEMORY_VALUE) {
+      return errorResponse("متن پیام بیش از ۱۲۰۰۰ نویسه است و ذخیره نشد.", 413, corsOrigin);
+    }
+
+    if (memoryValue.length < 8) {
+      return errorResponse("این پیام برای ذخیره در حافظه بیش از حد کوتاه است.", 400, corsOrigin);
+    }
+
+    if (containsSensitiveInformation(memoryValue)) {
+      return errorResponse("این پیام شامل اطلاعات حساس است و در حافظه ذخیره نمی‌شود.", 400, corsOrigin);
+    }
+
+    const result = await saveNaviMemoryFact(
+      env.NAVA_DB,
+      memoryValue,
+      "پیام ذخیره‌شده از گفتگو",
+      "manual_message_save"
+    );
+
+    return successResponse({
+      action: "manual_message_save",
+      messageId,
+      duplicate: Boolean(result.duplicate),
+      saved: !result.duplicate,
+      memory: result,
+      message: result.duplicate
+        ? "این پیام یا اطلاعات مشابه آن از قبل در حافظه وجود دارد."
+        : "پیام انتخاب‌شده در حافظه تأییدشده NAVI ذخیره شد."
+    }, corsOrigin);
+
+  } catch (error) {
+    logError("Manual message memory save failed", error);
+    const sensitive = String(error?.message || "").includes("Sensitive information");
+    return errorResponse(
+      sensitive
+        ? "این پیام شامل اطلاعات حساس است و ذخیره نشد."
+        : "ذخیره پیام در حافظه NAVI ناموفق بود.",
+      sensitive ? 400 : 500,
+      corsOrigin,
+      { diagnostic: diagnostic(error) }
+    );
+  }
+}
+
 
 // ======================================
 // MEMORY MANAGEMENT
@@ -1984,6 +2084,18 @@ export async function handleNaviRoute({
       (request.method === "GET" || request.method === "POST")
     ) {
       return await handleThreads({ request, env, origin, corsOrigin });
+    }
+
+    if (
+      url.pathname === "/navi-memory-save-message" &&
+      request.method === "POST"
+    ) {
+      return await handleSaveMessageMemory({
+        request,
+        env,
+        origin,
+        corsOrigin
+      });
     }
 
     if (
