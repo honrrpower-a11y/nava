@@ -1817,7 +1817,7 @@ async function handleChat({
   let manualMemorySaveResult = null;
   let manualMemorySaveError = "";
   if (input.saveToMemory === true) {
-    const memoryValue = safeNaviText(message, NAVI_MAX_MEMORY_VALUE + 1).trim();
+    const memoryValue = safeNaviText(typeof input.memoryValue === "string" ? input.memoryValue : message, NAVI_MAX_MEMORY_VALUE + 1).trim();
     if (memoryValue.length > NAVI_MAX_MEMORY_VALUE) manualMemorySaveError = "متن پیام از سقف ۱۲۰۰۰ نویسه بیشتر است و در حافظه ذخیره نشد.";
     else if (memoryValue.length < 8) manualMemorySaveError = "پیام خیلی کوتاه است و برای حافظه بلندمدت مناسب نیست.";
     else if (containsSensitiveInformation(memoryValue)) manualMemorySaveError = "این پیام شامل اطلاعات حساس است و در حافظه ذخیره نشد.";
