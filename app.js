@@ -1955,6 +1955,7 @@ async function sendMessageToNavi() {
         pageContext: pageContext,
         threadId: naviActiveThreadId,
         saveToMemory: saveThisMessageToMemory,
+        memoryValue: message,
         history: naviHistory.slice(-NAVI_CONTEXT_MESSAGES)
       })
     });
