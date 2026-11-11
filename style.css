@@ -462,3 +462,44 @@ body.light .navi-memory-count{background:#fff8ed;color:#687487}
 body.light .navi-composer-memory{background:#fffdf8;color:#263a56}
 body.light .navi-composer-memory:has(input:checked){background:#fff3d9;border-color:#c17a1c}
 @media(max-width:480px){.navi-memory-accordion-toggle{padding:12px;font-size:11px}.navi-memory-accordion-content{padding:9px}.navi-composer-memory{align-items:flex-start}}
+
+
+/* NAVI composer — integrated memory option */
+.navi-composer{
+  margin:0 0 13px;
+  overflow:hidden;
+  border:1px solid var(--border);
+  border-radius:13px;
+  background:var(--bg);
+  transition:border-color .2s,box-shadow .2s;
+}
+.navi-composer:focus-within{
+  border-color:var(--blue);
+  box-shadow:0 0 0 3px rgba(37,202,255,.08),0 0 15px rgba(229,184,94,.06);
+}
+.navi-composer .request-textarea{
+  display:block;
+  min-height:120px;
+  margin:0;
+  border:0;
+  border-radius:0;
+  background:transparent;
+  box-shadow:none;
+}
+.navi-composer .request-textarea:focus{
+  border:0;
+  box-shadow:none;
+}
+.navi-composer-memory{
+  margin:0;
+  padding:9px 13px;
+  border:0;
+  border-top:1px solid var(--border);
+  border-radius:0;
+  background:var(--panel);
+}
+.navi-composer-memory-copy small{font-size:10px}
+body.light .navi-composer{background:#fffdf8;border-color:rgba(193,127,37,.30)}
+body.light .navi-composer .request-textarea{background:transparent;color:#17243b}
+body.light .navi-composer-memory{background:#f8f1e6;border-top-color:rgba(193,127,37,.22)}
+@media(max-width:480px){.navi-composer-memory{align-items:center;padding:9px 11px}}
