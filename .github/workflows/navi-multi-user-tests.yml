@@ -1,0 +1,32 @@
+name: NAVI multi-user isolation tests
+
+on:
+  push:
+    branches:
+      - feature/navi-multi-user-accounts
+    paths:
+      - "modules/navi.js"
+      - "modules/navi-auth.js"
+      - "modules/navi-memory.js"
+      - "tests/**"
+      - ".github/workflows/navi-multi-user-tests.yml"
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Run NAVI tests
+        run: node --test tests/*.test.mjs
