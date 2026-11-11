@@ -344,9 +344,9 @@ export function shouldSuppressNaviMemoryProposals(message) {
 
   // A negative consent instruction always overrides automatic memory suggestions.
   const hasNoSaveInstruction =
-    /بدون\\s+(?:تأیید|تایید)(?:\\s+نهایی)?(?:\\s+من)?[\\s\\S]{0,120}(?:ذخیره|ثبت|اضافه)\\s+نکن/u.test(text) ||
-    /(?:فعلاً|فعلا)[\\s\\S]{0,100}(?:ذخیره|ثبت|اضافه)\\s+نکن/u.test(text) ||
-    /(?:ذخیره|ثبت|اضافه)\\s+نکن[؛؛،,\\s]*$/u.test(text);
+    /بدون\s+(?:تأیید|تایید)(?:\s+نهایی)?(?:\s+من)?[\s\S]{0,120}(?:ذخیره|ثبت|اضافه)\s+نکن/u.test(text) ||
+    /(?:فعلاً|فعلا)[\s\S]{0,100}(?:ذخیره|ثبت|اضافه)\s+نکن/u.test(text) ||
+    /(?:ذخیره|ثبت|اضافه)\s+نکن[؛؛،,\s]*$/u.test(text);
 
   return hasNoSaveInstruction;
 }
