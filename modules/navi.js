@@ -1814,6 +1814,21 @@ async function handleChat({
   }
 
   let reply = parsed.reply;
+  let manualMemorySaveResult = null;
+  let manualMemorySaveError = "";
+  if (input.saveToMemory === true) {
+    const memoryValue = safeNaviText(message, NAVI_MAX_MEMORY_VALUE + 1).trim();
+    if (memoryValue.length > NAVI_MAX_MEMORY_VALUE) manualMemorySaveError = "متن پیام از سقف ۱۲۰۰۰ نویسه بیشتر است و در حافظه ذخیره نشد.";
+    else if (memoryValue.length < 8) manualMemorySaveError = "پیام خیلی کوتاه است و برای حافظه بلندمدت مناسب نیست.";
+    else if (containsSensitiveInformation(memoryValue)) manualMemorySaveError = "این پیام شامل اطلاعات حساس است و در حافظه ذخیره نشد.";
+    else {
+      try {
+        manualMemorySaveResult = await saveNaviMemoryFact(env.NAVA_DB, memoryValue, "پیام انتخاب‌شده از کادر گفتگو", "composer_manual_save");
+        if (manualMemorySaveResult.tooLong) manualMemorySaveError = "ترکیب این پیام با اطلاعات قبلی از سقف حافظه عبور می‌کند؛ ذخیره انجام نشد.";
+        else if (manualMemorySaveResult.invalid || manualMemorySaveResult.sensitive) manualMemorySaveError = "این پیام شرایط لازم برای ذخیره در حافظه را ندارد.";
+      } catch (error) { logError("Composer memory save failed", error); manualMemorySaveError = "ثبت پیام در حافظه با خطا روبه‌رو شد."; }
+    }
+  }
 
   if (!reply) {
     return errorResponse(
@@ -1837,7 +1852,7 @@ async function handleChat({
   let proposalsMergedIntoPending = 0;
   let proposalsMergeCandidates = 0;
 
-  const suppressMemoryProposals = shouldSuppressNaviMemoryProposals(message);
+  const suppressMemoryProposals = input.saveToMemory === true || shouldSuppressNaviMemoryProposals(message);
   let normalizedProposals = parsed.structured && !suppressMemoryProposals
     ? normalizeMemoryProposals(parsed.memoryProposals)
     : [];
@@ -1917,6 +1932,10 @@ async function handleChat({
       "»\nدوست داری این نکته را برای گفتگوهای بعدی به خاطر بسپارم؟";
   }
 
+  if (manualMemorySaveResult?.inserted || manualMemorySaveResult?.updated || manualMemorySaveResult?.merged) reply += "\n\n🧠 این پیام را طبق انتخاب خودت در حافظه تأییدشده ذخیره کردم.";
+  else if (manualMemorySaveResult?.duplicate) reply += "\n\n🧠 این پیام یا اطلاعات مشابه آن از قبل در حافظه تأییدشده وجود داشت.";
+  else if (manualMemorySaveError) reply += "\n\n🧠 " + manualMemorySaveError;
+
   // ----------------------------------
   // SAVE CONVERSATION
   // ----------------------------------
@@ -1959,7 +1978,10 @@ async function handleChat({
       proposalsMergedIntoPending,
       proposalsMergeCandidates,
       proposals: createdProposals,
-      proposalProcessingFailed
+      proposalProcessingFailed,
+      manualSaved: Boolean(manualMemorySaveResult && (manualMemorySaveResult.inserted || manualMemorySaveResult.updated || manualMemorySaveResult.merged)),
+      manualDuplicate: Boolean(manualMemorySaveResult?.duplicate),
+      manualSaveError: manualMemorySaveError || null
     }
   }, corsOrigin);
 }
