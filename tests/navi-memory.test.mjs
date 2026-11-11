@@ -238,3 +238,25 @@ test("Gemini parser preserves braces and escaped quotes inside JSON strings", as
   assert.equal(parsed.structured, true);
   assert.equal(parsed.reply, 'متن دارای } و "نقل‌قول"');
 });
+
+test("negative memory consent instruction suppresses all model-generated proposals", async () => {
+  const { shouldSuppressNaviMemoryProposals } = await import("../modules/navi.js");
+  const message = "می‌خواهم یک اطلاعات جدید به حافظه‌ات اضافه کنم: «رنگ مورد علاقه من آبی نفتی است.» آیا می‌توانی این اطلاعات را به‌عنوان پیشنهاد حافظه ثبت کنی و برای تأیید نهایی از من اجازه بگیری؟ فعلاً بدون تأیید من آن را به حافظه دائمی اضافه نکن.";
+  assert.equal(shouldSuppressNaviMemoryProposals(message), true);
+});
+
+test("ordinary stable preference statements are not blocked from proposal review", async () => {
+  const { shouldSuppressNaviMemoryProposals } = await import("../modules/navi.js");
+  assert.equal(
+    shouldSuppressNaviMemoryProposals("رنگ مورد علاقه من آبی نفتی است."),
+    false
+  );
+});
+
+test("explicit negative consent wording suppresses proposals even without the word فعلاً", async () => {
+  const { shouldSuppressNaviMemoryProposals } = await import("../modules/navi.js");
+  assert.equal(
+    shouldSuppressNaviMemoryProposals("بدون تأیید من این مورد را در حافظه ثبت نکن."),
+    true
+  );
+});
