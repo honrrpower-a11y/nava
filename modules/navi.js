@@ -256,49 +256,60 @@ function buildMemoryContext(memories) {
 // GEMINI RESPONSE PARSER
 // ======================================
 
-function parseNaviGeminiResponse(rawText) {
+export function parseNaviGeminiResponse(rawText) {
   const text = String(rawText || "").trim();
-
-  if (!text) {
-    return {
-      reply: "",
-      memoryProposals: [],
-      structured: false
-    };
-  }
+  if (!text) return { reply: "", memoryProposals: [], structured: false };
 
   const cleaned = text
-    .replace(/^```(?:json)?\s*/i, "")
-    .replace(/\s*```$/i, "")
+    .replace(/^\\uFEFF/, "")
+    .replace(/^\\s*```(?:json)?\\s*/i, "")
+    .replace(/\\s*```\\s*$/i, "")
     .trim();
 
-  try {
-    const parsed = JSON.parse(cleaned);
+  const candidates = [cleaned];
+  const firstBrace = cleaned.indexOf("{");
 
-    if (
-      !isObject(parsed) ||
-      typeof parsed.reply !== "string"
-    ) {
-      throw new Error("Invalid response structure.");
+  // Extract one balanced JSON object, respecting quoted strings and escapes.
+  if (firstBrace >= 0) {
+    let depth = 0;
+    let inString = false;
+    let escaped = false;
+
+    for (let i = firstBrace; i < cleaned.length; i += 1) {
+      const char = cleaned[i];
+      if (inString) {
+        if (escaped) escaped = false;
+        else if (char === "\\\\") escaped = true;
+        else if (char === '"') inString = false;
+        continue;
+      }
+      if (char === '"') inString = true;
+      else if (char === "{") depth += 1;
+      else if (char === "}") {
+        depth -= 1;
+        if (depth === 0) {
+          candidates.push(cleaned.slice(firstBrace, i + 1));
+          break;
+        }
+      }
     }
-
-    return {
-      reply: safeNaviText(parsed.reply, 10000),
-      memoryProposals: Array.isArray(
-        parsed.memoryProposals
-      )
-        ? parsed.memoryProposals
-        : [],
-      structured: true
-    };
-
-  } catch {
-    return {
-      reply: safeNaviText(text, 10000),
-      memoryProposals: [],
-      structured: false
-    };
   }
+
+  for (const candidate of candidates) {
+    try {
+      const parsed = JSON.parse(candidate);
+      if (!isObject(parsed) || typeof parsed.reply !== "string") continue;
+      return {
+        reply: safeNaviText(parsed.reply, 10000),
+        memoryProposals: Array.isArray(parsed.memoryProposals) ? parsed.memoryProposals : [],
+        structured: true
+      };
+    } catch {
+      // Try the next candidate; model output is never executable.
+    }
+  }
+
+  return { reply: safeNaviText(cleaned, 10000), memoryProposals: [], structured: false };
 }
 
 // ======================================
