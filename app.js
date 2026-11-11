@@ -1557,7 +1557,14 @@ function renderNaviThreads() {
 async function deleteNaviThread() {
   const thread = naviThreads.find(item => item.thread_id === naviActiveThreadId);
   if (!thread) return;
-  if (!window.confirm("گفت‌وگوی «" + (thread.title || "بدون عنوان") + "» و تمام پیام‌های آن حذف شود؟")) return;
+  const confirmed = await showNaviMemoryDialog({
+    title: "تأیید حذف گفت‌وگو",
+    message: "گفت‌وگوی «" + (thread.title || "بدون عنوان") + "» و تمام پیام‌های آن حذف شود؟",
+    confirmText: "بله، حذف شود",
+    cancelText: "انصراف",
+    danger: true
+  });
+  if (!confirmed) return;
   const token = getNaviToken();
   if (!token) return;
   naviDeleteThreadButton.disabled = true;
