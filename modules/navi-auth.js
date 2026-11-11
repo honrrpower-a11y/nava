@@ -133,28 +133,31 @@ export async function authorizeNaviRequest(request, env) {
       code: "NAVI_AUTH_REQUIRED"
     };
   }
-  let user = { id: session.sub, display_name: session.name, role: session.role };
-  // Non-owner sessions are checked against the account table on every request,
-  // so an owner can disable an account without waiting for its token to expire.
-  if (session.sub !== "owner") {
-    if (!env.NAVA_DB) {
-      return { valid: false, status: 503, error: "دیتابیس حساب‌های ناوی در دسترس نیست." };
-    }
-    try {
-      const row = await env.NAVA_DB.prepare(
-        "SELECT id, display_name, role, status FROM users WHERE id = ? LIMIT 1"
-      ).bind(session.sub).first();
-      if (!row || row.status !== "active") {
-        return { valid: false, status: 401, error: "این حساب غیرفعال است یا دیگر وجود ندارد.", code: "NAVI_ACCOUNT_DISABLED" };
-      }
-      user = {
-        id: String(row.id),
-        display_name: row.display_name || session.name,
-        role: row.role === "owner" ? "owner" : "user"
-      };
-    } catch {
-      return { valid: false, status: 503, error: "بررسی وضعیت حساب ناوی ممکن نشد." };
-    }
+  if (!env.NAVA_DB) {
+    return { valid: false, status: 503, error: "دیتابیس حساب‌های ناوی در دسترس نیست." };
   }
-  return { valid: true, user };
+
+  // Every session, including the owner's, is checked against D1 on each
+  // request. This makes account status and role changes effective immediately.
+  try {
+    const row = await env.NAVA_DB.prepare(
+      "SELECT id, display_name, role, status FROM users WHERE id = ? LIMIT 1"
+    ).bind(session.sub).first();
+
+    if (!row || row.status !== "active") {
+      return { valid: false, status: 401, error: "این حساب غیرفعال است یا دیگر وجود ندارد.", code: "NAVI_ACCOUNT_DISABLED" };
+    }
+    if (session.sub === "owner" && row.role !== "owner") {
+      return { valid: false, status: 403, error: "دسترسی مالک معتبر نیست.", code: "NAVI_OWNER_REQUIRED" };
+    }
+
+    const user = {
+      id: String(row.id),
+      display_name: row.display_name || session.name,
+      role: row.role === "owner" ? "owner" : "user"
+    };
+    return { valid: true, user };
+  } catch {
+    return { valid: false, status: 503, error: "بررسی وضعیت حساب ناوی ممکن نشد." };
+  }
 }
