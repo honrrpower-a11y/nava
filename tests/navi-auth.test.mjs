@@ -230,5 +230,5 @@ test("production deploy workflow guards the approved Worker and D1 target", () =
   assert.match(workflow, /modules\/navi-auth\.js/);
   assert.match(workflow, /prod\.database_name !== 'nava-memory'/);
   assert.match(workflow, /prod\.database_id !== '56f30fed-a03b-4e36-a320-cbefd3feaf12'/);
-  assert.match(workflow, /No D1 migrations will run/);
+  assert.match(workflow, /No database migrations will run/);
 });
