@@ -282,7 +282,7 @@ test("proposal plus approval request never enters direct-save parser", async () 
   assert.equal(parsed.isCommand, false);
 });
 
-test("long memory values are retained up to the configured 4000-character limit", async () => {
+test("long memory values are preserved without truncation below the 12000-character limit", async () => {
   const { createNaviMemoryProposal } = await import("../modules/navi-memory.js");
   const value = "ترجیح پایدار کاربر " + "الف".repeat(1500);
   let insertedValue = "";
@@ -295,7 +295,7 @@ test("long memory values are retained up to the configured 4000-character limit"
         async first() { return null; },
         async run() {
           if (/INSERT INTO navi_memory_facts_v1/.test(sql)) {
-            insertedValue = args.find(item => typeof item === "string" && item.length > 100) || "";
+            insertedValue = args[2] || "";
             return { success: true, meta: { changes: 1, last_row_id: 41 } };
           }
           return { success: true, meta: { changes: 1 } };
@@ -306,8 +306,8 @@ test("long memory values are retained up to the configured 4000-character limit"
   };
   const result = await createNaviMemoryProposal(db, value, "آزمایش طول");
   assert.equal(result.inserted, true);
-  assert.equal(insertedValue.length, 4000);
-  assert.equal(insertedValue, value.slice(0, 4000));
+  assert.equal(insertedValue.length, value.length);
+  assert.equal(insertedValue, value);
 });
 
 
