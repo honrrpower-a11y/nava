@@ -1555,7 +1555,7 @@ async function handleChat({
     );
   }
 
-  const reply = parsed.reply;
+  let reply = parsed.reply;
 
   if (!reply) {
     return errorResponse(
@@ -1620,6 +1620,11 @@ async function handleChat({
         error
       );
     }
+  }
+
+  // Never report a proposal as created when its database write failed.
+  if (proposalProcessingFailed) {
+    reply = "پاسخت را آماده کردم، اما ثبت پیشنهاد حافظه در دیتابیس ناموفق بود؛ بنابراین چیزی برای تأیید در فهرست حافظه ایجاد نشده است. لطفاً بعداً دوباره تلاش کن.";
   }
 
   // ----------------------------------
