@@ -181,3 +181,28 @@ test("SQLite integration: correction archives only the superseded approved fact"
   assert.match(rows[2].memory_value, /تهران/);
   sqlite.close();
 });
+
+
+test('conversation search retrieves relevant older messages across threads', async () => {
+  const { searchNaviConversationHistory } = await import('../modules/navi-memory.js');
+  const db = { prepare() { return { async all() { return { results: [
+    { thread_id: 'old-1', thread_title: 'نوا', role: 'user', content: 'نسخه موتور شعر نوا 3.1 است' },
+    { thread_id: 'old-2', thread_title: 'ورزش', role: 'user', content: 'تمرین کرانچ شکمی' },
+    { thread_id: 'old-3', thread_title: 'نوا', role: 'assistant', content: 'هدف موتور موسیقی ایرانی است' }
+  ] }; } }; } };
+  const matches = await searchNaviConversationHistory(db, 'موتور شعر نوا', 8, []);
+  assert.equal(matches.length, 2);
+  assert.ok(matches.some(item => item.threadId === 'old-1'));
+  assert.ok(matches.some(item => item.threadId === 'old-3'));
+});
+
+test('conversation search excludes messages already present in recent context', async () => {
+  const { searchNaviConversationHistory } = await import('../modules/navi-memory.js');
+  const db = { prepare() { return { async all() { return { results: [
+    { thread_id: 't', role: 'user', content: 'همان پیام اخیر' }
+  ] }; } }; } };
+  const matches = await searchNaviConversationHistory(db, 'پیام اخیر', 8, [
+    { role: 'user', content: 'همان پیام اخیر' }
+  ]);
+  assert.equal(matches.length, 0);
+});
