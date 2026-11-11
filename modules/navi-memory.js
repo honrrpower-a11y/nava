@@ -1222,10 +1222,32 @@ export async function saveNaviMemoryFact(
       normalizeMemoryText(duplicate.memory_value) ===
       normalizeMemoryText(memoryValue)
     ) {
+      const relatedRecords = await findMemoryRelatedRecords(
+        db,
+        memoryValue,
+        null,
+        memoryKey
+      );
+      const superseded = relatedRecords.filter(item =>
+        item.id !== duplicate.id &&
+        item.status === "approved" &&
+        normalizeMemoryText(item.memory_value) !== normalizeMemoryText(memoryValue)
+      );
+      if (superseded.length) {
+        const results = await db.batch(superseded.map(item => db.prepare(`
+          UPDATE navi_memory_facts_v1
+          SET status = 'archived', updated_at = datetime('now')
+          WHERE id = ? AND owner_id = ? AND status = 'approved'
+        `).bind(item.id, NAVI_OWNER_ID)));
+        if (!Array.isArray(results) || results.some(result => !result.success)) {
+          throw new Error("Could not archive superseded duplicate memory facts.");
+        }
+      }
       return {
         duplicate: true,
         existingId: duplicate.id,
-        existingStatus: duplicate.status
+        existingStatus: duplicate.status,
+        archivedCount: superseded.length
       };
     }
 
