@@ -38,7 +38,7 @@ const NAVI_VERSION = "1.0";
 const NAVI_MAX_MESSAGE = 12000;
 const NAVI_MAX_PAGE_CONTEXT = 3000;
 const NAVI_MAX_MEMORY_VALUE = 12000;
-const NAVI_MAX_PROPOSALS = 2;
+const NAVI_MAX_PROPOSALS = 1;
 const NAVI_GEMINI_TIMEOUT = 60000;
 
 // ======================================
@@ -1235,8 +1235,9 @@ A request to create a pending proposal is not approval for permanent storage.
 Do not propose a memory just to fill the array.
 Zero proposals is normal.
 
-Return no more than two proposals.
-Each proposal must be one clear, self-contained fact.
+Return no more than one proposal: choose the single most useful durable fact.
+The server will ask the user for approval after your answer; do not ask for memory approval yourself.
+The proposal must be one clear, self-contained fact.
 Do not combine unrelated facts.
 Do not rewrite uncertain statements as confirmed facts.
 Do not propose a fact that conflicts with approved memory.
@@ -1684,6 +1685,7 @@ async function handleChat({
   // ----------------------------------
 
   const createdProposals = [];
+  let memoryProposalForConsent = null;
   let proposalProcessingFailed = false;
   let proposalLengthLimitExceeded = false;
   let proposalsSkippedDuplicate = 0;
@@ -1706,13 +1708,14 @@ async function handleChat({
       );
 
       if (result?.inserted) {
-        createdProposals.push({
+        const createdProposal = {
           id: result.id,
           title: result.title || proposal.title,
-          memoryValue:
-            result.memoryValue || proposal.value,
+          memoryValue: result.memoryValue || proposal.value,
           mergeCandidateId: result.mergeCandidateId || null
-        });
+        };
+        createdProposals.push(createdProposal);
+        memoryProposalForConsent = createdProposal;
 
         if (result.mergeCandidateId) {
           proposalsMergeCandidates++;
@@ -1722,6 +1725,13 @@ async function handleChat({
         proposalLengthLimitExceeded = true;
       } else if (result?.merged) {
         proposalsMergedIntoPending++;
+        if (result.existingStatus === "pending") {
+          memoryProposalForConsent = {
+            id: result.existingId,
+            title: proposal.title,
+            memoryValue: result.memoryValue || proposal.value
+          };
+        }
       } else if (result?.duplicate) {
         proposalsSkippedDuplicate++;
       } else if (result?.sensitive) {
@@ -1745,6 +1755,15 @@ async function handleChat({
     reply = "پاسخت را آماده کردم، اما ثبت پیشنهاد حافظه در دیتابیس ناموفق بود؛ بنابراین چیزی برای تأیید در فهرست حافظه ایجاد نشده است. لطفاً بعداً دوباره تلاش کن.";
   } else if (proposalLengthLimitExceeded) {
     reply = "پاسخت آماده است، اما پیشنهاد حافظه به‌دلیل عبور از سقف ۱۲۰۰۰ نویسه ساخته نشد. لطفاً اطلاعات را خلاصه‌تر بفرست.";
+  } else if (memoryProposalForConsent?.memoryValue) {
+    const proposedValue = safeNaviText(
+      memoryProposalForConsent.memoryValue,
+      NAVI_MAX_MEMORY_VALUE
+    );
+    reply +=
+      "\\n\\nیک نکته از این گفتگو به نظرم برای دفعات بعد مفید است:\\n«" +
+      proposedValue +
+      "»\\nدوست داری این مورد را در حافظه بلندمدتم نگه دارم؟ برای موافقت بنویس «تأیید» و برای رد کردن بنویس «رد».";
   }
 
   // ----------------------------------
