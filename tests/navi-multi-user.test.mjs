@@ -76,7 +76,7 @@ test("each account receives a separate main thread while the owner keeps the leg
   await ensureNaviMainThread(db, "user-b");
   assert.equal(getNaviMainThreadId("owner"), "owner-main");
   assert.equal(getNaviMainThreadId("user-a"), "user-a-main");
-  const rows = db.sqlite.prepare("SELECT thread_id, owner_id FROM navi_chat_threads_v1 ORDER BY owner_id").all();
+  const rows = db.sqlite.prepare("SELECT thread_id, owner_id FROM navi_chat_threads_v1 ORDER BY owner_id").all().map(row => ({ thread_id: row.thread_id, owner_id: row.owner_id }));
   assert.deepEqual(rows, [
     { thread_id: "owner-main", owner_id: "owner" },
     { thread_id: "user-a-main", owner_id: "user-a" },
@@ -102,7 +102,7 @@ test("history and semantic search never return another account's messages", asyn
   const db = createDb();
   await ensureNaviMainThread(db, "user-a");
   await ensureNaviMainThread(db, "user-b");
-  await saveNaviConversation(db, "اطلاعات خصوصی حساب اول درباره نوا", "پاسخ خصوصی اول", getNaviMainThreadId("user-a"), "user-a");
+  await saveNaviConversation(db, "کلیدواژه‌مخفی‌منحصر‌به‌فرد‌اول", "پاسخ خصوصی اول", getNaviMainThreadId("user-a"), "user-a");
   await saveNaviConversation(db, "اطلاعات خصوصی حساب دوم درباره ورزش", "پاسخ خصوصی دوم", getNaviMainThreadId("user-b"), "user-b");
 
   const aHistory = await getNaviDbHistory(db, 10, getNaviMainThreadId("user-a"), "user-a");
@@ -113,7 +113,7 @@ test("history and semantic search never return another account's messages", asyn
   const crossHistory = await getNaviDbHistory(db, 10, getNaviMainThreadId("user-a"), "user-b");
   assert.deepEqual(crossHistory, []);
 
-  const bSearch = await searchNaviConversationHistory(db, "اطلاعات خصوصی حساب اول نوا", 8, [], "user-b");
+  const bSearch = await searchNaviConversationHistory(db, "کلیدواژه‌مخفی‌منحصر‌به‌فرد‌اول", 8, [], "user-b");
   assert.deepEqual(bSearch, []);
   db.sqlite.close();
 });
