@@ -1375,17 +1375,32 @@ async function requestGemini({
 // Short confirmations may affect only one uniquely pending memory proposal.
 // They do not authorize arbitrary code changes or external actions.
 export function parseNaviConfirmationIntent(message) {
-  const text = normalizeText(message).replace(/[.!؟،؛]+$/u, "").trim();
-  if (!text || text.length > 80) return null;
+  const text = normalizeText(message)
+    .replace(/[.!؟،؛]+$/u, "")
+    .replace(/[\\u200c\\u200d]/gu, "")
+    .trim();
+  if (!text || text.length > 120) return null;
 
-  if (/^(?:تأیید(?:\s+می‌کنم|\s+بفرما|\s+کن)?|تایید(?:\s+می‌کنم|\s+بفرما|\s+کن)?|موافقم|قبول(?:ه| دارم)?|انجامش\s+بده|بله،?\s*تأیید)$/u.test(text)) return "approve";
-  if (/^(?:رد(?:ش\s+کن)?|رد\s+می‌کنم|مخالفم|نمی‌خوام|لغو(?:ش\s+کن)?|بی‌خیال)$/u.test(text)) return "reject";
+  // Natural replies are understood, but only in response to a memory question.
+  if (/^(?:آره|اره|بله|بلی|حتماً|حتما|باشه|باش|اوکی|خوبه|خیلی خوبه|موافقم|قبوله|قبول دارم|چرا که نه|آره ممنون|بله ممنون|حتماً ممنون|همین خوبه|نگهش دار|نگه دار|بذار بمونه|بگذار بماند|تأیید(?: می‌کنم| بفرما| کن)?|تایید(?: می‌کنم| بفرما| کن)?|انجامش بده)$/u.test(text)) return "approve";
+  if (/^(?:نه|نخیر|خیر|نه ممنون|نه مرسی|لازم نیست|نمی‌خوام|نمیخواهم|ذخیره نکن|ثبت نکن|ردش کن|رد می‌کنم|مخالفم|لغوش کن|بی‌خیال|بیخیال)$/u.test(text)) return "reject";
   return null;
 }
 
 async function handleNaviPendingMemoryConfirmation(db, message, threadId, corsOrigin) {
   const intent = parseNaviConfirmationIntent(message);
   if (!intent) return null;
+
+  // A short yes/no is consent only if the immediately previous NAVI turn
+  // asked whether to keep this memory suggestion.
+  const history = await getNaviDbHistory(db, 1, threadId);
+  const lastAssistant = history[history.length - 1];
+  const lastText = lastAssistant?.role === "assistant"
+    ? normalizeText(lastAssistant.content || "")
+    : "";
+  if (!/دوست داری این مورد را در حافظه بلندمدتم نگه دارم/u.test(lastText)) {
+    return null;
+  }
 
   const allPending = await getNaviPendingMemory(db);
   const pending = allPending.filter(item =>
@@ -1763,7 +1778,7 @@ async function handleChat({
     reply +=
       "\n\nیک نکته از این گفتگو به نظرم برای دفعات بعد مفید است:\n«" +
       proposedValue +
-      "»\nدوست داری این مورد را در حافظه بلندمدتم نگه دارم؟ برای موافقت بنویس «تأیید» و برای رد کردن بنویس «رد».";
+      "»\nدوست داری این نکته را برای گفتگوهای بعدی به خاطر بسپارم؟";
   }
 
   // ----------------------------------
