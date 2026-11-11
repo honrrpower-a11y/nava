@@ -7,6 +7,7 @@ import { json, safeNaviText } from "./shared.js";
 import {
   createNaviSession,
   verifyNaviPassword,
+  hashNaviPassword,
   authorizeNaviRequest
 } from "./navi-auth.js";
 
@@ -477,69 +478,114 @@ async function handleLogin({
   corsOrigin
 }) {
   if (origin !== ALLOWED_ORIGIN) {
-    return errorResponse(
-      "مبدأ درخواست مجاز نیست.",
-      403,
-      corsOrigin
-    );
+    return errorResponse("مبدأ درخواست مجاز نیست.", 403, corsOrigin);
   }
-
-  if (
-    !env.NAVI_OWNER_PASSWORD ||
-    !env.NAVI_SESSION_SECRET
-  ) {
-    return errorResponse(
-      "تنظیمات ورود ناوی کامل نیست.",
-      500,
-      corsOrigin
-    );
+  if (!env.NAVI_SESSION_SECRET || !env.NAVI_OWNER_PASSWORD) {
+    return errorResponse("تنظیمات ورود ناوی کامل نیست.", 500, corsOrigin);
   }
 
   let input;
+  try { input = await request.json(); }
+  catch { return errorResponse("اطلاعات ورود معتبر نیست.", 400, corsOrigin); }
 
-  try {
-    input = await request.json();
-  } catch {
-    return errorResponse(
-      "اطلاعات ورود معتبر نیست.",
-      400,
-      corsOrigin
-    );
-  }
-
-  const passwordValid = await verifyNaviPassword(
-    input?.password,
-    env.NAVI_OWNER_PASSWORD
-  );
-
-  if (!passwordValid) {
-    return errorResponse(
-      "رمز ورود صحیح نیست.",
-      401,
-      corsOrigin
-    );
+  const username = safeNaviText(input?.username || "", 40).trim().toLowerCase();
+  const password = typeof input?.password === "string" ? input.password : "";
+  if (!password || password.length > 256) {
+    return errorResponse("نام کاربری یا رمز ورود معتبر نیست.", 400, corsOrigin);
   }
 
   try {
-    const token = await createNaviSession(
-      env.NAVI_SESSION_SECRET
-    );
+    let user = null;
 
+    // Owner's existing secret remains valid during the migration window.
+    // It also provisions a PBKDF2 hash on the owner row once migration 0002 is applied.
+    const isOwnerLogin = (!username || username === "owner") &&
+      await verifyNaviPassword(password, env.NAVI_OWNER_PASSWORD);
+
+    if (isOwnerLogin) {
+      user = { id: "owner", username: "owner", display_name: "مالک", role: "owner" };
+      if (env.NAVA_DB) {
+        try {
+          const ownerRow = await env.NAVA_DB.prepare(
+            "SELECT id, username, display_name, role, status, password_hash FROM users WHERE id = ? LIMIT 1"
+          ).bind("owner").first();
+          if (ownerRow && ownerRow.status !== "disabled" && !ownerRow.password_hash) {
+            const passwordHash = await hashNaviPassword(password);
+            await env.NAVA_DB.prepare(
+              "UPDATE users SET username = COALESCE(NULLIF(username, ''), 'owner'), password_hash = ?, role = 'owner', status = 'active' WHERE id = ?"
+            ).bind(passwordHash, "owner").run();
+          }
+          if (ownerRow) user = { ...user, display_name: ownerRow.display_name || "مالک" };
+        } catch (error) {
+          // Legacy owner login must remain available while the additive schema
+          // migration has not yet been applied.
+          logError("Owner account provisioning deferred", error);
+        }
+      }
+    } else {
+      if (!username || !/^[a-z0-9][a-z0-9._-]{2,39}$/.test(username) || !env.NAVA_DB) {
+        return errorResponse("نام کاربری یا رمز ورود صحیح نیست.", 401, corsOrigin);
+      }
+      const row = await env.NAVA_DB.prepare(
+        "SELECT id, username, display_name, password_hash, role, status FROM users WHERE username = ? LIMIT 1"
+      ).bind(username).first();
+      if (!row || row.status !== "active" || !row.password_hash ||
+          !await verifyNaviPassword(password, row.password_hash)) {
+        return errorResponse("نام کاربری یا رمز ورود صحیح نیست.", 401, corsOrigin);
+      }
+      user = { id: String(row.id), username: row.username, display_name: row.display_name || row.username, role: row.role === "owner" ? "owner" : "user" };
+    }
+
+    const token = await createNaviSession(env.NAVI_SESSION_SECRET, user);
     return successResponse({
       token,
       expiresIn: 43200,
       assistant: "NAVI",
-      version: NAVI_VERSION
+      version: NAVI_VERSION,
+      user: { id: user.id, username: user.username || "owner", displayName: user.display_name, role: user.role }
     }, corsOrigin);
-
   } catch (error) {
     logError("Login failed", error);
+    return errorResponse("ورود به ناوی ناموفق بود.", 500, corsOrigin);
+  }
+}
 
-    return errorResponse(
-      "ساخت نشست ورود ناموفق بود.",
-      500,
-      corsOrigin
-    );
+// Owner-only account creation. Public registration remains disabled by design.
+async function handleCreateNaviUser({ request, env, origin, corsOrigin }) {
+  const auth = await authorize(request, env, origin, corsOrigin);
+  if (!auth.valid) return auth.response;
+  if (auth.user.role !== "owner") return errorResponse("فقط مالک می‌تواند حساب جدید بسازد.", 403, corsOrigin);
+  if (!env.NAVA_DB) return errorResponse("اتصال دیتابیس NAVI تنظیم نشده است.", 500, corsOrigin);
+
+  let input;
+  try { input = await request.json(); }
+  catch { return errorResponse("اطلاعات حساب معتبر نیست.", 400, corsOrigin); }
+
+  const username = safeNaviText(input?.username || "", 40).trim().toLowerCase();
+  const displayName = safeNaviText(input?.displayName || "", 80).trim();
+  const password = typeof input?.password === "string" ? input.password : "";
+  if (!/^[a-z0-9][a-z0-9._-]{2,39}$/.test(username)) {
+    return errorResponse("نام کاربری باید ۳ تا ۴۰ نویسه و شامل حروف انگلیسی، عدد، نقطه، خط تیره یا زیرخط باشد.", 400, corsOrigin);
+  }
+  if (!displayName) return errorResponse("نام نمایشی را وارد کن.", 400, corsOrigin);
+  let passwordHash;
+  try { passwordHash = await hashNaviPassword(password); }
+  catch { return errorResponse("رمز عبور باید حداقل ۱۲ نویسه داشته باشد.", 400, corsOrigin); }
+
+  const id = crypto.randomUUID();
+  try {
+    const result = await env.NAVA_DB.prepare(
+      "INSERT INTO users (id, auth_provider, auth_subject, display_name, username, password_hash, role, status) VALUES (?, 'navi-local', ?, ?, ?, ?, 'user', 'active')"
+    ).bind(id, username, displayName, username, passwordHash).run();
+    if (!result.success || Number(result.meta?.changes || 0) !== 1) {
+      throw new Error("Account insert was not confirmed.");
+    }
+    return successResponse({ user: { id, username, displayName, role: "user" }, created: true }, corsOrigin, 201);
+  } catch (error) {
+    const message = String(error?.message || "");
+    if (/unique|constraint/i.test(message)) return errorResponse("این نام کاربری قبلاً ثبت شده است.", 409, corsOrigin);
+    logError("NAVI account creation failed", error);
+    return errorResponse("ساخت حساب انجام نشد. ابتدا مهاجرت ساختار حساب‌ها باید روی دیتابیس اجرا شود.", 500, corsOrigin);
   }
 }
 
@@ -2121,6 +2167,13 @@ export async function handleNaviRoute({
         origin,
         corsOrigin
       });
+    }
+
+    if (
+      url.pathname === "/navi-users" &&
+      request.method === "POST"
+    ) {
+      return await handleCreateNaviUser({ request, env, origin, corsOrigin });
     }
 
     if (
