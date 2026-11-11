@@ -206,3 +206,35 @@ test('conversation search excludes messages already present in recent context', 
   ]);
   assert.equal(matches.length, 0);
 });
+
+
+test("Gemini response parser accepts a valid JSON object wrapped in Markdown fences", async () => {
+  const { parseNaviGeminiResponse } = await import("../modules/navi.js");
+  const parsed = parseNaviGeminiResponse('```json\\n{"reply":"سلام","memoryProposals":[{"title":"ترجیح","value":"پاسخ کوتاه و کاربردی"}]}\\n```');
+  assert.equal(parsed.structured, true);
+  assert.equal(parsed.reply, "سلام");
+  assert.equal(parsed.memoryProposals.length, 1);
+});
+
+test("Gemini response parser extracts one complete JSON object surrounded by harmless text", async () => {
+  const { parseNaviGeminiResponse } = await import("../modules/navi.js");
+  const parsed = parseNaviGeminiResponse('نتیجه:\\n{"reply":"پاسخ درست","memoryProposals":[]}\\nپایان');
+  assert.equal(parsed.structured, true);
+  assert.equal(parsed.reply, "پاسخ درست");
+  assert.deepEqual(parsed.memoryProposals, []);
+});
+
+test("Gemini plain-text fallback never fabricates memory proposals", async () => {
+  const { parseNaviGeminiResponse } = await import("../modules/navi.js");
+  const parsed = parseNaviGeminiResponse("این یک پاسخ معمولی است.");
+  assert.equal(parsed.structured, false);
+  assert.equal(parsed.reply, "این یک پاسخ معمولی است.");
+  assert.deepEqual(parsed.memoryProposals, []);
+});
+
+test("Gemini parser preserves braces and escaped quotes inside JSON strings", async () => {
+  const { parseNaviGeminiResponse } = await import("../modules/navi.js");
+  const parsed = parseNaviGeminiResponse('پاسخ: {"reply":"متن دارای } و \\"نقل‌قول\\"","memoryProposals":[]} پایان');
+  assert.equal(parsed.structured, true);
+  assert.equal(parsed.reply, 'متن دارای } و "نقل‌قول"');
+});
