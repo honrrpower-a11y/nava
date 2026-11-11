@@ -1816,19 +1816,6 @@ async function handleChat({
   let reply = parsed.reply;
   let manualMemorySaveResult = null;
   let manualMemorySaveError = "";
-  if (input.saveToMemory === true) {
-    const memoryValue = safeNaviText(typeof input.memoryValue === "string" ? input.memoryValue : message, NAVI_MAX_MEMORY_VALUE + 1).trim();
-    if (memoryValue.length > NAVI_MAX_MEMORY_VALUE) manualMemorySaveError = "متن پیام از سقف ۱۲۰۰۰ نویسه بیشتر است و در حافظه ذخیره نشد.";
-    else if (memoryValue.length < 8) manualMemorySaveError = "پیام خیلی کوتاه است و برای حافظه بلندمدت مناسب نیست.";
-    else if (containsSensitiveInformation(memoryValue)) manualMemorySaveError = "این پیام شامل اطلاعات حساس است و در حافظه ذخیره نشد.";
-    else {
-      try {
-        manualMemorySaveResult = await saveNaviMemoryFact(env.NAVA_DB, memoryValue, "پیام انتخاب‌شده از کادر گفتگو", "composer_manual_save");
-        if (manualMemorySaveResult.tooLong) manualMemorySaveError = "ترکیب این پیام با اطلاعات قبلی از سقف حافظه عبور می‌کند؛ ذخیره انجام نشد.";
-        else if (manualMemorySaveResult.invalid || manualMemorySaveResult.sensitive) manualMemorySaveError = "این پیام شرایط لازم برای ذخیره در حافظه را ندارد.";
-      } catch (error) { logError("Composer memory save failed", error); manualMemorySaveError = "ثبت پیام در حافظه با خطا روبه‌رو شد."; }
-    }
-  }
 
   if (!reply) {
     return errorResponse(
@@ -1836,6 +1823,47 @@ async function handleChat({
       502,
       corsOrigin
     );
+  }
+
+  // Gemini's structured memory extraction is the source of truth for manual
+  // saves. The checkbox grants consent to save NAVI's interpretation, not
+  // the raw user message.
+  const suppressMemoryProposals = shouldSuppressNaviMemoryProposals(message);
+  let normalizedProposals = parsed.structured && !suppressMemoryProposals
+    ? normalizeMemoryProposals(parsed.memoryProposals)
+    : [];
+
+  // Keep the existing local fallback when Gemini returns no durable fact.
+  if (!suppressMemoryProposals && normalizedProposals.length === 0) {
+    normalizedProposals = normalizeMemoryProposals(
+      extractNaviDeterministicMemoryProposal(message)
+    );
+  }
+
+  if (input.saveToMemory === true) {
+    const selectedProposal = normalizedProposals[0] || null;
+
+    if (!selectedProposal) {
+      manualMemorySaveError = "ناوی در این پیام اطلاعات ماندگار و قابل ذخیره‌ای تشخیص نداد؛ چیزی ذخیره نشد.";
+    } else if (selectedProposal.value.length > NAVI_MAX_MEMORY_VALUE) {
+      manualMemorySaveError = "برداشت ناوی از سقف ۱۲۰۰۰ نویسه بیشتر است و در حافظه ذخیره نشد.";
+    } else if (containsSensitiveInformation(selectedProposal.value)) {
+      manualMemorySaveError = "برداشت ناوی شامل اطلاعات حساس است و در حافظه ذخیره نشد.";
+    } else {
+      try {
+        manualMemorySaveResult = await saveNaviMemoryFact(
+          env.NAVA_DB,
+          selectedProposal.value,
+          selectedProposal.title || "برداشت NAVI از پیام کاربر",
+          "composer_manual_save"
+        );
+        if (manualMemorySaveResult.tooLong) manualMemorySaveError = "ترکیب این اطلاعات با حافظه قبلی از سقف مجاز عبور می‌کند؛ ذخیره انجام نشد.";
+        else if (manualMemorySaveResult.invalid || manualMemorySaveResult.sensitive) manualMemorySaveError = "برداشت NAVI شرایط لازم برای ذخیره در حافظه را ندارد.";
+      } catch (error) {
+        logError("Composer interpreted-memory save failed", error);
+        manualMemorySaveError = "ثبت برداشت NAVI در حافظه با خطا روبه‌رو شد.";
+      }
+    }
   }
 
   // ----------------------------------
@@ -1852,20 +1880,13 @@ async function handleChat({
   let proposalsMergedIntoPending = 0;
   let proposalsMergeCandidates = 0;
 
-  const suppressMemoryProposals = input.saveToMemory === true || shouldSuppressNaviMemoryProposals(message);
-  let normalizedProposals = parsed.structured && !suppressMemoryProposals
-    ? normalizeMemoryProposals(parsed.memoryProposals)
-    : [];
+  // A checked composer box saves the first approved interpretation directly;
+  // it must not also create a pending proposal for the same message.
+  const proposalsForPending = input.saveToMemory === true
+    ? []
+    : normalizedProposals;
 
-  // If Gemini misses a clearly worded first-person durable preference,
-  // recover it locally without making another model request.
-  if (!suppressMemoryProposals && normalizedProposals.length === 0) {
-    normalizedProposals = normalizeMemoryProposals(
-      extractNaviDeterministicMemoryProposal(message)
-    );
-  }
-
-  for (const proposal of normalizedProposals) {
+  for (const proposal of proposalsForPending) {
     try {      const result = await createNaviMemoryProposal(
         env.NAVA_DB,
         proposal.value,
@@ -1932,8 +1953,8 @@ async function handleChat({
       "»\nدوست داری این نکته را برای گفتگوهای بعدی به خاطر بسپارم؟";
   }
 
-  if (manualMemorySaveResult?.inserted || manualMemorySaveResult?.updated || manualMemorySaveResult?.merged) reply += "\n\n🧠 این پیام را طبق انتخاب خودت در حافظه تأییدشده ذخیره کردم.";
-  else if (manualMemorySaveResult?.duplicate) reply += "\n\n🧠 این پیام یا اطلاعات مشابه آن از قبل در حافظه تأییدشده وجود داشت.";
+  if (manualMemorySaveResult?.inserted || manualMemorySaveResult?.updated || manualMemorySaveResult?.merged) reply += "\n\n🧠 برداشت ناوی از پیامت را طبق انتخاب خودت در حافظه تأییدشده ذخیره کردم.";
+  else if (manualMemorySaveResult?.duplicate) reply += "\n\n🧠 برداشت ناوی یا اطلاعات مشابه آن از قبل در حافظه تأییدشده وجود داشت.";
   else if (manualMemorySaveError) reply += "\n\n🧠 " + manualMemorySaveError;
 
   // ----------------------------------
