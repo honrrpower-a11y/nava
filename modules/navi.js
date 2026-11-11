@@ -497,31 +497,68 @@ async function handleLogin({
   try {
     let user = null;
 
-    // Owner's existing secret remains valid during the migration window.
-    // It also provisions a PBKDF2 hash on the owner row once migration 0002 is applied.
-    const isOwnerLogin = (!username || username === "owner") &&
-      await verifyNaviPassword(password, env.NAVI_OWNER_PASSWORD);
+    const isOwnerLogin = !username || username === "owner";
 
     if (isOwnerLogin) {
-      user = { id: "owner", username: "owner", display_name: "مالک", role: "owner" };
+      let ownerRow = null;
       if (env.NAVA_DB) {
         try {
-          const ownerRow = await env.NAVA_DB.prepare(
+          ownerRow = await env.NAVA_DB.prepare(
             "SELECT id, username, display_name, role, status, password_hash FROM users WHERE id = ? LIMIT 1"
           ).bind("owner").first();
-          if (ownerRow && ownerRow.status !== "disabled" && !ownerRow.password_hash) {
-            const passwordHash = await hashNaviPassword(password);
-            await env.NAVA_DB.prepare(
-              "UPDATE users SET username = COALESCE(NULLIF(username, ''), 'owner'), password_hash = ?, role = 'owner', status = 'active' WHERE id = ?"
-            ).bind(passwordHash, "owner").run();
-          }
-          if (ownerRow) user = { ...user, display_name: ownerRow.display_name || "مالک" };
         } catch (error) {
-          // Legacy owner login must remain available while the additive schema
-          // migration has not yet been applied.
-          logError("Owner account provisioning deferred", error);
+          logError("Owner account lookup failed", error);
+          return errorResponse("بررسی حساب مالک در دیتابیس ممکن نشد.", 503, corsOrigin);
         }
       }
+
+      let ownerPasswordValid = false;
+      if (ownerRow) {
+        if (ownerRow.status !== "active" || ownerRow.role !== "owner") {
+          return errorResponse("حساب مالک فعال یا معتبر نیست.", 403, corsOrigin);
+        }
+
+        if (ownerRow.password_hash) {
+          // Once provisioned, the D1 password hash is authoritative.
+          // The legacy Worker secret can no longer bypass a changed hash.
+          ownerPasswordValid = await verifyNaviPassword(password, ownerRow.password_hash);
+        } else {
+          // One-time compatibility path for the pre-migration owner secret.
+          ownerPasswordValid = await verifyNaviPassword(password, env.NAVI_OWNER_PASSWORD);
+          if (ownerPasswordValid && password.length >= 12) {
+            const passwordHash = await hashNaviPassword(password);
+            const provision = await env.NAVA_DB.prepare(
+              "UPDATE users SET username = COALESCE(NULLIF(username, ''), 'owner'), password_hash = ?, role = 'owner', status = 'active' WHERE id = ? AND (password_hash IS NULL OR password_hash = '')"
+            ).bind(passwordHash, "owner").run();
+            if (!provision?.success) {
+              return errorResponse("ثبت امن رمز مالک در دیتابیس ناموفق بود.", 503, corsOrigin);
+            }
+            if (Number(provision.meta?.changes || 0) !== 1) {
+              const refreshed = await env.NAVA_DB.prepare(
+                "SELECT password_hash, status, role FROM users WHERE id = ? LIMIT 1"
+              ).bind("owner").first();
+              if (!refreshed || refreshed.status !== "active" || refreshed.role !== "owner" ||
+                  !await verifyNaviPassword(password, refreshed.password_hash)) {
+                return errorResponse("وضعیت رمز مالک هم‌زمان تغییر کرده است؛ دوباره تلاش کن.", 409, corsOrigin);
+              }
+            }
+          }
+        }
+      } else {
+        // Legacy fallback is retained only when the owner row is not present yet.
+        ownerPasswordValid = await verifyNaviPassword(password, env.NAVI_OWNER_PASSWORD);
+      }
+
+      if (!ownerPasswordValid) {
+        return errorResponse("نام کاربری یا رمز ورود صحیح نیست.", 401, corsOrigin);
+      }
+
+      user = {
+        id: "owner",
+        username: "owner",
+        display_name: ownerRow?.display_name || "مالک",
+        role: "owner"
+      };
     } else {
       if (!username || !/^[a-z0-9][a-z0-9._-]{2,39}$/.test(username) || !env.NAVA_DB) {
         return errorResponse("نام کاربری یا رمز ورود صحیح نیست.", 401, corsOrigin);
