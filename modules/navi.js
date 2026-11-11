@@ -374,7 +374,7 @@ export function extractNaviDeterministicMemoryProposal(message) {
   if (/[«»“”]/u.test(value)) return [];
 
   const durableFirstPersonPatterns = [
-    /(?:من\s+)?ترجیح\s+می(?:دهم|دم|کنم)/u,
+    /(?:من\s+)?ترجیح\\s+می[\\s\\u200c]*(?:دهم|دم|کنم)/u,
     /(?:من\s+)?دوست\s+دارم\s+(?:همیشه|معمولاً|معمولا|در\s+کار|در\s+پروژه)/u,
     /(?:اولویت|هدف|رویکرد|اصل)\s+(?:اصلی\s+)?من\s+(?:این\s+است|اینکه)/u,
     /برای\s+من\s+(?:همیشه\s+)?(?:مهم\s+است|اهمیت\s+دارد)/u,
