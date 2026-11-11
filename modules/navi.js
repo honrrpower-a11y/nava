@@ -15,6 +15,7 @@ import {
   NAVI_OWNER_ID,
   ensureNaviMainThread,
   getNaviDbHistory,
+  getNaviPreviousExplicitMemoryValue,
   searchNaviConversationHistory,
   getNaviApprovedMemory,
   getNaviPendingMemory,
@@ -995,13 +996,22 @@ async function handleExplicitMemoryCommand(
     let saveResult = null;
     let conversationSaved = true;
 
-    if (!memoryCommand.value) {
+    // A blank "save this" command can refer to the user's immediately
+    // preceding message, but only if NAVI's latest reply was a memory
+    // clarification question in this exact conversation thread.
+    const previousMessageValue = memoryCommand.value
+      ? ""
+      : await getNaviPreviousExplicitMemoryValue(env.NAVA_DB, threadId);
+    const requestedMemoryValue =
+      memoryCommand.memoryValue || memoryCommand.value || previousMessageValue;
+
+    if (!requestedMemoryValue) {
       reply =
         "حتماً. چه اطلاعاتی را می‌خواهی در حافظه بلندمدتم ذخیره کنم؟";
 
     } else {
       const value = safeNaviText(
-        memoryCommand.memoryValue || memoryCommand.value,
+        requestedMemoryValue,
         NAVI_MAX_MEMORY_VALUE + 1
       );
       if (value.length > NAVI_MAX_MEMORY_VALUE) {
