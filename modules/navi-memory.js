@@ -133,7 +133,7 @@ export async function getNaviPreviousExplicitMemoryValue(
     return "";
   }
 
-  const prompt = normalizeMemoryText(latest.content || "");
+  const prompt = normalizeMemoryText(latest.content || "").replace(/[\u200c\u200d]/g, "");
   const isMemoryClarification = (
     /چه اطلاعاتی را می(?:خواهی|خوای) در حافظه/.test(prompt) ||
     /چه اطلاعاتی.*(?:ذخیره|ثبت).*(?:حافظه|بلندمدت)/.test(prompt) ||
