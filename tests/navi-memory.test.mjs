@@ -357,11 +357,14 @@ test("long memory values are preserved without truncation below the 12000-charac
 });
 
 
-test("short confirmation phrases are recognized without treating ordinary replies as approval", async () => {
+test("natural Persian consent and refusal phrases are understood", async () => {
   const { parseNaviConfirmationIntent } = await import("../modules/navi.js");
-  assert.equal(parseNaviConfirmationIntent("تأیید بفرما"), "approve");
-  assert.equal(parseNaviConfirmationIntent("تایید."), "approve");
-  assert.equal(parseNaviConfirmationIntent("ردش کن"), "reject");
-  assert.equal(parseNaviConfirmationIntent("بله، ممنون"), null);
+  for (const phrase of ["آره", "اره", "بله", "حتماً", "باشه", "اوکی", "خوبه", "بله، ممنون", "نگهش دار", "بذار بمونه"]) {
+    assert.equal(parseNaviConfirmationIntent(phrase), "approve", phrase);
+  }
+  for (const phrase of ["نه", "نخیر", "نه ممنون", "لازم نیست", "نمی‌خوام", "ذخیره نکن", "بی‌خیال"]) {
+    assert.equal(parseNaviConfirmationIntent(phrase), "reject", phrase);
+  }
+  assert.equal(parseNaviConfirmationIntent("بله، در مورد بعدی هم کمکم کن"), null);
   assert.equal(parseNaviConfirmationIntent("انجام بده و فایل را هم حذف کن"), null);
 });
