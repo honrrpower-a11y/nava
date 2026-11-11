@@ -42,6 +42,9 @@ export async function verifyNaviSession(token, secret) {
     const parts = token.split(".");
     if (parts.length !== 2) return null;
     const [payloadPart, signaturePart] = parts;
+    if (!/^[A-Za-z0-9_-]+$/.test(payloadPart) || !/^[A-Za-z0-9_-]+$/.test(signaturePart)) return null;
+    if (base64UrlEncode(base64UrlDecode(payloadPart)) !== payloadPart ||
+        base64UrlEncode(base64UrlDecode(signaturePart)) !== signaturePart) return null;
     const key = await getNaviSigningKey(secret);
     const valid = await crypto.subtle.verify(
       "HMAC", key, base64UrlDecode(signaturePart), new TextEncoder().encode(payloadPart)
