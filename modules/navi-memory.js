@@ -248,6 +248,33 @@ export async function getNaviPendingMemory(db) {
 }
 
 // ======================================
+// ARCHIVED MEMORY (MANAGEMENT / AUDIT)
+// ======================================
+
+export async function getNaviArchivedMemory(db) {
+  const result = await db.prepare(`
+    SELECT
+      id,
+      memory_key,
+      memory_value,
+      source,
+      status,
+      created_at,
+      updated_at
+    FROM navi_memory_facts_v1
+    WHERE owner_id = ?
+      AND status = 'archived'
+    ORDER BY updated_at DESC, id DESC
+    LIMIT ?
+  `).bind(
+    NAVI_OWNER_ID,
+    MEMORY_LIST_LIMIT
+  ).all();
+
+  return result.results || [];
+}
+
+// ======================================
 // MEMORY COMMAND PARSER
 // ======================================
 
