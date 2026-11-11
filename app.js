@@ -57,6 +57,7 @@ const requestResponse = document.getElementById("requestResponse");
 const serviceSelect = document.getElementById("serviceSelect");
 const userRequest = document.getElementById("userRequest");
 const sendRequest = document.getElementById("sendRequest");
+const naviSaveComposerMessage = document.getElementById("naviSaveComposerMessage");
 
 // DOM elements — History
 const naviHistoryToggle = document.getElementById("naviHistoryToggle");
@@ -1240,6 +1241,10 @@ async function loadNaviMemories(forceRefresh = false) {
       renderNaviMemories(naviMemory);
       renderNaviMemoryProposals(naviProposals);
       renderNaviArchivedMemory(naviArchivedMemory);
+      const countDigits = value => String(value).replace(/[0-9]/g, digit => "۰۱۲۳۴۵۶۷۸۹"[Number(digit)]);
+      document.getElementById("naviApprovedMemoryCount").textContent = countDigits(naviMemory.length);
+      document.getElementById("naviPendingMemoryCount").textContent = countDigits(naviProposals.length);
+      document.getElementById("naviArchivedMemoryCount").textContent = countDigits(naviArchivedMemory.length);
 
       setNaviMemoryStatus(
         naviMemory.length
@@ -1585,6 +1590,16 @@ naviMemoryToggle.addEventListener("click", async () => {
   }
 });
 
+document.addEventListener("click", event => {
+  const button = event.target instanceof Element ? event.target.closest("[data-navi-memory-section-toggle]") : null;
+  if (!button) return;
+  const content = button.closest(".navi-memory-accordion")?.querySelector(".navi-memory-accordion-content");
+  if (!content) return;
+  const opening = content.hidden;
+  content.hidden = !opening;
+  button.setAttribute("aria-expanded", opening ? "true" : "false");
+});
+
 naviHistoryRefresh.addEventListener("click", () => {
   loadNaviHistory();
 });
@@ -1905,6 +1920,7 @@ async function sendMessageToNavi() {
 
   const requestVersion = naviSessionVersion;
   const selectedService = serviceSelect.value;
+  const saveThisMessageToMemory = Boolean(naviSaveComposerMessage?.checked);
 
   const finalMessage =
     selectedService && selectedService !== "انتخاب نشده"
@@ -1938,6 +1954,7 @@ async function sendMessageToNavi() {
         page: window.location.pathname,
         pageContext: pageContext,
         threadId: naviActiveThreadId,
+        saveToMemory: saveThisMessageToMemory,
         history: naviHistory.slice(-NAVI_CONTEXT_MESSAGES)
       })
     });
@@ -1993,6 +2010,7 @@ async function sendMessageToNavi() {
 
     showNaviReply(reply);
     userRequest.value = "";
+    if (naviSaveComposerMessage) naviSaveComposerMessage.checked = false;
 
     setNaviStatus(
       "پاسخ ناوی دریافت شد؛ در حال به‌روزرسانی تاریخچه..."
@@ -2026,6 +2044,10 @@ async function sendMessageToNavi() {
     const memoryResult = data.memory && typeof data.memory === "object"
       ? data.memory
       : null;
+
+    if (memoryResult?.manualSaved || memoryResult?.manualDuplicate || memoryResult?.manualSaveError) {
+      setNaviMemoryStatus(memoryResult.manualSaved ? "پیام انتخاب‌شده از کادر گفتگو در حافظه تأییدشده ذخیره شد." : memoryResult.manualDuplicate ? "این پیام یا اطلاعات مشابه آن از قبل در حافظه تأییدشده وجود داشت." : memoryResult.manualSaveError);
+    }
 
     if (!naviMemoryBusy) {
       const memoryRefreshed = await loadNaviMemories(true);
