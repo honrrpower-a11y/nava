@@ -1,0 +1,74 @@
+name: NAVI production schema audit
+
+on:
+  push:
+    branches:
+      - feature/navi-multi-user-accounts
+    paths:
+      - ".github/workflows/navi-production-schema-audit.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: navi-production-schema-audit
+  cancel-in-progress: false
+
+jobs:
+  inspect-production-schema:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/navi-multi-user-accounts
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install Wrangler
+        run: npm install --global wrangler@4
+      - name: Export production D1 read-only snapshot
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$CLOUDFLARE_API_TOKEN"
+          test -n "$CLOUDFLARE_ACCOUNT_ID"
+          npx wrangler d1 export nava-memory --remote --output=/tmp/nava-memory-schema-audit.sql
+          test -s /tmp/nava-memory-schema-audit.sql
+      - name: Extract schema only
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import sqlite3
+          source = "/tmp/nava-memory-schema-audit.sql"
+          target = "/tmp/navi-production-schema.sqlite"
+          conn = sqlite3.connect(target)
+          with open(source, "r", encoding="utf-8") as f:
+              conn.executescript(f.read())
+          lines = []
+          tables = conn.execute(
+              "SELECT name, sql FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY name"
+          ).fetchall()
+          for name, create_sql in tables:
+              lines.append(f"TABLE: {name}")
+              lines.append(create_sql or "")
+              columns = conn.execute(f'PRAGMA table_info("{name}")').fetchall()
+              for col in columns:
+                  lines.append("COLUMN: " + " | ".join(str(x) for x in col))
+              lines.append("")
+          with open("navi-production-schema.txt", "w", encoding="utf-8") as f:
+              f.write("\n".join(lines))
+          conn.close()
+          PY
+          rm -f /tmp/nava-memory-schema-audit.sql /tmp/navi-production-schema.sqlite
+      - name: Upload schema-only audit
+        uses: actions/upload-artifact@v4
+        with:
+          name: navi-production-schema-audit
+          path: navi-production-schema.txt
+          if-no-files-found: error
+          retention-days: 7
