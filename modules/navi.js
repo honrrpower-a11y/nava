@@ -1065,7 +1065,7 @@ async function handleExplicitMemoryCommand(
       assistant: "NAVI",
       version: NAVI_VERSION,
       memory: {        commandRecognized: true,
-        saved: Boolean(saveResult),
+        saved: Boolean(saveResult && !saveResult.tooLong),
         duplicate: Boolean(saveResult?.duplicate),
         updated: Boolean(saveResult?.updated),
         inserted: Boolean(saveResult?.inserted),
@@ -1318,7 +1318,7 @@ async function requestGemini({
           contents,
           generationConfig: {
             temperature: 0.65,
-            maxOutputTokens: 2000,
+            maxOutputTokens: 4096,
             responseMimeType: "application/json"
           }
         }),
@@ -1406,7 +1406,7 @@ async function handleNaviPendingMemoryConfirmation(db, message, threadId, corsOr
   const proposal = pending[0];
   if (intent === "approve") {
     const result = await approveNaviMemoryProposal(db, proposal.id);
-    if (!result?.success || result.notFound || result.invalid || result.sensitive || result.duplicate) {
+    if (!result?.success || result.notFound || result.invalid || result.sensitive || result.duplicate || result.tooLong) {
       return errorResponse("تأیید پیشنهاد انجام نشد؛ وضعیت حافظه تغییر نکرد.", 409, corsOrigin);
     }
   } else {
