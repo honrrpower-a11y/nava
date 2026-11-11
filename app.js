@@ -14,11 +14,13 @@ const NAVI_HISTORY_API = NAVI_BASE + "/navi-history";
 const NAVI_THREADS_API = NAVI_BASE + "/navi-threads";
 const NAVI_MEMORY_API = NAVI_BASE + "/navi-memory";
 const NAVI_SAVE_MESSAGE_API = NAVI_BASE + "/navi-memory-save-message";
+const NAVI_USERS_API = NAVI_BASE + "/navi-users";
 
 // Session
 const NAVI_SESSION_KEY = "nava_navi_session";
 const NAVI_EXPIRY_KEY = "nava_navi_expiry";
 const NAVI_USER_NAME_KEY = "nava_navi_user_name";
+const NAVI_USER_ROLE_KEY = "nava_navi_user_role";
 
 // Limits
 const NAVI_MAX_DISPLAY_MESSAGES = 100;
@@ -49,6 +51,10 @@ const naviLoginForm = document.getElementById("naviLoginForm");
 const naviPassword = document.getElementById("naviPassword");
 const naviUsername = document.getElementById("naviUsername");
 const naviUserDisplay = document.getElementById("naviUserDisplay");
+const naviAccountAdmin = document.getElementById("naviAccountAdmin");
+const naviCreateUserForm = document.getElementById("naviCreateUserForm");
+const naviCreateUserButton = document.getElementById("naviCreateUserButton");
+const naviCreateUserStatus = document.getElementById("naviCreateUserStatus");
 const naviLoginButton = document.getElementById("naviLoginButton");
 const naviLoginError = document.getElementById("naviLoginError");
 const naviLoginStatus = document.getElementById("naviLoginStatus");
@@ -248,6 +254,7 @@ function clearNaviSession() {
     sessionStorage.removeItem(NAVI_SESSION_KEY);
     sessionStorage.removeItem(NAVI_EXPIRY_KEY);
     sessionStorage.removeItem(NAVI_USER_NAME_KEY);
+    sessionStorage.removeItem(NAVI_USER_ROLE_KEY);
   } catch (error) {
     console.warn("Could not clear local session storage.");
   }
@@ -271,6 +278,8 @@ function clearNaviSession() {
   if (naviPassword) naviPassword.value = "";
   if (naviUsername) naviUsername.value = "";
   if (naviUserDisplay) naviUserDisplay.textContent = "";
+  if (naviAccountAdmin) naviAccountAdmin.hidden = true;
+  if (naviCreateUserStatus) naviCreateUserStatus.textContent = "";
 
   if (requestResponse) {
     requestResponse.textContent = "";
@@ -301,6 +310,7 @@ function showNaviChat() {
   const displayName = sessionStorage.getItem(NAVI_USER_NAME_KEY) || "کاربر";
   naviLoginStatus.textContent = "نشست امن ناوی فعال است.";
   if (naviUserDisplay) naviUserDisplay.textContent = "حساب فعال: " + displayName;
+  if (naviAccountAdmin) naviAccountAdmin.hidden = sessionStorage.getItem(NAVI_USER_ROLE_KEY) !== "owner";
   setNaviStatus("در حال بازیابی گفت‌وگوهای قبلی...");
 }
 
@@ -1831,6 +1841,7 @@ naviLoginForm.addEventListener("submit", async event => {
 
     saveNaviSession(data.token, expiresIn);
     sessionStorage.setItem(NAVI_USER_NAME_KEY, String(data.user?.displayName || username || "مالک"));
+    sessionStorage.setItem(NAVI_USER_ROLE_KEY, String(data.user?.role || "user"));
 
     naviSessionVersion++;
     naviPassword.value = "";
@@ -1863,6 +1874,46 @@ naviLoginForm.addEventListener("submit", async event => {
     naviLoginButton.textContent = "ورود به ناوی";
   }
 });
+
+
+/* =========================================
+   OWNER-ONLY INVITED ACCOUNT CREATION
+========================================= */
+
+if (naviCreateUserForm) {
+  naviCreateUserForm.addEventListener("submit", async event => {
+    event.preventDefault();
+    const displayName = document.getElementById("naviNewDisplayName")?.value.trim() || "";
+    const username = document.getElementById("naviNewUsername")?.value.trim().toLowerCase() || "";
+    const password = document.getElementById("naviNewPassword")?.value || "";
+    if (!displayName || !username || password.length < 12) {
+      if (naviCreateUserStatus) naviCreateUserStatus.textContent = "نام، نام کاربری و رمز حداقل ۱۲ نویسه‌ای را کامل کن.";
+      return;
+    }
+    naviCreateUserButton.disabled = true;
+    naviCreateUserButton.textContent = "در حال ساخت حساب...";
+    if (naviCreateUserStatus) naviCreateUserStatus.textContent = "";
+    try {
+      const response = await fetch(NAVI_USERS_API, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer " + getNaviToken()
+        },
+        body: JSON.stringify({ displayName, username, password })
+      });
+      const data = await response.json();
+      if (!response.ok || !data.success) throw new Error(data.error || "ساخت حساب ناموفق بود.");
+      naviCreateUserForm.reset();
+      if (naviCreateUserStatus) naviCreateUserStatus.textContent = "حساب «" + data.user.displayName + "» ساخته شد. نام کاربری: " + data.user.username;
+    } catch (error) {
+      if (naviCreateUserStatus) naviCreateUserStatus.textContent = error.message || "ساخت حساب انجام نشد.";
+    } finally {
+      naviCreateUserButton.disabled = false;
+      naviCreateUserButton.textContent = "ساخت حساب";
+    }
+  });
+}
 
 
 /* =========================================
