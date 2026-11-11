@@ -6,13 +6,7 @@
 ========================================= */
 
 // API
-// Preview mode is opt-in via ?naviPreview=1; normal visitors stay on production.
-const NAVI_PREVIEW_MODE = new URLSearchParams(window.location.search).get("naviPreview") === "1";
-// Preview mode uses the existing Worker and its existing login secrets,
-// while routing NAVI database calls to the isolated preview D1 binding only.
-const NAVI_DB_HEADER = NAVI_PREVIEW_MODE
-  ? { "X-Navi-Database": "preview" }
-  : {};
+// API
 const NAVI_BASE = "https://nava-music-api.honrrpower.workers.dev";
 const NAVI_LOGIN_API = NAVI_BASE + "/navi-login";
 const NAVI_API = NAVI_BASE + "/navi-chat";
@@ -21,8 +15,8 @@ const NAVI_THREADS_API = NAVI_BASE + "/navi-threads";
 const NAVI_MEMORY_API = NAVI_BASE + "/navi-memory";
 
 // Session
-const NAVI_SESSION_KEY = "nava_navi_session" + (NAVI_PREVIEW_MODE ? "_preview" : "");
-const NAVI_EXPIRY_KEY = "nava_navi_expiry" + (NAVI_PREVIEW_MODE ? "_preview" : "");
+const NAVI_SESSION_KEY = "nava_navi_session";
+const NAVI_EXPIRY_KEY = "nava_navi_expiry";
 
 // Limits
 const NAVI_MAX_DISPLAY_MESSAGES = 100;
@@ -424,8 +418,7 @@ async function loadNaviHistory() {
     try {
       const response = await fetch(NAVI_HISTORY_API + "?thread_id=" + encodeURIComponent(naviActiveThreadId), {
         method: "GET",
-        headers: { "Authorization": "Bearer " + token ,
-        ...NAVI_DB_HEADER
+        headers: { "Authorization": "Bearer " + token 
       },
         cache: "no-store"
       });
@@ -1021,8 +1014,7 @@ async function submitNaviProposalAction(id, action, memoryValue, button) {
       headers: {
         "Content-Type": "application/json",
         "Authorization": "Bearer " + token
-      ,
-        ...NAVI_DB_HEADER
+      
       },
       body: JSON.stringify(payload)
     });
@@ -1116,8 +1108,7 @@ async function loadNaviMemories(forceRefresh = false) {
     try {
       const response = await fetch(NAVI_MEMORY_API, {
         method: "GET",
-        headers: { "Authorization": "Bearer " + token ,
-        ...NAVI_DB_HEADER
+        headers: { "Authorization": "Bearer " + token 
       },
         cache: "no-store"
       });
@@ -1308,8 +1299,7 @@ async function updateNaviMemory(id, memoryValue, button, editor) {
       headers: {
         "Content-Type": "application/json",
         "Authorization": "Bearer " + token
-      ,
-        ...NAVI_DB_HEADER
+      
       },
       body: JSON.stringify({
         action: "update",
@@ -1418,8 +1408,7 @@ async function deleteNaviMemory(id, button) {
       headers: {
         "Content-Type": "application/json",
         "Authorization": "Bearer " + token
-      ,
-        ...NAVI_DB_HEADER
+      
       },
       body: JSON.stringify({
         action: "delete",
@@ -1514,7 +1503,7 @@ async function loadNaviThreads() {
   if (!token) return false;
   try {
     const response = await fetch(NAVI_THREADS_API, {
-      headers: { "Authorization": "Bearer " + token, ...NAVI_DB_HEADER },
+      headers: { "Authorization": "Bearer " + token },
       cache: "no-store"
     });
     const data = await response.json();
@@ -1542,7 +1531,7 @@ function renderNaviThreads() {
     button.title = thread.title || "گفت‌وگو";
     button.addEventListener("click", async () => {
       naviActiveThreadId = thread.thread_id;
-      sessionStorage.setItem("nava_navi_active_thread" + (NAVI_PREVIEW_MODE ? "_preview" : ""), naviActiveThreadId);
+      sessionStorage.setItem("nava_navi_active_thread", naviActiveThreadId);
       renderNaviThreads();
       requestResponse.textContent = "";
       requestResponse.classList.remove("show");
@@ -1571,7 +1560,7 @@ async function deleteNaviThread() {
   try {
     const response = await fetch(NAVI_THREADS_API, {
       method: "POST",
-      headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token, ...NAVI_DB_HEADER },
+      headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
       body: JSON.stringify({ action: "delete", threadId: thread.thread_id })
     });
     const data = await response.json();
@@ -1579,7 +1568,7 @@ async function deleteNaviThread() {
     await loadNaviThreads();
     if (!naviThreads.some(item => item.thread_id === naviActiveThreadId)) {
       naviActiveThreadId = naviThreads[0]?.thread_id || "owner-main";
-      sessionStorage.setItem("nava_navi_active_thread" + (NAVI_PREVIEW_MODE ? "_preview" : ""), naviActiveThreadId);
+      sessionStorage.setItem("nava_navi_active_thread", naviActiveThreadId);
       naviHistory = [];
       requestResponse.textContent = "";
       requestResponse.classList.remove("show");
@@ -1611,7 +1600,7 @@ async function nameNaviThreadFromFirstMessage(message) {
   const title = buildNaviThreadTitle(message);
   const response = await fetch(NAVI_THREADS_API, {
     method: "POST",
-    headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token, ...NAVI_DB_HEADER },
+    headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
     body: JSON.stringify({ action: "rename", threadId: thread.thread_id, title })
   });
   const data = await response.json();
@@ -1628,13 +1617,13 @@ async function createNaviThread() {
   try {
     const response = await fetch(NAVI_THREADS_API, {
       method: "POST",
-      headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token, ...NAVI_DB_HEADER },
+      headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
       body: JSON.stringify({ title: "گفت‌وگوی جدید" })
     });
     const data = await response.json();
     if (!response.ok || !data.success || !data.thread?.thread_id) throw new Error(data.error || "ساخت گفت‌وگوی جدید ناموفق بود.");
     naviActiveThreadId = data.thread.thread_id;
-    sessionStorage.setItem("nava_navi_active_thread" + (NAVI_PREVIEW_MODE ? "_preview" : ""), naviActiveThreadId);
+    sessionStorage.setItem("nava_navi_active_thread", naviActiveThreadId);
     naviHistory = [];
     requestResponse.textContent = "";
     requestResponse.classList.remove("show");
@@ -1667,7 +1656,7 @@ const existingNaviToken = getNaviToken();
 if (existingNaviToken) {
   showNaviChat();
   loadNaviThreads().then(() => {
-    const saved = sessionStorage.getItem("nava_navi_active_thread" + (NAVI_PREVIEW_MODE ? "_preview" : ""));
+    const saved = sessionStorage.getItem("nava_navi_active_thread");
     if (saved && naviThreads.some(item => item.thread_id === saved)) naviActiveThreadId = saved;
     renderNaviThreads();
     loadNaviHistory();
@@ -1700,8 +1689,7 @@ naviLoginForm.addEventListener("submit", async event => {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
-      ,
-        ...NAVI_DB_HEADER
+      
       },
       body: JSON.stringify({ password })
     });
@@ -1852,8 +1840,7 @@ async function sendMessageToNavi() {
       headers: {
         "Content-Type": "application/json",
         "Authorization": "Bearer " + token
-      ,
-        ...NAVI_DB_HEADER
+      
       },
       body: JSON.stringify({
         message: finalMessage,
