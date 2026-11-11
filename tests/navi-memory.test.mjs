@@ -261,7 +261,30 @@ test("conversation search preserves thread title, identity and UTC timestamp met
 });
 
 test("memory proposals from different project categories are not merged", async () => {
-  const db = new MockD1();
+  const inserted = [];
+  let nextId = 1;
+  const db = {
+    prepare(sql) {
+      let values = [];
+      return {
+        bind(...args) { values = args; return this; },
+        async all() { return { results: [] }; },
+        async run() {
+          if (sql.includes("INSERT INTO navi_memory_facts_v1")) {
+            inserted.push({
+              id: nextId++,
+              owner_id: values[0],
+              memory_key: values[1],
+              memory_value: values[2],
+              status: "pending"
+            });
+            return { success: true, meta: { changes: 1, last_row_id: inserted.length } };
+          }
+          throw new Error("Unexpected SQL in project isolation test.");
+        }
+      };
+    }
+  };
   const first = await createNaviMemoryProposal(
     db,
     "پروژه نوا موتور موسیقی ایرانی دارد",
@@ -274,6 +297,6 @@ test("memory proposals from different project categories are not merged", async 
   );
   assert.equal(first.inserted, true);
   assert.equal(second.inserted, true);
-  assert.equal(db.memories.length, 2);
-  assert.notEqual(db.memories[0].memory_key, db.memories[1].memory_key);
+  assert.equal(inserted.length, 2);
+  assert.notEqual(inserted[0].memory_key, inserted[1].memory_key);
 });
