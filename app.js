@@ -1239,11 +1239,9 @@ async function loadNaviMemories(forceRefresh = false) {
       naviMemoryLoaded = true;
 
       renderNaviMemories(naviMemory);
-      renderNaviMemoryProposals(naviProposals);
       renderNaviArchivedMemory(naviArchivedMemory);
       const countDigits = value => String(value).replace(/[0-9]/g, digit => "۰۱۲۳۴۵۶۷۸۹"[Number(digit)]);
       document.getElementById("naviApprovedMemoryCount").textContent = countDigits(naviMemory.length);
-      document.getElementById("naviPendingMemoryCount").textContent = countDigits(naviProposals.length);
       document.getElementById("naviArchivedMemoryCount").textContent = countDigits(naviArchivedMemory.length);
 
       setNaviMemoryStatus(
