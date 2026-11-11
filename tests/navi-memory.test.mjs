@@ -368,3 +368,28 @@ test("natural Persian consent and refusal phrases are understood", async () => {
   assert.equal(parseNaviConfirmationIntent("بله، در مورد بعدی هم کمکم کن"), null);
   assert.equal(parseNaviConfirmationIntent("انجام بده و فایل را هم حذف کن"), null);
 });
+
+
+test("deterministic fallback recognizes a clear first-person durable preference", async () => {
+  const { extractNaviDeterministicMemoryProposal } = await import("../modules/navi.js");
+  const message = "من ترجیح می‌دهم وقتی درباره یک مشکل فنی صحبت می‌کنیم، اول علت اصلی مشکل پیدا و برطرف شود؛ نه اینکه با تغییرات موقت فقط علائم مشکل را پنهان کنیم.";
+  const proposals = extractNaviDeterministicMemoryProposal(message);
+  assert.equal(proposals.length, 1);
+  assert.equal(proposals[0].value, message);
+});
+
+test("deterministic fallback ignores ordinary opinions, questions and hypothetical examples", async () => {
+  const { extractNaviDeterministicMemoryProposal } = await import("../modules/navi.js");
+  assert.deepEqual(extractNaviDeterministicMemoryProposal("این راه‌حل به نظرم خوب است."), []);
+  assert.deepEqual(extractNaviDeterministicMemoryProposal("آیا ترجیح می‌دهی مشکل را ریشه‌ای حل کنیم؟"), []);
+  assert.deepEqual(extractNaviDeterministicMemoryProposal("مثلاً فرض کن من ترجیح می‌دهم همه‌چیز ساده باشد."), []);
+  assert.deepEqual(extractNaviDeterministicMemoryProposal("«من ترجیح می‌دهم پاسخ‌ها کوتاه باشند.»"), []);
+});
+
+test("deterministic fallback does not override a no-save instruction", async () => {
+  const { extractNaviDeterministicMemoryProposal } = await import("../modules/navi.js");
+  assert.deepEqual(
+    extractNaviDeterministicMemoryProposal("من ترجیح می‌دهم پاسخ‌ها کوتاه باشند؛ اما فعلاً این مورد را ذخیره نکن."),
+    []
+  );
+});
