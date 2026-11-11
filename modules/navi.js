@@ -362,6 +362,32 @@ export function parseNaviMemoryCommandSafely(message) {
   return parseNaviMemoryCommand(message);
 }
 
+// Deterministic safety net for clear, first-person durable preferences.
+// Gemini remains the primary extractor; this only fills an empty proposal list.
+export function extractNaviDeterministicMemoryProposal(message) {
+  const value = safeNaviText(message || "", NAVI_MAX_MEMORY_VALUE).trim();
+  if (!value || value.length < 20 || value.length > NAVI_MAX_MEMORY_VALUE) return [];
+  if (shouldSuppressNaviMemoryProposals(value) || containsSensitiveInformation(value)) return [];
+
+  // Do not turn questions, hypotheticals, quotations, or examples into personal facts.
+  if (/[؟?]/u.test(value) || /(?:فرض کن|مثلاً|برای مثال|به‌عنوان نمونه|اگر\s)/u.test(value)) return [];
+  if (/[«»“”]/u.test(value)) return [];
+
+  const durableFirstPersonPatterns = [
+    /(?:من\s+)?ترجیح\s+می(?:دهم|دم|کنم)/u,
+    /(?:من\s+)?دوست\s+دارم\s+(?:همیشه|معمولاً|معمولا|در\s+کار|در\s+پروژه)/u,
+    /(?:اولویت|هدف|رویکرد|اصل)\s+(?:اصلی\s+)?من\s+(?:این\s+است|اینکه)/u,
+    /برای\s+من\s+(?:همیشه\s+)?(?:مهم\s+است|اهمیت\s+دارد)/u,
+    /من\s+(?:همیشه|معمولاً|معمولا)\s+(?:ترجیح|سعی|تلاش)/u
+  ];
+  if (!durableFirstPersonPatterns.some(pattern => pattern.test(value))) return [];
+
+  return [{
+    title: "ترجیح و رویکرد پایدار کاربر",
+    value
+  }];
+}
+
 function normalizeMemoryProposals(proposals) {
   if (!Array.isArray(proposals)) return [];
 
@@ -1712,9 +1738,17 @@ async function handleChat({
   let proposalsMergeCandidates = 0;
 
   const suppressMemoryProposals = shouldSuppressNaviMemoryProposals(message);
-  const normalizedProposals = parsed.structured && !suppressMemoryProposals
+  let normalizedProposals = parsed.structured && !suppressMemoryProposals
     ? normalizeMemoryProposals(parsed.memoryProposals)
     : [];
+
+  // If Gemini misses a clearly worded first-person durable preference,
+  // recover it locally without making another model request.
+  if (!suppressMemoryProposals && normalizedProposals.length === 0) {
+    normalizedProposals = normalizeMemoryProposals(
+      extractNaviDeterministicMemoryProposal(message)
+    );
+  }
 
   for (const proposal of normalizedProposals) {
     try {      const result = await createNaviMemoryProposal(
