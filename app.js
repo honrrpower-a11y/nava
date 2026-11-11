@@ -41,6 +41,7 @@ let naviActiveThreadId = "owner-main";
 // Memory state
 let naviMemory = [];
 let naviProposals = [];
+let naviArchivedMemory = [];
 let naviMemoryLoaded = false;
 let naviMemoryLoading = false;
 let naviMemoryLoadPromise = null;
@@ -259,6 +260,7 @@ function clearNaviSession() {
   naviHistory = [];
   naviMemory = [];
   naviProposals = [];
+  naviArchivedMemory = [];
   naviMemoryLoaded = false;
   naviMemoryLoading = false;
   naviMemoryLoadPromise = null;
@@ -684,6 +686,72 @@ function renderNaviMemories(memories) {
 
 
 
+function normalizeNaviArchivedMemory(data) {
+  const source = data && Array.isArray(data.archived)
+    ? data.archived
+    : data && data.data && Array.isArray(data.data.archived)
+      ? data.data.archived
+      : [];
+
+  return source
+    .filter(item => item && typeof item === "object")
+    .map(item => ({
+      id: Number(item.id),
+      memory_key: String(item.memory_key ?? ""),
+      memory_value: String(item.memory_value ?? ""),
+      source: String(item.source ?? ""),
+      status: String(item.status ?? "archived"),
+      created_at: item.created_at ?? "",
+      updated_at: item.updated_at ?? ""
+    }))
+    .filter(item => Number.isSafeInteger(item.id) && item.id > 0);
+}
+
+function renderNaviArchivedMemory(items) {
+  const list = document.getElementById("naviMemoryArchivedList");
+  if (!list) return;
+  list.replaceChildren();
+
+  if (!Array.isArray(items) || items.length === 0) {
+    const empty = document.createElement("div");
+    empty.className = "navi-memory-empty";
+    empty.textContent = "رکورد آرشیوشده‌ای وجود ندارد.";
+    list.appendChild(empty);
+    return;
+  }
+
+  const fragment = document.createDocumentFragment();
+  items.forEach(item => {
+    const card = document.createElement("article");
+    card.className = "navi-memory-card navi-memory-archived";
+    card.dataset.memoryId = String(item.id);
+
+    const value = document.createElement("div");
+    value.className = "navi-memory-value";
+    value.textContent = item.memory_value || "محتوای این رکورد خالی است.";
+
+    const meta = document.createElement("div");
+    meta.className = "navi-memory-meta";
+    const status = document.createElement("span");
+    status.textContent = "وضعیت: آرشیوشده";
+    meta.appendChild(status);
+    if (item.updated_at) {
+      const date = document.createElement("span");
+      date.textContent = "آخرین تغییر: " + formatNaviMemoryDate(item.updated_at);
+      meta.appendChild(date);
+    }
+    if (item.source) {
+      const source = document.createElement("span");
+      source.textContent = "منبع: " + item.source;
+      meta.appendChild(source);
+    }
+
+    card.append(value, meta);
+    fragment.appendChild(card);
+  });
+  list.appendChild(fragment);
+}
+
 function normalizeNaviProposals(data) {
   const source = data && Array.isArray(data.proposals)
     ? data.proposals
@@ -1075,10 +1143,12 @@ async function loadNaviMemories(forceRefresh = false) {
 
       naviMemory = normalizeNaviMemories(data);
       naviProposals = normalizeNaviProposals(data);
+      naviArchivedMemory = normalizeNaviArchivedMemory(data);
       naviMemoryLoaded = true;
 
       renderNaviMemories(naviMemory);
       renderNaviMemoryProposals(naviProposals);
+      renderNaviArchivedMemory(naviArchivedMemory);
 
       setNaviMemoryStatus(
         naviMemory.length
