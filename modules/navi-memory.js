@@ -108,6 +108,47 @@ export async function ensureNaviMainThread(db) {
 // CONVERSATION HISTORY
 // ======================================
 
+// If NAVI just asked what information to save, recover the immediately
+// preceding user message from this same thread. Never search older messages
+// or guess which content the user meant.
+export async function getNaviPreviousExplicitMemoryValue(
+  db,
+  threadId = NAVI_MAIN_THREAD_ID
+) {
+  const result = await db.prepare(`
+    SELECT role, content
+    FROM navi_chat_messages_v1
+    WHERE thread_id = ?
+    ORDER BY id DESC
+    LIMIT 2
+  `).bind(threadId).all();
+
+  const rows = result.results || [];
+  if (rows.length !== 2) return "";
+
+  const latest = rows[0];
+  const previous = rows[1];
+
+  if (latest.role !== "assistant" || previous.role !== "user") {
+    return "";
+  }
+
+  const prompt = normalizeMemoryText(latest.content || "");
+  const isMemoryClarification = (
+    /چه اطلاعاتی را می(?:خواهی|خوای) در حافظه/.test(prompt) ||
+    /چه اطلاعاتی.*(?:ذخیره|ثبت).*(?:حافظه|بلندمدت)/.test(prompt) ||
+    /کدام اطلاعات.*(?:ذخیره|ثبت).*(?:حافظه|بلندمدت)/.test(prompt) ||
+    /چه چیزی را می(?:خواهی|خوای).*(?:ذخیره|ثبت).*(?:حافظه|بلندمدت)/.test(prompt)
+  );
+
+  if (!isMemoryClarification) return "";
+
+  const value = cleanMemoryValue(previous.content || "");
+  if (value.length < 8 || containsSensitiveMemory(value)) return "";
+
+  return value;
+}
+
 export async function getNaviDbHistory(
   db,
   limit = 10,
