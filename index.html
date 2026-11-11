@@ -122,6 +122,21 @@
             <button class="navi-logout" id="naviLogout" type="button">خروج از ناوی</button>
           </div>
 
+          <section class="navi-memory-panel" id="naviAccountAdmin" hidden>
+            <h3>ساخت حساب دعوتی</h3>
+            <p class="navi-memory-description">فعلاً فقط مالک می‌تواند حساب بسازد. ثبت‌نام عمومی غیرفعال است.</p>
+            <form id="naviCreateUserForm">
+              <label class="field-label" for="naviNewDisplayName">نام نمایشی</label>
+              <input class="navi-password" id="naviNewDisplayName" type="text" maxlength="80" required>
+              <label class="field-label" for="naviNewUsername">نام کاربری انگلیسی</label>
+              <input class="navi-password" id="naviNewUsername" type="text" minlength="3" maxlength="40" autocomplete="off" required>
+              <label class="field-label" for="naviNewPassword">رمز عبور اولیه (حداقل ۱۲ نویسه)</label>
+              <input class="navi-password" id="naviNewPassword" type="password" minlength="12" maxlength="256" autocomplete="new-password" required>
+              <button class="btn-primary" id="naviCreateUserButton" type="submit">ساخت حساب</button>
+            </form>
+            <div class="navi-auth-error" id="naviCreateUserStatus" role="status" aria-live="polite"></div>
+          </section>
+
           <section class="navi-memory-panel" id="naviHistoryPanel">
             <div class="navi-thread-toolbar">
               <div class="navi-thread-toolbar-actions">
