@@ -1378,8 +1378,8 @@ export function parseNaviConfirmationIntent(message) {
   const text = normalizeText(message)
     .replace(/[.!؟،؛]+$/u, "")
     .replace(/[،,]/gu, " ")
-    .replace(/[\\u200c\\u200d]/gu, "")
-    .replace(/\\s+/gu, " ")
+    .replace(/[\u200c\u200d]/gu, "")
+    .replace(/\s+/gu, " ")
     .trim();
   if (!text || text.length > 120) return null;
 
