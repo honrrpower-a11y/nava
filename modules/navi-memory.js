@@ -10,7 +10,7 @@ import { safeNaviText } from "./shared.js";
 export const NAVI_MAIN_THREAD_ID = "owner-main";
 export const NAVI_OWNER_ID = "owner";
 
-const MEMORY_VALUE_LIMIT = 1000;
+const MEMORY_VALUE_LIMIT = 4000;
 const MEMORY_KEY_LIMIT = 150;
 const MEMORY_LIST_LIMIT = 200;
 
@@ -319,6 +319,18 @@ export function parseNaviMemoryCommand(message) {
       isCommand: false,
       value: ""
     };
+  }
+
+  // A request to create a proposal and obtain approval is NOT a direct-save command.
+  // Leave it on the conversational path so Gemini can create a pending proposal.
+  const asksForProposalApproval =
+    /(?:به\s*عنوان|به\s*صورت)\s+(?:یک\s+)?(?:پیشنهاد|پروپوزال)\s+(?:حافظه\s+)?(?:ثبت|ذخیره|ایجاد)/u.test(text) ||
+    /(?:پیشنهاد\s+حافظه|حافظه\s+پیشنهادی)/u.test(text) &&
+      /(?:تأیید|تایید|اجازه|موافقت)/u.test(text) ||
+    /(?:قبل\s+از|پیش\s+از)\s+(?:ذخیره|جایگزینی|به\s*روزرسانی)[\s\S]{0,100}(?:تأیید|تایید|اجازه)/u.test(text);
+
+  if (asksForProposalApproval) {
+    return { isCommand: false, value: "" };
   }
 
   // جمله‌ای که ابتدا واقعیت را بیان می‌کند و در پایان می‌گوید
