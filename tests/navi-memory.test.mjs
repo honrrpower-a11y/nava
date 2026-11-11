@@ -55,7 +55,7 @@ test("blank explicit save recovers only the immediately preceding user message a
   const intended = "پروژه نوا باید به یک استودیوی حرفه‌ای موسیقی ایرانی تبدیل شود و ناوی دستیار اصلی آن باشد.";
   const db = {
     prepare(sql) {
-      assert.match(sql, /ORDER BY id DESC/);
+      assert.match(sql, /ORDER BY m\\.id DESC/);
       assert.match(sql, /LIMIT 2/);
       return {
         bind(threadId) {
