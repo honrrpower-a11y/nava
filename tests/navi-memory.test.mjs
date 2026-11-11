@@ -238,3 +238,42 @@ test("Gemini parser preserves braces and escaped quotes inside JSON strings", as
   assert.equal(parsed.structured, true);
   assert.equal(parsed.reply, 'متن دارای } و "نقل‌قول"');
 });
+
+
+test("conversation search preserves thread title, identity and UTC timestamp metadata", async () => {
+  const { searchNaviConversationHistory } = await import("../modules/navi-memory.js");
+  const db = {
+    prepare(sql) {
+      assert.match(sql, /LEFT JOIN navi_chat_threads_v1/);
+      assert.match(sql, /LIMIT 600/);
+      return { async all() { return { results: [
+        { thread_id: "nava-project", thread_title: "پروژه نوا", role: "user", content: "تصمیم موتور موسیقی نوا", created_at: "2026-11-10 09:30:00" },
+        { thread_id: "ritmetan-project", thread_title: "ریتمتان", role: "assistant", content: "تصمیم موتور موسیقی برای ریتمتان", created_at: "2026-11-09 12:00:00" }
+      ] }; } };
+    }
+  };
+  const matches = await searchNaviConversationHistory(db, "موتور موسیقی نوا", 8, []);
+  assert.ok(matches.length > 0);
+  const match = matches.find(item => item.threadId === "nava-project");
+  assert.equal(match.threadTitle, "پروژه نوا");
+  assert.equal(match.createdAt, "2026-11-10 09:30:00");
+  assert.equal(match.role, "user");
+});
+
+test("memory proposals from different project categories are not merged", async () => {
+  const db = new MockD1();
+  const first = await createNaviMemoryProposal(
+    db,
+    "پروژه نوا موتور موسیقی ایرانی دارد",
+    "پروژه نوا"
+  );
+  const second = await createNaviMemoryProposal(
+    db,
+    "پروژه ریتمتان موتور موسیقی ایرانی دارد",
+    "پروژه ریتمتان"
+  );
+  assert.equal(first.inserted, true);
+  assert.equal(second.inserted, true);
+  assert.equal(db.memories.length, 2);
+  assert.notEqual(db.memories[0].memory_key, db.memories[1].memory_key);
+});
