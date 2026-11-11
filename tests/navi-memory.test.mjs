@@ -50,6 +50,52 @@ test("remember command extracts the fact instead of saving the instruction", () 
 });
 
 
+test("blank explicit save recovers only the immediately preceding user message after NAVI asks what to save", async () => {
+  const { getNaviPreviousExplicitMemoryValue } = await import("../modules/navi-memory.js");
+  const intended = "پروژه نوا باید به یک استودیوی حرفه‌ای موسیقی ایرانی تبدیل شود و ناوی دستیار اصلی آن باشد.";
+  const db = {
+    prepare(sql) {
+      assert.match(sql, /ORDER BY id DESC/);
+      assert.match(sql, /LIMIT 2/);
+      return {
+        bind(threadId) {
+          assert.equal(threadId, "thread-test");
+          return {
+            async all() {
+              return { results: [
+                { role: "assistant", content: "حتماً. چه اطلاعاتی را می‌خواهی در حافظه بلندمدتم ذخیره کنم؟" },
+                { role: "user", content: intended }
+              ] };
+            }
+          };
+        }
+      };
+    }
+  };
+  assert.equal(await getNaviPreviousExplicitMemoryValue(db, "thread-test"), intended);
+});
+
+test("blank explicit save does not recover content after an unrelated assistant reply", async () => {
+  const { getNaviPreviousExplicitMemoryValue } = await import("../modules/navi-memory.js");
+  const db = {
+    prepare() {
+      return {
+        bind() {
+          return {
+            async all() {
+              return { results: [
+                { role: "assistant", content: "بله، می‌توانم در این مورد کمکت کنم." },
+                { role: "user", content: "این متن نباید به‌صورت خودکار ذخیره شود." }
+              ] };
+            }
+          };
+        }
+      };
+    }
+  };
+  assert.equal(await getNaviPreviousExplicitMemoryValue(db, "thread-test"), "");
+});
+
 test("archived memory query returns only archived rows for the owner", async () => {
   let sql = "";
   let bound = [];
