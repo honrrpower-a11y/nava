@@ -1339,6 +1339,60 @@ async function requestGemini({
   }
 }
 
+// Short confirmations may affect only one uniquely pending memory proposal.
+// They do not authorize arbitrary code changes or external actions.
+export function parseNaviConfirmationIntent(message) {
+  const text = normalizeText(message);
+  if (!text || text.length > 80) return null;
+
+  if (/^(?:تأیید(?:\s+می‌کنم|\s+بفرما|\s+کن)?|تایید(?:\s+می‌کنم|\s+بفرما|\s+کن)?|موافقم|قبول(?:ه| دارم)?|انجامش\s+بده|بله،?\s*تأیید)$/u.test(text)) return "approve";
+  if (/^(?:رد(?:ش\s+کن)?|رد\s+می‌کنم|مخالفم|نمی‌خوام|لغو(?:ش\s+کن)?|بی‌خیال)$/u.test(text)) return "reject";
+  return null;
+}
+
+async function handleNaviPendingMemoryConfirmation(db, message, threadId, corsOrigin) {
+  const intent = parseNaviConfirmationIntent(message);
+  if (!intent) return null;
+
+  const pending = await getNaviPendingMemory(db);
+  if (!pending.length) {
+    return successResponse({
+      reply: "در حال حاضر پیشنهاد حافظهٔ درانتظاری برای تأیید یا رد ندارم.",
+      assistant: "NAVI", version: NAVI_VERSION,
+      action: { handled: true, result: "no_pending_proposal" }
+    }, corsOrigin);
+  }
+
+  if (pending.length !== 1) {
+    return successResponse({
+      reply: "چند پیشنهاد حافظه در انتظار بررسی است. برای جلوگیری از تأیید اشتباه، لطفاً پیشنهاد موردنظر را از بخش مدیریت حافظه انتخاب کن.",
+      assistant: "NAVI", version: NAVI_VERSION,
+      action: { handled: true, result: "ambiguous_pending_proposals", count: pending.length }
+    }, corsOrigin);
+  }
+
+  const proposal = pending[0];
+  if (intent === "approve") {
+    const result = await approveNaviMemoryProposal(db, proposal.id);
+    if (!result || result.notFound || result.invalid || result.sensitive || result.duplicate) {
+      return errorResponse("تأیید پیشنهاد انجام نشد؛ وضعیت حافظه تغییر نکرد.", 409, corsOrigin);
+    }
+  } else {
+    const result = await rejectNaviMemoryProposal(db, proposal.id);
+    if (!result?.success) return errorResponse("رد پیشنهاد انجام نشد؛ وضعیت حافظه تغییر نکرد.", 409, corsOrigin);
+  }
+
+  const reply = intent === "approve"
+    ? "پیشنهاد زیر با تأیید صریح تو به حافظه بلندمدت اضافه شد:\n«" + proposal.memory_value + "»"
+    : "پیشنهاد زیر طبق درخواست تو رد شد و به حافظه تأییدشده اضافه نشد:\n«" + proposal.memory_value + "»";
+
+  await saveNaviConversation(db, message, reply, threadId);
+  return successResponse({
+    reply, assistant: "NAVI", version: NAVI_VERSION,
+    action: { handled: true, type: intent, proposalId: proposal.id, success: true }
+  }, corsOrigin);
+}
+
 // ======================================
 // CHAT
 // ======================================
@@ -1447,6 +1501,17 @@ async function handleChat({
     WHERE thread_id = ? AND owner_id = ? LIMIT 1
   `).bind(requestedThreadId, NAVI_OWNER_ID).first();
   if (!activeThread) return errorResponse("گفت‌وگوی انتخاب‌شده معتبر نیست.", 404, corsOrigin);
+
+  // A short confirmation applies only to one uniquely pending memory proposal.
+  try {
+    const confirmationResponse = await handleNaviPendingMemoryConfirmation(
+      env.NAVA_DB, message, requestedThreadId, corsOrigin
+    );
+    if (confirmationResponse) return confirmationResponse;
+  } catch (error) {
+    logError("Pending memory confirmation failed", error);
+    return errorResponse("بررسی یا اجرای تأیید حافظه ناموفق بود؛ هیچ موفقیتی اعلام نمی‌کنم.", 500, corsOrigin);
+  }
 
   // ----------------------------------
   // LOAD HISTORY AND APPROVED MEMORY
