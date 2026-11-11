@@ -56,23 +56,14 @@ jobs:
           if (config.main !== './index.js') {
             throw new Error('STOP: unexpected Worker entry point.');
           }
-          if (!Array.isArray(config.d1_databases) || config.d1_databases.length !== 2) {
-            throw new Error('STOP: expected exactly the production and preview D1 bindings.');
+          if (!Array.isArray(config.d1_databases) || config.d1_databases.length !== 1) {
+            throw new Error('STOP: expected exactly one production D1 binding.');
           }
           const prod = config.d1_databases.find(db => db.binding === 'NAVA_DB');
-          const preview = config.d1_databases.find(db => db.binding === 'NAVI_PREVIEW_DB');
-          if (!prod || prod.database_name !== 'nava-memory' ||
-              prod.database_id !== '56f30fed-a03b-4e36-a320-cbef3dfeaf12') {
-            throw new Error('STOP: production D1 target mismatch.');
-          }
-          if (!preview || preview.database_name !== 'nava-memory-preview' ||
-              preview.database_id !== 'b48b0390-f292-4ecf-b36d-31eb2aff3958') {
-            throw new Error('STOP: preview D1 target mismatch.');
-          }
           if (!fs.existsSync('index.js') || !fs.existsSync('modules/navi-memory.js')) {
             throw new Error('STOP: required Worker source files are missing.');
           }
-          console.log('Verified production Worker and both D1 bindings. No database migrations will run.');
+          console.log('Verified the production Worker and its sole production D1 binding. No database migrations will run.');
           NODE
 
       - name: Deploy production Worker only (no D1 migrations)
