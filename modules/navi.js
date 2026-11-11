@@ -1342,7 +1342,7 @@ async function requestGemini({
 // Short confirmations may affect only one uniquely pending memory proposal.
 // They do not authorize arbitrary code changes or external actions.
 export function parseNaviConfirmationIntent(message) {
-  const text = normalizeText(message);
+  const text = normalizeText(message).replace(/[.!؟،؛]+$/u, "").trim();
   if (!text || text.length > 80) return null;
 
   if (/^(?:تأیید(?:\s+می‌کنم|\s+بفرما|\s+کن)?|تایید(?:\s+می‌کنم|\s+بفرما|\s+کن)?|موافقم|قبول(?:ه| دارم)?|انجامش\s+بده|بله،?\s*تأیید)$/u.test(text)) return "approve";
@@ -1374,7 +1374,7 @@ async function handleNaviPendingMemoryConfirmation(db, message, threadId, corsOr
   const proposal = pending[0];
   if (intent === "approve") {
     const result = await approveNaviMemoryProposal(db, proposal.id);
-    if (!result || result.notFound || result.invalid || result.sensitive || result.duplicate) {
+    if (!result?.success || result.notFound || result.invalid || result.sensitive || result.duplicate) {
       return errorResponse("تأیید پیشنهاد انجام نشد؛ وضعیت حافظه تغییر نکرد.", 409, corsOrigin);
     }
   } else {
@@ -1386,7 +1386,11 @@ async function handleNaviPendingMemoryConfirmation(db, message, threadId, corsOr
     ? "پیشنهاد زیر با تأیید صریح تو به حافظه بلندمدت اضافه شد:\n«" + proposal.memory_value + "»"
     : "پیشنهاد زیر طبق درخواست تو رد شد و به حافظه تأییدشده اضافه نشد:\n«" + proposal.memory_value + "»";
 
-  await saveNaviConversation(db, message, reply, threadId);
+  try {
+    await saveNaviConversation(db, message, reply, threadId);
+  } catch (error) {
+    logError("Confirmation history save failed after action", error);
+  }
   return successResponse({
     reply, assistant: "NAVI", version: NAVI_VERSION,
     action: { handled: true, type: intent, proposalId: proposal.id, success: true }
