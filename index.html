@@ -196,9 +196,11 @@
           </select>
 
           <label class="field-label" for="userRequest">پیامت برای ناوی</label>
-          <textarea class="request-textarea" id="userRequest"
-            placeholder="سلام ناوی، می‌خواهم برای کسب‌وکارم یک ایده تازه پیدا کنم..."></textarea>
-          <label class="navi-composer-memory" for="naviSaveComposerMessage"><input type="checkbox" id="naviSaveComposerMessage"><span class="navi-composer-memory-icon" aria-hidden="true">🧠</span><span class="navi-composer-memory-copy"><strong>ذخیره این پیام در حافظه</strong><small>فقط همین پیام، پس از ارسال، به حافظه تأییدشده اضافه می‌شود.</small></span></label>
+          <div class="navi-composer">
+            <textarea class="request-textarea" id="userRequest"
+              placeholder="سلام ناوی، می‌خواهم برای کسب‌وکارم یک ایده تازه پیدا کنم..."></textarea>
+            <label class="navi-composer-memory" for="naviSaveComposerMessage"><input type="checkbox" id="naviSaveComposerMessage"><span class="navi-composer-memory-icon" aria-hidden="true">🧠</span><span class="navi-composer-memory-copy"><strong>ذخیره این پیام در حافظه</strong><small>فقط همین پیام، پس از ارسال، به حافظه تأییدشده اضافه می‌شود.</small></span></label>
+          </div>
           <button class="btn-primary" id="sendRequest" type="button">ارسال پیام به ناوی</button>
           <div class="navi-status" id="naviStatus">ناوی آماده گفت‌وگو با توست.</div>
           <div class="response-box" id="requestResponse" aria-live="polite"></div>
