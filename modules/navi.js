@@ -351,6 +351,16 @@ export function shouldSuppressNaviMemoryProposals(message) {
   return hasNoSaveInstruction;
 }
 
+// Negative consent must be checked BEFORE the explicit-command parser.
+// Otherwise a request phrased as adding a fact can bypass the proposal filter.
+export function parseNaviMemoryCommandSafely(message) {
+  if (shouldSuppressNaviMemoryProposals(message)) {
+    return { isCommand: false, value: "" };
+  }
+
+  return parseNaviMemoryCommand(message);
+}
+
 function normalizeMemoryProposals(proposals) {
   if (!Array.isArray(proposals)) return [];
 
@@ -1411,7 +1421,7 @@ async function handleChat({
   // EXPLICIT MEMORY COMMAND
   // ----------------------------------
 
-  const memoryCommand = parseNaviMemoryCommand(
+  const memoryCommand = parseNaviMemoryCommandSafely(
     message
   );
 
