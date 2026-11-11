@@ -805,9 +805,9 @@ export async function createNaviMemoryProposal(
     if (duplicate.status === "pending") {
       const update = await db.prepare(`
         UPDATE navi_memory_facts_v1
-        SET memory_value = ?, updated_at = datetime('now')
+        SET memory_value = ?, source = ?, updated_at = datetime('now')
         WHERE id = ? AND owner_id = ? AND status = 'pending'
-      `).bind(mergedValue, duplicate.id, NAVI_OWNER_ID).run();
+      `).bind(mergedValue, memorySource, duplicate.id, NAVI_OWNER_ID).run();
 
       if (!update.success || !update.meta?.changes) {
         throw new Error("Could not merge pending memory proposal.");
