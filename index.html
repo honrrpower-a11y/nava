@@ -7,7 +7,7 @@
   <meta name="description" content="NAVA؛ استودیوی هوشمند برای ساخت، طراحی و رشد کسب‌وکارها">
   <title>NAVA | One Vision. One Mission. One NAVA.</title>
   <link rel="stylesheet" href="style.css">
-  <script src="app.js?v=navi-manual-memory-save-1" defer></script>
+  <script src="app.js?v=navi-composer-memory-accordion-1" defer></script>
 </head>
 <body>
 
@@ -169,23 +169,18 @@
 
               <div class="navi-memory-error" id="naviMemoryError" role="alert"></div>
 
-              <div class="navi-memory-section-title">اطلاعات تأییدشده پروفایل</div>
-              <div class="navi-memory-list" id="naviMemoryList" aria-live="polite">
-                <div class="navi-memory-empty">هنوز اطلاعاتی بارگذاری نشده است.</div>
-              </div>
-
-              <div class="navi-memory-section-title">پیشنهادهای ناوی — برای بررسی و تأیید</div>
-              <div class="navi-memory-list" id="naviMemoryProposalList" aria-live="polite">
-                <div class="navi-memory-empty">پیشنهادهای حافظه بارگذاری نشده‌اند.</div>
-              </div>
-
-              <div class="navi-memory-section-title">سوابق آرشیوشده</div>
-              <p class="navi-memory-description">
-                موارد ردشده یا جایگزین‌شده در اینجا فقط برای بررسی سابقه نمایش داده می‌شوند و در پاسخ‌های ناوی به‌عنوان حافظه فعال استفاده نمی‌شوند.
-              </p>
-              <div class="navi-memory-list" id="naviMemoryArchivedList" aria-live="polite">
-                <div class="navi-memory-empty">سوابق آرشیوشده بارگذاری نشده‌اند.</div>
-              </div>
+              <section class="navi-memory-accordion">
+                <button class="navi-memory-accordion-toggle" type="button" aria-expanded="false" aria-controls="naviMemoryApprovedContent" data-navi-memory-section-toggle><span>اطلاعات تأییدشده پروفایل</span><span class="navi-memory-accordion-side"><span class="navi-memory-count" id="naviApprovedMemoryCount">۰</span><span class="navi-memory-arrow" aria-hidden="true">⌄</span></span></button>
+                <div class="navi-memory-accordion-content" id="naviMemoryApprovedContent" hidden><div class="navi-memory-list" id="naviMemoryList" aria-live="polite"><div class="navi-memory-empty">هنوز اطلاعاتی بارگذاری نشده است.</div></div></div>
+              </section>
+              <section class="navi-memory-accordion">
+                <button class="navi-memory-accordion-toggle" type="button" aria-expanded="false" aria-controls="naviMemoryProposalContent" data-navi-memory-section-toggle><span>پیشنهادهای منتظر تأیید</span><span class="navi-memory-accordion-side"><span class="navi-memory-count" id="naviPendingMemoryCount">۰</span><span class="navi-memory-arrow" aria-hidden="true">⌄</span></span></button>
+                <div class="navi-memory-accordion-content" id="naviMemoryProposalContent" hidden><div class="navi-memory-list" id="naviMemoryProposalList" aria-live="polite"><div class="navi-memory-empty">پیشنهادهای حافظه بارگذاری نشده‌اند.</div></div></div>
+              </section>
+              <section class="navi-memory-accordion">
+                <button class="navi-memory-accordion-toggle" type="button" aria-expanded="false" aria-controls="naviMemoryArchivedContent" data-navi-memory-section-toggle><span>سوابق آرشیوشده</span><span class="navi-memory-accordion-side"><span class="navi-memory-count" id="naviArchivedMemoryCount">۰</span><span class="navi-memory-arrow" aria-hidden="true">⌄</span></span></button>
+                <div class="navi-memory-accordion-content" id="naviMemoryArchivedContent" hidden><p class="navi-memory-description">موارد ردشده یا جایگزین‌شده فقط برای بررسی سابقه نمایش داده می‌شوند و در پاسخ‌های ناوی به‌عنوان حافظه فعال استفاده نمی‌شوند.</p><div class="navi-memory-list" id="naviMemoryArchivedList" aria-live="polite"><div class="navi-memory-empty">سوابق آرشیوشده بارگذاری نشده‌اند.</div></div></div>
+              </section>
             </div>
           </section>
 
@@ -203,7 +198,7 @@
           <label class="field-label" for="userRequest">پیامت برای ناوی</label>
           <textarea class="request-textarea" id="userRequest"
             placeholder="سلام ناوی، می‌خواهم برای کسب‌وکارم یک ایده تازه پیدا کنم..."></textarea>
-
+          <label class="navi-composer-memory" for="naviSaveComposerMessage"><input type="checkbox" id="naviSaveComposerMessage"><span class="navi-composer-memory-icon" aria-hidden="true">🧠</span><span class="navi-composer-memory-copy"><strong>ذخیره این پیام در حافظه</strong><small>فقط همین پیام، پس از ارسال، به حافظه تأییدشده اضافه می‌شود.</small></span></label>
           <button class="btn-primary" id="sendRequest" type="button">ارسال پیام به ناوی</button>
           <div class="navi-status" id="naviStatus">ناوی آماده گفت‌وگو با توست.</div>
           <div class="response-box" id="requestResponse" aria-live="polite"></div>
