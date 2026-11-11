@@ -122,7 +122,7 @@ export async function getNaviPreviousExplicitMemoryValue(
     FROM navi_chat_messages_v1 m
     INNER JOIN navi_chat_threads_v1 t ON t.thread_id = m.thread_id
     WHERE m.thread_id = ? AND t.owner_id = ?
-    ORDER BY id DESC
+    ORDER BY m.id DESC
     LIMIT 2
   `).bind(threadId, ownerId).all();
 
@@ -1143,7 +1143,8 @@ export async function updateNaviMemoryProposal(
     db,
     memoryValue,
     proposalId,
-    existing.memory_key
+    existing.memory_key,
+    ownerId
   );
 
   if (duplicate) {
