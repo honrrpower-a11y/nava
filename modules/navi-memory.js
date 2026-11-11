@@ -463,6 +463,7 @@ function getMemoryMeaningTokens(value) {
     "میخوام", "میخواهم", "میخوام", "می‌خوام", "می‌خواهم",
     "باشه", "باشد", "هست", "است", "بشه", "شود",
     "قبلا", "پیشتر", "گفته", "گفتم", "بودم",
+    "است", "هست", "هستم", "هستی", "هستیم", "هستند",
     "ترجیح", "ترجیحا", "ترجیحاً", "دوست", "دارم", "دارید",
     "کن", "کنه", "کنید", "بکن", "بکنه", "بکنید",
     "یادت", "بمونه", "بماند", "نگه", "دار", "داشته"
@@ -494,8 +495,13 @@ function getMemoryMeaningTokens(value) {
       if (directAlias) return directAlias;
 
       let normalized = token
-        .replace(/(?:هایی|های|ها)$/u, "")
         .replace(/(?:هاتون|هات|هایت|هاش|هایش)$/u, "")
+        .replace(/(?:هایی|های|ها)$/u, "")
+        // فارسیِ محاوره‌ای و اضافه‌های ملکی: رنگم، علاقه‌ام، سلیقه‌اش
+        // باید به هستهٔ واژه برگردند تا اصلاح یک واقعیت، حافظهٔ جدا نسازد.
+        .replace(/(?:ام|ات|اش)$/u, match =>
+          token.length > match.length + 2 ? "" : match
+        )
         .replace(/(?:تر|ترین)$/u, "");
 
       return synonyms.get(normalized) || normalized;
@@ -503,7 +509,7 @@ function getMemoryMeaningTokens(value) {
     .filter(token => token.length > 1 && !stopWords.has(token));
 }
 
-function areMemoryValuesSemanticallySimilar(first, second) {
+export function areMemoryValuesSemanticallySimilar(first, second) {
   const firstTokens = new Set(getMemoryMeaningTokens(first));
   const secondTokens = new Set(getMemoryMeaningTokens(second));
 
