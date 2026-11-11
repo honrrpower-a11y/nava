@@ -2045,7 +2045,7 @@ async function sendMessageToNavi() {
       : null;
 
     if (memoryResult?.manualSaved || memoryResult?.manualDuplicate || memoryResult?.manualSaveError) {
-      setNaviMemoryStatus(memoryResult.manualSaved ? "پیام انتخاب‌شده از کادر گفتگو در حافظه تأییدشده ذخیره شد." : memoryResult.manualDuplicate ? "این پیام یا اطلاعات مشابه آن از قبل در حافظه تأییدشده وجود داشت." : memoryResult.manualSaveError);
+      setNaviMemoryStatus(memoryResult.manualSaved ? "برداشت ناوی از پیام در حافظه تأییدشده ذخیره شد." : memoryResult.manualDuplicate ? "برداشت ناوی یا اطلاعات مشابه آن از قبل در حافظه تأییدشده وجود داشت." : memoryResult.manualSaveError);
     }
 
     if (!naviMemoryBusy) {
