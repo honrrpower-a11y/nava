@@ -1,0 +1,27 @@
+name: NAVI memory regression tests
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "modules/navi-memory.js"
+      - "modules/shared.js"
+      - "tests/navi-memory.test.mjs"
+      - ".github/workflows/navi-memory-tests.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Run NAVI memory regression tests
+        run: node --experimental-default-type=module --test tests/navi-memory.test.mjs
