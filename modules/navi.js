@@ -480,8 +480,8 @@ async function handleLogin({
   if (origin !== ALLOWED_ORIGIN) {
     return errorResponse("مبدأ درخواست مجاز نیست.", 403, corsOrigin);
   }
-  if (!env.NAVI_SESSION_SECRET || !env.NAVI_OWNER_PASSWORD) {
-    return errorResponse("تنظیمات ورود ناوی کامل نیست.", 500, corsOrigin);
+  if (!env.NAVI_SESSION_SECRET) {
+    return errorResponse("تنظیمات امنیتی نشست ناوی کامل نیست.", 500, corsOrigin);
   }
 
   let input;
