@@ -505,47 +505,46 @@ body.light .navi-composer-memory{background:#f8f1e6;border-top-color:rgba(193,12
 @media(max-width:480px){.navi-composer-memory{align-items:center;padding:9px 11px}}
 
 
-/* NAVI compact memory action beside send */
-.navi-send-toolbar{
+/* NAVI memory checkbox inside the chat composer */
+.navi-composer-memory{
   display:flex;
   align-items:center;
   gap:10px;
-  margin-top:0;
-}
-.navi-send-toolbar #sendRequest{flex:1;min-width:0}
-.navi-memory-quick{
-  width:48px;
-  height:48px;
-  flex:0 0 48px;
-  display:grid;
-  place-items:center;
-  position:relative;
-  border:1px solid var(--border);
-  border-radius:13px;
+  margin:0;
+  padding:10px 13px;
+  border:0;
+  border-top:1px solid var(--border);
+  border-radius:0;
   background:var(--panel);
-  color:var(--gold);
+  color:var(--muted);
   cursor:pointer;
-  transition:background .2s,border-color .2s,box-shadow .2s,transform .2s;
+  transition:background .2s,color .2s;
 }
-.navi-memory-quick span{font-size:21px;line-height:1;filter:grayscale(.35);opacity:.78}
-.navi-memory-quick input{
-  position:absolute;
-  width:1px;
-  height:1px;
-  opacity:0;
-  pointer-events:none;
+.navi-composer-memory input{
+  width:17px;
+  height:17px;
+  flex:0 0 17px;
+  margin:0;
+  accent-color:var(--gold);
+  cursor:pointer;
 }
-.navi-memory-quick:has(input:checked){
-  border-color:var(--gold);
-  background:color-mix(in srgb,var(--gold) 17%,var(--panel));
-  box-shadow:0 0 0 3px color-mix(in srgb,var(--gold) 15%,transparent),0 0 16px rgba(229,184,94,.16);
+.navi-composer-memory span{
+  font-size:11px;
+  line-height:1.7;
 }
-.navi-memory-quick:has(input:checked) span{filter:none;opacity:1}
-.navi-memory-quick:focus-within{outline:2px solid var(--blue);outline-offset:2px}
-.navi-memory-quick:active{transform:scale(.96)}
-body.light .navi-memory-quick{background:#fffdf8;border-color:rgba(193,127,37,.3)}
-body.light .navi-memory-quick:has(input:checked){background:#fff0cf;border-color:#c17a1c}
+.navi-composer-memory:has(input:checked){
+  color:var(--text);
+  background:color-mix(in srgb,var(--panel) 88%,var(--gold) 12%);
+}
+body.light .navi-composer-memory{
+  background:#f8f1e6;
+  color:#536176;
+  border-top-color:rgba(193,127,37,.22);
+}
+body.light .navi-composer-memory:has(input:checked){
+  background:#fff0cf;
+  color:#263a56;
+}
 @media(max-width:480px){
-  .navi-send-toolbar{gap:8px}
-  .navi-memory-quick{width:46px;height:46px;flex-basis:46px}
+  .navi-composer-memory{padding:9px 11px}
 }
