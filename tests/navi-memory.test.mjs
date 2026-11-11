@@ -306,7 +306,8 @@ test("long memory values are retained up to the configured 4000-character limit"
   };
   const result = await createNaviMemoryProposal(db, value, "آزمایش طول");
   assert.equal(result.inserted, true);
-  assert.equal(insertedValue.length, value.length);
+  assert.equal(insertedValue.length, 4000);
+  assert.equal(insertedValue, value.slice(0, 4000));
 });
 
 
