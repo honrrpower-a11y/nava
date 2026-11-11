@@ -34,9 +34,9 @@ import {
 // ======================================
 
 const NAVI_VERSION = "1.0";
-const NAVI_MAX_MESSAGE = 4000;
+const NAVI_MAX_MESSAGE = 12000;
 const NAVI_MAX_PAGE_CONTEXT = 3000;
-const NAVI_MAX_MEMORY_VALUE = 4000;
+const NAVI_MAX_MEMORY_VALUE = 12000;
 const NAVI_MAX_PROPOSALS = 2;
 const NAVI_GEMINI_TIMEOUT = 60000;
 
@@ -315,7 +315,7 @@ export function parseNaviGeminiResponse(rawText) {
       if (!isObject(parsed) || typeof parsed.reply !== "string") continue;
 
       return {
-        reply: safeNaviText(parsed.reply, 10000),
+        reply: safeNaviText(parsed.reply, 20000),
         memoryProposals: Array.isArray(parsed.memoryProposals)
           ? parsed.memoryProposals
           : [],
@@ -329,7 +329,7 @@ export function parseNaviGeminiResponse(rawText) {
   // Plain-text fallback remains a user-visible answer, but cannot create
   // memory proposals because no structured proposal data was supplied.
   return {
-    reply: safeNaviText(unfenced, 10000),
+    reply: safeNaviText(unfenced, 20000),
     memoryProposals: [],
     structured: false
   };
@@ -374,8 +374,9 @@ function normalizeMemoryProposals(proposals) {
 
     const value = safeNaviText(
       item.value || "",
-      NAVI_MAX_MEMORY_VALUE
+      NAVI_MAX_MEMORY_VALUE + 1
     );
+    if (value.length > NAVI_MAX_MEMORY_VALUE) continue;
 
     const title = safeNaviText(
       item.title || "یادداشت کاربر",
@@ -689,8 +690,11 @@ async function handleMemory({
     if (action === "update") {
       const memoryValue = safeNaviText(
         input.memory_value || "",
-        NAVI_MAX_MEMORY_VALUE
+        NAVI_MAX_MEMORY_VALUE + 1
       );
+      if (memoryValue.length > NAVI_MAX_MEMORY_VALUE) {
+        return errorResponse("متن حافظه بیش از ۱۲۰۰۰ نویسه است؛ آن را کوتاه‌تر کن.", 413, corsOrigin);
+      }
 
       if (!memoryValue) {
         return errorResponse(
@@ -820,8 +824,11 @@ async function handleMemory({
     if (action === "update_pending") {
       const memoryValue = safeNaviText(
         input.memory_value || "",
-        NAVI_MAX_MEMORY_VALUE
+        NAVI_MAX_MEMORY_VALUE + 1
       );
+      if (memoryValue.length > NAVI_MAX_MEMORY_VALUE) {
+        return errorResponse("متن حافظه بیش از ۱۲۰۰۰ نویسه است؛ آن را کوتاه‌تر کن.", 413, corsOrigin);
+      }
 
       if (!memoryValue) {
         return errorResponse(
@@ -877,10 +884,13 @@ async function handleMemory({
         typeof input.memory_value === "string"
           ? safeNaviText(
               input.memory_value,
-              NAVI_MAX_MEMORY_VALUE
+              NAVI_MAX_MEMORY_VALUE + 1
             )
           : null;
 
+      if (editedValue && editedValue.length > NAVI_MAX_MEMORY_VALUE) {
+        return errorResponse("متن حافظه بیش از ۱۲۰۰۰ نویسه است؛ آن را کوتاه‌تر کن.", 413, corsOrigin);
+      }
       if (
         editedValue &&
         containsSensitiveInformation(editedValue)
@@ -906,6 +916,9 @@ async function handleMemory({
         );
       }
 
+      if (result.tooLong) {
+        return errorResponse("ترکیب این پیشنهاد با حافظه قبلی از سقف ۱۲۰۰۰ نویسه عبور می‌کند؛ پیشنهاد را کوتاه‌تر و دوباره تأیید کن.", 413, corsOrigin);
+      }
       if (result.duplicate) {
         return errorResponse(
           "این اطلاعات از قبل در حافظه تأییدشده وجود دارد.",
@@ -989,8 +1002,11 @@ async function handleExplicitMemoryCommand(
     } else {
       const value = safeNaviText(
         memoryCommand.memoryValue || memoryCommand.value,
-        NAVI_MAX_MEMORY_VALUE
+        NAVI_MAX_MEMORY_VALUE + 1
       );
+      if (value.length > NAVI_MAX_MEMORY_VALUE) {
+        return errorResponse("متن حافظه بیش از ۱۲۰۰۰ نویسه است؛ لطفاً آن را در چند بخش ذخیره کن.", 413, corsOrigin);
+      }
 
       if (containsSensitiveInformation(value)) {
         return errorResponse(
@@ -1007,7 +1023,9 @@ async function handleExplicitMemoryCommand(
         memoryCommand.source || "user_command"
       );
 
-      if (saveResult.duplicate) {
+      if (saveResult.tooLong) {
+        reply = "متن جدید با اطلاعات قبلی از سقف ۱۲۰۰۰ نویسه عبور می‌کند؛ لطفاً آن را کوتاه‌تر و دوباره ارسال کن.";
+      } else if (saveResult.duplicate) {
         reply =
           "این اطلاعات از قبل در حافظه بلندمدتم ثبت شده است.";
 
@@ -1358,8 +1376,18 @@ async function handleNaviPendingMemoryConfirmation(db, message, threadId, corsOr
   const intent = parseNaviConfirmationIntent(message);
   if (!intent) return null;
 
-  const pending = await getNaviPendingMemory(db);
+  const allPending = await getNaviPendingMemory(db);
+  const pending = allPending.filter(item =>
+    item.source === "navi_suggestion:" + threadId
+  );
   if (!pending.length) {
+    if (allPending.length) {
+      return successResponse({
+        reply: "پیشنهادهای حافظه موجود به گفت‌وگوی دیگری تعلق دارند یا از نسخه قبلی هستند. برای جلوگیری از تأیید اشتباه، آن‌ها را از بخش مدیریت حافظه بررسی کن.",
+        assistant: "NAVI", version: NAVI_VERSION,
+        action: { handled: true, result: "no_thread_scoped_pending_proposal" }
+      }, corsOrigin);
+    }
     return successResponse({
       reply: "در حال حاضر پیشنهاد حافظهٔ درانتظاری برای تأیید یا رد ندارم.",
       assistant: "NAVI", version: NAVI_VERSION,
@@ -1458,8 +1486,11 @@ async function handleChat({
 
   const message = safeNaviText(
     input.message || "",
-    NAVI_MAX_MESSAGE
+    NAVI_MAX_MESSAGE + 1
   );
+  if (message.length > NAVI_MAX_MESSAGE) {
+    return errorResponse("پیام بیش از ۱۲۰۰۰ نویسه است؛ لطفاً آن را در چند پیام ارسال کن.", 413, corsOrigin);
+  }
 
   if (!message) {
     return errorResponse(
@@ -1660,7 +1691,7 @@ async function handleChat({
         env.NAVA_DB,
         proposal.value,
         proposal.title,
-        "navi_suggestion"
+        "navi_suggestion:" + requestedThreadId
       );
 
       if (result?.inserted) {
@@ -1675,6 +1706,8 @@ async function handleChat({
         if (result.mergeCandidateId) {
           proposalsMergeCandidates++;
         }
+      } else if (result?.tooLong) {
+        proposalsSkippedInvalid++;
       } else if (result?.merged) {
         proposalsMergedIntoPending++;
       } else if (result?.duplicate) {
