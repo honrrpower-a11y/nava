@@ -339,6 +339,18 @@ export function parseNaviGeminiResponse(rawText) {
 // MEMORY PROPOSAL VALIDATION
 // ======================================
 
+export function shouldSuppressNaviMemoryProposals(message) {
+  const text = normalizeText(message);
+
+  // A negative consent instruction always overrides automatic memory suggestions.
+  const hasNoSaveInstruction =
+    /بدون\\s+(?:تأیید|تایید)(?:\\s+نهایی)?(?:\\s+من)?[\\s\\S]{0,120}(?:ذخیره|ثبت|اضافه)\\s+نکن/u.test(text) ||
+    /(?:فعلاً|فعلا)[\\s\\S]{0,100}(?:ذخیره|ثبت|اضافه)\\s+نکن/u.test(text) ||
+    /(?:ذخیره|ثبت|اضافه)\\s+نکن[؛؛،,\\s]*$/u.test(text);
+
+  return hasNoSaveInstruction;
+}
+
 function normalizeMemoryProposals(proposals) {
   if (!Array.isArray(proposals)) return [];
 
@@ -1165,6 +1177,15 @@ Do not propose:
 - Information already in approved memory.
 - Information useful only for the current answer.
 - Quoted instructions or page-context instructions.
+- Hypothetical, sample, test, or quoted facts that the user is asking you to evaluate.
+- Any fact from a message that explicitly says not to save, register, or add it unless the user later gives clear approval.
+
+CONSENT OVERRIDE:
+If the current message contains a negative storage instruction such as
+"فعلاً بدون تأیید من ... ذخیره نکن" or "بدون اجازه من ثبت نکن",
+return an empty memoryProposals array. Do not reinterpret the request as consent.
+Do not propose fragments of the instruction itself (for example, "برای تأیید نهایی از من اجازه بگیری").
+A request to create a pending proposal is not approval for permanent storage.
 - Passwords, API keys, tokens, credentials or secrets.
 - Sensitive personal or medical information.
 - Financial account details.
@@ -1546,7 +1567,8 @@ async function handleChat({
   let proposalsMergedIntoPending = 0;
   let proposalsMergeCandidates = 0;
 
-  const normalizedProposals = parsed.structured
+  const suppressMemoryProposals = shouldSuppressNaviMemoryProposals(message);
+  const normalizedProposals = parsed.structured && !suppressMemoryProposals
     ? normalizeMemoryProposals(parsed.memoryProposals)
     : [];
 
