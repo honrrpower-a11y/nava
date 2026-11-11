@@ -19,7 +19,8 @@ INSERT OR IGNORE INTO users (
 );
 
 UPDATE users
-SET role = 'owner',
+SET username = COALESCE(NULLIF(username, ''), 'owner'),
+    role = 'owner',
     status = 'active',
     display_name = COALESCE(NULLIF(display_name, ''), 'مالک')
 WHERE id = 'owner';
