@@ -1400,7 +1400,7 @@ async function handleNaviPendingMemoryConfirmation(db, message, threadId, corsOr
   const lastText = lastAssistant?.role === "assistant"
     ? normalizeText(lastAssistant.content || "")
     : "";
-  if (!/دوست داری این مورد را در حافظه بلندمدتم نگه دارم/u.test(lastText)) {
+  if (!/دوست داری این نکته را برای گفتگوهای بعدی به خاطر بسپارم/u.test(lastText)) {
     return null;
   }
 
