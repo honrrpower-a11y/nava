@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 
 import {
   areMemoryValuesSemanticallySimilar,
+  createNaviMemoryProposal,
   getNaviArchivedMemory,
   parseNaviMemoryCommand
 } from "../modules/navi-memory.js";
