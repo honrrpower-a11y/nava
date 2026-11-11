@@ -10,7 +10,7 @@ import { safeNaviText } from "./shared.js";
 export const NAVI_MAIN_THREAD_ID = "owner-main";
 export const NAVI_OWNER_ID = "owner";
 
-const MEMORY_VALUE_LIMIT = 4000;
+const MEMORY_VALUE_LIMIT = 12000;
 const MEMORY_KEY_LIMIT = 150;
 const MEMORY_LIST_LIMIT = 200;
 
@@ -30,10 +30,9 @@ function normalizeMemoryText(value) {
 }
 
 function cleanMemoryValue(value) {
-  return safeNaviText(
-    value || "",
-    MEMORY_VALUE_LIMIT
-  );
+  const cleaned = safeNaviText(value || "", MEMORY_VALUE_LIMIT + 1);
+  // Never store a silently truncated memory value.
+  return cleaned.length > MEMORY_VALUE_LIMIT ? "" : cleaned;
 }
 
 function cleanMemoryTitle(value) {
@@ -156,7 +155,7 @@ export function prepareNaviHistory(
 
     const content = safeNaviText(
       item.content || "",
-      10000
+      20000
     );
 
     if (!role || !content) continue;
@@ -175,7 +174,7 @@ export function prepareNaviHistory(
 
   const current = safeNaviText(
     currentMessage || "",
-    4000
+    12000
   );
 
   if (current) {
@@ -221,7 +220,7 @@ export async function searchNaviConversationHistory(db, query, limit = 8, recent
     threadId: row.thread_id,
     threadTitle: row.thread_title || 'گفت‌وگوی بدون عنوان',
     role: row.role,
-    content: safeNaviText(row.content, 1800),
+    content: safeNaviText(row.content, 3000),
     createdAt: row.created_at || null,
     relevance: row.score
   }));
@@ -312,7 +311,7 @@ export async function getNaviArchivedMemory(db) {
 // ======================================
 
 export function parseNaviMemoryCommand(message) {
-  const text = safeNaviText(message || "", 4000).trim();
+  const text = safeNaviText(message || "", 12000).trim();
 
   if (!text) {
     return {
@@ -787,6 +786,10 @@ export async function createNaviMemoryProposal(
       memoryValue
     );
 
+    if (!mergedValue) {
+      return { inserted: false, tooLong: true, existingId: duplicate.id };
+    }
+
     if (
       normalizeMemoryText(mergedValue) ===
       normalizeMemoryText(duplicate.memory_value)
@@ -925,6 +928,8 @@ export async function approveNaviMemoryProposal(
     const nextValue = replacesApprovedFact
       ? memoryValue
       : mergeMemoryValues(duplicate.memory_value, memoryValue);
+
+    if (!nextValue) return { tooLong: true };
 
     if (containsSensitiveMemory(nextValue)) {
       return { sensitive: true };
@@ -1218,6 +1223,8 @@ export async function saveNaviMemoryFact(
         memoryValue
       );
 
+      if (!mergedValue) return { tooLong: true };
+
       if (normalizeMemoryText(mergedValue) ===
           normalizeMemoryText(related.memory_value)) {
         return {
@@ -1383,12 +1390,12 @@ export async function saveNaviConversation(
 ) {
   const userText = safeNaviText(
     userMessage || "",
-    4000
+    12000
   );
 
   const assistantText = safeNaviText(
     assistantMessage || "",
-    10000
+    20000
   );
 
   if (!userText || !assistantText) {
