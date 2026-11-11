@@ -1,6 +1,17 @@
 name: NAVI production Worker deploy
 
 on:
+  push:
+    branches:
+      - main
+    paths:
+      - "modules/navi.js"
+      - "modules/navi-memory.js"
+      - "modules/shared.js"
+      - "modules/config.js"
+      - "index.js"
+      - "wrangler.jsonc"
+      - ".github/workflows/navi-production-deploy.yml"
   workflow_dispatch:
     inputs:
       confirmation:
@@ -17,7 +28,7 @@ concurrency:
 
 jobs:
   deploy-production-worker:
-    if: inputs.confirmation == 'DEPLOY_NAVA_MUSIC_API'
+    if: github.event_name == 'push' || inputs.confirmation == 'DEPLOY_NAVA_MUSIC_API'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout main
