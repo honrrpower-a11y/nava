@@ -434,3 +434,31 @@ body.light .navi-memory-value{color:#263a56}
   color:#41be82;
   background:rgba(65,190,130,.07);
 }
+
+
+/* NAVI MEMORY — compact nested accordions, theme aware */
+.navi-memory-accordion{margin:12px 0;border:1px solid var(--border);border-radius:12px;background:var(--panel);overflow:hidden}
+.navi-memory-accordion-toggle{width:100%;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:13px 14px;background:var(--panel2);border:0;color:var(--text);font:inherit;font-size:12px;font-weight:700;text-align:right;cursor:pointer;transition:background .2s,color .2s}
+.navi-memory-accordion-toggle:hover{background:color-mix(in srgb,var(--panel2) 75%,var(--gold) 25%);color:var(--gold)}
+.navi-memory-accordion-toggle[aria-expanded="true"]{color:var(--gold);border-bottom:1px solid var(--border)}
+.navi-memory-accordion-side{display:flex;align-items:center;gap:10px;flex-shrink:0}
+.navi-memory-count{min-width:24px;padding:3px 7px;border:1px solid var(--border);border-radius:20px;background:var(--bg);color:var(--muted);font-size:10px;text-align:center;font-variant-numeric:tabular-nums}
+.navi-memory-accordion-content{padding:12px;background:var(--panel)}
+.navi-memory-accordion-content[hidden]{display:none!important}
+.navi-memory-accordion-content .navi-memory-list{max-height:420px;overflow-y:auto;padding:2px}
+.navi-memory-accordion .navi-memory-description{margin:0 0 10px;padding:2px}
+.navi-composer-memory{display:flex;align-items:center;gap:10px;margin:2px 0 13px;padding:11px 13px;border:1px solid var(--border);border-radius:12px;background:var(--panel);color:var(--text);cursor:pointer;transition:border-color .2s,background .2s}
+.navi-composer-memory:has(input:checked){border-color:var(--gold);background:color-mix(in srgb,var(--panel) 88%,var(--gold) 12%)}
+.navi-composer-memory input{width:17px;height:17px;accent-color:var(--gold);flex-shrink:0}
+.navi-composer-memory-icon{font-size:19px;line-height:1}
+.navi-composer-memory-copy{display:flex;flex-direction:column;gap:3px}
+.navi-composer-memory-copy strong{font-size:11px;color:var(--gold)}
+.navi-composer-memory-copy small{font-size:10px;line-height:1.7;color:var(--muted)}
+body.light .navi-memory-accordion{background:#fffdf8}
+body.light .navi-memory-accordion-toggle{background:#f8eddd;color:#263a56}
+body.light .navi-memory-accordion-toggle[aria-expanded="true"]{color:#a96522}
+body.light .navi-memory-accordion-content{background:#fffdf8}
+body.light .navi-memory-count{background:#fff8ed;color:#687487}
+body.light .navi-composer-memory{background:#fffdf8;color:#263a56}
+body.light .navi-composer-memory:has(input:checked){background:#fff3d9;border-color:#c17a1c}
+@media(max-width:480px){.navi-memory-accordion-toggle{padding:12px;font-size:11px}.navi-memory-accordion-content{padding:9px}.navi-composer-memory{align-items:flex-start}}
