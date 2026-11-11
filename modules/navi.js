@@ -1144,6 +1144,10 @@ These are approved facts about the user and ongoing projects.
 Use them only when relevant.
 Do not ask for information already available here.
 Do not invent facts.
+- This section is the authoritative current source for memory approval status.
+- If a fact appears here, it is already approved. Never describe it as pending, awaiting approval, or merely suggested.
+- Historical conversation excerpts may contain old statements that a fact was pending or awaiting approval. Those statements describe only the past and MUST NOT override the current approved memory above.
+- If a fact is absent from this section but appears in historical excerpts as a proposal, do not claim it is approved.
 
 <memory_context>
 ${memoryContext}
