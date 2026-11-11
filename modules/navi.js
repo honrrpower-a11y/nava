@@ -263,49 +263,76 @@ function buildMemoryContext(memories) {
 // GEMINI RESPONSE PARSER
 // ======================================
 
-function parseNaviGeminiResponse(rawText) {
+export function parseNaviGeminiResponse(rawText) {
   const text = String(rawText || "").trim();
 
   if (!text) {
-    return {
-      reply: "",
-      memoryProposals: [],
-      structured: false
-    };
+    return { reply: "", memoryProposals: [], structured: false };
   }
 
-  const cleaned = text
-    .replace(/^```(?:json)?\s*/i, "")
-    .replace(/\s*```$/i, "")
+  // Gemini normally returns a JSON object because responseMimeType is set.
+  // Be tolerant of harmless Markdown fences or short text surrounding it.
+  const candidates = [];
+  const unfenced = text
+    .replace(/^\uFEFF/, "")
+    .replace(/^\s*```(?:json)?\s*/i, "")
+    .replace(/\s*```\s*$/i, "")
     .trim();
 
-  try {
-    const parsed = JSON.parse(cleaned);
+  candidates.push(unfenced);
 
-    if (
-      !isObject(parsed) ||
-      typeof parsed.reply !== "string"
-    ) {
-      throw new Error("Invalid response structure.");
+  const firstBrace = unfenced.indexOf("{");
+  if (firstBrace >= 0) {
+    let depth = 0;
+    let inString = false;
+    let escaped = false;
+
+    for (let index = firstBrace; index < unfenced.length; index += 1) {
+      const char = unfenced[index];
+
+      if (inString) {
+        if (escaped) escaped = false;
+        else if (char === "\\\\") escaped = true;
+        else if (char === '"') inString = false;
+        continue;
+      }
+
+      if (char === '"') inString = true;
+      else if (char === "{") depth += 1;
+      else if (char === "}") {
+        depth -= 1;
+        if (depth === 0) {
+          candidates.push(unfenced.slice(firstBrace, index + 1));
+          break;
+        }
+      }
     }
-
-    return {
-      reply: safeNaviText(parsed.reply, 10000),
-      memoryProposals: Array.isArray(
-        parsed.memoryProposals
-      )
-        ? parsed.memoryProposals
-        : [],
-      structured: true
-    };
-
-  } catch {
-    return {
-      reply: safeNaviText(text, 10000),
-      memoryProposals: [],
-      structured: false
-    };
   }
+
+  for (const candidate of candidates) {
+    try {
+      const parsed = JSON.parse(candidate);
+      if (!isObject(parsed) || typeof parsed.reply !== "string") continue;
+
+      return {
+        reply: safeNaviText(parsed.reply, 10000),
+        memoryProposals: Array.isArray(parsed.memoryProposals)
+          ? parsed.memoryProposals
+          : [],
+        structured: true
+      };
+    } catch {
+      // Try the next bounded candidate. Never evaluate or repair model text.
+    }
+  }
+
+  // Plain-text fallback remains a user-visible answer, but cannot create
+  // memory proposals because no structured proposal data was supplied.
+  return {
+    reply: safeNaviText(unfenced, 10000),
+    memoryProposals: [],
+    structured: false
+  };
 }
 
 // ======================================
