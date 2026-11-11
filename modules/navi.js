@@ -17,6 +17,7 @@ import {
   getNaviDbHistory,
   getNaviApprovedMemory,
   getNaviPendingMemory,
+  getNaviArchivedMemory,
   parseNaviMemoryCommand,
   saveNaviMemoryFact,
   createNaviMemoryProposal,
@@ -558,17 +559,21 @@ async function handleMemory({
     if (request.method === "GET") {
       const [
         memories,
-        proposals
+        proposals,
+        archived
       ] = await Promise.all([
         getNaviApprovedMemory(env.NAVA_DB),
-        getNaviPendingMemory(env.NAVA_DB)
+        getNaviPendingMemory(env.NAVA_DB),
+        getNaviArchivedMemory(env.NAVA_DB)
       ]);
 
       return successResponse({
         memories,
         proposals,
+        archived,
         count: memories.length,
         proposalCount: proposals.length,
+        archivedCount: archived.length,
         version: NAVI_VERSION
       }, corsOrigin);
     }
