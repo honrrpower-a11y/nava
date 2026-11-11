@@ -1243,7 +1243,8 @@ async function handleExplicitMemoryCommand(
         env.NAVA_DB,
         message,
         reply,
-        threadId
+        threadId,
+        userId
       );
     } catch (error) {
       conversationSaved = false;
