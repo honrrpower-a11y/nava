@@ -17,7 +17,7 @@ export default {
         headers: {
           "Access-Control-Allow-Origin": ALLOWED_ORIGIN,
           "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-          "Access-Control-Allow-Headers": "Content-Type, X-Nava-Test-Token, Authorization, X-Navi-Database",
+          "Access-Control-Allow-Headers": "Content-Type, X-Nava-Test-Token, Authorization",
           "Access-Control-Max-Age": "86400",
           "Vary": "Origin"
         }
@@ -35,23 +35,7 @@ export default {
       }, 200, corsOrigin);
     }
 
-    // Only NAVI requests carrying the explicit preview header use the isolated
-    // preview D1 database. Lyrics and music always retain the production env.
-    const useNaviPreviewDb =
-      request.headers.get("X-Navi-Database") === "preview";
-
-    if (useNaviPreviewDb && !env.NAVI_PREVIEW_DB) {
-      return json({
-        success: false,
-        error: "NAVI preview database is not configured."
-      }, 503, corsOrigin);
-    }
-
-    const naviEnv = useNaviPreviewDb
-      ? { ...env, NAVA_DB: env.NAVI_PREVIEW_DB }
-      : env;
-
-    const naviContext = { request, env: naviEnv, url, origin, corsOrigin };
+    const naviContext = { request, env, url, origin, corsOrigin };
     const naviResponse = await handleNaviRoute(naviContext);
     if (naviResponse) return naviResponse;
 
