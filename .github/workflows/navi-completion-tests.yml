@@ -1,0 +1,35 @@
+name: NAVI completion branch tests
+
+on:
+  push:
+    branches: [navi-completion-work]
+    paths:
+      - "modules/navi-memory.js"
+      - "modules/navi.js"
+      - "modules/shared.js"
+      - "app.js"
+      - "index.html"
+      - "tests/*.test.mjs"
+      - ".github/workflows/navi-completion-tests.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Check JavaScript syntax
+        run: |
+          node --check app.js
+          node --experimental-default-type=module --check modules/navi.js
+          node --experimental-default-type=module --check modules/navi-memory.js
+      - name: Run NAVI regression tests
+        run: node --experimental-sqlite --experimental-default-type=module --test tests/*.test.mjs
