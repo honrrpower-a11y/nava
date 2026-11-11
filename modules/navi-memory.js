@@ -922,7 +922,7 @@ export async function approveNaviMemoryProposal(
   db,
   id,
   editedValue = null,
-  ownerId = ownerId
+  ownerId = NAVI_OWNER_ID
 ) {
   const proposalId = Number(id);
 
@@ -1066,7 +1066,7 @@ export async function approveNaviMemoryProposal(
 export async function rejectNaviMemoryProposal(
   db,
   id,
-  ownerId = ownerId
+  ownerId = NAVI_OWNER_ID
 ) {
   const proposalId = Number(id);
 
@@ -1105,7 +1105,7 @@ export async function updateNaviMemoryProposal(
   db,
   id,
   value,
-  ownerId = ownerId
+  ownerId = NAVI_OWNER_ID
 ) {
   const proposalId = Number(id);
   const memoryValue = cleanMemoryValue(value);
@@ -1182,7 +1182,7 @@ export async function saveNaviMemoryFact(
   value,
   key = "یادداشت کاربر",
   source = "user_command",
-  ownerId = ownerId
+  ownerId = NAVI_OWNER_ID
 ) {
   const memoryValue = cleanMemoryValue(value);
   const memoryKey = cleanMemoryTitle(key);
