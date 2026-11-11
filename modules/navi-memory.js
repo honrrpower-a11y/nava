@@ -530,12 +530,27 @@ export function areMemoryValuesSemanticallySimilar(first, second) {
   const overlapRatio = overlap / smallerSize;
   const jaccardRatio = overlap / (firstTokens.size + secondTokens.size - overlap);
 
-  // برای حافظه‌های کوتاه، حداقل دو مفهوم مشترک لازم است تا
-  // شباهت یک واژه عمومی باعث حذف اشتباهی اطلاعات متفاوت نشود.
-  return overlap >= 2 &&
+  // برای حافظه‌های کوتاه، حداقل دو مفهوم مشترک لازم است؛
+  // استثنا: یک موضوع صریح و مشخص مثل «رنگم» که مقدارش عوض شده است.
+  const stableTopicTokens = new Set([
+    "رنگ", "شهر", "کشور", "شغل", "نام", "سن",
+    "غذا", "موسیقی", "سبک", "زبان", "رشته", "حرفه"
+  ]);
+  const sharesOneStableTopic = overlap === 1 &&
+    [...firstTokens].some(token =>
+      secondTokens.has(token) && stableTopicTokens.has(token)
+    ) &&
+    overlapRatio === 1 &&
+    jaccardRatio >= 0.3 &&
+    smallerSize >= 2 &&
+    largerSize <= smallerSize + 1;
+
+  return sharesOneStableTopic || (
+    overlap >= 2 &&
     overlapRatio >= 0.75 &&
     jaccardRatio >= 0.5 &&
-    (smallerSize >= 2 && largerSize <= smallerSize + 3);
+    (smallerSize >= 2 && largerSize <= smallerSize + 3)
+  );
 }
 
 function isResponsePreferenceMemory(value) {
