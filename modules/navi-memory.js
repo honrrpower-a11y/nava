@@ -502,6 +502,9 @@ function getMemoryMeaningTokens(value) {
         .replace(/(?:ام|ات|اش)$/u, match =>
           token.length > match.length + 2 ? "" : match
         )
+        .replace(/(?:م|ت|ش)$/u, match =>
+          token.length > match.length + 2 ? "" : match
+        )
         .replace(/(?:تر|ترین)$/u, "");
 
       return synonyms.get(normalized) || normalized;
