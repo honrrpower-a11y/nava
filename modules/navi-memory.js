@@ -194,6 +194,36 @@ export function prepareNaviHistory(
   return messages;
 }
 
+// Search a bounded set of older messages across all saved NAVI threads.
+export async function searchNaviConversationHistory(db, query, limit = 8, recentHistory = []) {
+  const terms = [...new Set(String(query || '').normalize('NFKC')
+    .replace(/[ي]/g, 'ی').replace(/[ك]/g, 'ک').toLowerCase()
+    .replace(/[^\\p{L}\\p{N}\\s]/gu, ' ').split(/\\s+/)
+    .filter(word => word.length > 1))];
+  if (!terms.length) return [];
+  const recent = new Set((recentHistory || []).map(item => String(item?.content || '').trim()).filter(Boolean));
+  const result = await db.prepare(`
+    SELECT m.thread_id, m.role, m.content, m.created_at, t.title AS thread_title
+    FROM navi_chat_messages_v1 m
+    LEFT JOIN navi_chat_threads_v1 t ON t.thread_id = m.thread_id
+    ORDER BY m.id DESC LIMIT 600
+  `).all();
+  const ranked = (result.results || []).filter(row => row &&
+    (row.role === 'user' || row.role === 'assistant') && row.content &&
+    !recent.has(String(row.content).trim())).map(row => {
+      const content = String(row.content).normalize('NFKC').replace(/[ي]/g, 'ی').replace(/[ك]/g, 'ک').toLowerCase();
+      let score = 0;
+      for (const term of terms) if (content.includes(term)) score += term.length > 4 ? 3 : 1;
+      return { ...row, score };
+    }).filter(row => row.score > 0).sort((a, b) => b.score - a.score);
+  const safeLimit = Math.max(1, Math.min(Number(limit) || 8, 12));
+  return ranked.slice(0, safeLimit).reverse().map(row => ({
+    threadId: row.thread_id, threadTitle: row.thread_title || 'گفت‌وگوی بدون عنوان',
+    role: row.role, content: safeNaviText(row.content, 1800),
+    createdAt: row.created_at, relevance: row.score
+  }));
+}
+
 // ======================================
 // APPROVED MEMORY
 // ======================================
