@@ -497,8 +497,7 @@ async function handleHistory({
   try {
     await ensureNaviMainThread(env.NAVA_DB);
 
-    const requestedThreadId = String(url.searchParams.get("thread_id") || NAVI_MAIN_THREAD_ID);
-    const thread = await env.NAVA_DB.prepare(`
+    const requestedThreadId = String(url.searchParams.get("thread_id") || NAVI_MAIN_THREAD_ID);    const thread = await env.NAVA_DB.prepare(`
       SELECT thread_id FROM navi_chat_threads_v1
       WHERE thread_id = ? AND owner_id = ? LIMIT 1
     `).bind(requestedThreadId, NAVI_OWNER_ID).first();
@@ -997,8 +996,7 @@ async function handleExplicitMemoryCommand(
       reply,
       assistant: "NAVI",
       version: NAVI_VERSION,
-      memory: {
-        commandRecognized: true,
+      memory: {        commandRecognized: true,
         saved: Boolean(saveResult),
         duplicate: Boolean(saveResult?.duplicate),
         updated: Boolean(saveResult?.updated),
@@ -1078,6 +1076,43 @@ Its existing capabilities include:
 - Music generation.
 - Instrumental music experiments.
 - Story creation.
+
+OWNER PROJECT REFERENCE — TRUSTED BASELINE:
+Use these confirmed project facts when relevant. They are durable project context,
+not guesses and not claims about live service health.
+
+- The user is the owner and creator of NAVA and is developing both the creative
+  platform and its technical infrastructure.
+- Production Cloudflare D1 database: nava-memory. Its Worker binding is NAVA_DB.
+- Separate test/preview D1 database: nava-memory-preview. Its Worker binding is
+  NAVI_PREVIEW_DB. It is for NAVI preview/testing; it must not be confused with
+  production data.
+- The production Worker is nava-music-api. The preview Worker is
+  nava-music-api-preview.
+- NAVI requests can be routed to the preview database using the
+  X-Navi-Database: preview header. Music and lyrics continue to use production
+  bindings; do not imply the entire site is on the preview database.
+- Production and preview databases are separate. A successful Worker deployment
+  does not mean database records were migrated or copied.
+- Latest confirmed lyrics-engine status in project notes (2026-11-02):
+  Nava Persian Lyrics Engine v0.3.1 / version 3.1. Persian pronunciation quality
+  is the priority. Do not claim a newer version unless a newer fact is supplied.
+- ACE-Step is a testing engine, not the intended final main music engine.
+  Long-term direction is an Iranian-focused music engine with Persian melodic,
+  rhythmic and vocal identity.
+- NAVI should be the primary creative writer for lyrics; the existing lyrics
+  engine's pronunciation and meter capabilities should be preserved and
+  integrated rather than removed without evaluation.
+- Long-term goal: make NAVA a professional Iranian creative studio/platform,
+  with its own increasingly independent music and language capabilities.
+
+When asked for the current technical state, distinguish:
+1. facts in this trusted baseline,
+2. facts retrieved from approved database memory/history,
+3. live operational status that has not been checked.
+Never say a database is empty, unavailable, migrated, or deployed unless that
+specific state has been verified. If asked for technical facts listed above,
+answer directly instead of saying they are absent from memory.
 
 CURRENT PAGE:
 ${page}
@@ -1497,8 +1532,7 @@ async function handleChat({
     : [];
 
   for (const proposal of normalizedProposals) {
-    try {
-      const result = await createNaviMemoryProposal(
+    try {      const result = await createNaviMemoryProposal(
         env.NAVA_DB,
         proposal.value,
         proposal.title,
