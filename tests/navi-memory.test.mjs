@@ -405,3 +405,35 @@ test("propagates database failures instead of reporting a successful save", asyn
   );
   assert.equal(db.memories.length, 0);
 });
+
+
+test("NAVI parser accepts fenced JSON containing memory proposals", async () => {
+  const { parseNaviGeminiResponse } = await import("../modules/navi.js");
+  const parsed = parseNaviGeminiResponse('\\`\\`\\`json\\n{"reply":"سلام","memoryProposals":[{"title":"ترجیحات پاسخ","value":"پاسخ کوتاه و کاربردی"}]}\\n\\`\\`\\`');
+  assert.equal(parsed.structured, true);
+  assert.equal(parsed.reply, "سلام");
+  assert.equal(parsed.memoryProposals.length, 1);
+});
+
+test("NAVI parser extracts a complete JSON object surrounded by text", async () => {
+  const { parseNaviGeminiResponse } = await import("../modules/navi.js");
+  const parsed = parseNaviGeminiResponse('نتیجه: {"reply":"پاسخ سالم","memoryProposals":[]} پایان');
+  assert.equal(parsed.structured, true);
+  assert.equal(parsed.reply, "پاسخ سالم");
+  assert.deepEqual(parsed.memoryProposals, []);
+});
+
+test("NAVI parser preserves braces and escaped quotes inside JSON strings", async () => {
+  const { parseNaviGeminiResponse } = await import("../modules/navi.js");
+  const parsed = parseNaviGeminiResponse('{"reply":"عبارت } و \\"نقل قول\\"","memoryProposals":[]}');
+  assert.equal(parsed.structured, true);
+  assert.equal(parsed.reply, 'عبارت } و "نقل قول"');
+});
+
+test("NAVI parser keeps plain text as a reply without inventing memory proposals", async () => {
+  const { parseNaviGeminiResponse } = await import("../modules/navi.js");
+  const parsed = parseNaviGeminiResponse("یک پاسخ معمولی");
+  assert.equal(parsed.structured, false);
+  assert.equal(parsed.reply, "یک پاسخ معمولی");
+  assert.deepEqual(parsed.memoryProposals, []);
+});
