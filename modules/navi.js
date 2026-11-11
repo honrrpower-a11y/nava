@@ -1675,6 +1675,7 @@ async function handleChat({
 
   const createdProposals = [];
   let proposalProcessingFailed = false;
+  let proposalLengthLimitExceeded = false;
   let proposalsSkippedDuplicate = 0;
   let proposalsSkippedInvalid = 0;
   let proposalsSkippedSensitive = 0;
@@ -1708,6 +1709,7 @@ async function handleChat({
         }
       } else if (result?.tooLong) {
         proposalsSkippedInvalid++;
+        proposalLengthLimitExceeded = true;
       } else if (result?.merged) {
         proposalsMergedIntoPending++;
       } else if (result?.duplicate) {
@@ -1731,6 +1733,8 @@ async function handleChat({
   // Never report a proposal as created when its database write failed.
   if (proposalProcessingFailed) {
     reply = "پاسخت را آماده کردم، اما ثبت پیشنهاد حافظه در دیتابیس ناموفق بود؛ بنابراین چیزی برای تأیید در فهرست حافظه ایجاد نشده است. لطفاً بعداً دوباره تلاش کن.";
+  } else if (proposalLengthLimitExceeded) {
+    reply = "پاسخت آماده است، اما پیشنهاد حافظه به‌دلیل عبور از سقف ۱۲۰۰۰ نویسه ساخته نشد. لطفاً اطلاعات را خلاصه‌تر بفرست.";
   }
 
   // ----------------------------------
