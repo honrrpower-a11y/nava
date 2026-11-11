@@ -1,4 +1,5 @@
 import test from "node:test";
+import { readFileSync } from "node:fs";
 import assert from "node:assert/strict";
 import {
   createNaviSession,
@@ -196,4 +197,38 @@ test("owner login provisions PBKDF2 once and then authenticates from D1 hash", a
 
   const wrong = await login("a-different-legacy-password");
   assert.equal(wrong.status, 401);
+});
+
+
+test("owner sessions are rejected if the D1 row no longer grants owner role", async () => {
+  const { authorizeNaviRequest } = await import("../modules/navi-auth.js");
+  const secret = "test-session-secret-with-enough-entropy";
+  const token = await createNaviSession(secret, { id: "owner", role: "owner" });
+  const env = {
+    NAVI_SESSION_SECRET: secret,
+    NAVA_DB: {
+      prepare() {
+        return { bind() { return { async first() {
+          return { id: "owner", role: "user", status: "active" };
+        } }; } };
+      }
+    }
+  };
+  const result = await authorizeNaviRequest(new Request("https://example.test", {
+    headers: { Authorization: "Bearer " + token }
+  }), env);
+  assert.equal(result.valid, false);
+  assert.equal(result.code, "NAVI_OWNER_REQUIRED");
+});
+
+test("production deploy workflow guards the approved Worker and D1 target", () => {
+  const workflow = readFileSync(
+    new URL("../.github/workflows/navi-production-deploy.yml", import.meta.url),
+    "utf8"
+  );
+  assert.match(workflow, /branches:\s*\n\s*- main/);
+  assert.match(workflow, /modules\/navi-auth\.js/);
+  assert.match(workflow, /prod\.database_name !== 'nava-memory'/);
+  assert.match(workflow, /prod\.database_id !== '56f30fed-a03b-4e36-a320-cbefd3feaf12'/);
+  assert.match(workflow, /No D1 migrations will run/);
 });
