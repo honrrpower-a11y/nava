@@ -11,7 +11,6 @@ import {
 } from "./navi-auth.js";
 
 import {
-  getNaviMainThreadId(userId),
   getNaviMainThreadId,
   ensureNaviMainThread,
   getNaviDbHistory,
