@@ -28,5 +28,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
+      - name: Check JavaScript syntax
+        run: node --check app.js && node --check modules/navi.js && node --check modules/navi-auth.js && node --check modules/navi-memory.js
       - name: Run NAVI tests
         run: node --test tests/*.test.mjs
