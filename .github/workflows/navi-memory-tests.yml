@@ -5,7 +5,10 @@ on:
     branches: [main]
     paths:
       - "modules/navi-memory.js"
+      - "modules/navi.js"
       - "modules/shared.js"
+      - "app.js"
+      - "index.html"
       - "tests/navi-memory.test.mjs"
       - ".github/workflows/navi-memory-tests.yml"
   workflow_dispatch:
