@@ -18,6 +18,7 @@ const NAVI_SAVE_MESSAGE_API = NAVI_BASE + "/navi-memory-save-message";
 // Session
 const NAVI_SESSION_KEY = "nava_navi_session";
 const NAVI_EXPIRY_KEY = "nava_navi_expiry";
+const NAVI_USER_NAME_KEY = "nava_navi_user_name";
 
 // Limits
 const NAVI_MAX_DISPLAY_MESSAGES = 100;
@@ -46,6 +47,8 @@ let naviMemoryBusy = false;
 const naviLoginPanel = document.getElementById("naviLoginPanel");
 const naviLoginForm = document.getElementById("naviLoginForm");
 const naviPassword = document.getElementById("naviPassword");
+const naviUsername = document.getElementById("naviUsername");
+const naviUserDisplay = document.getElementById("naviUserDisplay");
 const naviLoginButton = document.getElementById("naviLoginButton");
 const naviLoginError = document.getElementById("naviLoginError");
 const naviLoginStatus = document.getElementById("naviLoginStatus");
@@ -244,6 +247,7 @@ function clearNaviSession() {
   try {
     sessionStorage.removeItem(NAVI_SESSION_KEY);
     sessionStorage.removeItem(NAVI_EXPIRY_KEY);
+    sessionStorage.removeItem(NAVI_USER_NAME_KEY);
   } catch (error) {
     console.warn("Could not clear local session storage.");
   }
@@ -265,6 +269,8 @@ function clearNaviSession() {
   if (naviChatArea) naviChatArea.hidden = true;
   if (naviLoginPanel) naviLoginPanel.hidden = false;
   if (naviPassword) naviPassword.value = "";
+  if (naviUsername) naviUsername.value = "";
+  if (naviUserDisplay) naviUserDisplay.textContent = "";
 
   if (requestResponse) {
     requestResponse.textContent = "";
@@ -292,7 +298,9 @@ function showNaviChat() {
 
   clearLoginError();
 
+  const displayName = sessionStorage.getItem(NAVI_USER_NAME_KEY) || "کاربر";
   naviLoginStatus.textContent = "نشست امن ناوی فعال است.";
+  if (naviUserDisplay) naviUserDisplay.textContent = "حساب فعال: " + displayName;
   setNaviStatus("در حال بازیابی گفت‌وگوهای قبلی...");
 }
 
@@ -1777,10 +1785,11 @@ if (existingNaviToken) {
 naviLoginForm.addEventListener("submit", async event => {
   event.preventDefault();
 
-  const password = naviPassword.value.trim();
+  const username = naviUsername ? naviUsername.value.trim().toLowerCase() : "";
+  const password = naviPassword.value;
 
   if (!password) {
-    showLoginError("لطفاً رمز ورود را وارد کن.");
+    showLoginError("لطفاً رمز عبور را وارد کن.");
     return;
   }
 
@@ -1795,7 +1804,7 @@ naviLoginForm.addEventListener("submit", async event => {
         "Content-Type": "application/json"
       
       },
-      body: JSON.stringify({ password })
+      body: JSON.stringify({ username, password })
     });
 
     let data;
@@ -1821,10 +1830,11 @@ naviLoginForm.addEventListener("submit", async event => {
     const expiresIn = Number(data.expiresIn || 43200);
 
     saveNaviSession(data.token, expiresIn);
+    sessionStorage.setItem(NAVI_USER_NAME_KEY, String(data.user?.displayName || username || "مالک"));
 
     naviSessionVersion++;
     naviPassword.value = "";
-    naviActiveThreadId = "owner-main";
+    naviActiveThreadId = data.user?.id && data.user.id !== "owner" ? data.user.id + "-main" : "owner-main";
     naviHistory = [];
     naviMemory = [];
     naviProposals = [];
