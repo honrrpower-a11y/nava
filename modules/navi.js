@@ -526,20 +526,36 @@ async function handleLogin({
           // One-time compatibility path for the pre-migration owner secret.
           ownerPasswordValid = await verifyNaviPassword(password, env.NAVI_OWNER_PASSWORD);
           if (ownerPasswordValid && password.length >= 12) {
-            const passwordHash = await hashNaviPassword(password);
-            const provision = await env.NAVA_DB.prepare(
-              "UPDATE users SET username = COALESCE(NULLIF(username, ''), 'owner'), password_hash = ?, role = 'owner', status = 'active' WHERE id = ? AND (password_hash IS NULL OR password_hash = '')"
-            ).bind(passwordHash, "owner").run();
-            if (!provision?.success) {
-              return errorResponse("ثبت امن رمز مالک در دیتابیس ناموفق بود.", 503, corsOrigin);
+            // Authentication is based on the verified legacy owner secret.
+            // Upgrading that credential to a D1 PBKDF2 hash is best-effort:
+            // a temporary hashing/write failure must not lock the owner out.
+            let passwordHash = null;
+            try {
+              passwordHash = await hashNaviPassword(password);
+            } catch (error) {
+              logError("Owner password hash generation failed; legacy login remains available", error);
             }
-            if (Number(provision.meta?.changes || 0) !== 1) {
-              const refreshed = await env.NAVA_DB.prepare(
-                "SELECT password_hash, status, role FROM users WHERE id = ? LIMIT 1"
-              ).bind("owner").first();
-              if (!refreshed || refreshed.status !== "active" || refreshed.role !== "owner" ||
-                  !await verifyNaviPassword(password, refreshed.password_hash)) {
-                return errorResponse("وضعیت رمز مالک هم‌زمان تغییر کرده است؛ دوباره تلاش کن.", 409, corsOrigin);
+
+            if (passwordHash) {
+              try {
+                const provision = await env.NAVA_DB.prepare(
+                  "UPDATE users SET username = COALESCE(NULLIF(username, ''), 'owner'), password_hash = ?, role = 'owner', status = 'active' WHERE id = ? AND (password_hash IS NULL OR password_hash = '')"
+                ).bind(passwordHash, "owner").run();
+
+                if (!provision?.success) {
+                  logError("Owner password hash persistence was not confirmed; legacy login remains available",
+                    new Error("D1 update returned an unsuccessful result."));
+                } else if (Number(provision.meta?.changes || 0) !== 1) {
+                  const refreshed = await env.NAVA_DB.prepare(
+                    "SELECT password_hash, status, role FROM users WHERE id = ? LIMIT 1"
+                  ).bind("owner").first();
+                  if (!refreshed || refreshed.status !== "active" || refreshed.role !== "owner" ||
+                      !await verifyNaviPassword(password, refreshed.password_hash)) {
+                    return errorResponse("وضعیت رمز مالک هم‌زمان تغییر کرده است؛ دوباره تلاش کن.", 409, corsOrigin);
+                  }
+                }
+              } catch (error) {
+                logError("Owner password hash persistence failed; legacy login remains available", error);
               }
             }
           }
