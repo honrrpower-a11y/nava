@@ -7,7 +7,8 @@ import { json, safeNaviText } from "./shared.js";
 import {
   createNaviSession,
   verifyNaviPassword,
-  hashNaviPassword,
+  validateNaviPasswordVerifier,
+  verifyNaviChallengeProof,
   authorizeNaviRequest
 } from "./navi-auth.js";
 
@@ -471,131 +472,136 @@ async function authorize(request, env, origin, corsOrigin) {
 // LOGIN
 // ======================================
 
-async function handleLogin({
-  request,
-  env,
-  origin,
-  corsOrigin
-}) {
-  if (origin !== ALLOWED_ORIGIN) {
-    return errorResponse("مبدأ درخواست مجاز نیست.", 403, corsOrigin);
-  }
-  if (!env.NAVI_SESSION_SECRET) {
-    return errorResponse("تنظیمات امنیتی نشست ناوی کامل نیست.", 500, corsOrigin);
-  }
+function naviAuthBase64Url(bytes) {
+  let binary = "";
+  for (const byte of bytes) binary += String.fromCharCode(byte);
+  return btoa(binary).replace(/\\+/g, "-").replace(/\\//g, "_").replace(/=+$/g, "");
+}
+
+async function handleNaviAuthChallenge({ request, env, origin, corsOrigin }) {
+  if (origin !== ALLOWED_ORIGIN) return errorResponse("مبدأ درخواست مجاز نیست.", 403, corsOrigin);
+  if (!env.NAVA_DB) return errorResponse("دیتابیس حساب‌های ناوی در دسترس نیست.", 503, corsOrigin);
 
   let input;
-  try { input = await request.json(); }
-  catch { return errorResponse("اطلاعات ورود معتبر نیست.", 400, corsOrigin); }
-
-  const username = safeNaviText(input?.username || "", 40).trim().toLowerCase();
-  const password = typeof input?.password === "string" ? input.password : "";
-  if (!password || password.length > 256) {
-    return errorResponse("نام کاربری یا رمز ورود معتبر نیست.", 400, corsOrigin);
+  try { input = await request.json(); } catch { return errorResponse("اطلاعات ورود معتبر نیست.", 400, corsOrigin); }
+  const username = safeNaviText(input?.username || "", 40).trim().toLowerCase() || "owner";
+  if (username !== "owner" && !/^[a-z0-9][a-z0-9._-]{2,39}$/.test(username)) {
+    return errorResponse("نام کاربری یا رمز ورود صحیح نیست.", 401, corsOrigin);
   }
 
   try {
-    let user = null;
+    const row = username === "owner"
+      ? await env.NAVA_DB.prepare("SELECT id, username, password_hash, role, status FROM users WHERE id = ? LIMIT 1").bind("owner").first()
+      : await env.NAVA_DB.prepare("SELECT id, username, password_hash, role, status FROM users WHERE username = ? LIMIT 1").bind(username).first();
 
-    const isOwnerLogin = !username || username === "owner";
-
-    if (isOwnerLogin) {
-      let ownerRow = null;
-      if (env.NAVA_DB) {
-        try {
-          ownerRow = await env.NAVA_DB.prepare(
-            "SELECT id, username, display_name, role, status, password_hash FROM users WHERE id = ? LIMIT 1"
-          ).bind("owner").first();
-        } catch (error) {
-          logError("Owner account lookup failed", error);
-          return errorResponse("بررسی حساب مالک در دیتابیس ممکن نشد.", 503, corsOrigin);
-        }
-      }
-
-      let ownerPasswordValid = false;
-      if (ownerRow) {
-        if (ownerRow.status !== "active" || ownerRow.role !== "owner") {
-          return errorResponse("حساب مالک فعال یا معتبر نیست.", 403, corsOrigin);
-        }
-
-        if (ownerRow.password_hash) {
-          // Once provisioned, the D1 password hash is authoritative.
-          // The legacy Worker secret can no longer bypass a changed hash.
-          ownerPasswordValid = await verifyNaviPassword(password, ownerRow.password_hash);
-        } else {
-          // One-time compatibility path for the pre-migration owner secret.
-          ownerPasswordValid = await verifyNaviPassword(password, env.NAVI_OWNER_PASSWORD);
-          if (ownerPasswordValid && password.length >= 12) {
-            // Authentication is based on the verified legacy owner secret.
-            // Upgrading that credential to a D1 PBKDF2 hash is best-effort:
-            // a temporary hashing/write failure must not lock the owner out.
-            let passwordHash = null;
-            try {
-              passwordHash = await hashNaviPassword(password);
-            } catch (error) {
-              logError("Owner password hash generation failed; legacy login remains available", error);
-            }
-
-            if (passwordHash) {
-              try {
-                const provision = await env.NAVA_DB.prepare(
-                  "UPDATE users SET username = COALESCE(NULLIF(username, ''), 'owner'), password_hash = ?, role = 'owner', status = 'active' WHERE id = ? AND (password_hash IS NULL OR password_hash = '')"
-                ).bind(passwordHash, "owner").run();
-
-                if (!provision?.success) {
-                  logError("Owner password hash persistence was not confirmed; legacy login remains available",
-                    new Error("D1 update returned an unsuccessful result."));
-                } else if (Number(provision.meta?.changes || 0) !== 1) {
-                  const refreshed = await env.NAVA_DB.prepare(
-                    "SELECT password_hash, status, role FROM users WHERE id = ? LIMIT 1"
-                  ).bind("owner").first();
-                  if (!refreshed || refreshed.status !== "active" || refreshed.role !== "owner" ||
-                      !await verifyNaviPassword(password, refreshed.password_hash)) {
-                    return errorResponse("وضعیت رمز مالک هم‌زمان تغییر کرده است؛ دوباره تلاش کن.", 409, corsOrigin);
-                  }
-                }
-              } catch (error) {
-                logError("Owner password hash persistence failed; legacy login remains available", error);
-              }
-            }
-          }
-        }
-      } else {
-        // Legacy fallback is retained only when the owner row is not present yet.
-        ownerPasswordValid = await verifyNaviPassword(password, env.NAVI_OWNER_PASSWORD);
-      }
-
-      if (!ownerPasswordValid) {
-        return errorResponse("نام کاربری یا رمز ورود صحیح نیست.", 401, corsOrigin);
-      }
-
-      user = {
-        id: "owner",
-        username: "owner",
-        display_name: ownerRow?.display_name || "مالک",
-        role: "owner"
-      };
-    } else {
-      if (!username || !/^[a-z0-9][a-z0-9._-]{2,39}$/.test(username) || !env.NAVA_DB) {
-        return errorResponse("نام کاربری یا رمز ورود صحیح نیست.", 401, corsOrigin);
-      }
-      const row = await env.NAVA_DB.prepare(
-        "SELECT id, username, display_name, password_hash, role, status FROM users WHERE username = ? LIMIT 1"
-      ).bind(username).first();
-      if (!row || row.status !== "active" || !row.password_hash ||
-          !await verifyNaviPassword(password, row.password_hash)) {
-        return errorResponse("نام کاربری یا رمز ورود صحیح نیست.", 401, corsOrigin);
-      }
-      user = { id: String(row.id), username: row.username, display_name: row.display_name || row.username, role: row.role === "owner" ? "owner" : "user" };
+    if (!row || row.status !== "active" || (username === "owner" && row.role !== "owner")) {
+      return errorResponse("نام کاربری یا رمز ورود صحیح نیست.", 401, corsOrigin);
     }
 
+    // The owner's pre-existing Worker secret is used only for the one-time
+    // transition when no D1 verifier has been enrolled yet.
+    if (username === "owner" && !row.password_hash) {
+      return successResponse({ mode: "legacy" }, corsOrigin);
+    }
+
+    const parsed = validateNaviPasswordVerifier(row.password_hash);
+    if (!parsed) return errorResponse("ساختار امن رمز این حساب معتبر نیست؛ نیاز به بازیابی امن دارد.", 409, corsOrigin);
+
+    const now = Date.now();
+    await env.NAVA_DB.prepare("DELETE FROM navi_auth_challenges WHERE expires_at <= ? OR used_at IS NOT NULL").bind(now).run();
+    const challengeId = crypto.randomUUID();
+    const nonceBytes = crypto.getRandomValues(new Uint8Array(32));
+    const nonce = naviAuthBase64Url(nonceBytes);
+    const expiresAt = now + 120000;
+    await env.NAVA_DB.prepare(
+      "INSERT INTO navi_auth_challenges (challenge_id, user_id, nonce, expires_at, used_at) VALUES (?, ?, ?, ?, NULL)"
+    ).bind(challengeId, String(row.id), nonce, expiresAt).run();
+
+    return successResponse({
+      mode: "challenge",
+      challengeId,
+      nonce,
+      salt: parsed.salt,
+      iterations: parsed.iterations,
+      expiresIn: 120
+    }, corsOrigin);
+  } catch (error) {
+    logError("NAVI login challenge failed", error);
+    return errorResponse("آماده‌سازی ورود امن ممکن نشد. ابتدا ساختار امنیتی دیتابیس را به‌روزرسانی کن.", 503, corsOrigin);
+  }
+}
+
+async function handleLogin({ request, env, origin, corsOrigin }) {
+  if (origin !== ALLOWED_ORIGIN) return errorResponse("مبدأ درخواست مجاز نیست.", 403, corsOrigin);
+  if (!env.NAVI_SESSION_SECRET) return errorResponse("تنظیمات امنیتی نشست ناوی کامل نیست.", 500, corsOrigin);
+  if (!env.NAVA_DB) return errorResponse("دیتابیس حساب‌های ناوی در دسترس نیست.", 503, corsOrigin);
+
+  let input;
+  try { input = await request.json(); } catch { return errorResponse("اطلاعات ورود معتبر نیست.", 400, corsOrigin); }
+
+  const username = safeNaviText(input?.username || "", 40).trim().toLowerCase() || "owner";
+  if (username !== "owner" && !/^[a-z0-9][a-z0-9._-]{2,39}$/.test(username)) {
+    return errorResponse("نام کاربری یا رمز ورود صحیح نیست.", 401, corsOrigin);
+  }
+
+  try {
+    let row = username === "owner"
+      ? await env.NAVA_DB.prepare("SELECT id, username, display_name, password_hash, role, status FROM users WHERE id = ? LIMIT 1").bind("owner").first()
+      : await env.NAVA_DB.prepare("SELECT id, username, display_name, password_hash, role, status FROM users WHERE username = ? LIMIT 1").bind(username).first();
+
+    if (!row || row.status !== "active" || (username === "owner" && row.role !== "owner")) {
+      // Retain the pre-migration owner-only fallback if the owner row has not
+      // yet been created. No invited account can use this path.
+      if (username === "owner" && !row && await verifyNaviPassword(input?.password || "", env.NAVI_OWNER_PASSWORD)) {
+        const user = { id: "owner", username: "owner", display_name: "مالک", role: "owner" };
+        const token = await createNaviSession(env.NAVI_SESSION_SECRET, user);
+        return successResponse({ token, expiresIn: 43200, assistant: "NAVI", version: NAVI_VERSION,
+          user: { id: user.id, username: user.username, displayName: user.display_name, role: user.role } }, corsOrigin);
+      }
+      return errorResponse("نام کاربری یا رمز ورود صحیح نیست.", 401, corsOrigin);
+    }
+
+    if (username === "owner" && !row.password_hash) {
+      // One-time legacy owner authentication. The browser supplies the PBKDF2
+      // verifier it computed locally; the server never runs PBKDF2.
+      const password = typeof input?.password === "string" ? input.password : "";
+      const verifier = validateNaviPasswordVerifier(input?.passwordHash);
+      if (!password || password.length > 256 || !verifier ||
+          !await verifyNaviPassword(password, env.NAVI_OWNER_PASSWORD)) {
+        return errorResponse("نام کاربری یا رمز ورود صحیح نیست.", 401, corsOrigin);
+      }
+      const provision = await env.NAVA_DB.prepare(
+        "UPDATE users SET username = COALESCE(NULLIF(username, ''), 'owner'), password_hash = ?, role = 'owner', status = 'active' WHERE id = ? AND (password_hash IS NULL OR password_hash = '')"
+      ).bind(input.passwordHash, "owner").run();
+      if (!provision?.success) throw new Error("Owner verifier enrollment was not confirmed.");
+      row.password_hash = input.passwordHash;
+    } else {
+      const challengeId = String(input?.challengeId || "");
+      const proof = String(input?.proof || "");
+      if (!/^[0-9a-f-]{36}$/i.test(challengeId) || proof.length > 128) {
+        return errorResponse("درخواست ورود امن معتبر نیست؛ دوباره تلاش کن.", 401, corsOrigin);
+      }
+      // Atomic consume prevents the same challenge response from being replayed.
+      const challenge = await env.NAVA_DB.prepare(
+        "UPDATE navi_auth_challenges SET used_at = ? WHERE challenge_id = ? AND user_id = ? AND used_at IS NULL AND expires_at > ? RETURNING nonce"
+      ).bind(Date.now(), challengeId, String(row.id), Date.now()).first();
+      if (!challenge?.nonce) return errorResponse("درخواست ورود منقضی یا قبلاً استفاده شده است؛ دوباره تلاش کن.", 401, corsOrigin);
+      const message = "navi-login|" + challengeId + "|" + username + "|" + challenge.nonce;
+      if (!await verifyNaviChallengeProof(row.password_hash, message, proof)) {
+        return errorResponse("نام کاربری یا رمز ورود صحیح نیست.", 401, corsOrigin);
+      }
+    }
+
+    const user = {
+      id: String(row.id),
+      username: row.username || "owner",
+      display_name: row.display_name || (username === "owner" ? "مالک" : row.username),
+      role: row.role === "owner" ? "owner" : "user"
+    };
     const token = await createNaviSession(env.NAVI_SESSION_SECRET, user);
     return successResponse({
-      token,
-      expiresIn: 43200,
-      assistant: "NAVI",
-      version: NAVI_VERSION,
-      user: { id: user.id, username: user.username || "owner", displayName: user.display_name, role: user.role }
+      token, expiresIn: 43200, assistant: "NAVI", version: NAVI_VERSION,
+      user: { id: user.id, username: user.username, displayName: user.display_name, role: user.role }
     }, corsOrigin);
   } catch (error) {
     logError("Login failed", error);
@@ -663,23 +669,9 @@ async function handleNaviUsers({ request, env, origin, corsOrigin }) {
 
   const username = safeNaviText(input?.username || "", 40).trim().toLowerCase();
   const displayName = safeNaviText(input?.displayName || "", 80).trim();
-  const password = typeof input?.password === "string" ? input.password : "";
-  if (!/^[a-z0-9][a-z0-9._-]{2,39}$/.test(username) || username === "owner") {
-    return errorResponse("نام کاربری باید ۳ تا ۴۰ نویسه و شامل حروف انگلیسی، عدد، نقطه، خط تیره یا زیرخط باشد.", 400, corsOrigin);
-  }
-  if (!displayName) return errorResponse("نام نمایشی را وارد کن.", 400, corsOrigin);
-  // Validate length separately so a cryptographic/runtime failure is never
-  // misreported as a short password.
-  if (password.length < 12 || password.length > 256) {
-    return errorResponse("رمز عبور باید بین ۱۲ تا ۲۵۶ نویسه داشته باشد.", 400, corsOrigin);
-  }
-
-  let passwordHash;
-  try {
-    passwordHash = await hashNaviPassword(password);
-  } catch (error) {
-    logError("NAVI account password hashing failed", error);
-    return errorResponse("ساخت امن رمز عبور با خطای فنی روبه‌رو شد. لطفاً کمی بعد دوباره تلاش کن.", 500, corsOrigin);
+  const passwordHash = typeof input?.passwordHash === "string" ? input.passwordHash : "";
+  if (!validateNaviPasswordVerifier(passwordHash)) {
+    return errorResponse("ساختار رمز امن معتبر نیست. دوباره تلاش کن.", 400, corsOrigin);
   }
 
   const id = crypto.randomUUID();
@@ -2268,6 +2260,10 @@ export async function handleNaviRoute({
   corsOrigin
 }) {
   try {
+    if (url.pathname === "/navi-auth-challenge" && request.method === "POST") {
+      return await handleNaviAuthChallenge({ request, env, origin, corsOrigin });
+    }
+
     if (
       url.pathname === "/navi-login" &&
       request.method === "POST"
