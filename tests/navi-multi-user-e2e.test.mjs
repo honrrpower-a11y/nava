@@ -248,6 +248,16 @@ test("isolated SQLite end-to-end: owner login, invited account, memory isolation
     assert.match(JSON.stringify(secondMemory.memories), /second-user-only-memory-marker/);
     assert.doesNotMatch(JSON.stringify(secondMemory.memories), /owner-only-memory-marker/);
 
+    // Deleting the owner's main thread must clear only messages owned by that thread.
+    const deleteOwnerMain = await callNavi(env, "/navi-threads", "POST", {
+      token: ownerToken,
+      body: { action: "delete", threadId: "owner-main" }
+    });
+    assert.equal(deleteOwnerMain.status, 200);
+    assert.equal(sqlite.prepare("SELECT COUNT(*) AS count FROM navi_chat_messages_v1 WHERE thread_id = 'owner-main'").get().count, 0);
+    assert.equal(sqlite.prepare("SELECT COUNT(*) AS count FROM navi_chat_messages_v1 WHERE thread_id = ?").get(secondUserId + "-main").count, 1);
+    assert.equal(sqlite.prepare("SELECT COUNT(*) AS count FROM navi_chat_threads_v1 WHERE thread_id = 'owner-main' AND owner_id = 'owner'").get().count, 1);
+
     // Disabling the invited account must invalidate its already-issued session on the next request.
     const disableUser = await callNavi(env, "/navi-users", "POST", {
       token: ownerToken,
