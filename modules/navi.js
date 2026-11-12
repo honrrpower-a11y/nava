@@ -587,16 +587,63 @@ async function handleLogin({
   }
 }
 
-// Owner-only account creation. Public registration remains disabled by design.
-async function handleCreateNaviUser({ request, env, origin, corsOrigin }) {
+// Owner-only account administration. Public registration remains disabled.
+async function handleNaviUsers({ request, env, origin, corsOrigin }) {
   const auth = await authorize(request, env, origin, corsOrigin);
   if (!auth.valid) return auth.response;
-  if (auth.user.role !== "owner") return errorResponse("فقط مالک می‌تواند حساب جدید بسازد.", 403, corsOrigin);
+  if (auth.user.role !== "owner") return errorResponse("فقط مالک می‌تواند حساب‌ها را مدیریت کند.", 403, corsOrigin);
   if (!env.NAVA_DB) return errorResponse("اتصال دیتابیس NAVI تنظیم نشده است.", 500, corsOrigin);
+
+  if (request.method === "GET") {
+    try {
+      const result = await env.NAVA_DB.prepare(
+        "SELECT id, username, display_name, role, status, created_at, updated_at FROM users ORDER BY CASE WHEN role = 'owner' THEN 0 ELSE 1 END, created_at DESC"
+      ).all();
+      return successResponse({ users: result.results || [] }, corsOrigin);
+    } catch (error) {
+      logError("NAVI account list failed", error);
+      return errorResponse("دریافت فهرست حساب‌ها ناموفق بود.", 500, corsOrigin);
+    }
+  }
+
+  if (request.method !== "POST") {
+    return errorResponse("روش درخواست پشتیبانی نمی‌شود.", 405, corsOrigin);
+  }
 
   let input;
   try { input = await request.json(); }
   catch { return errorResponse("اطلاعات حساب معتبر نیست.", 400, corsOrigin); }
+
+  const action = String(input?.action || "create").toLowerCase();
+
+  if (action === "set_status") {
+    const userId = String(input?.userId || "").trim();
+    const status = String(input?.status || "").toLowerCase();
+    if (!userId || userId.length > 128 || !["active", "disabled"].includes(status)) {
+      return errorResponse("شناسه حساب یا وضعیت درخواستی معتبر نیست.", 400, corsOrigin);
+    }
+    if (userId === "owner") {
+      return errorResponse("حساب اصلی مالک از این بخش قابل غیرفعال‌سازی نیست.", 400, corsOrigin);
+    }
+    try {
+      const result = await env.NAVA_DB.prepare(
+        "UPDATE users SET status = ?, updated_at = datetime('now') WHERE id = ? AND role = 'user'"
+      ).bind(status, userId).run();
+      if (!result?.success || Number(result.meta?.changes || 0) !== 1) {
+        return errorResponse("حساب موردنظر پیدا نشد یا قابل تغییر نیست.", 404, corsOrigin);
+      }
+      return successResponse({
+        updated: true,
+        user: { id: userId, status },
+        message: status === "disabled" ? "حساب غیرفعال شد." : "حساب دوباره فعال شد."
+      }, corsOrigin);
+    } catch (error) {
+      logError("NAVI account status update failed", error);
+      return errorResponse("تغییر وضعیت حساب ناموفق بود.", 500, corsOrigin);
+    }
+  }
+
+  if (action !== "create") return errorResponse("عملیات مدیریت حساب معتبر نیست.", 400, corsOrigin);
 
   const username = safeNaviText(input?.username || "", 40).trim().toLowerCase();
   const displayName = safeNaviText(input?.displayName || "", 80).trim();
@@ -617,7 +664,7 @@ async function handleCreateNaviUser({ request, env, origin, corsOrigin }) {
     if (!result.success || Number(result.meta?.changes || 0) !== 1) {
       throw new Error("Account insert was not confirmed.");
     }
-    return successResponse({ user: { id, username, displayName, role: "user" }, created: true }, corsOrigin, 201);
+    return successResponse({ user: { id, username, displayName, role: "user", status: "active" }, created: true }, corsOrigin, 201);
   } catch (error) {
     const message = String(error?.message || "");
     if (/unique|constraint/i.test(message)) return errorResponse("این نام کاربری قبلاً ثبت شده است.", 409, corsOrigin);
@@ -2209,9 +2256,9 @@ export async function handleNaviRoute({
 
     if (
       url.pathname === "/navi-users" &&
-      request.method === "POST"
+      (request.method === "GET" || request.method === "POST")
     ) {
-      return await handleCreateNaviUser({ request, env, origin, corsOrigin });
+      return await handleNaviUsers({ request, env, origin, corsOrigin });
     }
 
     if (
