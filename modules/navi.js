@@ -668,9 +668,19 @@ async function handleNaviUsers({ request, env, origin, corsOrigin }) {
     return errorResponse("نام کاربری باید ۳ تا ۴۰ نویسه و شامل حروف انگلیسی، عدد، نقطه، خط تیره یا زیرخط باشد.", 400, corsOrigin);
   }
   if (!displayName) return errorResponse("نام نمایشی را وارد کن.", 400, corsOrigin);
+  // Validate length separately so a cryptographic/runtime failure is never
+  // misreported as a short password.
+  if (password.length < 12 || password.length > 256) {
+    return errorResponse("رمز عبور باید بین ۱۲ تا ۲۵۶ نویسه داشته باشد.", 400, corsOrigin);
+  }
+
   let passwordHash;
-  try { passwordHash = await hashNaviPassword(password); }
-  catch { return errorResponse("رمز عبور باید حداقل ۱۲ نویسه داشته باشد.", 400, corsOrigin); }
+  try {
+    passwordHash = await hashNaviPassword(password);
+  } catch (error) {
+    logError("NAVI account password hashing failed", error);
+    return errorResponse("ساخت امن رمز عبور با خطای فنی روبه‌رو شد. لطفاً کمی بعد دوباره تلاش کن.", 500, corsOrigin);
+  }
 
   const id = crypto.randomUUID();
   try {
