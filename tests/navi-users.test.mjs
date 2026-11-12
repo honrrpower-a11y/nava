@@ -10,26 +10,25 @@ function createEnv(account, onList = () => [], onStatus = () => ({ success: true
     NAVI_SESSION_SECRET: secret,
     NAVA_DB: {
       prepare(sql) {
-        return {
-          bind(...values) {
-            return {
-              async first() {
-                assert.match(sql, /SELECT id, display_name, role, status FROM users WHERE id = \?/);
-                assert.equal(values[0], account.id);
-                return account;
-              },
-              async all() {
-                assert.match(sql, /SELECT id, username, display_name, role, status, created_at, updated_at FROM users/);
-                assert.doesNotMatch(sql, /password_hash/);
-                return { results: onList() };
-              },
-              async run() {
-                assert.match(sql, /UPDATE users SET status = \?, updated_at = datetime\('now'\) WHERE id = \? AND role = 'user'/);
-                return onStatus(sql, values);
-              }
-            };
+        let values = [];
+        const statement = {
+          bind(...args) { values = args; return statement; },
+          async first() {
+            assert.match(sql, /SELECT id, display_name, role, status FROM users WHERE id = \\?/);
+            assert.equal(values[0], account.id);
+            return account;
+          },
+          async all() {
+            assert.match(sql, /SELECT id, username, display_name, role, status, created_at, updated_at FROM users/);
+            assert.doesNotMatch(sql, /password_hash/);
+            return { results: onList() };
+          },
+          async run() {
+            assert.match(sql, /UPDATE users SET status = \\?, updated_at = datetime\\('now'\\) WHERE id = \\? AND role = 'user'/);
+            return onStatus(sql, values);
           }
         };
+        return statement;
       }
     }
   };
