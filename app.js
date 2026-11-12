@@ -1960,12 +1960,18 @@ if (naviCreateUserForm) {
     const username = document.getElementById("naviNewUsername")?.value.trim().toLowerCase() || "";
     const password = document.getElementById("naviNewPassword")?.value || "";
     if (!displayName || !username || password.length < 12) {
-      if (naviCreateUserStatus) naviCreateUserStatus.textContent = "نام، نام کاربری و رمز حداقل ۱۲ نویسه‌ای را کامل کن.";
+      if (naviCreateUserStatus) {
+        naviCreateUserStatus.textContent = "نام، نام کاربری و رمز حداقل ۱۲ نویسه‌ای را کامل کن.";
+        naviCreateUserStatus.classList.add("show");
+      }
       return;
     }
     naviCreateUserButton.disabled = true;
     naviCreateUserButton.textContent = "در حال ساخت حساب...";
-    if (naviCreateUserStatus) naviCreateUserStatus.textContent = "";
+    if (naviCreateUserStatus) {
+      naviCreateUserStatus.textContent = "";
+      naviCreateUserStatus.classList.remove("show");
+    }
     try {
       const response = await fetch(NAVI_USERS_API, {
         method: "POST",
@@ -1978,10 +1984,16 @@ if (naviCreateUserForm) {
       const data = await response.json();
       if (!response.ok || !data.success) throw new Error(data.error || "ساخت حساب ناموفق بود.");
       naviCreateUserForm.reset();
-      if (naviCreateUserStatus) naviCreateUserStatus.textContent = "حساب «" + data.user.displayName + "» ساخته شد. نام کاربری: " + data.user.username;
+      if (naviCreateUserStatus) {
+        naviCreateUserStatus.textContent = "حساب «" + data.user.displayName + "» ساخته شد. نام کاربری: " + data.user.username;
+        naviCreateUserStatus.classList.add("show");
+      }
       await loadNaviUsers();
     } catch (error) {
-      if (naviCreateUserStatus) naviCreateUserStatus.textContent = error.message || "ساخت حساب انجام نشد.";
+      if (naviCreateUserStatus) {
+        naviCreateUserStatus.textContent = error.message || "ساخت حساب انجام نشد.";
+        naviCreateUserStatus.classList.add("show");
+      }
     } finally {
       naviCreateUserButton.disabled = false;
       naviCreateUserButton.textContent = "ساخت حساب";
