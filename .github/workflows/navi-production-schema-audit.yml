@@ -70,7 +70,7 @@ jobs:
               raise SystemExit("STOP: owner account preconditions are not satisfied.")
           print("Preflight PASS: existing tables, account columns, unique username index, and owner identity verified.")
           PY
-          npx wrangler d1 migrations apply nava-memory --remote --to 0001_navi_memory_schema.sql
+          npx wrangler d1 migrations apply nava-memory --remote --config=wrangler.navi-production-reconcile.jsonc
 
       - name: List production D1 migration status (read-only)
         shell: bash
