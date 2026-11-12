@@ -14,7 +14,7 @@ function createEnv(account, onList = () => [], onStatus = () => ({ success: true
         const statement = {
           bind(...args) { values = args; return statement; },
           async first() {
-            assert.match(sql, /SELECT id, display_name, role, status FROM users WHERE id = \\?/);
+            assert.match(sql, /SELECT id, display_name, role, status FROM users WHERE id = \?/);
             assert.equal(values[0], account.id);
             return account;
           },
@@ -24,7 +24,7 @@ function createEnv(account, onList = () => [], onStatus = () => ({ success: true
             return { results: onList() };
           },
           async run() {
-            assert.match(sql, /UPDATE users SET status = \\?, updated_at = datetime\\('now'\\) WHERE id = \\? AND role = 'user'/);
+            assert.match(sql, /UPDATE users SET status = \?, updated_at = datetime\('now'\) WHERE id = \? AND role = 'user'/);
             return onStatus(sql, values);
           }
         };
