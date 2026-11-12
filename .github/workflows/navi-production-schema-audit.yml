@@ -77,6 +77,13 @@ jobs:
                   lines.append("COLUMN: " + " | ".join(str(x) for x in col))
               lines.append("")
 
+          indexes = conn.execute(
+              "SELECT name, tbl_name, sql FROM sqlite_master WHERE type='index' AND name NOT LIKE 'sqlite_%' ORDER BY name"
+          ).fetchall()
+          for name, table_name, create_sql in indexes:
+              lines.append(f"INDEX: {name} ON {table_name}")
+              lines.append(create_sql or "")
+
           with open("navi-production-schema.txt", "w", encoding="utf-8") as f:
               f.write("\n".join(lines))
 
@@ -87,6 +94,34 @@ jobs:
           missing_columns = sorted(required_columns - user_columns)
           if missing_columns:
               raise SystemExit("STOP: production users table is missing required account columns: " + ", ".join(missing_columns))
+
+          required_tables = {
+              "users", "navi_chat_threads_v1", "navi_chat_messages_v1",
+              "navi_memory_facts_v1"
+          }
+          actual_tables = {row[0] for row in tables}
+          missing_tables = sorted(required_tables - actual_tables)
+          if missing_tables:
+              raise SystemExit("STOP: production NAVI tables are missing: " + ", ".join(missing_tables))
+
+          required_indexes = {
+              "idx_navi_chat_threads_owner_updated",
+              "idx_navi_chat_messages_thread_id",
+              "idx_navi_memory_owner_status_updated",
+              "idx_navi_memory_owner_key_status",
+              "idx_navi_memory_owner_value_status",
+              "idx_users_username_unique"
+          }
+          actual_indexes = {row[0] for row in indexes}
+          missing_indexes = sorted(required_indexes - actual_indexes)
+          if missing_indexes:
+              raise SystemExit("STOP: production schema is missing required indexes: " + ", ".join(missing_indexes))
+
+          duplicate_usernames = conn.execute(
+              "SELECT username, COUNT(*) FROM users WHERE username IS NOT NULL AND username <> '' GROUP BY username HAVING COUNT(*) > 1 LIMIT 1"
+          ).fetchone()
+          if duplicate_usernames:
+              raise SystemExit("STOP: duplicate usernames prevent safe unique-index validation.")
 
           owner = conn.execute(
               "SELECT id, username, role, status, password_hash FROM users WHERE id = 'owner' LIMIT 1"
@@ -116,6 +151,8 @@ jobs:
           report = [
               "NAVI production readiness audit",
               "D1 users account columns: PASS",
+              "NAVI core tables: PASS",
+              "Required NAVI and username indexes: PASS",
               "Owner account row: present",
               "Owner role: owner",
               "Owner status: active",
