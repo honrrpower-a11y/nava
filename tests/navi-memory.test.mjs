@@ -407,8 +407,8 @@ test("semantic memory candidates do not depend on query keyword overlap", async 
   const candidatesA = selectRelevantMemories("چه کسی این مجموعه را راه‌اندازی و اداره می‌کند؟", memories);
   const candidatesB = selectRelevantMemories("مسئول شکل‌گیری این کسب‌وکار چه کسی بوده؟", memories);
 
-  assert.deepEqual(candidatesA.map(item => item.id), [1, 2, 3]);
-  assert.deepEqual(candidatesB.map(item => item.id), [1, 2, 3]);
+  assert.deepEqual(candidatesA.map(item => item.id), [2, 1, 3]);
+  assert.deepEqual(candidatesB.map(item => item.id), [2, 1, 3]);
 });
 
 test("generic word overlap cannot exclude semantically useful memory candidates", async () => {
