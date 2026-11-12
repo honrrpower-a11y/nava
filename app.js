@@ -1992,12 +1992,59 @@ async function loadNaviUsers() {
         action.textContent = isActive ? "غیرفعال‌کردن" : "فعال‌کردن";
         action.addEventListener("click", () => changeNaviUserStatus(user.id, isActive ? "disabled" : "active", action));
         item.append(action);
+
+        const resetButton = document.createElement("button");
+        resetButton.type = "button";
+        resetButton.className = "navi-users-refresh";
+        resetButton.textContent = "بازنشانی رمز";
+        resetButton.addEventListener("click", () => resetNaviUserPassword(user.id, user.username, resetButton));
+        item.append(resetButton);
       }
       naviUsersList.append(item);
     }
     if (naviUsersStatus) naviUsersStatus.textContent = users.length + " حساب";
   } catch (error) {
     if (naviUsersStatus) naviUsersStatus.textContent = error.message || "دریافت فهرست حساب‌ها ناموفق بود.";
+  }
+}
+
+async function resetNaviUserPassword(userId, username, button) {
+  const password = window.prompt(
+    "رمز جدید برای @" + username + " را وارد کن (حداقل ۱۲ نویسه):"
+  );
+  if (password === null) return;
+  if (password.length < 12 || password.length > 256) {
+    if (naviUsersStatus) naviUsersStatus.textContent = "رمز باید بین ۱۲ تا ۲۵۶ نویسه باشد.";
+    return;
+  }
+
+  const confirmation = window.prompt("برای تأیید، رمز جدید را دوباره وارد کن:");
+  if (confirmation === null) return;
+  if (password !== confirmation) {
+    if (naviUsersStatus) naviUsersStatus.textContent = "دو رمز واردشده یکسان نیستند.";
+    return;
+  }
+
+  button.disabled = true;
+  if (naviUsersStatus) naviUsersStatus.textContent = "در حال ساخت و ثبت رمز امن جدید...";
+  try {
+    // Password stretching stays in the browser; only the PBKDF2 verifier is sent.
+    const passwordHash = await deriveNaviPasswordVerifier(password);
+    const response = await fetch(NAVI_USERS_API, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + getNaviToken()
+      },
+      body: JSON.stringify({ action: "reset_password", userId, passwordHash })
+    });
+    const data = await response.json();
+    if (!response.ok || !data.success) throw new Error(data.error || "بازنشانی رمز ناموفق بود.");
+    if (naviUsersStatus) naviUsersStatus.textContent = data.message || "رمز حساب بازنشانی شد.";
+  } catch (error) {
+    if (naviUsersStatus) naviUsersStatus.textContent = error.message || "بازنشانی رمز ناموفق بود.";
+  } finally {
+    button.disabled = false;
   }
 }
 
