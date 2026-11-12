@@ -179,7 +179,7 @@ test("isolated SQLite end-to-end: owner login, invited account, memory isolation
     });
     const replayChallenge = await replayChallengeResponse.json();
     const replaySalt = Buffer.from(replayChallenge.salt, "base64url");
-    const replayMaterial = await testCrypto.subtle.importKey("raw", new TextEncoder().encode("second-user-password-123"), "PBKDF2", false, ["deriveBits"]);
+    const replayMaterial = await testCrypto.subtle.importKey("raw", new TextEncoder().encode("second-user-new-password-456"), "PBKDF2", false, ["deriveBits"]);
     const replayBits = await testCrypto.subtle.deriveBits({ name: "PBKDF2", hash: "SHA-256", salt: replaySalt, iterations: replayChallenge.iterations }, replayMaterial, 256);
     const replayKey = await testCrypto.subtle.importKey("raw", replayBits, { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
     const replayMessage = "navi-login|" + replayChallenge.challengeId + "|second.user|" + replayChallenge.nonce;
