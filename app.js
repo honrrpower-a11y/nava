@@ -2307,10 +2307,33 @@ async function sendMessageToNavi() {
       );
     }
 
-    const reply = String(data.reply || "").trim();
+    let reply = String(data.reply || "").trim();
 
     if (!reply) {
       throw new Error("ناوی پاسخ خالی ارسال کرده است.");
+    }
+
+    // Give explicit, visible feedback whenever the user checked the
+    // composer save option. Do not silently treat a missing result as success.
+    if (saveThisMessageToMemory) {
+      const manualMemory = data.memory && typeof data.memory === "object"
+        ? data.memory
+        : null;
+      let manualSaveFeedback = "";
+
+      if (manualMemory?.manualSaved) {
+        manualSaveFeedback = "برداشت ناوی از این پیام در حافظه تأییدشده ذخیره شد.";
+      } else if (manualMemory?.manualDuplicate) {
+        manualSaveFeedback = "این برداشت یا اطلاعات مشابه آن از قبل در حافظه تأییدشده وجود داشت.";
+      } else if (manualMemory?.manualSaveError) {
+        manualSaveFeedback = manualMemory.manualSaveError;
+      } else {
+        manualSaveFeedback = "درخواست ذخیره ارسال شد، اما سرور ذخیره موفق را تأیید نکرد؛ لطفاً بخش پروفایل اطلاعات را بررسی کن.";
+      }
+
+      if (!reply.includes("🧠")) {
+        reply += "\n\n🧠 " + manualSaveFeedback;
+      }
     }
 
     const threadBeforeNaming = naviThreads.find(item => item.thread_id === naviActiveThreadId);
