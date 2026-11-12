@@ -154,7 +154,24 @@ test("isolated SQLite end-to-end: owner login, invited account, memory isolation
     assert.equal(secondLoginData.success, true);
     assert.equal(secondLoginData.user.id, secondUserId);
     assert.equal(secondLoginData.user.role, "user");
-    const secondToken = secondLoginData.token;
+    let secondToken = secondLoginData.token;
+
+    // The owner can reset an invited account password without touching its identity or data.
+    const resetPasswordHash = await makeVerifier("second-user-new-password-456");
+    const resetPassword = await callNavi(env, "/navi-users", "POST", {
+      token: ownerToken,
+      body: { action: "reset_password", userId: secondUserId, passwordHash: resetPasswordHash }
+    });
+    assert.equal(resetPassword.status, 200);
+    assert.equal((await resetPassword.json()).success, true);
+
+    const oldPasswordLogin = await loginWithPassword(env, "second.user", "second-user-password-123");
+    assert.equal(oldPasswordLogin.status, 401);
+    const newPasswordLogin = await loginWithPassword(env, "second.user", "second-user-new-password-456");
+    assert.equal(newPasswordLogin.status, 200);
+    const newPasswordLoginData = await newPasswordLogin.json();
+    assert.equal(newPasswordLoginData.success, true);
+    secondToken = newPasswordLoginData.token;
 
     // A valid challenge proof is accepted once and cannot be replayed.
     const replayChallengeResponse = await callNavi(env, "/navi-auth-challenge", "POST", {
