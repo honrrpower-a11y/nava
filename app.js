@@ -27,7 +27,7 @@ const NAVI_USER_ROLE_KEY = "nava_navi_user_role";
 function naviBytesToBase64Url(bytes) {
   let binary = "";
   for (const byte of bytes) binary += String.fromCharCode(byte);
-  return btoa(binary).replace(/\\+/g, "-").replace(/\\//g, "_").replace(/=+$/g, "");
+  return btoa(binary).replaceAll("+", "-").replaceAll("/", "_").replaceAll("=", "");
 }
 
 function naviBase64UrlToBytes(value) {
