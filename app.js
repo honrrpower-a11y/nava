@@ -9,6 +9,7 @@
 // API
 const NAVI_BASE = "https://nava-music-api.honrrpower.workers.dev";
 const NAVI_LOGIN_API = NAVI_BASE + "/navi-login";
+const NAVI_AUTH_CHALLENGE_API = NAVI_BASE + "/navi-auth-challenge";
 const NAVI_API = NAVI_BASE + "/navi-chat";
 const NAVI_HISTORY_API = NAVI_BASE + "/navi-history";
 const NAVI_THREADS_API = NAVI_BASE + "/navi-threads";
@@ -21,6 +22,53 @@ const NAVI_SESSION_KEY = "nava_navi_session";
 const NAVI_EXPIRY_KEY = "nava_navi_expiry";
 const NAVI_USER_NAME_KEY = "nava_navi_user_name";
 const NAVI_USER_ROLE_KEY = "nava_navi_user_role";
+
+// Browser-side password derivation. PBKDF2 never runs inside the Free Worker.
+function naviBytesToBase64Url(bytes) {
+  let binary = "";
+  for (const byte of bytes) binary += String.fromCharCode(byte);
+  return btoa(binary).replace(/\\+/g, "-").replace(/\\//g, "_").replace(/=+$/g, "");
+}
+
+function naviBase64UrlToBytes(value) {
+  const normalized = value.replace(/-/g, "+").replace(/_/g, "/");
+  const binary = atob(normalized + "=".repeat((4 - normalized.length % 4) % 4));
+  return Uint8Array.from(binary, char => char.charCodeAt(0));
+}
+
+async function deriveNaviPasswordVerifier(password) {
+  if (typeof password !== "string" || password.length < 12 || password.length > 256) {
+    throw new Error("رمز عبور باید بین ۱۲ تا ۲۵۶ نویسه داشته باشد.");
+  }
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+  const material = await crypto.subtle.importKey(
+    "raw", new TextEncoder().encode(password), "PBKDF2", false, ["deriveBits"]
+  );
+  const bits = await crypto.subtle.deriveBits(
+    { name: "PBKDF2", hash: "SHA-256", salt, iterations: 310000 },
+    material, 256
+  );
+  return "pbkdf2$310000$" + naviBytesToBase64Url(salt) + "$" +
+    naviBytesToBase64Url(new Uint8Array(bits));
+}
+
+async function createNaviLoginProof(password, challenge) {
+  const salt = naviBase64UrlToBytes(challenge.salt);
+  const material = await crypto.subtle.importKey(
+    "raw", new TextEncoder().encode(password), "PBKDF2", false, ["deriveBits"]
+  );
+  const bits = await crypto.subtle.deriveBits(
+    { name: "PBKDF2", hash: "SHA-256", salt, iterations: Number(challenge.iterations) },
+    material, 256
+  );
+  const hmacKey = await crypto.subtle.importKey(
+    "raw", bits, { name: "HMAC", hash: "SHA-256" }, false, ["sign"]
+  );
+  const message = "navi-login|" + challenge.challengeId + "|" +
+    challenge.username + "|" + challenge.nonce;
+  const signature = await crypto.subtle.sign("HMAC", hmacKey, new TextEncoder().encode(message));
+  return naviBytesToBase64Url(new Uint8Array(signature));
+}
 
 // Limits
 const NAVI_MAX_DISPLAY_MESSAGES = 100;
@@ -1812,13 +1860,38 @@ naviLoginForm.addEventListener("submit", async event => {
   clearLoginError();
 
   try {
+    // Ask the server whether this account uses the one-time owner migration
+    // or a replay-resistant challenge. Password stretching runs locally.
+    const challengeResponse = await fetch(NAVI_AUTH_CHALLENGE_API, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username })
+    });
+    const challengeData = await challengeResponse.json();
+    if (!challengeResponse.ok || !challengeData.success) {
+      throw new Error(challengeData.error || "آماده‌سازی ورود امن ناموفق بود.");
+    }
+
+    let loginPayload;
+    if (challengeData.mode === "legacy") {
+      const passwordHash = await deriveNaviPasswordVerifier(password);
+      loginPayload = { username, password, passwordHash };
+    } else if (challengeData.mode === "challenge") {
+      const challenge = { ...challengeData, username: username || "owner" };
+      const proof = await createNaviLoginProof(password, challenge);
+      loginPayload = {
+        username,
+        challengeId: challenge.challengeId,
+        proof
+      };
+    } else {
+      throw new Error("روش ورود امن پشتیبانی نمی‌شود.");
+    }
+
     const response = await fetch(NAVI_LOGIN_API, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      
-      },
-      body: JSON.stringify({ username, password })
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(loginPayload)
     });
 
     let data;
@@ -1973,13 +2046,14 @@ if (naviCreateUserForm) {
       naviCreateUserStatus.classList.remove("show");
     }
     try {
+      const passwordHash = await deriveNaviPasswordVerifier(password);
       const response = await fetch(NAVI_USERS_API, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           "Authorization": "Bearer " + getNaviToken()
         },
-        body: JSON.stringify({ displayName, username, password })
+        body: JSON.stringify({ displayName, username, passwordHash })
       });
       const data = await response.json();
       if (!response.ok || !data.success) throw new Error(data.error || "ساخت حساب ناموفق بود.");
