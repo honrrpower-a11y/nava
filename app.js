@@ -223,6 +223,106 @@ function initNavaTheme() {
 
 initNavaTheme();
 
+/* NAVA ACCOUNT UI — theme-aware dropdowns and registration spacing */
+(function initNavaAccountUiStyles() {
+  if (document.getElementById("navaAccountUiStyles")) return;
+  const style = document.createElement("style");
+  style.id = "navaAccountUiStyles";
+  style.textContent = `
+    .navi-registration-details {
+      margin-top: 26px;
+      padding: 13px 14px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: var(--panel);
+      color: var(--text);
+      transition: background .25s, border-color .25s, color .25s;
+    }
+    .navi-registration-details > summary {
+      color: var(--gold);
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      list-style-position: inside;
+      padding: 2px 0;
+    }
+    .navi-registration-details[open] > summary {
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 12px;
+    }
+    .navi-registration-details .navi-memory-description {
+      color: var(--muted);
+    }
+    .navi-users-dropdown {
+      margin-top: 10px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      background: var(--panel);
+      transition: background .25s, border-color .25s;
+    }
+    .navi-users-dropdown > summary {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 13px 14px;
+      color: var(--gold);
+      background: var(--panel2);
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      list-style: none;
+    }
+    .navi-users-dropdown > summary::-webkit-details-marker { display: none; }
+    .navi-users-dropdown > summary::after {
+      content: "⌄";
+      font-size: 17px;
+      transition: transform .2s;
+    }
+    .navi-users-dropdown[open] > summary {
+      border-bottom: 1px solid var(--border);
+    }
+    .navi-users-dropdown[open] > summary::after {
+      transform: rotate(180deg);
+    }
+    .navi-users-dropdown-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      padding: 10px;
+      background: var(--panel);
+    }
+    .navi-registration-pending-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin: 10px 0 14px;
+    }
+    body.light .navi-registration-details {
+      background: #fffdf8;
+      border-color: rgba(193,127,37,.30);
+      color: #263a56;
+    }
+    body.light .navi-registration-details > summary { color: #a96522; }
+    body.light .navi-users-dropdown {
+      background: #fffdf8;
+      border-color: rgba(193,127,37,.30);
+    }
+    body.light .navi-users-dropdown > summary {
+      background: #f8eddd;
+      color: #a96522;
+    }
+    body.light .navi-users-dropdown-list { background: #fffdf8; }
+    body.light .navi-users-dropdown-list .navi-user-row {
+      background: #fff8ed;
+      border-color: rgba(193,127,37,.24);
+    }
+  `;
+  document.head.appendChild(style);
+})();
+
 
 /* =========================================
    GENERAL HELPERS
@@ -1964,88 +2064,146 @@ async function loadNaviUsers() {
   if (!naviUsersList || sessionStorage.getItem(NAVI_USER_ROLE_KEY) !== "owner") return;
   if (naviUsersStatus) naviUsersStatus.textContent = "در حال دریافت حساب‌ها...";
   naviUsersList.replaceChildren();
+
   try {
     const response = await fetch(NAVI_USERS_API, {
-      headers: { "Authorization": "Bearer " + getNaviToken() }
+      headers: { "Authorization": "Bearer " + getNaviToken() },
+      cache: "no-store"
     });
     const data = await response.json();
-    if (!response.ok || !data.success) throw new Error(data.error || "دریافت حساب‌ها ناموفق بود.");
-    const users = Array.isArray(data.users) ? data.users : [];
-    const registrationRequests = Array.isArray(data.registrationRequests) ? data.registrationRequests : [];
+    if (!response.ok || !data.success) {
+      throw new Error(data.error || "دریافت حساب‌ها ناموفق بود.");
+    }
+
+    const allUsers = Array.isArray(data.users) ? data.users : [];
+    // The owner is viewing this panel; list only the other accounts.
+    const users = allUsers.filter(user => user && user.role !== "owner");
+    const registrationRequests = Array.isArray(data.registrationRequests)
+      ? data.registrationRequests
+      : [];
+
     if (!users.length && !registrationRequests.length) {
-      if (naviUsersStatus) naviUsersStatus.textContent = "هنوز حساب یا درخواست عضویتی ثبت نشده است.";
+      if (naviUsersStatus) {
+        naviUsersStatus.textContent = "هنوز حساب کاربری دیگری یا درخواست عضویتی ثبت نشده است.";
+      }
       return;
     }
 
+    /* Pending registration requests remain visible outside the users dropdown. */
     if (registrationRequests.length) {
+      const pendingList = document.createElement("div");
+      pendingList.className = "navi-registration-pending-list";
+
       const heading = document.createElement("strong");
       heading.className = "navi-registration-heading";
       heading.textContent = "درخواست‌های عضویت در انتظار بررسی (" + registrationRequests.length + ")";
-      naviUsersList.append(heading);
+      pendingList.append(heading);
+
       for (const registration of registrationRequests) {
         const item = document.createElement("div");
         item.className = "navi-user-row navi-registration-row";
+
         const details = document.createElement("div");
         details.className = "navi-user-details";
+
         const name = document.createElement("strong");
         name.textContent = String(registration.display_name || "متقاضی");
+
         const meta = document.createElement("span");
-        meta.textContent = "@" + String(registration.username || "") + " · درخواست " + String(registration.created_at || "");
+        meta.textContent = "@" + String(registration.username || "") +
+          " · درخواست " + String(registration.created_at || "");
+
         details.append(name, meta);
+
         const approve = document.createElement("button");
         approve.type = "button";
         approve.className = "navi-user-enable";
         approve.textContent = "تأیید و فعال‌سازی";
-        approve.addEventListener("click", () => reviewNaviRegistration(registration.request_id, "approve", approve));
+        approve.addEventListener("click", () => {
+          reviewNaviRegistration(registration.request_id, "approve", approve);
+        });
+
         const reject = document.createElement("button");
         reject.type = "button";
         reject.className = "navi-user-disable";
         reject.textContent = "رد درخواست";
-        reject.addEventListener("click", () => reviewNaviRegistration(registration.request_id, "reject", reject));
+        reject.addEventListener("click", () => {
+          reviewNaviRegistration(registration.request_id, "reject", reject);
+        });
+
         item.append(details, approve, reject);
-        naviUsersList.append(item);
+        pendingList.append(item);
       }
+
+      naviUsersList.append(pendingList);
     }
 
+    /* Registered accounts and their controls live inside one collapsible box. */
     if (users.length) {
-      const heading = document.createElement("strong");
-      heading.className = "navi-registration-heading";
-      heading.textContent = "حساب‌های ثبت‌شده";
-      naviUsersList.append(heading);
-    }
-    for (const user of users) {
-      const item = document.createElement("div");
-      item.className = "navi-user-row";
-      const details = document.createElement("div");
-      details.className = "navi-user-details";
-      const name = document.createElement("strong");
-      name.textContent = String(user.display_name || user.username || "کاربر");
-      const meta = document.createElement("span");
-      const isOwner = user.role === "owner";
-      const isActive = user.status === "active";
-      meta.textContent = (isOwner ? "مالک" : "@" + user.username) + " · " + (isActive ? "فعال" : "غیرفعال");
-      details.append(name, meta);
-      item.append(details);
-      if (!isOwner) {
-        const action = document.createElement("button");
-        action.type = "button";
-        action.className = isActive ? "navi-user-disable" : "navi-user-enable";
-        action.textContent = isActive ? "غیرفعال‌کردن" : "فعال‌کردن";
-        action.addEventListener("click", () => changeNaviUserStatus(user.id, isActive ? "disabled" : "active", action));
-        item.append(action);
+      const dropdown = document.createElement("details");
+      dropdown.className = "navi-users-dropdown";
 
-        const resetButton = document.createElement("button");
-        resetButton.type = "button";
-        resetButton.className = "navi-users-refresh";
-        resetButton.textContent = "بازنشانی رمز";
-        resetButton.addEventListener("click", () => resetNaviUserPassword(user.id, user.username, resetButton));
-        item.append(resetButton);
+      const summary = document.createElement("summary");
+      summary.textContent = "حساب‌های ثبت‌شده (" + users.length + ")";
+
+      const registeredList = document.createElement("div");
+      registeredList.className = "navi-users-dropdown-list";
+
+      for (const user of users) {
+        const item = document.createElement("div");
+        item.className = "navi-user-row";
+
+        const details = document.createElement("div");
+        details.className = "navi-user-details";
+
+        const name = document.createElement("strong");
+        name.textContent = String(user.display_name || user.username || "کاربر");
+
+        const meta = document.createElement("span");
+        const isOwner = user.role === "owner";
+        const isActive = user.status === "active";
+        meta.textContent = (isOwner ? "مالک" : "@" + user.username) +
+          " · " + (isActive ? "فعال" : "غیرفعال");
+
+        details.append(name, meta);
+        item.append(details);
+
+        if (!isOwner) {
+          const action = document.createElement("button");
+          action.type = "button";
+          action.className = isActive ? "navi-user-disable" : "navi-user-enable";
+          action.textContent = isActive ? "غیرفعال‌کردن" : "فعال‌کردن";
+          action.addEventListener("click", () => {
+            changeNaviUserStatus(user.id, isActive ? "disabled" : "active", action);
+          });
+          item.append(action);
+
+          const resetButton = document.createElement("button");
+          resetButton.type = "button";
+          resetButton.className = "navi-users-refresh";
+          resetButton.textContent = "بازنشانی رمز";
+          resetButton.addEventListener("click", () => {
+            resetNaviUserPassword(user.id, user.username, resetButton);
+          });
+          item.append(resetButton);
+        }
+
+        registeredList.append(item);
       }
-      naviUsersList.append(item);
+
+      dropdown.append(summary, registeredList);
+      naviUsersList.append(dropdown);
     }
-    if (naviUsersStatus) naviUsersStatus.textContent = users.length + " حساب · " + registrationRequests.length + " درخواست در انتظار";
+
+    if (naviUsersStatus) {
+      naviUsersStatus.textContent =
+        users.length + " حساب · " + registrationRequests.length + " درخواست در انتظار";
+    }
   } catch (error) {
-    if (naviUsersStatus) naviUsersStatus.textContent = error.message || "دریافت فهرست حساب‌ها ناموفق بود.";
+    if (naviUsersStatus) {
+      naviUsersStatus.textContent =
+        error.message || "دریافت فهرست حساب‌ها ناموفق بود.";
+    }
   }
 }
 
