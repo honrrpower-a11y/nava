@@ -8,6 +8,8 @@ on:
       - "modules/navi.js"
       - "modules/navi-auth.js"
       - "modules/navi-memory.js"
+      - "index.js"
+      - "app.js"
       - "tests/**"
       - ".github/workflows/navi-multi-user-tests.yml"
   pull_request:
@@ -29,6 +31,6 @@ jobs:
         with:
           node-version: 22
       - name: Check JavaScript syntax
-        run: node --check app.js && node --check modules/navi.js && node --check modules/navi-auth.js && node --check modules/navi-memory.js
+        run: node --check index.js && node --check app.js && node --check modules/navi.js && node --check modules/navi-auth.js && node --check modules/navi-memory.js
       - name: Run NAVI tests
         run: node --test tests/*.test.mjs
