@@ -51,21 +51,35 @@ jobs:
           node <<'NODE'
           const fs = require('node:fs');
           const config = JSON.parse(fs.readFileSync('wrangler.jsonc', 'utf8'));
-          if (config.name !== 'nava-music-api') {
+          const norm = value => String(value ?? '').trim().toLowerCase();
+
+          if (norm(config.name) !== 'nava-music-api') {
             throw new Error('STOP: production Worker name mismatch.');
           }
-          if (config.main !== './index.js') {
+          if (norm(config.main) !== './index.js') {
             throw new Error('STOP: unexpected Worker entry point.');
           }
           if (!Array.isArray(config.d1_databases) || config.d1_databases.length !== 1) {
             throw new Error('STOP: expected exactly one production D1 binding.');
           }
+
           const prod = config.d1_databases[0];
-          if (prod.binding !== 'NAVA_DB' ||
-              prod.database_name !== 'nava-memory' ||
-              prod.database_id !== '56f30fed-a03b-4e36-a320-cbefd3feaf12') {
-            throw new Error('STOP: production D1 binding does not match the approved nava-memory database.');
+          const actual = {
+            binding: norm(prod.binding),
+            database_name: norm(prod.database_name),
+            database_id: norm(prod.database_id)
+          };
+          const expected = {
+            binding: 'nava_db',
+            database_name: 'nava-memory',
+            database_id: '56f30fed-a03b-4e36-a320-cbefd3feaf12'
+          };
+          for (const key of Object.keys(expected)) {
+            if (actual[key] !== expected[key]) {
+              throw new Error('STOP: production D1 ' + key + ' mismatch. Expected ' + expected[key] + ', received ' + (actual[key] || '<missing>') + '.');
+            }
           }
+
           const requiredFiles = [
             'index.js',
             'modules/navi.js',
@@ -78,7 +92,7 @@ jobs:
               throw new Error('STOP: required Worker source file is missing: ' + file);
             }
           }
-          console.log('Verified the production Worker and exact nava-memory D1 target. No database migrations will run.');
+          console.log('Verified production Worker nava-music-api and exact nava-memory D1 target. No database migrations will run.');
           NODE
 
       - name: Deploy production Worker only (no D1 migrations)
