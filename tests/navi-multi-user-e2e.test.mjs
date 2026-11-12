@@ -38,6 +38,18 @@ async function loginWithPassword(env, username, password) {
 
 function createD1Adapter(sqlite, options = {}) {
   return {
+    async batch(statements) {
+      sqlite.exec("BEGIN");
+      try {
+        const results = [];
+        for (const statement of statements) results.push(await statement.run());
+        sqlite.exec("COMMIT");
+        return results;
+      } catch (error) {
+        sqlite.exec("ROLLBACK");
+        throw error;
+      }
+    },
     prepare(sql) {
       let values = [];
       const statement = {
@@ -104,6 +116,7 @@ test("isolated SQLite end-to-end: owner login, invited account, memory isolation
     `);
     sqlite.exec(readFileSync(new URL("../migrations/0002_navi_multi_user_accounts.sql", import.meta.url), "utf8"));
     sqlite.exec(readFileSync(new URL("../migrations/0003_navi_auth_challenges.sql", import.meta.url), "utf8"));
+    sqlite.exec(readFileSync(new URL("../migrations/0004_navi_registration_requests.sql", import.meta.url), "utf8"));
     sqlite.exec(readFileSync(new URL("../migrations/0001_navi_memory_schema.sql", import.meta.url), "utf8"));
 
     const env = {
@@ -155,6 +168,45 @@ test("isolated SQLite end-to-end: owner login, invited account, memory isolation
     assert.equal(secondLoginData.user.id, secondUserId);
     assert.equal(secondLoginData.user.role, "user");
     let secondToken = secondLoginData.token;
+
+    // Public registration remains pending until the owner explicitly approves it.
+    const registrationResponse = await callNavi(env, "/navi-register", "POST", {
+      body: { displayName: "Pending Applicant", username: "pending.user", passwordHash: await makeVerifier("pending-user-password-123") }
+    });
+    assert.equal(registrationResponse.status, 201);
+    const registrationData = await registrationResponse.json();
+    assert.equal(registrationData.request.status, "pending");
+    const pendingLogin = await loginWithPassword(env, "pending.user", "pending-user-password-123");
+    assert.equal(pendingLogin.status, 401);
+
+    const pendingListResponse = await callNavi(env, "/navi-users", "GET", { token: ownerToken });
+    const pendingList = await pendingListResponse.json();
+    assert.equal(pendingListResponse.status, 200);
+    assert.equal(pendingList.registrationRequests.length, 1);
+    assert.equal(pendingList.registrationRequests[0].username, "pending.user");
+    assert.equal(JSON.stringify(pendingList).includes("password_hash"), false);
+
+    const unauthorizedReview = await callNavi(env, "/navi-users", "POST", {
+      token: secondToken,
+      body: { action: "review_registration", requestId: registrationData.request.requestId, decision: "approve" }
+    });
+    assert.equal(unauthorizedReview.status, 403);
+
+    const approvedResponse = await callNavi(env, "/navi-users", "POST", {
+      token: ownerToken,
+      body: { action: "review_registration", requestId: registrationData.request.requestId, decision: "approve" }
+    });
+    assert.equal(approvedResponse.status, 200);
+    const approvedData = await approvedResponse.json();
+    assert.equal(approvedData.user.username, "pending.user");
+    assert.equal(approvedData.user.status, "active");
+    assert.equal((await loginWithPassword(env, "pending.user", "pending-user-password-123")).status, 200);
+
+    const repeatedApproval = await callNavi(env, "/navi-users", "POST", {
+      token: ownerToken,
+      body: { action: "review_registration", requestId: registrationData.request.requestId, decision: "approve" }
+    });
+    assert.equal(repeatedApproval.status, 404);
 
     // The owner can reset an invited account password without touching its identity or data.
     const resetPasswordHash = await makeVerifier("second-user-new-password-456");
