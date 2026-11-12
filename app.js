@@ -2243,12 +2243,6 @@ async function sendMessageToNavi() {
         "\n\nپیام کاربر: " + message
       : message;
 
-  const pageContext = [
-    "عنوان صفحه: " + document.title,
-    "مسیر صفحه: " + window.location.pathname,
-    "محتوای قابل مشاهده صفحه:",
-    document.body.innerText.slice(0, 2500)
-  ].join("\n");
 
   sendRequest.disabled = true;
   sendRequest.textContent = "ناوی در حال پاسخ‌گویی...";
@@ -2267,7 +2261,6 @@ async function sendMessageToNavi() {
       body: JSON.stringify({
         message: finalMessage,
         page: window.location.pathname,
-        pageContext: pageContext,
         threadId: naviActiveThreadId,
         saveToMemory: saveThisMessageToMemory,
         history: naviHistory.slice(-NAVI_CONTEXT_MESSAGES)
