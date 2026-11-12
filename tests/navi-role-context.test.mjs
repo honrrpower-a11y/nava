@@ -28,7 +28,7 @@ test("NAVI prompt identifies an invited user as separate from the platform owner
 
   assert.match(prompt, /regular invited user \(role: user\)/);
   assert.match(prompt, /This person is NOT the NAVA platform owner or creator/);
-  assert.match(prompt, /the platform owner is a separate person\/account/);
+  assert.match(prompt, /The platform owner is a separate person\\/account/i);
   assert.match(prompt, /If this user asks about "the owner" or "the owner's project"/);
   assert.match(prompt, /Role: regular user; not the platform owner/);
   assert.doesNotMatch(prompt, /The user is the owner and creator of the NAVA project/);
