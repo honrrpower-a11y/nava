@@ -229,6 +229,13 @@ initNavaTheme();
   const style = document.createElement("style");
   style.id = "navaAccountUiStyles";
   style.textContent = `
+    .navi-auth-error.navi-registration-success {
+      display: block;
+      color: #65c99a;
+    }
+    body.light .navi-auth-error.navi-registration-success {
+      color: #287b58;
+    }
     .navi-registration-details {
       margin-top: 26px;
       padding: 13px 14px;
@@ -1655,9 +1662,13 @@ async function deleteNaviMemory(id, button) {
 
   if (naviMemoryBusy) return;
 
-  const confirmed = window.confirm(
-    "آیا مطمئنی می‌خواهی این حافظه را حذف کنی؟\nاین عملیات قابل بازگشت نیست."
-  );
+  const confirmed = await showNaviMemoryDialog({
+    title: "حذف حافظه",
+    message: "آیا مطمئنی می‌خواهی این حافظه را حذف کنی؟ این عملیات قابل بازگشت نیست.",
+    confirmText: "بله، حذف شود",
+    cancelText: "انصراف",
+    danger: true
+  });
 
   if (!confirmed) return;
 
@@ -2296,10 +2307,16 @@ function resetNaviUserPassword(userId, username, triggerButton) {
 }
 
 async function reviewNaviRegistration(requestId, decision, button) {
-  const question = decision === "approve"
-    ? "این درخواست تأیید و حساب کاربری فعال شود؟"
-    : "این درخواست عضویت رد شود؟";
-  if (!window.confirm(question)) return;
+  const confirmed = await showNaviMemoryDialog({
+    title: decision === "approve" ? "تأیید عضویت" : "رد درخواست عضویت",
+    message: decision === "approve"
+      ? "این درخواست تأیید و حساب کاربری فعال شود؟"
+      : "این درخواست عضویت رد شود؟",
+    confirmText: decision === "approve" ? "تأیید و فعال‌سازی" : "بله، رد شود",
+    cancelText: "انصراف",
+    danger: decision === "reject"
+  });
+  if (!confirmed) return;
   button.disabled = true;
   try {
     const response = await fetch(NAVI_USERS_API, {
@@ -2322,7 +2339,14 @@ async function reviewNaviRegistration(requestId, decision, button) {
 
 async function changeNaviUserStatus(userId, status, button) {
   const actionLabel = status === "disabled" ? "غیرفعال شود" : "دوباره فعال شود";
-  if (!window.confirm("این حساب " + actionLabel + "؟")) return;
+  const confirmed = await showNaviMemoryDialog({
+    title: status === "disabled" ? "غیرفعال‌سازی حساب" : "فعال‌سازی حساب",
+    message: "این حساب " + actionLabel + "؟",
+    confirmText: status === "disabled" ? "غیرفعال شود" : "فعال شود",
+    cancelText: "انصراف",
+    danger: status === "disabled"
+  });
+  if (!confirmed) return;
   button.disabled = true;
   try {
     const response = await fetch(NAVI_USERS_API, {
@@ -2345,6 +2369,13 @@ async function changeNaviUserStatus(userId, status, button) {
 
 if (naviUsersRefresh) naviUsersRefresh.addEventListener("click", loadNaviUsers);
 
+function setNaviRegistrationStatus(message, success = false) {
+  if (!naviRegistrationStatus) return;
+  naviRegistrationStatus.textContent = String(message || "");
+  naviRegistrationStatus.classList.add("show");
+  naviRegistrationStatus.classList.toggle("navi-registration-success", Boolean(success));
+}
+
 if (naviRegistrationForm) {
   naviRegistrationForm.addEventListener("submit", async event => {
     event.preventDefault();
@@ -2353,16 +2384,16 @@ if (naviRegistrationForm) {
     const password = document.getElementById("naviRegisterPassword")?.value || "";
     const confirmPassword = document.getElementById("naviRegisterPasswordConfirm")?.value || "";
     if (displayName.length < 2 || !/^[a-z0-9][a-z0-9._-]{2,39}$/.test(username) || password.length < 12 || password.length > 256) {
-      if (naviRegistrationStatus) naviRegistrationStatus.textContent = "نام، نام کاربری معتبر و رمز ۱۲ تا ۲۵۶ نویسه‌ای را وارد کن.";
+      setNaviRegistrationStatus("نام، نام کاربری معتبر و رمز ۱۲ تا ۲۵۶ نویسه‌ای را وارد کن.");
       return;
     }
     if (password !== confirmPassword) {
-      if (naviRegistrationStatus) naviRegistrationStatus.textContent = "دو رمز واردشده یکسان نیستند.";
+      setNaviRegistrationStatus("دو رمز واردشده یکسان نیستند.");
       return;
     }
     const submit = naviRegistrationForm.querySelector('button[type="submit"]');
     if (submit) { submit.disabled = true; submit.textContent = "در حال ثبت درخواست..."; }
-    if (naviRegistrationStatus) naviRegistrationStatus.textContent = "در حال ثبت امن درخواست عضویت...";
+    setNaviRegistrationStatus("در حال ثبت امن درخواست عضویت...");
     try {
       const passwordHash = await deriveNaviPasswordVerifier(password);
       const response = await fetch(NAVI_REGISTER_API, {
@@ -2373,9 +2404,12 @@ if (naviRegistrationForm) {
       const data = await response.json();
       if (!response.ok || !data.success) throw new Error(data.error || "ثبت درخواست عضویت ناموفق بود.");
       naviRegistrationForm.reset();
-      if (naviRegistrationStatus) naviRegistrationStatus.textContent = "درخواستت ثبت شد. پس از تأیید مالک می‌توانی با همین نام کاربری و رمز وارد ناوی شوی.";
+      setNaviRegistrationStatus(
+        "درخواست عضویتت با موفقیت ثبت شد. زمان معمول بررسی تا حدود یک ساعت است. پس از تأیید مالک، حساب فعال می‌شود و می‌توانی وارد نوا شوی.",
+        true
+      );
     } catch (error) {
-      if (naviRegistrationStatus) naviRegistrationStatus.textContent = error.message || "ثبت درخواست عضویت ناموفق بود.";
+      setNaviRegistrationStatus(error.message || "ثبت درخواست عضویت ناموفق بود.");
     } finally {
       if (submit) { submit.disabled = false; submit.textContent = "ارسال درخواست عضویت"; }
     }
