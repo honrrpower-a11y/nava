@@ -208,6 +208,27 @@ jobs:
           conn.close()
           PY
           rm -f /tmp/nava-memory-schema-audit.sql /tmp/navi-production-schema.sqlite /tmp/navi-worker-secrets.json
+      - name: Smoke test deployed NAVI Worker routes
+        shell: bash
+        run: |
+          set -euo pipefail
+          node <<'NODE'
+          const base = "https://nava-music-api.honrrpower.workers.dev";
+          const origin = "https://honrrpower-a11y.github.io";
+          const status = await fetch(base + "/status");
+          if (!status.ok) throw new Error("Worker status endpoint failed: HTTP " + status.status);
+          const statusBody = await status.json();
+          if (statusBody.success !== true) throw new Error("Worker status response is not successful.");
+          const protectedRoute = await fetch(base + "/navi-history?thread_id=owner-main", {
+            headers: { Origin: origin }
+          });
+          const protectedBody = await protectedRoute.json();
+          if (protectedRoute.status !== 401 || protectedBody.code !== "NAVI_AUTH_REQUIRED") {
+            throw new Error("NAVI protected route did not enforce authentication as expected.");
+          }
+          console.log("Worker /status: PASS");
+          console.log("NAVI protected route rejects unauthenticated requests: PASS");
+          NODE
       - name: Upload schema and readiness audit
         uses: actions/upload-artifact@v4
         with:
