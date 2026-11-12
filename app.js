@@ -14,10 +14,13 @@ const NAVI_HISTORY_API = NAVI_BASE + "/navi-history";
 const NAVI_THREADS_API = NAVI_BASE + "/navi-threads";
 const NAVI_MEMORY_API = NAVI_BASE + "/navi-memory";
 const NAVI_SAVE_MESSAGE_API = NAVI_BASE + "/navi-memory-save-message";
+const NAVI_USERS_API = NAVI_BASE + "/navi-users";
 
 // Session
 const NAVI_SESSION_KEY = "nava_navi_session";
 const NAVI_EXPIRY_KEY = "nava_navi_expiry";
+const NAVI_USER_NAME_KEY = "nava_navi_user_name";
+const NAVI_USER_ROLE_KEY = "nava_navi_user_role";
 
 // Limits
 const NAVI_MAX_DISPLAY_MESSAGES = 100;
@@ -46,6 +49,15 @@ let naviMemoryBusy = false;
 const naviLoginPanel = document.getElementById("naviLoginPanel");
 const naviLoginForm = document.getElementById("naviLoginForm");
 const naviPassword = document.getElementById("naviPassword");
+const naviUsername = document.getElementById("naviUsername");
+const naviUserDisplay = document.getElementById("naviUserDisplay");
+const naviAccountAdmin = document.getElementById("naviAccountAdmin");
+const naviCreateUserForm = document.getElementById("naviCreateUserForm");
+const naviCreateUserButton = document.getElementById("naviCreateUserButton");
+const naviCreateUserStatus = document.getElementById("naviCreateUserStatus");
+const naviUsersList = document.getElementById("naviUsersList");
+const naviUsersStatus = document.getElementById("naviUsersStatus");
+const naviUsersRefresh = document.getElementById("naviUsersRefresh");
 const naviLoginButton = document.getElementById("naviLoginButton");
 const naviLoginError = document.getElementById("naviLoginError");
 const naviLoginStatus = document.getElementById("naviLoginStatus");
@@ -244,6 +256,8 @@ function clearNaviSession() {
   try {
     sessionStorage.removeItem(NAVI_SESSION_KEY);
     sessionStorage.removeItem(NAVI_EXPIRY_KEY);
+    sessionStorage.removeItem(NAVI_USER_NAME_KEY);
+    sessionStorage.removeItem(NAVI_USER_ROLE_KEY);
   } catch (error) {
     console.warn("Could not clear local session storage.");
   }
@@ -265,6 +279,10 @@ function clearNaviSession() {
   if (naviChatArea) naviChatArea.hidden = true;
   if (naviLoginPanel) naviLoginPanel.hidden = false;
   if (naviPassword) naviPassword.value = "";
+  if (naviUsername) naviUsername.value = "";
+  if (naviUserDisplay) naviUserDisplay.textContent = "";
+  if (naviAccountAdmin) naviAccountAdmin.hidden = true;
+  if (naviCreateUserStatus) naviCreateUserStatus.textContent = "";
 
   if (requestResponse) {
     requestResponse.textContent = "";
@@ -292,7 +310,11 @@ function showNaviChat() {
 
   clearLoginError();
 
+  const displayName = sessionStorage.getItem(NAVI_USER_NAME_KEY) || "کاربر";
   naviLoginStatus.textContent = "نشست امن ناوی فعال است.";
+  if (naviUserDisplay) naviUserDisplay.textContent = "حساب فعال: " + displayName;
+  if (naviAccountAdmin) naviAccountAdmin.hidden = sessionStorage.getItem(NAVI_USER_ROLE_KEY) !== "owner";
+  if (sessionStorage.getItem(NAVI_USER_ROLE_KEY) === "owner") loadNaviUsers();
   setNaviStatus("در حال بازیابی گفت‌وگوهای قبلی...");
 }
 
@@ -1777,10 +1799,11 @@ if (existingNaviToken) {
 naviLoginForm.addEventListener("submit", async event => {
   event.preventDefault();
 
-  const password = naviPassword.value.trim();
+  const username = naviUsername ? naviUsername.value.trim().toLowerCase() : "";
+  const password = naviPassword.value;
 
   if (!password) {
-    showLoginError("لطفاً رمز ورود را وارد کن.");
+    showLoginError("لطفاً رمز عبور را وارد کن.");
     return;
   }
 
@@ -1795,7 +1818,7 @@ naviLoginForm.addEventListener("submit", async event => {
         "Content-Type": "application/json"
       
       },
-      body: JSON.stringify({ password })
+      body: JSON.stringify({ username, password })
     });
 
     let data;
@@ -1821,10 +1844,12 @@ naviLoginForm.addEventListener("submit", async event => {
     const expiresIn = Number(data.expiresIn || 43200);
 
     saveNaviSession(data.token, expiresIn);
+    sessionStorage.setItem(NAVI_USER_NAME_KEY, String(data.user?.displayName || username || "مالک"));
+    sessionStorage.setItem(NAVI_USER_ROLE_KEY, String(data.user?.role || "user"));
 
     naviSessionVersion++;
     naviPassword.value = "";
-    naviActiveThreadId = "owner-main";
+    naviActiveThreadId = data.user?.id && data.user.id !== "owner" ? data.user.id + "-main" : "owner-main";
     naviHistory = [];
     naviMemory = [];
     naviProposals = [];
@@ -1853,6 +1878,128 @@ naviLoginForm.addEventListener("submit", async event => {
     naviLoginButton.textContent = "ورود به ناوی";
   }
 });
+
+
+/* =========================================
+   OWNER-ONLY INVITED ACCOUNT CREATION
+========================================= */
+
+async function loadNaviUsers() {
+  if (!naviUsersList || sessionStorage.getItem(NAVI_USER_ROLE_KEY) !== "owner") return;
+  if (naviUsersStatus) naviUsersStatus.textContent = "در حال دریافت حساب‌ها...";
+  naviUsersList.replaceChildren();
+  try {
+    const response = await fetch(NAVI_USERS_API, {
+      headers: { "Authorization": "Bearer " + getNaviToken() }
+    });
+    const data = await response.json();
+    if (!response.ok || !data.success) throw new Error(data.error || "دریافت حساب‌ها ناموفق بود.");
+    const users = Array.isArray(data.users) ? data.users : [];
+    if (!users.length) {
+      if (naviUsersStatus) naviUsersStatus.textContent = "هنوز حسابی ثبت نشده است.";
+      return;
+    }
+    for (const user of users) {
+      const item = document.createElement("div");
+      item.className = "navi-user-row";
+      const details = document.createElement("div");
+      details.className = "navi-user-details";
+      const name = document.createElement("strong");
+      name.textContent = String(user.display_name || user.username || "کاربر");
+      const meta = document.createElement("span");
+      const isOwner = user.role === "owner";
+      const isActive = user.status === "active";
+      meta.textContent = (isOwner ? "مالک" : "@" + user.username) + " · " + (isActive ? "فعال" : "غیرفعال");
+      details.append(name, meta);
+      item.append(details);
+      if (!isOwner) {
+        const action = document.createElement("button");
+        action.type = "button";
+        action.className = isActive ? "navi-user-disable" : "navi-user-enable";
+        action.textContent = isActive ? "غیرفعال‌کردن" : "فعال‌کردن";
+        action.addEventListener("click", () => changeNaviUserStatus(user.id, isActive ? "disabled" : "active", action));
+        item.append(action);
+      }
+      naviUsersList.append(item);
+    }
+    if (naviUsersStatus) naviUsersStatus.textContent = users.length + " حساب";
+  } catch (error) {
+    if (naviUsersStatus) naviUsersStatus.textContent = error.message || "دریافت فهرست حساب‌ها ناموفق بود.";
+  }
+}
+
+async function changeNaviUserStatus(userId, status, button) {
+  const actionLabel = status === "disabled" ? "غیرفعال شود" : "دوباره فعال شود";
+  if (!window.confirm("این حساب " + actionLabel + "؟")) return;
+  button.disabled = true;
+  try {
+    const response = await fetch(NAVI_USERS_API, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + getNaviToken()
+      },
+      body: JSON.stringify({ action: "set_status", userId, status })
+    });
+    const data = await response.json();
+    if (!response.ok || !data.success) throw new Error(data.error || "تغییر وضعیت حساب ناموفق بود.");
+    if (naviUsersStatus) naviUsersStatus.textContent = data.message || "وضعیت حساب تغییر کرد.";
+    await loadNaviUsers();
+  } catch (error) {
+    button.disabled = false;
+    if (naviUsersStatus) naviUsersStatus.textContent = error.message || "تغییر وضعیت حساب ناموفق بود.";
+  }
+}
+
+if (naviUsersRefresh) naviUsersRefresh.addEventListener("click", loadNaviUsers);
+
+if (naviCreateUserForm) {
+  naviCreateUserForm.addEventListener("submit", async event => {
+    event.preventDefault();
+    const displayName = document.getElementById("naviNewDisplayName")?.value.trim() || "";
+    const username = document.getElementById("naviNewUsername")?.value.trim().toLowerCase() || "";
+    const password = document.getElementById("naviNewPassword")?.value || "";
+    if (!displayName || !username || password.length < 12) {
+      if (naviCreateUserStatus) {
+        naviCreateUserStatus.textContent = "نام، نام کاربری و رمز حداقل ۱۲ نویسه‌ای را کامل کن.";
+        naviCreateUserStatus.classList.add("show");
+      }
+      return;
+    }
+    naviCreateUserButton.disabled = true;
+    naviCreateUserButton.textContent = "در حال ساخت حساب...";
+    if (naviCreateUserStatus) {
+      naviCreateUserStatus.textContent = "";
+      naviCreateUserStatus.classList.remove("show");
+    }
+    try {
+      const response = await fetch(NAVI_USERS_API, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer " + getNaviToken()
+        },
+        body: JSON.stringify({ displayName, username, password })
+      });
+      const data = await response.json();
+      if (!response.ok || !data.success) throw new Error(data.error || "ساخت حساب ناموفق بود.");
+      naviCreateUserForm.reset();
+      if (naviCreateUserStatus) {
+        naviCreateUserStatus.textContent = "حساب «" + data.user.displayName + "» ساخته شد. نام کاربری: " + data.user.username;
+        naviCreateUserStatus.classList.add("show");
+      }
+      await loadNaviUsers();
+    } catch (error) {
+      if (naviCreateUserStatus) {
+        naviCreateUserStatus.textContent = error.message || "ساخت حساب انجام نشد.";
+        naviCreateUserStatus.classList.add("show");
+      }
+    } finally {
+      naviCreateUserButton.disabled = false;
+      naviCreateUserButton.textContent = "ساخت حساب";
+    }
+  });
+}
 
 
 /* =========================================

@@ -9,6 +9,7 @@ import { safeNaviText } from "./shared.js";
 
 export const NAVI_MAIN_THREAD_ID = "owner-main";
 export const NAVI_OWNER_ID = "owner";
+export function getNaviMainThreadId(ownerId = NAVI_OWNER_ID) { const id = String(ownerId || NAVI_OWNER_ID); return id === NAVI_OWNER_ID ? NAVI_MAIN_THREAD_ID : id + "-main"; }
 
 const MEMORY_VALUE_LIMIT = 12000;
 const MEMORY_KEY_LIMIT = 150;
@@ -83,7 +84,7 @@ function containsSensitiveMemory(value) {
 // DATABASE THREAD
 // ======================================
 
-export async function ensureNaviMainThread(db) {
+export async function ensureNaviMainThread(db, ownerId = NAVI_OWNER_ID) {
   if (!db) {
     throw new Error("NAVI database is unavailable.");
   }
@@ -98,8 +99,8 @@ export async function ensureNaviMainThread(db) {
     )
     VALUES (?, ?, ?, datetime('now'), datetime('now'))
   `).bind(
-    NAVI_MAIN_THREAD_ID,
-    NAVI_OWNER_ID,
+    getNaviMainThreadId(ownerId),
+    ownerId,
     "گفت‌وگوی اصلی ناوی"
   ).run();
 }
@@ -113,15 +114,17 @@ export async function ensureNaviMainThread(db) {
 // or guess which content the user meant.
 export async function getNaviPreviousExplicitMemoryValue(
   db,
-  threadId = NAVI_MAIN_THREAD_ID
+  threadId = NAVI_MAIN_THREAD_ID,
+  ownerId = NAVI_OWNER_ID
 ) {
   const result = await db.prepare(`
-    SELECT role, content
-    FROM navi_chat_messages_v1
-    WHERE thread_id = ?
-    ORDER BY id DESC
+    SELECT m.role, m.content
+    FROM navi_chat_messages_v1 m
+    INNER JOIN navi_chat_threads_v1 t ON t.thread_id = m.thread_id
+    WHERE m.thread_id = ? AND t.owner_id = ?
+    ORDER BY m.id DESC
     LIMIT 2
-  `).bind(threadId).all();
+  `).bind(threadId, ownerId).all();
 
   const rows = result.results || [];
   if (rows.length !== 2) return "";
@@ -152,7 +155,8 @@ export async function getNaviPreviousExplicitMemoryValue(
 export async function getNaviDbHistory(
   db,
   limit = 10,
-  threadId = NAVI_MAIN_THREAD_ID
+  threadId = NAVI_MAIN_THREAD_ID,
+  ownerId = NAVI_OWNER_ID
 ) {
   const safeLimit = Math.max(
     1,
@@ -160,13 +164,15 @@ export async function getNaviDbHistory(
   );
 
   const result = await db.prepare(`
-    SELECT role, content, created_at
-    FROM navi_chat_messages_v1
-    WHERE thread_id = ?
-    ORDER BY id DESC
+    SELECT m.role, m.content, m.created_at
+    FROM navi_chat_messages_v1 m
+    INNER JOIN navi_chat_threads_v1 t ON t.thread_id = m.thread_id
+    WHERE m.thread_id = ? AND t.owner_id = ?
+    ORDER BY m.id DESC
     LIMIT ?
   `).bind(
     threadId,
+    ownerId,
     safeLimit
   ).all();
 
@@ -235,7 +241,7 @@ export function prepareNaviHistory(
 }
 
 // Search a bounded set of older messages across all saved NAVI threads.
-export async function searchNaviConversationHistory(db, query, limit = 8, recentHistory = []) {
+export async function searchNaviConversationHistory(db, query, limit = 8, recentHistory = [], ownerId = NAVI_OWNER_ID) {
   const terms = [...new Set(String(query || '').normalize('NFKC')
     .replace(/[ي]/g, 'ی').replace(/[ك]/g, 'ک').toLowerCase()
     .replace(/[^\p{L}\p{N}\s]/gu, ' ').split(/\s+/)
@@ -245,9 +251,10 @@ export async function searchNaviConversationHistory(db, query, limit = 8, recent
   const result = await db.prepare(`
     SELECT m.thread_id, m.role, m.content, m.created_at, t.title AS thread_title
     FROM navi_chat_messages_v1 m
-    LEFT JOIN navi_chat_threads_v1 t ON t.thread_id = m.thread_id
+    INNER JOIN navi_chat_threads_v1 t ON t.thread_id = m.thread_id
+    WHERE t.owner_id = ?
     ORDER BY m.id DESC LIMIT 600
-  `).all();
+  `).bind(ownerId).all();
   const ranked = (result.results || []).filter(row => row &&
     (row.role === 'user' || row.role === 'assistant') && row.content &&
     !recent.has(String(row.content).trim())).map(row => {
@@ -271,7 +278,7 @@ export async function searchNaviConversationHistory(db, query, limit = 8, recent
 // APPROVED MEMORY
 // ======================================
 
-export async function getNaviApprovedMemory(db) {
+export async function getNaviApprovedMemory(db, ownerId = NAVI_OWNER_ID) {
   const result = await db.prepare(`
     SELECT
       id,
@@ -286,7 +293,7 @@ export async function getNaviApprovedMemory(db) {
     ORDER BY updated_at DESC, id DESC
     LIMIT ?
   `).bind(
-    NAVI_OWNER_ID,
+    ownerId,
     MEMORY_LIST_LIMIT
   ).all();
 
@@ -297,7 +304,7 @@ export async function getNaviApprovedMemory(db) {
 // PENDING MEMORY PROPOSALS
 // ======================================
 
-export async function getNaviPendingMemory(db) {
+export async function getNaviPendingMemory(db, ownerId = NAVI_OWNER_ID) {
   const result = await db.prepare(`
     SELECT
       id,
@@ -313,7 +320,7 @@ export async function getNaviPendingMemory(db) {
     ORDER BY created_at DESC, id DESC
     LIMIT ?
   `).bind(
-    NAVI_OWNER_ID,
+    ownerId,
     MEMORY_LIST_LIMIT
   ).all();
 
@@ -324,7 +331,7 @@ export async function getNaviPendingMemory(db) {
 // ARCHIVED MEMORY (MANAGEMENT / AUDIT)
 // ======================================
 
-export async function getNaviArchivedMemory(db) {
+export async function getNaviArchivedMemory(db, ownerId = NAVI_OWNER_ID) {
   const result = await db.prepare(`
     SELECT
       id,
@@ -340,7 +347,7 @@ export async function getNaviArchivedMemory(db) {
     ORDER BY updated_at DESC, id DESC
     LIMIT ?
   `).bind(
-    NAVI_OWNER_ID,
+    ownerId,
     MEMORY_LIST_LIMIT
   ).all();
 
@@ -701,7 +708,8 @@ async function findMemoryDuplicate(
   db,
   value,
   excludeId = null,
-  memoryKey = null
+  memoryKey = null,
+  ownerId = NAVI_OWNER_ID
 ) {
   const result = await db.prepare(`
     SELECT id, memory_key, memory_value, status
@@ -710,7 +718,7 @@ async function findMemoryDuplicate(
       AND status IN ('approved', 'pending')
       AND id != ?
   `).bind(
-    NAVI_OWNER_ID,
+    ownerId,
     Number(excludeId) || -1
   ).all();
 
@@ -765,12 +773,12 @@ async function findMemoryDuplicate(
 }
 
 
-async function findMemoryRelatedRecords(db, value, excludeId = null, memoryKey = null) {
+async function findMemoryRelatedRecords(db, value, excludeId = null, memoryKey = null, ownerId = NAVI_OWNER_ID) {
   const result = await db.prepare(`
     SELECT id, memory_key, memory_value, status
     FROM navi_memory_facts_v1
     WHERE owner_id = ? AND status IN ('approved', 'pending') AND id != ?
-  `).bind(NAVI_OWNER_ID, Number(excludeId) || -1).all();
+  `).bind(ownerId, Number(excludeId) || -1).all();
   const normalized = normalizeMemoryText(value);
   const normalizedKey = normalizeMemoryKey(memoryKey);
   const genericKeys = new Set(["یادداشت کاربر", "یادداشت", "حافظه", ""].map(normalizeMemoryText));
@@ -792,7 +800,8 @@ export async function createNaviMemoryProposal(
   db,
   value,
   title = "یادداشت کاربر",
-  source = "navi_suggestion"
+  source = "navi_suggestion",
+  ownerId = NAVI_OWNER_ID
 ) {
   const memoryValue = cleanMemoryValue(value);
   const memoryTitle = cleanMemoryTitle(title);
@@ -818,7 +827,8 @@ export async function createNaviMemoryProposal(
     db,
     memoryValue,
     null,
-    memoryTitle
+    memoryTitle,
+    ownerId
   );
 
   if (duplicate) {
@@ -848,7 +858,7 @@ export async function createNaviMemoryProposal(
         UPDATE navi_memory_facts_v1
         SET memory_value = ?, source = ?, updated_at = datetime('now')
         WHERE id = ? AND owner_id = ? AND status = 'pending'
-      `).bind(mergedValue, memorySource, duplicate.id, NAVI_OWNER_ID).run();
+      `).bind(mergedValue, memorySource, duplicate.id, ownerId).run();
 
       if (!update.success || !update.meta?.changes) {
         throw new Error("Could not merge pending memory proposal.");
@@ -884,7 +894,7 @@ export async function createNaviMemoryProposal(
     )
     VALUES (?, ?, ?, ?, 'pending', datetime('now'), datetime('now'))
   `).bind(
-    NAVI_OWNER_ID,
+    ownerId,
     memoryKey,
     memoryValue,
     memorySource
@@ -911,7 +921,8 @@ export async function createNaviMemoryProposal(
 export async function approveNaviMemoryProposal(
   db,
   id,
-  editedValue = null
+  editedValue = null,
+  ownerId = NAVI_OWNER_ID
 ) {
   const proposalId = Number(id);
 
@@ -931,7 +942,7 @@ export async function approveNaviMemoryProposal(
     LIMIT 1
   `).bind(
     proposalId,
-    NAVI_OWNER_ID
+    ownerId
   ).first();
 
   if (!existing) {
@@ -954,7 +965,8 @@ export async function approveNaviMemoryProposal(
     db,
     memoryValue,
     proposalId,
-    existing.memory_key
+    existing.memory_key,
+    ownerId
   );
 
   if (duplicate) {
@@ -983,7 +995,7 @@ export async function approveNaviMemoryProposal(
     `).bind(
       nextValue,
       duplicate.id,
-      NAVI_OWNER_ID,
+      ownerId,
       targetStatus
     );
 
@@ -993,11 +1005,11 @@ export async function approveNaviMemoryProposal(
       WHERE id = ? AND owner_id = ? AND status = 'pending'
     `).bind(
       proposalId,
-      NAVI_OWNER_ID
+      ownerId
     );
 
     const relatedRecords = replacesApprovedFact
-      ? await findMemoryRelatedRecords(db, memoryValue, proposalId, existing.memory_key)
+      ? await findMemoryRelatedRecords(db, memoryValue, proposalId, existing.memory_key, ownerId)
       : [];
     const archiveSuperseded = relatedRecords
       .filter(item => item.status === "approved" && item.id !== duplicate.id)
@@ -1005,7 +1017,7 @@ export async function approveNaviMemoryProposal(
         UPDATE navi_memory_facts_v1
         SET status = 'archived', updated_at = datetime('now')
         WHERE id = ? AND owner_id = ? AND status = 'approved'
-      `).bind(item.id, NAVI_OWNER_ID));
+      `).bind(item.id, ownerId));
     const results = await db.batch([update, archive, ...archiveSuperseded]);
     if (!Array.isArray(results) || results.some(item => !item.success)) {
       throw new Error("Could not update related memory records.");
@@ -1034,7 +1046,7 @@ export async function approveNaviMemoryProposal(
   `).bind(
     memoryValue,
     proposalId,
-    NAVI_OWNER_ID
+    ownerId
   ).run();
 
   if (!result.success || !result.meta?.changes) {
@@ -1054,7 +1066,8 @@ export async function approveNaviMemoryProposal(
 
 export async function rejectNaviMemoryProposal(
   db,
-  id
+  id,
+  ownerId = NAVI_OWNER_ID
 ) {
   const proposalId = Number(id);
 
@@ -1075,7 +1088,7 @@ export async function rejectNaviMemoryProposal(
       AND status = 'pending'
   `).bind(
     proposalId,
-    NAVI_OWNER_ID
+    ownerId
   ).run();
 
   return {
@@ -1092,7 +1105,8 @@ export async function rejectNaviMemoryProposal(
 export async function updateNaviMemoryProposal(
   db,
   id,
-  value
+  value,
+  ownerId = NAVI_OWNER_ID
 ) {
   const proposalId = Number(id);
   const memoryValue = cleanMemoryValue(value);
@@ -1118,7 +1132,7 @@ export async function updateNaviMemoryProposal(
     LIMIT 1
   `).bind(
     proposalId,
-    NAVI_OWNER_ID
+    ownerId
   ).first();
 
   if (!existing) {
@@ -1129,7 +1143,8 @@ export async function updateNaviMemoryProposal(
     db,
     memoryValue,
     proposalId,
-    existing.memory_key
+    existing.memory_key,
+    ownerId
   );
 
   if (duplicate) {
@@ -1147,7 +1162,7 @@ export async function updateNaviMemoryProposal(
   `).bind(
     memoryValue,
     proposalId,
-    NAVI_OWNER_ID
+    ownerId
   ).run();
 
   if (!result.success || !result.meta?.changes) {
@@ -1168,7 +1183,8 @@ export async function saveNaviMemoryFact(
   db,
   value,
   key = "یادداشت کاربر",
-  source = "user_command"
+  source = "user_command",
+  ownerId = NAVI_OWNER_ID
 ) {
   const memoryValue = cleanMemoryValue(value);
   const memoryKey = cleanMemoryTitle(key);
@@ -1199,7 +1215,7 @@ export async function saveNaviMemoryFact(
         AND status = 'approved'
       LIMIT 1
     `).bind(
-      NAVI_OWNER_ID,
+      ownerId,
       memoryKey
     ).first();
 
@@ -1227,7 +1243,7 @@ export async function saveNaviMemoryFact(
         memoryValue,
         memorySource,
         existing.id,
-        NAVI_OWNER_ID
+        ownerId
       ).run();
 
       if (!update.success || !update.meta?.changes) {
@@ -1252,7 +1268,7 @@ export async function saveNaviMemoryFact(
       WHERE owner_id = ?
         AND status IN ('approved', 'pending')
       ORDER BY updated_at DESC, id DESC
-    `).bind(NAVI_OWNER_ID).all();
+    `).bind(ownerId).all();
 
     const related = (candidates.results || []).find(item =>
       isResponsePreferenceMemory(item.memory_value)
@@ -1285,7 +1301,7 @@ export async function saveNaviMemoryFact(
         mergedValue,
         memorySource,
         related.id,
-        NAVI_OWNER_ID
+        ownerId
       ).run();
 
       if (!update.success || !update.meta?.changes) {
@@ -1307,7 +1323,8 @@ export async function saveNaviMemoryFact(
     db,
     memoryValue,
     null,
-    memoryKey
+    memoryKey,
+    ownerId
   );
 
   if (duplicate) {
@@ -1319,7 +1336,8 @@ export async function saveNaviMemoryFact(
         db,
         memoryValue,
         null,
-        memoryKey
+        memoryKey,
+        ownerId
       );
       const superseded = relatedRecords.filter(item =>
         item.id !== duplicate.id &&
@@ -1331,7 +1349,7 @@ export async function saveNaviMemoryFact(
           UPDATE navi_memory_facts_v1
           SET status = 'archived', updated_at = datetime('now')
           WHERE id = ? AND owner_id = ? AND status = 'approved'
-        `).bind(item.id, NAVI_OWNER_ID)));
+        `).bind(item.id, ownerId)));
         if (!Array.isArray(results) || results.some(result => !result.success)) {
           throw new Error("Could not archive superseded duplicate memory facts.");
         }
@@ -1347,7 +1365,7 @@ export async function saveNaviMemoryFact(
     // A direct user memory command is an authoritative correction:
     // replace the matched fact instead of concatenating contradictory
     // values (for example, favorite color: red -> blue).
-    const relatedRecords = await findMemoryRelatedRecords(db, memoryValue, null, memoryKey);
+    const relatedRecords = await findMemoryRelatedRecords(db, memoryValue, null, memoryKey, ownerId);
     const statements = [
       db.prepare(`
         UPDATE navi_memory_facts_v1
@@ -1358,7 +1376,7 @@ export async function saveNaviMemoryFact(
         memoryValue,
         memorySource,
         duplicate.id,
-        NAVI_OWNER_ID
+        ownerId
       ),
       ...relatedRecords
         .filter(item => item.id !== duplicate.id)
@@ -1366,7 +1384,7 @@ export async function saveNaviMemoryFact(
           UPDATE navi_memory_facts_v1
           SET status = 'archived', updated_at = datetime('now')
           WHERE id = ? AND owner_id = ? AND status IN ('approved', 'pending')
-        `).bind(item.id, NAVI_OWNER_ID))
+        `).bind(item.id, ownerId))
     ];
 
     const results = await db.batch(statements);
@@ -1402,7 +1420,7 @@ export async function saveNaviMemoryFact(
     )
     VALUES (?, ?, ?, ?, 'approved', datetime('now'), datetime('now'))
   `).bind(
-    NAVI_OWNER_ID,
+    ownerId,
     uniqueKey,
     memoryValue,
     memorySource
@@ -1427,7 +1445,8 @@ export async function saveNaviConversation(
   db,
   userMessage,
   assistantMessage,
-  threadId = NAVI_MAIN_THREAD_ID
+  threadId = NAVI_MAIN_THREAD_ID,
+  ownerId = NAVI_OWNER_ID
 ) {
   const userText = safeNaviText(
     userMessage || "",
@@ -1442,6 +1461,9 @@ export async function saveNaviConversation(
   if (!userText || !assistantText) {
     throw new Error("Conversation messages cannot be empty.");
   }
+
+  const ownedThread = await db.prepare(`SELECT thread_id FROM navi_chat_threads_v1 WHERE thread_id = ? AND owner_id = ? LIMIT 1`).bind(threadId, ownerId).first();
+  if (!ownedThread) throw new Error("NAVI conversation thread does not belong to this user.");
 
   const statements = [
     db.prepare(`
@@ -1477,7 +1499,7 @@ export async function saveNaviConversation(
         AND owner_id = ?
     `).bind(
       threadId,
-      NAVI_OWNER_ID
+      ownerId
     )
   ];
 

@@ -7,7 +7,7 @@
   <meta name="description" content="NAVA؛ استودیوی هوشمند برای ساخت، طراحی و رشد کسب‌وکارها">
   <title>NAVA | One Vision. One Mission. One NAVA.</title>
   <link rel="stylesheet" href="style.css">
-  <script src="app.js?v=navi-composer-memory-accordion-1" defer></script>
+  <script src="app.js?v=navi-multi-user-accounts-1" defer></script>
 </head>
 <body>
 
@@ -103,11 +103,14 @@
 
         <div class="navi-auth-panel" id="naviLoginPanel">
           <h3>ورود اختصاصی به ناوی</h3>
-          <p>برای شروع گفت‌وگو با ناوی، رمز ورود اختصاصی را وارد کن.</p>
+          <p>برای شروع گفت‌وگو با ناوی، نام کاربری و رمز عبورت را وارد کن.</p>
           <form id="naviLoginForm">
-            <label class="field-label" for="naviPassword">رمز ورود</label>
+            <label class="field-label" for="naviUsername">نام کاربری</label>
+            <input class="navi-password" id="naviUsername" type="text"
+              placeholder="نام کاربری حساب" autocomplete="username" autocapitalize="none">
+            <label class="field-label" for="naviPassword">رمز عبور</label>
             <input class="navi-password" id="naviPassword" type="password"
-              placeholder="رمز اختصاصی ناوی" autocomplete="current-password" required>
+              placeholder="رمز عبور" autocomplete="current-password" required>
             <button class="btn-primary" id="naviLoginButton" type="submit">ورود به ناوی</button>
           </form>
           <div class="navi-auth-error" id="naviLoginError" role="alert"></div>
@@ -115,9 +118,30 @@
 
         <div class="navi-chat-area" id="naviChatArea" hidden>
           <div class="navi-chat-toolbar">
-            <span class="navi-status" id="naviLoginStatus">نشست امن ناوی فعال است.</span>
+            <span class="navi-status" id="naviLoginStatus">نشست امن ناوی فعال است.</span><span class="navi-user-display" id="naviUserDisplay" aria-live="polite"></span>
             <button class="navi-logout" id="naviLogout" type="button">خروج از ناوی</button>
           </div>
+
+          <section class="navi-memory-panel" id="naviAccountAdmin" hidden>
+            <h3>ساخت حساب دعوتی</h3>
+            <p class="navi-memory-description">فعلاً فقط مالک می‌تواند حساب بسازد. ثبت‌نام عمومی غیرفعال است.</p>
+            <form id="naviCreateUserForm">
+              <label class="field-label" for="naviNewDisplayName">نام نمایشی</label>
+              <input class="navi-password" id="naviNewDisplayName" type="text" maxlength="80" required>
+              <label class="field-label" for="naviNewUsername">نام کاربری انگلیسی</label>
+              <input class="navi-password" id="naviNewUsername" type="text" minlength="3" maxlength="40" autocomplete="off" required>
+              <label class="field-label" for="naviNewPassword">رمز عبور اولیه (حداقل ۱۲ نویسه)</label>
+              <input class="navi-password" id="naviNewPassword" type="password" minlength="12" maxlength="256" autocomplete="new-password" required>
+              <button class="btn-primary" id="naviCreateUserButton" type="submit">ساخت حساب</button>
+            </form>
+            <div class="navi-auth-error" id="naviCreateUserStatus" role="status" aria-live="polite"></div>
+            <div class="navi-users-toolbar">
+              <strong>حساب‌های ثبت‌شده</strong>
+              <button class="navi-users-refresh" id="naviUsersRefresh" type="button">تازه‌سازی</button>
+            </div>
+            <div class="navi-users-status" id="naviUsersStatus" aria-live="polite">برای مشاهده فهرست، کمی صبر کن.</div>
+            <div class="navi-users-list" id="naviUsersList"></div>
+          </section>
 
           <section class="navi-memory-panel" id="naviHistoryPanel">
             <div class="navi-thread-toolbar">

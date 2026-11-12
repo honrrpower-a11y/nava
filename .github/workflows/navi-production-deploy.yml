@@ -6,6 +6,7 @@ on:
       - main
     paths:
       - "modules/navi.js"
+      - "modules/navi-auth.js"
       - "modules/navi-memory.js"
       - "modules/shared.js"
       - "modules/config.js"
@@ -59,11 +60,25 @@ jobs:
           if (!Array.isArray(config.d1_databases) || config.d1_databases.length !== 1) {
             throw new Error('STOP: expected exactly one production D1 binding.');
           }
-          const prod = config.d1_databases.find(db => db.binding === 'NAVA_DB');
-          if (!fs.existsSync('index.js') || !fs.existsSync('modules/navi-memory.js')) {
-            throw new Error('STOP: required Worker source files are missing.');
+          const prod = config.d1_databases[0];
+          if (prod.binding !== 'NAVA_DB' ||
+              prod.database_name !== 'nava-memory' ||
+              prod.database_id !== '56f30fed-a03b-4e36-a320-cbefd3feaf12') {
+            throw new Error('STOP: production D1 binding does not match the approved nava-memory database.');
           }
-          console.log('Verified the production Worker and its sole production D1 binding. No database migrations will run.');
+          const requiredFiles = [
+            'index.js',
+            'modules/navi.js',
+            'modules/navi-auth.js',
+            'modules/navi-memory.js',
+            'modules/shared.js'
+          ];
+          for (const file of requiredFiles) {
+            if (!fs.existsSync(file)) {
+              throw new Error('STOP: required Worker source file is missing: ' + file);
+            }
+          }
+          console.log('Verified the production Worker and exact nava-memory D1 target. No database migrations will run.');
           NODE
 
       - name: Deploy production Worker only (no D1 migrations)

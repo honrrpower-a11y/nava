@@ -7,12 +7,12 @@ import { json, safeNaviText } from "./shared.js";
 import {
   createNaviSession,
   verifyNaviPassword,
+  hashNaviPassword,
   authorizeNaviRequest
 } from "./navi-auth.js";
 
 import {
-  NAVI_MAIN_THREAD_ID,
-  NAVI_OWNER_ID,
+  getNaviMainThreadId,
   ensureNaviMainThread,
   getNaviDbHistory,
   getNaviPreviousExplicitMemoryValue,
@@ -464,7 +464,7 @@ async function authorize(request, env, origin, corsOrigin) {
     };
   }
 
-  return { valid: true };
+  return { valid: true, user: auth.user };
 }
 
 // ======================================
@@ -478,69 +478,198 @@ async function handleLogin({
   corsOrigin
 }) {
   if (origin !== ALLOWED_ORIGIN) {
-    return errorResponse(
-      "مبدأ درخواست مجاز نیست.",
-      403,
-      corsOrigin
-    );
+    return errorResponse("مبدأ درخواست مجاز نیست.", 403, corsOrigin);
   }
-
-  if (
-    !env.NAVI_OWNER_PASSWORD ||
-    !env.NAVI_SESSION_SECRET
-  ) {
-    return errorResponse(
-      "تنظیمات ورود ناوی کامل نیست.",
-      500,
-      corsOrigin
-    );
+  if (!env.NAVI_SESSION_SECRET) {
+    return errorResponse("تنظیمات امنیتی نشست ناوی کامل نیست.", 500, corsOrigin);
   }
 
   let input;
+  try { input = await request.json(); }
+  catch { return errorResponse("اطلاعات ورود معتبر نیست.", 400, corsOrigin); }
 
-  try {
-    input = await request.json();
-  } catch {
-    return errorResponse(
-      "اطلاعات ورود معتبر نیست.",
-      400,
-      corsOrigin
-    );
-  }
-
-  const passwordValid = await verifyNaviPassword(
-    input?.password,
-    env.NAVI_OWNER_PASSWORD
-  );
-
-  if (!passwordValid) {
-    return errorResponse(
-      "رمز ورود صحیح نیست.",
-      401,
-      corsOrigin
-    );
+  const username = safeNaviText(input?.username || "", 40).trim().toLowerCase();
+  const password = typeof input?.password === "string" ? input.password : "";
+  if (!password || password.length > 256) {
+    return errorResponse("نام کاربری یا رمز ورود معتبر نیست.", 400, corsOrigin);
   }
 
   try {
-    const token = await createNaviSession(
-      env.NAVI_SESSION_SECRET
-    );
+    let user = null;
 
+    const isOwnerLogin = !username || username === "owner";
+
+    if (isOwnerLogin) {
+      let ownerRow = null;
+      if (env.NAVA_DB) {
+        try {
+          ownerRow = await env.NAVA_DB.prepare(
+            "SELECT id, username, display_name, role, status, password_hash FROM users WHERE id = ? LIMIT 1"
+          ).bind("owner").first();
+        } catch (error) {
+          logError("Owner account lookup failed", error);
+          return errorResponse("بررسی حساب مالک در دیتابیس ممکن نشد.", 503, corsOrigin);
+        }
+      }
+
+      let ownerPasswordValid = false;
+      if (ownerRow) {
+        if (ownerRow.status !== "active" || ownerRow.role !== "owner") {
+          return errorResponse("حساب مالک فعال یا معتبر نیست.", 403, corsOrigin);
+        }
+
+        if (ownerRow.password_hash) {
+          // Once provisioned, the D1 password hash is authoritative.
+          // The legacy Worker secret can no longer bypass a changed hash.
+          ownerPasswordValid = await verifyNaviPassword(password, ownerRow.password_hash);
+        } else {
+          // One-time compatibility path for the pre-migration owner secret.
+          ownerPasswordValid = await verifyNaviPassword(password, env.NAVI_OWNER_PASSWORD);
+          if (ownerPasswordValid && password.length >= 12) {
+            const passwordHash = await hashNaviPassword(password);
+            const provision = await env.NAVA_DB.prepare(
+              "UPDATE users SET username = COALESCE(NULLIF(username, ''), 'owner'), password_hash = ?, role = 'owner', status = 'active' WHERE id = ? AND (password_hash IS NULL OR password_hash = '')"
+            ).bind(passwordHash, "owner").run();
+            if (!provision?.success) {
+              return errorResponse("ثبت امن رمز مالک در دیتابیس ناموفق بود.", 503, corsOrigin);
+            }
+            if (Number(provision.meta?.changes || 0) !== 1) {
+              const refreshed = await env.NAVA_DB.prepare(
+                "SELECT password_hash, status, role FROM users WHERE id = ? LIMIT 1"
+              ).bind("owner").first();
+              if (!refreshed || refreshed.status !== "active" || refreshed.role !== "owner" ||
+                  !await verifyNaviPassword(password, refreshed.password_hash)) {
+                return errorResponse("وضعیت رمز مالک هم‌زمان تغییر کرده است؛ دوباره تلاش کن.", 409, corsOrigin);
+              }
+            }
+          }
+        }
+      } else {
+        // Legacy fallback is retained only when the owner row is not present yet.
+        ownerPasswordValid = await verifyNaviPassword(password, env.NAVI_OWNER_PASSWORD);
+      }
+
+      if (!ownerPasswordValid) {
+        return errorResponse("نام کاربری یا رمز ورود صحیح نیست.", 401, corsOrigin);
+      }
+
+      user = {
+        id: "owner",
+        username: "owner",
+        display_name: ownerRow?.display_name || "مالک",
+        role: "owner"
+      };
+    } else {
+      if (!username || !/^[a-z0-9][a-z0-9._-]{2,39}$/.test(username) || !env.NAVA_DB) {
+        return errorResponse("نام کاربری یا رمز ورود صحیح نیست.", 401, corsOrigin);
+      }
+      const row = await env.NAVA_DB.prepare(
+        "SELECT id, username, display_name, password_hash, role, status FROM users WHERE username = ? LIMIT 1"
+      ).bind(username).first();
+      if (!row || row.status !== "active" || !row.password_hash ||
+          !await verifyNaviPassword(password, row.password_hash)) {
+        return errorResponse("نام کاربری یا رمز ورود صحیح نیست.", 401, corsOrigin);
+      }
+      user = { id: String(row.id), username: row.username, display_name: row.display_name || row.username, role: row.role === "owner" ? "owner" : "user" };
+    }
+
+    const token = await createNaviSession(env.NAVI_SESSION_SECRET, user);
     return successResponse({
       token,
       expiresIn: 43200,
       assistant: "NAVI",
-      version: NAVI_VERSION
+      version: NAVI_VERSION,
+      user: { id: user.id, username: user.username || "owner", displayName: user.display_name, role: user.role }
     }, corsOrigin);
-
   } catch (error) {
     logError("Login failed", error);
+    return errorResponse("ورود به ناوی ناموفق بود.", 500, corsOrigin);
+  }
+}
 
-    return errorResponse(
-      "ساخت نشست ورود ناموفق بود.",
-      500,
-      corsOrigin
-    );
+// Owner-only account administration. Public registration remains disabled.
+async function handleNaviUsers({ request, env, origin, corsOrigin }) {
+  const auth = await authorize(request, env, origin, corsOrigin);
+  if (!auth.valid) return auth.response;
+  if (auth.user.role !== "owner") return errorResponse("فقط مالک می‌تواند حساب‌ها را مدیریت کند.", 403, corsOrigin);
+  if (!env.NAVA_DB) return errorResponse("اتصال دیتابیس NAVI تنظیم نشده است.", 500, corsOrigin);
+
+  if (request.method === "GET") {
+    try {
+      const result = await env.NAVA_DB.prepare(
+        "SELECT id, username, display_name, role, status, created_at, updated_at FROM users ORDER BY CASE WHEN role = 'owner' THEN 0 ELSE 1 END, created_at DESC"
+      ).all();
+      return successResponse({ users: result.results || [] }, corsOrigin);
+    } catch (error) {
+      logError("NAVI account list failed", error);
+      return errorResponse("دریافت فهرست حساب‌ها ناموفق بود.", 500, corsOrigin);
+    }
+  }
+
+  if (request.method !== "POST") {
+    return errorResponse("روش درخواست پشتیبانی نمی‌شود.", 405, corsOrigin);
+  }
+
+  let input;
+  try { input = await request.json(); }
+  catch { return errorResponse("اطلاعات حساب معتبر نیست.", 400, corsOrigin); }
+
+  const action = String(input?.action || "create").toLowerCase();
+
+  if (action === "set_status") {
+    const userId = String(input?.userId || "").trim();
+    const status = String(input?.status || "").toLowerCase();
+    if (!userId || userId.length > 128 || !["active", "disabled"].includes(status)) {
+      return errorResponse("شناسه حساب یا وضعیت درخواستی معتبر نیست.", 400, corsOrigin);
+    }
+    if (userId === "owner") {
+      return errorResponse("حساب اصلی مالک از این بخش قابل غیرفعال‌سازی نیست.", 400, corsOrigin);
+    }
+    try {
+      const result = await env.NAVA_DB.prepare(
+        "UPDATE users SET status = ?, updated_at = datetime('now') WHERE id = ? AND role = 'user'"
+      ).bind(status, userId).run();
+      if (!result?.success || Number(result.meta?.changes || 0) !== 1) {
+        return errorResponse("حساب موردنظر پیدا نشد یا قابل تغییر نیست.", 404, corsOrigin);
+      }
+      return successResponse({
+        updated: true,
+        user: { id: userId, status },
+        message: status === "disabled" ? "حساب غیرفعال شد." : "حساب دوباره فعال شد."
+      }, corsOrigin);
+    } catch (error) {
+      logError("NAVI account status update failed", error);
+      return errorResponse("تغییر وضعیت حساب ناموفق بود.", 500, corsOrigin);
+    }
+  }
+
+  if (action !== "create") return errorResponse("عملیات مدیریت حساب معتبر نیست.", 400, corsOrigin);
+
+  const username = safeNaviText(input?.username || "", 40).trim().toLowerCase();
+  const displayName = safeNaviText(input?.displayName || "", 80).trim();
+  const password = typeof input?.password === "string" ? input.password : "";
+  if (!/^[a-z0-9][a-z0-9._-]{2,39}$/.test(username) || username === "owner") {
+    return errorResponse("نام کاربری باید ۳ تا ۴۰ نویسه و شامل حروف انگلیسی، عدد، نقطه، خط تیره یا زیرخط باشد.", 400, corsOrigin);
+  }
+  if (!displayName) return errorResponse("نام نمایشی را وارد کن.", 400, corsOrigin);
+  let passwordHash;
+  try { passwordHash = await hashNaviPassword(password); }
+  catch { return errorResponse("رمز عبور باید حداقل ۱۲ نویسه داشته باشد.", 400, corsOrigin); }
+
+  const id = crypto.randomUUID();
+  try {
+    const result = await env.NAVA_DB.prepare(
+      "INSERT INTO users (id, auth_provider, auth_subject, display_name, username, password_hash, role, status) VALUES (?, 'navi-local', ?, ?, ?, ?, 'user', 'active')"
+    ).bind(id, username, displayName, username, passwordHash).run();
+    if (!result.success || Number(result.meta?.changes || 0) !== 1) {
+      throw new Error("Account insert was not confirmed.");
+    }
+    return successResponse({ user: { id, username, displayName, role: "user", status: "active" }, created: true }, corsOrigin, 201);
+  } catch (error) {
+    const message = String(error?.message || "");
+    if (/unique|constraint/i.test(message)) return errorResponse("این نام کاربری قبلاً ثبت شده است.", 409, corsOrigin);
+    logError("NAVI account creation failed", error);
+    return errorResponse("ساخت حساب انجام نشد. ابتدا مهاجرت ساختار حساب‌ها باید روی دیتابیس اجرا شود.", 500, corsOrigin);
   }
 }
 
@@ -563,6 +692,7 @@ async function handleHistory({
   );
 
   if (!auth.valid) return auth.response;
+  const userId = auth.user.id;
 
   if (!env.NAVA_DB) {
     return errorResponse(
@@ -573,12 +703,12 @@ async function handleHistory({
   }
 
   try {
-    await ensureNaviMainThread(env.NAVA_DB);
+    await ensureNaviMainThread(env.NAVA_DB, userId);
 
-    const requestedThreadId = String(url.searchParams.get("thread_id") || NAVI_MAIN_THREAD_ID);    const thread = await env.NAVA_DB.prepare(`
+    const requestedThreadId = String(url.searchParams.get("thread_id") || getNaviMainThreadId(userId));    const thread = await env.NAVA_DB.prepare(`
       SELECT thread_id FROM navi_chat_threads_v1
       WHERE thread_id = ? AND owner_id = ? LIMIT 1
-    `).bind(requestedThreadId, NAVI_OWNER_ID).first();
+    `).bind(requestedThreadId, userId).first();
 
     if (!thread) {
       return errorResponse("این گفت‌وگو پیدا نشد.", 404, corsOrigin);
@@ -632,6 +762,7 @@ async function handleSaveMessageMemory({
 }) {
   const auth = await authorize(request, env, origin, corsOrigin);
   if (!auth.valid) return auth.response;
+  const userId = auth.user.id;
 
   if (!env.NAVA_DB) {
     return errorResponse("اتصال دیتابیس NAVI تنظیم نشده است.", 500, corsOrigin);
@@ -666,7 +797,7 @@ async function handleSaveMessageMemory({
         AND m.role = 'user'
         AND t.owner_id = ?
       LIMIT 1
-    `).bind(messageId, threadId, NAVI_OWNER_ID).first();
+    `).bind(messageId, threadId, userId).first();
 
     if (!row) {
       return errorResponse("پیام انتخاب‌شده پیدا نشد یا متعلق به این گفت‌وگو نیست.", 404, corsOrigin);
@@ -690,7 +821,8 @@ async function handleSaveMessageMemory({
       env.NAVA_DB,
       memoryValue,
       "پیام ذخیره‌شده از گفتگو",
-      "manual_message_save"
+      "manual_message_save",
+      userId
     );
 
     return successResponse({
@@ -737,6 +869,7 @@ async function handleMemory({
   );
 
   if (!auth.valid) return auth.response;
+  const userId = auth.user.id;
 
   if (!env.NAVA_DB) {
     return errorResponse(
@@ -747,7 +880,7 @@ async function handleMemory({
   }
 
   try {
-    await ensureNaviMainThread(env.NAVA_DB);
+    await ensureNaviMainThread(env.NAVA_DB, userId);
 
     // GET: approved + pending
 
@@ -757,9 +890,9 @@ async function handleMemory({
         proposals,
         archived
       ] = await Promise.all([
-        getNaviApprovedMemory(env.NAVA_DB),
-        getNaviPendingMemory(env.NAVA_DB),
-        getNaviArchivedMemory(env.NAVA_DB)
+        getNaviApprovedMemory(env.NAVA_DB, userId),
+        getNaviPendingMemory(env.NAVA_DB, userId),
+        getNaviArchivedMemory(env.NAVA_DB, userId)
       ]);
 
       return successResponse({
@@ -848,7 +981,7 @@ async function handleMemory({
         LIMIT 1
       `).bind(
         id,
-        NAVI_OWNER_ID
+        userId
       ).first();
 
       if (!existing) {
@@ -868,7 +1001,7 @@ async function handleMemory({
           AND id != ?
         LIMIT 1
       `).bind(
-        NAVI_OWNER_ID,
+        userId,
         memoryValue,
         id
       ).first();
@@ -891,7 +1024,7 @@ async function handleMemory({
       `).bind(
         memoryValue,
         id,
-        NAVI_OWNER_ID
+        userId
       ).run();
 
       // Confirm that exactly the requested approved record was updated.
@@ -926,7 +1059,7 @@ async function handleMemory({
           AND status = 'approved'
       `).bind(
         id,
-        NAVI_OWNER_ID
+        userId
       ).run();
 
       if (!result?.success || Number(result.meta?.changes || 0) !== 1) {
@@ -976,7 +1109,8 @@ async function handleMemory({
       const result = await updateNaviMemoryProposal(
         env.NAVA_DB,
         id,
-        memoryValue
+        memoryValue,
+        userId
       );
 
       if (result.notFound) {
@@ -1032,7 +1166,8 @@ async function handleMemory({
       const result = await approveNaviMemoryProposal(
         env.NAVA_DB,
         id,
-        editedValue
+        editedValue,
+        userId
       );
 
       if (result.notFound) {
@@ -1068,7 +1203,8 @@ async function handleMemory({
     if (action === "reject") {
       const result = await rejectNaviMemoryProposal(
         env.NAVA_DB,
-        id
+        id,
+        userId
       );
 
       if (!result.success) {
@@ -1113,10 +1249,11 @@ async function handleExplicitMemoryCommand(
   memoryCommand,
   env,
   corsOrigin,
-  threadId = NAVI_MAIN_THREAD_ID
+  threadId,
+  userId
 ) {
   try {
-    await ensureNaviMainThread(env.NAVA_DB);
+    await ensureNaviMainThread(env.NAVA_DB, userId);
 
     let reply = "";
     let saveResult = null;
@@ -1127,7 +1264,7 @@ async function handleExplicitMemoryCommand(
     // clarification question in this exact conversation thread.
     const previousMessageValue = memoryCommand.value
       ? ""
-      : await getNaviPreviousExplicitMemoryValue(env.NAVA_DB, threadId);
+      : await getNaviPreviousExplicitMemoryValue(env.NAVA_DB, threadId, userId);
     const requestedMemoryValue =
       memoryCommand.memoryValue || memoryCommand.value || previousMessageValue;
 
@@ -1156,7 +1293,8 @@ async function handleExplicitMemoryCommand(
         env.NAVA_DB,
         value,
         memoryCommand.memoryKey || "یادداشت کاربر",
-        memoryCommand.source || "user_command"
+        memoryCommand.source || "user_command",
+        userId
       );
 
       if (saveResult.tooLong) {
@@ -1189,7 +1327,8 @@ async function handleExplicitMemoryCommand(
         env.NAVA_DB,
         message,
         reply,
-        threadId
+        threadId,
+        userId
       );
     } catch (error) {
       conversationSaved = false;
@@ -1515,13 +1654,13 @@ export function parseNaviConfirmationIntent(message) {
   return null;
 }
 
-async function handleNaviPendingMemoryConfirmation(db, message, threadId, corsOrigin) {
+async function handleNaviPendingMemoryConfirmation(db, message, threadId, corsOrigin, userId) {
   const intent = parseNaviConfirmationIntent(message);
   if (!intent) return null;
 
   // A short yes/no is consent only if the immediately previous NAVI turn
   // asked whether to keep this memory suggestion.
-  const history = await getNaviDbHistory(db, 1, threadId);
+  const history = await getNaviDbHistory(db, 1, threadId, userId);
   const lastAssistant = history[history.length - 1];
   const lastText = lastAssistant?.role === "assistant"
     ? normalizeText(lastAssistant.content || "")
@@ -1530,7 +1669,7 @@ async function handleNaviPendingMemoryConfirmation(db, message, threadId, corsOr
     return null;
   }
 
-  const allPending = await getNaviPendingMemory(db);
+  const allPending = await getNaviPendingMemory(db, userId);
   const pending = allPending.filter(item =>
     item.source === "navi_suggestion:" + threadId
   );
@@ -1559,12 +1698,12 @@ async function handleNaviPendingMemoryConfirmation(db, message, threadId, corsOr
 
   const proposal = pending[0];
   if (intent === "approve") {
-    const result = await approveNaviMemoryProposal(db, proposal.id);
+    const result = await approveNaviMemoryProposal(db, proposal.id, null, userId);
     if (!result?.success || result.notFound || result.invalid || result.sensitive || result.duplicate || result.tooLong) {
       return errorResponse("تأیید پیشنهاد انجام نشد؛ وضعیت حافظه تغییر نکرد.", 409, corsOrigin);
     }
   } else {
-    const result = await rejectNaviMemoryProposal(db, proposal.id);
+    const result = await rejectNaviMemoryProposal(db, proposal.id, userId);
     if (!result?.success) return errorResponse("رد پیشنهاد انجام نشد؛ وضعیت حافظه تغییر نکرد.", 409, corsOrigin);
   }
 
@@ -1573,7 +1712,7 @@ async function handleNaviPendingMemoryConfirmation(db, message, threadId, corsOr
     : "پیشنهاد زیر طبق درخواست تو رد شد و به حافظه تأییدشده اضافه نشد:\n«" + proposal.memory_value + "»";
 
   try {
-    await saveNaviConversation(db, message, reply, threadId);
+    await saveNaviConversation(db, message, reply, threadId, userId);
   } catch (error) {
     logError("Confirmation history save failed after action", error);
   }
@@ -1601,6 +1740,7 @@ async function handleChat({
   );
 
   if (!auth.valid) return auth.response;
+  const userId = auth.user.id;
 
   if (!env.GEMINI_API_KEY) {
     return errorResponse(
@@ -1673,32 +1813,33 @@ async function handleChat({
   );
 
   if (memoryCommand.isCommand) {
-    const requestedThreadId = String(input.threadId || NAVI_MAIN_THREAD_ID);
+    const requestedThreadId = String(input.threadId || getNaviMainThreadId(userId));
     const validThread = await env.NAVA_DB.prepare(`
       SELECT thread_id FROM navi_chat_threads_v1
       WHERE thread_id = ? AND owner_id = ? LIMIT 1
-    `).bind(requestedThreadId, NAVI_OWNER_ID).first();
+    `).bind(requestedThreadId, userId).first();
     if (!validThread) return errorResponse("گفت‌وگوی انتخاب‌شده معتبر نیست.", 404, corsOrigin);
     return handleExplicitMemoryCommand(
       message,
       memoryCommand,
       env,
       corsOrigin,
-      requestedThreadId
+      requestedThreadId,
+      userId
     );
   }
 
-  const requestedThreadId = String(input.threadId || NAVI_MAIN_THREAD_ID);
+  const requestedThreadId = String(input.threadId || getNaviMainThreadId(userId));
   const activeThread = await env.NAVA_DB.prepare(`
     SELECT thread_id FROM navi_chat_threads_v1
     WHERE thread_id = ? AND owner_id = ? LIMIT 1
-  `).bind(requestedThreadId, NAVI_OWNER_ID).first();
+  `).bind(requestedThreadId, userId).first();
   if (!activeThread) return errorResponse("گفت‌وگوی انتخاب‌شده معتبر نیست.", 404, corsOrigin);
 
   // A short confirmation applies only to one uniquely pending memory proposal.
   try {
     const confirmationResponse = await handleNaviPendingMemoryConfirmation(
-      env.NAVA_DB, message, requestedThreadId, corsOrigin
+      env.NAVA_DB, message, requestedThreadId, corsOrigin, userId
     );
     if (confirmationResponse) return confirmationResponse;
   } catch (error) {
@@ -1715,14 +1856,14 @@ async function handleChat({
   let conversationMatches = [];
 
   try {
-    await ensureNaviMainThread(env.NAVA_DB);
+    await ensureNaviMainThread(env.NAVA_DB, userId);
 
     const [
       historyResult,
       memoryResult
     ] = await Promise.all([
-      getNaviDbHistory(env.NAVA_DB, 10, requestedThreadId),
-      getNaviApprovedMemory(env.NAVA_DB)
+      getNaviDbHistory(env.NAVA_DB, 10, requestedThreadId, userId),
+      getNaviApprovedMemory(env.NAVA_DB, userId)
     ]);
 
     dbHistory = Array.isArray(historyResult)
@@ -1734,7 +1875,7 @@ async function handleChat({
       : [];
 
     conversationMatches = await searchNaviConversationHistory(
-      env.NAVA_DB, message, 8, dbHistory
+      env.NAVA_DB, message, 8, dbHistory, userId
     );
 
   } catch (error) {
@@ -1855,7 +1996,8 @@ async function handleChat({
           env.NAVA_DB,
           selectedProposal.value,
           selectedProposal.title || "برداشت NAVI از پیام کاربر",
-          "composer_manual_save"
+          "composer_manual_save",
+          userId
         );
         if (manualMemorySaveResult.tooLong) manualMemorySaveError = "ترکیب این اطلاعات با حافظه قبلی از سقف مجاز عبور می‌کند؛ ذخیره انجام نشد.";
         else if (manualMemorySaveResult.invalid || manualMemorySaveResult.sensitive) manualMemorySaveError = "برداشت NAVI شرایط لازم برای ذخیره در حافظه را ندارد.";
@@ -1891,7 +2033,8 @@ async function handleChat({
         env.NAVA_DB,
         proposal.value,
         proposal.title,
-        "navi_suggestion:" + requestedThreadId
+        "navi_suggestion:" + requestedThreadId,
+        userId
       );
 
       if (result?.inserted) {
@@ -1966,7 +2109,8 @@ async function handleChat({
       env.NAVA_DB,
       message,
       reply,
-      requestedThreadId
+      requestedThreadId,
+      userId
     );
 
   } catch (error) {
@@ -2014,9 +2158,10 @@ async function handleChat({
 async function handleThreads({ request, env, origin, corsOrigin }) {
   const auth = await authorize(request, env, origin, corsOrigin);
   if (!auth.valid) return auth.response;
+  const userId = auth.user.id;
   if (!env.NAVA_DB) return errorResponse("اتصال دیتابیس NAVI برقرار نیست.", 500, corsOrigin);
   try {
-    await ensureNaviMainThread(env.NAVA_DB);
+    await ensureNaviMainThread(env.NAVA_DB, userId);
     if (request.method === "GET") {
       const result = await env.NAVA_DB.prepare(`
         SELECT t.thread_id, t.title, t.created_at, t.updated_at,
@@ -2025,7 +2170,7 @@ async function handleThreads({ request, env, origin, corsOrigin }) {
         WHERE t.owner_id = ?
         ORDER BY CASE WHEN t.thread_id = ? THEN 0 ELSE 1 END, t.updated_at DESC
         LIMIT 50
-      `).bind(NAVI_OWNER_ID, NAVI_MAIN_THREAD_ID).all();
+      `).bind(userId, getNaviMainThreadId(userId)).all();
       return successResponse({ threads: result.results || [] }, corsOrigin);
     }
     let input;
@@ -2034,12 +2179,12 @@ async function handleThreads({ request, env, origin, corsOrigin }) {
       const threadId = String(input.threadId || "");
       const title = safeNaviText(input.title || "", 80).trim();
       if (!threadId || !title) return errorResponse("شناسه یا عنوان گفت‌وگو معتبر نیست.", 400, corsOrigin);
-      if (threadId === NAVI_MAIN_THREAD_ID) return errorResponse("عنوان گفت‌وگوی اصلی قابل تغییر نیست.", 400, corsOrigin);
+      if (threadId === getNaviMainThreadId(userId)) return errorResponse("عنوان گفت‌وگوی اصلی قابل تغییر نیست.", 400, corsOrigin);
       const renamed = await env.NAVA_DB.prepare(`
         UPDATE navi_chat_threads_v1
         SET title = ?, updated_at = datetime('now')
         WHERE thread_id = ? AND owner_id = ?
-      `).bind(title, threadId, NAVI_OWNER_ID).run();
+      `).bind(title, threadId, userId).run();
       if (!renamed.success || renamed.meta?.changes !== 1) return errorResponse("گفت‌وگو برای نام‌گذاری پیدا نشد.", 404, corsOrigin);
       return successResponse({ renamed: true, threadId, title }, corsOrigin);
     }
@@ -2049,16 +2194,16 @@ async function handleThreads({ request, env, origin, corsOrigin }) {
       const thread = await env.NAVA_DB.prepare(`
         SELECT thread_id FROM navi_chat_threads_v1
         WHERE thread_id = ? AND owner_id = ? LIMIT 1
-      `).bind(threadId, NAVI_OWNER_ID).first();
+      `).bind(threadId, userId).first();
       if (!thread) return errorResponse("این گفت‌وگو پیدا نشد.", 404, corsOrigin);
       const deleteMessages = await env.NAVA_DB.prepare(`
         DELETE FROM navi_chat_messages_v1 WHERE thread_id = ?
       `).bind(threadId).run();
       if (!deleteMessages.success) throw new Error("Could not delete conversation messages.");
-      if (threadId !== NAVI_MAIN_THREAD_ID) {
+      if (threadId !== getNaviMainThreadId(userId)) {
         const deleteThread = await env.NAVA_DB.prepare(`
           DELETE FROM navi_chat_threads_v1 WHERE thread_id = ? AND owner_id = ?
-        `).bind(threadId, NAVI_OWNER_ID).run();
+        `).bind(threadId, userId).run();
         if (!deleteThread.success || deleteThread.meta?.changes !== 1) {
           throw new Error("Could not delete conversation thread.");
         }
@@ -2067,7 +2212,7 @@ async function handleThreads({ request, env, origin, corsOrigin }) {
           UPDATE navi_chat_threads_v1
           SET title = 'گفت‌وگوی اصلی', updated_at = datetime('now')
           WHERE thread_id = ? AND owner_id = ?
-        `).bind(threadId, NAVI_OWNER_ID).run();
+        `).bind(threadId, userId).run();
       }
       return successResponse({ deleted: true, threadId }, corsOrigin);
     }
@@ -2076,7 +2221,7 @@ async function handleThreads({ request, env, origin, corsOrigin }) {
     const result = await env.NAVA_DB.prepare(`
       INSERT INTO navi_chat_threads_v1 (thread_id, owner_id, title, created_at, updated_at)
       VALUES (?, ?, ?, datetime('now'), datetime('now'))
-    `).bind(threadId, NAVI_OWNER_ID, title).run();
+    `).bind(threadId, userId, title).run();
     if (!result.success) throw new Error("Could not create conversation thread.");
     return successResponse({ thread: { thread_id: threadId, title, message_count: 0 } }, corsOrigin, 201);
   } catch (error) {
@@ -2107,6 +2252,13 @@ export async function handleNaviRoute({
         origin,
         corsOrigin
       });
+    }
+
+    if (
+      url.pathname === "/navi-users" &&
+      (request.method === "GET" || request.method === "POST")
+    ) {
+      return await handleNaviUsers({ request, env, origin, corsOrigin });
     }
 
     if (
