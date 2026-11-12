@@ -156,6 +156,23 @@ test("isolated SQLite end-to-end: owner login, invited account, memory isolation
     assert.equal(secondLoginData.user.role, "user");
     const secondToken = secondLoginData.token;
 
+    // A valid challenge proof is accepted once and cannot be replayed.
+    const replayChallengeResponse = await callNavi(env, "/navi-auth-challenge", "POST", {
+      body: { username: "second.user" }
+    });
+    const replayChallenge = await replayChallengeResponse.json();
+    const replaySalt = Buffer.from(replayChallenge.salt, "base64url");
+    const replayMaterial = await testCrypto.subtle.importKey("raw", new TextEncoder().encode("second-user-password-123"), "PBKDF2", false, ["deriveBits"]);
+    const replayBits = await testCrypto.subtle.deriveBits({ name: "PBKDF2", hash: "SHA-256", salt: replaySalt, iterations: replayChallenge.iterations }, replayMaterial, 256);
+    const replayKey = await testCrypto.subtle.importKey("raw", replayBits, { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+    const replayMessage = "navi-login|" + replayChallenge.challengeId + "|second.user|" + replayChallenge.nonce;
+    const replayProof = toBase64Url(new Uint8Array(await testCrypto.subtle.sign("HMAC", replayKey, new TextEncoder().encode(replayMessage))));
+    const replayBody = { username: "second.user", challengeId: replayChallenge.challengeId, proof: replayProof };
+    const firstProofUse = await callNavi(env, "/navi-login", "POST", { body: replayBody });
+    const repeatedProofUse = await callNavi(env, "/navi-login", "POST", { body: replayBody });
+    assert.equal(firstProofUse.status, 200);
+    assert.equal(repeatedProofUse.status, 401);
+
     // Each account gets a separate main thread; the owner's legacy thread ID is preserved.
     const ownerThreadsResponse = await callNavi(env, "/navi-threads", "GET", { token: ownerToken });
     const secondThreadsResponse = await callNavi(env, "/navi-threads", "GET", { token: secondToken });
