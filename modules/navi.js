@@ -145,119 +145,63 @@ function containsSensitiveInformation(value) {
 // MEMORY RELEVANCE
 // ======================================
 
-function getMemoryRelevance(message, memory) {
-  const messageWords = new Set(tokenize(message));
-
-  const memoryText = [
-    memory.memory_key || "",
-    memory.memory_value || ""
-  ].join(" ");
-
-  const memoryWords = tokenize(memoryText);
-
-  if (!messageWords.size || !memoryWords.length) {
-    return 0;
-  }
-
-  let score = 0;
-
-  for (const word of memoryWords) {
-    if (messageWords.has(word)) {
-      score += word.length > 4 ? 3 : 1;
-    }
-  }
-
-  const normalizedMessage = normalizeText(message);
-  const normalizedMemory = normalizeText(memoryText);
-
-  if (
-    normalizedMemory.length > 5 &&
-    normalizedMessage.includes(normalizedMemory)
-  ) {
-    score += 10;
-  }
-
-  return score;
-}
-
-function selectRelevantMemories(message, memories) {
+// Approved memory retrieval is model-semantic, not keyword-ranked.
+// The server supplies a bounded, account-scoped candidate set; Gemini selects
+// relevant facts by meaning in the same response request. This avoids a second
+// model call and prevents generic word overlap (e.g. "است") from ranking facts.
+export function selectRelevantMemories(message, memories) {
   if (!Array.isArray(memories)) return [];
 
-  const scored = memories
-    .filter(item =>
-      item &&
-      item.memory_value &&
-      !containsSensitiveInformation(item.memory_value)
-    )
-    .map(item => ({
-      item,
-      score: getMemoryRelevance(message, item)
-    }));
-
-  scored.sort((a, b) => b.score - a.score);
-
-  // حافظه‌های مرتبط در اولویت هستند.
-  // چند یادداشت پایه نیز برای حفظ هویت پروژه باقی می‌مانند.
-
-  const relevant = scored
-    .filter(entry => entry.score > 0)
-    .slice(0, 12)
-    .map(entry => entry.item);
-
-  if (relevant.length >= 12) {
-    return relevant;
-  }
-
-  const selectedIds = new Set(
-    relevant.map(item => item.id)
+  const safe = memories.filter(item =>
+    item &&
+    item.memory_value &&
+    !containsSensitiveInformation(item.memory_value)
   );
 
-  // Always keep a small set of durable identity and project facts in
-  // context. Relevance-only retrieval can otherwise omit them when the
-  // user's question is broad (for example: "what do you remember?").
-  const foundational = scored
-    .filter(entry => !selectedIds.has(entry.item.id))
-    .filter(entry => {
-      const key = normalizeText(entry.item.memory_key || "");
-      const value = normalizeText(entry.item.memory_value || "");
-      return (
-        /نام کاربر|هویت دستیار|ترجیحات پاسخ|پروژه نوا|پروژه ناوی|nava|navi/.test(key) ||
-        /پروژه نوا|پروژه ناوی|دستیار شخصی|ترجیحات پاسخ|پلتفرم نوا/.test(value)
-      );
-    })
-    .slice(0, 6)
-    .map(entry => entry.item);
+  const isFoundational = item => {
+    const key = normalizeText(item.memory_key || "");
+    const value = normalizeText(item.memory_value || "");
+    return (
+      /نام کاربر|هویت دستیار|ترجیحات پاسخ|پروژه نوا|پروژه ناوی|nava|navi/.test(key) ||
+      /پروژه نوا|پروژه ناوی|دستیار شخصی|ترجیحات پاسخ|پلتفرم نوا/.test(value)
+    );
+  };
 
+  // Keep identity/project anchors first, then retain the database's
+  // updated_at-desc order. Do not use query-token overlap as a relevance gate.
+  const foundational = safe.filter(isFoundational);
   const foundationalIds = new Set(foundational.map(item => item.id));
-  const baseline = scored
-    .filter(entry =>
-      !selectedIds.has(entry.item.id) &&
-      !foundationalIds.has(entry.item.id)
-    )
-    .slice(0, 3)
-    .map(entry => entry.item);
-
-  return [...relevant, ...foundational, ...baseline].slice(0, 18);
+  const remaining = safe.filter(item => !foundationalIds.has(item.id));
+  return [...foundational, ...remaining].slice(0, 80);
 }
 
 function buildMemoryContext(memories) {
   if (!memories.length) {
-    return "No relevant approved memory is available.";
+    return "No approved memory candidates are available for this account.";
   }
 
-  return memories.map(item => {
-    const title = safeNaviText(
-      item.memory_key || "یادداشت",
-      150
-    );
+  const maxContextChars = 36000;
+  const lines = [];
+  let usedChars = 0;
+  let omitted = 0;
 
-    const value = safeNaviText(
-      item.memory_value || "",
-      NAVI_MAX_MEMORY_VALUE
-    );
+  for (const item of memories) {
+    const title = safeNaviText(item.memory_key || "یادداشت", 150);
+    const value = safeNaviText(item.memory_value || "", NAVI_MAX_MEMORY_VALUE);
+    const line = `- [memory id: ${item.id}] ${title}: ${value}`;
+    if (usedChars + line.length > maxContextChars) {
+      omitted += 1;
+      continue;
+    }
+    lines.push(line);
+    usedChars += line.length + 1;
+  }
 
-    return `- ${title}: ${value}`;
-  }).join("\n");
+  if (omitted) {
+    lines.push(`[توجه: ${omitted} یادداشت دیگر به دلیل محدودیت اندازه زمینه در این نوبت ارسال نشدند.]`);
+  }
+
+  return lines.join("\n");
 }
 
 // ======================================
@@ -1624,6 +1568,10 @@ Use them only when relevant.
 Do not ask for information already available here.
 Do not invent facts.
 - This section is the authoritative current source for memory approval status.
+- The server supplies a bounded candidate set, not a keyword-search result list. Select relevant facts by semantic meaning, intent, entities and context, even when the user's wording shares no keywords with the stored fact.
+- Do not treat generic word overlap as relevance. In particular, never select a fact merely because it shares common words such as "است", "من", "این" or "چه".
+- If none of the candidates meaningfully answers the question, say the information is not available; do not force an unrelated memory into the answer.
+- Foundational identity and ongoing-project facts may be used when the user asks a broad question about what you remember.
 - If a fact appears here, it is already approved. Never describe it as pending, awaiting approval, or merely suggested.
 - Historical conversation excerpts may contain old statements that a fact was pending or awaiting approval. Those statements describe only the past and MUST NOT override the current approved memory above.
 - If a fact is absent from this section but appears in historical excerpts as a proposal, do not claim it is approved.

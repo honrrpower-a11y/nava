@@ -393,3 +393,31 @@ test("deterministic fallback does not override a no-save instruction", async () 
     []
   );
 });
+
+
+test("semantic memory candidates do not depend on query keyword overlap", async () => {
+  const { selectRelevantMemories } = await import("../modules/navi.js");
+  const memories = [
+    { id: 1, memory_key: "یادداشت کاربر", memory_value: "کاربر بنیان‌گذار و مدیر استودیوی موسیقی نوا است." },
+    { id: 2, memory_key: "ترجیحات پاسخ‌گویی", memory_value: "پاسخ‌ها باید روشن و کاربردی باشند." },
+    { id: 3, memory_key: "یادداشت کاربر", memory_value: "کاربر در اوقات فراغت دوچرخه‌سواری می‌کند." }
+  ];
+
+  // These questions intentionally share no meaningful keywords with the facts.
+  const candidatesA = selectRelevantMemories("چه کسی این مجموعه را راه‌اندازی و اداره می‌کند؟", memories);
+  const candidatesB = selectRelevantMemories("مسئول شکل‌گیری این کسب‌وکار چه کسی بوده؟", memories);
+
+  assert.deepEqual(candidatesA.map(item => item.id), [2, 1, 3]);
+  assert.deepEqual(candidatesB.map(item => item.id), [2, 1, 3]);
+});
+
+test("generic word overlap cannot exclude semantically useful memory candidates", async () => {
+  const { selectRelevantMemories } = await import("../modules/navi.js");
+  const memories = [
+    { id: 11, memory_key: "یادداشت کاربر", memory_value: "کاربر بنیان‌گذار یک استودیوی موسیقی ایرانی است." },
+    { id: 12, memory_key: "یادداشت کاربر", memory_value: "کاربر غذای گیاهی را ترجیح می‌دهد." }
+  ];
+
+  const candidates = selectRelevantMemories("این چیست؟", memories);
+  assert.deepEqual(candidates.map(item => item.id), [11, 12]);
+});
