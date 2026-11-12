@@ -5,7 +5,7 @@ import { DatabaseSync } from "node:sqlite";
 import { handleNaviRoute } from "../modules/navi.js";
 import { ALLOWED_ORIGIN } from "../modules/config.js";
 
-function createD1Adapter(sqlite) {
+function createD1Adapter(sqlite, options = {}) {
   return {
     prepare(sql) {
       let values = [];
@@ -21,6 +21,9 @@ function createD1Adapter(sqlite) {
           return { results: sqlite.prepare(sql).all(...values) };
         },
         async run() {
+          if (options.failOwnerHashProvision && /^UPDATE users SET username = COALESCE/.test(sql)) {
+            throw new Error("Simulated D1 write failure for owner hash provisioning.");
+          }
           const result = sqlite.prepare(sql).run(...values);
           return {
             success: true,
@@ -205,6 +208,44 @@ test("isolated SQLite end-to-end: owner login, invited account, memory isolation
     const accountList = await accountListResponse.json();
     assert.equal(accountListResponse.status, 200);
     assert.equal(JSON.stringify(accountList).includes("password_hash"), false);
+  } finally {
+    sqlite.close();
+  }
+});
+
+test("owner can log in when the optional first-login password-hash upgrade encounters a D1 write failure", async () => {
+  const sqlite = new DatabaseSync(":memory:");
+  try {
+    sqlite.exec(`
+      CREATE TABLE users (
+        id TEXT PRIMARY KEY,
+        auth_provider TEXT,
+        auth_subject TEXT UNIQUE,
+        display_name TEXT,
+        created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+    sqlite.exec(readFileSync(new URL("../migrations/0002_navi_multi_user_accounts.sql", import.meta.url), "utf8"));
+    sqlite.exec(readFileSync(new URL("../migrations/0001_navi_memory_schema.sql", import.meta.url), "utf8"));
+
+    const env = {
+      NAVI_SESSION_SECRET: "isolated-test-session-secret-with-strong-entropy",
+      NAVI_OWNER_PASSWORD: "isolated-legacy-owner-password",
+      NAVA_DB: createD1Adapter(sqlite, { failOwnerHashProvision: true })
+    };
+
+    const response = await callNavi(env, "/navi-login", "POST", {
+      body: { username: "owner", password: env.NAVI_OWNER_PASSWORD }
+    });
+    const data = await response.json();
+
+    assert.equal(response.status, 200);
+    assert.equal(data.success, true);
+    assert.equal(data.user.id, "owner");
+    assert.ok(data.token);
+    const ownerHash = sqlite.prepare("SELECT password_hash FROM users WHERE id = 'owner'").get().password_hash;
+    assert.equal(ownerHash, null);
   } finally {
     sqlite.close();
   }
