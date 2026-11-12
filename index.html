@@ -7,7 +7,7 @@
   <meta name="description" content="NAVA؛ استودیوی هوشمند برای ساخت، طراحی و رشد کسب‌وکارها">
   <title>NAVA | One Vision. One Mission. One NAVA.</title>
   <link rel="stylesheet" href="style.css">
-  <script src="app.js?v=navi-context-security-20261112-1" defer></script>
+  <script src="app.js?v=navi-owner-approved-registration-20261112-1" defer></script>
 </head>
 <body>
 
@@ -114,6 +114,22 @@
             <button class="btn-primary" id="naviLoginButton" type="submit">ورود به ناوی</button>
           </form>
           <div class="navi-auth-error" id="naviLoginError" role="alert"></div>
+          <details class="navi-registration-details">
+            <summary>درخواست عضویت در ناوی</summary>
+            <p class="navi-memory-description">عضویت پس از بررسی و تأیید مالک فعال می‌شود. ثبت درخواست به معنی دسترسی فوری نیست.</p>
+            <form id="naviRegistrationForm">
+              <label class="field-label" for="naviRegisterDisplayName">نام نمایشی</label>
+              <input class="navi-password" id="naviRegisterDisplayName" type="text" minlength="2" maxlength="80" autocomplete="name" required>
+              <label class="field-label" for="naviRegisterUsername">نام کاربری انگلیسی</label>
+              <input class="navi-password" id="naviRegisterUsername" type="text" minlength="3" maxlength="40" autocomplete="username" autocapitalize="none" required>
+              <label class="field-label" for="naviRegisterPassword">رمز عبور (حداقل ۱۲ نویسه)</label>
+              <input class="navi-password" id="naviRegisterPassword" type="password" minlength="12" maxlength="256" autocomplete="new-password" required>
+              <label class="field-label" for="naviRegisterPasswordConfirm">تکرار رمز عبور</label>
+              <input class="navi-password" id="naviRegisterPasswordConfirm" type="password" minlength="12" maxlength="256" autocomplete="new-password" required>
+              <button class="btn-primary" type="submit">ارسال درخواست عضویت</button>
+            </form>
+            <div class="navi-auth-error" id="naviRegistrationStatus" role="status" aria-live="polite"></div>
+          </details>
         </div>
 
         <div class="navi-chat-area" id="naviChatArea" hidden>
@@ -123,8 +139,8 @@
           </div>
 
           <section class="navi-memory-panel" id="naviAccountAdmin" hidden>
-            <h3>ساخت حساب دعوتی</h3>
-            <p class="navi-memory-description">فعلاً فقط مالک می‌تواند حساب بسازد. ثبت‌نام عمومی غیرفعال است.</p>
+            <h3>مدیریت عضویت و حساب‌ها</h3>
+            <p class="navi-memory-description">درخواست‌های عضویت فقط با تأیید مالک فعال می‌شوند. ساخت حساب دعوتی مستقیم نیز در اختیار مالک باقی می‌ماند.</p>
             <form id="naviCreateUserForm">
               <label class="field-label" for="naviNewDisplayName">نام نمایشی</label>
               <input class="navi-password" id="naviNewDisplayName" type="text" maxlength="80" required>
