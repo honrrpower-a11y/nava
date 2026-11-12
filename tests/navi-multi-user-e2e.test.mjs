@@ -176,8 +176,8 @@ test("isolated SQLite end-to-end: owner login, invited account, memory isolation
     assert.equal(registrationResponse.status, 201);
     const registrationData = await registrationResponse.json();
     assert.equal(registrationData.request.status, "pending");
-    const pendingLogin = await loginWithPassword(env, "pending.user", "pending-user-password-123");
-    assert.equal(pendingLogin.status, 401);
+    const pendingChallenge = await callNavi(env, "/navi-auth-challenge", "POST", { body: { username: "pending.user" } });
+    assert.equal(pendingChallenge.status, 401);
 
     const pendingListResponse = await callNavi(env, "/navi-users", "GET", { token: ownerToken });
     const pendingList = await pendingListResponse.json();
