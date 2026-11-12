@@ -78,6 +78,12 @@ jobs:
           set -euo pipefail
           npx wrangler d1 migrations list nava-memory --remote | tee navi-production-migrations.txt
           test -s navi-production-migrations.txt
+      - name: Refresh production D1 snapshot after migration reconciliation
+        shell: bash
+        run: |
+          set -euo pipefail
+          npx wrangler d1 export nava-memory --remote --output=/tmp/nava-memory-schema-audit.sql
+          test -s /tmp/nava-memory-schema-audit.sql
       - name: List production Worker secret names only
         shell: bash
         run: |
