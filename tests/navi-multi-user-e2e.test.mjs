@@ -201,6 +201,21 @@ test("isolated SQLite end-to-end: owner login, invited account, memory isolation
     assert.equal(approvedData.user.username, "pending.user");
     assert.equal(approvedData.user.status, "active");
     assert.equal((await loginWithPassword(env, "pending.user", "pending-user-password-123")).status, 200);
+    assert.equal(sqlite.prepare("SELECT password_hash FROM navi_registration_requests WHERE request_id = ?").get(registrationData.request.requestId).password_hash, "");
+
+    const rejectedRequest = await callNavi(env, "/navi-register", "POST", {
+      body: { displayName: "Rejected Applicant", username: "rejected.user", passwordHash: await makeVerifier("rejected-user-password-123") }
+    });
+    assert.equal(rejectedRequest.status, 201);
+    const rejectedData = await rejectedRequest.json();
+    const rejectResponse = await callNavi(env, "/navi-users", "POST", {
+      token: ownerToken,
+      body: { action: "review_registration", requestId: rejectedData.request.requestId, decision: "reject" }
+    });
+    assert.equal(rejectResponse.status, 200);
+    assert.equal(sqlite.prepare("SELECT status FROM navi_registration_requests WHERE request_id = ?").get(rejectedData.request.requestId).status, "rejected");
+    assert.equal(sqlite.prepare("SELECT password_hash FROM navi_registration_requests WHERE request_id = ?").get(rejectedData.request.requestId).password_hash, "");
+    assert.equal((await loginWithPassword(env, "rejected.user", "rejected-user-password-123")).status, 401);
 
     const repeatedApproval = await callNavi(env, "/navi-users", "POST", {
       token: ownerToken,
