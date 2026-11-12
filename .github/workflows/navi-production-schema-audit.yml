@@ -3,7 +3,7 @@ name: NAVI production schema and readiness audit
 on:
   push:
     branches:
-      - feature/navi-multi-user-accounts
+      - main
     paths:
       - ".github/workflows/navi-production-schema-audit.yml"
   workflow_dispatch:
@@ -25,7 +25,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: feature/navi-multi-user-accounts
+          ref: main
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -39,6 +39,12 @@ jobs:
           test -n "$CLOUDFLARE_ACCOUNT_ID"
           npx wrangler d1 export nava-memory --remote --output=/tmp/nava-memory-schema-audit.sql
           test -s /tmp/nava-memory-schema-audit.sql
+      - name: List production D1 migration status (read-only)
+        shell: bash
+        run: |
+          set -euo pipefail
+          npx wrangler d1 migrations list nava-memory --remote | tee navi-production-migrations.txt
+          test -s navi-production-migrations.txt
       - name: List production Worker secret names only
         shell: bash
         run: |
@@ -133,5 +139,6 @@ jobs:
           path: |
             navi-production-schema.txt
             navi-production-readiness.txt
+            navi-production-migrations.txt
           if-no-files-found: error
           retention-days: 7
