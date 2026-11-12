@@ -149,7 +149,7 @@ test("owner login enrolls a browser-derived verifier without server-side PBKDF2"
         bind(...values) {
           return {
             async first() {
-              assert.match(sql, /SELECT .*FROM users WHERE id = \\?/s);
+              assert.ok(sql.includes("FROM users WHERE id = ?"));
               return { ...ownerRow };
             },
             async run() {
