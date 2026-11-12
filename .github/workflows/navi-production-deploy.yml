@@ -72,7 +72,7 @@ jobs:
           const expected = {
             binding: 'nava_db',
             database_name: 'nava-memory',
-            database_id: '56f30fed-a03b-4e36-a320-cbefd3feaf12'
+            database_id: '56f30fed-a03b-4e36-a320-cbef3dfeaf12'
           };
           for (const key of Object.keys(expected)) {
             if (actual[key] !== expected[key]) {
