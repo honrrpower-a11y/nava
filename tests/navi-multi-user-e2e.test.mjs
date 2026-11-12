@@ -2,8 +2,39 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { DatabaseSync } from "node:sqlite";
+import { webcrypto } from "node:crypto";
 import { handleNaviRoute } from "../modules/navi.js";
 import { ALLOWED_ORIGIN } from "../modules/config.js";
+
+
+const testCrypto = webcrypto;
+function toBase64Url(bytes) {
+  return Buffer.from(bytes).toString("base64url");
+}
+async function makeVerifier(password) {
+  const salt = testCrypto.getRandomValues(new Uint8Array(16));
+  const material = await testCrypto.subtle.importKey("raw", new TextEncoder().encode(password), "PBKDF2", false, ["deriveBits"]);
+  const bits = await testCrypto.subtle.deriveBits({ name: "PBKDF2", hash: "SHA-256", salt, iterations: 310000 }, material, 256);
+  return "pbkdf2$310000$" + toBase64Url(salt) + "$" + toBase64Url(new Uint8Array(bits));
+}
+async function loginWithPassword(env, username, password) {
+  const challengeResponse = await callNavi(env, "/navi-auth-challenge", "POST", { body: { username } });
+  const challengeData = await challengeResponse.json();
+  assert.equal(challengeResponse.status, 200, JSON.stringify(challengeData));
+  let body;
+  if (challengeData.mode === "legacy") {
+    body = { username, password, passwordHash: await makeVerifier(password) };
+  } else {
+    const salt = Buffer.from(challengeData.salt, "base64url");
+    const material = await testCrypto.subtle.importKey("raw", new TextEncoder().encode(password), "PBKDF2", false, ["deriveBits"]);
+    const bits = await testCrypto.subtle.deriveBits({ name: "PBKDF2", hash: "SHA-256", salt, iterations: challengeData.iterations }, material, 256);
+    const hmacKey = await testCrypto.subtle.importKey("raw", bits, { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+    const message = "navi-login|" + challengeData.challengeId + "|" + username + "|" + challengeData.nonce;
+    const proof = toBase64Url(new Uint8Array(await testCrypto.subtle.sign("HMAC", hmacKey, new TextEncoder().encode(message))));
+    body = { username, challengeId: challengeData.challengeId, proof };
+  }
+  return callNavi(env, "/navi-login", "POST", { body });
+}
 
 function createD1Adapter(sqlite, options = {}) {
   return {
@@ -72,6 +103,7 @@ test("isolated SQLite end-to-end: owner login, invited account, memory isolation
       );
     `);
     sqlite.exec(readFileSync(new URL("../migrations/0002_navi_multi_user_accounts.sql", import.meta.url), "utf8"));
+    sqlite.exec(readFileSync(new URL("../migrations/0003_navi_auth_challenges.sql", import.meta.url), "utf8"));
     sqlite.exec(readFileSync(new URL("../migrations/0001_navi_memory_schema.sql", import.meta.url), "utf8"));
 
     const env = {
@@ -80,10 +112,8 @@ test("isolated SQLite end-to-end: owner login, invited account, memory isolation
       NAVA_DB: createD1Adapter(sqlite)
     };
 
-    // First owner login must provision a PBKDF2 hash in the isolated database.
-    const ownerLogin = await callNavi(env, "/navi-login", "POST", {
-      body: { username: "owner", password: env.NAVI_OWNER_PASSWORD }
-    });
+    // First owner login enrolls a browser-derived PBKDF2 verifier.
+    const ownerLogin = await loginWithPassword(env, "owner", env.NAVI_OWNER_PASSWORD);
     assert.equal(ownerLogin.status, 200);
     const ownerLoginData = await ownerLogin.json();
     assert.equal(ownerLoginData.success, true);
@@ -95,13 +125,9 @@ test("isolated SQLite end-to-end: owner login, invited account, memory isolation
 
     // After provisioning, the D1 hash is authoritative; the legacy fallback cannot bypass it.
     env.NAVI_OWNER_PASSWORD = "a-different-legacy-password";
-    const ownerLoginAgain = await callNavi(env, "/navi-login", "POST", {
-      body: { username: "owner", password: "isolated-legacy-owner-password" }
-    });
+    const ownerLoginAgain = await loginWithPassword(env, "owner", "isolated-legacy-owner-password");
     assert.equal(ownerLoginAgain.status, 200);
-    const wrongOwnerLogin = await callNavi(env, "/navi-login", "POST", {
-      body: { username: "owner", password: env.NAVI_OWNER_PASSWORD }
-    });
+    const wrongOwnerLogin = await loginWithPassword(env, "owner", env.NAVI_OWNER_PASSWORD);
     assert.equal(wrongOwnerLogin.status, 401);
 
     // Owner creates an invite-only account; the new user can then log in.
@@ -111,7 +137,7 @@ test("isolated SQLite end-to-end: owner login, invited account, memory isolation
         action: "create",
         username: "second.user",
         displayName: "Second Test User",
-        password: "second-user-password-123"
+        passwordHash: await makeVerifier("second-user-password-123")
       }
     });
     assert.equal(createUser.status, 201);
@@ -122,9 +148,7 @@ test("isolated SQLite end-to-end: owner login, invited account, memory isolation
     assert.equal(createdData.user.status, "active");
     const secondUserId = createdData.user.id;
 
-    const secondLogin = await callNavi(env, "/navi-login", "POST", {
-      body: { username: "second.user", password: "second-user-password-123" }
-    });
+    const secondLogin = await loginWithPassword(env, "second.user", "second-user-password-123");
     assert.equal(secondLogin.status, 200);
     const secondLoginData = await secondLogin.json();
     assert.equal(secondLoginData.success, true);
@@ -213,7 +237,7 @@ test("isolated SQLite end-to-end: owner login, invited account, memory isolation
   }
 });
 
-test("owner can log in when the optional first-login password-hash upgrade encounters a D1 write failure", async () => {
+test("owner login fails closed if the initial verifier cannot be persisted", async () => {
   const sqlite = new DatabaseSync(":memory:");
   try {
     sqlite.exec(`
@@ -236,14 +260,13 @@ test("owner can log in when the optional first-login password-hash upgrade encou
     };
 
     const response = await callNavi(env, "/navi-login", "POST", {
-      body: { username: "owner", password: env.NAVI_OWNER_PASSWORD }
+      body: { username: "owner", password: env.NAVI_OWNER_PASSWORD, passwordHash: await makeVerifier(env.NAVI_OWNER_PASSWORD) }
     });
     const data = await response.json();
 
-    assert.equal(response.status, 200);
-    assert.equal(data.success, true);
-    assert.equal(data.user.id, "owner");
-    assert.ok(data.token);
+    assert.equal(response.status, 500);
+    assert.equal(data.success, false);
+    assert.equal(data.token, undefined);
     const ownerHash = sqlite.prepare("SELECT password_hash FROM users WHERE id = 'owner'").get().password_hash;
     assert.equal(ownerHash, null);
   } finally {
