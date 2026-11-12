@@ -2075,14 +2075,16 @@ async function loadNaviUsers() {
       throw new Error(data.error || "دریافت حساب‌ها ناموفق بود.");
     }
 
-    const users = Array.isArray(data.users) ? data.users : [];
+    const allUsers = Array.isArray(data.users) ? data.users : [];
+    // The owner is viewing this panel; list only the other accounts.
+    const users = allUsers.filter(user => user && user.role !== "owner");
     const registrationRequests = Array.isArray(data.registrationRequests)
       ? data.registrationRequests
       : [];
 
     if (!users.length && !registrationRequests.length) {
       if (naviUsersStatus) {
-        naviUsersStatus.textContent = "هنوز حساب یا درخواست عضویتی ثبت نشده است.";
+        naviUsersStatus.textContent = "هنوز حساب کاربری دیگری یا درخواست عضویتی ثبت نشده است.";
       }
       return;
     }
