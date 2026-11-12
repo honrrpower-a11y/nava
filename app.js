@@ -16,6 +16,7 @@ const NAVI_THREADS_API = NAVI_BASE + "/navi-threads";
 const NAVI_MEMORY_API = NAVI_BASE + "/navi-memory";
 const NAVI_SAVE_MESSAGE_API = NAVI_BASE + "/navi-memory-save-message";
 const NAVI_USERS_API = NAVI_BASE + "/navi-users";
+const NAVI_REGISTER_API = NAVI_BASE + "/navi-register";
 
 // Session
 const NAVI_SESSION_KEY = "nava_navi_session";
@@ -106,6 +107,8 @@ const naviCreateUserStatus = document.getElementById("naviCreateUserStatus");
 const naviUsersList = document.getElementById("naviUsersList");
 const naviUsersStatus = document.getElementById("naviUsersStatus");
 const naviUsersRefresh = document.getElementById("naviUsersRefresh");
+const naviRegistrationForm = document.getElementById("naviRegistrationForm");
+const naviRegistrationStatus = document.getElementById("naviRegistrationStatus");
 const naviLoginButton = document.getElementById("naviLoginButton");
 const naviLoginError = document.getElementById("naviLoginError");
 const naviLoginStatus = document.getElementById("naviLoginStatus");
@@ -1968,9 +1971,47 @@ async function loadNaviUsers() {
     const data = await response.json();
     if (!response.ok || !data.success) throw new Error(data.error || "دریافت حساب‌ها ناموفق بود.");
     const users = Array.isArray(data.users) ? data.users : [];
-    if (!users.length) {
-      if (naviUsersStatus) naviUsersStatus.textContent = "هنوز حسابی ثبت نشده است.";
+    const registrationRequests = Array.isArray(data.registrationRequests) ? data.registrationRequests : [];
+    if (!users.length && !registrationRequests.length) {
+      if (naviUsersStatus) naviUsersStatus.textContent = "هنوز حساب یا درخواست عضویتی ثبت نشده است.";
       return;
+    }
+
+    if (registrationRequests.length) {
+      const heading = document.createElement("strong");
+      heading.className = "navi-registration-heading";
+      heading.textContent = "درخواست‌های عضویت در انتظار بررسی (" + registrationRequests.length + ")";
+      naviUsersList.append(heading);
+      for (const registration of registrationRequests) {
+        const item = document.createElement("div");
+        item.className = "navi-user-row navi-registration-row";
+        const details = document.createElement("div");
+        details.className = "navi-user-details";
+        const name = document.createElement("strong");
+        name.textContent = String(registration.display_name || "متقاضی");
+        const meta = document.createElement("span");
+        meta.textContent = "@" + String(registration.username || "") + " · درخواست " + String(registration.created_at || "");
+        details.append(name, meta);
+        const approve = document.createElement("button");
+        approve.type = "button";
+        approve.className = "navi-user-enable";
+        approve.textContent = "تأیید و فعال‌سازی";
+        approve.addEventListener("click", () => reviewNaviRegistration(registration.request_id, "approve", approve));
+        const reject = document.createElement("button");
+        reject.type = "button";
+        reject.className = "navi-user-disable";
+        reject.textContent = "رد درخواست";
+        reject.addEventListener("click", () => reviewNaviRegistration(registration.request_id, "reject", reject));
+        item.append(details, approve, reject);
+        naviUsersList.append(item);
+      }
+    }
+
+    if (users.length) {
+      const heading = document.createElement("strong");
+      heading.className = "navi-registration-heading";
+      heading.textContent = "حساب‌های ثبت‌شده";
+      naviUsersList.append(heading);
     }
     for (const user of users) {
       const item = document.createElement("div");
@@ -2002,7 +2043,7 @@ async function loadNaviUsers() {
       }
       naviUsersList.append(item);
     }
-    if (naviUsersStatus) naviUsersStatus.textContent = users.length + " حساب";
+    if (naviUsersStatus) naviUsersStatus.textContent = users.length + " حساب · " + registrationRequests.length + " درخواست در انتظار";
   } catch (error) {
     if (naviUsersStatus) naviUsersStatus.textContent = error.message || "دریافت فهرست حساب‌ها ناموفق بود.";
   }
@@ -2096,6 +2137,31 @@ function resetNaviUserPassword(userId, username, triggerButton) {
   });
 }
 
+async function reviewNaviRegistration(requestId, decision, button) {
+  const question = decision === "approve"
+    ? "این درخواست تأیید و حساب کاربری فعال شود؟"
+    : "این درخواست عضویت رد شود؟";
+  if (!window.confirm(question)) return;
+  button.disabled = true;
+  try {
+    const response = await fetch(NAVI_USERS_API, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + getNaviToken()
+      },
+      body: JSON.stringify({ action: "review_registration", requestId, decision })
+    });
+    const data = await response.json();
+    if (!response.ok || !data.success) throw new Error(data.error || "بررسی درخواست ناموفق بود.");
+    if (naviUsersStatus) naviUsersStatus.textContent = data.message || "درخواست بررسی شد.";
+    await loadNaviUsers();
+  } catch (error) {
+    button.disabled = false;
+    if (naviUsersStatus) naviUsersStatus.textContent = error.message || "بررسی درخواست ناموفق بود.";
+  }
+}
+
 async function changeNaviUserStatus(userId, status, button) {
   const actionLabel = status === "disabled" ? "غیرفعال شود" : "دوباره فعال شود";
   if (!window.confirm("این حساب " + actionLabel + "؟")) return;
@@ -2120,6 +2186,45 @@ async function changeNaviUserStatus(userId, status, button) {
 }
 
 if (naviUsersRefresh) naviUsersRefresh.addEventListener("click", loadNaviUsers);
+
+if (naviRegistrationForm) {
+  naviRegistrationForm.addEventListener("submit", async event => {
+    event.preventDefault();
+    const displayName = document.getElementById("naviRegisterDisplayName")?.value.trim() || "";
+    const username = document.getElementById("naviRegisterUsername")?.value.trim().toLowerCase() || "";
+    const password = document.getElementById("naviRegisterPassword")?.value || "";
+    const confirmPassword = document.getElementById("naviRegisterPasswordConfirm")?.value || "";
+    if (displayName.length < 2 || !/^[a-z0-9][a-z0-9._-]{2,39}$/.test(username) || password.length < 12 || password.length > 256) {
+      if (naviRegistrationStatus) naviRegistrationStatus.textContent = "نام، نام کاربری معتبر و رمز ۱۲ تا ۲۵۶ نویسه‌ای را وارد کن.";
+      return;
+    }
+    if (password !== confirmPassword) {
+      if (naviRegistrationStatus) naviRegistrationStatus.textContent = "دو رمز واردشده یکسان نیستند.";
+      return;
+    }
+    const submit = naviRegistrationForm.querySelector('button[type="submit"]');
+    if (submit) { submit.disabled = true; submit.textContent = "در حال ثبت درخواست..."; }
+    if (naviRegistrationStatus) naviRegistrationStatus.textContent = "در حال ثبت امن درخواست عضویت...";
+    try {
+      const passwordHash = await deriveNaviPasswordVerifier(password);
+      const response = await fetch(NAVI_REGISTER_API, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ displayName, username, passwordHash })
+      });
+      const data = await response.json();
+      if (!response.ok || !data.success) throw new Error(data.error || "ثبت درخواست عضویت ناموفق بود.");
+      naviRegistrationForm.reset();
+      if (naviRegistrationStatus) naviRegistrationStatus.textContent = "درخواستت ثبت شد. پس از تأیید مالک می‌توانی با همین نام کاربری و رمز وارد ناوی شوی.";
+    } catch (error) {
+      if (naviRegistrationStatus) naviRegistrationStatus.textContent = error.message || "ثبت درخواست عضویت ناموفق بود.";
+    } finally {
+      if (submit) { submit.disabled = false; submit.textContent = "ارسال درخواست عضویت"; }
+    }
+  });
+}
+
+
 
 if (naviCreateUserForm) {
   naviCreateUserForm.addEventListener("submit", async event => {
