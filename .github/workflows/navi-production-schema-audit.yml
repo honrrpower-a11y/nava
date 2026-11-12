@@ -1,4 +1,4 @@
-name: NAVI production schema audit
+name: NAVI production schema and readiness audit
 
 on:
   push:
@@ -39,16 +39,26 @@ jobs:
           test -n "$CLOUDFLARE_ACCOUNT_ID"
           npx wrangler d1 export nava-memory --remote --output=/tmp/nava-memory-schema-audit.sql
           test -s /tmp/nava-memory-schema-audit.sql
-      - name: Extract schema only
+      - name: List production Worker secret names only
+        shell: bash
+        run: |
+          set -euo pipefail
+          npx wrangler secret list --name nava-music-api --format json > /tmp/navi-worker-secrets.json
+          test -s /tmp/navi-worker-secrets.json
+      - name: Verify schema and NAVI login readiness without exposing data or secrets
         shell: bash
         run: |
           python3 - <<'PY'
+          import json
           import sqlite3
+          import sys
+
           source = "/tmp/nava-memory-schema-audit.sql"
           target = "/tmp/navi-production-schema.sqlite"
-          conn = sqlite3.connect(target)
           with open(source, "r", encoding="utf-8") as f:
+              conn = sqlite3.connect(target)
               conn.executescript(f.read())
+
           lines = []
           tables = conn.execute(
               "SELECT name, sql FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY name"
@@ -60,15 +70,68 @@ jobs:
               for col in columns:
                   lines.append("COLUMN: " + " | ".join(str(x) for x in col))
               lines.append("")
+
           with open("navi-production-schema.txt", "w", encoding="utf-8") as f:
               f.write("\n".join(lines))
+
+          user_columns = {
+              row[1] for row in conn.execute('PRAGMA table_info("users")').fetchall()
+          }
+          required_columns = {"username", "password_hash", "role", "status"}
+          missing_columns = sorted(required_columns - user_columns)
+          if missing_columns:
+              raise SystemExit("STOP: production users table is missing required account columns: " + ", ".join(missing_columns))
+
+          owner = conn.execute(
+              "SELECT id, username, role, status, password_hash FROM users WHERE id = 'owner' LIMIT 1"
+          ).fetchone()
+          if not owner:
+              raise SystemExit("STOP: the production owner account row is missing.")
+          if owner[2] != "owner" or owner[3] != "active" or owner[1] != "owner":
+              raise SystemExit("STOP: the production owner account identity or status is not valid.")
+
+          with open("/tmp/navi-worker-secrets.json", "r", encoding="utf-8") as f:
+              secret_records = json.load(f)
+          secret_names = {
+              item.get("name")
+              for item in secret_records
+              if isinstance(item, dict) and isinstance(item.get("name"), str)
+          }
+
+          session_secret_present = "NAVI_SESSION_SECRET" in secret_names
+          owner_password_hash_present = bool(owner[4])
+          owner_password_fallback_present = "NAVI_OWNER_PASSWORD" in secret_names
+
+          if not session_secret_present:
+              raise SystemExit("STOP: production Worker is missing the NAVI_SESSION_SECRET secret.")
+          if not owner_password_hash_present and not owner_password_fallback_present:
+              raise SystemExit("STOP: owner login has neither a D1 password hash nor the legacy NAVI_OWNER_PASSWORD secret.")
+
+          report = [
+              "NAVI production readiness audit",
+              "D1 users account columns: PASS",
+              "Owner account row: present",
+              "Owner role: owner",
+              "Owner status: active",
+              "Owner username: owner",
+              "NAVI_SESSION_SECRET configured: yes",
+              "Owner D1 password hash configured: " + ("yes" if owner_password_hash_present else "no"),
+              "Legacy NAVI_OWNER_PASSWORD fallback configured: " + ("yes" if owner_password_fallback_present else "no"),
+              "Secret values: never read or written to this report"
+          ]
+          with open("navi-production-readiness.txt", "w", encoding="utf-8") as f:
+              f.write("\n".join(report) + "\n")
+
+          print("\n".join(report))
           conn.close()
           PY
-          rm -f /tmp/nava-memory-schema-audit.sql /tmp/navi-production-schema.sqlite
-      - name: Upload schema-only audit
+          rm -f /tmp/nava-memory-schema-audit.sql /tmp/navi-production-schema.sqlite /tmp/navi-worker-secrets.json
+      - name: Upload schema and readiness audit
         uses: actions/upload-artifact@v4
         with:
-          name: navi-production-schema-audit
-          path: navi-production-schema.txt
+          name: navi-production-schema-and-readiness-audit
+          path: |
+            navi-production-schema.txt
+            navi-production-readiness.txt
           if-no-files-found: error
           retention-days: 7
