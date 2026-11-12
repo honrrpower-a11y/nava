@@ -39,6 +39,39 @@ jobs:
           test -n "$CLOUDFLARE_ACCOUNT_ID"
           npx wrangler d1 export nava-memory --remote --output=/tmp/nava-memory-schema-audit.sql
           test -s /tmp/nava-memory-schema-audit.sql
+      - name: Preflight and apply only the additive NAVI base indexes
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import sqlite3
+          source = "/tmp/nava-memory-schema-audit.sql"
+          conn = sqlite3.connect(":memory:")
+          with open(source, "r", encoding="utf-8") as f:
+              conn.executescript(f.read())
+          tables = {r[0] for r in conn.execute("SELECT name FROM sqlite_master WHERE type='table'")}
+          required_tables = {"users", "navi_chat_threads_v1", "navi_chat_messages_v1", "navi_memory_facts_v1"}
+          missing = sorted(required_tables - tables)
+          if missing:
+              raise SystemExit("STOP: required production tables are missing: " + ", ".join(missing))
+          columns = {r[1] for r in conn.execute('PRAGMA table_info("users")')}
+          required_columns = {"username", "password_hash", "role", "status"}
+          missing = sorted(required_columns - columns)
+          if missing:
+              raise SystemExit("STOP: account columns are missing; do not run base migration: " + ", ".join(missing))
+          indexes = {r[0] for r in conn.execute("SELECT name FROM sqlite_master WHERE type='index'")}
+          if "idx_users_username_unique" not in indexes:
+              raise SystemExit("STOP: unique username index is absent; do not apply migration 0001.")
+          duplicate = conn.execute("SELECT username FROM users WHERE username IS NOT NULL AND username <> '' GROUP BY username HAVING COUNT(*) > 1 LIMIT 1").fetchone()
+          if duplicate:
+              raise SystemExit("STOP: duplicate usernames found.")
+          owner = conn.execute("SELECT username, role, status FROM users WHERE id='owner' LIMIT 1").fetchone()
+          if not owner or owner != ("owner", "owner", "active"):
+              raise SystemExit("STOP: owner account preconditions are not satisfied.")
+          print("Preflight PASS: existing tables, account columns, unique username index, and owner identity verified.")
+          PY
+          npx wrangler d1 migrations apply nava-memory --remote --to 0001_navi_memory_schema.sql
+
       - name: List production D1 migration status (read-only)
         shell: bash
         run: |
