@@ -649,6 +649,30 @@ async function handleNaviUsers({ request, env, origin, corsOrigin }) {
 
   const action = String(input?.action || "create").toLowerCase();
 
+  if (action === "reset_password") {
+    const userId = String(input?.userId || "").trim();
+    const passwordHash = typeof input?.passwordHash === "string" ? input.passwordHash : "";
+    if (!userId || userId.length > 128 || userId === "owner" || !validateNaviPasswordVerifier(passwordHash)) {
+      return errorResponse("شناسه حساب یا رمز امن جدید معتبر نیست.", 400, corsOrigin);
+    }
+    try {
+      const result = await env.NAVA_DB.prepare(
+        "UPDATE users SET password_hash = ?, updated_at = datetime('now') WHERE id = ? AND role = 'user'"
+      ).bind(passwordHash, userId).run();
+      if (!result?.success || Number(result.meta?.changes || 0) !== 1) {
+        return errorResponse("حساب موردنظر پیدا نشد یا قابل بازنشانی نیست.", 404, corsOrigin);
+      }
+      return successResponse({
+        updated: true,
+        user: { id: userId },
+        message: "رمز حساب با موفقیت بازنشانی شد."
+      }, corsOrigin);
+    } catch (error) {
+      logError("NAVI account password reset failed", error);
+      return errorResponse("بازنشانی رمز حساب ناموفق بود.", 500, corsOrigin);
+    }
+  }
+
   if (action === "set_status") {
     const userId = String(input?.userId || "").trim();
     const status = String(input?.status || "").toLowerCase();
