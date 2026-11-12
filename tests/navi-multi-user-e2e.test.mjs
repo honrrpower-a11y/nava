@@ -215,7 +215,7 @@ test("isolated SQLite end-to-end: owner login, invited account, memory isolation
     assert.equal(rejectResponse.status, 200);
     assert.equal(sqlite.prepare("SELECT status FROM navi_registration_requests WHERE request_id = ?").get(rejectedData.request.requestId).status, "rejected");
     assert.equal(sqlite.prepare("SELECT password_hash FROM navi_registration_requests WHERE request_id = ?").get(rejectedData.request.requestId).password_hash, "");
-    assert.equal((await loginWithPassword(env, "rejected.user", "rejected-user-password-123")).status, 401);
+    assert.equal((await callNavi(env, "/navi-auth-challenge", "POST", { body: { username: "rejected.user" } })).status, 401);
 
     const repeatedApproval = await callNavi(env, "/navi-users", "POST", {
       token: ownerToken,
