@@ -574,7 +574,18 @@ async function handleLogin({ request, env, origin, corsOrigin }) {
         "UPDATE users SET username = COALESCE(NULLIF(username, ''), 'owner'), password_hash = ?, role = 'owner', status = 'active' WHERE id = ? AND (password_hash IS NULL OR password_hash = '')"
       ).bind(input.passwordHash, "owner").run();
       if (!provision?.success) throw new Error("Owner verifier enrollment was not confirmed.");
-      row.password_hash = input.passwordHash;
+      if (Number(provision.meta?.changes || 0) !== 1) {
+        const refreshed = await env.NAVA_DB.prepare(
+          "SELECT password_hash, status, role FROM users WHERE id = ? LIMIT 1"
+        ).bind("owner").first();
+        if (!refreshed || refreshed.status !== "active" || refreshed.role !== "owner" ||
+            refreshed.password_hash !== input.passwordHash) {
+          return errorResponse("ثبت رمز مالک هم‌زمان تغییر کرده است؛ دوباره تلاش کن.", 409, corsOrigin);
+        }
+        row.password_hash = refreshed.password_hash;
+      } else {
+        row.password_hash = input.passwordHash;
+      }
     } else {
       const challengeId = String(input?.challengeId || "");
       const proof = String(input?.proof || "");
