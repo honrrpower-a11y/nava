@@ -768,12 +768,15 @@ async function handleHistory({
     }
 
     const result = await env.NAVA_DB.prepare(`
-      SELECT id, role, content, created_at
-      FROM navi_chat_messages_v1
-      WHERE thread_id = ?
-      ORDER BY id DESC
+      SELECT m.id, m.role, m.content, m.created_at
+      FROM navi_chat_messages_v1 AS m
+      INNER JOIN navi_chat_threads_v1 AS t
+        ON t.thread_id = m.thread_id
+      WHERE m.thread_id = ?
+        AND t.owner_id = ?
+      ORDER BY m.id DESC
       LIMIT 100
-    `).bind(requestedThreadId).all();
+    `).bind(requestedThreadId, userId).all();
 
     const messages = (result.results || [])
       .reverse()
@@ -1852,10 +1855,9 @@ async function handleChat({
     100
   );
 
-  const pageContext = safeNaviText(
-    input.pageContext || "",
-    NAVI_MAX_PAGE_CONTEXT
-  );
+  // Never trust client-supplied page content as model context.
+  // The page path above is sufficient; private/admin DOM text is excluded.
+  const pageContext = "";
 
   // ----------------------------------
   // EXPLICIT MEMORY COMMAND
@@ -2250,8 +2252,15 @@ async function handleThreads({ request, env, origin, corsOrigin }) {
       `).bind(threadId, userId).first();
       if (!thread) return errorResponse("این گفت‌وگو پیدا نشد.", 404, corsOrigin);
       const deleteMessages = await env.NAVA_DB.prepare(`
-        DELETE FROM navi_chat_messages_v1 WHERE thread_id = ?
-      `).bind(threadId).run();
+        DELETE FROM navi_chat_messages_v1
+        WHERE thread_id = ?
+          AND EXISTS (
+            SELECT 1
+            FROM navi_chat_threads_v1 AS t
+            WHERE t.thread_id = navi_chat_messages_v1.thread_id
+              AND t.owner_id = ?
+          )
+      `).bind(threadId, userId).run();
       if (!deleteMessages.success) throw new Error("Could not delete conversation messages.");
       if (threadId !== getNaviMainThreadId(userId)) {
         const deleteThread = await env.NAVA_DB.prepare(`
