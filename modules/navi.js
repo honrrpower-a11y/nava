@@ -619,7 +619,59 @@ async function handleLogin({ request, env, origin, corsOrigin }) {
   }
 }
 
-// Owner-only account administration. Public registration remains disabled.
+// Public registration requests are stored as pending; only the owner can approve them.
+async function handleNaviRegistration({ request, env, origin, corsOrigin }) {
+  if (origin !== ALLOWED_ORIGIN) return errorResponse("مبدأ درخواست مجاز نیست.", 403, corsOrigin);
+  if (request.method !== "POST") return errorResponse("روش درخواست پشتیبانی نمی‌شود.", 405, corsOrigin);
+  if (!env.NAVA_DB) return errorResponse("اتصال دیتابیس NAVI تنظیم نشده است.", 503, corsOrigin);
+
+  let input;
+  try { input = await request.json(); }
+  catch { return errorResponse("اطلاعات درخواست عضویت معتبر نیست.", 400, corsOrigin); }
+
+  const username = safeNaviText(input?.username || "", 40).trim().toLowerCase();
+  const displayName = safeNaviText(input?.displayName || "", 80).trim();
+  const passwordHash = typeof input?.passwordHash === "string" ? input.passwordHash : "";
+  if (!/^[a-z0-9][a-z0-9._-]{2,39}$/.test(username) || username === "owner") {
+    return errorResponse("نام کاربری باید ۳ تا ۴۰ نویسه انگلیسی و بدون فاصله باشد.", 400, corsOrigin);
+  }
+  if (displayName.length < 2 || displayName.length > 80 || !validateNaviPasswordVerifier(passwordHash)) {
+    return errorResponse("نام نمایشی یا رمز امن واردشده معتبر نیست.", 400, corsOrigin);
+  }
+
+  try {
+    const existingUser = await env.NAVA_DB.prepare(
+      "SELECT id FROM users WHERE username = ? LIMIT 1"
+    ).bind(username).first();
+    if (existingUser) return errorResponse("این نام کاربری قبلاً استفاده شده است.", 409, corsOrigin);
+
+    const existingRequest = await env.NAVA_DB.prepare(
+      "SELECT request_id FROM navi_registration_requests WHERE username = ? AND status = 'pending' LIMIT 1"
+    ).bind(username).first();
+    if (existingRequest) return errorResponse("برای این نام کاربری یک درخواست در انتظار بررسی وجود دارد.", 409, corsOrigin);
+
+    const requestId = crypto.randomUUID();
+    const result = await env.NAVA_DB.prepare(
+      "INSERT INTO navi_registration_requests (request_id, username, display_name, password_hash, status) VALUES (?, ?, ?, ?, 'pending')"
+    ).bind(requestId, username, displayName, passwordHash).run();
+    if (!result?.success || Number(result.meta?.changes || 0) !== 1) {
+      throw new Error("Registration request insert was not confirmed.");
+    }
+    return successResponse({
+      submitted: true,
+      request: { requestId, username, displayName, status: "pending" },
+      message: "درخواست عضویت ثبت شد و پس از بررسی مالک نتیجه مشخص می‌شود."
+    }, corsOrigin, 201);
+  } catch (error) {
+    if (/unique|constraint/i.test(String(error?.message || ""))) {
+      return errorResponse("برای این نام کاربری درخواست دیگری ثبت شده یا قبلاً استفاده شده است.", 409, corsOrigin);
+    }
+    logError("NAVI registration request failed", error);
+    return errorResponse("ثبت درخواست عضویت انجام نشد. ساختار دیتابیس باید به‌روزرسانی شود.", 503, corsOrigin);
+  }
+}
+
+// Owner-only account administration and registration review.
 async function handleNaviUsers({ request, env, origin, corsOrigin }) {
   const auth = await authorize(request, env, origin, corsOrigin);
   if (!auth.valid) return auth.response;
@@ -628,13 +680,21 @@ async function handleNaviUsers({ request, env, origin, corsOrigin }) {
 
   if (request.method === "GET") {
     try {
-      const result = await env.NAVA_DB.prepare(
-        "SELECT id, username, display_name, role, status, created_at, updated_at FROM users ORDER BY CASE WHEN role = 'owner' THEN 0 ELSE 1 END, created_at DESC"
-      ).all();
-      return successResponse({ users: result.results || [] }, corsOrigin);
+      const [users, requests] = await Promise.all([
+        env.NAVA_DB.prepare(
+          "SELECT id, username, display_name, role, status, created_at, updated_at FROM users ORDER BY CASE WHEN role = 'owner' THEN 0 ELSE 1 END, created_at DESC"
+        ).all(),
+        env.NAVA_DB.prepare(
+          "SELECT request_id, username, display_name, status, created_at FROM navi_registration_requests WHERE status = 'pending' ORDER BY created_at ASC"
+        ).all()
+      ]);
+      return successResponse({
+        users: users.results || [],
+        registrationRequests: requests.results || []
+      }, corsOrigin);
     } catch (error) {
       logError("NAVI account list failed", error);
-      return errorResponse("دریافت فهرست حساب‌ها ناموفق بود.", 500, corsOrigin);
+      return errorResponse("دریافت فهرست حساب‌ها ناموفق بود. اگر این قابلیت تازه نصب شده، Migration عضویت هنوز اجرا نشده است.", 500, corsOrigin);
     }
   }
 
@@ -647,6 +707,65 @@ async function handleNaviUsers({ request, env, origin, corsOrigin }) {
   catch { return errorResponse("اطلاعات حساب معتبر نیست.", 400, corsOrigin); }
 
   const action = String(input?.action || "create").toLowerCase();
+
+  if (action === "review_registration") {
+    const requestId = String(input?.requestId || "").trim();
+    const decision = String(input?.decision || "").toLowerCase();
+    if (!requestId || requestId.length > 128 || !["approve", "reject"].includes(decision)) {
+      return errorResponse("درخواست یا تصمیم مدیریتی معتبر نیست.", 400, corsOrigin);
+    }
+    try {
+      const pending = await env.NAVA_DB.prepare(
+        "SELECT request_id, username, display_name, password_hash FROM navi_registration_requests WHERE request_id = ? AND status = 'pending' LIMIT 1"
+      ).bind(requestId).first();
+      if (!pending) return errorResponse("این درخواست قبلاً بررسی شده یا وجود ندارد.", 404, corsOrigin);
+
+      if (decision === "reject") {
+        const rejected = await env.NAVA_DB.prepare(
+          "UPDATE navi_registration_requests SET status = 'rejected', password_hash = '', reviewed_at = datetime('now'), reviewed_by = ? WHERE request_id = ? AND status = 'pending'"
+        ).bind(auth.user.id, requestId).run();
+        if (!rejected?.success || Number(rejected.meta?.changes || 0) !== 1) {
+          return errorResponse("رد درخواست انجام نشد؛ فهرست را تازه‌سازی کن.", 409, corsOrigin);
+        }
+        return successResponse({ reviewed: true, decision: "rejected", message: "درخواست عضویت رد شد." }, corsOrigin);
+      }
+
+      const existing = await env.NAVA_DB.prepare(
+        "SELECT id FROM users WHERE username = ? LIMIT 1"
+      ).bind(pending.username).first();
+      if (existing) return errorResponse("این نام کاربری در این فاصله توسط حساب دیگری استفاده شده است؛ درخواست را رد یا با متقاضی هماهنگ کن.", 409, corsOrigin);
+
+      const userId = crypto.randomUUID();
+      if (typeof env.NAVA_DB.batch !== "function") {
+        return errorResponse("دیتابیس از عملیات اتمی تأیید عضویت پشتیبانی نمی‌کند؛ هیچ تغییری انجام نشد.", 503, corsOrigin);
+      }
+      const results = await env.NAVA_DB.batch([
+        env.NAVA_DB.prepare(
+          "INSERT INTO users (id, auth_provider, auth_subject, display_name, username, password_hash, role, status) SELECT ?, 'navi-local', ?, display_name, username, password_hash, 'user', 'active' FROM navi_registration_requests WHERE request_id = ? AND status = 'pending' AND NOT EXISTS (SELECT 1 FROM users WHERE username = (SELECT username FROM navi_registration_requests WHERE request_id = ?))"
+        ).bind(userId, "navi-registration:" + userId, requestId, requestId),
+        env.NAVA_DB.prepare(
+          "UPDATE navi_registration_requests SET status = 'approved', password_hash = '', reviewed_at = datetime('now'), reviewed_by = ? WHERE request_id = ? AND status = 'pending' AND EXISTS (SELECT 1 FROM users WHERE id = ?)"
+        ).bind(auth.user.id, requestId, userId)
+      ]);
+      const inserted = Number(results?.[0]?.meta?.changes || 0);
+      const reviewed = Number(results?.[1]?.meta?.changes || 0);
+      if (inserted !== 1 || reviewed !== 1) {
+        return errorResponse("تأیید انجام نشد؛ ممکن است درخواست هم‌زمان بررسی شده باشد. فهرست را تازه‌سازی کن.", 409, corsOrigin);
+      }
+      return successResponse({
+        reviewed: true,
+        decision: "approved",
+        user: { id: userId, username: pending.username, displayName: pending.display_name, role: "user", status: "active" },
+        message: "درخواست تأیید شد و حساب کاربری فعال است."
+      }, corsOrigin);
+    } catch (error) {
+      if (/unique|constraint/i.test(String(error?.message || ""))) {
+        return errorResponse("نام کاربری دیگر در دسترس نیست؛ درخواست تأیید نشد.", 409, corsOrigin);
+      }
+      logError("NAVI registration review failed", error);
+      return errorResponse("بررسی درخواست عضویت ناموفق بود.", 500, corsOrigin);
+    }
+  }
 
   if (action === "reset_password") {
     const userId = String(input?.userId || "").trim();
@@ -661,11 +780,7 @@ async function handleNaviUsers({ request, env, origin, corsOrigin }) {
       if (!result?.success || Number(result.meta?.changes || 0) !== 1) {
         return errorResponse("حساب موردنظر پیدا نشد یا قابل بازنشانی نیست.", 404, corsOrigin);
       }
-      return successResponse({
-        updated: true,
-        user: { id: userId },
-        message: "رمز حساب با موفقیت بازنشانی شد."
-      }, corsOrigin);
+      return successResponse({ updated: true, user: { id: userId }, message: "رمز حساب با موفقیت بازنشانی شد." }, corsOrigin);
     } catch (error) {
       logError("NAVI account password reset failed", error);
       return errorResponse("بازنشانی رمز حساب ناموفق بود.", 500, corsOrigin);
@@ -678,9 +793,7 @@ async function handleNaviUsers({ request, env, origin, corsOrigin }) {
     if (!userId || userId.length > 128 || !["active", "disabled"].includes(status)) {
       return errorResponse("شناسه حساب یا وضعیت درخواستی معتبر نیست.", 400, corsOrigin);
     }
-    if (userId === "owner") {
-      return errorResponse("حساب اصلی مالک از این بخش قابل غیرفعال‌سازی نیست.", 400, corsOrigin);
-    }
+    if (userId === "owner") return errorResponse("حساب اصلی مالک از این بخش قابل غیرفعال‌سازی نیست.", 400, corsOrigin);
     try {
       const result = await env.NAVA_DB.prepare(
         "UPDATE users SET status = ?, updated_at = datetime('now') WHERE id = ? AND role = 'user'"
@@ -700,28 +813,24 @@ async function handleNaviUsers({ request, env, origin, corsOrigin }) {
   }
 
   if (action !== "create") return errorResponse("عملیات مدیریت حساب معتبر نیست.", 400, corsOrigin);
-
   const username = safeNaviText(input?.username || "", 40).trim().toLowerCase();
   const displayName = safeNaviText(input?.displayName || "", 80).trim();
   const passwordHash = typeof input?.passwordHash === "string" ? input.passwordHash : "";
-  if (!validateNaviPasswordVerifier(passwordHash)) {
-    return errorResponse("ساختار رمز امن معتبر نیست. دوباره تلاش کن.", 400, corsOrigin);
+  if (!/^[a-z0-9][a-z0-9._-]{2,39}$/.test(username) || username === "owner" ||
+      displayName.length < 2 || !validateNaviPasswordVerifier(passwordHash)) {
+    return errorResponse("نام نمایشی، نام کاربری یا ساختار رمز امن معتبر نیست.", 400, corsOrigin);
   }
-
   const id = crypto.randomUUID();
   try {
     const result = await env.NAVA_DB.prepare(
       "INSERT INTO users (id, auth_provider, auth_subject, display_name, username, password_hash, role, status) VALUES (?, 'navi-local', ?, ?, ?, ?, 'user', 'active')"
-    ).bind(id, username, displayName, username, passwordHash).run();
-    if (!result.success || Number(result.meta?.changes || 0) !== 1) {
-      throw new Error("Account insert was not confirmed.");
-    }
+    ).bind(id, "navi-invite:" + id, displayName, username, passwordHash).run();
+    if (!result.success || Number(result.meta?.changes || 0) !== 1) throw new Error("Account insert was not confirmed.");
     return successResponse({ user: { id, username, displayName, role: "user", status: "active" }, created: true }, corsOrigin, 201);
   } catch (error) {
-    const message = String(error?.message || "");
-    if (/unique|constraint/i.test(message)) return errorResponse("این نام کاربری قبلاً ثبت شده است.", 409, corsOrigin);
+    if (/unique|constraint/i.test(String(error?.message || ""))) return errorResponse("این نام کاربری قبلاً ثبت شده است.", 409, corsOrigin);
     logError("NAVI account creation failed", error);
-    return errorResponse("ساخت حساب انجام نشد. ابتدا مهاجرت ساختار حساب‌ها باید روی دیتابیس اجرا شود.", 500, corsOrigin);
+    return errorResponse("ساخت حساب انجام نشد. ساختار دیتابیس حساب‌ها را بررسی کن.", 500, corsOrigin);
   }
 }
 
@@ -2317,6 +2426,10 @@ export async function handleNaviRoute({
         origin,
         corsOrigin
       });
+    }
+
+    if (url.pathname === "/navi-register") {
+      return await handleNaviRegistration({ request, env, origin, corsOrigin });
     }
 
     if (

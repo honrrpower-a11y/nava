@@ -19,9 +19,13 @@ function createEnv(account, onList = () => [], onStatus = () => ({ success: true
             return account;
           },
           async all() {
-            assert.match(sql, /SELECT id, username, display_name, role, status, created_at, updated_at FROM users/);
+            if (/SELECT id, username, display_name, role, status, created_at, updated_at FROM users/.test(sql)) {
+              assert.doesNotMatch(sql, /password_hash/);
+              return { results: onList() };
+            }
+            assert.match(sql, /SELECT request_id, username, display_name, status, created_at FROM navi_registration_requests/);
             assert.doesNotMatch(sql, /password_hash/);
-            return { results: onList() };
+            return { results: [] };
           },
           async run() {
             assert.match(sql, /UPDATE users SET status = \?, updated_at = datetime\('now'\) WHERE id = \? AND role = 'user'/);
