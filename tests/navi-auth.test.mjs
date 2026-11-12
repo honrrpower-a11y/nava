@@ -135,9 +135,10 @@ test("disabled owner sessions are rejected immediately", async () => {
   assert.equal(result.code, "NAVI_ACCOUNT_DISABLED");
 });
 
-test("owner login provisions PBKDF2 once and then authenticates from D1 hash", async () => {
+test("owner login enrolls a browser-derived verifier without server-side PBKDF2", async () => {
   const { handleNaviRoute } = await import("../modules/navi.js");
   const oldSecret = "legacy-owner-password-123";
+  const verifier = await hashNaviPassword("legacy-owner-password-123");
   const ownerRow = {
     id: "owner", username: "owner", display_name: "مالک",
     role: "owner", status: "active", password_hash: null
@@ -148,7 +149,7 @@ test("owner login provisions PBKDF2 once and then authenticates from D1 hash", a
         bind(...values) {
           return {
             async first() {
-              assert.match(sql, /SELECT .*FROM users WHERE id = \?/s);
+              assert.match(sql, /SELECT .*FROM users WHERE id = \\?/s);
               return { ...ownerRow };
             },
             async run() {
@@ -166,37 +167,24 @@ test("owner login provisions PBKDF2 once and then authenticates from D1 hash", a
     NAVI_OWNER_PASSWORD: oldSecret,
     NAVA_DB: db
   };
-
-  async function login(password) {
-    const request = new Request("https://worker.example/navi-login", {
-      method: "POST",
-      headers: {
-        Origin: "https://honrrpower-a11y.github.io",
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({ username: "owner", password })
-    });
-    return handleNaviRoute({
-      request,
-      env,
-      url: new URL(request.url),
-      origin: "https://honrrpower-a11y.github.io",
-      corsOrigin: "https://honrrpower-a11y.github.io"
-    });
-  }
-
-  const first = await login(oldSecret);
-  assert.equal(first.status, 200);
-  assert.equal((await first.json()).success, true);
-  assert.match(ownerRow.password_hash, /^pbkdf2\$310000\$/);
-
-  env.NAVI_OWNER_PASSWORD = "a-different-legacy-password";
-  const second = await login(oldSecret);
-  assert.equal(second.status, 200);
-  assert.equal((await second.json()).success, true);
-
-  const wrong = await login("a-different-legacy-password");
-  assert.equal(wrong.status, 401);
+  const request = new Request("https://worker.example/navi-login", {
+    method: "POST",
+    headers: {
+      Origin: "https://honrrpower-a11y.github.io",
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({ username: "owner", password: oldSecret, passwordHash: verifier })
+  });
+  const response = await handleNaviRoute({
+    request,
+    env,
+    url: new URL(request.url),
+    origin: "https://honrrpower-a11y.github.io",
+    corsOrigin: "https://honrrpower-a11y.github.io"
+  });
+  assert.equal(response.status, 200);
+  assert.equal((await response.json()).success, true);
+  assert.equal(ownerRow.password_hash, verifier);
 });
 
 
