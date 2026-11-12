@@ -65,6 +65,45 @@ export async function verifyNaviSession(token, secret) {
   }
 }
 
+
+const NAVI_PASSWORD_ITERATIONS = 310000;
+
+// Validate the browser-generated PBKDF2 verifier without doing expensive work
+// in the Workers runtime. Format remains compatible with existing PBKDF2 rows.
+export function validateNaviPasswordVerifier(value) {
+  try {
+    if (typeof value !== "string" || value.length > 256) return null;
+    const [scheme, iterationsText, saltText, hashText, extra] = value.split("$");
+    const iterations = Number(iterationsText);
+    if (extra !== undefined || scheme !== "pbkdf2" ||
+        !Number.isInteger(iterations) || iterations !== NAVI_PASSWORD_ITERATIONS) return null;
+    const salt = base64UrlDecode(saltText);
+    const verifier = base64UrlDecode(hashText);
+    if (salt.length !== 16 || verifier.length !== 32) return null;
+    return { iterations, salt: saltText, verifier: hashText };
+  } catch {
+    return null;
+  }
+}
+
+// Verify a one-time browser proof. The D1 challenge is consumed atomically
+// by the caller before this function is invoked.
+export async function verifyNaviChallengeProof(verifierText, message, proofText) {
+  try {
+    const parsed = validateNaviPasswordVerifier(verifierText);
+    if (!parsed || typeof message !== "string" || typeof proofText !== "string") return false;
+    const key = await crypto.subtle.importKey(
+      "raw", base64UrlDecode(parsed.verifier),
+      { name: "HMAC", hash: "SHA-256" }, false, ["verify"]
+    );
+    return await crypto.subtle.verify(
+      "HMAC", key, base64UrlDecode(proofText), new TextEncoder().encode(message)
+    );
+  } catch {
+    return false;
+  }
+}
+
 const PBKDF2_ITERATIONS = 310000;
 
 export async function hashNaviPassword(password) {
