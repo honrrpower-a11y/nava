@@ -1992,6 +1992,13 @@ async function loadNaviUsers() {
         action.textContent = isActive ? "غیرفعال‌کردن" : "فعال‌کردن";
         action.addEventListener("click", () => changeNaviUserStatus(user.id, isActive ? "disabled" : "active", action));
         item.append(action);
+
+        const resetButton = document.createElement("button");
+        resetButton.type = "button";
+        resetButton.className = "navi-users-refresh";
+        resetButton.textContent = "بازنشانی رمز";
+        resetButton.addEventListener("click", () => resetNaviUserPassword(user.id, user.username, resetButton));
+        item.append(resetButton);
       }
       naviUsersList.append(item);
     }
@@ -1999,6 +2006,94 @@ async function loadNaviUsers() {
   } catch (error) {
     if (naviUsersStatus) naviUsersStatus.textContent = error.message || "دریافت فهرست حساب‌ها ناموفق بود.";
   }
+}
+
+function resetNaviUserPassword(userId, username, triggerButton) {
+  const row = triggerButton.closest(".navi-user-row");
+  if (!row) return;
+  const existingForm = row.querySelector(".navi-user-reset-form");
+  if (existingForm) {
+    existingForm.remove();
+    return;
+  }
+
+  const wrapper = document.createElement("div");
+  wrapper.className = "navi-user-reset-form";
+  const form = document.createElement("form");
+  const newLabel = document.createElement("label");
+  newLabel.className = "field-label";
+  newLabel.textContent = "رمز جدید (حداقل ۱۲ نویسه)";
+  const newPassword = document.createElement("input");
+  newPassword.className = "navi-password";
+  newPassword.type = "password";
+  newPassword.minLength = 12;
+  newPassword.maxLength = 256;
+  newPassword.autocomplete = "new-password";
+  newPassword.required = true;
+  const confirmLabel = document.createElement("label");
+  confirmLabel.className = "field-label";
+  confirmLabel.textContent = "تکرار رمز جدید";
+  const confirmPassword = document.createElement("input");
+  confirmPassword.className = "navi-password";
+  confirmPassword.type = "password";
+  confirmPassword.minLength = 12;
+  confirmPassword.maxLength = 256;
+  confirmPassword.autocomplete = "new-password";
+  confirmPassword.required = true;
+  const submit = document.createElement("button");
+  submit.type = "submit";
+  submit.className = "navi-users-refresh";
+  submit.textContent = "ثبت رمز جدید";
+  const cancel = document.createElement("button");
+  cancel.type = "button";
+  cancel.className = "navi-users-refresh";
+  cancel.textContent = "انصراف";
+  cancel.addEventListener("click", () => wrapper.remove());
+
+  form.append(newLabel, newPassword, confirmLabel, confirmPassword, submit, cancel);
+  wrapper.append(form);
+  row.append(wrapper);
+  newPassword.focus();
+
+  form.addEventListener("submit", async event => {
+    event.preventDefault();
+    const password = newPassword.value;
+    if (password.length < 12 || password.length > 256) {
+      if (naviUsersStatus) naviUsersStatus.textContent = "رمز باید بین ۱۲ تا ۲۵۶ نویسه باشد.";
+      return;
+    }
+    if (password !== confirmPassword.value) {
+      if (naviUsersStatus) naviUsersStatus.textContent = "دو رمز واردشده یکسان نیستند.";
+      confirmPassword.focus();
+      return;
+    }
+
+    submit.disabled = true;
+    cancel.disabled = true;
+    if (naviUsersStatus) naviUsersStatus.textContent = "در حال ساخت و ثبت رمز امن جدید...";
+    try {
+      // Password stretching stays in the browser; only the PBKDF2 verifier is sent.
+      const passwordHash = await deriveNaviPasswordVerifier(password);
+      const response = await fetch(NAVI_USERS_API, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer " + getNaviToken()
+        },
+        body: JSON.stringify({ action: "reset_password", userId, passwordHash })
+      });
+      const data = await response.json();
+      if (!response.ok || !data.success) throw new Error(data.error || "بازنشانی رمز ناموفق بود.");
+      newPassword.value = "";
+      confirmPassword.value = "";
+      wrapper.remove();
+      if (naviUsersStatus) naviUsersStatus.textContent = data.message || "رمز حساب بازنشانی شد.";
+    } catch (error) {
+      if (naviUsersStatus) naviUsersStatus.textContent = error.message || "بازنشانی رمز ناموفق بود.";
+      submit.disabled = false;
+      cancel.disabled = false;
+    }
+  });
 }
 
 async function changeNaviUserStatus(userId, status, button) {
