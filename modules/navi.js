@@ -722,7 +722,7 @@ async function handleNaviUsers({ request, env, origin, corsOrigin }) {
 
       if (decision === "reject") {
         const rejected = await env.NAVA_DB.prepare(
-          "UPDATE navi_registration_requests SET status = 'rejected', reviewed_at = datetime('now'), reviewed_by = ? WHERE request_id = ? AND status = 'pending'"
+          "UPDATE navi_registration_requests SET status = 'rejected', password_hash = '', reviewed_at = datetime('now'), reviewed_by = ? WHERE request_id = ? AND status = 'pending'"
         ).bind(auth.user.id, requestId).run();
         if (!rejected?.success || Number(rejected.meta?.changes || 0) !== 1) {
           return errorResponse("رد درخواست انجام نشد؛ فهرست را تازه‌سازی کن.", 409, corsOrigin);
@@ -744,7 +744,7 @@ async function handleNaviUsers({ request, env, origin, corsOrigin }) {
           "INSERT INTO users (id, auth_provider, auth_subject, display_name, username, password_hash, role, status) SELECT ?, 'navi-local', ?, display_name, username, password_hash, 'user', 'active' FROM navi_registration_requests WHERE request_id = ? AND status = 'pending' AND NOT EXISTS (SELECT 1 FROM users WHERE username = (SELECT username FROM navi_registration_requests WHERE request_id = ?))"
         ).bind(userId, "navi-registration:" + userId, requestId, requestId),
         env.NAVA_DB.prepare(
-          "UPDATE navi_registration_requests SET status = 'approved', reviewed_at = datetime('now'), reviewed_by = ? WHERE request_id = ? AND status = 'pending' AND EXISTS (SELECT 1 FROM users WHERE id = ?)"
+          "UPDATE navi_registration_requests SET status = 'approved', password_hash = '', reviewed_at = datetime('now'), reviewed_by = ? WHERE request_id = ? AND status = 'pending' AND EXISTS (SELECT 1 FROM users WHERE id = ?)"
         ).bind(auth.user.id, requestId, userId)
       ]);
       const inserted = Number(results?.[0]?.meta?.changes || 0);
