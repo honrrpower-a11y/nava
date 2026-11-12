@@ -2100,15 +2100,16 @@ async function loadNaviUsers() {
       return;
     }
 
-    /* Pending registration requests remain visible outside the users dropdown. */
+    /* Pending registration requests live in their own collapsible dropdown. */
     if (registrationRequests.length) {
-      const pendingList = document.createElement("div");
-      pendingList.className = "navi-registration-pending-list";
+      const pendingDropdown = document.createElement("details");
+      pendingDropdown.className = "navi-users-dropdown navi-pending-dropdown";
 
-      const heading = document.createElement("strong");
-      heading.className = "navi-registration-heading";
-      heading.textContent = "درخواست‌های عضویت در انتظار بررسی (" + registrationRequests.length + ")";
-      pendingList.append(heading);
+      const pendingSummary = document.createElement("summary");
+      pendingSummary.textContent = "درخواست‌های عضویت در انتظار بررسی (" + registrationRequests.length + ")";
+
+      const pendingList = document.createElement("div");
+      pendingList.className = "navi-users-dropdown-list navi-registration-pending-list";
 
       for (const registration of registrationRequests) {
         const item = document.createElement("div");
@@ -2146,7 +2147,8 @@ async function loadNaviUsers() {
         pendingList.append(item);
       }
 
-      naviUsersList.append(pendingList);
+      pendingDropdown.append(pendingSummary, pendingList);
+      naviUsersList.append(pendingDropdown);
     }
 
     /* Registered accounts and their controls live inside one collapsible box. */
