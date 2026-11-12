@@ -475,7 +475,7 @@ async function authorize(request, env, origin, corsOrigin) {
 function naviAuthBase64Url(bytes) {
   let binary = "";
   for (const byte of bytes) binary += String.fromCharCode(byte);
-  return btoa(binary).replace(/\\+/g, "-").replace(/\\//g, "_").replace(/=+$/g, "");
+  return btoa(binary).replaceAll("+", "-").replaceAll("/", "_").replaceAll("=", "");
 }
 
 async function handleNaviAuthChallenge({ request, env, origin, corsOrigin }) {
