@@ -5,6 +5,8 @@ import {
   ensureNaviMainThread,
   getNaviMainThreadId,
   getNaviApprovedMemory,
+  getNaviPendingMemory,
+  getNaviArchivedMemory,
   getNaviDbHistory,
   saveNaviConversation,
   saveNaviMemoryFact,
@@ -139,6 +141,62 @@ test("saving to a thread owned by another account is rejected", async () => {
     () => saveNaviConversation(db, "پیام", "پاسخ", getNaviMainThreadId("user-a"), "user-b"),
     /does not belong to this user/
   );
+  db.sqlite.close();
+});
+
+test("legacy unscoped notes stay in General while only approved account-wide keys cross projects", async () => {
+  const db = createDb();
+  await saveNaviMemoryFact(db, "جزئیات قدیمی برند نوا که هنوز پروژه‌بندی نشده است", "یادداشت کاربر", "legacy", "owner", null);
+  await saveNaviMemoryFact(db, "نام نمایشی کاربر", "نام کاربر", "test", "owner", "project-alpha");
+  await saveNaviMemoryFact(db, "پاسخ‌ها باید کوتاه و کاربردی باشند", "ترجیحات پاسخ‌گویی", "test", "owner", "project-alpha");
+  await saveNaviMemoryFact(db, "یادداشت اختصاصی آلفا", "یادداشت پروژه", "test", "owner", "project-alpha");
+
+  const general = await getNaviApprovedMemory(db, "owner", "project-general");
+  const alpha = await getNaviApprovedMemory(db, "owner", "project-alpha");
+  const beta = await getNaviApprovedMemory(db, "owner", "project-beta");
+
+  assert.ok(general.some(item => /برند نوا/.test(item.memory_value)));
+  assert.ok(alpha.some(item => item.memory_key === "نام کاربر"));
+  assert.ok(alpha.some(item => item.memory_key === "ترجیحات پاسخ‌گویی"));
+  assert.ok(alpha.some(item => /آلفا/.test(item.memory_value)));
+  assert.ok(!alpha.some(item => /برند نوا/.test(item.memory_value)));
+  assert.ok(!beta.some(item => /برند نوا/.test(item.memory_value)));
+  assert.equal(beta.length, 2);
+  db.sqlite.close();
+});
+
+test("pending and archived legacy notes are hidden from non-General project workspaces", async () => {
+  const db = createDb();
+  db.sqlite.prepare("INSERT INTO navi_memory_facts_v1 (owner_id,memory_key,memory_value,source,status,project_id) VALUES (?,?,?,?,?,?)").run("owner", "یادداشت کاربر", "پیشنهاد قدیمی عمومی", "legacy", "pending", null);
+  db.sqlite.prepare("INSERT INTO navi_memory_facts_v1 (owner_id,memory_key,memory_value,source,status,project_id) VALUES (?,?,?,?,?,?)").run("owner", "ترجیحات پاسخ‌گویی", "پیشنهاد ترجیح عمومی", "legacy", "pending", null);
+  db.sqlite.prepare("INSERT INTO navi_memory_facts_v1 (owner_id,memory_key,memory_value,source,status,project_id) VALUES (?,?,?,?,?,?)").run("owner", "یادداشت کاربر", "یادداشت بایگانی قدیمی", "legacy", "archived", null);
+  const pending = await getNaviPendingMemory(db, "owner", "project-alpha");
+  const archived = await getNaviArchivedMemory(db, "owner", "project-alpha");
+  assert.deepEqual(pending.map(item => item.memory_value), ["پیشنهاد ترجیح عمومی"]);
+  assert.deepEqual(archived, []);
+  const generalPending = await getNaviPendingMemory(db, "owner", "project-general");
+  const generalArchived = await getNaviArchivedMemory(db, "owner", "project-general");
+  assert.equal(generalPending.length, 2);
+  assert.equal(generalArchived.length, 1);
+  db.sqlite.close();
+});
+
+test("correcting a project memory cannot archive an unrelated legacy account-wide row", async () => {
+  const db = createDb();
+  const oldValue = "مقدار قدیمی تنظیمات رابط";
+  await saveNaviMemoryFact(db, oldValue, "تنظیمات رابط", "legacy", "owner", null);
+  await saveNaviMemoryFact(db, oldValue, "تنظیمات رابط", "test", "owner", "project-alpha");
+  const globalBefore = db.sqlite.prepare("SELECT id FROM navi_memory_facts_v1 WHERE project_id IS NULL AND memory_key = 'تنظیمات رابط' AND status = 'approved'").get();
+  const projectBefore = db.sqlite.prepare("SELECT id FROM navi_memory_facts_v1 WHERE project_id = 'project-alpha' AND memory_key = 'تنظیمات رابط' AND status = 'approved'").get();
+
+  const result = await saveNaviMemoryFact(db, "مقدار تازه تنظیمات رابط", "تنظیمات رابط", "test", "owner", "project-alpha");
+  const globalAfter = db.sqlite.prepare("SELECT status FROM navi_memory_facts_v1 WHERE id = ?").get(globalBefore.id);
+  const projectAfter = db.sqlite.prepare("SELECT status,memory_value FROM navi_memory_facts_v1 WHERE id = ?").get(projectBefore.id);
+
+  assert.equal(result.updated, true);
+  assert.equal(globalAfter.status, "approved");
+  assert.equal(projectAfter.status, "approved");
+  assert.equal(projectAfter.memory_value, "مقدار تازه تنظیمات رابط");
   db.sqlite.close();
 });
 
