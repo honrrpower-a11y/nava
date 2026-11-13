@@ -1492,10 +1492,13 @@ The user explicitly checked the "save this message to memory" control.
 Treat this as consent to save the single most useful durable, non-sensitive fact
 clearly stated in the current user message. Extract that fact into exactly one
 memoryProposals item. Do not ask what information the user wants to save when
-the fact is already present in the message. Do not save the instruction itself,
-temporary details, secrets, or sensitive information. If the message does not
-contain a clear fact to retain, return an empty memoryProposals array and explain
-briefly that no clear durable fact was found.`
+the fact is already present in the message. Do not save the instruction itself, temporary details, secrets, or sensitive information.
+Answer the user's message normally and engage with its actual subject first:
+share your view, explain, ask a useful follow-up, or continue the discussion
+as appropriate. Memory extraction is a separate background task and must never
+replace the conversational answer. If the message does not contain a clear
+fact to retain, return an empty memoryProposals array and explain briefly
+that no clear durable fact was found.`
     : `COMPOSER SAVE NOT CHECKED:
 The user did not enable the save checkbox for this message.
 Do not save, update, merge, propose, or queue any memory from this message.
