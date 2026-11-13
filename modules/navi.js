@@ -324,7 +324,7 @@ export function extractNaviDeterministicMemoryProposal(message) {
   );
   if (projectCodeAssertionMatch) {
     return [{
-      title: \`نام رمز آزمایش حافظه پروژه \${projectCodeAssertionMatch[1]}\`,
+      title: `نام رمز آزمایش حافظه پروژه \${projectCodeAssertionMatch[1]}`,
       value
     }];
   }
