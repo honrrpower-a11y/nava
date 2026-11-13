@@ -600,6 +600,13 @@ test("checked save fallback recognizes a short NAVI project-code shorthand as th
     ),
     false
   );
+  assert.equal(
+    areMemoryValuesSemanticallySimilar(
+      "نام رمز آزمایش حافظه پروژه NAVI برابر با «آبی-۷۳۱» است",
+      extractNaviDeterministicMemoryProposal("قرمز NAVI - 731")[0].value
+    ),
+    false
+  );
 });
 
 test("short ordinary text and incomplete NAVI codes are not promoted to memory", async () => {
