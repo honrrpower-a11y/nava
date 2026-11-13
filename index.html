@@ -7,7 +7,9 @@
   <meta name="description" content="NAVA؛ استودیوی هوشمند برای ساخت، طراحی و رشد کسب‌وکارها">
   <title>NAVA | One Vision. One Mission. One NAVA.</title>
   <link rel="stylesheet" href="style.css?v=nava-orbit-spacing-20261113-2">
+  <link rel="stylesheet" href="logo-studio.css?v=logo-studio-mvp-1">
   <script src="app.js?v=navi-account-redesign-20261113-3" defer></script>
+  <script src="logo-studio.js?v=logo-studio-mvp-1" defer></script>
 </head>
 <body>
 
@@ -58,7 +60,7 @@
         </div>
 
         <div class="nava-orbit-item nava-orbit-item--logo">
-          <button class="nava-orbit-button" type="button" onclick="chooseService('طراحی لوگو')" aria-label="ورود به استودیوی طراحی لوگو"><span class="nava-orbit-icon" aria-hidden="true">✦</span><span class="nava-orbit-title">طراحی لوگو</span><span class="nava-orbit-caption">هویت بصری</span></button>
+          <button class="nava-orbit-button" type="button" onclick="showPage('logoPage')" aria-label="ورود به استودیوی طراحی لوگو"><span class="nava-orbit-icon" aria-hidden="true">✦</span><span class="nava-orbit-title">طراحی لوگو</span><span class="nava-orbit-caption">هویت بصری</span></button>
         </div>
         <div class="nava-orbit-item nava-orbit-item--brand">
           <button class="nava-orbit-button" type="button" onclick="chooseService('برندینگ')" aria-label="ورود به استودیوی برندینگ"><span class="nava-orbit-icon" aria-hidden="true">◇</span><span class="nava-orbit-title">برندینگ</span><span class="nava-orbit-caption">شخصیت و هویت برند</span></button>
@@ -96,6 +98,43 @@
       </div>
 
       <p class="nava-home-footnote"><span aria-hidden="true">✦</span> هر مسیر، شروع یک تجربه تازه در نواست.</p>
+    </div>
+  </section>
+
+  <section class="page" id="logoPage">
+    <div class="logo-studio-page">
+      <div class="logo-studio-head">
+        <div><span class="logo-studio-eyebrow">NAVA CREATIVE STUDIO / 01</span><h1>استودیوی طراحی لوگو</h1></div>
+        <button class="btn-secondary logo-studio-back" type="button" onclick="showPage('homePage')">بازگشت به استودیوها</button>
+      </div>
+      <div class="logo-studio-intro">
+        <span class="logo-studio-eyebrow">FROM IDEA TO IDENTITY</span>
+        <h1>هویت برندت را <span>شکل بده</span></h1>
+        <p>اطلاعات برند را وارد کن تا سه مسیر اولیه برای نشان و لوگوتایپ بسازیم. می‌توانی طرح‌ها را مقایسه کنی و نسخه برداری SVG یا PNG بگیری.</p>
+      </div>
+      <div class="logo-studio-layout">
+        <form class="logo-studio-form" id="logoStudioForm">
+          <h2>شناخت برند</h2><p>هرچه بریف دقیق‌تر باشد، مسیر طراحی هدفمندتر می‌شود.</p>
+          <label class="logo-field" for="logoBrandName">نام برند *</label><input class="logo-control" id="logoBrandName" maxlength="48" required placeholder="مثلاً نوا">
+          <label class="logo-field" for="logoSlogan">شعار برند (اختیاری)</label><input class="logo-control" id="logoSlogan" maxlength="80" placeholder="یک جمله کوتاه درباره برند">
+          <label class="logo-field" for="logoIndustry">حوزه فعالیت</label><input class="logo-control" id="logoIndustry" maxlength="80" placeholder="مثلاً فناوری، پوشاک، کافه...">
+          <label class="logo-field" for="logoAudience">مخاطب اصلی</label><input class="logo-control" id="logoAudience" maxlength="100" placeholder="این برند برای چه کسانی است؟">
+          <label class="logo-field" for="logoPersonality">شخصیت برند</label>
+          <select class="logo-control" id="logoPersonality"><option value="minimal">مینیمال و ساده</option><option value="bold">جسور و قدرتمند</option><option value="elegant">ظریف و لوکس</option><option value="friendly">صمیمی و دوستانه</option><option value="tech">مدرن و فناورانه</option></select>
+          <label class="logo-field" for="logoFormat">ساختار لوگو</label>
+          <select class="logo-control" id="logoFormat"><option value="combination">نماد + نام برند</option><option value="wordmark">لوگوتایپ (نوشتاری)</option><option value="monogram">مونوگرام (حروف اختصاری)</option></select>
+          <label class="logo-field" for="logoPalette">پالت رنگی</label>
+          <select class="logo-control" id="logoPalette"><option value="gold">طلایی و سرمه‌ای</option><option value="blue">آبی و نقره‌ای</option><option value="green">سبز و کرم</option><option value="violet">بنفش و یاسی</option><option value="mono">تک‌رنگ</option></select>
+          <button class="btn-primary" type="submit">ساخت سه طرح اولیه</button>
+          <div class="logo-brief-actions"><button class="btn-secondary" id="logoBriefToNavi" type="button">بررسی بریف با ناوی</button></div>
+          <div class="logo-studio-status" id="logoStudioStatus" role="status" aria-live="polite">برای شروع، نام برند را وارد کن.</div>
+        </form>
+        <section class="logo-studio-results" aria-labelledby="logoResultsTitle">
+          <h2 id="logoResultsTitle">مسیرهای پیشنهادی طراحی</h2><p>سه برداشت اولیه با ساختارهای متفاوت؛ هیچ‌کدام تا زمان تأیید تو نهایی نمی‌شوند.</p>
+          <div class="logo-studio-empty" id="logoStudioEmpty"><div class="logo-studio-empty-mark" aria-hidden="true">✦</div><strong>هنوز طرحی ساخته نشده</strong><span>فرم شناخت برند را کامل کن و روی «ساخت سه طرح اولیه» بزن.</span></div>
+          <div class="logo-concept-results" id="logoConceptResults" aria-live="polite"></div>
+        </section>
+      </div>
     </div>
   </section>
 
