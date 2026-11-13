@@ -2684,6 +2684,7 @@ async function sendMessageToNavi() {
       if (
         memoryRefreshed &&
         memoryResult &&
+        memoryResult.composerSaveRequested &&
         !memoryResult.commandRecognized
       ) {
         if (

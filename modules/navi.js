@@ -306,15 +306,6 @@ export function parseNaviMemoryCommandSafely(message) {
   return parseNaviMemoryCommand(message);
 }
 
-/**
- * A checked composer-save control is explicit consent for this message's
- * extracted fact. It must take precedence over the conversational command
- * parser, which otherwise diverts the request before the chat save path runs.
- */
-export function shouldHandleNaviExplicitMemoryCommand(memoryCommand, saveToMemory) {
-  return memoryCommand?.isCommand === true && saveToMemory !== true;
-}
-
 // Deterministic safety net for clear, first-person durable preferences.
 // Gemini remains the primary extractor; this only fills an empty proposal list.
 export function extractNaviDeterministicMemoryProposal(message) {
@@ -1501,22 +1492,22 @@ The user explicitly checked the "save this message to memory" control.
 Treat this as consent to save the single most useful durable, non-sensitive fact
 clearly stated in the current user message. Extract that fact into exactly one
 memoryProposals item. Do not ask what information the user wants to save when
-the fact is already present in the message. Do not save the instruction itself,
-temporary details, secrets, or sensitive information. If the message does not
-contain a clear fact to retain, return an empty memoryProposals array and explain
-briefly that no clear durable fact was found.`
-    : `If the user explicitly asks to remember or retain information,
-the server handles that direct request separately. Recognize natural
-Persian wording, not only fixed keywords. Examples include:
-- "می‌خوام یادت بمونه که ..."
-- "این رو تو پروفایلم نگه دار."
-- "این ترجیح رو برای دفعات بعد در نظر داشته باش."
-- "این مورد رو به پروفایلم اضافه کن."
-
-When the user simply states a stable preference without asking you
-to store it, suggest it as a pending proposal instead of saving it
-directly. If the user refers only to "این" or "اون" without stating
-what should be retained, ask what exact information they mean.`;
+the fact is already present in the message. Do not save the instruction itself, temporary details, secrets, or sensitive information.
+Answer the user's message normally and engage with its actual subject first:
+share your view, explain, ask a useful follow-up, or continue the discussion
+as appropriate. Memory extraction is a separate background task and must never
+replace the conversational answer. If the message does not contain a clear
+fact to retain, return an empty memoryProposals array and explain briefly
+that no clear durable fact was found.`
+    : `COMPOSER SAVE NOT CHECKED:
+The user did not enable the save checkbox for this message.
+Do not save, update, merge, propose, or queue any memory from this message.
+Do not inspect whether the information already exists in memory for the
+purpose of reporting duplicates. Do not say that something was saved before,
+is already saved, or will be saved. Treat any wording about remembering as
+ordinary conversation: respond to the substance, discuss the idea, answer
+questions, and continue naturally. Do not replace a helpful conversational
+answer with a memory-status message.`;
   const roleContext = accountRole === "owner"
     ? `- The authenticated account is the NAVA platform owner and creator (role: owner).
 - Address this person as the owner when relevant. The owner may discuss their own NAVA/NAVI development work.
@@ -1958,30 +1949,9 @@ async function handleChat({
   // The page path above is sufficient; private/admin DOM text is excluded.
   const pageContext = "";
 
-  // ----------------------------------
-  // EXPLICIT MEMORY COMMAND
-  // ----------------------------------
-
-  const memoryCommand = parseNaviMemoryCommandSafely(
-    message
-  );
-
-  if (shouldHandleNaviExplicitMemoryCommand(memoryCommand, input.saveToMemory)) {
-    const requestedThreadId = String(input.threadId || getNaviMainThreadId(userId));
-    const validThread = await env.NAVA_DB.prepare(`
-      SELECT thread_id FROM navi_chat_threads_v1
-      WHERE thread_id = ? AND owner_id = ? LIMIT 1
-    `).bind(requestedThreadId, userId).first();
-    if (!validThread) return errorResponse("گفت‌وگوی انتخاب‌شده معتبر نیست.", 404, corsOrigin);
-    return handleExplicitMemoryCommand(
-      message,
-      memoryCommand,
-      env,
-      corsOrigin,
-      requestedThreadId,
-      userId
-    );
-  }
+  // Memory is controlled only by the explicit composer checkbox.
+  // Natural-language requests about remembering remain ordinary conversation;
+  // they never bypass the assistant response or trigger storage by themselves.
 
   const requestedThreadId = String(input.threadId || getNaviMainThreadId(userId));
   const activeThread = await env.NAVA_DB.prepare(`
@@ -1990,16 +1960,9 @@ async function handleChat({
   `).bind(requestedThreadId, userId).first();
   if (!activeThread) return errorResponse("گفت‌وگوی انتخاب‌شده معتبر نیست.", 404, corsOrigin);
 
-  // A short confirmation applies only to one uniquely pending memory proposal.
-  try {
-    const confirmationResponse = await handleNaviPendingMemoryConfirmation(
-      env.NAVA_DB, message, requestedThreadId, corsOrigin, userId
-    );
-    if (confirmationResponse) return confirmationResponse;
-  } catch (error) {
-    logError("Pending memory confirmation failed", error);
-    return errorResponse("بررسی یا اجرای تأیید حافظه ناموفق بود؛ هیچ موفقیتی اعلام نمی‌کنم.", 500, corsOrigin);
-  }
+  // Chat text alone is never consent to save. Pending proposals, if any,
+  // must be reviewed explicitly in the profile panel, not inferred from "yes"
+  // or other conversational wording in this chat.
 
   // ----------------------------------
   // LOAD HISTORY AND APPROVED MEMORY
@@ -2126,12 +2089,17 @@ async function handleChat({
   // saves. The checkbox grants consent to save NAVI's interpretation, not
   // the raw user message.
   const suppressMemoryProposals = shouldSuppressNaviMemoryProposals(message);
-  let normalizedProposals = parsed.structured && !suppressMemoryProposals
+  // The checkbox is the sole consent signal. Without it, do not even process
+  // candidate memory proposals; with it, extract within the same Gemini call.
+  let normalizedProposals = input.saveToMemory === true &&
+    parsed.structured && !suppressMemoryProposals
     ? normalizeMemoryProposals(parsed.memoryProposals)
     : [];
 
-  // Keep the existing local fallback when Gemini returns no durable fact.
-  if (!suppressMemoryProposals && normalizedProposals.length === 0) {
+  // Keep the deterministic fallback only for an explicitly checked save.
+  if (input.saveToMemory === true &&
+      !suppressMemoryProposals &&
+      normalizedProposals.length === 0) {
     normalizedProposals = normalizeMemoryProposals(
       extractNaviDeterministicMemoryProposal(message)
     );
@@ -2178,11 +2146,9 @@ async function handleChat({
   let proposalsMergedIntoPending = 0;
   let proposalsMergeCandidates = 0;
 
-  // A checked composer box saves the first approved interpretation directly;
-  // it must not also create a pending proposal for the same message.
-  const proposalsForPending = input.saveToMemory === true
-    ? []
-    : normalizedProposals;
+  // All chat-originated proposals require the checked composer control;
+  // checked items are saved directly above, so none are queued for later review.
+  const proposalsForPending = [];
 
   for (const proposal of proposalsForPending) {
     try {      const result = await createNaviMemoryProposal(
@@ -2237,20 +2203,8 @@ async function handleChat({
   }
 
   // Never report a proposal as created when its database write failed.
-  if (proposalProcessingFailed) {
-    reply = "پاسخت را آماده کردم، اما ثبت پیشنهاد حافظه در دیتابیس ناموفق بود؛ بنابراین چیزی برای تأیید در فهرست حافظه ایجاد نشده است. لطفاً بعداً دوباره تلاش کن.";
-  } else if (proposalLengthLimitExceeded) {
-    reply = "پاسخت آماده است، اما پیشنهاد حافظه به‌دلیل عبور از سقف ۱۲۰۰۰ نویسه ساخته نشد. لطفاً اطلاعات را خلاصه‌تر بفرست.";
-  } else if (memoryProposalForConsent?.memoryValue) {
-    const proposedValue = safeNaviText(
-      memoryProposalForConsent.memoryValue,
-      NAVI_MAX_MEMORY_VALUE
-    );
-    reply +=
-      "\n\nیک نکته از این گفتگو به نظرم برای دفعات بعد مفید است:\n«" +
-      proposedValue +
-      "»\nدوست داری این نکته را برای گفتگوهای بعدی به خاطر بسپارم؟";
-  }
+  // Do not let memory bookkeeping replace or interrupt the assistant's answer.
+  // Explicit save feedback is appended separately below when the checkbox is checked.
 
   if (manualMemorySaveResult?.inserted || manualMemorySaveResult?.updated || manualMemorySaveResult?.merged) reply += "\n\n🧠 برداشت ناوی از پیامت را طبق انتخاب خودت در حافظه تأییدشده ذخیره کردم.";
   else if (manualMemorySaveResult?.duplicate) reply += "\n\n🧠 برداشت ناوی یا اطلاعات مشابه آن از قبل در حافظه تأییدشده وجود داشت.";
@@ -2290,6 +2244,7 @@ async function handleChat({
     version: NAVI_VERSION,
 
     memory: {
+      composerSaveRequested: input.saveToMemory === true,
       responseStructured: parsed.structured,
       proposalsReceived: normalizedProposals.length,
       proposalsCreated: createdProposals.length,
