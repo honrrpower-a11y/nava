@@ -2109,7 +2109,8 @@ async function createNaviProject() {
     await createNaviThread();
     naviMemoryLoaded = false;
     await loadNaviMemories(true);
-    if (naviProjectStatus) naviProjectStatus.textContent = "پروژه ساخته شد و گفت‌وگوی تازه آماده است.";
+    setNaviStatus("پروژه ساخته شد و گفت‌وگوی تازه آماده است.");
+    setNaviWorkspaceTab("chat");
   } catch (error) { if (naviProjectStatus) naviProjectStatus.textContent = error.message || "ساخت پروژه ناموفق بود."; }
   finally { naviCreateProjectButton.disabled = false; }
 }
@@ -2193,7 +2194,8 @@ naviProjectSelect?.addEventListener("change", async () => {
   if (!naviActiveThreadId) { await createNaviThread(); return; }
   await loadNaviHistory();
   await loadNaviMemories(true);
-  if (naviProjectStatus) naviProjectStatus.textContent = "فضای کاری «" + (naviProjects.find(p => p.project_id === nextProjectId)?.name || "پروژه") + "» فعال شد.";
+  setNaviStatus("فضای کاری «" + (naviProjects.find(p => p.project_id === nextProjectId)?.name || "پروژه") + "» فعال شد.");
+  setNaviWorkspaceTab("chat");
 });
 naviNewThreadButton?.addEventListener("click", createNaviThread);
 naviDeleteThreadButton?.addEventListener("click", deleteNaviThread);
