@@ -10,6 +10,9 @@ import {
 
 import {
   extractNaviDeterministicMemoryProposal,
+  isExplicitMemoryCorrectionMessage,
+  normalizeMemoryProposals,
+  buildSystemInstruction,
   removeNaviModelMemoryClaims
 } from "../modules/navi.js";
 
@@ -670,4 +673,156 @@ test("checked save fallback extracts a quoted Persian project-code assertion", a
     ),
     true
   );
+});
+
+
+test("explicit correction intent is detected conservatively", () => {
+  assert.equal(isExplicitMemoryCorrectionMessage("تصمیم قبلی‌ام را اصلاح می‌کنم."), true);
+  assert.equal(isExplicitMemoryCorrectionMessage("این ایده شاید خوب باشد."), false);
+});
+
+test("proposal normalization preserves a bounded exact correction target", () => {
+  const proposals = normalizeMemoryProposals([{
+    title: "اولویت توسعه",
+    value: "اولویت فعلی فقط تکمیل استودیوی لوگوسازی است.",
+    correctionOf: "اولویت فعلی توسعه و تکمیل استودیوی لوگوسازی و برندینگ پیش از توسعه استودیوهای دیگر است."
+  }]);
+  assert.equal(proposals.length, 1);
+  assert.equal(proposals[0].correctionOf, "اولویت فعلی توسعه و تکمیل استودیوی لوگوسازی و برندینگ پیش از توسعه استودیوهای دیگر است.");
+});
+
+test("checked correction prompt requires the exact approved-memory target", () => {
+  const prompt = buildSystemInstruction({
+    page: "chat",
+    pageContext: "",
+    memoryContext: "- اولویت: اولویت فعلی توسعه و تکمیل استودیوی لوگوسازی و برندینگ پیش از توسعه استودیوهای دیگر است.",
+    conversationContext: "",
+    currentUser: { role: "owner", display_name: "مالک" },
+    explicitComposerSave: true
+  });
+  assert.match(prompt, /correctionOf/);
+  assert.match(prompt, /exact complete old memory_value/);
+  assert.match(prompt, /If the exact target is unavailable or/);
+});
+
+test("SQLite integration: explicit correction updates one exact target and archives only exact duplicate copies", async () => {
+  const { DatabaseSync } = await import("node:sqlite");
+  const { saveNaviMemoryFact } = await import("../modules/navi-memory.js");
+  const sqlite = new DatabaseSync(":memory:");
+  sqlite.exec(`
+    CREATE TABLE navi_memory_facts_v1 (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      owner_id TEXT NOT NULL,
+      memory_key TEXT NOT NULL,
+      memory_value TEXT NOT NULL,
+      source TEXT,
+      status TEXT NOT NULL,
+      project_id TEXT,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+    );
+    INSERT INTO navi_memory_facts_v1
+      (owner_id, memory_key, memory_value, source, status, project_id)
+    VALUES
+      ('owner', 'old-title', 'اولویت فعلی توسعه و تکمیل استودیوی لوگوسازی و برندینگ پیش از توسعه استودیوهای دیگر است', 'test', 'approved', 'project-general'),
+      ('owner', 'new-title', 'اولویت اول فقط تکمیل استودیوی لوگوسازی است و برندینگ بعد از آن انجام می‌شود', 'test', 'approved', 'project-general'),
+      ('owner', 'other-project', 'اولویت فعلی توسعه و تکمیل استودیوی لوگوسازی و برندینگ پیش از توسعه استودیوهای دیگر است', 'test', 'approved', 'project-nava'),
+      ('other-user', 'old-title', 'اولویت فعلی توسعه و تکمیل استودیوی لوگوسازی و برندینگ پیش از توسعه استودیوهای دیگر است', 'test', 'approved', 'project-general');
+  `);
+
+  const db = {
+    prepare(sql) {
+      let args = [];
+      const statement = {
+        bind(...values) { args = values; return statement; },
+        async all() { return { results: sqlite.prepare(sql).all(...args) }; },
+        async first() { return sqlite.prepare(sql).get(...args) || null; },
+        async run() {
+          const result = sqlite.prepare(sql).run(...args);
+          return { success: true, meta: { changes: Number(result.changes), last_row_id: Number(result.lastInsertRowid || 0) } };
+        }
+      };
+      return statement;
+    },
+    async batch(statements) {
+      const results = [];
+      sqlite.exec("BEGIN");
+      try {
+        for (const statement of statements) results.push(await statement.run());
+        sqlite.exec("COMMIT");
+        return results;
+      } catch (error) {
+        sqlite.exec("ROLLBACK");
+        throw error;
+      }
+    }
+  };
+
+  const oldValue = "اولویت فعلی توسعه و تکمیل استودیوی لوگوسازی و برندینگ پیش از توسعه استودیوهای دیگر است";
+  const newValue = "اولویت اول فقط تکمیل استودیوی لوگوسازی است و برندینگ بعد از آن انجام می‌شود";
+  const result = await saveNaviMemoryFact(
+    db, newValue, "عنوان جدید", "composer_manual_save", "owner", "project-general", oldValue
+  );
+  const rows = sqlite.prepare("SELECT id, owner_id, project_id, memory_value, status FROM navi_memory_facts_v1 ORDER BY id").all();
+
+  assert.equal(result.replaced, true);
+  assert.equal(result.id, 1);
+  assert.equal(result.archivedCount, 1);
+  assert.equal(rows[0].memory_value, newValue);
+  assert.equal(rows[0].status, "approved");
+  assert.equal(rows[1].status, "archived");
+  assert.equal(rows[2].status, "approved", "another project must remain untouched");
+  assert.equal(rows[3].status, "approved", "another user must remain untouched");
+  sqlite.close();
+});
+
+test("SQLite integration: ambiguous correction target changes no approved memory", async () => {
+  const { DatabaseSync } = await import("node:sqlite");
+  const { saveNaviMemoryFact } = await import("../modules/navi-memory.js");
+  const sqlite = new DatabaseSync(":memory:");
+  sqlite.exec(`
+    CREATE TABLE navi_memory_facts_v1 (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      owner_id TEXT NOT NULL,
+      memory_key TEXT NOT NULL,
+      memory_value TEXT NOT NULL,
+      source TEXT,
+      status TEXT NOT NULL,
+      project_id TEXT,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+    );
+    INSERT INTO navi_memory_facts_v1
+      (owner_id, memory_key, memory_value, source, status, project_id)
+    VALUES
+      ('owner', 'one', 'یک اولویت قبلی مشخص', 'test', 'approved', 'project-general'),
+      ('owner', 'two', 'یک اولویت قبلی مشخص', 'test', 'approved', 'project-general');
+  `);
+  const db = {
+    prepare(sql) {
+      let args = [];
+      const statement = {
+        bind(...values) { args = values; return statement; },
+        async all() { return { results: sqlite.prepare(sql).all(...args) }; },
+        async run() {
+          const result = sqlite.prepare(sql).run(...args);
+          return { success: true, meta: { changes: Number(result.changes) } };
+        }
+      };
+      return statement;
+    },
+    async batch(statements) {
+      return Promise.all(statements.map(statement => statement.run()));
+    }
+  };
+  const result = await saveNaviMemoryFact(
+    db, "اولویت جدید و اصلاح‌شده", "عنوان", "test", "owner", "project-general", "یک اولویت قبلی مشخص"
+  );
+  assert.equal(result.correctionTargetAmbiguous, true);
+  const rows = sqlite.prepare("SELECT memory_value, status FROM navi_memory_facts_v1 ORDER BY id").all();
+  assert.deepEqual(rows, [
+    { memory_value: "یک اولویت قبلی مشخص", status: "approved" },
+    { memory_value: "یک اولویت قبلی مشخص", status: "approved" }
+  ]);
+  sqlite.close();
 });
