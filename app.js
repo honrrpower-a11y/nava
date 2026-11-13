@@ -79,6 +79,7 @@ const NAVI_CONTEXT_MESSAGES = 10;
 
 // Session state
 let naviSessionVersion = 0;
+let naviAssistantContext = null;
 
 // History state
 let naviHistory = [];
@@ -121,6 +122,10 @@ const naviLogout = document.getElementById("naviLogout");
 const naviWidgetPanel = document.getElementById("naviWidgetPanel");
 const naviWidgetToggle = document.getElementById("naviWidgetToggle");
 const naviWidgetClose = document.getElementById("naviWidgetClose");
+const naviAssistantContextPanel = document.getElementById("naviAssistantContext");
+const naviAssistantContextTitle = document.getElementById("naviAssistantContextTitle");
+const naviAssistantContextSummary = document.getElementById("naviAssistantContextSummary");
+const naviAssistantContextClear = document.getElementById("naviAssistantContextClear");
 const naviWelcomeBubble = document.getElementById("naviWelcomeBubble");
 const naviWelcomeBubbleText = document.getElementById("naviWelcomeBubbleText");
 const naviWelcomeBubbleClose = document.getElementById("naviWelcomeBubbleClose");
@@ -314,6 +319,46 @@ if (naviWidgetToggle) {
 if (naviWidgetClose) {
   naviWidgetClose.addEventListener("click", () => setNaviWidgetOpen(false));
 }
+
+function normalizeNaviStudioContext(context) {
+  if (!context || typeof context !== "object" || Array.isArray(context)) return {};
+  const allowed = ["brandName","slogan","industry","audience","personality","format","palette","content","goal"];
+  const result = {};
+  for (const key of allowed) {
+    const value = context[key];
+    if (typeof value === "string" && value.trim()) result[key] = value.trim().slice(0, 500);
+  }
+  return result;
+}
+
+function updateNaviAssistantContext(service, context = {}) {
+  const normalized = normalizeNaviStudioContext(context);
+  naviAssistantContext = { service: String(service || "گفت‌وگوی عمومی").slice(0, 80), context: normalized };
+  if (naviAssistantContextTitle) naviAssistantContextTitle.textContent = naviAssistantContext.service;
+  if (naviAssistantContextSummary) {
+    const labels = {
+      brandName: "نام برند", slogan: "شعار", industry: "حوزه", audience: "مخاطب",
+      personality: "شخصیت", format: "ساختار", palette: "رنگ‌ها", content: "محتوا", goal: "هدف"
+    };
+    const lines = Object.entries(normalized).map(([key, value]) => (labels[key] || key) + ": " + value);
+    naviAssistantContextSummary.textContent = lines.length ? lines.join(" • ") : "ناوی می‌داند اکنون در این استودیو هستی.";
+  }
+  if (naviAssistantContextPanel) naviAssistantContextPanel.hidden = false;
+}
+
+naviAssistantContextClear?.addEventListener("click", () => {
+  naviAssistantContext = null;
+  if (naviAssistantContextPanel) naviAssistantContextPanel.hidden = true;
+});
+
+window.openNaviAssistant = function(options = {}) {
+  const service = String(options.service || "گفت‌وگوی عمومی");
+  const available = Array.from(serviceSelect.options).some(option => option.value === service);
+  if (available) serviceSelect.value = service;
+  updateNaviAssistantContext(service, options.context || {});
+  if (typeof options.message === "string" && options.message.trim()) userRequest.value = options.message.trim();
+  setNaviWidgetOpen(true, true);
+};
 document.addEventListener("keydown", event => {
   if (event.key === "Escape" && naviWidgetPanel && !naviWidgetPanel.hidden) {
     setNaviWidgetOpen(false);
@@ -2765,8 +2810,7 @@ naviLogout.addEventListener("click", () => {
 ========================================= */
 
 function chooseService(service) {
-  serviceSelect.value = service;
-  scrollToRequest();
+  window.openNaviAssistant({ service });
 }
 
 function scrollToRequest() {
@@ -2810,11 +2854,16 @@ async function sendMessageToNavi() {
   const saveThisMessageToMemory = Boolean(naviSaveComposerMessage?.checked);
   if (naviSaveComposerMessage) naviSaveComposerMessage.checked = false;
 
-  const finalMessage =
-    selectedService && selectedService !== "انتخاب نشده"
-      ? "موضوع انتخاب‌شده: " + selectedService +
-        "\n\nپیام کاربر: " + message
-      : message;
+  const contextLines = naviAssistantContext
+    ? Object.entries(naviAssistantContext.context || {}).map(([key, value]) => key + ": " + value)
+    : [];
+  const finalMessage = [
+    selectedService && selectedService !== "انتخاب نشده" ? "موضوع انتخاب‌شده: " + selectedService : "",
+    naviAssistantContext ? "محیط فعال: استودیوی " + naviAssistantContext.service : "",
+    contextLines.length ? "اطلاعات زمینه‌ای این استودیو:\\n" + contextLines.join("\\n") : "",
+    naviAssistantContext ? "پاسخ را با توجه به همین محیط و اطلاعات زمینه‌ای ارائه کن؛ اگر اقدامی به ابزار استودیو نیاز دارد، قبل از ادعای انجام آن راهنمایی کن." : "",
+    "پیام کاربر: " + message
+  ].filter(Boolean).join("\\n\\n");
 
 
   sendRequest.disabled = true;
