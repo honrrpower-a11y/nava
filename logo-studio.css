@@ -45,3 +45,4 @@ body.light .logo-control{background:#fff;color:#273143}
 .logo-concept-actions{flex-direction:column}
 .logo-concept-actions button{width:100%}
 }
+.logo-studio-disclaimer{margin-top:9px!important;font-size:11px!important;color:var(--muted)!important;opacity:.9}
