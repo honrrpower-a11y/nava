@@ -960,6 +960,14 @@ async function handleSaveMessageMemory({
 }
 
 
+function getNaviMemoryProjectScopeSql(projectId) {
+  if (!projectId || projectId === "project-general") {
+    return "(project_id IS NULL OR project_id = ?)";
+  }
+
+  return "(project_id = ? OR (project_id IS NULL AND memory_key IN ('نام کاربر', 'هویت دستیار', 'ترجیحات پاسخ‌گویی')))";
+}
+
 // ======================================
 // MEMORY MANAGEMENT
 // ======================================
@@ -1079,7 +1087,7 @@ async function handleMemory({
         WHERE id = ?
           AND owner_id = ?
           AND status = 'approved'
-          AND (project_id IS NULL OR project_id = ?)
+          AND ${getNaviMemoryProjectScopeSql(projectId)}
         LIMIT 1
       `).bind(
         id,
@@ -1102,7 +1110,7 @@ async function handleMemory({
           AND memory_value = ?
           AND status = 'approved'
           AND id != ?
-          AND (project_id IS NULL OR project_id = ?)
+          AND ${getNaviMemoryProjectScopeSql(projectId)}
         LIMIT 1
       `).bind(
         userId,
@@ -1126,7 +1134,7 @@ async function handleMemory({
         WHERE id = ?
           AND owner_id = ?
           AND status = 'approved'
-          AND (project_id IS NULL OR project_id = ?)
+          AND ${getNaviMemoryProjectScopeSql(projectId)}
       `).bind(
         memoryValue,
         id,
@@ -1164,7 +1172,7 @@ async function handleMemory({
         WHERE id = ?
           AND owner_id = ?
           AND status = 'approved'
-          AND (project_id IS NULL OR project_id = ?)
+          AND ${getNaviMemoryProjectScopeSql(projectId)}
       `).bind(
         id,
         userId,
