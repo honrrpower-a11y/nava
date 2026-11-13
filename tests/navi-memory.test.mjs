@@ -697,14 +697,14 @@ test("checked correction prompt requires the exact approved-memory target", () =
   const prompt = buildSystemInstruction({
     page: "chat",
     pageContext: "",
-    memoryContext: "- اولویت: اولویت فعلی توسعه و تکمیل استودیوی لوگوسازی و برندینگ پیش از توسعه استودیوهای دیگر است.",
+    memoryContext: "- [memory id: 1] اولویت: اولویت فعلی توسعه و تکمیل استودیوی لوگوسازی و برندینگ پیش از توسعه استودیوهای دیگر است.",
     conversationContext: "",
     currentUser: { role: "owner", display_name: "مالک" },
     explicitComposerSave: true
   });
   assert.match(prompt, /correctionOf/);
   assert.match(prompt, /correctionTargetId/);
-  assert.match(prompt, /\\[memory id: N\\]/);
+  assert.match(prompt, /memory id: N/);
   assert.match(prompt, /exact complete old memory_value/);
   assert.match(prompt, /If the exact target is unavailable or/);
 });
