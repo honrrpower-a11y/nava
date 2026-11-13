@@ -783,7 +783,34 @@ function mountNavaAccountWorkspace() {
 
   // NAVI chat remains inside its floating window; only account tools move.
   tabs.querySelector('[data-navi-tab="chat"]')?.remove();
-  tabsSlot.appendChild(tabs);
+
+  // Keep account navigation on one aligned header row and reveal it on demand.
+  let dropdown = tabsSlot.querySelector(".nava-header-tabs-dropdown");
+  if (!dropdown) {
+    dropdown = document.createElement("div");
+    dropdown.className = "nava-header-tabs-dropdown";
+    const trigger = document.createElement("button");
+    trigger.type = "button";
+    trigger.className = "nava-header-tabs-trigger";
+    trigger.textContent = "بخش‌های حساب";
+    trigger.setAttribute("aria-expanded", "false");
+    trigger.setAttribute("aria-controls", "naviWorkspaceTabs");
+    trigger.addEventListener("click", () => {
+      const expanded = trigger.getAttribute("aria-expanded") === "true";
+      trigger.setAttribute("aria-expanded", expanded ? "false" : "true");
+      tabs.hidden = expanded;
+    });
+    dropdown.appendChild(trigger);
+    tabsSlot.appendChild(dropdown);
+    tabs.addEventListener("click", event => {
+      if (event.target.closest("[data-navi-tab]")) {
+        tabs.hidden = true;
+        trigger.setAttribute("aria-expanded", "false");
+      }
+    });
+  }
+  dropdown.appendChild(tabs);
+  tabs.hidden = true;
 
   ["projects", "memory", "users"].forEach(name => {
     const panel = document.querySelector('[data-navi-panel="' + name + '"]');
