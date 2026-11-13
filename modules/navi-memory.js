@@ -813,7 +813,8 @@ export async function createNaviMemoryProposal(
   value,
   title = "یادداشت کاربر",
   source = "navi_suggestion",
-  ownerId = NAVI_OWNER_ID
+  ownerId = NAVI_OWNER_ID,
+  projectId = null
 ) {
   const memoryValue = cleanMemoryValue(value);
   const memoryTitle = cleanMemoryTitle(title);
@@ -840,7 +841,8 @@ export async function createNaviMemoryProposal(
     memoryValue,
     null,
     memoryTitle,
-    ownerId
+    ownerId,
+    projectId
   );
 
   if (duplicate) {
@@ -894,24 +896,9 @@ export async function createNaviMemoryProposal(
     memoryTitle
   );
 
-  const result = await db.prepare(`
-    INSERT INTO navi_memory_facts_v1 (
-      owner_id,
-      memory_key,
-      memory_value,
-      source,
-      status,
-      created_at,
-      updated_at
-    )
-    VALUES (?, ?, ?, ?, 'pending', datetime('now'), datetime('now'))
-  `).bind(
-    ownerId,
-    memoryKey,
-    memoryValue,
-    memorySource
+  const result = await db.prepare("INSERT INTO navi_memory_facts_v1 (owner_id,memory_key,memory_value,source,status,project_id,created_at,updated_at) VALUES (?,?,?,?,'pending',?,datetime('now'),datetime('now'))").bind(
+    ownerId, memoryKey, memoryValue, memorySource, projectId
   ).run();
-
   if (!result.success) {
     throw new Error("Could not create memory proposal.");
   }
