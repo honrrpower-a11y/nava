@@ -8,6 +8,11 @@ import {
   searchNaviConversationHistory
 } from "../modules/navi-memory.js";
 
+import {
+  extractNaviDeterministicMemoryProposal,
+  removeNaviModelMemoryClaims
+} from "../modules/navi.js";
+
 test("a changed Persian favorite color is recognized as the same fact", () => {
   assert.equal(
     areMemoryValuesSemanticallySimilar(
