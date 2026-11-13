@@ -510,3 +510,34 @@ test("server-authoritative memory feedback removes model claims that it saved so
   );
   assert.equal(reply, "چطور می‌توانم در ادامه کمکتان کنم؟");
 });
+
+
+test("different Persian descriptions of the same project test code are duplicates", () => {
+  assert.equal(
+    areMemoryValuesSemanticallySimilar(
+      "کد آزمایشی اختصاصی این پروژه: NAVI-731-آبی",
+      "نام رمز آزمایش حافظه پروژه NAVI برابر با آبی-۷۳۱ است"
+    ),
+    true
+  );
+});
+
+test("a different numeric test-code component is not treated as a duplicate", () => {
+  assert.equal(
+    areMemoryValuesSemanticallySimilar(
+      "کد آزمایشی اختصاصی این پروژه: NAVI-731-آبی",
+      "نام رمز آزمایش حافظه پروژه NAVI برابر با آبی-۷۳۲ است"
+    ),
+    false
+  );
+});
+
+test("a different text test-code component is not treated as a duplicate", () => {
+  assert.equal(
+    areMemoryValuesSemanticallySimilar(
+      "کد آزمایشی اختصاصی این پروژه: NAVI-731-آبی",
+      "نام رمز آزمایش حافظه پروژه NAVI برابر با قرمز-۷۳۱ است"
+    ),
+    false
+  );
+});
