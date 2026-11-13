@@ -686,11 +686,24 @@ function shareStableMemoryCodeIdentity(first, second) {
 
   const shared = [...firstParts].filter(part => secondParts.has(part));
   const sharesNumber = shared.some(part => /^\d{2,}$/u.test(part));
-  const sharesWord = shared.some(part => /\p{L}/u.test(part));
-  return sharesNumber && sharesWord;
+  // A project label such as NAVI is not itself a distinguishing code value.
+  // Require a shared non-label word (e.g. آبی) as well as the number.
+  const projectLabels = new Set(["navi", "code", "test"]);
+  const sharesCodeWord = shared.some(part =>
+    /\p{L}/u.test(part) && !projectLabels.has(part)
+  );
+  return sharesNumber && sharesCodeWord;
 }
 
 export function areMemoryValuesSemanticallySimilar(first, second) {
+  // If both values are explicitly code-like, do not let broad word overlap
+  // turn a different numeric or textual identifier into a duplicate.
+  const firstCodeParts = extractMemoryCodeIdentity(first);
+  const secondCodeParts = extractMemoryCodeIdentity(second);
+  if (firstCodeParts && secondCodeParts) {
+    return shareStableMemoryCodeIdentity(first, second);
+  }
+
   // Equivalent test/project identifiers may be phrased in a different order
   // and may use Persian or Latin digits (NAVI-731-آبی vs آبی-۷۳۱).
   if (shareStableMemoryCodeIdentity(first, second)) return true;

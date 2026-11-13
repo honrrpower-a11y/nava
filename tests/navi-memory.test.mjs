@@ -579,6 +579,43 @@ test("checked save fallback extracts a clearly labeled project test code", () =>
   assert.equal(proposals[0].value, "کد آزمایشی اختصاصی این پروژه: NAVI-731-آبی");
 });
 
+
+test("checked save fallback recognizes a short NAVI project-code shorthand as the existing fact", async () => {
+  const { extractNaviDeterministicMemoryProposal } = await import("../modules/navi.js");
+  const shorthand = "آبی NAVI - 731";
+  const proposals = extractNaviDeterministicMemoryProposal(shorthand);
+  assert.equal(proposals.length, 1);
+  assert.equal(proposals[0].title, "نام رمز آزمایش حافظه پروژه NAVI");
+  assert.equal(
+    areMemoryValuesSemanticallySimilar(
+      "نام رمز آزمایش حافظه پروژه NAVI برابر با «آبی-۷۳۱» است",
+      proposals[0].value
+    ),
+    true
+  );
+  assert.equal(
+    areMemoryValuesSemanticallySimilar(
+      "نام رمز آزمایش حافظه پروژه NAVI برابر با «آبی-۷۳۱» است",
+      extractNaviDeterministicMemoryProposal("آبی NAVI - 732")[0].value
+    ),
+    false
+  );
+  assert.equal(
+    areMemoryValuesSemanticallySimilar(
+      "نام رمز آزمایش حافظه پروژه NAVI برابر با «آبی-۷۳۱» است",
+      extractNaviDeterministicMemoryProposal("قرمز NAVI - 731")[0].value
+    ),
+    false
+  );
+});
+
+test("short ordinary text and incomplete NAVI codes are not promoted to memory", async () => {
+  const { extractNaviDeterministicMemoryProposal } = await import("../modules/navi.js");
+  assert.deepEqual(extractNaviDeterministicMemoryProposal("آبی"), []);
+  assert.deepEqual(extractNaviDeterministicMemoryProposal("NAVI-731"), []);
+  assert.deepEqual(extractNaviDeterministicMemoryProposal("آبی پروژه"), []);
+});
+
 test("server-authoritative memory feedback removes model claims that it saved something", () => {
   const reply = removeNaviModelMemoryClaims(
     "کد آزمایشی را ثبت کردم. چطور می‌توانم در ادامه کمکتان کنم؟"
