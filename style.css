@@ -2116,3 +2116,66 @@ body.light .nava-account-workspace .navi-workspace-tab{
   .nava-header-tabs-row .navi-workspace-tabs{gap:3px}
   .nava-header-tabs-row .navi-workspace-tab{padding:5px 6px;font-size:9px}
 }
+
+
+/* NAVI in-page workspace dock — keep the assistant beside the active studio. */
+@media (min-width: 1100px) {
+  body.navi-widget-open main.container {
+    width: auto;
+    max-width: none;
+    margin: 18px 420px 0 18px;
+  }
+
+  body.navi-widget-open .navi-widget-panel {
+    position: fixed !important;
+    top: 142px !important;
+    right: 16px !important;
+    bottom: 16px !important;
+    left: auto !important;
+    width: 388px !important;
+    max-width: calc(100vw - 32px);
+    height: auto;
+    max-height: none !important;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    transform: none !important;
+    transform-origin: top right;
+    border-radius: 20px;
+  }
+
+  body.navi-widget-open .navi-widget-panel .navi-widget-panel-head {
+    flex: 0 0 auto;
+  }
+
+  body.navi-widget-open .navi-widget-panel .request-panel {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  body.navi-widget-open .navi-widget-panel .request-content {
+    min-height: 100%;
+  }
+
+  body.navi-widget-open .navi-widget-panel.is-open {
+    animation: naviSideDockIn .22s ease-out both;
+  }
+
+  @keyframes naviSideDockIn {
+    from { opacity: 0; transform: translateX(12px) !important; }
+    to { opacity: 1; transform: translateX(0) !important; }
+  }
+}
+
+/* Tablet and mobile retain the established centered, touch-friendly dialog. */
+@media (max-width: 1099px) {
+  body.navi-widget-open main.container {
+    width: min(1120px, 92%);
+    max-width: 1120px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+}
