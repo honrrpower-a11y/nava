@@ -1545,6 +1545,50 @@ async function handleExplicitMemoryCommand(
   }
 }
 
+// Build a bounded, same-thread evidence window for an explicitly requested
+// memory save. User turns are the only source of personal facts; assistant
+// turns are included solely to resolve references such as "همان مورد".
+export function buildNaviMemoryExtractionContext(
+  history,
+  currentMessage,
+  maxMessages = 40,
+  maxChars = 24000
+) {
+  const safeLimit = Math.max(1, Math.min(Number(maxMessages) || 40, 60));
+  const charLimit = Math.max(1000, Math.min(Number(maxChars) || 24000, 30000));
+  const entries = (Array.isArray(history) ? history : [])
+    .filter(item =>
+      item &&
+      (item.role === "user" || item.role === "assistant") &&
+      String(item.content || "").trim()
+    )
+    .slice(-safeLimit)
+    .map(item => ({
+      role: item.role,
+      content: safeNaviText(item.content || "", 4000).trim()
+    }))
+    .filter(item => item.content);
+
+  const current = safeNaviText(currentMessage || "", NAVI_MAX_MESSAGE).trim();
+  const currentLine = current ? "[پیام فعلی کاربر]\n" + current : "";
+  let used = currentLine.length;
+  const selected = [];
+
+  // Retain the newest evidence first while always preserving the current turn.
+  for (let index = entries.length - 1; index >= 0; index -= 1) {
+    const item = entries[index];
+    const label = item.role === "user" ? "[پیام قبلی کاربر]" : "[پاسخ قبلی ناوی؛ فقط برای رفع ابهام]";
+    const line = label + "\n" + item.content;
+    if (used + line.length + 2 > charLimit) continue;
+    selected.push(line);
+    used += line.length + 2;
+  }
+
+  selected.reverse();
+  if (currentLine) selected.push(currentLine);
+  return selected.join("\n\n");
+}
+
 // ======================================
 // NAVI SYSTEM INSTRUCTION
 // ======================================
@@ -1556,7 +1600,8 @@ export function buildSystemInstruction({
   conversationContext,
   currentUser,
   explicitComposerSave = false,
-  currentProject = null
+  currentProject = null,
+  memoryExtractionContext = ""
 }) {
   const accountRole = currentUser?.role === "owner" ? "owner" : "user";
   const displayName = safeNaviText(
@@ -1565,17 +1610,42 @@ export function buildSystemInstruction({
   );
   const composerMemoryContext = explicitComposerSave
     ? `COMPOSER SAVE CHECKED:
-The user explicitly checked the "save this message to memory" control.
-Treat this as consent to save the single most useful durable, non-sensitive fact
-clearly stated in the current user message. Extract that fact into exactly one
-memoryProposals item. Do not ask what information the user wants to save when
-the fact is already present in the message. Do not save the instruction itself, temporary details, secrets, or sensitive information.
-Answer the user's message normally and engage with its actual subject first:
-share your view, explain, ask a useful follow-up, or continue the discussion
-as appropriate. Memory extraction is a separate background task and must never
-replace the conversational answer. If the message does not contain a clear
-fact to retain, return an empty memoryProposals array and explain briefly
-that no clear durable fact was found.`
+The user explicitly checked the memory-save control for this turn. This is the
+only consent signal. Use the current user message together with the bounded
+same-thread evidence window below to understand natural, multi-turn statements.
+Extract exactly one durable, non-sensitive fact only when the current message
+clearly states, confirms, corrects, completes, or unambiguously refers to that
+fact. The recent context may resolve pronouns, shorthand, and details spread
+across several user turns; it is not permission to mine unrelated old topics.
+
+EVIDENCE RULES:
+- Personal facts must be explicitly stated or clearly confirmed by the USER.
+- Prior NAVI replies may resolve what "این/آن/همان" refers to, but an assistant
+  suggestion is never evidence until the user clearly confirms it.
+- Prefer the latest clear user statement when the user explicitly corrects an
+  earlier statement. Do not combine old and new contradictory values.
+- If a statement is tentative, hypothetical, quoted, an example, a question,
+  or contradicted later without a clear correction, do not turn it into a fact.
+- Do not infer a stable preference from one situational request or temporary mood.
+- Compare the candidate with approved memory. If it is already represented,
+  return no proposal. If it conflicts with approved memory, propose a correction
+  only when the user has clearly and explicitly corrected that fact; otherwise
+  return no proposal.
+- Do not extract an unrelated fact merely because it appears somewhere in the
+  recent context. The current message must connect to it.
+- Never save the instruction to save, temporary details, secrets, credentials,
+  or sensitive information. Never copy the raw conversation as a memory.
+- If the evidence is ambiguous or insufficient, return an empty memoryProposals
+  array. A safe empty result is better than a guessed memory.
+
+<same_thread_memory_evidence>
+${memoryExtractionContext || "No prior same-thread evidence supplied; use only the current user message."}
+</same_thread_memory_evidence>
+
+Answer the user's message normally and engage with its actual subject first.
+Memory extraction is a separate background task and must never replace the
+conversational answer. If no clear durable fact is established, return an empty
+memoryProposals array and briefly explain that no clear fact was found.`
     : `COMPOSER SAVE NOT CHECKED:
 The user did not enable the save checkbox for this message.
 Do not save, update, merge, propose, or queue any memory from this message.
@@ -2057,6 +2127,7 @@ async function handleChat({
   // ----------------------------------
 
   let dbHistory = [];
+  let memoryExtractionHistory = [];
   let memoryFacts = [];
   let conversationMatches = [];
 
@@ -2073,6 +2144,12 @@ async function handleChat({
 
     dbHistory = Array.isArray(historyResult)
       ? historyResult
+      : [];
+
+    // Fetch a wider window only when the user explicitly requests memory saving.
+    // Ordinary chat keeps the existing ten-message context and database cost.
+    memoryExtractionHistory = input.saveToMemory === true
+      ? await getNaviDbHistory(env.NAVA_DB, 40, requestedThreadId, userId)
       : [];
 
     memoryFacts = Array.isArray(memoryResult)
@@ -2131,7 +2208,10 @@ async function handleChat({
     conversationContext,
     currentUser: auth.user,
     explicitComposerSave: input.saveToMemory === true,
-    currentProject: { id: activeProjectId, name: activeProjectName }
+    currentProject: { id: activeProjectId, name: activeProjectName },
+    memoryExtractionContext: input.saveToMemory === true
+      ? buildNaviMemoryExtractionContext(memoryExtractionHistory, message)
+      : ""
   });
 
   // ----------------------------------
