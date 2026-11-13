@@ -4,7 +4,8 @@ import assert from "node:assert/strict";
 import {
   areMemoryValuesSemanticallySimilar,
   getNaviArchivedMemory,
-  parseNaviMemoryCommand
+  parseNaviMemoryCommand,
+  searchNaviConversationHistory
 } from "../modules/navi-memory.js";
 
 test("a changed Persian favorite color is recognized as the same fact", () => {
@@ -462,4 +463,27 @@ test("generic word overlap cannot exclude semantically useful memory candidates"
 
   const candidates = selectRelevantMemories("این چیست؟", memories);
   assert.deepEqual(candidates.map(item => item.id), [11, 12]);
+});
+
+test("conversation recall is constrained to the active project workspace", async () => {
+  let sql = "";
+  let bound = [];
+  const db = {
+    prepare(query) {
+      sql = query;
+      return {
+        bind(...values) {
+          bound = values;
+          return { async all() { return { results: [
+            { thread_id: "thread-a", role: "user", content: "ادامه پروژه نوا", created_at: "2026-11-13", thread_title: "NAVA" }
+          ] }; } };
+        }
+      };
+    }
+  };
+  const rows = await searchNaviConversationHistory(db, "پروژه نوا", 8, [], "user-1", "project-nava");
+  assert.match(sql, /t\.project_id = \?/);
+  assert.deepEqual(bound, ["user-1", "project-nava", "project-nava"]);
+  assert.equal(rows.length, 1);
+  assert.equal(rows[0].threadId, "thread-a");
 });
