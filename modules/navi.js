@@ -980,6 +980,7 @@ async function handleMemory({
 
   if (!auth.valid) return auth.response;
   const userId = auth.user.id;
+  const projectId = String(url?.searchParams.get("project_id") || "project-general").slice(0,100);
 
   if (!env.NAVA_DB) {
     return errorResponse(
@@ -995,7 +996,6 @@ async function handleMemory({
     // GET: approved + pending
 
     if (request.method === "GET") {
-      const projectId = String(url?.searchParams.get("project_id") || "project-general").slice(0,100);
       const project = await env.NAVA_DB.prepare("SELECT project_id FROM navi_projects_v1 WHERE project_id=? AND owner_id=? LIMIT 1").bind(projectId,userId).first();
       if (!project) return errorResponse("پروژه انتخاب‌شده پیدا نشد.",404,corsOrigin);
       const [memories,proposals,archived] = await Promise.all([
@@ -1209,7 +1209,8 @@ async function handleMemory({
         env.NAVA_DB,
         id,
         memoryValue,
-        userId
+        userId,
+        projectId
       );
 
       if (result.notFound) {
@@ -1266,7 +1267,8 @@ async function handleMemory({
         env.NAVA_DB,
         id,
         editedValue,
-        userId
+        userId,
+        projectId
       );
 
       if (result.notFound) {
