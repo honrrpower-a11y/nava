@@ -244,6 +244,11 @@ test("isolated SQLite end-to-end: owner login, invited account, memory isolation
     });
     assert.equal(deleteOwnProject.status, 200);
     assert.equal((await deleteOwnProject.json()).deleted, true);
+    const projectsAfterDeleteResponse = await callNavi(env, "/navi-projects", "GET", { token: secondToken });
+    const projectsAfterDelete = await projectsAfterDeleteResponse.json();
+    assert.equal(projectsAfterDeleteResponse.status, 200);
+    assert.ok(!projectsAfterDelete.projects.some(project => project.project_id === secondOwnProject.project_id));
+    assert.ok(projectsAfterDelete.projects.some(project => project.project_id === "project-general"));
 
     // Public registration remains pending until the owner explicitly approves it.
     const registrationResponse = await callNavi(env, "/navi-register", "POST", {
