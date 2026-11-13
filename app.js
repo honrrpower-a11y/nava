@@ -2102,6 +2102,7 @@ async function createNaviProject() {
     await loadNaviProjects();
     naviActiveProjectId = data.project.project_id;
     if (naviProjectSelect) naviProjectSelect.value = naviActiveProjectId;
+    updateNaviProjectControls();
     sessionStorage.setItem("nava_navi_active_project", naviActiveProjectId);
     naviActiveThreadId = "";
     await loadNaviThreads();
