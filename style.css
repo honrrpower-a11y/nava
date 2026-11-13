@@ -2179,3 +2179,143 @@ body.light .nava-account-workspace .navi-workspace-tab{
     margin-right: auto;
   }
 }
+
+
+/* Mobile NAVI companion dock — keep the active studio visible. */
+@media (max-width: 600px) {
+  body.navi-widget-open .navi-widget-panel {
+    position: fixed !important;
+    top: auto !important;
+    right: auto !important;
+    bottom: calc(8px + env(safe-area-inset-bottom, 0px)) !important;
+    left: 50% !important;
+    width: calc(100vw - 16px) !important;
+    height: min(50dvh, 420px) !important;
+    max-height: calc(100dvh - 104px) !important;
+    min-height: min(220px, calc(100dvh - 112px)) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
+    transform: translateX(-50%) !important;
+    transform-origin: bottom center !important;
+    border-radius: 18px !important;
+    box-shadow: 0 16px 48px rgba(0,0,0,.42), 0 0 22px rgba(37,202,255,.10);
+  }
+
+  body.navi-widget-open .navi-widget-panel.is-open {
+    animation: naviMobileDockIn .22s ease-out both !important;
+  }
+
+  body.navi-widget-open .navi-widget-panel .navi-widget-panel-head {
+    flex: 0 0 52px;
+    min-height: 52px;
+  }
+
+  body.navi-widget-open .navi-widget-panel .navi-assistant-context {
+    flex: 0 0 auto;
+    max-height: 76px;
+    overflow: auto;
+    margin: 7px 9px 0;
+    padding: 7px 9px;
+  }
+
+  body.navi-widget-open .navi-widget-panel .request-panel {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
+  }
+
+  body.navi-widget-open .navi-widget-panel .request-content {
+    min-height: 0;
+    padding: 9px 11px 16px;
+  }
+
+  body.navi-widget-open .navi-widget-panel .navi-auth-panel {
+    margin: 9px 0 12px;
+    padding: 11px;
+  }
+
+  body.navi-widget-open .navi-widget-panel .navi-auth-panel p,
+  body.navi-widget-open .navi-widget-panel .navi-password {
+    margin-bottom: 8px;
+  }
+
+  body.navi-widget-open .navi-widget-panel .navi-chat-toolbar {
+    margin: 6px 0 9px;
+    padding: 0;
+  }
+
+  body.navi-widget-open .navi-widget-panel .navi-workspace-tabs {
+    position: sticky;
+    top: 0;
+    z-index: 4;
+    margin: 0 0 9px;
+    padding: 5px 3px;
+    background: var(--panel);
+  }
+
+  body.navi-widget-open .navi-widget-panel .request-content:has(#naviChatArea:not([hidden])) > h2,
+  body.navi-widget-open .navi-widget-panel .request-content:has(#naviChatArea:not([hidden])) > p {
+    display: none;
+  }
+
+  body.navi-widget-open .navi-widget-panel .request-textarea {
+    min-height: 76px;
+    max-height: 112px;
+  }
+
+  body.navi-widget-open .navi-widget-panel .navi-send-toolbar {
+    position: sticky;
+    bottom: -16px;
+    z-index: 3;
+    padding: 8px 0 5px;
+    background: var(--panel);
+  }
+
+  .navi-assistant-widget {
+    right: 10px;
+    bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .navi-widget-toggle {
+    min-height: 48px;
+    padding: 6px 10px;
+    border-radius: 15px;
+  }
+
+  .navi-widget-orb {
+    width: 34px;
+    height: 34px;
+  }
+
+  .navi-widget-toggle-copy strong { font-size: 11px; }
+  .navi-widget-toggle-copy small { font-size: 9px; }
+
+  @keyframes naviMobileDockIn {
+    from { opacity: 0; transform: translate(-50%, 14px) !important; }
+    to { opacity: 1; transform: translate(-50%, 0) !important; }
+  }
+}
+
+@media (max-width: 380px) {
+  body.navi-widget-open .navi-widget-panel .navi-widget-panel-head {
+    min-height: 48px;
+    flex-basis: 48px;
+  }
+
+  body.navi-widget-open .navi-widget-panel .navi-workspace-tab {
+    min-height: 38px;
+    padding: 6px 3px;
+    font-size: 9px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body.navi-widget-open .navi-widget-panel.is-open {
+    animation: none !important;
+  }
+}
