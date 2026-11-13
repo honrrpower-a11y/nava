@@ -992,6 +992,8 @@ async function handleMemory({
 
   try {
     await ensureNaviMainThread(env.NAVA_DB, userId);
+    const activeProject = await env.NAVA_DB.prepare("SELECT project_id FROM navi_projects_v1 WHERE project_id=? AND owner_id=? LIMIT 1").bind(projectId,userId).first();
+    if (!activeProject) return errorResponse("پروژه انتخاب‌شده پیدا نشد.",404,corsOrigin);
 
     // GET: approved + pending
 
