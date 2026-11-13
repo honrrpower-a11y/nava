@@ -17,7 +17,7 @@ CREATE TABLE IF NOT EXISTS navi_projects_v1 (
 );
 
 ALTER TABLE navi_chat_threads_v1
-  ADD COLUMN project_id TEXT NOT NULL DEFAULT 'general';
+  ADD COLUMN project_id TEXT NOT NULL DEFAULT 'project-general';
 
 ALTER TABLE navi_memory_facts_v1
   ADD COLUMN project_id TEXT;
