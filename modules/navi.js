@@ -284,6 +284,12 @@ export function parseNaviGeminiResponse(rawText) {
 // MEMORY PROPOSAL VALIDATION
 // ======================================
 
+export function isExplicitMemoryCorrectionMessage(message) {
+  const text = normalizeText(message);
+  return /(?:تصمیم|اطلاعات|اولویت|مورد|حرف)\\s*(?:قبلی|پیشین)(?:\\s*ام|\\s*‌ام)?[\\s\\S]{0,80}(?:اصلاح|تصحیح|تغییر)/u.test(text) ||
+    /(?:اصلاح|تصحیح)\\s*(?:می‌کنم|می کنم|کردم|کنم|می‌شود|می شود)/u.test(text);
+}
+
 export function shouldSuppressNaviMemoryProposals(message) {
   const text = normalizeText(message);
 
@@ -429,9 +435,16 @@ function normalizeMemoryProposals(proposals) {
 
     seen.add(normalized);
 
+    const correctionOf = safeNaviText(
+      item.correctionOf || "",
+      NAVI_MAX_MEMORY_VALUE + 1
+    );
+    if (correctionOf.length > NAVI_MAX_MEMORY_VALUE) continue;
+
     result.push({
       title: title || "یادداشت کاربر",
-      value
+      value,
+      ...(correctionOf.trim() ? { correctionOf: correctionOf.trim() } : {})
     });
   }
 
@@ -1626,6 +1639,10 @@ EVIDENCE RULES:
   suggestion is never evidence until the user clearly confirms it.
 - Prefer the latest clear user statement when the user explicitly corrects an
   earlier statement. Do not combine old and new contradictory values.
+- For an explicit correction of an approved memory, include "correctionOf" in
+  that proposal and copy the exact complete old memory_value from the approved
+  memory context. Never paraphrase or invent the target. If exactly one target
+  cannot be identified, return no proposal; the server will not guess.
 - If a statement is tentative, hypothetical, quoted, an example, a question,
   or contradicted later without a clear correction, do not turn it into a fact.
 - Do not infer a stable preference from one situational request or temporary mood.
@@ -1819,8 +1836,13 @@ The server will ask the user for approval after your answer; do not ask for memo
 The proposal must be one clear, self-contained fact.
 Do not combine unrelated facts.
 Do not rewrite uncertain statements as confirmed facts.
-Do not propose a fact that conflicts with approved memory.
-Never modify approved memory automatically.
+Do not propose a fact that conflicts with approved memory unless the current
+user message explicitly corrects that exact fact. For an explicit correction,
+include "correctionOf" with the exact complete approved memory value copied from
+the supplied approved-memory context. If the exact target is unavailable or
+ambiguous, return an empty memoryProposals array.
+Never modify approved memory automatically without the current checked save
+consent and a uniquely verified correction target.
 
 ${composerMemoryContext}
 
@@ -1835,7 +1857,8 @@ Do not add text outside the JSON.
   "memoryProposals": [
     {
       "title": "عنوان کوتاه",
-      "value": "یک واقعیت روشن و مستقل"
+      "value": "یک واقعیت روشن و مستقل",
+      "correctionOf": "Exact full approved memory value being corrected; include only for an explicit correction"
     }
   ]
 }
@@ -2283,9 +2306,14 @@ async function handleChat({
     ? normalizeMemoryProposals(parsed.memoryProposals)
     : [];
 
-  // Keep the deterministic fallback only for an explicitly checked save.
+  const explicitMemoryCorrection = isExplicitMemoryCorrectionMessage(message);
+
+  // A correction must identify its exact approved target through the structured
+  // model output. Never fall back to saving the whole correction sentence as a
+  // new independent memory.
   if (input.saveToMemory === true &&
       !suppressMemoryProposals &&
+      !explicitMemoryCorrection &&
       normalizedProposals.length === 0) {
     normalizedProposals = normalizeMemoryProposals(
       extractNaviDeterministicMemoryProposal(message)
@@ -2296,7 +2324,11 @@ async function handleChat({
     const selectedProposal = normalizedProposals[0] || null;
 
     if (!selectedProposal) {
-      manualMemorySaveError = "ناوی در این پیام اطلاعات ماندگار و قابل ذخیره‌ای تشخیص نداد؛ چیزی ذخیره نشد.";
+      manualMemorySaveError = explicitMemoryCorrection
+        ? "هدف دقیق اصلاح در حافظه مشخص نشد؛ برای جلوگیری از ثبت تکراری، هیچ تغییری انجام نشد."
+        : "ناوی در این پیام اطلاعات ماندگار و قابل ذخیره‌ای تشخیص نداد؛ چیزی ذخیره نشد.";
+    } else if (explicitMemoryCorrection && !selectedProposal.correctionOf) {
+      manualMemorySaveError = "حافظه قبلیِ موردنظر برای اصلاح به‌طور دقیق شناسایی نشد؛ هیچ رکوردی تغییر نکرد.";
     } else if (selectedProposal.value.length > NAVI_MAX_MEMORY_VALUE) {
       manualMemorySaveError = "برداشت ناوی از سقف ۱۲۰۰۰ نویسه بیشتر است و در حافظه ذخیره نشد.";
     } else if (containsSensitiveInformation(selectedProposal.value)) {
@@ -2309,7 +2341,8 @@ async function handleChat({
           selectedProposal.title || "برداشت NAVI از پیام کاربر",
           "composer_manual_save",
           userId,
-          activeProjectId
+          activeProjectId,
+          selectedProposal.correctionOf || null
         );
         if (manualMemorySaveResult.tooLong) manualMemorySaveError = "ترکیب این اطلاعات با حافظه قبلی از سقف مجاز عبور می‌کند؛ ذخیره انجام نشد.";
         else if (manualMemorySaveResult.invalid || manualMemorySaveResult.sensitive) manualMemorySaveError = "برداشت NAVI شرایط لازم برای ذخیره در حافظه را ندارد.";
@@ -2444,7 +2477,7 @@ async function handleChat({
       proposalsMergeCandidates,
       proposals: createdProposals,
       proposalProcessingFailed,
-      manualSaved: Boolean(manualMemorySaveResult && (manualMemorySaveResult.inserted || manualMemorySaveResult.updated || manualMemorySaveResult.merged)),
+      manualSaved: Boolean(manualMemorySaveResult && (manualMemorySaveResult.inserted || manualMemorySaveResult.updated || manualMemorySaveResult.merged || manualMemorySaveResult.replaced)),
       manualDuplicate: Boolean(manualMemorySaveResult?.duplicate),
       manualSaveError: manualMemorySaveError || null
     }
