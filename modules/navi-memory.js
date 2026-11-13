@@ -1295,16 +1295,19 @@ export async function saveNaviMemoryFact(
       return { correctionTargetNotFound: true };
     }
 
+    // Use the same project visibility rules as approved-memory reads:
+    // general-project facts may be stored with either NULL or project-general,
+    // while other projects may also see only explicitly global memory keys.
+    const projectScope = getMemoryProjectScope(memoryProjectId);
     const scopedRows = await db.prepare(`
       SELECT id, memory_key, memory_value, status
       FROM navi_memory_facts_v1
       WHERE owner_id = ?
         AND status = 'approved'
-        AND ((? IS NULL AND project_id IS NULL) OR project_id = ?)
+        AND ${projectScope.sql}
     `).bind(
       ownerId,
-      memoryProjectId,
-      memoryProjectId
+      ...projectScope.bindings
     ).all();
 
     const targetMatches = (scopedRows.results || []).filter(item =>
@@ -1340,25 +1343,23 @@ export async function saveNaviMemoryFact(
         UPDATE navi_memory_facts_v1
         SET memory_value = ?, source = ?, updated_at = datetime('now')
         WHERE id = ? AND owner_id = ? AND status = 'approved'
-          AND ((? IS NULL AND project_id IS NULL) OR project_id = ?)
+          AND ${projectScope.sql}
       `).bind(
         memoryValue,
         memorySource,
         target.id,
         ownerId,
-        memoryProjectId,
-        memoryProjectId
+        ...projectScope.bindings
       ),
       ...exactDuplicates.map(item => db.prepare(`
         UPDATE navi_memory_facts_v1
         SET status = 'archived', updated_at = datetime('now')
         WHERE id = ? AND owner_id = ? AND status = 'approved'
-          AND ((? IS NULL AND project_id IS NULL) OR project_id = ?)
+          AND ${projectScope.sql}
       `).bind(
         item.id,
         ownerId,
-        memoryProjectId,
-        memoryProjectId
+        ...projectScope.bindings
       ))
     ];
 
