@@ -286,8 +286,8 @@ export function parseNaviGeminiResponse(rawText) {
 
 export function isExplicitMemoryCorrectionMessage(message) {
   const text = normalizeText(message);
-  return /(?:تصمیم|اطلاعات|اولویت|مورد|حرف)\\s*(?:قبلی|پیشین)(?:\\s*ام|\\s*‌ام)?[\\s\\S]{0,80}(?:اصلاح|تصحیح|تغییر)/u.test(text) ||
-    /(?:اصلاح|تصحیح)\\s*(?:می‌کنم|می کنم|کردم|کنم|می‌شود|می شود)/u.test(text);
+  return /(?:تصمیم|اطلاعات|اولویت|مورد|حرف)\s*(?:قبلی|پیشین)(?:\s*ام|\s*‌ام)?[\s\S]{0,80}(?:اصلاح|تصحیح|تغییر)/u.test(text) ||
+    /(?:اصلاح|تصحیح)\s*(?:می‌کنم|می کنم|کردم|کنم|می‌شود|می شود)/u.test(text);
 }
 
 export function shouldSuppressNaviMemoryProposals(message) {
@@ -401,7 +401,7 @@ export function removeNaviModelMemoryClaims(reply) {
   return cleaned || "پیامت را بررسی کردم.";
 }
 
-function normalizeMemoryProposals(proposals) {
+export function normalizeMemoryProposals(proposals) {
   if (!Array.isArray(proposals)) return [];
 
   const result = [];
