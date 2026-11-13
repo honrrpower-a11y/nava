@@ -2311,7 +2311,7 @@ async function handleThreads({ request, env, origin, corsOrigin, url }) {
   const userId = auth.user.id;
   if (!env.NAVA_DB) return errorResponse("اتصال دیتابیس NAVI برقرار نیست.", 500, corsOrigin);
   try {
-    await env.NAVA_DB.prepare("INSERT OR IGNORE INTO navi_projects_v1 (project_id,owner_id,slug,name,description,is_system,created_at,updated_at) VALUES (?,?,?,?,?,1,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)").bind("project-general",userId,"general","عمومی","گفت‌وگوهای عمومی.",1).run();
+    await env.NAVA_DB.prepare("INSERT OR IGNORE INTO navi_projects_v1 (project_id,owner_id,slug,name,description,is_system,created_at,updated_at) VALUES (?,?,?,?,?,1,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)").bind("project-general",userId,"general","عمومی","گفت‌وگوهای عمومی.").run();
     await ensureNaviMainThread(env.NAVA_DB, userId);
     if (request.method === "GET") {
       const projectId = String(url?.searchParams.get("project_id") || "project-general").slice(0,100);
