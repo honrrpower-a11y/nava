@@ -2459,6 +2459,7 @@ naviLoginForm.addEventListener("submit", async event => {
     naviMemoryLoaded = false;
 
     showNaviChat();
+    restoreNavaReturnContext();
 
     await loadNaviProjects();
     await loadNaviThreads();
@@ -2470,8 +2471,6 @@ naviLoginForm.addEventListener("submit", async event => {
         "وارد ناوی شدی؛ اما دریافت تاریخچه فعلاً ممکن نیست. می‌توانی دوباره تلاش کنی."
       );
     }
-
-    restoreNavaReturnContext();
 
   } catch (error) {
     console.error("NAVI login error:", error);

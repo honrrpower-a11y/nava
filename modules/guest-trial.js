@@ -1,6 +1,7 @@
 // Server-enforced guest trial quota for NAVA's browser-side logo studio.
 // Visitor identifiers and client IPs are HMACed; raw identifiers/IPs are never stored.
 import { json } from "./shared.js";
+import { ALLOWED_ORIGIN } from "./config.js";
 import { getNaviSigningKey, authorizeNaviRequest } from "./navi-auth.js";
 
 const GUEST_TRIAL_LIMIT = 2;
@@ -31,7 +32,7 @@ function error(message, status, corsOrigin, extra = {}) {
 }
 
 export async function handleGuestTrial({ request, env, origin, corsOrigin }) {
-  if (origin !== "https://honrrpower-a11y.github.io") return error("مبدأ درخواست مجاز نیست.", 403, corsOrigin);
+  if (origin !== ALLOWED_ORIGIN) return error("مبدأ درخواست مجاز نیست.", 403, corsOrigin);
   if (request.method !== "POST") return error("روش درخواست پشتیبانی نمی‌شود.", 405, corsOrigin);
   if (!env.NAVA_DB || !env.NAVI_SESSION_SECRET) {
     return error("سرویس سهمیه آزمایشی موقتاً در دسترس نیست.", 503, corsOrigin);
