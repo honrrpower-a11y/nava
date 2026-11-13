@@ -1360,3 +1360,39 @@ body.light .nava-orbit-icon{color:#a96d20;border-color:rgba(193,127,37,.28);back
 @media(prefers-reduced-motion:reduce){
   .nava-orbit-button,.nava-orbit-track,.nava-orbit-track:before,.nava-orbit-track:after{animation:none!important;will-change:auto}
 }
+
+/* Preserve the studio identity and card treatment while changing only the layout. */
+.nava-home-eyebrow{display:inline-flex;align-items:center;gap:8px;color:var(--gold);font-size:10px;font-weight:700;letter-spacing:3px;direction:ltr}
+.nava-home-eyebrow:before,.nava-home-eyebrow:after{content:"";width:24px;height:1px;background:linear-gradient(90deg,transparent,var(--gold))}
+.nava-home-eyebrow:after{transform:rotate(180deg)}
+.nava-home-intro h1{margin:13px 0 8px;font-size:clamp(27px,4.5vw,42px);line-height:1.5;color:var(--text)}
+.nava-home-intro h1 span{background:linear-gradient(90deg,var(--gold2),var(--blue),var(--gold));-webkit-background-clip:text;background-clip:text;color:transparent}
+.nava-home-intro p{max-width:580px;margin:0 auto;color:var(--muted);font-size:13px;line-height:2}
+.nava-center-label{color:var(--gold2);font-weight:700;text-shadow:0 0 16px rgba(229,184,94,.22)}
+.nava-orbit-button{
+  position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  width:100%;overflow:hidden;border:1px solid rgba(229,184,94,.24);
+  color:var(--text);
+  background:linear-gradient(145deg,color-mix(in srgb,var(--panel) 94%,#1b4160),color-mix(in srgb,var(--panel) 96%,#7b5520));
+  box-shadow:0 12px 30px rgba(0,0,0,.14),inset 0 1px rgba(255,255,255,.035);
+  transition:border-color .25s,box-shadow .25s,background .25s;
+}
+.nava-orbit-button:before{
+  content:"";position:absolute;inset:0;
+  background:radial-gradient(circle at 50% 0,rgba(229,184,94,.12),transparent 68%);
+  opacity:.8;pointer-events:none;
+}
+.nava-orbit-button:hover,.nava-orbit-button:focus-visible{
+  border-color:var(--gold);outline:none;
+  box-shadow:0 13px 34px rgba(0,0,0,.2),0 0 24px rgba(229,184,94,.13),0 0 18px rgba(37,202,255,.08);
+}
+.nava-orbit-icon{
+  position:relative;display:grid;place-items:center;
+  border:1px solid rgba(229,184,94,.26);border-radius:11px;
+  color:var(--gold2);background:linear-gradient(135deg,rgba(229,184,94,.16),rgba(37,202,255,.09));
+  box-shadow:0 0 16px rgba(229,184,94,.08);line-height:1;
+}
+.nava-orbit-title{position:relative;color:var(--gold2);font-weight:700;white-space:nowrap}
+.nava-orbit-caption{position:relative;color:var(--muted);line-height:1.5;white-space:nowrap}
+.nava-home-footnote{display:flex;justify-content:center;align-items:center;gap:8px;color:var(--muted);font-size:11px;text-align:center}
+.nava-home-footnote span{color:var(--gold);font-size:14px}
