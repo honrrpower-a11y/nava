@@ -1640,3 +1640,69 @@ body.light .nava-orbit-icon{color:#a96d20;border-color:rgba(193,127,37,.28);back
   .logo-orb,.logo-orb:before,.logo-orb:after,
   .navi-widget-orb,.navi-widget-orb:before{animation:none!important}
 }
+
+
+/* NAVA account workspace — projects, memory and owner tools live on the homepage. */
+.nava-account-workspace{
+  position:relative;
+  max-width:1040px;
+  margin:38px auto 52px;
+  padding:clamp(18px,3vw,30px);
+  border:1px solid rgba(229,184,94,.28);
+  border-radius:24px;
+  background:
+    radial-gradient(circle at 92% 0,rgba(37,202,255,.09),transparent 34%),
+    radial-gradient(circle at 5% 100%,rgba(229,184,94,.08),transparent 38%),
+    var(--card-surface);
+  box-shadow:var(--shadow);
+}
+.nava-account-workspace[hidden]{display:none!important}
+.nava-account-workspace-heading{
+  display:flex;align-items:center;justify-content:space-between;gap:18px;
+  margin-bottom:20px;
+}
+.nava-account-eyebrow{
+  display:block;margin-bottom:7px;color:var(--gold);
+  font-size:9px;font-weight:800;letter-spacing:2px;direction:ltr;
+}
+.nava-account-workspace-heading h2{margin:0 0 7px;color:var(--text);font-size:clamp(20px,3vw,27px)}
+.nava-account-workspace-heading p{margin:0;color:var(--muted);font-size:12px;line-height:2}
+.nava-account-session-mark{
+  flex:0 0 48px;width:48px;height:48px;display:grid;place-items:center;
+  border:1px solid rgba(229,184,94,.35);border-radius:15px;
+  color:var(--gold2);font-size:24px;
+  background:linear-gradient(140deg,rgba(229,184,94,.16),rgba(37,202,255,.10));
+  box-shadow:0 0 25px rgba(229,184,94,.08);
+}
+.nava-account-workspace .navi-workspace-tabs{
+  position:static;top:auto;z-index:1;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  margin:0 0 18px;
+  border-color:rgba(229,184,94,.28);
+  background:color-mix(in srgb,var(--panel) 92%,transparent);
+}
+.nava-account-workspace .navi-workspace-tabs.is-owner{grid-template-columns:repeat(3,minmax(0,1fr))}
+.nava-account-workspace .navi-workspace-tab{min-height:50px;font-size:12px}
+.nava-account-workspace .navi-workspace-panel{
+  min-width:0;padding:clamp(10px,2vw,18px);
+  border:1px solid var(--border);border-radius:18px;
+  background:color-mix(in srgb,var(--panel) 82%,transparent);
+}
+.nava-account-workspace .navi-workspace-panel>.navi-memory-panel{margin:0}
+.nava-account-workspace .navi-workspace-panel[data-navi-panel="users"]>.navi-memory-panel{padding:clamp(13px,2vw,20px)}
+.nava-account-workspace .navi-project-toolbar{border-radius:15px}
+body.light .nava-account-workspace{
+  border-color:rgba(193,127,37,.28);
+  background:radial-gradient(circle at 92% 0,rgba(22,121,213,.07),transparent 34%),linear-gradient(145deg,#fffdf8,#f5f0e7);
+}
+body.light .nava-account-workspace .navi-workspace-panel{background:rgba(255,255,255,.68)}
+@media(max-width:600px){
+  .nava-account-workspace{margin:25px 5px 38px;padding:15px 11px;border-radius:19px}
+  .nava-account-workspace-heading{align-items:flex-start;gap:10px;margin-bottom:15px}
+  .nava-account-session-mark{width:38px;height:38px;flex-basis:38px;border-radius:12px;font-size:19px}
+  .nava-account-workspace .navi-workspace-tabs{gap:5px;padding:5px;border-radius:13px}
+  .nava-account-workspace .navi-workspace-tabs.is-owner{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .nava-account-workspace .navi-workspace-tab{min-height:46px;gap:5px;padding:8px 4px;font-size:10px;white-space:normal}
+  .nava-account-workspace .navi-workspace-tab>span:first-child{font-size:15px}
+  .nava-account-workspace .navi-workspace-panel{padding:8px;border-radius:14px}
+}
