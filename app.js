@@ -704,6 +704,12 @@ function clearNaviSession() {
   naviMemoryBusy = false;
 
   if (naviChatArea) naviChatArea.hidden = true;
+  const accountWorkspace = document.getElementById("navaAccountWorkspace");
+  if (accountWorkspace) accountWorkspace.hidden = true;
+  document.querySelectorAll("#navaAccountWorkspacePanels [data-navi-panel]").forEach(panel => {
+    panel.hidden = true;
+    panel.classList.remove("is-active");
+  });
   if (naviLoginPanel) naviLoginPanel.hidden = false;
   if (naviPassword) naviPassword.value = "";
   if (naviUsername) naviUsername.value = "";
@@ -731,27 +737,51 @@ function clearNaviSession() {
   resetNaviMemoryPanel();
 }
 
-function setNaviWorkspaceTab(tabName) {
-  const allowedTabs = new Set(["chat", "projects", "memory", "users"]);
-  if (!allowedTabs.has(tabName)) return;
-  const isOwner = sessionStorage.getItem(NAVI_USER_ROLE_KEY) === "owner";
-  if (tabName === "users" && !isOwner) tabName = "chat";
 
+/* Move account-only workspaces out of the NAVI chat dialog and into the homepage. */
+function mountNavaAccountWorkspace() {
+  const workspace = document.getElementById("navaAccountWorkspace");
+  const tabs = document.getElementById("naviWorkspaceTabs");
+  const tabsSlot = document.getElementById("navaAccountTabsSlot");
+  const panelsSlot = document.getElementById("navaAccountWorkspacePanels");
+  if (!workspace || !tabs || !tabsSlot || !panelsSlot) return;
+
+  // NAVI chat remains inside its floating window; only account tools move.
+  tabs.querySelector('[data-navi-tab="chat"]')?.remove();
+  tabsSlot.appendChild(tabs);
+
+  ["projects", "memory", "users"].forEach(name => {
+    const panel = document.querySelector('[data-navi-panel="' + name + '"]');
+    if (panel) panelsSlot.appendChild(panel);
+  });
+}
+mountNavaAccountWorkspace();
+
+function setNaviWorkspaceTab(tabName) {
+  const allowedTabs = new Set(["projects", "memory", "users"]);
+  if (!allowedTabs.has(tabName)) return;
+
+  const isOwner = sessionStorage.getItem(NAVI_USER_ROLE_KEY) === "owner";
+  if (tabName === "users" && !isOwner) tabName = "projects";
+
+  const workspace = document.getElementById("navaAccountWorkspace");
   const tabBar = document.getElementById("naviWorkspaceTabs");
+  if (workspace) workspace.hidden = false;
   if (tabBar) tabBar.classList.toggle("is-owner", isOwner);
-  document.querySelectorAll("[data-navi-tab]").forEach(button => {
+
+  document.querySelectorAll("#naviWorkspaceTabs [data-navi-tab]").forEach(button => {
     const active = button.dataset.naviTab === tabName;
     button.classList.toggle("is-active", active);
     button.setAttribute("aria-selected", active ? "true" : "false");
   });
-  document.querySelectorAll("[data-navi-panel]").forEach(panel => {
+  document.querySelectorAll("#navaAccountWorkspacePanels [data-navi-panel]").forEach(panel => {
     const active = panel.dataset.naviPanel === tabName;
-    panel.hidden = !active;
-    panel.classList.toggle("is-active", active);
+    panel.hidden = !active || (tabName === "users" && !isOwner);
+    panel.classList.toggle("is-active", active && !panel.hidden);
   });
 }
 
-document.querySelectorAll("[data-navi-tab]").forEach(button => {
+document.querySelectorAll("#naviWorkspaceTabs [data-navi-tab]").forEach(button => {
   button.addEventListener("click", () => setNaviWorkspaceTab(button.dataset.naviTab));
 });
 
@@ -762,13 +792,14 @@ function showNaviChat() {
   clearLoginError();
 
   const displayName = sessionStorage.getItem(NAVI_USER_NAME_KEY) || "کاربر";
+  const isOwner = sessionStorage.getItem(NAVI_USER_ROLE_KEY) === "owner";
   naviLoginStatus.textContent = "نشست امن ناوی فعال است.";
   if (naviUserDisplay) naviUserDisplay.textContent = "حساب فعال: " + displayName;
-  if (naviAccountAdmin) naviAccountAdmin.hidden = sessionStorage.getItem(NAVI_USER_ROLE_KEY) !== "owner";
+  if (naviAccountAdmin) naviAccountAdmin.hidden = !isOwner;
   const naviOwnerTab = document.getElementById("naviOwnerTab");
-  if (naviOwnerTab) naviOwnerTab.hidden = sessionStorage.getItem(NAVI_USER_ROLE_KEY) !== "owner";
-  setNaviWorkspaceTab("chat");
-  if (sessionStorage.getItem(NAVI_USER_ROLE_KEY) === "owner") loadNaviUsers();
+  if (naviOwnerTab) naviOwnerTab.hidden = !isOwner;
+  setNaviWorkspaceTab("projects");
+  if (isOwner) loadNaviUsers();
   const accountIdentity = sessionStorage.getItem(NAVI_USER_ID_KEY) || displayName;
   showNaviWelcome("account", accountIdentity);
   setNaviStatus("در حال بازیابی گفت‌وگوهای قبلی...");
