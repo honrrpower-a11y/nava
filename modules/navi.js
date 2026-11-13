@@ -295,9 +295,9 @@ export function shouldSuppressNaviMemoryProposals(message) {
 
   // A negative consent instruction always overrides automatic memory suggestions.
   const hasNoSaveInstruction =
-    /بدون\s+(?:تأیید|تایید)(?:\s+نهایی)?(?:\s+من)?[\s\S]{0,120}(?:ذخیره|ثبت|اضافه)\s+نکن/u.test(text) ||
-    /(?:فعلاً|فعلا)[\s\S]{0,100}(?:ذخیره|ثبت|اضافه)\s+نکن/u.test(text) ||
-    /(?:ذخیره|ثبت|اضافه)\s+نکن[؛؛،,\s]*$/u.test(text);
+    /بدون\s+(?:تأیید|تایید|اجازه)(?:\s+نهایی)?(?:\s+من)?[\s\S]{0,120}(?:هیچ(?:\s+چیز)?|اطلاعات|موردی)[\s\S]{0,40}(?:ذخیره|ثبت|اضافه)\s+نکن/u.test(text) ||
+    /(?:فعلاً|فعلا)[\s\S]{0,100}(?:هیچ(?:\s+چیز)?|چیزی|اطلاعات|موردی)[\s\S]{0,40}(?:ذخیره|ثبت|اضافه)\s+نکن/u.test(text) ||
+    /(?:هیچ(?:\s+چیز)?|چیزی|اطلاعات|موردی)\s+(?:را\s+)?(?:ذخیره|ثبت|اضافه)\s+نکن[؛؛،,\s]*$/u.test(text);
 
   return hasNoSaveInstruction;
 }
@@ -440,11 +440,18 @@ export function normalizeMemoryProposals(proposals) {
       NAVI_MAX_MEMORY_VALUE + 1
     );
     if (correctionOf.length > NAVI_MAX_MEMORY_VALUE) continue;
+    const rawTargetId = item.correctionTargetId;
+    const correctionTargetId = rawTargetId === undefined || rawTargetId === null || rawTargetId === ""
+      ? null
+      : Number(rawTargetId);
+    if (correctionTargetId !== null &&
+        (!Number.isSafeInteger(correctionTargetId) || correctionTargetId <= 0)) continue;
 
     result.push({
       title: title || "یادداشت کاربر",
       value,
-      ...(correctionOf.trim() ? { correctionOf: correctionOf.trim() } : {})
+      ...(correctionOf.trim() ? { correctionOf: correctionOf.trim() } : {}),
+      ...(correctionTargetId !== null ? { correctionTargetId } : {})
     });
   }
 
@@ -1639,10 +1646,13 @@ EVIDENCE RULES:
   suggestion is never evidence until the user clearly confirms it.
 - Prefer the latest clear user statement when the user explicitly corrects an
   earlier statement. Do not combine old and new contradictory values.
-- For an explicit correction of an approved memory, include "correctionOf" in
-  that proposal and copy the exact complete old memory_value from the approved
-  memory context. Never paraphrase or invent the target. If exactly one target
-  cannot be identified, return no proposal; the server will not guess.
+- For an explicit correction of an approved memory, include BOTH
+  "correctionTargetId" and "correctionOf" in that proposal. Copy the numeric
+  id from the exact line marker "[memory id: N]" in approved-memory context,
+  and copy the exact complete old memory_value into correctionOf. Never
+  paraphrase, infer, or invent either target. If exactly one target cannot be
+  identified, return no proposal; the server will verify owner, approval status,
+  project scope, id, and old value before changing anything.
 - If a statement is tentative, hypothetical, quoted, an example, a question,
   or contradicted later without a clear correction, do not turn it into a fact.
 - Do not infer a stable preference from one situational request or temporary mood.
@@ -1838,9 +1848,10 @@ Do not combine unrelated facts.
 Do not rewrite uncertain statements as confirmed facts.
 Do not propose a fact that conflicts with approved memory unless the current
 user message explicitly corrects that exact fact. For an explicit correction,
-include "correctionOf" with the exact complete approved memory value copied from
-the supplied approved-memory context. If the exact target is unavailable or
-ambiguous, return an empty memoryProposals array.
+include BOTH "correctionTargetId" (the numeric id shown in the approved-memory
+line marker) and "correctionOf" (the exact complete approved memory value).
+If either target detail is unavailable or ambiguous, return an empty
+memoryProposals array.
 Never modify approved memory automatically without the current checked save
 consent and a uniquely verified correction target.
 
@@ -1858,7 +1869,8 @@ Do not add text outside the JSON.
     {
       "title": "عنوان کوتاه",
       "value": "یک واقعیت روشن و مستقل",
-      "correctionOf": "Exact full approved memory value being corrected; include only for an explicit correction"
+      "correctionTargetId": 123,
+      "correctionOf": "Exact full approved memory value being corrected; include both target fields only for an explicit correction"
     }
   ]
 }
@@ -2327,7 +2339,8 @@ async function handleChat({
       manualMemorySaveError = explicitMemoryCorrection
         ? "هدف دقیق اصلاح در حافظه مشخص نشد؛ برای جلوگیری از ثبت تکراری، هیچ تغییری انجام نشد."
         : "ناوی در این پیام اطلاعات ماندگار و قابل ذخیره‌ای تشخیص نداد؛ چیزی ذخیره نشد.";
-    } else if (explicitMemoryCorrection && !selectedProposal.correctionOf) {
+    } else if (explicitMemoryCorrection &&
+               (!selectedProposal.correctionOf || !selectedProposal.correctionTargetId)) {
       manualMemorySaveError = "حافظه قبلیِ موردنظر برای اصلاح به‌طور دقیق شناسایی نشد؛ هیچ رکوردی تغییر نکرد.";
     } else if (selectedProposal.value.length > NAVI_MAX_MEMORY_VALUE) {
       manualMemorySaveError = "برداشت ناوی از سقف ۱۲۰۰۰ نویسه بیشتر است و در حافظه ذخیره نشد.";
@@ -2342,7 +2355,8 @@ async function handleChat({
           "composer_manual_save",
           userId,
           activeProjectId,
-          selectedProposal.correctionOf || null
+          selectedProposal.correctionOf || null,
+          selectedProposal.correctionTargetId || null
         );
         if (manualMemorySaveResult.tooLong) manualMemorySaveError = "ترکیب این اطلاعات با حافظه قبلی از سقف مجاز عبور می‌کند؛ ذخیره انجام نشد.";
         else if (manualMemorySaveResult.correctionTargetAmbiguous) manualMemorySaveError = "چند حافظه با متن یکسان پیدا شد؛ برای جلوگیری از اصلاح اشتباه، هیچ تغییری انجام نشد.";
