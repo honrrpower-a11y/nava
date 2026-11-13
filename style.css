@@ -939,3 +939,213 @@ body.light .navi-workspace-tabs{box-shadow:0 8px 24px rgba(42,49,68,.08)}
   .navi-workspace-panel{animation:none!important}
   .navi-workspace-tab{transition:none!important}
 }
+
+
+/* NAVI ACCOUNT WORKSPACE REFRESH — visual-only, preserves existing roles and actions */
+.navi-widget-panel{
+  width:min(540px,calc(100vw - 28px));
+  max-height:min(84vh,820px);
+  max-height:min(84dvh,820px);
+  border-color:rgba(229,184,94,.32);
+  border-radius:22px;
+  background:
+    radial-gradient(ellipse at 8% 0%,rgba(37,202,255,.075),transparent 36%),
+    radial-gradient(ellipse at 92% 18%,rgba(229,184,94,.075),transparent 34%),
+    var(--panel);
+  box-shadow:0 26px 90px rgba(0,0,0,.48),0 0 34px rgba(37,202,255,.07);
+}
+.navi-widget-panel .navi-widget-panel-head{
+  min-height:62px;
+  padding:13px 18px;
+  border-bottom-color:rgba(229,184,94,.18);
+}
+.navi-widget-panel .navi-widget-identity{
+  gap:12px;
+}
+.navi-widget-panel .navi-widget-identity:before{
+  content:"";
+  width:34px;
+  height:34px;
+  flex:0 0 34px;
+  border:1px solid rgba(229,184,94,.42);
+  border-radius:12px;
+  background:
+    radial-gradient(circle at 35% 30%,#fff2c5 0,#e5b85e 25%,#7f5727 58%,#172338 78%);
+  box-shadow:0 0 18px rgba(229,184,94,.18),inset 0 0 10px rgba(255,255,255,.18);
+}
+.navi-widget-panel .navi-chat-toolbar{
+  display:flex;
+  align-items:center;
+  gap:8px 12px;
+  padding:11px 12px;
+  margin:2px 0 13px;
+  border:1px solid var(--border);
+  border-radius:14px;
+  background:linear-gradient(110deg,rgba(229,184,94,.075),rgba(37,202,255,.045));
+}
+.navi-widget-panel .navi-chat-toolbar .navi-status{
+  display:inline-flex;
+  align-items:center;
+  gap:7px;
+  margin:0;
+  color:var(--muted);
+  font-size:10px;
+}
+.navi-widget-panel .navi-chat-toolbar .navi-status:before{
+  content:"";
+  width:7px;
+  height:7px;
+  flex:0 0 7px;
+  border-radius:50%;
+  background:#65c99a;
+  box-shadow:0 0 0 4px rgba(101,201,154,.10);
+}
+.navi-widget-panel .navi-user-display{
+  color:var(--gold2);
+  font-size:11px;
+  font-weight:700;
+}
+.navi-widget-panel .navi-logout{
+  margin-right:auto;
+  padding:7px 10px;
+  border-radius:9px;
+  font-size:10px;
+}
+.navi-widget-panel .navi-workspace-tabs{
+  top:61px;
+  gap:7px;
+  margin:9px 0 16px;
+  padding:6px;
+  border-color:rgba(229,184,94,.24);
+  border-radius:16px;
+  background:color-mix(in srgb,var(--panel) 96%,transparent);
+  box-shadow:0 10px 28px rgba(0,0,0,.18);
+}
+.navi-widget-panel .navi-workspace-tab{
+  min-height:47px;
+  border-radius:11px;
+  font-size:11px;
+}
+.navi-widget-panel .navi-workspace-tab.is-active{
+  background:linear-gradient(135deg,rgba(229,184,94,.19),rgba(37,202,255,.09));
+  box-shadow:inset 0 0 18px rgba(229,184,94,.045),0 5px 15px rgba(0,0,0,.12);
+}
+.navi-widget-panel .navi-workspace-panel{
+  padding:4px 2px 10px;
+}
+.navi-widget-panel .navi-thread-toolbar{
+  margin:4px 0 10px;
+}
+.navi-widget-panel .navi-thread-toolbar-actions{
+  width:100%;
+}
+.navi-widget-panel .navi-new-thread{
+  min-height:39px;
+  padding:9px 14px;
+  border-radius:11px;
+}
+.navi-widget-panel .navi-delete-thread-current{
+  min-height:39px;
+  border-radius:11px;
+}
+.navi-widget-panel .navi-thread-list{
+  max-height:150px;
+  gap:8px;
+  padding:2px 1px 5px;
+}
+.navi-widget-panel .navi-thread-item{
+  min-height:40px;
+  padding:10px 12px;
+  border-radius:11px;
+  background:color-mix(in srgb,var(--panel2) 72%,transparent);
+}
+.navi-widget-panel .navi-thread-item.active{
+  border-color:rgba(229,184,94,.65);
+  background:linear-gradient(100deg,rgba(229,184,94,.13),rgba(37,202,255,.055));
+}
+.navi-widget-panel .navi-workspace-panel[data-navi-panel="chat"]>.field-label{
+  display:block;
+  margin:15px 2px 8px;
+  font-size:11px;
+}
+.navi-widget-panel .request-select,
+.navi-widget-panel .request-textarea{
+  border-color:rgba(229,184,94,.22);
+  border-radius:13px;
+  background:var(--bg);
+}
+.navi-widget-panel .navi-composer{
+  border-color:rgba(229,184,94,.24);
+  border-radius:14px;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.025);
+}
+.navi-widget-panel .navi-composer .request-textarea{
+  min-height:118px;
+  padding:13px 14px;
+}
+.navi-widget-panel .navi-send-toolbar .btn-primary{
+  width:100%;
+  min-height:44px;
+  border-radius:12px;
+}
+.navi-widget-panel .navi-memory-toggle{
+  border:1px solid rgba(229,184,94,.18);
+  border-radius:12px;
+  background:linear-gradient(110deg,rgba(229,184,94,.085),rgba(37,202,255,.045));
+}
+.navi-widget-panel .navi-project-toolbar{
+  gap:12px;
+  padding:17px;
+  border-color:rgba(229,184,94,.24);
+  border-radius:16px;
+  background:linear-gradient(145deg,var(--panel2),var(--panel));
+}
+.navi-widget-panel .navi-project-toolbar>label{
+  font-size:13px;
+}
+.navi-widget-panel #naviProjectSelect,
+.navi-widget-panel #naviNewProjectName{
+  min-height:43px;
+  border-radius:11px;
+  border-color:rgba(229,184,94,.23);
+}
+.navi-widget-panel #naviCreateProject{
+  min-height:43px;
+  padding-inline:14px;
+  border-radius:11px;
+}
+.navi-widget-panel .navi-memory-panel{
+  border-color:rgba(229,184,94,.22);
+  border-radius:15px;
+}
+.navi-widget-panel .navi-memory-card{
+  border-radius:13px;
+}
+body.light .navi-widget-panel{
+  background:
+    radial-gradient(ellipse at 8% 0%,rgba(22,121,213,.055),transparent 36%),
+    radial-gradient(ellipse at 92% 18%,rgba(193,127,37,.055),transparent 34%),
+    var(--panel);
+  box-shadow:0 24px 75px rgba(42,49,68,.22);
+}
+body.light .navi-widget-panel .navi-chat-toolbar{
+  background:linear-gradient(110deg,rgba(193,127,37,.07),rgba(22,121,213,.035));
+}
+@media(max-width:600px){
+  .navi-widget-panel{
+    width:calc(100vw - 16px);
+    max-height:88vh;
+    max-height:88dvh;
+    border-radius:18px;
+  }
+  .navi-widget-panel .navi-widget-panel-head{min-height:57px;padding:11px 13px}
+  .navi-widget-panel .navi-workspace-tabs{top:56px;gap:4px;padding:5px}
+  .navi-widget-panel .navi-workspace-tab{min-height:44px;gap:4px;padding:7px 3px;font-size:10px}
+  .navi-widget-panel .navi-workspace-tab>span:first-child{font-size:14px}
+  .navi-widget-panel .navi-chat-toolbar{padding:9px 10px}
+  .navi-widget-panel .navi-thread-list{max-height:125px}
+  .navi-widget-panel .navi-project-toolbar{padding:13px}
+}
+@media(prefers-reduced-motion:reduce){
+  .navi-widget-panel .navi-workspace-tab{transition:none!important}
+}
