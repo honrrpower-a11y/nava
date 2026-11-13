@@ -541,3 +541,13 @@ test("a different text test-code component is not treated as a duplicate", () =>
     false
   );
 });
+
+
+test("checked save fallback extracts a quoted Persian project-code assertion", async () => {
+  const { extractNaviDeterministicMemoryProposal } = await import("../modules/navi.js");
+  const message = "درست است، نام رمز آزمایش حافظه پروژه NAVI برابر با «آبی-۷۳۱» است.";
+  const proposals = extractNaviDeterministicMemoryProposal(message);
+  assert.equal(proposals.length, 1);
+  assert.equal(proposals[0].title, "نام رمز آزمایش حافظه پروژه NAVI");
+  assert.equal(proposals[0].value, message);
+});
