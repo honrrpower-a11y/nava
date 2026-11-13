@@ -858,7 +858,8 @@ body.light .navi-welcome-bubble:after{background:#fffdf8}
 /* NAVI WORKSPACE — compact, tabbed owner experience */
 .navi-workspace-tabs{
   position:sticky;
-  top:0;
+  /* Keep all workspace tabs visible directly below the sticky NAVI panel header. */
+  top:61px;
   z-index:4;
   display:grid;
   grid-template-columns:repeat(3,minmax(0,1fr));
