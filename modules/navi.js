@@ -2521,6 +2521,39 @@ async function handleProjects({ request, env, origin, corsOrigin }) {
       return successResponse({ projects: result.results || [] }, corsOrigin);
     }
     let input; try { input = await request.json(); } catch { return errorResponse("اطلاعات ارسالی معتبر نیست.",400,corsOrigin); }
+
+    if (input?.action === "delete") {
+      const projectId = String(input.projectId || "").trim().slice(0,100);
+      if (!projectId) return errorResponse("شناسه پروژه معتبر نیست.",400,corsOrigin);
+
+      const project = await env.NAVA_DB.prepare(
+        "SELECT project_id,name,is_system FROM navi_projects_v1 WHERE project_id=? AND owner_id=? LIMIT 1"
+      ).bind(projectId,userId).first();
+      if (!project) return errorResponse("پروژه پیدا نشد یا به این حساب تعلق ندارد.",404,corsOrigin);
+      if (Number(project.is_system) !== 0 || projectId === "project-general") {
+        return errorResponse("پروژه‌های پیش‌فرض قابل حذف نیستند.",403,corsOrigin);
+      }
+
+      // Delete only data scoped to this user's custom project. General/account-wide
+      // memories (project_id IS NULL) and every other project remain untouched.
+      await env.NAVA_DB.batch([
+        env.NAVA_DB.prepare(
+          "DELETE FROM navi_chat_messages_v1 WHERE thread_id IN (SELECT thread_id FROM navi_chat_threads_v1 WHERE owner_id=? AND project_id=?)"
+        ).bind(userId,projectId),
+        env.NAVA_DB.prepare(
+          "DELETE FROM navi_chat_threads_v1 WHERE owner_id=? AND project_id=?"
+        ).bind(userId,projectId),
+        env.NAVA_DB.prepare(
+          "DELETE FROM navi_memory_facts_v1 WHERE owner_id=? AND project_id=?"
+        ).bind(userId,projectId),
+        env.NAVA_DB.prepare(
+          "DELETE FROM navi_projects_v1 WHERE owner_id=? AND project_id=? AND is_system=0"
+        ).bind(userId,projectId)
+      ]);
+
+      return successResponse({ deleted:true,project:{ project_id:project.project_id,name:project.name } },corsOrigin);
+    }
+
     const name = safeNaviText(input?.name || "",60).trim();
     if (name.length < 2) return errorResponse("نام پروژه باید دست‌کم دو نویسه باشد.",400,corsOrigin);
     const duplicate = await env.NAVA_DB.prepare("SELECT project_id FROM navi_projects_v1 WHERE owner_id = ? AND lower(name)=lower(?) LIMIT 1").bind(userId,name).first();
