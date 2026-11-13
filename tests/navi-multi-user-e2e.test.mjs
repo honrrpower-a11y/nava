@@ -118,6 +118,7 @@ test("isolated SQLite end-to-end: owner login, invited account, memory isolation
     sqlite.exec(readFileSync(new URL("../migrations/0003_navi_auth_challenges.sql", import.meta.url), "utf8"));
     sqlite.exec(readFileSync(new URL("../migrations/0004_navi_registration_requests.sql", import.meta.url), "utf8"));
     sqlite.exec(readFileSync(new URL("../migrations/0001_navi_memory_schema.sql", import.meta.url), "utf8"));
+    sqlite.exec(readFileSync(new URL("../migrations/navi-production-reconcile/0003_navi_project_workspaces.sql", import.meta.url), "utf8"));
 
     const env = {
       NAVI_SESSION_SECRET: "isolated-test-session-secret-with-strong-entropy",
@@ -133,6 +134,21 @@ test("isolated SQLite end-to-end: owner login, invited account, memory isolation
     assert.equal(ownerLoginData.user.id, "owner");
     assert.equal(ownerLoginData.user.role, "owner");
     const ownerToken = ownerLoginData.token;
+
+    // Project workspaces are account-scoped and each conversation belongs to one project.
+    const projectsResponse = await callNavi(env, "/navi-projects", "GET", { token: ownerToken });
+    assert.equal(projectsResponse.status, 200);
+    const projectsData = await projectsResponse.json();
+    assert.deepEqual(new Set(projectsData.projects.map(project => project.project_id)), new Set(["project-general", "project-nava", "project-navi", "project-ritmetan"]));
+    const projectThreadResponse = await callNavi(env, "/navi-threads", "POST", { token: ownerToken, body: { title: "NAVA test", projectId: "project-nava" } });
+    assert.equal(projectThreadResponse.status, 201);
+    const projectThread = (await projectThreadResponse.json()).thread;
+    const navaThreadsResponse = await callNavi(env, "/navi-threads?project_id=project-nava", "GET", { token: ownerToken });
+    const generalThreadsResponse = await callNavi(env, "/navi-threads?project_id=project-general", "GET", { token: ownerToken });
+    assert.equal(navaThreadsResponse.status, 200);
+    assert.equal(generalThreadsResponse.status, 200);
+    assert.ok((await navaThreadsResponse.json()).threads.some(thread => thread.thread_id === projectThread.thread_id));
+    assert.ok(!(await generalThreadsResponse.json()).threads.some(thread => thread.thread_id === projectThread.thread_id));
     const ownerHash = sqlite.prepare("SELECT password_hash FROM users WHERE id = 'owner'").get().password_hash;
     assert.match(ownerHash, /^pbkdf2\$310000\$/);
 

@@ -229,6 +229,15 @@
           </section>
 
           <section class="navi-memory-panel" id="naviHistoryPanel">
+            <div class="navi-project-toolbar">
+              <label for="naviProjectSelect">پروژه فعال</label>
+              <select id="naviProjectSelect" aria-label="انتخاب پروژه"><option value="project-general">عمومی</option></select>
+              <div class="navi-project-create-row">
+                <input id="naviNewProjectName" type="text" maxlength="60" placeholder="نام پروژه جدید" aria-label="نام پروژه جدید">
+                <button id="naviCreateProject" type="button">＋ ساخت پروژه</button>
+              </div>
+              <div id="naviProjectStatus" class="navi-project-status" role="status" aria-live="polite"></div>
+            </div>
             <div class="navi-thread-toolbar">
               <div class="navi-thread-toolbar-actions">
                 <button class="navi-new-thread" id="naviNewThread" type="button">＋ گفت‌وگوی جدید</button>

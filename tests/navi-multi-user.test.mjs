@@ -18,8 +18,21 @@ function createDb() {
       thread_id TEXT PRIMARY KEY,
       owner_id TEXT NOT NULL,
       title TEXT NOT NULL,
+      project_id TEXT NOT NULL DEFAULT 'project-general',
       created_at TEXT,
       updated_at TEXT
+    );
+    CREATE TABLE navi_projects_v1 (
+      project_id TEXT NOT NULL,
+      owner_id TEXT NOT NULL,
+      slug TEXT NOT NULL,
+      name TEXT NOT NULL,
+      description TEXT NOT NULL DEFAULT '',
+      is_system INTEGER NOT NULL DEFAULT 0,
+      created_at TEXT,
+      updated_at TEXT,
+      PRIMARY KEY (owner_id, project_id),
+      UNIQUE (owner_id, slug)
     );
     CREATE TABLE navi_chat_messages_v1 (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -35,6 +48,7 @@ function createDb() {
       memory_value TEXT NOT NULL,
       source TEXT,
       status TEXT NOT NULL,
+      project_id TEXT,
       created_at TEXT,
       updated_at TEXT
     );
@@ -125,5 +139,19 @@ test("saving to a thread owned by another account is rejected", async () => {
     () => saveNaviConversation(db, "پیام", "پاسخ", getNaviMainThreadId("user-a"), "user-b"),
     /does not belong to this user/
   );
+  db.sqlite.close();
+});
+
+test("project memories stay separate while global profile facts remain shared", async () => {
+  const db = createDb();
+  await saveNaviMemoryFact(db, "جزئیات اختصاصی پروژه آلفا", "یادداشت پروژه", "test", "owner", "project-alpha");
+  await saveNaviMemoryFact(db, "جزئیات اختصاصی پروژه بتا", "یادداشت پروژه", "test", "owner", "project-beta");
+  await saveNaviMemoryFact(db, "نام نمایشی کاربر", "نام کاربر", "test", "owner", "project-alpha");
+  const alpha = await getNaviApprovedMemory(db, "owner", "project-alpha");
+  const beta = await getNaviApprovedMemory(db, "owner", "project-beta");
+  assert.equal(alpha.length, 2);
+  assert.equal(beta.length, 2);
+  assert.match(alpha.find(item => /آلفا/.test(item.memory_value)).memory_value, /آلفا/);
+  assert.match(beta.find(item => /بتا/.test(item.memory_value)).memory_value, /بتا/);
   db.sqlite.close();
 });

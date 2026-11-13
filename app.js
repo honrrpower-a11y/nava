@@ -13,6 +13,7 @@ const NAVI_AUTH_CHALLENGE_API = NAVI_BASE + "/navi-auth-challenge";
 const NAVI_API = NAVI_BASE + "/navi-chat";
 const NAVI_HISTORY_API = NAVI_BASE + "/navi-history";
 const NAVI_THREADS_API = NAVI_BASE + "/navi-threads";
+const NAVI_PROJECTS_API = NAVI_BASE + "/navi-projects";
 const NAVI_MEMORY_API = NAVI_BASE + "/navi-memory";
 const NAVI_SAVE_MESSAGE_API = NAVI_BASE + "/navi-memory-save-message";
 const NAVI_USERS_API = NAVI_BASE + "/navi-users";
@@ -84,6 +85,8 @@ let naviHistory = [];
 let naviHistoryLoading = false;
 let naviHistoryLoadPromise = null;
 let naviThreads = [];
+let naviProjects = [];
+let naviActiveProjectId = "project-general";
 let naviActiveThreadId = "owner-main";
 
 // Memory state
@@ -139,6 +142,10 @@ const naviHistoryRefresh = document.getElementById("naviHistoryRefresh");
 const naviNewThreadButton = document.getElementById("naviNewThread");
 const naviDeleteThreadButton = document.getElementById("naviDeleteThread");
 const naviThreadList = document.getElementById("naviThreadList");
+const naviProjectSelect = document.getElementById("naviProjectSelect");
+const naviNewProjectName = document.getElementById("naviNewProjectName");
+const naviCreateProjectButton = document.getElementById("naviCreateProject");
+const naviProjectStatus = document.getElementById("naviProjectStatus");
 
 // DOM elements — Memory
 const naviMemoryToggle = document.getElementById("naviMemoryToggle");
@@ -1374,7 +1381,7 @@ async function submitNaviProposalAction(id, action, memoryValue, button) {
     const payload = { action, id: Number(id) };
     if (cleanValue !== null) payload.memory_value = cleanValue;
 
-    const response = await fetch(NAVI_MEMORY_API, {
+    const response = await fetch(NAVI_MEMORY_API + "?project_id=" + encodeURIComponent(naviActiveProjectId), {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -1471,7 +1478,7 @@ async function loadNaviMemories(forceRefresh = false) {
 
   naviMemoryLoadPromise = (async () => {
     try {
-      const response = await fetch(NAVI_MEMORY_API, {
+      const response = await fetch(NAVI_MEMORY_API + "?project_id=" + encodeURIComponent(naviActiveProjectId), {
         method: "GET",
         headers: { "Authorization": "Bearer " + token 
       },
@@ -1879,25 +1886,41 @@ naviHistoryRefresh.addEventListener("click", () => {
   loadNaviHistory();
 });
 
+async function loadNaviProjects() {
+  const token = getNaviToken();
+  if (!token) return false;
+  try {
+    const response = await fetch(NAVI_PROJECTS_API, { headers: { Authorization: "Bearer " + token }, cache: "no-store" });
+    const data = await response.json();
+    if (!response.ok || !data.success) throw new Error(data.error || "دریافت پروژه‌ها ناموفق بود.");
+    naviProjects = Array.isArray(data.projects) ? data.projects : [];
+    const savedProject = sessionStorage.getItem("nava_navi_active_project");
+    if (savedProject && naviProjects.some(item => item.project_id === savedProject)) naviActiveProjectId = savedProject;
+    if (!naviProjects.some(item => item.project_id === naviActiveProjectId)) naviActiveProjectId = "project-general";
+    if (naviProjectSelect) {
+      naviProjectSelect.replaceChildren();
+      naviProjects.forEach(project => { const option = document.createElement("option"); option.value = project.project_id; option.textContent = project.name; naviProjectSelect.appendChild(option); });
+      naviProjectSelect.value = naviActiveProjectId;
+    }
+    return true;
+  } catch (error) { console.error("NAVI projects error:", error); if (naviProjectStatus) naviProjectStatus.textContent = error.message || "دریافت پروژه‌ها ناموفق بود."; return false; }
+}
+
 async function loadNaviThreads() {
   const token = getNaviToken();
   if (!token) return false;
   try {
-    const response = await fetch(NAVI_THREADS_API, {
-      headers: { "Authorization": "Bearer " + token },
-      cache: "no-store"
+    const response = await fetch(NAVI_THREADS_API + "?project_id=" + encodeURIComponent(naviActiveProjectId), {
+      headers: { "Authorization": "Bearer " + token }, cache: "no-store"
     });
     const data = await response.json();
     if (!response.ok || !data.success) throw new Error(data.error || "دریافت فهرست گفت‌وگوها ناموفق بود.");
     naviThreads = Array.isArray(data.threads) ? data.threads : [];
+    if (!naviThreads.some(item => item.thread_id === naviActiveThreadId)) naviActiveThreadId = naviThreads[0]?.thread_id || "";
     renderNaviThreads();
     return true;
-  } catch (error) {
-    console.error("NAVI threads error:", error);
-    return false;
-  }
+  } catch (error) { console.error("NAVI threads error:", error); return false; }
 }
-
 function renderNaviThreads() {
   if (!naviThreadList) return;
   naviThreadList.replaceChildren();
@@ -1948,7 +1971,12 @@ async function deleteNaviThread() {
     if (!response.ok || !data.success) throw new Error(data.error || "حذف گفت‌وگو ناموفق بود.");
     await loadNaviThreads();
     if (!naviThreads.some(item => item.thread_id === naviActiveThreadId)) {
-      naviActiveThreadId = naviThreads[0]?.thread_id || "owner-main";
+      if (!naviThreads.length) {
+        naviActiveThreadId = "";
+        await createNaviThread();
+        return;
+      }
+      naviActiveThreadId = naviThreads[0].thread_id;
       sessionStorage.setItem("nava_navi_active_thread", naviActiveThreadId);
       naviHistory = [];
       requestResponse.textContent = "";
@@ -1999,7 +2027,7 @@ async function createNaviThread() {
     const response = await fetch(NAVI_THREADS_API, {
       method: "POST",
       headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
-      body: JSON.stringify({ title: "گفت‌وگوی جدید" })
+      body: JSON.stringify({ title: "گفت‌وگوی جدید", projectId: naviActiveProjectId })
     });
     const data = await response.json();
     if (!response.ok || !data.success || !data.thread?.thread_id) throw new Error(data.error || "ساخت گفت‌وگوی جدید ناموفق بود.");
@@ -2020,6 +2048,51 @@ async function createNaviThread() {
   }
 }
 
+
+async function createNaviProject() {
+  const token = getNaviToken();
+  const name = String(naviNewProjectName?.value || "").trim();
+  if (!token || !name) { if (naviProjectStatus) naviProjectStatus.textContent = "نام پروژه را وارد کن."; return; }
+  naviCreateProjectButton.disabled = true;
+  if (naviProjectStatus) naviProjectStatus.textContent = "در حال ساخت پروژه...";
+  try {
+    const response = await fetch(NAVI_PROJECTS_API, { method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer " + token }, body: JSON.stringify({ name }) });
+    const data = await response.json();
+    if (!response.ok || !data.success || !data.project?.project_id) throw new Error(data.error || "ساخت پروژه ناموفق بود.");
+    naviNewProjectName.value = "";
+    await loadNaviProjects();
+    naviActiveProjectId = data.project.project_id;
+    if (naviProjectSelect) naviProjectSelect.value = naviActiveProjectId;
+    sessionStorage.setItem("nava_navi_active_project", naviActiveProjectId);
+    naviActiveThreadId = "";
+    await loadNaviThreads();
+    await createNaviThread();
+    naviMemoryLoaded = false;
+    await loadNaviMemories(true);
+    if (naviProjectStatus) naviProjectStatus.textContent = "پروژه ساخته شد و گفت‌وگوی تازه آماده است.";
+  } catch (error) { if (naviProjectStatus) naviProjectStatus.textContent = error.message || "ساخت پروژه ناموفق بود."; }
+  finally { naviCreateProjectButton.disabled = false; }
+}
+
+naviCreateProjectButton?.addEventListener("click", createNaviProject);
+naviNewProjectName?.addEventListener("keydown", event => { if (event.key === "Enter") createNaviProject(); });
+naviProjectSelect?.addEventListener("change", async () => {
+  const nextProjectId = naviProjectSelect.value;
+  if (!naviProjects.some(project => project.project_id === nextProjectId)) return;
+  naviActiveProjectId = nextProjectId;
+  sessionStorage.setItem("nava_navi_active_project", nextProjectId);
+  naviActiveThreadId = "";
+  naviHistory = [];
+  naviMemoryLoaded = false;
+  requestResponse.textContent = "";
+  requestResponse.classList.remove("show");
+  const loaded = await loadNaviThreads();
+  if (!loaded) { if (naviProjectStatus) naviProjectStatus.textContent = "گفت‌وگوهای این پروژه بارگذاری نشدند."; return; }
+  if (!naviActiveThreadId) { await createNaviThread(); return; }
+  await loadNaviHistory();
+  await loadNaviMemories(true);
+  if (naviProjectStatus) naviProjectStatus.textContent = "فضای کاری «" + (naviProjects.find(p => p.project_id === nextProjectId)?.name || "پروژه") + "» فعال شد.";
+});
 naviNewThreadButton?.addEventListener("click", createNaviThread);
 naviDeleteThreadButton?.addEventListener("click", deleteNaviThread);
 
@@ -2036,12 +2109,15 @@ const existingNaviToken = getNaviToken();
 
 if (existingNaviToken) {
   showNaviChat();
-  loadNaviThreads().then(() => {
+  (async () => {
+    await loadNaviProjects();
+    await loadNaviThreads();
     const saved = sessionStorage.getItem("nava_navi_active_thread");
     if (saved && naviThreads.some(item => item.thread_id === saved)) naviActiveThreadId = saved;
+    if (!naviActiveThreadId) { await createNaviThread(); return; }
     renderNaviThreads();
-    loadNaviHistory();
-  });
+    await loadNaviHistory();
+  })();
 } else {
   clearNaviSession();
   showNaviWelcome("guest");
@@ -2139,7 +2215,9 @@ naviLoginForm.addEventListener("submit", async event => {
 
     showNaviChat();
 
+    await loadNaviProjects();
     await loadNaviThreads();
+    if (!naviActiveThreadId) await createNaviThread();
     const historyLoaded = await loadNaviHistory();
 
     if (!historyLoaded && getNaviToken()) {
