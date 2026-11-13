@@ -896,7 +896,7 @@ async function handleSaveMessageMemory({
 
   try {
     const row = await env.NAVA_DB.prepare(`
-      SELECT m.id, m.content
+      SELECT m.id, m.content, t.project_id
       FROM navi_chat_messages_v1 AS m
       INNER JOIN navi_chat_threads_v1 AS t
         ON t.thread_id = m.thread_id
@@ -930,7 +930,8 @@ async function handleSaveMessageMemory({
       memoryValue,
       "پیام ذخیره‌شده از گفتگو",
       "manual_message_save",
-      userId
+      userId,
+      row.project_id || "project-general"
     );
 
     return successResponse({
@@ -967,7 +968,8 @@ async function handleMemory({
   request,
   env,
   origin,
-  corsOrigin
+  corsOrigin,
+  url
 }) {
   const auth = await authorize(
     request,
@@ -993,27 +995,16 @@ async function handleMemory({
     // GET: approved + pending
 
     if (request.method === "GET") {
-      const [
-        memories,
-        proposals,
-        archived
-      ] = await Promise.all([
-        getNaviApprovedMemory(env.NAVA_DB, userId),
-        getNaviPendingMemory(env.NAVA_DB, userId),
-        getNaviArchivedMemory(env.NAVA_DB, userId)
+      const projectId = String(url?.searchParams.get("project_id") || "project-general").slice(0,100);
+      const project = await env.NAVA_DB.prepare("SELECT project_id FROM navi_projects_v1 WHERE project_id=? AND owner_id=? LIMIT 1").bind(projectId,userId).first();
+      if (!project) return errorResponse("پروژه انتخاب‌شده پیدا نشد.",404,corsOrigin);
+      const [memories,proposals,archived] = await Promise.all([
+        getNaviApprovedMemory(env.NAVA_DB,userId,projectId),
+        getNaviPendingMemory(env.NAVA_DB,userId,projectId),
+        getNaviArchivedMemory(env.NAVA_DB,userId,projectId)
       ]);
-
-      return successResponse({
-        memories,
-        proposals,
-        archived,
-        count: memories.length,
-        proposalCount: proposals.length,
-        archivedCount: archived.length,
-        version: NAVI_VERSION
-      }, corsOrigin);
+      return successResponse({ memories,proposals,archived,count:memories.length,proposalCount:proposals.length,archivedCount:archived.length,projectId,version:NAVI_VERSION },corsOrigin);
     }
-
     let input;
 
     try {
@@ -1402,7 +1393,8 @@ async function handleExplicitMemoryCommand(
         value,
         memoryCommand.memoryKey || "یادداشت کاربر",
         memoryCommand.source || "user_command",
-        userId
+        userId,
+        activeProjectId
       );
 
       if (saveResult.tooLong) {
@@ -1990,7 +1982,7 @@ async function handleChat({
       memoryResult
     ] = await Promise.all([
       getNaviDbHistory(env.NAVA_DB, 10, requestedThreadId, userId),
-      getNaviApprovedMemory(env.NAVA_DB, userId)
+      getNaviApprovedMemory(env.NAVA_DB, userId, activeProjectId)
     ]);
 
     dbHistory = Array.isArray(historyResult)
@@ -2132,7 +2124,8 @@ async function handleChat({
           selectedProposal.value,
           selectedProposal.title || "برداشت NAVI از پیام کاربر",
           "composer_manual_save",
-          userId
+          userId,
+          activeProjectId
         );
         if (manualMemorySaveResult.tooLong) manualMemorySaveError = "ترکیب این اطلاعات با حافظه قبلی از سقف مجاز عبور می‌کند؛ ذخیره انجام نشد.";
         else if (manualMemorySaveResult.invalid || manualMemorySaveResult.sensitive) manualMemorySaveError = "برداشت NAVI شرایط لازم برای ذخیره در حافظه را ندارد.";
@@ -2167,7 +2160,8 @@ async function handleChat({
         proposal.value,
         proposal.title,
         "navi_suggestion:" + requestedThreadId,
-        userId
+        userId,
+        activeProjectId
       );
 
       if (result?.inserted) {
@@ -2473,7 +2467,8 @@ export async function handleNaviRoute({
         request,
         env,
         origin,
-        corsOrigin
+        corsOrigin,
+        url
       });
     }
 
