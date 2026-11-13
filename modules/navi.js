@@ -1079,10 +1079,12 @@ async function handleMemory({
         WHERE id = ?
           AND owner_id = ?
           AND status = 'approved'
+          AND (project_id IS NULL OR project_id = ?)
         LIMIT 1
       `).bind(
         id,
-        userId
+        userId,
+        projectId
       ).first();
 
       if (!existing) {
@@ -1100,11 +1102,13 @@ async function handleMemory({
           AND memory_value = ?
           AND status = 'approved'
           AND id != ?
+          AND (project_id IS NULL OR project_id = ?)
         LIMIT 1
       `).bind(
         userId,
         memoryValue,
-        id
+        id,
+        projectId
       ).first();
 
       if (duplicate) {
@@ -1122,10 +1126,12 @@ async function handleMemory({
         WHERE id = ?
           AND owner_id = ?
           AND status = 'approved'
+          AND (project_id IS NULL OR project_id = ?)
       `).bind(
         memoryValue,
         id,
-        userId
+        userId,
+        projectId
       ).run();
 
       // Confirm that exactly the requested approved record was updated.
@@ -1158,9 +1164,11 @@ async function handleMemory({
         WHERE id = ?
           AND owner_id = ?
           AND status = 'approved'
+          AND (project_id IS NULL OR project_id = ?)
       `).bind(
         id,
-        userId
+        userId,
+        projectId
       ).run();
 
       if (!result?.success || Number(result.meta?.changes || 0) !== 1) {
