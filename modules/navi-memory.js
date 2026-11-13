@@ -1184,11 +1184,14 @@ export async function saveNaviMemoryFact(
   value,
   key = "یادداشت کاربر",
   source = "user_command",
-  ownerId = NAVI_OWNER_ID
+  ownerId = NAVI_OWNER_ID,
+  projectId = null
 ) {
   const memoryValue = cleanMemoryValue(value);
   const memoryKey = cleanMemoryTitle(key);
   const memorySource = safeNaviText(source, 100) || "user_command";
+  const globalMemoryKeys = ["نام کاربر", "هویت دستیار", "ترجیحات پاسخ‌گویی"];
+  const memoryProjectId = globalMemoryKeys.includes(memoryKey) ? null : projectId;
 
   if (!memoryValue) {
     throw new Error("Memory value is empty.");
@@ -1266,6 +1269,7 @@ export async function saveNaviMemoryFact(
       SELECT id, memory_key, memory_value, status
       FROM navi_memory_facts_v1
       WHERE owner_id = ?
+        AND project_id IS NULL
         AND status IN ('approved', 'pending')
       ORDER BY updated_at DESC, id DESC
     `).bind(ownerId).all();
@@ -1324,7 +1328,8 @@ export async function saveNaviMemoryFact(
     memoryValue,
     null,
     memoryKey,
-    ownerId
+    ownerId,
+    memoryProjectId
   );
 
   if (duplicate) {
@@ -1337,7 +1342,8 @@ export async function saveNaviMemoryFact(
         memoryValue,
         null,
         memoryKey,
-        ownerId
+        ownerId,
+        memoryProjectId
       );
       const superseded = relatedRecords.filter(item =>
         item.id !== duplicate.id &&
@@ -1408,24 +1414,9 @@ export async function saveNaviMemoryFact(
 
   const uniqueKey = createUniqueMemoryKey(memoryKey);
 
-  const result = await db.prepare(`
-    INSERT INTO navi_memory_facts_v1 (
-      owner_id,
-      memory_key,
-      memory_value,
-      source,
-      status,
-      created_at,
-      updated_at
-    )
-    VALUES (?, ?, ?, ?, 'approved', datetime('now'), datetime('now'))
-  `).bind(
-    ownerId,
-    uniqueKey,
-    memoryValue,
-    memorySource
+  const result = await db.prepare("INSERT INTO navi_memory_facts_v1 (owner_id,memory_key,memory_value,source,status,project_id,created_at,updated_at) VALUES (?,?,?,?,'approved',?,datetime('now'),datetime('now'))").bind(
+    ownerId, memoryKey, memoryValue, memorySource, memoryProjectId
   ).run();
-
   if (!result.success) {
     throw new Error("Could not save approved memory.");
   }
