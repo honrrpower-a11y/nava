@@ -1404,6 +1404,19 @@ export async function saveNaviMemoryFact(
   );
 
   if (duplicate) {
+    // A stable project/test identifier is the fact itself. A different
+    // sentence describing the same identifier is a duplicate, not a
+    // correction: preserve every existing record and never archive aliases.
+    if (shareStableMemoryCodeIdentity(duplicate.memory_value, memoryValue)) {
+      return {
+        duplicate: true,
+        existingId: duplicate.id,
+        existingStatus: duplicate.status,
+        stableIdentity: true,
+        archivedCount: 0
+      };
+    }
+
     if (
       normalizeMemoryText(duplicate.memory_value) ===
       normalizeMemoryText(memoryValue)
