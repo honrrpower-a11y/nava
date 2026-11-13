@@ -819,7 +819,8 @@ test("SQLite integration: ambiguous correction target changes no approved memory
     db, "اولویت جدید و اصلاح‌شده", "عنوان", "test", "owner", "project-general", "یک اولویت قبلی مشخص"
   );
   assert.equal(result.correctionTargetAmbiguous, true);
-  const rows = sqlite.prepare("SELECT memory_value, status FROM navi_memory_facts_v1 ORDER BY id").all();
+  const rows = sqlite.prepare("SELECT memory_value, status FROM navi_memory_facts_v1 ORDER BY id").all()
+    .map(row => ({ memory_value: row.memory_value, status: row.status }));
   assert.deepEqual(rows, [
     { memory_value: "یک اولویت قبلی مشخص", status: "approved" },
     { memory_value: "یک اولویت قبلی مشخص", status: "approved" }
