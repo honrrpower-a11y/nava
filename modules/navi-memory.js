@@ -1270,7 +1270,8 @@ export async function saveNaviMemoryFact(
   key = "یادداشت کاربر",
   source = "user_command",
   ownerId = NAVI_OWNER_ID,
-  projectId = null
+  projectId = null,
+  correctionTargetValue = null
 ) {
   const memoryValue = cleanMemoryValue(value);
   const memoryKey = cleanMemoryTitle(key);
@@ -1283,6 +1284,100 @@ export async function saveNaviMemoryFact(
 
   if (containsSensitiveMemory(memoryValue)) {
     throw new Error("Sensitive information cannot be stored.");
+  }
+
+  // A checked, explicit correction may replace only one uniquely matched
+  // approved fact in the same account and project. The model-supplied target
+  // is treated as a locator, never trusted until it exactly matches a DB row.
+  if (correctionTargetValue !== null) {
+    const targetValue = cleanMemoryValue(correctionTargetValue);
+    if (!targetValue || containsSensitiveMemory(targetValue)) {
+      return { correctionTargetNotFound: true };
+    }
+
+    const scopedRows = await db.prepare(`
+      SELECT id, memory_key, memory_value, status
+      FROM navi_memory_facts_v1
+      WHERE owner_id = ?
+        AND status = 'approved'
+        AND ((? IS NULL AND project_id IS NULL) OR project_id = ?)
+    `).bind(
+      ownerId,
+      memoryProjectId,
+      memoryProjectId
+    ).all();
+
+    const targetMatches = (scopedRows.results || []).filter(item =>
+      normalizeMemoryText(item.memory_value) === normalizeMemoryText(targetValue)
+    );
+
+    if (targetMatches.length !== 1) {
+      return {
+        correctionTargetNotFound: targetMatches.length === 0,
+        correctionTargetAmbiguous: targetMatches.length > 1
+      };
+    }
+
+    const target = targetMatches[0];
+    if (normalizeMemoryText(target.memory_value) === normalizeMemoryText(memoryValue)) {
+      return {
+        duplicate: true,
+        existingId: target.id,
+        existingStatus: target.status,
+        memoryKey: target.memory_key,
+        correction: true
+      };
+    }
+
+    // Heal exact duplicate copies of the corrected value, but do not archive
+    // merely similar records: they may represent distinct project decisions.
+    const exactDuplicates = (scopedRows.results || []).filter(item =>
+      item.id !== target.id &&
+      normalizeMemoryText(item.memory_value) === normalizeMemoryText(memoryValue)
+    );
+    const statements = [
+      db.prepare(`
+        UPDATE navi_memory_facts_v1
+        SET memory_value = ?, source = ?, updated_at = datetime('now')
+        WHERE id = ? AND owner_id = ? AND status = 'approved'
+          AND ((? IS NULL AND project_id IS NULL) OR project_id = ?)
+      `).bind(
+        memoryValue,
+        memorySource,
+        target.id,
+        ownerId,
+        memoryProjectId,
+        memoryProjectId
+      ),
+      ...exactDuplicates.map(item => db.prepare(`
+        UPDATE navi_memory_facts_v1
+        SET status = 'archived', updated_at = datetime('now')
+        WHERE id = ? AND owner_id = ? AND status = 'approved'
+          AND ((? IS NULL AND project_id IS NULL) OR project_id = ?)
+      `).bind(
+        item.id,
+        ownerId,
+        memoryProjectId,
+        memoryProjectId
+      ))
+    ];
+
+    const results = await db.batch(statements);
+    if (!Array.isArray(results) ||
+        results.some(result => !result.success) ||
+        Number(results[0]?.meta?.changes || 0) !== 1) {
+      throw new Error("Could not safely replace the explicitly corrected memory.");
+    }
+
+    return {
+      updated: true,
+      replaced: true,
+      correction: true,
+      id: target.id,
+      memoryKey: target.memory_key,
+      memoryValue,
+      archivedCount: exactDuplicates.length
+    };
   }
 
   // نام کاربر و هویت دستیار کلیدهای ثابت هستند.
