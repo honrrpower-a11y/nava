@@ -1971,7 +1971,12 @@ async function deleteNaviThread() {
     if (!response.ok || !data.success) throw new Error(data.error || "حذف گفت‌وگو ناموفق بود.");
     await loadNaviThreads();
     if (!naviThreads.some(item => item.thread_id === naviActiveThreadId)) {
-      naviActiveThreadId = naviThreads[0]?.thread_id || "owner-main";
+      if (!naviThreads.length) {
+        naviActiveThreadId = "";
+        await createNaviThread();
+        return;
+      }
+      naviActiveThreadId = naviThreads[0].thread_id;
       sessionStorage.setItem("nava_navi_active_thread", naviActiveThreadId);
       naviHistory = [];
       requestResponse.textContent = "";
