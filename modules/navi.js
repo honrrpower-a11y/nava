@@ -1069,7 +1069,7 @@ async function handleMemory({
     // GET: approved + pending
 
     if (request.method === "GET") {
-      const project = await env.NAVA_DB.prepare("SELECT project_id FROM navi_projects_v1 WHERE project_id=? AND owner_id=? LIMIT 1").bind(projectId,userId).first();
+      const project = await env.NAVA_DB.prepare("SELECT project_id FROM navi_projects_v1 WHERE project_id=? AND owner_id=? AND (is_system = 0 OR slug = 'general' OR ? = 'owner') LIMIT 1").bind(projectId,userId,auth.user.role).first();
       if (!project) return errorResponse("پروژه انتخاب‌شده پیدا نشد.",404,corsOrigin);
       const [memories,proposals,archived] = await Promise.all([
         getNaviApprovedMemory(env.NAVA_DB,userId,projectId),
@@ -2362,13 +2362,18 @@ async function handleProjects({ request, env, origin, corsOrigin }) {
   if (!auth.valid) return auth.response;
   const userId = auth.user.id;
   if (!env.NAVA_DB) return errorResponse("اتصال دیتابیس NAVI برقرار نیست.", 500, corsOrigin);
-  const defaults = [["general","عمومی","گفت‌وگوهای عمومی."],["nava","NAVA","پلتفرم نوا، برند و استودیوها."],["navi","NAVI","توسعه دستیار، حافظه و زیرساخت."],["ritmetan","Ritmetan","محتوای ورزشی و شبکه‌های اجتماعی."]];
+  // Built-in workspaces belong to the owner account. Regular accounts receive
+  // only their own General workspace plus projects they explicitly create.
+  // The GET filter also hides legacy built-in rows previously seeded for users.
+  const defaults = auth.user.role === "owner"
+    ? [["general","عمومی","گفت‌وگوهای عمومی."],["nava","NAVA","پلتفرم نوا، برند و استودیوها."],["navi","NAVI","توسعه دستیار، حافظه و زیرساخت."],["ritmetan","Ritmetan","محتوای ورزشی و شبکه‌های اجتماعی."]]
+    : [["general","عمومی","گفت‌وگوهای عمومی."]];
   try {
     for (const [slug,name,description] of defaults) {
       await env.NAVA_DB.prepare("INSERT OR IGNORE INTO navi_projects_v1 (project_id,owner_id,slug,name,description,is_system,created_at,updated_at) VALUES (?,?,?,?,?,1,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)").bind("project-"+slug,userId,slug,name,description).run();
     }
     if (request.method === "GET") {
-      const result = await env.NAVA_DB.prepare("SELECT project_id,slug,name,description,is_system FROM navi_projects_v1 WHERE owner_id = ? ORDER BY is_system DESC,name COLLATE NOCASE").bind(userId).all();
+      const result = await env.NAVA_DB.prepare("SELECT project_id,slug,name,description,is_system FROM navi_projects_v1 WHERE owner_id = ? AND (is_system = 0 OR slug = 'general' OR ? = 'owner') ORDER BY is_system DESC,name COLLATE NOCASE").bind(userId,auth.user.role).all();
       return successResponse({ projects: result.results || [] }, corsOrigin);
     }
     let input; try { input = await request.json(); } catch { return errorResponse("اطلاعات ارسالی معتبر نیست.",400,corsOrigin); }
