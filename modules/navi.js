@@ -2345,6 +2345,8 @@ async function handleChat({
           selectedProposal.correctionOf || null
         );
         if (manualMemorySaveResult.tooLong) manualMemorySaveError = "ترکیب این اطلاعات با حافظه قبلی از سقف مجاز عبور می‌کند؛ ذخیره انجام نشد.";
+        else if (manualMemorySaveResult.correctionTargetAmbiguous) manualMemorySaveError = "چند حافظه با متن یکسان پیدا شد؛ برای جلوگیری از اصلاح اشتباه، هیچ تغییری انجام نشد.";
+        else if (manualMemorySaveResult.correctionTargetNotFound) manualMemorySaveError = "حافظه قبلیِ موردنظر دقیقاً پیدا نشد؛ برای جلوگیری از ثبت تکراری، هیچ تغییری انجام نشد.";
         else if (manualMemorySaveResult.invalid || manualMemorySaveResult.sensitive) manualMemorySaveError = "برداشت NAVI شرایط لازم برای ذخیره در حافظه را ندارد.";
       } catch (error) {
         logError("Composer interpreted-memory save failed", error);
