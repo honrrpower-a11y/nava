@@ -1381,7 +1381,7 @@ async function submitNaviProposalAction(id, action, memoryValue, button) {
     const payload = { action, id: Number(id) };
     if (cleanValue !== null) payload.memory_value = cleanValue;
 
-    const response = await fetch(NAVI_MEMORY_API, {
+    const response = await fetch(NAVI_MEMORY_API + "?project_id=" + encodeURIComponent(naviActiveProjectId), {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -1478,7 +1478,7 @@ async function loadNaviMemories(forceRefresh = false) {
 
   naviMemoryLoadPromise = (async () => {
     try {
-      const response = await fetch(NAVI_MEMORY_API, {
+      const response = await fetch(NAVI_MEMORY_API + "?project_id=" + encodeURIComponent(naviActiveProjectId), {
         method: "GET",
         headers: { "Authorization": "Bearer " + token 
       },
@@ -2081,12 +2081,14 @@ naviProjectSelect?.addEventListener("change", async () => {
   sessionStorage.setItem("nava_navi_active_project", nextProjectId);
   naviActiveThreadId = "";
   naviHistory = [];
+  naviMemoryLoaded = false;
   requestResponse.textContent = "";
   requestResponse.classList.remove("show");
   const loaded = await loadNaviThreads();
   if (!loaded) { if (naviProjectStatus) naviProjectStatus.textContent = "گفت‌وگوهای این پروژه بارگذاری نشدند."; return; }
   if (!naviActiveThreadId) { await createNaviThread(); return; }
   await loadNaviHistory();
+  await loadNaviMemories(true);
   if (naviProjectStatus) naviProjectStatus.textContent = "فضای کاری «" + (naviProjects.find(p => p.project_id === nextProjectId)?.name || "پروژه") + "» فعال شد.";
 });
 naviNewThreadButton?.addEventListener("click", createNaviThread);
