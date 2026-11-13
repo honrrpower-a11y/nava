@@ -119,7 +119,7 @@ test("archived memory query returns only archived rows for the owner", async () 
   const rows = await getNaviArchivedMemory(db);
   assert.match(sql, /status = 'archived'/);
   assert.match(sql, /owner_id = \\?/);
-  assert.deepEqual(bound, ["owner", 200]);
+  assert.deepEqual(bound, ["owner", null, 200]);
   assert.equal(rows.length, 1);
   assert.equal(rows[0].status, "archived");
 });
@@ -178,6 +178,7 @@ test("SQLite integration: correction archives only the superseded approved fact"
       memory_value TEXT NOT NULL,
       source TEXT,
       status TEXT NOT NULL,
+      project_id TEXT,
       created_at TEXT DEFAULT CURRENT_TIMESTAMP,
       updated_at TEXT DEFAULT CURRENT_TIMESTAMP
     );
