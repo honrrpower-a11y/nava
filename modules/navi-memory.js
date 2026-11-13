@@ -241,7 +241,7 @@ export function prepareNaviHistory(
 }
 
 // Search a bounded set of older messages across all saved NAVI threads.
-export async function searchNaviConversationHistory(db, query, limit = 8, recentHistory = [], ownerId = NAVI_OWNER_ID) {
+export async function searchNaviConversationHistory(db, query, limit = 8, recentHistory = [], ownerId = NAVI_OWNER_ID, projectId = null) {
   const terms = [...new Set(String(query || '').normalize('NFKC')
     .replace(/[ي]/g, 'ی').replace(/[ك]/g, 'ک').toLowerCase()
     .replace(/[^\p{L}\p{N}\s]/gu, ' ').split(/\s+/)
@@ -253,8 +253,9 @@ export async function searchNaviConversationHistory(db, query, limit = 8, recent
     FROM navi_chat_messages_v1 m
     INNER JOIN navi_chat_threads_v1 t ON t.thread_id = m.thread_id
     WHERE t.owner_id = ?
+      AND (? IS NULL OR t.project_id = ?)
     ORDER BY m.id DESC LIMIT 600
-  `).bind(ownerId).all();
+  `).bind(ownerId, projectId, projectId).all();
   const ranked = (result.results || []).filter(row => row &&
     (row.role === 'user' || row.role === 'assistant') && row.content &&
     !recent.has(String(row.content).trim())).map(row => {
