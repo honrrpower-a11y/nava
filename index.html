@@ -6,10 +6,10 @@
   <meta name="theme-color" content="#080d19">
   <meta name="description" content="NAVA؛ استودیوی هوشمند برای ساخت، طراحی و رشد کسب‌وکارها">
   <title>NAVA | One Vision. One Mission. One NAVA.</title>
-  <link rel="stylesheet" href="style.css?v=nava-orbit-spacing-20261113-2">
+  <link rel="stylesheet" href="style.css?v=navi-universal-assistant-1">
   <link rel="stylesheet" href="logo-studio.css?v=logo-studio-mvp-1">
-  <script src="app.js?v=navi-account-redesign-20261113-3" defer></script>
-  <script src="logo-studio.js?v=logo-studio-mvp-1" defer></script>
+  <script src="app.js?v=navi-universal-assistant-1" defer></script>
+  <script src="logo-studio.js?v=navi-universal-assistant-1" defer></script>
 </head>
 <body>
 
@@ -206,6 +206,10 @@
       </div>
       <button class="navi-widget-close" id="naviWidgetClose" type="button" aria-label="بستن پنجره ناوی">×</button>
     </div>
+    <div class="navi-assistant-context" id="naviAssistantContext" hidden>
+      <div class="navi-assistant-context-copy"><span>زمینه فعال</span><strong id="naviAssistantContextTitle"></strong><p id="naviAssistantContextSummary"></p></div>
+      <button type="button" id="naviAssistantContextClear" aria-label="پاک کردن زمینه گفتگو">×</button>
+    </div>
     <div class="request-panel" id="requestSection">
       <div class="request-content">
         <h2>با ناوی صحبت کن</h2>
@@ -216,7 +220,7 @@
 
         <div class="navi-auth-panel" id="naviLoginPanel">
           <h3>ورود اختصاصی به ناوی</h3>
-          <p>برای شروع گفت‌وگو با ناوی، نام کاربری و رمز عبورت را وارد کن.</p>
+          <p>برای دسترسی به گفت‌وگو و حافظه شخصی، یک بار وارد حساب نوا شو؛ پس از ورود می‌توانی در همه استودیوها با همین ناوی ادامه بدهی.</p>
           <form id="naviLoginForm">
             <label class="field-label" for="naviUsername">نام کاربری</label>
             <input class="navi-password" id="naviUsername" type="text"
