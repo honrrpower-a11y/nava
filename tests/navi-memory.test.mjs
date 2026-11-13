@@ -8,6 +8,11 @@ import {
   searchNaviConversationHistory
 } from "../modules/navi-memory.js";
 
+import {
+  extractNaviDeterministicMemoryProposal,
+  removeNaviModelMemoryClaims
+} from "../modules/navi.js";
+
 test("a changed Persian favorite color is recognized as the same fact", () => {
   assert.equal(
     areMemoryValuesSemanticallySimilar(
@@ -487,4 +492,21 @@ test("conversation recall is constrained to the active project workspace", async
   assert.deepEqual(bound, ["user-1", "project-nava", "project-nava"]);
   assert.equal(rows.length, 1);
   assert.equal(rows[0].threadId, "thread-a");
+});
+
+
+test("checked save fallback extracts a clearly labeled project test code", () => {
+  const proposals = extractNaviDeterministicMemoryProposal(
+    "کد آزمایشی اختصاصی این پروژه: NAVI-731-آبی"
+  );
+  assert.equal(proposals.length, 1);
+  assert.equal(proposals[0].title, "کد آزمایشی اختصاصی این پروژه");
+  assert.equal(proposals[0].value, "کد آزمایشی اختصاصی این پروژه: NAVI-731-آبی");
+});
+
+test("server-authoritative memory feedback removes model claims that it saved something", () => {
+  const reply = removeNaviModelMemoryClaims(
+    "کد آزمایشی را ثبت کردم. چطور می‌توانم در ادامه کمکتان کنم؟"
+  );
+  assert.equal(reply, "چطور می‌توانم در ادامه کمکتان کنم؟");
 });
