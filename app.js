@@ -831,11 +831,20 @@ function setNaviWorkspaceTab(tabName) {
     button.classList.toggle("is-active", active);
     button.setAttribute("aria-selected", active ? "true" : "false");
   });
+  let activePanel = null;
   panels.forEach(panel => {
     const active = panel.dataset.naviPanel === tabName && !(tabName === "users" && !isOwner);
     panel.hidden = !active;
     panel.classList.toggle("is-active", active);
+    if (active) activePanel = panel;
   });
+
+  // Bring the newly opened panel into view even when the page was already scrolled.
+  if (activePanel) {
+    window.requestAnimationFrame(() => {
+      activePanel.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  }
 }
 
 function closeNaviWorkspacePanels() {

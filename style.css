@@ -2052,3 +2052,66 @@ body.light .nava-account-workspace .navi-workspace-tab{
 
 /* A signed-in session shows navigation only; panels open on explicit tab selection. */
 .nava-account-workspace[hidden]{display:none!important}
+
+
+/* Account navigation is a separate row below the brand, docked to the header divider. */
+.nava-header-tabs-row{
+  position:relative;
+  z-index:15;
+  display:flex;
+  align-items:flex-end;
+  min-height:40px;
+  margin-top:-1px;
+  padding:0 58px 0 0;
+  border-top:1px solid rgba(229,184,94,.24);
+}
+.nava-header-tabs-row .nava-header-tabs-slot{
+  position:static!important;
+  inset:auto!important;
+  width:100%!important;
+  height:39px;
+  margin:0;
+  padding:0;
+  transform:none!important;
+  display:flex;
+  align-items:flex-end;
+}
+.nava-header-tabs-row .navi-workspace-tabs{
+  height:100%;
+  align-items:flex-end!important;
+}
+.nava-header-tabs-row .navi-workspace-tab{
+  align-self:flex-end;
+  border-bottom:0!important;
+  border-radius:9px 9px 0 0!important;
+}
+.nava-header-tabs-row .navi-workspace-tab.is-active{
+  border-bottom:0!important;
+  box-shadow:0 -2px 0 var(--gold) inset;
+}
+#navaAccountWorkspacePanels [data-navi-panel]{
+  scroll-margin-top:18px;
+}
+@media(max-width:760px){
+  .header-inner{min-height:76px!important}
+  .nava-header-tabs-row{
+    min-height:36px;
+    padding:0 48px 0 8px;
+  }
+  .nava-header-tabs-row .nava-header-tabs-slot{
+    height:35px;
+    right:auto!important;
+    left:auto!important;
+  }
+  .nava-header-tabs-row .navi-workspace-tabs{gap:5px}
+  .nava-header-tabs-row .navi-workspace-tab{
+    min-height:32px;
+    padding:5px 8px;
+    font-size:10px;
+  }
+}
+@media(max-width:380px){
+  .nava-header-tabs-row{padding-right:44px;padding-left:4px}
+  .nava-header-tabs-row .navi-workspace-tabs{gap:3px}
+  .nava-header-tabs-row .navi-workspace-tab{padding:5px 6px;font-size:9px}
+}
