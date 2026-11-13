@@ -2148,9 +2148,19 @@ async function handleChat({
 
     // Fetch a wider window only when the user explicitly requests memory saving.
     // Ordinary chat keeps the existing ten-message context and database cost.
-    memoryExtractionHistory = input.saveToMemory === true
-      ? await getNaviDbHistory(env.NAVA_DB, 40, requestedThreadId, userId)
-      : [];
+    memoryExtractionHistory = [];
+    if (input.saveToMemory === true) {
+      try {
+        memoryExtractionHistory = await getNaviDbHistory(
+          env.NAVA_DB, 40, requestedThreadId, userId
+        );
+      } catch (error) {
+        // Keep the save flow available with its existing recent history if
+        // the optional wider evidence read fails.
+        logError("Extended memory context loading failed", error);
+        memoryExtractionHistory = dbHistory;
+      }
+    }
 
     memoryFacts = Array.isArray(memoryResult)
       ? memoryResult
