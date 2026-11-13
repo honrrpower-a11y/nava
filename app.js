@@ -205,7 +205,26 @@ function showPage(pageId) {
     musicPage: "تولید موسیقی"
   };
   if (studioByPage[pageId]) {
-    updateNaviAssistantContext(studioByPage[pageId]);
+    let studioContext = {};
+    if (pageId === "logoPage") {
+      const value = id => document.getElementById(id)?.value?.trim() || "";
+      const selected = id => {
+        const field = document.getElementById(id);
+        return field?.selectedOptions?.[0]?.textContent?.trim() || "";
+      };
+      studioContext = {
+        brandName: value("logoBrandName"),
+        slogan: value("logoSlogan"),
+        industry: value("logoIndustry"),
+        audience: value("logoAudience"),
+        personality: selected("logoPersonality"),
+        format: selected("logoFormat"),
+        palette: selected("logoPalette")
+      };
+    } else if (pageId === "storyPage") {
+      studioContext = { content: document.getElementById("storyInput")?.value?.trim() || "" };
+    }
+    updateNaviAssistantContext(studioByPage[pageId], studioContext);
     if (Array.from(serviceSelect.options).some(option => option.value === studioByPage[pageId])) {
       serviceSelect.value = studioByPage[pageId];
     }
@@ -365,6 +384,7 @@ function updateNaviAssistantContext(service, context = {}) {
 naviAssistantContextClear?.addEventListener("click", () => {
   naviAssistantContext = null;
   if (naviAssistantContextPanel) naviAssistantContextPanel.hidden = true;
+  if (serviceSelect) serviceSelect.value = "انتخاب نشده";
 });
 
 window.openNaviAssistant = function(options = {}) {
@@ -2970,7 +2990,7 @@ async function sendMessageToNavi() {
     const threadBeforeNaming = naviThreads.find(item => item.thread_id === naviActiveThreadId);
     if (threadBeforeNaming && Number(threadBeforeNaming.message_count || 0) === 0) {
       try {
-        await nameNaviThreadFromFirstMessage(finalMessage);
+        await nameNaviThreadFromFirstMessage(message);
         await loadNaviThreads();
       } catch (titleError) {
         console.warn("NAVI conversation title update failed:", titleError);
