@@ -689,6 +689,7 @@ test("proposal normalization preserves a bounded exact correction target", () =>
   }]);
   assert.equal(proposals.length, 1);
   assert.equal(proposals[0].correctionOf, "اولویت فعلی توسعه و تکمیل استودیوی لوگوسازی و برندینگ پیش از توسعه استودیوهای دیگر است.");
+  assert.equal(proposals[0].correctionTargetId, 123);
 });
 
 test("checked correction prompt requires the exact approved-memory target", () => {
