@@ -18,8 +18,21 @@ function createDb() {
       thread_id TEXT PRIMARY KEY,
       owner_id TEXT NOT NULL,
       title TEXT NOT NULL,
+      project_id TEXT NOT NULL DEFAULT 'project-general',
       created_at TEXT,
       updated_at TEXT
+    );
+    CREATE TABLE navi_projects_v1 (
+      project_id TEXT NOT NULL,
+      owner_id TEXT NOT NULL,
+      slug TEXT NOT NULL,
+      name TEXT NOT NULL,
+      description TEXT NOT NULL DEFAULT '',
+      is_system INTEGER NOT NULL DEFAULT 0,
+      created_at TEXT,
+      updated_at TEXT,
+      PRIMARY KEY (owner_id, project_id),
+      UNIQUE (owner_id, slug)
     );
     CREATE TABLE navi_chat_messages_v1 (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
