@@ -939,3 +939,157 @@ body.light .navi-workspace-tabs{box-shadow:0 8px 24px rgba(42,49,68,.08)}
   .navi-workspace-panel{animation:none!important}
   .navi-workspace-tab{transition:none!important}
 }
+
+
+/* NAVI ACCOUNT WORKSPACE — visual refresh, existing permissions and flows preserved */
+.navi-widget-panel{
+  width:min(560px,calc(100vw - 36px));
+  max-height:min(86vh,860px);
+  max-height:min(86dvh,860px);
+  border-color:rgba(229,184,94,.34);
+  background:
+    radial-gradient(ellipse at 92% 0%,rgba(37,202,255,.075),transparent 34%),
+    radial-gradient(ellipse at 5% 20%,rgba(229,184,94,.055),transparent 30%),
+    var(--panel);
+}
+.navi-widget-panel .navi-widget-panel-head{
+  padding:14px 18px;
+  background:color-mix(in srgb,var(--panel) 94%,transparent);
+}
+.navi-widget-panel .navi-widget-identity strong{font-size:15px;letter-spacing:2.5px}
+.navi-widget-panel .request-content{padding:15px 17px 18px}
+.navi-account-overview{
+  position:relative;
+  isolation:isolate;
+  overflow:hidden;
+  margin:0 0 13px;
+  padding:17px 17px 14px;
+  border:1px solid rgba(229,184,94,.25);
+  border-radius:17px;
+  background:linear-gradient(125deg,rgba(229,184,94,.105),rgba(37,202,255,.055) 58%,rgba(12,23,40,.24));
+}
+.navi-account-overview:after{
+  content:"✦";
+  position:absolute;
+  z-index:-1;
+  left:17px;
+  top:19px;
+  color:rgba(229,184,94,.12);
+  font-size:66px;
+  line-height:1;
+}
+.navi-account-overview-top{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  margin-bottom:11px;
+}
+.navi-account-kicker{
+  color:var(--gold);
+  font-size:9px;
+  font-weight:800;
+  letter-spacing:2px;
+  direction:ltr;
+}
+.navi-account-live{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  padding:4px 8px;
+  border:1px solid rgba(101,201,154,.22);
+  border-radius:20px;
+  background:rgba(101,201,154,.07);
+  color:#76cba4;
+  font-size:9px;
+  white-space:nowrap;
+}
+.navi-account-live i{
+  width:6px;height:6px;border-radius:50%;
+  background:#65c99a;box-shadow:0 0 8px rgba(101,201,154,.7)
+}
+.navi-account-overview h2{
+  margin:0 0 7px;
+  color:var(--text);
+  font-size:19px;
+  line-height:1.7;
+  font-weight:800;
+}
+.navi-account-overview h2 span{color:var(--gold)}
+.navi-account-overview p{
+  max-width:440px;
+  margin:0;
+  color:var(--muted);
+  font-size:11px;
+  line-height:2;
+}
+.navi-account-shortcuts{
+  display:flex;
+  flex-wrap:wrap;
+  gap:7px;
+  margin-top:13px;
+}
+.navi-account-shortcuts span{
+  display:inline-flex;
+  align-items:center;
+  gap:5px;
+  padding:6px 8px;
+  border:1px solid var(--border);
+  border-radius:9px;
+  background:rgba(5,12,24,.18);
+  color:var(--muted);
+  font-size:9px;
+}
+.navi-account-shortcuts b{color:var(--gold);font-size:12px}
+.navi-widget-panel .navi-chat-toolbar{
+  padding:9px 11px;
+  border:1px solid var(--border);
+  border-radius:12px;
+  background:color-mix(in srgb,var(--panel2) 78%,transparent);
+}
+.navi-widget-panel .navi-workspace-tabs{
+  margin:9px 0 13px;
+  padding:5px;
+  border-radius:14px;
+  background:color-mix(in srgb,var(--panel2) 90%,transparent);
+}
+.navi-widget-panel .navi-workspace-tab{
+  min-height:45px;
+  font-size:11px;
+}
+.navi-widget-panel .navi-workspace-panel{
+  padding:2px 1px 8px;
+}
+.navi-widget-panel .navi-thread-item,
+.navi-widget-panel .navi-memory-toggle,
+.navi-widget-panel .navi-project-toolbar,
+.navi-widget-panel .navi-memory-accordion{
+  border-radius:12px;
+}
+.navi-widget-panel .request-textarea{min-height:112px;padding:13px}
+.navi-widget-panel .navi-send-toolbar .btn-primary{min-height:43px}
+body.light .navi-account-overview{
+  background:linear-gradient(125deg,rgba(193,127,37,.10),rgba(22,121,213,.055) 58%,#fffdf8);
+  border-color:rgba(193,127,37,.25);
+}
+body.light .navi-account-shortcuts span{background:rgba(255,255,255,.72);color:#59677a}
+@media(max-width:600px){
+  .navi-assistant-widget{right:8px;bottom:9px}
+  .navi-widget-panel{
+    width:calc(100vw - 16px);
+    max-height:88vh;
+    max-height:88dvh;
+    border-radius:17px;
+  }
+  .navi-widget-panel .request-content{padding:10px 11px 14px}
+  .navi-account-overview{padding:14px 13px 12px;margin-bottom:10px}
+  .navi-account-overview h2{font-size:17px}
+  .navi-account-overview p{font-size:10px}
+  .navi-account-shortcuts{gap:5px;margin-top:10px}
+  .navi-account-shortcuts span{font-size:8px;padding:5px 6px}
+  .navi-widget-panel .navi-chat-toolbar{gap:7px;padding:8px}
+  .navi-widget-panel .navi-workspace-tab{min-height:42px;font-size:10px}
+}
+@media(prefers-reduced-motion:reduce){
+  .navi-account-overview,.navi-account-shortcuts span{transition:none!important}
+}
