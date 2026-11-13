@@ -1952,3 +1952,9 @@ body.light .nava-account-workspace .navi-workspace-tab{
   .header-inner{min-height:116px}
   .nava-header-tabs-slot{right:44px;left:auto}
 }
+
+.logo-orb:before{animation:blueRingCompact 10s linear infinite!important}
+@keyframes blueRingCompact{
+  from{transform:scaleX(1.12) rotate(0)}
+  to{transform:scaleX(1.12) rotate(360deg)}
+}
