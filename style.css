@@ -703,6 +703,8 @@ body.light .navi-composer-memory:has(input:checked){
   box-shadow:none;
   background:transparent;
 }
+/* Let workspace tabs stick to the widget's own scroll container. */
+.navi-widget-panel .request-panel{overflow:visible}
 .navi-widget-panel .request-panel:before{display:none}
 .navi-widget-panel .request-content{
   padding:14px;
