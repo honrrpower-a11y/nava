@@ -331,7 +331,7 @@ test("chat memory commands never bypass the normal conversational response", asy
     explicitComposerSave: false
   });
   assert.match(prompt, /COMPOSER SAVE NOT CHECKED/);
-  assert.match(prompt, /Treat any wording about remembering as ordinary conversation/);
+  assert.match(prompt, /Treat any wording about remembering as\\s+ordinary conversation/);
   assert.match(prompt, /Do not save, update, merge, propose, or queue any memory/);
 });
 
@@ -359,7 +359,7 @@ test("checked composer save tells Gemini to extract the stated fact in the same 
   assert.match(checkedPrompt, /Answer the user's message normally/);
   assert.doesNotMatch(normalPrompt, /COMPOSER SAVE CHECKED/);
   assert.match(normalPrompt, /COMPOSER SAVE NOT CHECKED/);
-  assert.match(normalPrompt, /Treat any wording about remembering as ordinary conversation/);
+  assert.match(normalPrompt, /Treat any wording about remembering as\\s+ordinary conversation/);
 });
 
 
