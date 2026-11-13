@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#080d19">
   <meta name="description" content="NAVA؛ استودیوی هوشمند برای ساخت، طراحی و رشد کسب‌وکارها">
   <title>NAVA | One Vision. One Mission. One NAVA.</title>
-  <link rel="stylesheet" href="style.css?v=navi-account-redesign-20261113-2">
+  <link rel="stylesheet" href="style.css?v=nava-orbit-studio-home-20261113-1">
   <script src="app.js?v=navi-account-redesign-20261113-2" defer></script>
 </head>
 <body>
@@ -37,63 +37,82 @@
 <main class="container">
 
   <section class="page active" id="homePage">
-    <div class="hero">
-      <div class="hero-content">
-        <div class="eyebrow">استودیوی هوشمند خلاقیت</div>
-        <h1>ایده‌ات را به<br><span>یک اثر ماندگار</span><br>تبدیل کن.</h1>
-        <p>
-          نوا، فضای خلاقانه تو برای طراحی، تولید محتوا،
-          ساخت هویت برند و توسعه ایده‌هاست.
-          از یک فکر ساده شروع کن؛ مسیر ساختنش را با هم پیش می‌بریم.
-        </p>
-        <div class="hero-buttons">
-          <button class="btn-primary" onclick="scrollToRequest()">شروع یک ایده جدید</button>
-          <button class="btn-secondary" onclick="showPage('storyPage')">ورود به استوری‌ساز</button>
-        </div>
+    <div class="nava-studio-home">
+      <div class="nava-home-intro">
+        <span class="nava-home-eyebrow">NAVA CREATIVE UNIVERSE</span>
+        <h1>یک جهان، <span>بی‌نهایت ایده</span></h1>
+        <p>به دنیای خلاق نوا خوش آمدی؛ مسیرت را انتخاب کن و ایده‌ات را به واقعیت نزدیک‌تر کن.</p>
       </div>
-      <div class="orb-stage">
-        <div class="orb-large">
-          <span class="orb-blue-ring"></span>
-          <div class="orb-dot"></div>
-          <span class="orb-particle p1"></span>
-          <span class="orb-particle p2"></span>
-          <span class="orb-particle p3"></span>
-          <span class="orb-particle p4"></span>
-        </div>
-        <div class="orb-caption">NAVA INTELLIGENCE</div>
-      </div>
-    </div>
 
-    <div class="section">
-      <div class="section-heading">
-        <h2>دنیای <span>خلاقیت نوا</span></h2>
-        <p>از کدام مسیر می‌خواهی شروع کنی؟</p>
-      </div>
-      <div class="services-grid">
-        <div class="service-card" onclick="chooseService('طراحی لوگو')">
-          <div class="service-icon">✦</div>
-          <h3>طراحی لوگو</h3>
-          <p>خلق نشانه‌ای متمایز برای هویت بصری برند</p>
-        </div>
-        <div class="service-card" onclick="chooseService('تولید محتوا')">
-          <div class="service-icon">✧</div>
-          <h3>تولید محتوا</h3>
-          <p>ایده‌پردازی و ساخت محتوای جذاب و کاربردی</p>
-        </div>
-        <div class="service-card" onclick="chooseService('تبلیغات')">
-          <div class="service-icon">◈</div>
-          <h3>تبلیغات</h3>
-          <p>طراحی پیام و مسیر معرفی محصولات و خدمات</p>
-        </div>
-        <div class="service-card" onclick="chooseService('هویت برند')">
-          <div class="service-icon">◇</div>
-          <h3>هویت برند</h3>
-          <p>ساخت شخصیت و زبان بصری یک کسب‌وکار</p>
-        </div>
-      </div>
-    </div>
+      <div class="nava-orbit-stage" aria-label="مسیرهای اصلی استودیوی نوا">
+        <div class="nava-orbit-track" aria-hidden="true"></div>
 
-    
+        <div class="nava-orbit-center">
+          <div class="orb-stage nava-orb-stage" aria-label="هسته هوشمند نوا">
+            <div class="orb-large">
+              <span class="orb-blue-ring"></span>
+              <div class="orb-dot"></div>
+              <span class="orb-particle p1"></span>
+              <span class="orb-particle p2"></span>
+              <span class="orb-particle p3"></span>
+              <span class="orb-particle p4"></span>
+            </div>
+            <div class="orb-caption">NAVA INTELLIGENCE</div>
+          </div>
+          <span class="nava-center-label">هسته مرکزی نوا</span>
+        </div>
+
+        <div class="nava-orbit-item nava-orbit-item--logo">
+          <button class="nava-orbit-button" type="button" onclick="chooseService('طراحی لوگو')" aria-label="ورود به مسیر طراحی لوگو">
+            <span class="nava-orbit-icon" aria-hidden="true">✦</span>
+            <span class="nava-orbit-title">طراحی لوگو</span>
+            <span class="nava-orbit-caption">هویت بصری</span>
+          </button>
+        </div>
+
+        <div class="nava-orbit-item nava-orbit-item--content">
+          <button class="nava-orbit-button" type="button" onclick="chooseService('تولید محتوا')" aria-label="ورود به مسیر تولید محتوا">
+            <span class="nava-orbit-icon" aria-hidden="true">✧</span>
+            <span class="nava-orbit-title">تولید محتوا</span>
+            <span class="nava-orbit-caption">ایده تا انتشار</span>
+          </button>
+        </div>
+
+        <div class="nava-orbit-item nava-orbit-item--music">
+          <button class="nava-orbit-button" type="button" onclick="showPage('musicPage')" aria-label="ورود به استودیوی موسیقی">
+            <span class="nava-orbit-icon" aria-hidden="true">♫</span>
+            <span class="nava-orbit-title">استودیوی موسیقی</span>
+            <span class="nava-orbit-caption">خلق صدا و ملودی</span>
+          </button>
+        </div>
+
+        <div class="nava-orbit-item nava-orbit-item--story">
+          <button class="nava-orbit-button" type="button" onclick="showPage('storyPage')" aria-label="ورود به استوری‌ساز">
+            <span class="nava-orbit-icon" aria-hidden="true">▧</span>
+            <span class="nava-orbit-title">استوری‌ساز</span>
+            <span class="nava-orbit-caption">روایت تصویری</span>
+          </button>
+        </div>
+
+        <div class="nava-orbit-item nava-orbit-item--chat">
+          <button class="nava-orbit-button" type="button" onclick="scrollToRequest()" aria-label="شروع گفت‌وگو با ناوی">
+            <span class="nava-orbit-icon" aria-hidden="true">✺</span>
+            <span class="nava-orbit-title">گفت‌وگو با ناوی</span>
+            <span class="nava-orbit-caption">همراه همه ایده‌ها</span>
+          </button>
+        </div>
+
+        <div class="nava-orbit-item nava-orbit-item--campaign">
+          <button class="nava-orbit-button" type="button" onclick="chooseService('تبلیغات')" aria-label="ورود به مسیر تبلیغات">
+            <span class="nava-orbit-icon" aria-hidden="true">◈</span>
+            <span class="nava-orbit-title">تبلیغات</span>
+            <span class="nava-orbit-caption">پیام و کمپین</span>
+          </button>
+        </div>
+      </div>
+
+      <p class="nava-home-footnote"><span aria-hidden="true">✦</span> هر مسیر، شروع یک تجربه تازه در نواست.</p>
+    </div>
   </section>
 
   <section class="page" id="storyPage">
