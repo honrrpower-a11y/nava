@@ -150,8 +150,8 @@ test("project memories stay separate while global profile facts remain shared", 
   const alpha = await getNaviApprovedMemory(db, "owner", "project-alpha");
   const beta = await getNaviApprovedMemory(db, "owner", "project-beta");
   assert.equal(alpha.length, 2);
-  assert.equal(beta.length, 1);
+  assert.equal(beta.length, 2);
   assert.match(alpha.find(item => item.memory_key === "یادداشت پروژه").memory_value, /آلفا/);
-  assert.match(beta[0].memory_value, /بتا/);
+  assert.match(beta.find(item => item.memory_key === "یادداشت پروژه").memory_value, /بتا/);
   db.sqlite.close();
 });
