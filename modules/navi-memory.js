@@ -1271,7 +1271,8 @@ export async function saveNaviMemoryFact(
   source = "user_command",
   ownerId = NAVI_OWNER_ID,
   projectId = null,
-  correctionTargetValue = null
+  correctionTargetValue = null,
+  correctionTargetId = null
 ) {
   const memoryValue = cleanMemoryValue(value);
   const memoryKey = cleanMemoryTitle(key);
@@ -1289,9 +1290,17 @@ export async function saveNaviMemoryFact(
   // A checked, explicit correction may replace only one uniquely matched
   // approved fact in the same account and project. The model-supplied target
   // is treated as a locator, never trusted until it exactly matches a DB row.
-  if (correctionTargetValue !== null) {
-    const targetValue = cleanMemoryValue(correctionTargetValue);
-    if (!targetValue || containsSensitiveMemory(targetValue)) {
+  if (correctionTargetValue !== null || correctionTargetId !== null) {
+    const targetValue = correctionTargetValue === null
+      ? null
+      : cleanMemoryValue(correctionTargetValue);
+    const targetId = correctionTargetId === null
+      ? null
+      : Number(correctionTargetId);
+    if ((correctionTargetValue !== null &&
+         (!targetValue || containsSensitiveMemory(targetValue))) ||
+        (correctionTargetId !== null &&
+         (!Number.isSafeInteger(targetId) || targetId <= 0))) {
       return { correctionTargetNotFound: true };
     }
 
@@ -1311,7 +1320,11 @@ export async function saveNaviMemoryFact(
     ).all();
 
     const targetMatches = (scopedRows.results || []).filter(item =>
-      normalizeMemoryText(item.memory_value) === normalizeMemoryText(targetValue)
+      targetId !== null
+        ? Number(item.id) === targetId &&
+          (targetValue === null ||
+           normalizeMemoryText(item.memory_value) === normalizeMemoryText(targetValue))
+        : normalizeMemoryText(item.memory_value) === normalizeMemoryText(targetValue)
     );
 
     if (targetMatches.length !== 1) {
