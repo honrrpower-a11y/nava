@@ -1541,13 +1541,19 @@ body.light .nava-orbit-icon{color:#a96d20;border-color:rgba(193,127,37,.28);back
   from{opacity:0;transform:translate(-50%,-47%) scale(.98)}
   to{opacity:1;transform:translate(-50%,-50%) scale(1)}
 }
-/* Keep one animated brand core in the home orbit; supporting marks stay still. */
-.logo-orb,
-.logo-orb:before{
-  animation:none!important;
+/* Subtle motion for the main NAVA header emblem. Keep its layout transform untouched. */
+.logo-orb{
+  animation:logoGlow 3.8s ease-in-out infinite;
 }
-.navi-widget-orb:before{
-  animation:none!important;
+.logo-orb:before{
+  animation:blueRing 10s linear infinite!important;
+}
+.logo-orb:after{
+  animation:logoHeaderRing 14s linear infinite;
+}
+@keyframes logoHeaderRing{
+  from{transform:rotate(-25deg) scaleX(1.35)}
+  to{transform:rotate(335deg) scaleX(1.35)}
 }
 @media(max-width:700px){
   /* The homepage access card remains the primary mobile sign-in entry.
@@ -1631,5 +1637,6 @@ body.light .nava-orbit-icon{color:#a96d20;border-color:rgba(193,127,37,.28);back
   .navi-widget-orb{width:28px;height:28px}
 }
 @media(prefers-reduced-motion:reduce){
+  .logo-orb,.logo-orb:before,.logo-orb:after,
   .navi-widget-orb,.navi-widget-orb:before{animation:none!important}
 }
