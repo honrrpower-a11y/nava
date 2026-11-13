@@ -3278,6 +3278,9 @@ copyStory.addEventListener("click", async () => {
 
   const guestButton = document.getElementById("navaGuestExplore");
   guestButton?.addEventListener("click", () => {
+    // Choosing guest mode dismisses any open NAVI dialog or welcome bubble first.
+    setNaviWidgetOpen(false);
+    if (naviWelcomeBubble) naviWelcomeBubble.hidden = true;
     const orbit = document.querySelector(".nava-orbit-stage");
     orbit?.scrollIntoView({ behavior: "smooth", block: "start" });
     const firstStudio = document.querySelector(".nava-orbit-button");
