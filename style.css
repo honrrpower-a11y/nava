@@ -1562,8 +1562,8 @@ body.light .nava-orbit-icon{color:#a96d20;border-color:rgba(193,127,37,.28);back
     right:auto;
     bottom:auto;
     width:calc(100vw - 24px);
-    max-height:calc(100dvh - 28px);
     max-height:calc(100vh - 28px);
+    max-height:calc(100dvh - 28px);
     transform:translate(-50%,-50%);
     border-radius:17px;
   }
