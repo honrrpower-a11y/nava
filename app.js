@@ -114,6 +114,9 @@ const naviLoginError = document.getElementById("naviLoginError");
 const naviLoginStatus = document.getElementById("naviLoginStatus");
 const naviChatArea = document.getElementById("naviChatArea");
 const naviLogout = document.getElementById("naviLogout");
+const naviWidgetPanel = document.getElementById("naviWidgetPanel");
+const naviWidgetToggle = document.getElementById("naviWidgetToggle");
+const naviWidgetClose = document.getElementById("naviWidgetClose");
 
 const naviStatus = document.getElementById("naviStatus");
 const requestResponse = document.getElementById("requestResponse");
@@ -222,6 +225,41 @@ function initNavaTheme() {
 }
 
 initNavaTheme();
+
+/* NAVI FLOATING CHAT — stage 1: animated chat window */
+function setNaviWidgetOpen(isOpen, focusComposer = false) {
+  if (!naviWidgetPanel || !naviWidgetToggle) return;
+
+  naviWidgetPanel.hidden = !isOpen;
+  naviWidgetPanel.classList.toggle("is-open", isOpen);
+  naviWidgetToggle.setAttribute("aria-expanded", isOpen ? "true" : "false");
+  naviWidgetToggle.setAttribute(
+    "aria-label",
+    isOpen ? "بستن گفت‌وگو با ناوی" : "باز کردن گفت‌وگو با ناوی"
+  );
+
+  if (isOpen && focusComposer) {
+    window.setTimeout(() => {
+      const target = getNaviToken() ? userRequest : naviUsername;
+      if (target && !target.hidden) target.focus();
+    }, 220);
+  }
+}
+
+if (naviWidgetToggle) {
+  naviWidgetToggle.addEventListener("click", () => {
+    setNaviWidgetOpen(naviWidgetPanel?.hidden !== false, true);
+  });
+}
+if (naviWidgetClose) {
+  naviWidgetClose.addEventListener("click", () => setNaviWidgetOpen(false));
+}
+document.addEventListener("keydown", event => {
+  if (event.key === "Escape" && naviWidgetPanel && !naviWidgetPanel.hidden) {
+    setNaviWidgetOpen(false);
+    naviWidgetToggle?.focus();
+  }
+});
 
 /* NAVA ACCOUNT UI — theme-aware dropdowns and registration spacing */
 (function initNavaAccountUiStyles() {
@@ -2493,18 +2531,15 @@ function chooseService(service) {
 }
 
 function scrollToRequest() {
-  document.getElementById("requestSection").scrollIntoView({
-    behavior: "smooth",
-    block: "center"
-  });
+  setNaviWidgetOpen(true, false);
 
   window.setTimeout(() => {
-    if (!naviChatArea.hidden) {
-      userRequest.focus();
+    if (naviChatArea && !naviChatArea.hidden) {
+      userRequest?.focus();
     } else {
-      naviPassword.focus();
+      naviUsername?.focus();
     }
-  }, 450);
+  }, 240);
 }
 
 
