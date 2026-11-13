@@ -236,6 +236,81 @@ test("SQLite integration: correction archives only the superseded approved fact"
 });
 
 
+test("equivalent project-code wording never archives existing approved memories", async () => {
+  const { DatabaseSync } = await import("node:sqlite");
+  const { saveNaviMemoryFact } = await import("../modules/navi-memory.js");
+  const sqlite = new DatabaseSync(":memory:");
+  sqlite.exec(`
+    CREATE TABLE navi_memory_facts_v1 (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      owner_id TEXT NOT NULL,
+      memory_key TEXT NOT NULL,
+      memory_value TEXT NOT NULL,
+      source TEXT,
+      status TEXT NOT NULL,
+      project_id TEXT,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+    );
+    INSERT INTO navi_memory_facts_v1
+      (owner_id, memory_key, memory_value, source, status, project_id)
+    VALUES
+      ('owner', 'یادداشت کاربر', 'کد آزمایشی اختصاصی این پروژه: NAVI-731-آبی', 'test', 'approved', 'project-navi'),
+      ('owner', 'یادداشت کاربر', 'نام رمز آزمایش حافظه پروژه NAVI برابر با آبی-۷۳۱ است', 'test', 'approved', 'project-navi'),
+      ('owner', 'یادداشت کاربر', 'من در تهران زندگی می‌کنم', 'test', 'approved', 'project-navi');
+  `);
+
+  const db = {
+    prepare(sql) {
+      let args = [];
+      const statement = {
+        bind(...values) { args = values; return statement; },
+        async all() { return { results: sqlite.prepare(sql).all(...args) }; },
+        async first() { return sqlite.prepare(sql).get(...args) || null; },
+        async run() {
+          const result = sqlite.prepare(sql).run(...args);
+          return { success: true, meta: { changes: Number(result.changes), last_row_id: Number(result.lastInsertRowid || 0) } };
+        }
+      };
+      return statement;
+    },
+    async batch(statements) {
+      const results = [];
+      sqlite.exec("BEGIN");
+      try {
+        for (const statement of statements) results.push(await statement.run());
+        sqlite.exec("COMMIT");
+        return results;
+      } catch (error) {
+        sqlite.exec("ROLLBACK");
+        throw error;
+      }
+    }
+  };
+
+  const incoming = "درست است، نام رمز آزمایش حافظه پروژه NAVI برابر با «آبی-۷۳۱» است.";
+  const result = await saveNaviMemoryFact(
+    db,
+    incoming,
+    "یادداشت کاربر",
+    "test",
+    "owner",
+    "project-navi"
+  );
+  const rows = sqlite.prepare(
+    "SELECT id, memory_value, status FROM navi_memory_facts_v1 ORDER BY id"
+  ).all();
+
+  assert.equal(result.duplicate, true);
+  assert.equal(result.stableIdentity, true);
+  assert.equal(result.archivedCount, 0);
+  assert.equal(rows.length, 3, "a duplicate must not create another row");
+  assert.deepEqual(rows.map(row => row.status), ["approved", "approved", "approved"]);
+  assert.equal(rows[0].memory_value, "کد آزمایشی اختصاصی این پروژه: NAVI-731-آبی");
+  assert.equal(rows[1].memory_value, "نام رمز آزمایش حافظه پروژه NAVI برابر با آبی-۷۳۱ است");
+  sqlite.close();
+});
+
 test('conversation search retrieves relevant older messages across threads', async () => {
   const { searchNaviConversationHistory } = await import('../modules/navi-memory.js');
   const db = { prepare() { const statement = { bind() { return statement; }, async all() { return { results: [
