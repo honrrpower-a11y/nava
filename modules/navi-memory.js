@@ -40,6 +40,8 @@ function normalizeMemoryText(value) {
     .normalize("NFKC")
     .replace(/[ي]/g, "ی")
     .replace(/[ك]/g, "ک")
+    .replace(/[۰-۹]/g, digit => String("۰۱۲۳۴۵۶۷۸۹".indexOf(digit)))
+    .replace(/[٠-٩]/g, digit => String("٠١٢٣٤٥٦٧٨٩".indexOf(digit)))
     .replace(/[\u064B-\u065F\u0670]/g, "")
     .replace(/\s+/g, " ")
     .trim()
@@ -657,7 +659,42 @@ function getMemoryMeaningTokens(value) {
     .filter(token => token.length > 1 && !stopWords.has(token));
 }
 
+function extractMemoryCodeIdentity(value) {
+  const normalized = normalizeMemoryText(value);
+  // Only use identifier matching when both statements explicitly discuss
+  // a code, password-like label, or test identifier.
+  if (!/(?:کد|رمز|شناسه|آزمایش|آزمایشی)/u.test(normalized)) return null;
+
+  const hyphenatedIdentifiers = normalized.match(
+    /[\p{L}\p{N}]+(?:-[\p{L}\p{N}]+){1,4}/gu
+  ) || [];
+  if (!hyphenatedIdentifiers.length) return null;
+
+  const parts = new Set(
+    hyphenatedIdentifiers
+      .flatMap(identifier => identifier.split("-"))
+      .filter(part => part.length > 1)
+  );
+
+  return parts.size ? parts : null;
+}
+
+function shareStableMemoryCodeIdentity(first, second) {
+  const firstParts = extractMemoryCodeIdentity(first);
+  const secondParts = extractMemoryCodeIdentity(second);
+  if (!firstParts || !secondParts) return false;
+
+  const shared = [...firstParts].filter(part => secondParts.has(part));
+  const sharesNumber = shared.some(part => /^\d{2,}$/u.test(part));
+  const sharesWord = shared.some(part => /\p{L}/u.test(part));
+  return sharesNumber && sharesWord;
+}
+
 export function areMemoryValuesSemanticallySimilar(first, second) {
+  // Equivalent test/project identifiers may be phrased in a different order
+  // and may use Persian or Latin digits (NAVI-731-آبی vs آبی-۷۳۱).
+  if (shareStableMemoryCodeIdentity(first, second)) return true;
+
   const firstTokens = new Set(getMemoryMeaningTokens(first));
   const secondTokens = new Set(getMemoryMeaningTokens(second));
 
