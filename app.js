@@ -2420,7 +2420,7 @@ naviProjectSelect?.addEventListener("change", async () => {
   if (!naviProjects.some(project => project.project_id === nextProjectId)) return;
   naviActiveProjectId = nextProjectId;
   updateNaviProjectControls();
-  sessionStorage.setItem("nava_navi_active_project", nextProjectId);
+  setNaviStoredValue("nava_navi_active_project", nextProjectId);
   naviActiveThreadId = "";
   naviHistory = [];
   naviMemoryLoaded = false;
