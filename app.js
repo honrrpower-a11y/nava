@@ -2876,10 +2876,10 @@ async function sendMessageToNavi() {
   const finalMessage = [
     selectedService && selectedService !== "انتخاب نشده" ? "موضوع انتخاب‌شده: " + selectedService : "",
     naviAssistantContext ? "محیط فعال: استودیوی " + naviAssistantContext.service : "",
-    contextLines.length ? "اطلاعات زمینه‌ای این استودیو:\\n" + contextLines.join("\\n") : "",
+    contextLines.length ? "اطلاعات زمینه‌ای این استودیو:\n" + contextLines.join("\n") : "",
     naviAssistantContext ? "پاسخ را با توجه به همین محیط و اطلاعات زمینه‌ای ارائه کن؛ اگر اقدامی به ابزار استودیو نیاز دارد، قبل از ادعای انجام آن راهنمایی کن." : "",
     "پیام کاربر: " + message
-  ].filter(Boolean).join("\\n\\n");
+  ].filter(Boolean).join("\n\n");
 
 
   sendRequest.disabled = true;
