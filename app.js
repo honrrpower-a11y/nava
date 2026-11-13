@@ -473,8 +473,26 @@ if (naviWidgetToggle) {
   });
 }
 if (naviWidgetClose) {
-  naviWidgetClose.addEventListener("click", () => setNaviWidgetOpen(false));
+  naviWidgetClose.addEventListener("click", event => {
+    event.preventDefault();
+    event.stopPropagation();
+    setNaviWidgetOpen(false);
+  });
 }
+
+// Keep the login view dismissible even while the mobile keyboard is open.
+const naviLoginPanelClose = document.getElementById("naviLoginPanelClose");
+naviLoginPanelClose?.addEventListener("click", event => {
+  event.preventDefault();
+  event.stopPropagation();
+  setNaviWidgetOpen(false);
+});
+
+document.addEventListener("keydown", event => {
+  if (event.key === "Escape" && naviWidgetPanel && !naviWidgetPanel.hidden) {
+    setNaviWidgetOpen(false);
+  }
+});
 
 function normalizeNaviStudioContext(context) {
   if (!context || typeof context !== "object" || Array.isArray(context)) return {};
