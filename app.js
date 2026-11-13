@@ -839,10 +839,14 @@ function setNaviWorkspaceTab(tabName) {
     if (active) activePanel = panel;
   });
 
-  // Bring the newly opened panel into view even when the page was already scrolled.
+  // Scroll the panel below the sticky header, accounting for the full header + tab row.
   if (activePanel) {
     window.requestAnimationFrame(() => {
-      activePanel.scrollIntoView({ behavior: "smooth", block: "start" });
+      const header = document.querySelector("header");
+      const headerHeight = header ? header.getBoundingClientRect().height : 0;
+      const panelTop = activePanel.getBoundingClientRect().top + window.scrollY;
+      const targetTop = Math.max(0, panelTop - headerHeight - 14);
+      window.scrollTo({ top: targetTop, behavior: "smooth" });
     });
   }
 }

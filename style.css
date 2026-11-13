@@ -1549,7 +1549,8 @@ body.light .nava-orbit-icon{color:#a96d20;border-color:rgba(193,127,37,.28);back
   animation:blueRing 10s linear infinite!important;
 }
 .logo-orb:after{
-  animation:logoHeaderRing 14s linear infinite;
+  animation:none!important;
+  transform:rotate(-25deg) scaleX(1.35)!important;
 }
 @keyframes logoHeaderRing{
   from{transform:rotate(-25deg) scaleX(1.35)}
