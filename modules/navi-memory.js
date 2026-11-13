@@ -666,7 +666,7 @@ function extractMemoryCodeIdentity(value) {
   if (!/(?:کد|رمز|شناسه|آزمایش|آزمایشی)/u.test(normalized)) return null;
 
   const hyphenatedIdentifiers = normalized.match(
-    /[\\p{L}\\p{N}]+(?:-[\\p{L}\\p{N}]+){1,4}/gu
+    /[\p{L}\p{N}]+(?:-[\p{L}\p{N}]+){1,4}/gu
   ) || [];
   if (!hyphenatedIdentifiers.length) return null;
 
@@ -685,8 +685,8 @@ function shareStableMemoryCodeIdentity(first, second) {
   if (!firstParts || !secondParts) return false;
 
   const shared = [...firstParts].filter(part => secondParts.has(part));
-  const sharesNumber = shared.some(part => /^\\d{2,}$/u.test(part));
-  const sharesWord = shared.some(part => /\\p{L}/u.test(part));
+  const sharesNumber = shared.some(part => /^\d{2,}$/u.test(part));
+  const sharesWord = shared.some(part => /\p{L}/u.test(part));
   return sharesNumber && sharesWord;
 }
 
