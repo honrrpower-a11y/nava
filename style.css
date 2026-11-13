@@ -1398,3 +1398,46 @@ body.light .nava-orbit-icon{color:#a96d20;border-color:rgba(193,127,37,.28);back
 .nava-home-footnote span{color:var(--gold);font-size:14px}
 
 .nava-home-intro{position:relative;z-index:2;max-width:700px;margin-left:auto;margin-right:auto;text-align:center}
+
+
+/* NAVA mobile orbit — keep the twelve studios around the central core on phones. */
+@media(max-width:600px){
+  .nava-orbit-stage{display:block;position:relative;width:100%;height:680px;max-width:430px;margin:0 auto;padding:0;overflow:visible}
+  .nava-orbit-track{position:absolute;inset:5% 7%;border-radius:50%;transform:rotate(-8deg);opacity:.8;animation:navaTrackTurn 150s linear infinite}
+  .nava-orbit-track:before{inset:7% 8%;border-radius:50%;animation:navaTrackCounter 110s linear infinite}
+  .nava-orbit-track:after{display:block;inset:-2% 22%;border-radius:50%;animation:navaTrackTurn 190s linear infinite reverse}
+  .nava-orbit-center{position:absolute;z-index:2;top:50%;left:50%;display:flex;width:112px;min-height:0;transform:translate(-50%,-50%)}
+  .nava-orb-stage{width:132px;min-height:116px}
+  .nava-orb-stage .orb-large{width:62px;height:62px}
+  .nava-orb-stage .orb-blue-ring{inset:-16px}
+  .nava-orb-stage .orb-caption{font-size:7px;letter-spacing:2px}
+  .nava-center-label{font-size:9px;margin-top:2px;white-space:nowrap}
+  .nava-orbit-item{position:absolute;z-index:3;left:var(--orbit-x);top:var(--orbit-y);right:auto;bottom:auto;width:min(96px,30vw);min-height:68px;transform:translate(-50%,-50%)}
+  .nava-orbit-button{min-height:68px;padding:6px 3px;gap:4px;border-radius:13px}
+  .nava-orbit-icon{width:25px;height:25px;font-size:15px;border-radius:8px}
+  .nava-orbit-title{font-size:9px;line-height:1.35;white-space:normal;text-align:center}
+  .nava-orbit-caption{display:none}
+  .nava-orbit-item--logo{--orbit-x:50%;--orbit-y:6%}
+  .nava-orbit-item--brand{--orbit-x:70%;--orbit-y:12%}
+  .nava-orbit-item--content{--orbit-x:84%;--orbit-y:28%}
+  .nava-orbit-item--article{--orbit-x:84%;--orbit-y:50%}
+  .nava-orbit-item--office{--orbit-x:84%;--orbit-y:72%}
+  .nava-orbit-item--music{--orbit-x:70%;--orbit-y:88%}
+  .nava-orbit-item--composition{--orbit-x:50%;--orbit-y:94%}
+  .nava-orbit-item--story{--orbit-x:30%;--orbit-y:88%}
+  .nava-orbit-item--media{--orbit-x:16%;--orbit-y:72%}
+  .nava-orbit-item--seo{--orbit-x:16%;--orbit-y:50%}
+  .nava-orbit-item--campaign{--orbit-x:16%;--orbit-y:28%}
+  .nava-orbit-item--business{--orbit-x:30%;--orbit-y:12%}
+  .nava-home-footnote{margin-top:8px}
+}
+@media(max-width:360px){
+  .nava-orbit-stage{height:650px}
+  .nava-orbit-item{width:90px;min-height:64px}
+  .nava-orbit-button{min-height:64px}
+  .nava-orbit-icon{width:23px;height:23px;font-size:14px}
+  .nava-orbit-title{font-size:8px}
+}
+@media(prefers-reduced-motion:reduce){
+  .nava-orbit-button,.nava-orbit-track,.nava-orbit-track:before,.nava-orbit-track:after{animation:none!important;will-change:auto}
+}
