@@ -26,6 +26,38 @@ const NAVI_USER_NAME_KEY = "nava_navi_user_name";
 const NAVI_USER_ROLE_KEY = "nava_navi_user_role";
 const NAVI_USER_ID_KEY = "nava_navi_user_id";
 
+// Persistent account state: closing the browser must not end a valid login.
+// Temporary studio-return context intentionally remains in sessionStorage.
+function getNaviStoredValue(key) {
+  try {
+    const persistent = localStorage.getItem(key);
+    if (persistent !== null) return persistent;
+    // One-time migration for users who still have an active legacy tab session.
+    const legacy = sessionStorage.getItem(key);
+    if (legacy !== null) {
+      localStorage.setItem(key, legacy);
+      sessionStorage.removeItem(key);
+    }
+    return legacy;
+  } catch (error) {
+    try { return sessionStorage.getItem(key); } catch (_) { return null; }
+  }
+}
+
+function setNaviStoredValue(key, value) {
+  try {
+    localStorage.setItem(key, String(value));
+    try { sessionStorage.removeItem(key); } catch (_) {}
+  } catch (error) {
+    throw new Error("ذخیره نشست پایدار در مرورگر ممکن نیست. تنظیمات ذخیره‌سازی مرورگر را بررسی کن.");
+  }
+}
+
+function removeNaviStoredValue(key) {
+  try { localStorage.removeItem(key); } catch (_) {}
+  try { sessionStorage.removeItem(key); } catch (_) {}
+}
+
 // Browser-side password derivation. PBKDF2 never runs inside the Free Worker.
 function naviBytesToBase64Url(bytes) {
   let binary = "";
@@ -296,7 +328,7 @@ function showNaviWelcome(kind, identity = "") {
     } catch (_) {}
   }
 
-  const displayName = sessionStorage.getItem(NAVI_USER_NAME_KEY) || "";
+  const displayName = getNaviStoredValue(NAVI_USER_NAME_KEY) || "";
   naviWelcomeBubbleText.textContent = kind === "account" && displayName
     ? "سلام " + displayName + " عزیز! به نوا خوش اومدی. من NAVI هستم؛ همراهت در این جهان خلاق."
     : "سلام! به جهان نوا خوش اومدی. من NAVI هستم؛ همراهت برای کشف ایده‌ها و ساختن چیزهای تازه.";
@@ -643,8 +675,8 @@ function getNaviToken() {
   let expiry = 0;
 
   try {
-    token = sessionStorage.getItem(NAVI_SESSION_KEY);
-    expiry = Number(sessionStorage.getItem(NAVI_EXPIRY_KEY) || 0);
+    token = getNaviStoredValue(NAVI_SESSION_KEY);
+    expiry = Number(getNaviStoredValue(NAVI_EXPIRY_KEY) || 0);
   } catch (error) {
     console.error("NAVI session storage error:", error);
     return null;
@@ -666,11 +698,8 @@ function saveNaviSession(token, expiresIn) {
   }
 
   try {
-    sessionStorage.setItem(NAVI_SESSION_KEY, token);
-    sessionStorage.setItem(
-      NAVI_EXPIRY_KEY,
-      String(Date.now() + duration * 1000)
-    );
+    setNaviStoredValue(NAVI_SESSION_KEY, token);
+    setNaviStoredValue(NAVI_EXPIRY_KEY, String(Date.now() + duration * 1000));
   } catch (error) {
     throw new Error("ذخیره نشست در مرورگر ممکن نیست. فضای ذخیره‌سازی مرورگر را بررسی کن.");
   }
@@ -680,11 +709,11 @@ function clearNaviSession() {
   naviSessionVersion++;
 
   try {
-    sessionStorage.removeItem(NAVI_SESSION_KEY);
-    sessionStorage.removeItem(NAVI_EXPIRY_KEY);
-    sessionStorage.removeItem(NAVI_USER_NAME_KEY);
-    sessionStorage.removeItem(NAVI_USER_ROLE_KEY);
-    sessionStorage.removeItem(NAVI_USER_ID_KEY);
+    removeNaviStoredValue(NAVI_SESSION_KEY);
+    removeNaviStoredValue(NAVI_EXPIRY_KEY);
+    removeNaviStoredValue(NAVI_USER_NAME_KEY);
+    removeNaviStoredValue(NAVI_USER_ROLE_KEY);
+    removeNaviStoredValue(NAVI_USER_ID_KEY);
   } catch (error) {
     console.warn("Could not clear local session storage.");
   }
@@ -711,6 +740,7 @@ function clearNaviSession() {
     panel.classList.remove("is-active");
   });
   if (naviLoginPanel) naviLoginPanel.hidden = false;
+  document.querySelector(".nava-access-panel")?.classList.remove("is-dismissed");
   if (naviPassword) naviPassword.value = "";
   if (naviUsername) naviUsername.value = "";
   if (naviUserDisplay) naviUserDisplay.textContent = "";
@@ -761,7 +791,7 @@ function setNaviWorkspaceTab(tabName) {
   const allowedTabs = new Set(["projects", "memory", "users"]);
   if (!allowedTabs.has(tabName)) return;
 
-  const isOwner = sessionStorage.getItem(NAVI_USER_ROLE_KEY) === "owner";
+  const isOwner = getNaviStoredValue(NAVI_USER_ROLE_KEY) === "owner";
   if (tabName === "users" && !isOwner) tabName = "projects";
 
   const workspace = document.getElementById("navaAccountWorkspace");
@@ -786,13 +816,14 @@ document.querySelectorAll("#naviWorkspaceTabs [data-navi-tab]").forEach(button =
 });
 
 function showNaviChat() {
+  document.querySelector(".nava-access-panel")?.classList.add("is-dismissed");
   naviLoginPanel.hidden = true;
   naviChatArea.hidden = false;
 
   clearLoginError();
 
-  const displayName = sessionStorage.getItem(NAVI_USER_NAME_KEY) || "کاربر";
-  const isOwner = sessionStorage.getItem(NAVI_USER_ROLE_KEY) === "owner";
+  const displayName = getNaviStoredValue(NAVI_USER_NAME_KEY) || "کاربر";
+  const isOwner = getNaviStoredValue(NAVI_USER_ROLE_KEY) === "owner";
   naviLoginStatus.textContent = "نشست امن ناوی فعال است.";
   if (naviUserDisplay) naviUserDisplay.textContent = "حساب فعال: " + displayName;
   if (naviAccountAdmin) naviAccountAdmin.hidden = !isOwner;
@@ -800,7 +831,7 @@ function showNaviChat() {
   if (naviOwnerTab) naviOwnerTab.hidden = !isOwner;
   setNaviWorkspaceTab("projects");
   if (isOwner) loadNaviUsers();
-  const accountIdentity = sessionStorage.getItem(NAVI_USER_ID_KEY) || displayName;
+  const accountIdentity = getNaviStoredValue(NAVI_USER_ID_KEY) || displayName;
   showNaviWelcome("account", accountIdentity);
   setNaviStatus("در حال بازیابی گفت‌وگوهای قبلی...");
 }
@@ -2121,9 +2152,14 @@ async function loadNaviProjects() {
   try {
     const response = await fetch(NAVI_PROJECTS_API, { headers: { Authorization: "Bearer " + token }, cache: "no-store" });
     const data = await response.json();
+    if (response.status === 401 || response.status === 403) {
+      clearNaviSession();
+      showLoginError("نشست ورود معتبر نیست یا پایان یافته است. دوباره وارد شو.");
+      return false;
+    }
     if (!response.ok || !data.success) throw new Error(data.error || "دریافت پروژه‌ها ناموفق بود.");
     naviProjects = Array.isArray(data.projects) ? data.projects : [];
-    const savedProject = sessionStorage.getItem("nava_navi_active_project");
+    const savedProject = getNaviStoredValue("nava_navi_active_project");
     if (savedProject && naviProjects.some(item => item.project_id === savedProject)) naviActiveProjectId = savedProject;
     if (!naviProjects.some(item => item.project_id === naviActiveProjectId)) naviActiveProjectId = "project-general";
     if (naviProjectSelect) {
@@ -2175,7 +2211,7 @@ function renderNaviThreads() {
     button.title = thread.title || "گفت‌وگو";
     button.addEventListener("click", async () => {
       naviActiveThreadId = thread.thread_id;
-      sessionStorage.setItem("nava_navi_active_thread", naviActiveThreadId);
+      setNaviStoredValue("nava_navi_active_thread", naviActiveThreadId);
       renderNaviThreads();
       requestResponse.textContent = "";
       requestResponse.classList.remove("show");
@@ -2217,7 +2253,7 @@ async function deleteNaviThread() {
         return;
       }
       naviActiveThreadId = naviThreads[0].thread_id;
-      sessionStorage.setItem("nava_navi_active_thread", naviActiveThreadId);
+      setNaviStoredValue("nava_navi_active_thread", naviActiveThreadId);
       naviHistory = [];
       requestResponse.textContent = "";
       requestResponse.classList.remove("show");
@@ -2272,7 +2308,7 @@ async function createNaviThread() {
     const data = await response.json();
     if (!response.ok || !data.success || !data.thread?.thread_id) throw new Error(data.error || "ساخت گفت‌وگوی جدید ناموفق بود.");
     naviActiveThreadId = data.thread.thread_id;
-    sessionStorage.setItem("nava_navi_active_thread", naviActiveThreadId);
+    setNaviStoredValue("nava_navi_active_thread", naviActiveThreadId);
     naviHistory = [];
     requestResponse.textContent = "";
     requestResponse.classList.remove("show");
@@ -2304,7 +2340,7 @@ async function createNaviProject() {
     naviActiveProjectId = data.project.project_id;
     if (naviProjectSelect) naviProjectSelect.value = naviActiveProjectId;
     updateNaviProjectControls();
-    sessionStorage.setItem("nava_navi_active_project", naviActiveProjectId);
+    setNaviStoredValue("nava_navi_active_project", naviActiveProjectId);
     naviActiveThreadId = "";
     await loadNaviThreads();
     await createNaviThread();
@@ -2346,9 +2382,9 @@ async function deleteNaviProject() {
     }
 
     naviActiveProjectId = "project-general";
-    sessionStorage.setItem("nava_navi_active_project", naviActiveProjectId);
+    setNaviStoredValue("nava_navi_active_project", naviActiveProjectId);
     naviActiveThreadId = "";
-    sessionStorage.removeItem("nava_navi_active_thread");
+    removeNaviStoredValue("nava_navi_active_thread");
     naviHistory = [];
     naviMemoryLoaded = false;
     requestResponse.textContent = "";
@@ -2358,7 +2394,7 @@ async function deleteNaviProject() {
     if (!projectsLoaded) throw new Error("پروژه حذف شد، اما بارگذاری دوباره فهرست پروژه‌ها ناموفق بود.");
     naviActiveProjectId = "project-general";
     if (naviProjectSelect) naviProjectSelect.value = naviActiveProjectId;
-    sessionStorage.setItem("nava_navi_active_project", naviActiveProjectId);
+    setNaviStoredValue("nava_navi_active_project", naviActiveProjectId);
 
     const threadsLoaded = await loadNaviThreads();
     if (!threadsLoaded) throw new Error("پروژه حذف شد، اما بارگذاری گفت‌وگوی عمومی ناموفق بود.");
@@ -2384,7 +2420,7 @@ naviProjectSelect?.addEventListener("change", async () => {
   if (!naviProjects.some(project => project.project_id === nextProjectId)) return;
   naviActiveProjectId = nextProjectId;
   updateNaviProjectControls();
-  sessionStorage.setItem("nava_navi_active_project", nextProjectId);
+  setNaviStoredValue("nava_navi_active_project", nextProjectId);
   naviActiveThreadId = "";
   naviHistory = [];
   naviMemoryLoaded = false;
@@ -2417,7 +2453,7 @@ if (existingNaviToken) {
   (async () => {
     await loadNaviProjects();
     await loadNaviThreads();
-    const saved = sessionStorage.getItem("nava_navi_active_thread");
+    const saved = getNaviStoredValue("nava_navi_active_thread");
     if (saved && naviThreads.some(item => item.thread_id === saved)) naviActiveThreadId = saved;
     if (!naviActiveThreadId) { await createNaviThread(); return; }
     renderNaviThreads();
@@ -2506,9 +2542,9 @@ naviLoginForm.addEventListener("submit", async event => {
     const expiresIn = Number(data.expiresIn || 43200);
 
     saveNaviSession(data.token, expiresIn);
-    sessionStorage.setItem(NAVI_USER_NAME_KEY, String(data.user?.displayName || username || "مالک"));
-    sessionStorage.setItem(NAVI_USER_ROLE_KEY, String(data.user?.role || "user"));
-    sessionStorage.setItem(NAVI_USER_ID_KEY, String(data.user?.id || data.user?.username || username || "owner"));
+    setNaviStoredValue(NAVI_USER_NAME_KEY, String(data.user?.displayName || username || "مالک"));
+    setNaviStoredValue(NAVI_USER_ROLE_KEY, String(data.user?.role || "user"));
+    setNaviStoredValue(NAVI_USER_ID_KEY, String(data.user?.id || data.user?.username || username || "owner"));
 
     naviSessionVersion++;
     naviPassword.value = "";
@@ -2551,7 +2587,7 @@ naviLoginForm.addEventListener("submit", async event => {
 ========================================= */
 
 async function loadNaviUsers() {
-  if (!naviUsersList || sessionStorage.getItem(NAVI_USER_ROLE_KEY) !== "owner") return;
+  if (!naviUsersList || getNaviStoredValue(NAVI_USER_ROLE_KEY) !== "owner") return;
   if (naviUsersStatus) naviUsersStatus.textContent = "در حال دریافت حساب‌ها...";
   naviUsersList.replaceChildren();
 

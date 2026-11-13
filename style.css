@@ -1706,3 +1706,65 @@ body.light .nava-account-workspace .navi-workspace-panel{background:rgba(255,255
   .nava-account-workspace .navi-workspace-tab>span:first-child{font-size:15px}
   .nava-account-workspace .navi-workspace-panel{padding:8px;border-radius:14px}
 }
+
+
+/* Account navigation: horizontal, always-visible tabs instead of a stacked/dropdown card. */
+.nava-account-workspace .navi-workspace-tabs{
+  position:sticky;
+  top:10px;
+  z-index:12;
+  display:flex;
+  flex-flow:row nowrap;
+  align-items:stretch;
+  justify-content:flex-start;
+  gap:8px;
+  width:100%;
+  margin:0 0 20px;
+  padding:0 0 10px;
+  overflow-x:auto;
+  overflow-y:hidden;
+  border:0;
+  border-bottom:1px solid rgba(229,184,94,.28);
+  border-radius:0;
+  background:transparent;
+  box-shadow:none;
+  scrollbar-width:thin;
+}
+.nava-account-workspace .navi-workspace-tab{
+  flex:0 0 auto;
+  min-width:118px;
+  min-height:46px;
+  padding:10px 17px;
+  white-space:nowrap;
+  border:1px solid rgba(229,184,94,.2);
+  border-radius:12px 12px 5px 5px;
+  background:rgba(255,255,255,.035);
+}
+.nava-account-workspace .navi-workspace-tab.is-active{
+  border-color:rgba(229,184,94,.72);
+  border-bottom-color:var(--gold);
+  background:linear-gradient(180deg,rgba(229,184,94,.16),rgba(37,202,255,.045));
+  box-shadow:0 5px 18px rgba(0,0,0,.12);
+}
+body.light .nava-account-workspace .navi-workspace-tabs{
+  border-bottom-color:rgba(193,127,37,.28);
+  background:transparent;
+}
+body.light .nava-account-workspace .navi-workspace-tab{
+  background:rgba(255,255,255,.7);
+}
+@media(max-width:600px){
+  .nava-account-workspace .navi-workspace-tabs{
+    position:relative;
+    top:auto;
+    gap:6px;
+    margin-bottom:14px;
+    padding-bottom:8px;
+  }
+  .nava-account-workspace .navi-workspace-tab{
+    min-width:max-content;
+    min-height:42px;
+    padding:8px 13px;
+    font-size:11px;
+  }
+}
