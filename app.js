@@ -384,24 +384,48 @@ function restoreNavaReturnContext() {
 }
 
 /* NAVI FLOATING CHAT — stage 1: animated chat window */
+function positionNaviWidgetOnOrbit() {
+  if (!naviWidgetPanel) return;
+  const homePage = document.getElementById("homePage");
+  const orbit = homePage?.classList.contains("active")
+    ? homePage.querySelector(".nava-orbit-stage")
+    : null;
+
+  if (orbit) {
+    const rect = orbit.getBoundingClientRect();
+    naviWidgetPanel.style.setProperty("--navi-panel-top", (rect.top + rect.height / 2) + "px");
+    naviWidgetPanel.style.setProperty("--navi-panel-left", (rect.left + rect.width / 2) + "px");
+  } else {
+    naviWidgetPanel.style.removeProperty("--navi-panel-top");
+    naviWidgetPanel.style.removeProperty("--navi-panel-left");
+  }
+}
+
 function setNaviWidgetOpen(isOpen, focusComposer = false) {
   if (!naviWidgetPanel || !naviWidgetToggle) return;
 
   if (isOpen && !getNaviToken()) captureNavaReturnContext();
+  if (isOpen) positionNaviWidgetOnOrbit();
 
   naviWidgetPanel.hidden = !isOpen;
   naviWidgetToggle.hidden = isOpen;
   naviWidgetPanel.classList.toggle("is-open", isOpen);
+  document.body.classList.toggle("navi-widget-open", isOpen);
   naviWidgetToggle.setAttribute("aria-expanded", isOpen ? "true" : "false");
   naviWidgetToggle.setAttribute(
     "aria-label",
     isOpen ? "بستن گفت‌وگو با ناوی" : "باز کردن گفت‌وگو با ناوی"
   );
 
+  if (!isOpen) {
+    naviWidgetPanel.style.removeProperty("--navi-panel-top");
+    naviWidgetPanel.style.removeProperty("--navi-panel-left");
+  }
+
   if (isOpen && focusComposer) {
     window.setTimeout(() => {
       const target = getNaviToken() ? userRequest : naviUsername;
-      if (target && !target.hidden) target.focus();
+      if (target && !target.hidden) target.focus({ preventScroll: true });
     }, 220);
   }
 }
@@ -3271,6 +3295,8 @@ copyStory.addEventListener("click", async () => {
     document.getElementById("navaHomeLogin")
   ].filter(Boolean);
   loginButtons.forEach(button => button.addEventListener("click", () => {
+    // The choice card disappears as soon as the visitor chooses the account path.
+    document.querySelector(".nava-access-panel")?.classList.add("is-dismissed");
     if (typeof window.openNaviAssistant === "function") {
       window.openNaviAssistant({ service: "گفت‌وگوی عمومی" });
     }
@@ -3278,11 +3304,10 @@ copyStory.addEventListener("click", async () => {
 
   const guestButton = document.getElementById("navaGuestExplore");
   guestButton?.addEventListener("click", () => {
-    // Choosing guest mode dismisses any open NAVI dialog or welcome bubble first.
+    // Close the choice card and any NAVI overlay directly; do not scroll the page to hide either one.
+    document.querySelector(".nava-access-panel")?.classList.add("is-dismissed");
     setNaviWidgetOpen(false);
     if (naviWelcomeBubble) naviWelcomeBubble.hidden = true;
-    const orbit = document.querySelector(".nava-orbit-stage");
-    orbit?.scrollIntoView({ behavior: "smooth", block: "start" });
     const firstStudio = document.querySelector(".nava-orbit-button");
     if (firstStudio) firstStudio.focus({ preventScroll: true });
   });
