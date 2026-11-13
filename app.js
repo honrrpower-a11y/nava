@@ -282,6 +282,7 @@ function setNaviWidgetOpen(isOpen, focusComposer = false) {
   if (!naviWidgetPanel || !naviWidgetToggle) return;
 
   naviWidgetPanel.hidden = !isOpen;
+  naviWidgetToggle.hidden = isOpen;
   naviWidgetPanel.classList.toggle("is-open", isOpen);
   naviWidgetToggle.setAttribute("aria-expanded", isOpen ? "true" : "false");
   naviWidgetToggle.setAttribute(
