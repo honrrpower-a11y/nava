@@ -6,8 +6,8 @@
   <meta name="theme-color" content="#080d19">
   <meta name="description" content="NAVA؛ استودیوی هوشمند برای ساخت، طراحی و رشد کسب‌وکارها">
   <title>NAVA | One Vision. One Mission. One NAVA.</title>
-  <link rel="stylesheet" href="style.css">
-  <script src="app.js?v=navi-registration-and-dialogs-20261113-1" defer></script>
+  <link rel="stylesheet" href="style.css?v=navi-floating-chat-20261113-1">
+  <script src="app.js?v=navi-floating-chat-20261113-1" defer></script>
 </head>
 <body>
 
@@ -93,6 +93,71 @@
       </div>
     </div>
 
+    
+  </section>
+
+  <section class="page" id="storyPage">
+    <div class="tool-page">
+      <div class="tool-card">
+        <div class="tool-card-inner">
+          <h1>استوری‌ساز نوا</h1>
+          <p>
+            متن موردنظرت را وارد کن تا پیش‌نمایش ساده آن را برای استوری ببینی.
+            این نسخه فعلاً پیش‌نمایش متنی است.
+          </p>
+          <label class="field-label" for="storyInput">متن استوری</label>
+          <textarea class="story-input" id="storyInput"
+            placeholder="متن استوری خود را اینجا بنویس..."></textarea>
+          <label class="field-label">پیش‌نمایش استوری</label>
+          <div class="story-preview empty" id="previewText">
+            متن استوری تو اینجا نمایش داده می‌شود
+          </div>
+          <div class="story-actions">
+            <button class="btn-secondary" id="clearStory">پاک کردن متن</button>
+            <button class="btn-primary" id="copyStory">کپی متن</button>
+          </div>
+          <div class="response-box" id="storyMessage" aria-live="polite"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="page" id="musicPage">
+    <div class="coming-card">
+      <div class="coming-card-inner">
+        <div class="coming-icon">♫</div>
+        <h1>استودیوی موسیقی نوا</h1>
+        <p>
+          این بخش در حال توسعه است.<br>
+          به‌زودی مسیر تازه‌ای برای خلق موسیقی و تجربه‌های صوتی در نوا فعال خواهد شد.
+        </p>
+        <div class="coming-actions">
+          <button class="btn-secondary" onclick="showPage('homePage')">
+            بازگشت به صفحه اصلی
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+
+<div class="navi-assistant-widget" id="naviAssistantWidget">
+  <button class="navi-widget-toggle" id="naviWidgetToggle" type="button"
+    aria-expanded="false" aria-controls="naviWidgetPanel" aria-label="باز کردن گفت‌وگو با ناوی">
+    <span class="navi-widget-orb" aria-hidden="true"><span class="navi-widget-orb-core"></span></span>
+    <span class="navi-widget-toggle-copy"><strong>گفت‌وگو با ناوی</strong><small>همراه هوشمند نوا</small></span>
+    <span class="navi-widget-live-dot" aria-hidden="true"></span>
+  </button>
+
+  <section class="navi-widget-panel" id="naviWidgetPanel" aria-label="پنجره گفت‌وگو با ناوی" hidden>
+    <div class="navi-widget-panel-head">
+      <div class="navi-widget-identity">
+        <span class="navi-widget-mini-orb" aria-hidden="true"></span>
+        <span><strong>NAVI</strong><small>همراه هوشمند نوا</small></span>
+      </div>
+      <button class="navi-widget-close" id="naviWidgetClose" type="button" aria-label="بستن پنجره ناوی">×</button>
+    </div>
     <div class="request-panel" id="requestSection">
       <div class="request-content">
         <h2>با ناوی صحبت کن</h2>
@@ -249,51 +314,7 @@
       </div>
     </div>
   </section>
-
-  <section class="page" id="storyPage">
-    <div class="tool-page">
-      <div class="tool-card">
-        <div class="tool-card-inner">
-          <h1>استوری‌ساز نوا</h1>
-          <p>
-            متن موردنظرت را وارد کن تا پیش‌نمایش ساده آن را برای استوری ببینی.
-            این نسخه فعلاً پیش‌نمایش متنی است.
-          </p>
-          <label class="field-label" for="storyInput">متن استوری</label>
-          <textarea class="story-input" id="storyInput"
-            placeholder="متن استوری خود را اینجا بنویس..."></textarea>
-          <label class="field-label">پیش‌نمایش استوری</label>
-          <div class="story-preview empty" id="previewText">
-            متن استوری تو اینجا نمایش داده می‌شود
-          </div>
-          <div class="story-actions">
-            <button class="btn-secondary" id="clearStory">پاک کردن متن</button>
-            <button class="btn-primary" id="copyStory">کپی متن</button>
-          </div>
-          <div class="response-box" id="storyMessage" aria-live="polite"></div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <section class="page" id="musicPage">
-    <div class="coming-card">
-      <div class="coming-card-inner">
-        <div class="coming-icon">♫</div>
-        <h1>استودیوی موسیقی نوا</h1>
-        <p>
-          این بخش در حال توسعه است.<br>
-          به‌زودی مسیر تازه‌ای برای خلق موسیقی و تجربه‌های صوتی در نوا فعال خواهد شد.
-        </p>
-        <div class="coming-actions">
-          <button class="btn-secondary" onclick="showPage('homePage')">
-            بازگشت به صفحه اصلی
-          </button>
-        </div>
-      </div>
-    </div>
-  </section>
-</main>
+</div>
 
 <footer>
   <div class="container">
