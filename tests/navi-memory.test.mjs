@@ -320,13 +320,19 @@ test("a direct remember request still reaches the explicit memory command handle
   assert.match(parsed.memoryValue, /آبی نفتی/);
 });
 
-test("a checked composer-save control bypasses the direct-command early return", async () => {
-  const { shouldHandleNaviExplicitMemoryCommand } = await import("../modules/navi.js");
-  const directCommand = { isCommand: true, memoryValue: "هدف پایدار پروژه نوا" };
-
-  assert.equal(shouldHandleNaviExplicitMemoryCommand(directCommand, true), false);
-  assert.equal(shouldHandleNaviExplicitMemoryCommand(directCommand, false), true);
-  assert.equal(shouldHandleNaviExplicitMemoryCommand({ isCommand: false }, true), false);
+test("chat memory commands never bypass the normal conversational response", async () => {
+  const { buildSystemInstruction } = await import("../modules/navi.js");
+  const prompt = buildSystemInstruction({
+    page: "/",
+    pageContext: "",
+    memoryContext: "",
+    conversationContext: "",
+    currentUser: { id: "owner", role: "owner", display_name: "مالک" },
+    explicitComposerSave: false
+  });
+  assert.match(prompt, /COMPOSER SAVE NOT CHECKED/);
+  assert.match(prompt, /Treat any wording about remembering as ordinary conversation/);
+  assert.match(prompt, /Do not save, update, merge, propose, or queue any memory/);
 });
 
 test("checked composer save tells Gemini to extract the stated fact in the same request", async () => {
@@ -350,8 +356,10 @@ test("checked composer save tells Gemini to extract the stated fact in the same 
 
   assert.match(checkedPrompt, /COMPOSER SAVE CHECKED/);
   assert.match(checkedPrompt, /Do not ask what information the user wants to save/);
+  assert.match(checkedPrompt, /Answer the user's message normally/);
   assert.doesNotMatch(normalPrompt, /COMPOSER SAVE CHECKED/);
-  assert.match(normalPrompt, /the server handles that direct request separately/);
+  assert.match(normalPrompt, /COMPOSER SAVE NOT CHECKED/);
+  assert.match(normalPrompt, /Treat any wording about remembering as ordinary conversation/);
 });
 
 
