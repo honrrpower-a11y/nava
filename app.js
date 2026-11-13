@@ -566,6 +566,8 @@ function setNaviWorkspaceTab(tabName) {
   const isOwner = sessionStorage.getItem(NAVI_USER_ROLE_KEY) === "owner";
   if (tabName === "users" && !isOwner) tabName = "chat";
 
+  const tabBar = document.getElementById("naviWorkspaceTabs");
+  if (tabBar) tabBar.classList.toggle("is-owner", isOwner);
   document.querySelectorAll("[data-navi-tab]").forEach(button => {
     const active = button.dataset.naviTab === tabName;
     button.classList.toggle("is-active", active);
