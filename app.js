@@ -2067,6 +2067,8 @@ async function createNaviProject() {
     naviActiveThreadId = "";
     await loadNaviThreads();
     await createNaviThread();
+    naviMemoryLoaded = false;
+    await loadNaviMemories(true);
     if (naviProjectStatus) naviProjectStatus.textContent = "پروژه ساخته شد و گفت‌وگوی تازه آماده است.";
   } catch (error) { if (naviProjectStatus) naviProjectStatus.textContent = error.message || "ساخت پروژه ناموفق بود."; }
   finally { naviCreateProjectButton.disabled = false; }
