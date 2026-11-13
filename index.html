@@ -207,27 +207,49 @@
             <button class="navi-logout" id="naviLogout" type="button">خروج از ناوی</button>
           </div>
 
-          <section class="navi-memory-panel" id="naviAccountAdmin" hidden>
-            <h3>مدیریت عضویت و حساب‌ها</h3>
-            <p class="navi-memory-description">درخواست‌های عضویت فقط با تأیید مالک فعال می‌شوند. ساخت حساب دعوتی مستقیم نیز در اختیار مالک باقی می‌ماند.</p>
-            <form id="naviCreateUserForm">
-              <label class="field-label" for="naviNewDisplayName">نام نمایشی</label>
-              <input class="navi-password" id="naviNewDisplayName" type="text" maxlength="80" required>
-              <label class="field-label" for="naviNewUsername">نام کاربری انگلیسی</label>
-              <input class="navi-password" id="naviNewUsername" type="text" minlength="3" maxlength="40" autocomplete="off" required>
-              <label class="field-label" for="naviNewPassword">رمز عبور اولیه (حداقل ۱۲ نویسه)</label>
-              <input class="navi-password" id="naviNewPassword" type="password" minlength="12" maxlength="256" autocomplete="new-password" required>
-              <button class="btn-primary" id="naviCreateUserButton" type="submit">ساخت حساب</button>
-            </form>
-            <div class="navi-auth-error" id="naviCreateUserStatus" role="status" aria-live="polite"></div>
-            <div class="navi-users-toolbar">
-              <strong>حساب‌های ثبت‌شده</strong>
-              <button class="navi-users-refresh" id="naviUsersRefresh" type="button">تازه‌سازی</button>
-            </div>
-            <div class="navi-users-status" id="naviUsersStatus" aria-live="polite">برای مشاهده فهرست، کمی صبر کن.</div>
-            <div class="navi-users-list" id="naviUsersList"></div>
-          </section>
+          <nav class="navi-workspace-tabs" id="naviWorkspaceTabs" aria-label="بخش‌های پنل ناوی">
+            <button class="navi-workspace-tab is-active" type="button" data-navi-tab="chat" aria-selected="true">
+              <span aria-hidden="true">✦</span><span>گفت‌وگو</span>
+            </button>
+            <button class="navi-workspace-tab" type="button" data-navi-tab="projects" aria-selected="false">
+              <span aria-hidden="true">▦</span><span>پروژه‌ها</span>
+            </button>
+            <button class="navi-workspace-tab" type="button" data-navi-tab="memory" aria-selected="false">
+              <span aria-hidden="true">◈</span><span>حافظه</span>
+            </button>
+            <button class="navi-workspace-tab" id="naviOwnerTab" type="button" data-navi-tab="users" aria-selected="false" hidden>
+              <span aria-hidden="true">♙</span><span>مدیریت کاربران</span>
+            </button>
+          </nav>
 
+          <section class="navi-workspace-panel is-active" data-navi-panel="chat" aria-label="گفت‌وگو با ناوی">
+          <label class="field-label" for="serviceSelect">موضوع درخواست</label>
+          <select class="request-select" id="serviceSelect">
+            <option value="انتخاب نشده">انتخاب موضوع</option>
+            <option value="طراحی لوگو">طراحی لوگو</option>
+            <option value="تولید محتوا">تولید محتوا</option>
+            <option value="تبلیغات">تبلیغات</option>
+            <option value="هویت برند">هویت برند</option>
+            <option value="ایده‌پردازی">ایده‌پردازی</option>
+            <option value="سایر موارد">سایر موارد</option>
+          </select>
+
+          <label class="field-label" for="userRequest">پیامت برای ناوی</label>
+          <div class="navi-composer">
+            <textarea class="request-textarea" id="userRequest"
+              placeholder="سلام ناوی، می‌خواهم برای کسب‌وکارم یک ایده تازه پیدا کنم..."></textarea>
+            <label class="navi-composer-memory" for="naviSaveComposerMessage">
+              <input type="checkbox" id="naviSaveComposerMessage">
+              <span>ذخیره این پیام در پروفایل اطلاعاتی</span>
+            </label>
+          </div>
+          <div class="navi-send-toolbar">
+            <button class="btn-primary" id="sendRequest" type="button">ارسال پیام به ناوی</button>
+          </div>
+          <div class="navi-status" id="naviStatus">ناوی آماده گفت‌وگو با توست.</div>
+          <div class="response-box" id="requestResponse" aria-live="polite"></div>
+          </section>
+          <section class="navi-workspace-panel" data-navi-panel="projects" aria-label="پروژه‌ها و تاریخچه" hidden>
           <section class="navi-memory-panel" id="naviHistoryPanel">
             <div class="navi-project-toolbar">
               <label for="naviProjectSelect">پروژه فعال</label>
@@ -263,7 +285,8 @@
               </div>
             </div>
           </section>
-
+          </section>
+          <section class="navi-workspace-panel" data-navi-panel="memory" aria-label="حافظه ناوی" hidden>
           <section class="navi-memory-panel" id="naviMemoryPanel">
             <button class="navi-memory-toggle" id="naviMemoryToggle"
               type="button" aria-expanded="false" aria-controls="naviMemoryContent">
@@ -297,32 +320,29 @@
               </section>
             </div>
           </section>
-
-          <label class="field-label" for="serviceSelect">موضوع درخواست</label>
-          <select class="request-select" id="serviceSelect">
-            <option value="انتخاب نشده">انتخاب موضوع</option>
-            <option value="طراحی لوگو">طراحی لوگو</option>
-            <option value="تولید محتوا">تولید محتوا</option>
-            <option value="تبلیغات">تبلیغات</option>
-            <option value="هویت برند">هویت برند</option>
-            <option value="ایده‌پردازی">ایده‌پردازی</option>
-            <option value="سایر موارد">سایر موارد</option>
-          </select>
-
-          <label class="field-label" for="userRequest">پیامت برای ناوی</label>
-          <div class="navi-composer">
-            <textarea class="request-textarea" id="userRequest"
-              placeholder="سلام ناوی، می‌خواهم برای کسب‌وکارم یک ایده تازه پیدا کنم..."></textarea>
-            <label class="navi-composer-memory" for="naviSaveComposerMessage">
-              <input type="checkbox" id="naviSaveComposerMessage">
-              <span>ذخیره این پیام در پروفایل اطلاعاتی</span>
-            </label>
-          </div>
-          <div class="navi-send-toolbar">
-            <button class="btn-primary" id="sendRequest" type="button">ارسال پیام به ناوی</button>
-          </div>
-          <div class="navi-status" id="naviStatus">ناوی آماده گفت‌وگو با توست.</div>
-          <div class="response-box" id="requestResponse" aria-live="polite"></div>
+          </section>
+          <section class="navi-workspace-panel" data-navi-panel="users" aria-label="مدیریت کاربران" hidden>
+          <section class="navi-memory-panel" id="naviAccountAdmin" hidden>
+            <h3>مدیریت عضویت و حساب‌ها</h3>
+            <p class="navi-memory-description">درخواست‌های عضویت فقط با تأیید مالک فعال می‌شوند. ساخت حساب دعوتی مستقیم نیز در اختیار مالک باقی می‌ماند.</p>
+            <form id="naviCreateUserForm">
+              <label class="field-label" for="naviNewDisplayName">نام نمایشی</label>
+              <input class="navi-password" id="naviNewDisplayName" type="text" maxlength="80" required>
+              <label class="field-label" for="naviNewUsername">نام کاربری انگلیسی</label>
+              <input class="navi-password" id="naviNewUsername" type="text" minlength="3" maxlength="40" autocomplete="off" required>
+              <label class="field-label" for="naviNewPassword">رمز عبور اولیه (حداقل ۱۲ نویسه)</label>
+              <input class="navi-password" id="naviNewPassword" type="password" minlength="12" maxlength="256" autocomplete="new-password" required>
+              <button class="btn-primary" id="naviCreateUserButton" type="submit">ساخت حساب</button>
+            </form>
+            <div class="navi-auth-error" id="naviCreateUserStatus" role="status" aria-live="polite"></div>
+            <div class="navi-users-toolbar">
+              <strong>حساب‌های ثبت‌شده</strong>
+              <button class="navi-users-refresh" id="naviUsersRefresh" type="button">تازه‌سازی</button>
+            </div>
+            <div class="navi-users-status" id="naviUsersStatus" aria-live="polite">برای مشاهده فهرست، کمی صبر کن.</div>
+            <div class="navi-users-list" id="naviUsersList"></div>
+          </section>
+          </section>
         </div>
       </div>
     </div>
