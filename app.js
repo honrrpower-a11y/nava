@@ -784,33 +784,9 @@ function mountNavaAccountWorkspace() {
   // NAVI chat remains inside its floating window; only account tools move.
   tabs.querySelector('[data-navi-tab="chat"]')?.remove();
 
-  // Keep account navigation on one aligned header row and reveal it on demand.
-  let dropdown = tabsSlot.querySelector(".nava-header-tabs-dropdown");
-  if (!dropdown) {
-    dropdown = document.createElement("div");
-    dropdown.className = "nava-header-tabs-dropdown";
-    const trigger = document.createElement("button");
-    trigger.type = "button";
-    trigger.className = "nava-header-tabs-trigger";
-    trigger.textContent = "بخش‌های حساب";
-    trigger.setAttribute("aria-expanded", "false");
-    trigger.setAttribute("aria-controls", "naviWorkspaceTabs");
-    trigger.addEventListener("click", () => {
-      const expanded = trigger.getAttribute("aria-expanded") === "true";
-      trigger.setAttribute("aria-expanded", expanded ? "false" : "true");
-      tabs.hidden = expanded;
-    });
-    dropdown.appendChild(trigger);
-    tabsSlot.appendChild(dropdown);
-    tabs.addEventListener("click", event => {
-      if (event.target.closest("[data-navi-tab]")) {
-        tabs.hidden = true;
-        trigger.setAttribute("aria-expanded", "false");
-      }
-    });
-  }
-  dropdown.appendChild(tabs);
-  tabs.hidden = true;
+  // Keep the account tabs directly on the NAVA header row; no intermediate menu.
+  tabsSlot.appendChild(tabs);
+  tabs.hidden = false;
 
   ["projects", "memory", "users"].forEach(name => {
     const panel = document.querySelector('[data-navi-panel="' + name + '"]');
@@ -829,19 +805,36 @@ function setNaviWorkspaceTab(tabName) {
   const workspace = document.getElementById("navaAccountWorkspace");
   const tabBar = document.getElementById("naviWorkspaceTabs");
   const headerTabsSlot = document.getElementById("navaHeaderTabsSlot");
-  if (workspace) workspace.hidden = false;
-  if (headerTabsSlot) headerTabsSlot.hidden = false;
-  if (tabBar) tabBar.classList.toggle("is-owner", isOwner);
+  const panels = Array.from(document.querySelectorAll("#navaAccountWorkspacePanels [data-navi-panel]"));
+  const currentPanel = panels.find(panel => !panel.hidden && panel.classList.contains("is-active"));
+  const closingCurrentPanel = currentPanel?.dataset.naviPanel === tabName;
 
+  if (tabBar) tabBar.classList.toggle("is-owner", isOwner);
+  if (headerTabsSlot) headerTabsSlot.hidden = false;
+
+  if (closingCurrentPanel) {
+    panels.forEach(panel => {
+      panel.hidden = true;
+      panel.classList.remove("is-active");
+    });
+    document.querySelectorAll("#naviWorkspaceTabs [data-navi-tab]").forEach(button => {
+      button.classList.remove("is-active");
+      button.setAttribute("aria-selected", "false");
+    });
+    if (workspace) workspace.hidden = true;
+    return;
+  }
+
+  if (workspace) workspace.hidden = false;
   document.querySelectorAll("#naviWorkspaceTabs [data-navi-tab]").forEach(button => {
     const active = button.dataset.naviTab === tabName;
     button.classList.toggle("is-active", active);
     button.setAttribute("aria-selected", active ? "true" : "false");
   });
-  document.querySelectorAll("#navaAccountWorkspacePanels [data-navi-panel]").forEach(panel => {
-    const active = panel.dataset.naviPanel === tabName;
-    panel.hidden = !active || (tabName === "users" && !isOwner);
-    panel.classList.toggle("is-active", active && !panel.hidden);
+  panels.forEach(panel => {
+    const active = panel.dataset.naviPanel === tabName && !(tabName === "users" && !isOwner);
+    panel.hidden = !active;
+    panel.classList.toggle("is-active", active);
   });
 }
 
