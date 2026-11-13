@@ -1106,7 +1106,8 @@ export async function updateNaviMemoryProposal(
   db,
   id,
   value,
-  ownerId = NAVI_OWNER_ID
+  ownerId = NAVI_OWNER_ID,
+  projectId = null
 ) {
   const proposalId = Number(id);
   const memoryValue = cleanMemoryValue(value);
@@ -1124,15 +1125,17 @@ export async function updateNaviMemoryProposal(
   }
 
   const existing = await db.prepare(`
-    SELECT id, memory_key
+    SELECT id, memory_key, project_id
     FROM navi_memory_facts_v1
     WHERE id = ?
       AND owner_id = ?
       AND status = 'pending'
+      AND (project_id IS NULL OR project_id = ?)
     LIMIT 1
   `).bind(
     proposalId,
-    ownerId
+    ownerId,
+    projectId
   ).first();
 
   if (!existing) {
@@ -1144,7 +1147,8 @@ export async function updateNaviMemoryProposal(
     memoryValue,
     proposalId,
     existing.memory_key,
-    ownerId
+    ownerId,
+    existing.project_id ?? null
   );
 
   if (duplicate) {
@@ -1159,10 +1163,13 @@ export async function updateNaviMemoryProposal(
     WHERE id = ?
       AND owner_id = ?
       AND status = 'pending'
+      AND ((? IS NULL AND project_id IS NULL) OR project_id = ?)
   `).bind(
     memoryValue,
     proposalId,
-    ownerId
+    ownerId,
+    existing.project_id ?? null,
+    existing.project_id ?? null
   ).run();
 
   if (!result.success || !result.meta?.changes) {
