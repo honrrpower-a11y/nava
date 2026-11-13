@@ -921,7 +921,8 @@ export async function approveNaviMemoryProposal(
   db,
   id,
   editedValue = null,
-  ownerId = NAVI_OWNER_ID
+  ownerId = NAVI_OWNER_ID,
+  projectId = null
 ) {
   const proposalId = Number(id);
 
@@ -938,10 +939,12 @@ export async function approveNaviMemoryProposal(
     WHERE id = ?
       AND owner_id = ?
       AND status = 'pending'
+      AND (project_id IS NULL OR project_id = ?)
     LIMIT 1
   `).bind(
     proposalId,
-    ownerId
+    ownerId,
+    projectId
   ).first();
 
   if (!existing) {
@@ -1067,7 +1070,8 @@ export async function approveNaviMemoryProposal(
 export async function rejectNaviMemoryProposal(
   db,
   id,
-  ownerId = NAVI_OWNER_ID
+  ownerId = NAVI_OWNER_ID,
+  projectId = null
 ) {
   const proposalId = Number(id);
 
@@ -1086,9 +1090,11 @@ export async function rejectNaviMemoryProposal(
     WHERE id = ?
       AND owner_id = ?
       AND status = 'pending'
+      AND (project_id IS NULL OR project_id = ?)
   `).bind(
     proposalId,
-    ownerId
+    ownerId,
+    projectId
   ).run();
 
   return {
