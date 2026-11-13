@@ -14,6 +14,22 @@ export function getNaviMainThreadId(ownerId = NAVI_OWNER_ID) { const id = String
 const MEMORY_VALUE_LIMIT = 12000;
 const MEMORY_KEY_LIMIT = 150;
 const MEMORY_LIST_LIMIT = 200;
+const GLOBAL_MEMORY_KEYS = ["نام کاربر", "هویت دستیار", "ترجیحات پاسخ‌گویی"];
+const GLOBAL_MEMORY_KEYS_SQL = "'نام کاربر', 'هویت دستیار', 'ترجیحات پاسخ‌گویی'";
+
+function getMemoryProjectScope(projectId) {
+  if (!projectId || projectId === "project-general") {
+    return {
+      sql: "(project_id IS NULL OR project_id = ?)",
+      bindings: [projectId]
+    };
+  }
+
+  return {
+    sql: `(project_id = ? OR (project_id IS NULL AND memory_key IN (${GLOBAL_MEMORY_KEYS_SQL})))`,
+    bindings: [projectId]
+  };
+}
 
 // ======================================
 // TEXT HELPERS
@@ -280,6 +296,7 @@ export async function searchNaviConversationHistory(db, query, limit = 8, recent
 // ======================================
 
 export async function getNaviApprovedMemory(db, ownerId = NAVI_OWNER_ID, projectId = null) {
+  const scope = getMemoryProjectScope(projectId);
   const result = await db.prepare(`
     SELECT
       id,
@@ -291,12 +308,12 @@ export async function getNaviApprovedMemory(db, ownerId = NAVI_OWNER_ID, project
     FROM navi_memory_facts_v1
     WHERE owner_id = ?
       AND status = 'approved'
-      AND (project_id IS NULL OR project_id = ?)
+      AND ${scope.sql}
     ORDER BY updated_at DESC, id DESC
     LIMIT ?
   `).bind(
     ownerId,
-    projectId,
+    ...scope.bindings,
     MEMORY_LIST_LIMIT
   ).all();
 
@@ -308,6 +325,7 @@ export async function getNaviApprovedMemory(db, ownerId = NAVI_OWNER_ID, project
 // ======================================
 
 export async function getNaviPendingMemory(db, ownerId = NAVI_OWNER_ID, projectId = null) {
+  const scope = getMemoryProjectScope(projectId);
   const result = await db.prepare(`
     SELECT
       id,
@@ -320,12 +338,12 @@ export async function getNaviPendingMemory(db, ownerId = NAVI_OWNER_ID, projectI
     FROM navi_memory_facts_v1
     WHERE owner_id = ?
       AND status = 'pending'
-      AND (project_id IS NULL OR project_id = ?)
+      AND ${scope.sql}
     ORDER BY created_at DESC, id DESC
     LIMIT ?
   `).bind(
     ownerId,
-    projectId,
+    ...scope.bindings,
     MEMORY_LIST_LIMIT
   ).all();
 
@@ -337,6 +355,7 @@ export async function getNaviPendingMemory(db, ownerId = NAVI_OWNER_ID, projectI
 // ======================================
 
 export async function getNaviArchivedMemory(db, ownerId = NAVI_OWNER_ID, projectId = null) {
+  const scope = getMemoryProjectScope(projectId);
   const result = await db.prepare(`
     SELECT
       id,
@@ -349,12 +368,12 @@ export async function getNaviArchivedMemory(db, ownerId = NAVI_OWNER_ID, project
     FROM navi_memory_facts_v1
     WHERE owner_id = ?
       AND status = 'archived'
-      AND (project_id IS NULL OR project_id = ?)
+      AND ${scope.sql}
     ORDER BY updated_at DESC, id DESC
     LIMIT ?
   `).bind(
     ownerId,
-    projectId,
+    ...scope.bindings,
     MEMORY_LIST_LIMIT
   ).all();
 
@@ -933,18 +952,19 @@ export async function approveNaviMemoryProposal(
     return { notFound: true };
   }
 
+  const scope = getMemoryProjectScope(projectId);
   const existing = await db.prepare(`
     SELECT id, memory_key, memory_value, project_id
     FROM navi_memory_facts_v1
     WHERE id = ?
       AND owner_id = ?
       AND status = 'pending'
-      AND (project_id IS NULL OR project_id = ?)
+      AND ${scope.sql}
     LIMIT 1
   `).bind(
     proposalId,
     ownerId,
-    projectId
+    ...scope.bindings
   ).first();
 
   if (!existing) {
@@ -1082,6 +1102,7 @@ export async function rejectNaviMemoryProposal(
     return { success: false };
   }
 
+  const scope = getMemoryProjectScope(projectId);
   const result = await db.prepare(`
     UPDATE navi_memory_facts_v1
     SET
@@ -1090,11 +1111,11 @@ export async function rejectNaviMemoryProposal(
     WHERE id = ?
       AND owner_id = ?
       AND status = 'pending'
-      AND (project_id IS NULL OR project_id = ?)
+      AND ${scope.sql}
   `).bind(
     proposalId,
     ownerId,
-    projectId
+    ...scope.bindings
   ).run();
 
   return {
@@ -1130,18 +1151,19 @@ export async function updateNaviMemoryProposal(
     return { sensitive: true };
   }
 
+  const scope = getMemoryProjectScope(projectId);
   const existing = await db.prepare(`
     SELECT id, memory_key, project_id
     FROM navi_memory_facts_v1
     WHERE id = ?
       AND owner_id = ?
       AND status = 'pending'
-      AND (project_id IS NULL OR project_id = ?)
+      AND ${scope.sql}
     LIMIT 1
   `).bind(
     proposalId,
     ownerId,
-    projectId
+    ...scope.bindings
   ).first();
 
   if (!existing) {
@@ -1203,8 +1225,7 @@ export async function saveNaviMemoryFact(
   const memoryValue = cleanMemoryValue(value);
   const memoryKey = cleanMemoryTitle(key);
   const memorySource = safeNaviText(source, 100) || "user_command";
-  const globalMemoryKeys = ["نام کاربر", "هویت دستیار", "ترجیحات پاسخ‌گویی"];
-  const memoryProjectId = globalMemoryKeys.includes(memoryKey) ? null : projectId;
+  const memoryProjectId = GLOBAL_MEMORY_KEYS.includes(memoryKey) ? null : projectId;
 
   if (!memoryValue) {
     throw new Error("Memory value is empty.");
@@ -1384,7 +1405,14 @@ export async function saveNaviMemoryFact(
     // A direct user memory command is an authoritative correction:
     // replace the matched fact instead of concatenating contradictory
     // values (for example, favorite color: red -> blue).
-    const relatedRecords = await findMemoryRelatedRecords(db, memoryValue, null, memoryKey, ownerId);
+    const relatedRecords = await findMemoryRelatedRecords(
+      db,
+      memoryValue,
+      null,
+      memoryKey,
+      ownerId,
+      memoryProjectId
+    );
     const statements = [
       db.prepare(`
         UPDATE navi_memory_facts_v1
