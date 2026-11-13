@@ -320,6 +320,40 @@ test("a direct remember request still reaches the explicit memory command handle
   assert.match(parsed.memoryValue, /آبی نفتی/);
 });
 
+test("a checked composer-save control bypasses the direct-command early return", async () => {
+  const { shouldHandleNaviExplicitMemoryCommand } = await import("../modules/navi.js");
+  const directCommand = { isCommand: true, memoryValue: "هدف پایدار پروژه نوا" };
+
+  assert.equal(shouldHandleNaviExplicitMemoryCommand(directCommand, true), false);
+  assert.equal(shouldHandleNaviExplicitMemoryCommand(directCommand, false), true);
+  assert.equal(shouldHandleNaviExplicitMemoryCommand({ isCommand: false }, true), false);
+});
+
+test("checked composer save tells Gemini to extract the stated fact in the same request", async () => {
+  const { buildSystemInstruction } = await import("../modules/navi.js");
+  const checkedPrompt = buildSystemInstruction({
+    page: "/",
+    pageContext: "",
+    memoryContext: "",
+    conversationContext: "",
+    currentUser: { id: "owner", role: "owner", display_name: "مالک" },
+    explicitComposerSave: true
+  });
+  const normalPrompt = buildSystemInstruction({
+    page: "/",
+    pageContext: "",
+    memoryContext: "",
+    conversationContext: "",
+    currentUser: { id: "owner", role: "owner", display_name: "مالک" },
+    explicitComposerSave: false
+  });
+
+  assert.match(checkedPrompt, /COMPOSER SAVE CHECKED/);
+  assert.match(checkedPrompt, /Do not ask what information the user wants to save/);
+  assert.doesNotMatch(normalPrompt, /COMPOSER SAVE CHECKED/);
+  assert.match(normalPrompt, /the server handles that direct request separately/);
+});
+
 
 test("proposal plus approval request never enters direct-save parser", async () => {
   const { parseNaviMemoryCommandSafely } = await import("../modules/navi.js");
