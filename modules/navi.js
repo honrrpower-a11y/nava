@@ -1611,8 +1611,10 @@ export function buildSystemInstruction({
   const composerMemoryContext = explicitComposerSave
     ? `COMPOSER SAVE CHECKED:
 The user explicitly checked the memory-save control for this turn. This is the
-only consent signal. Use the current user message together with the bounded
-same-thread evidence window below to understand natural, multi-turn statements.
+only consent signal. Do not ask what information the user wants to save
+when the fact can be identified from the current message and same-thread context.
+Use the current user message together with the bounded same-thread evidence window
+below to understand natural, multi-turn statements.
 Extract exactly one durable, non-sensitive fact only when the current message
 clearly states, confirms, corrects, completes, or unambiguously refers to that
 fact. The recent context may resolve pronouns, shorthand, and details spread
