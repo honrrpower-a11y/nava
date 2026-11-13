@@ -1958,3 +1958,50 @@ body.light .nava-account-workspace .navi-workspace-tab{
   from{transform:scaleX(1.12) rotate(0)}
   to{transform:scaleX(1.12) rotate(360deg)}
 }
+
+
+/* Header account tabs: visible inline; clicking the active tab closes its panel. */
+.nava-header-tabs-slot .navi-workspace-tabs{
+  display:flex!important;
+  position:static!important;
+  flex-flow:row nowrap!important;
+  align-items:center;
+  justify-content:flex-start;
+  gap:6px;
+  width:100%;
+  min-width:0;
+  margin:0;
+  padding:0;
+  overflow-x:auto;
+  overflow-y:hidden;
+  border:0;
+  border-radius:0;
+  background:transparent;
+  box-shadow:none;
+}
+.nava-header-tabs-slot .navi-workspace-tab{
+  flex:0 0 auto;
+  min-width:0;
+  min-height:36px;
+  padding:6px 11px;
+  border:1px solid rgba(229,184,94,.28);
+  border-radius:9px;
+  white-space:nowrap;
+  font-size:11px;
+}
+.nava-header-tabs-slot .navi-workspace-tab.is-active{
+  border-color:var(--gold);
+  background:linear-gradient(135deg,rgba(229,184,94,.18),rgba(37,202,255,.08));
+}
+.nava-header-tabs-dropdown,.nava-header-tabs-trigger{display:none!important}
+.nava-account-workspace[hidden]{display:none!important}
+@media(max-width:760px){
+  .nava-header-tabs-slot{right:48px;left:8px;width:auto}
+  .nava-header-tabs-slot .navi-workspace-tabs{gap:5px}
+  .nava-header-tabs-slot .navi-workspace-tab{min-height:32px;padding:5px 8px;font-size:10px}
+}
+@media(max-width:380px){
+  .nava-header-tabs-slot{right:44px;left:4px}
+  .nava-header-tabs-slot .navi-workspace-tabs{gap:3px}
+  .nava-header-tabs-slot .navi-workspace-tab{padding:5px 6px;font-size:9px}
+}
