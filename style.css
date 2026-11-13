@@ -1831,3 +1831,30 @@ body.light .nava-account-workspace .navi-workspace-tab{
   .nava-account-workspace-heading h2{font-size:15px}
   .nava-account-workspace .navi-workspace-tabs{margin-bottom:10px}
 }
+
+/* NAVA header account navigation — docked beside the brand emblem. */
+.header-inner{overflow:visible}
+.nava-header-tabs-slot{position:absolute;right:58px;top:50%;z-index:15;width:min(390px,calc(100% - 210px));transform:translateY(-50%);direction:rtl}
+.nava-header-tabs-slot[hidden]{display:none!important}
+.nava-header-tabs-slot .navi-workspace-tabs{display:flex;flex-flow:row nowrap;align-items:center;justify-content:flex-start;gap:6px;width:100%;margin:0;padding:0;overflow-x:auto;overflow-y:hidden;border:0;background:transparent;box-shadow:none;scrollbar-width:thin}
+.nava-header-tabs-slot .navi-workspace-tab{flex:0 0 auto;min-width:0;min-height:38px;padding:7px 11px;border:1px solid rgba(229,184,94,.25);border-radius:10px;background:rgba(255,255,255,.035);color:var(--text);font-size:11px;white-space:nowrap}
+.nava-header-tabs-slot .navi-workspace-tab.is-active{border-color:var(--gold);background:linear-gradient(135deg,rgba(229,184,94,.18),rgba(37,202,255,.08))}
+.nava-header-tabs-slot .navi-workspace-tab>span:first-child{font-size:13px}
+.nava-account-workspace{margin-top:12px}
+.navi-widget-panel{position:fixed!important;top:50vh!important;left:50vw!important;right:auto!important;bottom:auto!important;transform:translate(-50%,-50%)!important;max-height:calc(100dvh - 28px);z-index:1301}
+.navi-widget-panel.is-open{animation:naviWidgetCenteredIn .24s cubic-bezier(.2,.8,.2,1) both}
+@media(max-width:760px){
+ .header-inner{min-height:112px;align-items:flex-start}
+ .brand{padding-top:9px}
+ .header-inner>.logo-orb{top:17px;transform:none;width:35px;height:35px}
+ .nava-header-tabs-slot{top:auto;right:48px;left:8px;bottom:7px;width:auto;transform:none}
+ .nava-header-tabs-slot .navi-workspace-tabs{justify-content:flex-start}
+ .nava-header-tabs-slot .navi-workspace-tab{min-height:32px;padding:5px 9px;font-size:10px}
+ .header-actions{top:8px}
+}
+@media(max-width:380px){
+ .header-inner{min-height:116px}
+ .nava-header-tabs-slot{right:44px;left:4px}
+ .nava-header-tabs-slot .navi-workspace-tabs{gap:4px}
+ .nava-header-tabs-slot .navi-workspace-tab{padding:5px 7px;font-size:9px}
+}
