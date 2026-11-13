@@ -207,22 +207,22 @@
             <button class="navi-logout" id="naviLogout" type="button">خروج از ناوی</button>
           </div>
 
-          <nav class="navi-workspace-tabs" id="naviWorkspaceTabs" aria-label="بخش‌های پنل ناوی">
-            <button class="navi-workspace-tab is-active" type="button" data-navi-tab="chat" aria-selected="true">
+          <nav class="navi-workspace-tabs" id="naviWorkspaceTabs" role="tablist" aria-label="بخش‌های پنل ناوی">
+            <button class="navi-workspace-tab is-active" type="button" data-navi-tab="chat" role="tab" aria-controls="naviPanelChat" aria-selected="true">
               <span aria-hidden="true">✦</span><span>گفت‌وگو</span>
             </button>
-            <button class="navi-workspace-tab" type="button" data-navi-tab="projects" aria-selected="false">
+            <button class="navi-workspace-tab" type="button" data-navi-tab="projects" role="tab" aria-controls="naviPanelProjects" aria-selected="false">
               <span aria-hidden="true">▦</span><span>پروژه‌ها</span>
             </button>
-            <button class="navi-workspace-tab" type="button" data-navi-tab="memory" aria-selected="false">
+            <button class="navi-workspace-tab" type="button" data-navi-tab="memory" role="tab" aria-controls="naviPanelMemory" aria-selected="false">
               <span aria-hidden="true">◈</span><span>حافظه</span>
             </button>
-            <button class="navi-workspace-tab" id="naviOwnerTab" type="button" data-navi-tab="users" aria-selected="false" hidden>
+            <button class="navi-workspace-tab" id="naviOwnerTab" type="button" data-navi-tab="users" role="tab" aria-controls="naviPanelUsers" aria-selected="false" hidden>
               <span aria-hidden="true">♙</span><span>مدیریت کاربران</span>
             </button>
           </nav>
 
-          <section class="navi-workspace-panel is-active" data-navi-panel="chat" aria-label="گفت‌وگو با ناوی">
+          <section id="naviPanelChat" class="navi-workspace-panel is-active" data-navi-panel="chat" role="tabpanel" aria-label="گفت‌وگو با ناوی">
           <label class="field-label" for="serviceSelect">موضوع درخواست</label>
           <select class="request-select" id="serviceSelect">
             <option value="انتخاب نشده">انتخاب موضوع</option>
@@ -249,7 +249,7 @@
           <div class="navi-status" id="naviStatus">ناوی آماده گفت‌وگو با توست.</div>
           <div class="response-box" id="requestResponse" aria-live="polite"></div>
           </section>
-          <section class="navi-workspace-panel" data-navi-panel="projects" aria-label="پروژه‌ها و تاریخچه" hidden>
+          <section id="naviPanelProjects" class="navi-workspace-panel" data-navi-panel="projects" role="tabpanel" aria-label="پروژه‌ها و تاریخچه" hidden>
           <section class="navi-memory-panel" id="naviHistoryPanel">
             <div class="navi-project-toolbar">
               <label for="naviProjectSelect">پروژه فعال</label>
@@ -286,7 +286,7 @@
             </div>
           </section>
           </section>
-          <section class="navi-workspace-panel" data-navi-panel="memory" aria-label="حافظه ناوی" hidden>
+          <section id="naviPanelMemory" class="navi-workspace-panel" data-navi-panel="memory" role="tabpanel" aria-label="حافظه ناوی" hidden>
           <section class="navi-memory-panel" id="naviMemoryPanel">
             <button class="navi-memory-toggle" id="naviMemoryToggle"
               type="button" aria-expanded="false" aria-controls="naviMemoryContent">
@@ -321,7 +321,7 @@
             </div>
           </section>
           </section>
-          <section class="navi-workspace-panel" data-navi-panel="users" aria-label="مدیریت کاربران" hidden>
+          <section id="naviPanelUsers" class="navi-workspace-panel" data-navi-panel="users" role="tabpanel" aria-label="مدیریت کاربران" hidden>
           <section class="navi-memory-panel" id="naviAccountAdmin" hidden>
             <h3>مدیریت عضویت و حساب‌ها</h3>
             <p class="navi-memory-description">درخواست‌های عضویت فقط با تأیید مالک فعال می‌شوند. ساخت حساب دعوتی مستقیم نیز در اختیار مالک باقی می‌ماند.</p>
