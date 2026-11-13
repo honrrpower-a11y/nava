@@ -310,11 +310,34 @@ export function parseNaviMemoryCommandSafely(message) {
 // Gemini remains the primary extractor; this only fills an empty proposal list.
 export function extractNaviDeterministicMemoryProposal(message) {
   const value = safeNaviText(message || "", NAVI_MAX_MEMORY_VALUE).trim();
-  if (!value || value.length < 20 || value.length > NAVI_MAX_MEMORY_VALUE) return [];
+  if (!value || value.length < 5 || value.length > NAVI_MAX_MEMORY_VALUE) return [];
   if (shouldSuppressNaviMemoryProposals(value) || containsSensitiveInformation(value)) return [];
 
   // Do not turn questions, hypotheticals, or examples into personal facts.
   if (/[؟?]/u.test(value) || /(?:فرض کن|مثلاً|برای مثال|به‌عنوان نمونه|اگر\s)/u.test(value)) return [];
+
+  // A short, unambiguous project-code shorthand can still identify an
+  // existing durable fact. Accept only the NAVI + numeric + Persian-color
+  // shape, then expand it into the same contextual form used by the full
+  // assertion extractor so duplicate matching can compare stable components.
+  const projectCodeColors = "(?:آبی|قرمز|سبز|زرد|نارنجی|بنفش|سفید|سیاه|مشکی|طلایی|نقره(?:ای|‌ای)|یشمی|فیروزه(?:ای|‌ای))";
+  const shortProjectCodeMatch = value.match(
+    new RegExp(
+      "^(?:((" + projectCodeColors + ")\\s+NAVI\\s*-\\s*([\\p{N}]{2,}))|(?:NAVI\\s*-\\s*([\\p{N}]{2,})\\s*-\\s*(" + projectCodeColors + ")))$",
+      "iu"
+    )
+  );
+  if (shortProjectCodeMatch) {
+    const color = shortProjectCodeMatch[2] || shortProjectCodeMatch[5];
+    const digits = shortProjectCodeMatch[3] || shortProjectCodeMatch[4];
+    return [{
+      title: "نام رمز آزمایش حافظه پروژه NAVI",
+      value: `نام رمز آزمایش حافظه پروژه NAVI برابر با ${color}-${digits} است`
+    }];
+  }
+
+  // Keep the general-purpose fallback conservative for ordinary short messages.
+  if (value.length < 20) return [];
 
   // Recognize a narrowly defined Persian assertion of a project test code.
   // Quotation marks around the identifier are normal Persian writing, not a
