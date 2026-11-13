@@ -83,7 +83,7 @@
     card.querySelector('[data-download="png"]').addEventListener("click",()=>downloadPng(svg,data.name,kind));
     return card;
   }
-  form.addEventListener("submit",event=>{
+  form.addEventListener("submit",async event=>{
     event.preventDefault();
     const name=nameInput.value.trim();
     if(!name){status.textContent="برای شروع، نام برند را وارد کن.";nameInput.focus();return;}
@@ -91,10 +91,60 @@
       name,slogan:sloganInput.value.trim(),industry:industryInput.value.trim(),audience:audienceInput.value.trim(),
       personality:personalityInput.value,format:formatInput.value,palette:palettes[paletteInput.value]||palettes.gold
     };
+
+    let trialData;
+    try {
+      const token = sessionStorage.getItem("nava_navi_session") || "";
+      const headers = { "Content-Type": "application/json" };
+      if (token) headers.Authorization = "Bearer " + token;
+      let visitorId = "";
+      if (!token) {
+        visitorId = localStorage.getItem("nava_guest_trial_id") || "";
+        if (!/^[a-f0-9-]{32,40}$/i.test(visitorId)) {
+          visitorId = typeof crypto.randomUUID === "function"
+            ? crypto.randomUUID()
+            : Array.from(crypto.getRandomValues(new Uint8Array(16)), byte => byte.toString(16).padStart(2, "0")).join("");
+          localStorage.setItem("nava_guest_trial_id", visitorId);
+        }
+      }
+      const trialResponse = await fetch("https://nava-music-api.honrrpower.workers.dev/navi-guest-trial", {
+        method: "POST",
+        headers,
+        body: JSON.stringify({ studio: "logo", visitorId }),
+        cache: "no-store"
+      });
+      trialData = await trialResponse.json();
+      if (!trialResponse.ok || !trialData.success) {
+        status.textContent = trialData.error || "برای ادامه، ابتدا وارد حساب نوا شو.";
+        if (trialResponse.status === 401 || trialResponse.status === 429) {
+          if (typeof window.openNaviAssistant === "function") {
+            window.openNaviAssistant({
+              service: "طراحی لوگو",
+              context: {
+                brandName: data.name,
+                slogan: data.slogan,
+                industry: data.industry,
+                audience: data.audience,
+                personality: data.personality,
+                format: data.format,
+                palette: data.palette.name
+              }
+            });
+          }
+        }
+        return;
+      }
+    } catch (error) {
+      status.textContent = "فعلاً امکان بررسی سهمیه مهمان وجود ندارد. برای جلوگیری از ثبت نادرست سهمیه، ساخت طرح انجام نشد؛ کمی بعد دوباره تلاش کن.";
+      return;
+    }
+
     results.replaceChildren();
     ["نشان امضایی","نشان هندسی","لوگوتایپ"].forEach((title,index)=>results.appendChild(buildCard(data,index,title)));
     empty.hidden=true;
-    status.textContent="سه مسیر اولیه آماده شد. آن‌ها را مقایسه کن و خروجی دلخواهت را دریافت کن.";
+    status.textContent = trialData.remaining === null || trialData.remaining === undefined
+      ? "سه مسیر اولیه آماده شد. آن‌ها را مقایسه کن و خروجی دلخواهت را دریافت کن."
+      : "سه مسیر اولیه آماده شد. " + trialData.remaining + " فرصت آزمایشی دیگر داری.";
     results.scrollIntoView({behavior:"smooth",block:"start"});
   });
   document.getElementById("logoBriefToNavi")?.addEventListener("click",()=>{

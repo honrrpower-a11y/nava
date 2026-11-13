@@ -325,9 +325,69 @@ function hideNaviWelcome() {
 
 naviWelcomeBubbleClose?.addEventListener("click", hideNaviWelcome);
 
+/* Preserve the active studio form while a guest signs in. */
+const NAVA_RETURN_CONTEXT_KEY = "nava_pending_return_context_v1";
+
+function captureNavaReturnContext() {
+  const activePage = document.querySelector(".page.active");
+  if (!activePage) return;
+  const fields = Array.from(activePage.querySelectorAll("input[id], select[id], textarea[id]"))
+    .filter(field => !["password", "file", "hidden"].includes(String(field.type || "").toLowerCase()))
+    .map(field => ({
+      id: field.id,
+      value: field.value,
+      checked: field.type === "checkbox" || field.type === "radio" ? Boolean(field.checked) : undefined
+    }));
+  try {
+    sessionStorage.setItem(NAVA_RETURN_CONTEXT_KEY, JSON.stringify({
+      pageId: activePage.id,
+      fields,
+      savedAt: Date.now()
+    }));
+  } catch (error) {
+    console.warn("Could not preserve the active NAVA studio form.");
+  }
+}
+
+function restoreNavaReturnContext() {
+  let pending;
+  try {
+    const raw = sessionStorage.getItem(NAVA_RETURN_CONTEXT_KEY);
+    if (!raw) return false;
+    pending = JSON.parse(raw);
+  } catch (error) {
+    try { sessionStorage.removeItem(NAVA_RETURN_CONTEXT_KEY); } catch (_) {}
+    return false;
+  }
+  if (!pending || !Number.isFinite(pending.savedAt) ||
+      Date.now() - pending.savedAt > 30 * 60 * 1000 ||
+      typeof pending.pageId !== "string") {
+    try { sessionStorage.removeItem(NAVA_RETURN_CONTEXT_KEY); } catch (_) {}
+    return false;
+  }
+  const targetPage = document.getElementById(pending.pageId);
+  if (!targetPage || !targetPage.classList.contains("page")) return false;
+  showPage(pending.pageId);
+  if (Array.isArray(pending.fields)) {
+    for (const saved of pending.fields) {
+      if (!saved || typeof saved.id !== "string") continue;
+      const field = document.getElementById(saved.id);
+      if (!field || !targetPage.contains(field)) continue;
+      if (field.type === "checkbox" || field.type === "radio") field.checked = Boolean(saved.checked);
+      else if (typeof saved.value === "string") field.value = saved.value;
+    }
+  }
+  showPage(pending.pageId);
+  try { sessionStorage.removeItem(NAVA_RETURN_CONTEXT_KEY); } catch (_) {}
+  targetPage.querySelector("input:not([type='hidden']), textarea, select")?.focus({ preventScroll: true });
+  return true;
+}
+
 /* NAVI FLOATING CHAT — stage 1: animated chat window */
 function setNaviWidgetOpen(isOpen, focusComposer = false) {
   if (!naviWidgetPanel || !naviWidgetToggle) return;
+
+  if (isOpen && !getNaviToken()) captureNavaReturnContext();
 
   naviWidgetPanel.hidden = !isOpen;
   naviWidgetToggle.hidden = isOpen;
@@ -2410,6 +2470,8 @@ naviLoginForm.addEventListener("submit", async event => {
         "وارد ناوی شدی؛ اما دریافت تاریخچه فعلاً ممکن نیست. می‌توانی دوباره تلاش کنی."
       );
     }
+
+    restoreNavaReturnContext();
 
   } catch (error) {
     console.error("NAVI login error:", error);

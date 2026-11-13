@@ -3,6 +3,7 @@
 
 import { GEMINI_MODEL, ALLOWED_ORIGIN } from "./config.js";
 import { json, safeNaviText } from "./shared.js";
+import { handleGuestTrial } from "./guest-trial.js";
 
 import {
   createNaviSession,
@@ -2661,6 +2662,10 @@ export async function handleNaviRoute({
   corsOrigin
 }) {
   try {
+    if (url.pathname === "/navi-guest-trial" && request.method === "POST") {
+      return await handleGuestTrial({ request, env, origin, corsOrigin });
+    }
+
     if (url.pathname === "/navi-auth-challenge" && request.method === "POST") {
       return await handleNaviAuthChallenge({ request, env, origin, corsOrigin });
     }
