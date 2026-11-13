@@ -3201,3 +3201,25 @@ copyStory.addEventListener("click", async () => {
   storyMessage.classList.add("show");
 });
  
+
+
+/* NAVA homepage entry points: reuse the existing authenticated NAVI flow. */
+(function initNavaHomepageAccess(){
+  const loginButtons = [
+    document.getElementById("navaHeaderAccount"),
+    document.getElementById("navaHomeLogin")
+  ].filter(Boolean);
+  loginButtons.forEach(button => button.addEventListener("click", () => {
+    if (typeof window.openNaviAssistant === "function") {
+      window.openNaviAssistant({ service: "گفت‌وگوی عمومی" });
+    }
+  }));
+
+  const guestButton = document.getElementById("navaGuestExplore");
+  guestButton?.addEventListener("click", () => {
+    const orbit = document.querySelector(".nava-orbit-stage");
+    orbit?.scrollIntoView({ behavior: "smooth", block: "start" });
+    const firstStudio = document.querySelector(".nava-orbit-button");
+    if (firstStudio) firstStudio.focus({ preventScroll: true });
+  });
+})();
