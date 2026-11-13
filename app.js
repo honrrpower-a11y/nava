@@ -560,6 +560,28 @@ function clearNaviSession() {
   resetNaviMemoryPanel();
 }
 
+function setNaviWorkspaceTab(tabName) {
+  const allowedTabs = new Set(["chat", "projects", "memory", "users"]);
+  if (!allowedTabs.has(tabName)) return;
+  const isOwner = sessionStorage.getItem(NAVI_USER_ROLE_KEY) === "owner";
+  if (tabName === "users" && !isOwner) tabName = "chat";
+
+  document.querySelectorAll("[data-navi-tab]").forEach(button => {
+    const active = button.dataset.naviTab === tabName;
+    button.classList.toggle("is-active", active);
+    button.setAttribute("aria-selected", active ? "true" : "false");
+  });
+  document.querySelectorAll("[data-navi-panel]").forEach(panel => {
+    const active = panel.dataset.naviPanel === tabName;
+    panel.hidden = !active;
+    panel.classList.toggle("is-active", active);
+  });
+}
+
+document.querySelectorAll("[data-navi-tab]").forEach(button => {
+  button.addEventListener("click", () => setNaviWorkspaceTab(button.dataset.naviTab));
+});
+
 function showNaviChat() {
   naviLoginPanel.hidden = true;
   naviChatArea.hidden = false;
@@ -570,6 +592,9 @@ function showNaviChat() {
   naviLoginStatus.textContent = "نشست امن ناوی فعال است.";
   if (naviUserDisplay) naviUserDisplay.textContent = "حساب فعال: " + displayName;
   if (naviAccountAdmin) naviAccountAdmin.hidden = sessionStorage.getItem(NAVI_USER_ROLE_KEY) !== "owner";
+  const naviOwnerTab = document.getElementById("naviOwnerTab");
+  if (naviOwnerTab) naviOwnerTab.hidden = sessionStorage.getItem(NAVI_USER_ROLE_KEY) !== "owner";
+  setNaviWorkspaceTab("chat");
   if (sessionStorage.getItem(NAVI_USER_ROLE_KEY) === "owner") loadNaviUsers();
   const accountIdentity = sessionStorage.getItem(NAVI_USER_ID_KEY) || displayName;
   showNaviWelcome("account", accountIdentity);
