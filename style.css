@@ -2005,3 +2005,50 @@ body.light .nava-account-workspace .navi-workspace-tab{
   .nava-header-tabs-slot .navi-workspace-tabs{gap:3px}
   .nava-header-tabs-slot .navi-workspace-tab{padding:5px 6px;font-size:9px}
 }
+
+
+/* Header account tabs: dock flush to the header divider, like attached browser tabs. */
+.nava-header-tabs-slot{
+  top:auto!important;
+  bottom:0!important;
+  right:58px!important;
+  transform:none!important;
+  height:38px;
+  display:flex;
+  align-items:flex-end;
+}
+.nava-header-tabs-slot .navi-workspace-tabs{
+  height:100%;
+  align-items:flex-end!important;
+}
+.nava-header-tabs-slot .navi-workspace-tab{
+  align-self:flex-end;
+  border-bottom:0!important;
+  border-radius:9px 9px 0 0!important;
+}
+.nava-header-tabs-slot .navi-workspace-tab.is-active{
+  border-bottom:0!important;
+  box-shadow:0 -2px 0 var(--gold) inset;
+}
+@media(max-width:760px){
+  .nava-header-tabs-slot{
+    top:auto!important;
+    bottom:0!important;
+    right:48px!important;
+    left:8px!important;
+    width:auto!important;
+    height:33px;
+    transform:none!important;
+  }
+  .nava-header-tabs-slot .navi-workspace-tabs{height:100%}
+  .nava-header-tabs-slot .navi-workspace-tab{
+    min-height:32px;
+    border-radius:8px 8px 0 0!important;
+  }
+}
+@media(max-width:380px){
+  .nava-header-tabs-slot{right:44px!important;left:4px!important}
+}
+
+/* A signed-in session shows navigation only; panels open on explicit tab selection. */
+.nava-account-workspace[hidden]{display:none!important}
