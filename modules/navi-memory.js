@@ -933,7 +933,7 @@ export async function approveNaviMemoryProposal(
   }
 
   const existing = await db.prepare(`
-    SELECT id, memory_key, memory_value
+    SELECT id, memory_key, memory_value, project_id
     FROM navi_memory_facts_v1
     WHERE id = ?
       AND owner_id = ?
@@ -965,7 +965,8 @@ export async function approveNaviMemoryProposal(
     memoryValue,
     proposalId,
     existing.memory_key,
-    ownerId
+    ownerId,
+    existing.project_id ?? null
   );
 
   if (duplicate) {
@@ -1008,7 +1009,7 @@ export async function approveNaviMemoryProposal(
     );
 
     const relatedRecords = replacesApprovedFact
-      ? await findMemoryRelatedRecords(db, memoryValue, proposalId, existing.memory_key, ownerId)
+      ? await findMemoryRelatedRecords(db, memoryValue, proposalId, existing.memory_key, ownerId, existing.project_id ?? null)
       : [];
     const archiveSuperseded = relatedRecords
       .filter(item => item.status === "approved" && item.id !== duplicate.id)
