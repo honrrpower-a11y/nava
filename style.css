@@ -764,3 +764,84 @@ body.light .navi-widget-panel{box-shadow:0 22px 65px rgba(42,49,68,.22)}
   }
   .navi-widget-panel.is-open{animation:none!important}
 }
+
+
+/* NAVI first-visit welcome bubble */
+.navi-welcome-bubble{
+  position:absolute;
+  right:0;
+  bottom:calc(100% + 13px);
+  width:min(330px,calc(100vw - 30px));
+  padding:17px 18px 15px;
+  border:1px solid rgba(229,184,94,.58);
+  border-radius:17px;
+  background:linear-gradient(135deg,color-mix(in srgb,var(--panel) 94%,#173b59),var(--panel));
+  color:var(--text);
+  box-shadow:0 14px 42px rgba(0,0,0,.32),0 0 22px rgba(37,202,255,.10);
+  direction:rtl;
+  text-align:right;
+  animation:naviWelcomeIn .38s cubic-bezier(.2,.8,.2,1) both;
+}
+.navi-welcome-bubble[hidden]{display:none!important}
+.navi-welcome-bubble:after{
+  content:"";
+  position:absolute;
+  right:27px;
+  bottom:-8px;
+  width:14px;
+  height:14px;
+  border-right:1px solid rgba(229,184,94,.58);
+  border-bottom:1px solid rgba(229,184,94,.58);
+  background:var(--panel);
+  transform:rotate(45deg);
+}
+.navi-welcome-bubble-label{
+  display:block;
+  margin-bottom:7px;
+  color:var(--gold);
+  font-size:11px;
+  font-weight:800;
+  letter-spacing:1.5px;
+  direction:ltr;
+  text-align:left;
+}
+.navi-welcome-bubble-label span{color:var(--blue)}
+.navi-welcome-bubble p{
+  margin:0;
+  padding-left:12px;
+  font-size:13px;
+  line-height:1.9;
+  font-weight:600;
+}
+.navi-welcome-bubble-close{
+  position:absolute;
+  top:7px;
+  left:8px;
+  width:25px;
+  height:25px;
+  border:1px solid var(--border);
+  border-radius:8px;
+  background:var(--panel2);
+  color:var(--muted);
+  font-size:18px;
+  line-height:1;
+  cursor:pointer;
+}
+.navi-welcome-bubble-close:hover{border-color:var(--blue);color:var(--blue)}
+body.light .navi-welcome-bubble{
+  background:linear-gradient(135deg,#fffdf8,#edf5fc);
+  color:#263a56;
+  box-shadow:0 14px 38px rgba(42,49,68,.18),0 0 18px rgba(22,121,213,.08);
+}
+body.light .navi-welcome-bubble:after{background:#fffdf8}
+@keyframes naviWelcomeIn{
+  from{opacity:0;transform:translateY(9px) scale(.97)}
+  to{opacity:1;transform:translateY(0) scale(1)}
+}
+@media(max-width:600px){
+  .navi-welcome-bubble{right:0;bottom:calc(100% + 10px);width:min(310px,calc(100vw - 24px));padding:15px 16px 13px}
+  .navi-welcome-bubble p{font-size:12px}
+}
+@media(prefers-reduced-motion:reduce){
+  .navi-welcome-bubble{animation:none!important}
+}

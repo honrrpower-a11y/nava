@@ -23,6 +23,7 @@ const NAVI_SESSION_KEY = "nava_navi_session";
 const NAVI_EXPIRY_KEY = "nava_navi_expiry";
 const NAVI_USER_NAME_KEY = "nava_navi_user_name";
 const NAVI_USER_ROLE_KEY = "nava_navi_user_role";
+const NAVI_USER_ID_KEY = "nava_navi_user_id";
 
 // Browser-side password derivation. PBKDF2 never runs inside the Free Worker.
 function naviBytesToBase64Url(bytes) {
@@ -117,6 +118,10 @@ const naviLogout = document.getElementById("naviLogout");
 const naviWidgetPanel = document.getElementById("naviWidgetPanel");
 const naviWidgetToggle = document.getElementById("naviWidgetToggle");
 const naviWidgetClose = document.getElementById("naviWidgetClose");
+const naviWelcomeBubble = document.getElementById("naviWelcomeBubble");
+const naviWelcomeBubbleText = document.getElementById("naviWelcomeBubbleText");
+const naviWelcomeBubbleClose = document.getElementById("naviWelcomeBubbleClose");
+let naviWelcomeBubbleTimer = null;
 
 const naviStatus = document.getElementById("naviStatus");
 const requestResponse = document.getElementById("requestResponse");
@@ -225,6 +230,52 @@ function initNavaTheme() {
 }
 
 initNavaTheme();
+
+/* NAVI FIRST-VISIT WELCOME — once per browser guest / once per account */
+function showNaviWelcome(kind, identity = "") {
+  if (!naviWelcomeBubble || !naviWelcomeBubbleText) return;
+
+  const storageKey = kind === "account"
+    ? "nava_navi_welcome_account_" + String(identity || "unknown").replace(/[^a-zA-Z0-9_-]/g, "_")
+    : "nava_navi_welcome_guest";
+
+  try {
+    if (localStorage.getItem(storageKey) === "1") return;
+  } catch (error) {
+    // Fall back to the current tab if persistent storage is unavailable.
+    try {
+      if (sessionStorage.getItem(storageKey) === "1") return;
+    } catch (_) {}
+  }
+
+  const displayName = sessionStorage.getItem(NAVI_USER_NAME_KEY) || "";
+  naviWelcomeBubbleText.textContent = kind === "account" && displayName
+    ? "سلام " + displayName + " عزیز! به نوا خوش اومدی. من NAVI هستم؛ همراهت در این جهان خلاق."
+    : "سلام! به جهان نوا خوش اومدی. من NAVI هستم؛ همراهت برای کشف ایده‌ها و ساختن چیزهای تازه.";
+
+  naviWelcomeBubble.hidden = false;
+
+  try {
+    localStorage.setItem(storageKey, "1");
+  } catch (error) {
+    try { sessionStorage.setItem(storageKey, "1"); } catch (_) {}
+  }
+
+  if (naviWelcomeBubbleTimer) window.clearTimeout(naviWelcomeBubbleTimer);
+  naviWelcomeBubbleTimer = window.setTimeout(() => {
+    naviWelcomeBubble.hidden = true;
+  }, 10000);
+}
+
+function hideNaviWelcome() {
+  if (naviWelcomeBubble) naviWelcomeBubble.hidden = true;
+  if (naviWelcomeBubbleTimer) {
+    window.clearTimeout(naviWelcomeBubbleTimer);
+    naviWelcomeBubbleTimer = null;
+  }
+}
+
+naviWelcomeBubbleClose?.addEventListener("click", hideNaviWelcome);
 
 /* NAVI FLOATING CHAT — stage 1: animated chat window */
 function setNaviWidgetOpen(isOpen, focusComposer = false) {
@@ -454,6 +505,7 @@ function clearNaviSession() {
     sessionStorage.removeItem(NAVI_EXPIRY_KEY);
     sessionStorage.removeItem(NAVI_USER_NAME_KEY);
     sessionStorage.removeItem(NAVI_USER_ROLE_KEY);
+    sessionStorage.removeItem(NAVI_USER_ID_KEY);
   } catch (error) {
     console.warn("Could not clear local session storage.");
   }
@@ -511,6 +563,8 @@ function showNaviChat() {
   if (naviUserDisplay) naviUserDisplay.textContent = "حساب فعال: " + displayName;
   if (naviAccountAdmin) naviAccountAdmin.hidden = sessionStorage.getItem(NAVI_USER_ROLE_KEY) !== "owner";
   if (sessionStorage.getItem(NAVI_USER_ROLE_KEY) === "owner") loadNaviUsers();
+  const accountIdentity = sessionStorage.getItem(NAVI_USER_ID_KEY) || displayName;
+  showNaviWelcome("account", accountIdentity);
   setNaviStatus("در حال بازیابی گفت‌وگوهای قبلی...");
 }
 
@@ -1989,6 +2043,7 @@ if (existingNaviToken) {
   });
 } else {
   clearNaviSession();
+  showNaviWelcome("guest");
 }
 
 
@@ -2071,6 +2126,7 @@ naviLoginForm.addEventListener("submit", async event => {
     saveNaviSession(data.token, expiresIn);
     sessionStorage.setItem(NAVI_USER_NAME_KEY, String(data.user?.displayName || username || "مالک"));
     sessionStorage.setItem(NAVI_USER_ROLE_KEY, String(data.user?.role || "user"));
+    sessionStorage.setItem(NAVI_USER_ID_KEY, String(data.user?.id || data.user?.username || username || "owner"));
 
     naviSessionVersion++;
     naviPassword.value = "";
