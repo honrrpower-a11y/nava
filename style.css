@@ -1858,3 +1858,103 @@ body.light .nava-account-workspace .navi-workspace-tab{
  .nava-header-tabs-slot .navi-workspace-tabs{gap:4px}
  .nava-header-tabs-slot .navi-workspace-tab{padding:5px 7px;font-size:9px}
 }
+
+
+/* NAVA header navigation refinement: aligned dropdown tabs and tighter emblem ring. */
+.header-inner{display:flex;align-items:center}
+.nava-header-tabs-slot{
+  top:50%;
+  right:58px;
+  width:min(340px,calc(100% - 220px));
+  transform:translateY(-50%);
+  display:flex;
+  align-items:center;
+  justify-content:flex-start;
+}
+.nava-header-tabs-dropdown{position:relative;display:flex;align-items:center;width:100%}
+.nava-header-tabs-trigger{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:7px;
+  min-height:38px;
+  padding:7px 13px;
+  border:1px solid rgba(37,202,255,.42);
+  border-radius:11px;
+  background:linear-gradient(135deg,rgba(37,202,255,.10),rgba(229,184,94,.09));
+  color:var(--text);
+  font:inherit;
+  font-size:11px;
+  font-weight:700;
+  white-space:nowrap;
+  cursor:pointer;
+}
+.nava-header-tabs-trigger:after{
+  content:"⌄";
+  color:var(--blue);
+  font-size:15px;
+  line-height:1;
+  transition:transform .2s;
+}
+.nava-header-tabs-trigger[aria-expanded="true"]:after{transform:rotate(180deg)}
+.nava-header-tabs-dropdown .navi-workspace-tabs{
+  position:absolute;
+  top:calc(100% + 8px);
+  right:0;
+  z-index:30;
+  display:flex;
+  flex-direction:column;
+  align-items:stretch;
+  gap:5px;
+  width:max-content;
+  min-width:155px;
+  max-width:min(230px,calc(100vw - 28px));
+  margin:0;
+  padding:7px;
+  border:1px solid var(--border);
+  border-radius:13px;
+  background:var(--panel);
+  box-shadow:0 14px 38px rgba(0,0,0,.28);
+  overflow:visible;
+}
+.nava-header-tabs-dropdown .navi-workspace-tabs[hidden]{display:none!important}
+.nava-header-tabs-dropdown .navi-workspace-tab{
+  justify-content:flex-start;
+  width:100%;
+  min-height:37px;
+  padding:7px 10px;
+  text-align:right;
+}
+.header-inner>.logo-orb{right:0}
+.logo-orb:before{
+  inset:-5px;
+  transform:scaleX(1.12);
+}
+@media(max-width:760px){
+  .header-inner{min-height:112px;align-items:flex-start}
+  .nava-header-tabs-slot{
+    top:auto;
+    right:48px;
+    left:auto;
+    bottom:7px;
+    width:auto;
+    transform:none;
+  }
+  .nava-header-tabs-dropdown{width:auto}
+  .nava-header-tabs-dropdown .navi-workspace-tabs{
+    top:auto;
+    bottom:calc(100% + 8px);
+    right:0;
+  }
+  .nava-header-tabs-trigger{min-height:32px;padding:5px 10px;font-size:10px}
+}
+@media(max-width:380px){
+  .header-inner{min-height:116px}
+  .nava-header-tabs-slot{right:44px;left:auto}
+}
+
+.logo-orb:before{animation:blueRingCompact 10s linear infinite!important}
+@keyframes blueRingCompact{
+  from{transform:scaleX(1.12) rotate(0)}
+  to{transform:scaleX(1.12) rotate(360deg)}
+}
