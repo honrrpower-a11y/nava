@@ -861,7 +861,7 @@ body.light .navi-welcome-bubble:after{background:#fffdf8}
   top:0;
   z-index:4;
   display:grid;
-  grid-template-columns:repeat(4,minmax(0,1fr));
+  grid-template-columns:repeat(3,minmax(0,1fr));
   gap:6px;
   margin:8px 0 14px;
   padding:6px;
@@ -871,6 +871,7 @@ body.light .navi-welcome-bubble:after{background:#fffdf8}
   box-shadow:0 8px 24px rgba(0,0,0,.12);
   backdrop-filter:blur(14px);
 }
+.navi-workspace-tabs.is-owner{grid-template-columns:repeat(4,minmax(0,1fr))}
 .navi-workspace-tab{
   min-width:0;
   min-height:44px;
