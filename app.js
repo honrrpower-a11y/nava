@@ -838,6 +838,26 @@ function setNaviWorkspaceTab(tabName) {
   });
 }
 
+function closeNaviWorkspacePanels() {
+  const workspace = document.getElementById("navaAccountWorkspace");
+  const tabBar = document.getElementById("naviWorkspaceTabs");
+  const headerTabsSlot = document.getElementById("navaHeaderTabsSlot");
+  const isOwner = getNaviStoredValue(NAVI_USER_ROLE_KEY) === "owner";
+
+  if (headerTabsSlot) headerTabsSlot.hidden = false;
+  if (workspace) workspace.hidden = true;
+  if (tabBar) tabBar.classList.toggle("is-owner", isOwner);
+
+  document.querySelectorAll("#navaAccountWorkspacePanels [data-navi-panel]").forEach(panel => {
+    panel.hidden = true;
+    panel.classList.remove("is-active");
+  });
+  document.querySelectorAll("#naviWorkspaceTabs [data-navi-tab]").forEach(button => {
+    button.classList.remove("is-active");
+    button.setAttribute("aria-selected", "false");
+  });
+}
+
 document.querySelectorAll("#naviWorkspaceTabs [data-navi-tab]").forEach(button => {
   button.addEventListener("click", () => setNaviWorkspaceTab(button.dataset.naviTab));
 });
@@ -856,7 +876,7 @@ function showNaviChat() {
   if (naviAccountAdmin) naviAccountAdmin.hidden = !isOwner;
   const naviOwnerTab = document.getElementById("naviOwnerTab");
   if (naviOwnerTab) naviOwnerTab.hidden = !isOwner;
-  setNaviWorkspaceTab("projects");
+  closeNaviWorkspacePanels();
   if (isOwner) loadNaviUsers();
   const accountIdentity = getNaviStoredValue(NAVI_USER_ID_KEY) || displayName;
   showNaviWelcome("account", accountIdentity);
