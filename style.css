@@ -1223,92 +1223,178 @@ body.light .navi-widget-panel #naviNewProjectName{
 
 
 /* =========================================
-   NAVA MILKY WAY — NAVA AT THE CENTER
-   Twelve studio destinations around one core.
+   NAVA MILKY WAY — SPACIOUS ORBIT REDESIGN
+   Twelve destinations, one calm and readable system.
 ========================================= */
-.nava-studio-home{position:relative;padding:42px 0 52px;overflow:hidden}
-.nava-home-intro{position:relative;z-index:2;max-width:700px;margin:0 auto 8px;text-align:center}
+.nava-studio-home{padding:38px 0 48px;overflow:visible}
+.nava-home-intro{margin-bottom:22px}
+.nava-orbit-stage{
+  position:relative;isolation:isolate;
+  width:min(100%,1040px);height:880px;margin:0 auto;
+  overflow:visible;
+}
+.nava-orbit-track{
+  position:absolute;inset:5% 5%;
+  border:1px solid rgba(229,184,94,.16);
+  border-radius:50%;transform:rotate(-8deg);
+  pointer-events:none;
+  animation:navaTrackTurn 150s linear infinite;
+}
+.nava-orbit-track:before{
+  content:"";position:absolute;inset:8% 8%;
+  border:1px dashed rgba(37,202,255,.20);
+  border-radius:50%;
+  animation:navaTrackCounter 110s linear infinite;
+}
+.nava-orbit-track:after{
+  content:"";position:absolute;inset:-3% 19%;
+  border:1px solid rgba(229,184,94,.09);
+  border-radius:50%;transform:rotate(27deg);
+  animation:navaTrackTurn 190s linear infinite reverse;
+}
+@keyframes navaTrackTurn{from{transform:rotate(-8deg)}to{transform:rotate(352deg)}}
+@keyframes navaTrackCounter{from{transform:rotate(0)}to{transform:rotate(-360deg)}}
+.nava-orbit-center{
+  position:absolute;z-index:2;top:50%;left:50%;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  width:210px;transform:translate(-50%,-50%);
+}
+.nava-orb-stage{width:185px;min-height:160px;overflow:visible}
+.nava-orb-stage .orb-large{width:92px;height:92px}
+.nava-orb-stage .orb-blue-ring{inset:-23px}
+.nava-orb-stage .orb-caption{bottom:-1px;font-size:8px;letter-spacing:3px;white-space:nowrap}
+.nava-center-label{margin-top:10px;font-size:12px}
+.nava-orbit-item{
+  position:absolute;z-index:3;width:148px;min-height:100px;
+  left:var(--orbit-x);top:var(--orbit-y);
+  right:auto;bottom:auto;transform:translate(-50%,-50%);
+}
+.nava-orbit-button{
+  min-height:100px;padding:11px 8px;gap:6px;border-radius:17px;
+  animation:navaOrbitFloat 7s ease-in-out infinite;
+  will-change:transform;
+}
+.nava-orbit-icon{width:35px;height:35px;font-size:20px}
+.nava-orbit-title{font-size:11px}
+.nava-orbit-caption{font-size:8px}
+.nava-orbit-item--logo{--orbit-x:50%;--orbit-y:6%}
+.nava-orbit-item--brand{--orbit-x:70%;--orbit-y:14%}
+.nava-orbit-item--content{--orbit-x:88%;--orbit-y:28%}
+.nava-orbit-item--article{--orbit-x:91%;--orbit-y:50%}
+.nava-orbit-item--office{--orbit-x:88%;--orbit-y:72%}
+.nava-orbit-item--music{--orbit-x:70%;--orbit-y:86%}
+.nava-orbit-item--composition{--orbit-x:50%;--orbit-y:94%}
+.nava-orbit-item--story{--orbit-x:30%;--orbit-y:86%}
+.nava-orbit-item--media{--orbit-x:12%;--orbit-y:72%}
+.nava-orbit-item--seo{--orbit-x:9%;--orbit-y:50%}
+.nava-orbit-item--campaign{--orbit-x:12%;--orbit-y:28%}
+.nava-orbit-item--business{--orbit-x:30%;--orbit-y:14%}
+.nava-orbit-item--brand .nava-orbit-button{animation-delay:-.7s}
+.nava-orbit-item--content .nava-orbit-button{animation-delay:-1.4s}
+.nava-orbit-item--article .nava-orbit-button{animation-delay:-2.1s}
+.nava-orbit-item--office .nava-orbit-button{animation-delay:-2.8s}
+.nava-orbit-item--music .nava-orbit-button{animation-delay:-3.5s}
+.nava-orbit-item--composition .nava-orbit-button{animation-delay:-4.2s}
+.nava-orbit-item--story .nava-orbit-button{animation-delay:-4.9s}
+.nava-orbit-item--media .nava-orbit-button{animation-delay:-5.6s}
+.nava-orbit-item--seo .nava-orbit-button{animation-delay:-6.3s}
+.nava-orbit-item--campaign .nava-orbit-button{animation-delay:-7s}
+.nava-orbit-item--business .nava-orbit-button{animation-delay:-7.7s}
+@keyframes navaOrbitFloat{
+  0%,100%{translate:0 0}
+  50%{translate:0 -5px}
+}
+.nava-home-footnote{margin:5px auto 0}
+body.light .nava-orbit-track{border-color:rgba(193,127,37,.20)}
+body.light .nava-orbit-track:before{border-color:rgba(22,121,213,.20)}
+body.light .nava-orbit-track:after{border-color:rgba(193,127,37,.12)}
+body.light .nava-orbit-button{
+  border-color:rgba(193,127,37,.27);
+  background:linear-gradient(145deg,#fffefa,#f6eddf 72%,#edf5fc);
+  box-shadow:0 12px 28px rgba(42,49,68,.09),inset 0 1px #fff;
+}
+body.light .nava-orbit-button:before{background:radial-gradient(circle at 50% 0,rgba(193,127,37,.11),transparent 68%)}
+body.light .nava-orbit-title{color:#87571e}
+body.light .nava-orbit-caption{color:#687487}
+body.light .nava-orbit-icon{color:#a96d20;border-color:rgba(193,127,37,.28);background:linear-gradient(135deg,#f8e8c8,#eaf3fc)}
+@media(max-width:900px) and (min-width:601px){
+  .nava-studio-home{padding-top:30px}
+  .nava-orbit-stage{width:100%;height:820px}
+  .nava-orbit-item{width:126px;min-height:92px}
+  .nava-orbit-button{min-height:92px;padding:9px 5px}
+  .nava-orbit-center{width:180px}
+  .nava-orb-stage{width:160px;min-height:145px}
+  .nava-orb-stage .orb-large{width:78px;height:78px}
+}
+@media(max-width:600px){
+  .nava-studio-home{padding:27px 0 38px}
+  .nava-home-intro{padding:0 7px;margin-bottom:12px}
+  .nava-home-intro h1{font-size:27px}
+  .nava-home-intro p{font-size:11px;line-height:1.9}
+  .nava-orbit-stage{
+    display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:9px;width:100%;height:auto;max-width:430px;
+    padding:0 3px;overflow:hidden;
+  }
+  .nava-orbit-track{inset:0 12px;border-radius:24px;transform:none;opacity:.45;animation:none}
+  .nava-orbit-track:before{inset:12px;border-radius:18px;animation:none}
+  .nava-orbit-track:after{display:none}
+  .nava-orbit-center{
+    position:relative;top:auto;left:auto;grid-column:1/-1;grid-row:1;
+    width:100%;min-height:165px;transform:none;
+  }
+  .nava-orb-stage{width:145px;min-height:125px}
+  .nava-orb-stage .orb-large{width:70px;height:70px}
+  .nava-orb-stage .orb-blue-ring{inset:-18px}
+  .nava-center-label{font-size:10px;margin-top:4px}
+  .nava-orbit-item{
+    position:relative;left:auto;top:auto;right:auto;bottom:auto;
+    transform:none;width:100%;min-height:78px;
+  }
+  .nava-orbit-button{min-height:78px;padding:8px 4px;gap:3px;border-radius:14px}
+  .nava-orbit-icon{width:28px;height:28px;font-size:17px;border-radius:9px}
+  .nava-orbit-title{font-size:10px}
+  .nava-orbit-caption{font-size:8px}
+  .nava-home-footnote{margin-top:14px;font-size:10px;padding:0 10px}
+}
+@media(prefers-reduced-motion:reduce){
+  .nava-orbit-button,.nava-orbit-track,.nava-orbit-track:before,.nava-orbit-track:after{animation:none!important;will-change:auto}
+}
+
+/* Preserve the studio identity and card treatment while changing only the layout. */
 .nava-home-eyebrow{display:inline-flex;align-items:center;gap:8px;color:var(--gold);font-size:10px;font-weight:700;letter-spacing:3px;direction:ltr}
 .nava-home-eyebrow:before,.nava-home-eyebrow:after{content:"";width:24px;height:1px;background:linear-gradient(90deg,transparent,var(--gold))}
 .nava-home-eyebrow:after{transform:rotate(180deg)}
 .nava-home-intro h1{margin:13px 0 8px;font-size:clamp(27px,4.5vw,42px);line-height:1.5;color:var(--text)}
 .nava-home-intro h1 span{background:linear-gradient(90deg,var(--gold2),var(--blue),var(--gold));-webkit-background-clip:text;background-clip:text;color:transparent}
 .nava-home-intro p{max-width:580px;margin:0 auto;color:var(--muted);font-size:13px;line-height:2}
-.nava-orbit-stage{position:relative;isolation:isolate;width:min(100%,920px);height:710px;margin:0 auto;overflow:visible}
-.nava-orbit-track{position:absolute;inset:34px 62px;border:1px solid rgba(229,184,94,.12);border-radius:50%;transform:rotate(-8deg);pointer-events:none}
-.nava-orbit-track:before,.nava-orbit-track:after{content:"";position:absolute;inset:42px 65px;border:1px dashed rgba(37,202,255,.15);border-radius:50%}
-.nava-orbit-track:after{inset:-17px 135px;border-style:solid;border-color:rgba(229,184,94,.08);transform:rotate(27deg)}
-.nava-orbit-center{position:absolute;z-index:2;top:50%;left:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;width:190px;transform:translate(-50%,-50%)}
-.nava-orb-stage{width:170px;min-height:145px;overflow:visible}
-.nava-orb-stage .orb-large{width:82px;height:82px}
-.nava-orb-stage .orb-blue-ring{inset:-21px}
-.nava-orb-stage .orb-caption{bottom:-1px;font-size:8px;letter-spacing:3px;white-space:nowrap}
-.nava-center-label{margin-top:9px;color:var(--gold2);font-size:11px;font-weight:700;text-shadow:0 0 16px rgba(229,184,94,.22)}
-.nava-orbit-item{position:absolute;z-index:3;width:138px;min-height:94px}
-.nava-orbit-button{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;width:100%;min-height:94px;padding:10px 7px;overflow:hidden;border:1px solid rgba(229,184,94,.24);border-radius:18px;color:var(--text);background:linear-gradient(145deg,color-mix(in srgb,var(--panel) 94%,#1b4160),color-mix(in srgb,var(--panel) 96%,#7b5520));box-shadow:0 12px 30px rgba(0,0,0,.14),inset 0 1px rgba(255,255,255,.035);animation:navaOrbitFloat 5.8s ease-in-out infinite;transition:border-color .25s,box-shadow .25s,background .25s}
-.nava-orbit-button:before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 50% 0,rgba(229,184,94,.12),transparent 68%);opacity:.8;pointer-events:none}
-.nava-orbit-button:hover,.nava-orbit-button:focus-visible{border-color:var(--gold);outline:none;box-shadow:0 13px 34px rgba(0,0,0,.2),0 0 24px rgba(229,184,94,.13),0 0 18px rgba(37,202,255,.08)}
-.nava-orbit-icon{position:relative;display:grid;place-items:center;width:33px;height:33px;border:1px solid rgba(229,184,94,.26);border-radius:11px;color:var(--gold2);background:linear-gradient(135deg,rgba(229,184,94,.16),rgba(37,202,255,.09));box-shadow:0 0 16px rgba(229,184,94,.08);font-size:20px;line-height:1}
-.nava-orbit-title{position:relative;color:var(--gold2);font-size:11px;font-weight:700;white-space:nowrap}
-.nava-orbit-caption{position:relative;color:var(--muted);font-size:8px;line-height:1.5;white-space:nowrap}
-.nava-orbit-item--logo{top:0;left:50%;transform:translateX(-50%)}
-.nava-orbit-item--brand{top:10%;left:25%}
-.nava-orbit-item--content{top:10%;right:25%}
-.nava-orbit-item--article{top:31%;right:1%}
-.nava-orbit-item--office{bottom:30%;right:1%}
-.nava-orbit-item--music{bottom:9%;right:24%}
-.nava-orbit-item--composition{bottom:0;left:50%;transform:translateX(-50%)}
-.nava-orbit-item--story{bottom:9%;left:24%}
-.nava-orbit-item--media{bottom:30%;left:1%}
-.nava-orbit-item--seo{top:31%;left:1%}
-.nava-orbit-item--campaign{top:10%;left:1%}
-.nava-orbit-item--business{top:10%;right:1%}
-.nava-orbit-item--brand .nava-orbit-button{animation-delay:-.8s}
-.nava-orbit-item--content .nava-orbit-button{animation-delay:-1.6s}
-.nava-orbit-item--article .nava-orbit-button{animation-delay:-2.4s}
-.nava-orbit-item--office .nava-orbit-button{animation-delay:-3.2s}
-.nava-orbit-item--music .nava-orbit-button{animation-delay:-4s}
-.nava-orbit-item--composition .nava-orbit-button{animation-delay:-4.8s}
-.nava-orbit-item--story .nava-orbit-button{animation-delay:-5.6s}
-.nava-orbit-item--media .nava-orbit-button{animation-delay:-6.4s}
-.nava-orbit-item--seo .nava-orbit-button{animation-delay:-7.2s}
-.nava-orbit-item--campaign .nava-orbit-button{animation-delay:-8s}
-.nava-orbit-item--business .nava-orbit-button{animation-delay:-8.8s}
-@keyframes navaOrbitFloat{0%,100%{translate:0 0}50%{translate:0 -4px}}
-.nava-home-footnote{display:flex;justify-content:center;align-items:center;gap:8px;margin:0 auto;color:var(--muted);font-size:11px;text-align:center}
+.nava-center-label{color:var(--gold2);font-weight:700;text-shadow:0 0 16px rgba(229,184,94,.22)}
+.nava-orbit-button{
+  position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  width:100%;overflow:hidden;border:1px solid rgba(229,184,94,.24);
+  color:var(--text);
+  background:linear-gradient(145deg,color-mix(in srgb,var(--panel) 94%,#1b4160),color-mix(in srgb,var(--panel) 96%,#7b5520));
+  box-shadow:0 12px 30px rgba(0,0,0,.14),inset 0 1px rgba(255,255,255,.035);
+  transition:border-color .25s,box-shadow .25s,background .25s;
+}
+.nava-orbit-button:before{
+  content:"";position:absolute;inset:0;
+  background:radial-gradient(circle at 50% 0,rgba(229,184,94,.12),transparent 68%);
+  opacity:.8;pointer-events:none;
+}
+.nava-orbit-button:hover,.nava-orbit-button:focus-visible{
+  border-color:var(--gold);outline:none;
+  box-shadow:0 13px 34px rgba(0,0,0,.2),0 0 24px rgba(229,184,94,.13),0 0 18px rgba(37,202,255,.08);
+}
+.nava-orbit-icon{
+  position:relative;display:grid;place-items:center;
+  border:1px solid rgba(229,184,94,.26);border-radius:11px;
+  color:var(--gold2);background:linear-gradient(135deg,rgba(229,184,94,.16),rgba(37,202,255,.09));
+  box-shadow:0 0 16px rgba(229,184,94,.08);line-height:1;
+}
+.nava-orbit-title{position:relative;color:var(--gold2);font-weight:700;white-space:nowrap}
+.nava-orbit-caption{position:relative;color:var(--muted);line-height:1.5;white-space:nowrap}
+.nava-home-footnote{display:flex;justify-content:center;align-items:center;gap:8px;color:var(--muted);font-size:11px;text-align:center}
 .nava-home-footnote span{color:var(--gold);font-size:14px}
-body.light .nava-orbit-track{border-color:rgba(193,127,37,.17)}
-body.light .nava-orbit-track:before{border-color:rgba(22,121,213,.16)}
-body.light .nava-orbit-button{border-color:rgba(193,127,37,.24);background:linear-gradient(145deg,#fffdf8,#f3eadb 72%,#edf5fc);box-shadow:0 12px 28px rgba(42,49,68,.08),inset 0 1px #fff}
-body.light .nava-orbit-button:before{background:radial-gradient(circle at 50% 0,rgba(193,127,37,.10),transparent 68%)}
-body.light .nava-orbit-title{color:#87571e}
-body.light .nava-orbit-caption{color:#687487}
-body.light .nava-orbit-icon{color:#a96d20;border-color:rgba(193,127,37,.26);background:linear-gradient(135deg,#f8e8c8,#eaf3fc)}
-@media(max-width:900px){
- .nava-orbit-stage{height:650px;max-width:760px}
- .nava-orbit-item{width:126px}
- .nava-orbit-item--brand{left:23%}.nava-orbit-item--content{right:23%}
- .nava-orbit-item--music{right:22%}.nava-orbit-item--story{left:22%}
-}
-@media(max-width:600px){
- .nava-studio-home{padding:27px 0 38px}
- .nava-home-intro{padding:0 7px;margin-bottom:12px}
- .nava-home-intro h1{font-size:27px}
- .nava-home-intro p{font-size:11px;line-height:1.9}
- .nava-orbit-stage{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;width:100%;height:auto;max-width:430px;padding:0 3px}
- .nava-orbit-track{inset:0 12px;border-radius:24px;transform:none;opacity:.45}
- .nava-orbit-track:before{inset:12px;border-radius:18px}
- .nava-orbit-track:after{display:none}
- .nava-orbit-center{position:relative;top:auto;left:auto;grid-column:1/-1;grid-row:1;width:100%;min-height:165px;transform:none}
- .nava-orb-stage{width:145px;min-height:125px}
- .nava-orb-stage .orb-large{width:70px;height:70px}
- .nava-orb-stage .orb-blue-ring{inset:-18px}
- .nava-center-label{font-size:10px;margin-top:4px}
- .nava-orbit-item{position:relative;inset:auto!important;transform:none!important;width:100%;min-height:78px}
- .nava-orbit-button{min-height:78px;padding:8px 4px;gap:3px;border-radius:14px}
- .nava-orbit-icon{width:28px;height:28px;font-size:17px;border-radius:9px}
- .nava-orbit-title{font-size:10px}
- .nava-orbit-caption{font-size:8px}
- .nava-home-footnote{margin-top:14px;font-size:10px;padding:0 10px}
-}
-@media(prefers-reduced-motion:reduce){.nava-orbit-button{animation:none!important}}
+
+.nava-home-intro{position:relative;z-index:2;max-width:700px;margin-left:auto;margin-right:auto;text-align:center}
