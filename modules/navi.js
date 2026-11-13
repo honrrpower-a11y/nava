@@ -306,6 +306,15 @@ export function parseNaviMemoryCommandSafely(message) {
   return parseNaviMemoryCommand(message);
 }
 
+/**
+ * A checked composer-save control is explicit consent for this message's
+ * extracted fact. It must take precedence over the conversational command
+ * parser, which otherwise diverts the request before the chat save path runs.
+ */
+export function shouldHandleNaviExplicitMemoryCommand(memoryCommand, saveToMemory) {
+  return memoryCommand?.isCommand === true && saveToMemory !== true;
+}
+
 // Deterministic safety net for clear, first-person durable preferences.
 // Gemini remains the primary extractor; this only fills an empty proposal list.
 export function extractNaviDeterministicMemoryProposal(message) {
@@ -1478,13 +1487,36 @@ export function buildSystemInstruction({
   pageContext,
   memoryContext,
   conversationContext,
-  currentUser
+  currentUser,
+  explicitComposerSave = false
 }) {
   const accountRole = currentUser?.role === "owner" ? "owner" : "user";
   const displayName = safeNaviText(
     currentUser?.display_name || (accountRole === "owner" ? "مالک" : "کاربر"),
     100
   );
+  const composerMemoryContext = explicitComposerSave
+    ? `COMPOSER SAVE CHECKED:
+The user explicitly checked the "save this message to memory" control.
+Treat this as consent to save the single most useful durable, non-sensitive fact
+clearly stated in the current user message. Extract that fact into exactly one
+memoryProposals item. Do not ask what information the user wants to save when
+the fact is already present in the message. Do not save the instruction itself,
+temporary details, secrets, or sensitive information. If the message does not
+contain a clear fact to retain, return an empty memoryProposals array and explain
+briefly that no clear durable fact was found.`
+    : `If the user explicitly asks to remember or retain information,
+the server handles that direct request separately. Recognize natural
+Persian wording, not only fixed keywords. Examples include:
+- "می‌خوام یادت بمونه که ..."
+- "این رو تو پروفایلم نگه دار."
+- "این ترجیح رو برای دفعات بعد در نظر داشته باش."
+- "این مورد رو به پروفایلم اضافه کن."
+
+When the user simply states a stable preference without asking you
+to store it, suggest it as a pending proposal instead of saving it
+directly. If the user refers only to "این" or "اون" without stating
+what should be retained, ask what exact information they mean.`;
   const roleContext = accountRole === "owner"
     ? `- The authenticated account is the NAVA platform owner and creator (role: owner).
 - Address this person as the owner when relevant. The owner may discuss their own NAVA/NAVI development work.
@@ -1642,18 +1674,7 @@ Do not rewrite uncertain statements as confirmed facts.
 Do not propose a fact that conflicts with approved memory.
 Never modify approved memory automatically.
 
-If the user explicitly asks to remember or retain information,
-the server handles that direct request separately. Recognize natural
-Persian wording, not only fixed keywords. Examples include:
-- "می‌خوام یادت بمونه که ..."
-- "این رو تو پروفایلم نگه دار."
-- "این ترجیح رو برای دفعات بعد در نظر داشته باش."
-- "این مورد رو به پروفایلم اضافه کن."
-
-When the user simply states a stable preference without asking you
-to store it, suggest it as a pending proposal instead of saving it
-directly. If the user refers only to "این" or "اون" without stating
-what should be retained, ask what exact information they mean.
+${composerMemoryContext}
 
 OUTPUT FORMAT:
 
@@ -1945,7 +1966,7 @@ async function handleChat({
     message
   );
 
-  if (memoryCommand.isCommand) {
+  if (shouldHandleNaviExplicitMemoryCommand(memoryCommand, input.saveToMemory)) {
     const requestedThreadId = String(input.threadId || getNaviMainThreadId(userId));
     const validThread = await env.NAVA_DB.prepare(`
       SELECT thread_id FROM navi_chat_threads_v1
@@ -2057,7 +2078,8 @@ async function handleChat({
     pageContext,
     memoryContext,
     conversationContext,
-    currentUser: auth.user
+    currentUser: auth.user,
+    explicitComposerSave: input.saveToMemory === true
   });
 
   // ----------------------------------
