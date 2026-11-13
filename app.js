@@ -417,25 +417,10 @@ function restoreNavaReturnContext() {
 
 /* NAVI FLOATING CHAT — stage 1: animated chat window */
 function positionNaviWidgetOnOrbit() {
+  // NAVI is a viewport-level dialog, never anchored to the orbit or page scroll.
   if (!naviWidgetPanel) return;
-  const homePage = document.getElementById("homePage");
-  const orbit = homePage?.classList.contains("active")
-    ? homePage.querySelector(".nava-orbit-stage")
-    : null;
-
-  if (orbit) {
-    let rect = orbit.getBoundingClientRect();
-    const orbitCenterY = rect.top + rect.height / 2;
-    if (orbitCenterY < 80 || orbitCenterY > window.innerHeight - 80) {
-      orbit.scrollIntoView({ behavior: "auto", block: "center" });
-      rect = orbit.getBoundingClientRect();
-    }
-    naviWidgetPanel.style.setProperty("--navi-panel-top", (rect.top + rect.height / 2) + "px");
-    naviWidgetPanel.style.setProperty("--navi-panel-left", (rect.left + rect.width / 2) + "px");
-  } else {
-    naviWidgetPanel.style.removeProperty("--navi-panel-top");
-    naviWidgetPanel.style.removeProperty("--navi-panel-left");
-  }
+  naviWidgetPanel.style.removeProperty("--navi-panel-top");
+  naviWidgetPanel.style.removeProperty("--navi-panel-left");
 }
 
 function setNaviWidgetOpen(isOpen, focusComposer = false) {
@@ -753,6 +738,8 @@ function clearNaviSession() {
   if (naviChatArea) naviChatArea.hidden = true;
   const accountWorkspace = document.getElementById("navaAccountWorkspace");
   if (accountWorkspace) accountWorkspace.hidden = true;
+  const headerTabsSlot = document.getElementById("navaHeaderTabsSlot");
+  if (headerTabsSlot) headerTabsSlot.hidden = true;
   document.querySelectorAll("#navaAccountWorkspacePanels [data-navi-panel]").forEach(panel => {
     panel.hidden = true;
     panel.classList.remove("is-active");
@@ -790,7 +777,7 @@ function clearNaviSession() {
 function mountNavaAccountWorkspace() {
   const workspace = document.getElementById("navaAccountWorkspace");
   const tabs = document.getElementById("naviWorkspaceTabs");
-  const tabsSlot = document.getElementById("navaAccountTabsSlot");
+  const tabsSlot = document.getElementById("navaHeaderTabsSlot");
   const panelsSlot = document.getElementById("navaAccountWorkspacePanels");
   if (!workspace || !tabs || !tabsSlot || !panelsSlot) return;
 
@@ -814,7 +801,9 @@ function setNaviWorkspaceTab(tabName) {
 
   const workspace = document.getElementById("navaAccountWorkspace");
   const tabBar = document.getElementById("naviWorkspaceTabs");
+  const headerTabsSlot = document.getElementById("navaHeaderTabsSlot");
   if (workspace) workspace.hidden = false;
+  if (headerTabsSlot) headerTabsSlot.hidden = false;
   if (tabBar) tabBar.classList.toggle("is-owner", isOwner);
 
   document.querySelectorAll("#naviWorkspaceTabs [data-navi-tab]").forEach(button => {
