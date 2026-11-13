@@ -3,7 +3,11 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { DatabaseSync } from "node:sqlite";
 import { webcrypto } from "node:crypto";
-import { handleNaviRoute } from "../modules/navi.js";
+import {
+  handleNaviRoute,
+  buildNaviMemoryExtractionContext,
+  buildSystemInstruction
+} from "../modules/navi.js";
 import { ALLOWED_ORIGIN } from "../modules/config.js";
 
 
@@ -435,4 +439,65 @@ test("owner login fails closed if the initial verifier cannot be persisted", asy
   } finally {
     sqlite.close();
   }
+});
+
+
+test("memory extraction context uses recent same-thread turns and preserves the current message", () => {
+  const context = buildNaviMemoryExtractionContext([
+    { role: "user", content: "برای پروژه‌ام یک برند می‌سازم." },
+    { role: "assistant", content: "آیا رنگ مشخصی مدنظر داری؟" },
+    { role: "user", content: "سرمه‌ای و طلایی را ترجیح می‌دهم." }
+  ], "همان ترکیب رنگ را برای برند اصلی نگه دار.");
+
+  assert.match(context, /پیام قبلی کاربر/);
+  assert.match(context, /سرمه‌ای و طلایی را ترجیح می‌دهم/);
+  assert.match(context, /پاسخ قبلی ناوی؛ فقط برای رفع ابهام/);
+  assert.match(context, /پیام فعلی کاربر/);
+  assert.match(context, /همان ترکیب رنگ را برای برند اصلی نگه دار/);
+});
+
+test("memory extraction context is bounded and keeps the current turn", () => {
+  const history = Array.from({ length: 50 }, (_, index) => ({
+    role: "user",
+    content: "old-turn-" + index + "-" + "x".repeat(1000)
+  }));
+  const context = buildNaviMemoryExtractionContext(
+    history,
+    "CURRENT-TURN-MUST-REMAIN",
+    40,
+    5000
+  );
+
+  assert.ok(context.length <= 5000);
+  assert.match(context, /CURRENT-TURN-MUST-REMAIN/);
+  assert.doesNotMatch(context, /old-turn-0-/);
+});
+
+test("memory extraction prompt requires user evidence and conservative conflict handling", () => {
+  const checked = buildSystemInstruction({
+    page: "chat",
+    pageContext: "",
+    memoryContext: "- ترجیحات پاسخ: پاسخ کوتاه و کاربردی",
+    conversationContext: "",
+    currentUser: { role: "owner", display_name: "مالک" },
+    explicitComposerSave: true,
+    currentProject: { id: "project-general", name: "عمومی" },
+    memoryExtractionContext: "[پیام قبلی کاربر] ترجیح می‌دهم پاسخ‌ها کوتاه باشند."
+  });
+  assert.match(checked, /assistant\s+suggestion is never evidence/i);
+  assert.match(checked, /explicitly corrected/i);
+  assert.match(checked, /same_thread_memory_evidence/);
+  assert.match(checked, /ترجیح می‌دهم پاسخ‌ها کوتاه باشند/);
+
+  const unchecked = buildSystemInstruction({
+    page: "chat",
+    pageContext: "",
+    memoryContext: "",
+    conversationContext: "",
+    currentUser: { role: "owner", display_name: "مالک" },
+    explicitComposerSave: false,
+    currentProject: { id: "project-general", name: "عمومی" }
+  });
+  assert.match(unchecked, /COMPOSER SAVE NOT CHECKED/);
+  assert.doesNotMatch(unchecked, /<same_thread_memory_evidence>/);
 });
