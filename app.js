@@ -199,6 +199,22 @@ function showPage(pageId) {
     button.classList.toggle("active", button.dataset.page === pageId);
   });
 
+  const studioByPage = {
+    logoPage: "طراحی لوگو",
+    storyPage: "استوری‌ساز",
+    musicPage: "تولید موسیقی"
+  };
+  if (studioByPage[pageId]) {
+    updateNaviAssistantContext(studioByPage[pageId]);
+    if (Array.from(serviceSelect.options).some(option => option.value === studioByPage[pageId])) {
+      serviceSelect.value = studioByPage[pageId];
+    }
+  } else if (pageId === "homePage") {
+    naviAssistantContext = null;
+    if (naviAssistantContextPanel) naviAssistantContextPanel.hidden = true;
+    serviceSelect.value = "انتخاب نشده";
+  }
+
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
