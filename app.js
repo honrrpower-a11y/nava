@@ -145,6 +145,7 @@ const naviThreadList = document.getElementById("naviThreadList");
 const naviProjectSelect = document.getElementById("naviProjectSelect");
 const naviNewProjectName = document.getElementById("naviNewProjectName");
 const naviCreateProjectButton = document.getElementById("naviCreateProject");
+const naviDeleteProjectButton = document.getElementById("naviDeleteProject");
 const naviProjectStatus = document.getElementById("naviProjectStatus");
 
 // DOM elements — Memory
@@ -1929,8 +1930,19 @@ async function loadNaviProjects() {
       naviProjects.forEach(project => { const option = document.createElement("option"); option.value = project.project_id; option.textContent = project.name; naviProjectSelect.appendChild(option); });
       naviProjectSelect.value = naviActiveProjectId;
     }
+    updateNaviProjectControls();
     return true;
   } catch (error) { console.error("NAVI projects error:", error); if (naviProjectStatus) naviProjectStatus.textContent = error.message || "دریافت پروژه‌ها ناموفق بود."; return false; }
+}
+
+function updateNaviProjectControls() {
+  if (!naviDeleteProjectButton) return;
+  const selected = naviProjects.find(project => project.project_id === naviActiveProjectId);
+  const deletable = Boolean(selected && Number(selected.is_system) === 0 && selected.project_id !== "project-general");
+  naviDeleteProjectButton.disabled = !deletable;
+  naviDeleteProjectButton.title = deletable
+    ? "حذف پروژه انتخاب‌شده"
+    : "پروژه‌های پیش‌فرض قابل حذف نیستند";
 }
 
 async function loadNaviThreads() {
@@ -2101,12 +2113,74 @@ async function createNaviProject() {
   finally { naviCreateProjectButton.disabled = false; }
 }
 
+async function deleteNaviProject() {
+  const project = naviProjects.find(item => item.project_id === naviActiveProjectId);
+  if (!project || Number(project.is_system) !== 0 || project.project_id === "project-general") return;
+
+  const confirmed = await showNaviMemoryDialog({
+    title: "تأیید حذف پروژه",
+    message: "پروژه «" + project.name + "» و تمام گفت‌وگوها، پیام‌ها و حافظه‌های اختصاصی آن برای همیشه حذف شوند؟ این کار قابل بازگشت نیست.",
+    confirmText: "بله، پروژه حذف شود",
+    cancelText: "انصراف",
+    danger: true
+  });
+  if (!confirmed) return;
+
+  const token = getNaviToken();
+  if (!token) return;
+  naviDeleteProjectButton.disabled = true;
+  if (naviProjectStatus) naviProjectStatus.textContent = "در حال حذف پروژه و اطلاعات وابسته...";
+  try {
+    const response = await fetch(NAVI_PROJECTS_API, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
+      body: JSON.stringify({ action: "delete", projectId: project.project_id }),
+      cache: "no-store"
+    });
+    const data = await response.json();
+    if (!response.ok || !data.success || !data.deleted) {
+      throw new Error(data.error || "حذف پروژه ناموفق بود.");
+    }
+
+    naviActiveProjectId = "project-general";
+    sessionStorage.setItem("nava_navi_active_project", naviActiveProjectId);
+    naviActiveThreadId = "";
+    sessionStorage.removeItem("nava_navi_active_thread");
+    naviHistory = [];
+    naviMemoryLoaded = false;
+    requestResponse.textContent = "";
+    requestResponse.classList.remove("show");
+
+    const projectsLoaded = await loadNaviProjects();
+    if (!projectsLoaded) throw new Error("پروژه حذف شد، اما بارگذاری دوباره فهرست پروژه‌ها ناموفق بود.");
+    naviActiveProjectId = "project-general";
+    if (naviProjectSelect) naviProjectSelect.value = naviActiveProjectId;
+    sessionStorage.setItem("nava_navi_active_project", naviActiveProjectId);
+
+    const threadsLoaded = await loadNaviThreads();
+    if (!threadsLoaded) throw new Error("پروژه حذف شد، اما بارگذاری گفت‌وگوی عمومی ناموفق بود.");
+    if (!naviActiveThreadId) {
+      await createNaviThread();
+    } else {
+      await loadNaviHistory();
+    }
+    await loadNaviMemories(true);
+    if (naviProjectStatus) naviProjectStatus.textContent = "پروژه «" + project.name + "» و اطلاعات اختصاصی آن حذف شد؛ فضای عمومی فعال است.";
+  } catch (error) {
+    if (naviProjectStatus) naviProjectStatus.textContent = error.message || "حذف پروژه ناموفق بود.";
+  } finally {
+    updateNaviProjectControls();
+  }
+}
+
 naviCreateProjectButton?.addEventListener("click", createNaviProject);
+naviDeleteProjectButton?.addEventListener("click", deleteNaviProject);
 naviNewProjectName?.addEventListener("keydown", event => { if (event.key === "Enter") createNaviProject(); });
 naviProjectSelect?.addEventListener("change", async () => {
   const nextProjectId = naviProjectSelect.value;
   if (!naviProjects.some(project => project.project_id === nextProjectId)) return;
   naviActiveProjectId = nextProjectId;
+  updateNaviProjectControls();
   sessionStorage.setItem("nava_navi_active_project", nextProjectId);
   naviActiveThreadId = "";
   naviHistory = [];
