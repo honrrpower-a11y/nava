@@ -827,3 +827,75 @@ test("SQLite integration: ambiguous correction target changes no approved memory
   ]);
   sqlite.close();
 });
+
+
+test("SQLite integration: correction finds legacy NULL-scoped general-project memory", async () => {
+  const { DatabaseSync } = await import("node:sqlite");
+  const { saveNaviMemoryFact } = await import("../modules/navi-memory.js");
+  const sqlite = new DatabaseSync(":memory:");
+  sqlite.exec(`
+    CREATE TABLE navi_memory_facts_v1 (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      owner_id TEXT NOT NULL,
+      memory_key TEXT NOT NULL,
+      memory_value TEXT NOT NULL,
+      source TEXT,
+      status TEXT NOT NULL,
+      project_id TEXT,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+    );
+    INSERT INTO navi_memory_facts_v1
+      (owner_id, memory_key, memory_value, source, status, project_id)
+    VALUES
+      ('owner', 'old-title', 'اولویت قبلی برای تکمیل لوگوسازی و برندینگ', 'test', 'approved', NULL),
+      ('owner', 'other-project', 'اطلاعات مستقل پروژه دیگر', 'test', 'approved', 'project-nava'),
+      ('other-user', 'old-title', 'اولویت قبلی برای تکمیل لوگوسازی و برندینگ', 'test', 'approved', NULL);
+  `);
+  const db = {
+    prepare(sql) {
+      let args = [];
+      const statement = {
+        bind(...values) { args = values; return statement; },
+        async all() { return { results: sqlite.prepare(sql).all(...args) }; },
+        async run() {
+          const result = sqlite.prepare(sql).run(...args);
+          return { success: true, meta: { changes: Number(result.changes) } };
+        }
+      };
+      return statement;
+    },
+    async batch(statements) {
+      const results = [];
+      sqlite.exec("BEGIN");
+      try {
+        for (const statement of statements) results.push(await statement.run());
+        sqlite.exec("COMMIT");
+        return results;
+      } catch (error) {
+        sqlite.exec("ROLLBACK");
+        throw error;
+      }
+    }
+  };
+
+  const result = await saveNaviMemoryFact(
+    db,
+    "اولویت فعلی فقط تکمیل استودیوی لوگوسازی است و برندینگ بعد از آن انجام می‌شود",
+    "اولویت توسعه",
+    "composer_manual_save",
+    "owner",
+    "project-general",
+    "اولویت قبلی برای تکمیل لوگوسازی و برندینگ"
+  );
+  const rows = sqlite.prepare("SELECT owner_id, project_id, memory_value, status FROM navi_memory_facts_v1 ORDER BY id").all();
+
+  assert.equal(result.replaced, true);
+  assert.equal(result.id, 1);
+  assert.equal(rows[0].memory_value, "اولویت فعلی فقط تکمیل استودیوی لوگوسازی است و برندینگ بعد از آن انجام می‌شود");
+  assert.equal(rows[0].status, "approved");
+  assert.equal(rows[0].project_id, null, "legacy NULL-scoped general memory keeps its scope");
+  assert.equal(rows[1].status, "approved", "another project must remain untouched");
+  assert.equal(rows[2].status, "approved", "another user must remain untouched");
+  sqlite.close();
+});
