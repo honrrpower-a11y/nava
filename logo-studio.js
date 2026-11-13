@@ -113,7 +113,7 @@
       return;
     }
     const composer=document.getElementById("userRequest"),selector=document.getElementById("serviceSelect");
-    if(composer)composer.value=message+"\\n\\n"+Object.entries(context).map(([key,value])=>key+": "+value).join("\\n");
+    if(composer)composer.value=message+"\n\n"+Object.entries(context).map(([key,value])=>key+": "+value).join("\n");
     if(selector)selector.value="طراحی لوگو";
     document.getElementById("naviWidgetToggle")?.click();
   });
