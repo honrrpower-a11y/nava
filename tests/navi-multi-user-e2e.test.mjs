@@ -225,6 +225,26 @@ test("isolated SQLite end-to-end: owner login, invited account, memory isolation
     });
     assert.equal(crossOwnerProjectThread.status, 404);
 
+    // Only the authenticated account may delete its own custom projects.
+    const deleteGeneralProject = await callNavi(env, "/navi-projects", "POST", {
+      token: ownerToken,
+      body: { action: "delete", projectId: "project-general" }
+    });
+    assert.equal(deleteGeneralProject.status, 403);
+
+    const deleteAnotherUsersProject = await callNavi(env, "/navi-projects", "POST", {
+      token: secondToken,
+      body: { action: "delete", projectId: ownerPrivateProject.project_id }
+    });
+    assert.equal(deleteAnotherUsersProject.status, 404);
+
+    const deleteOwnProject = await callNavi(env, "/navi-projects", "POST", {
+      token: secondToken,
+      body: { action: "delete", projectId: secondOwnProject.project_id }
+    });
+    assert.equal(deleteOwnProject.status, 200);
+    assert.equal((await deleteOwnProject.json()).deleted, true);
+
     // Public registration remains pending until the owner explicitly approves it.
     const registrationResponse = await callNavi(env, "/navi-register", "POST", {
       body: { displayName: "Pending Applicant", username: "pending.user", passwordHash: await makeVerifier("pending-user-password-123") }
