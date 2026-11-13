@@ -399,6 +399,20 @@ body.light .navi-memory-value{color:#263a56}
 #naviNewProjectName{flex:1;min-width:0;min-height:38px;padding:8px 10px;border:1px solid var(--border);border-radius:9px;background:var(--surface,var(--panel));color:var(--text);font:inherit;font-size:12px}
 #naviCreateProject{flex:0 0 auto;min-height:38px;padding:7px 11px;border:1px solid var(--border);border-radius:9px;background:rgba(229,184,94,.12);color:var(--gold);font-size:12px;font-weight:700}
 #naviCreateProject:disabled{opacity:.5;cursor:wait}
+.navi-project-delete-row{display:flex;justify-content:flex-start}
+.navi-delete-project{
+  min-height:36px;
+  padding:7px 12px;
+  border:1px solid rgba(220,90,90,.38);
+  border-radius:9px;
+  background:rgba(220,70,70,.06);
+  color:#d98282;
+  font:inherit;
+  font-size:11px;
+  font-weight:700;
+}
+.navi-delete-project:hover:not(:disabled){border-color:#d98282;background:rgba(220,70,70,.13)}
+.navi-delete-project:disabled{opacity:.42;cursor:not-allowed}
 .navi-project-status{font-size:11px;color:var(--muted);min-height:0}
 .navi-project-status:empty{display:none}
 .navi-thread-toolbar{display:flex;justify-content:flex-start;margin:12px 0}
