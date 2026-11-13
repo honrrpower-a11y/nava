@@ -313,8 +313,23 @@ export function extractNaviDeterministicMemoryProposal(message) {
   if (!value || value.length < 20 || value.length > NAVI_MAX_MEMORY_VALUE) return [];
   if (shouldSuppressNaviMemoryProposals(value) || containsSensitiveInformation(value)) return [];
 
-  // Do not turn questions, hypotheticals, quotations, or examples into personal facts.
+  // Do not turn questions, hypotheticals, or examples into personal facts.
   if (/[؟?]/u.test(value) || /(?:فرض کن|مثلاً|برای مثال|به‌عنوان نمونه|اگر\s)/u.test(value)) return [];
+
+  // Recognize a narrowly defined Persian assertion of a project test code.
+  // Quotation marks around the identifier are normal Persian writing, not a
+  // hypothetical quotation, so this rule runs before the general quote guard.
+  const projectCodeAssertionMatch = value.match(
+    /^(?:درست\s+است[،,]?\s*)?(?:نام\s+رمز\s+آزمایش\s+حافظه|نام\s+رمز\s+حافظه|کد\s+آزمایشی(?:\s+حافظه)?)\s+پروژه\s+([\p{L}\p{N}_-]+)\s+(?:برابر\s+با|معادل\s+با)\s*[«“"']?([\p{L}\p{N}]+(?:-[\p{L}\p{N}]+){1,4})[»”"']?\s*(?:است|هست)?[.!؟]?$/u
+  );
+  if (projectCodeAssertionMatch) {
+    return [{
+      title: \`نام رمز آزمایش حافظه پروژه \${projectCodeAssertionMatch[1]}\`,
+      value
+    }];
+  }
+
+  // Quoted prose remains excluded unless it matched the explicit code format above.
   if (/[«»“”]/u.test(value)) return [];
 
   // Explicitly labeled facts (for example, "کد آزمایشی پروژه: NAVI-731")
