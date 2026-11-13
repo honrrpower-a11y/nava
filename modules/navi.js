@@ -2244,6 +2244,7 @@ async function handleChat({
     version: NAVI_VERSION,
 
     memory: {
+      composerSaveRequested: input.saveToMemory === true,
       responseStructured: parsed.structured,
       proposalsReceived: normalizedProposals.length,
       proposalsCreated: createdProposals.length,
