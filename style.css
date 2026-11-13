@@ -1350,6 +1350,7 @@ body.light .navi-widget-panel #naviNewProjectName{
 .nava-orbit-item--content{top:22%;right:3%}
 .nava-orbit-item--music{bottom:18%;right:3%}
 .nava-orbit-item--story{bottom:1%;left:50%;transform:translateX(-50%)}
+.nava-orbit-item--seo{bottom:18%;left:3%}
 .nava-orbit-item--campaign{top:22%;left:3%}
 .nava-orbit-button{
   position:relative;
@@ -1477,6 +1478,7 @@ body.light .nava-orbit-icon{color:#a96d20;border-color:rgba(193,127,37,.26);back
   .nava-orbit-item--content{top:22%;right:0}
   .nava-orbit-item--music{bottom:20%;right:0}
   .nava-orbit-item--story{bottom:0}
+  .nava-orbit-item--seo{bottom:20%;left:0}
   .nava-orbit-item--campaign{top:22%;left:0}
   .nava-home-footnote{font-size:10px;padding:0 10px}
 }
