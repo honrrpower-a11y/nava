@@ -223,6 +223,27 @@
           </nav>
 
           <section id="naviPanelChat" class="navi-workspace-panel is-active" data-navi-panel="chat" role="tabpanel" aria-label="گفت‌وگو با ناوی">
+          <div class="navi-thread-toolbar">
+            <div class="navi-thread-toolbar-actions">
+              <button class="navi-new-thread" id="naviNewThread" type="button">＋ گفت‌وگوی جدید</button>
+              <button class="navi-delete-thread-current" id="naviDeleteThread" type="button" disabled>حذف گفت‌وگو</button>
+            </div>
+          </div>
+          <div class="navi-thread-list" id="naviThreadList" aria-label="فهرست گفت‌وگوها"></div>
+          <button class="navi-memory-toggle" id="naviHistoryToggle"
+            type="button" aria-expanded="false" aria-controls="naviHistoryContent">
+            <span>💬 گفت‌وگوهای قبلی با ناوی</span>
+            <span class="navi-memory-arrow" aria-hidden="true">⌄</span>
+          </button>
+          <div class="navi-memory-content" id="naviHistoryContent" hidden>
+            <div class="navi-history-count" id="naviHistoryCount">در حال بارگذاری...</div>
+            <div class="navi-history-list" id="naviHistoryList" aria-live="polite">
+              <div class="navi-history-empty">در حال دریافت تاریخچه گفت‌وگو...</div>
+            </div>
+            <div class="navi-history-actions">
+              <button class="navi-history-refresh" id="naviHistoryRefresh" type="button">تازه‌سازی تاریخچه</button>
+            </div>
+          </div>
           <label class="field-label" for="serviceSelect">موضوع درخواست</label>
           <select class="request-select" id="serviceSelect">
             <option value="انتخاب نشده">انتخاب موضوع</option>
@@ -262,30 +283,6 @@
                 <button id="naviDeleteProject" class="navi-delete-project" type="button" disabled>حذف پروژه انتخاب‌شده</button>
               </div>
               <div id="naviProjectStatus" class="navi-project-status" role="status" aria-live="polite"></div>
-            </div>
-            <div class="navi-thread-toolbar">
-              <div class="navi-thread-toolbar-actions">
-                <button class="navi-new-thread" id="naviNewThread" type="button">＋ گفت‌وگوی جدید</button>
-                <button class="navi-delete-thread-current" id="naviDeleteThread" type="button" disabled>حذف گفت‌وگو</button>
-              </div>
-            </div>
-            <div class="navi-thread-list" id="naviThreadList" aria-label="فهرست گفت‌وگوها"></div>
-            <button class="navi-memory-toggle" id="naviHistoryToggle"
-              type="button" aria-expanded="false" aria-controls="naviHistoryContent">
-              <span>💬 گفت‌وگوهای قبلی با ناوی</span>
-              <span class="navi-memory-arrow" aria-hidden="true">⌄</span>
-            </button>
-
-            <div class="navi-memory-content" id="naviHistoryContent" hidden>
-              <div class="navi-history-count" id="naviHistoryCount">در حال بارگذاری...</div>
-              <div class="navi-history-list" id="naviHistoryList" aria-live="polite">
-                <div class="navi-history-empty">در حال دریافت تاریخچه گفت‌وگو...</div>
-              </div>
-              <div class="navi-history-actions">
-                <button class="navi-history-refresh" id="naviHistoryRefresh" type="button">
-                  تازه‌سازی تاریخچه
-                </button>
-              </div>
             </div>
           </section>
           </section>
