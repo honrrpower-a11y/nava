@@ -35,6 +35,21 @@
 <main class="container">
 
   <section class="page active" id="homePage">
+    <section class="nava-account-workspace" id="navaAccountWorkspace" aria-labelledby="navaAccountWorkspaceTitle" hidden>
+      <div class="nava-account-workspace-heading">
+        <div>
+          <span class="nava-account-eyebrow">YOUR PRIVATE NAVA SPACE</span>
+          <h2 id="navaAccountWorkspaceTitle">فضای شخصی نوا</h2>
+          <p>پروژه‌ها و حافظه‌ات را از همین‌جا مدیریت کن؛ گفت‌وگو با NAVI همیشه جدا و در دسترس است.</p>
+        </div>
+        <span class="nava-account-session-mark" aria-hidden="true">✦</span>
+      </div>
+      <div class="nava-account-workspace-content">
+        <div class="nava-account-tabs-slot" id="navaAccountTabsSlot"></div>
+        <div class="nava-account-panels" id="navaAccountWorkspacePanels"></div>
+      </div>
+    </section>
+
     <div class="nava-studio-home">
       <div class="nava-home-intro">
         <span class="nava-home-eyebrow">NAVA CREATIVE UNIVERSE</span>
@@ -119,20 +134,7 @@
       <p class="nava-home-footnote"><span aria-hidden="true">✦</span> هر مسیر، شروع یک تجربه تازه در نواست.</p>
     </div>
 
-    <section class="nava-account-workspace" id="navaAccountWorkspace" aria-labelledby="navaAccountWorkspaceTitle" hidden>
-      <div class="nava-account-workspace-heading">
-        <div>
-          <span class="nava-account-eyebrow">YOUR PRIVATE NAVA SPACE</span>
-          <h2 id="navaAccountWorkspaceTitle">فضای شخصی نوا</h2>
-          <p>پروژه‌ها و حافظه‌ات را از همین‌جا مدیریت کن؛ گفت‌وگو با NAVI همیشه جدا و در دسترس است.</p>
-        </div>
-        <span class="nava-account-session-mark" aria-hidden="true">✦</span>
-      </div>
-      <div class="nava-account-workspace-content">
-        <div class="nava-account-tabs-slot" id="navaAccountTabsSlot"></div>
-        <div class="nava-account-panels" id="navaAccountWorkspacePanels"></div>
-      </div>
-    </section>
+
   </section>
 
   <section class="page" id="logoPage">
@@ -253,7 +255,7 @@
         </p>
 
         <div class="navi-auth-panel" id="naviLoginPanel">
-          <h3>ورود اختصاصی به ناوی</h3>
+          <div class="navi-auth-heading"><h3>ورود اختصاصی به ناوی</h3><button class="navi-login-panel-close" id="naviLoginPanelClose" type="button" aria-label="بستن پنجره ناوی">×</button></div>
           <p>برای دسترسی به گفت‌وگو و حافظه شخصی، یک بار وارد حساب نوا شو؛ پس از ورود می‌توانی در همه استودیوها با همین ناوی ادامه بدهی.</p>
           <form id="naviLoginForm">
             <label class="field-label" for="naviUsername">نام کاربری</label>
