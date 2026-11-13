@@ -1441,3 +1441,33 @@ body.light .nava-orbit-icon{color:#a96d20;border-color:rgba(193,127,37,.28);back
 @media(prefers-reduced-motion:reduce){
   .nava-orbit-button,.nava-orbit-track,.nava-orbit-track:before,.nava-orbit-track:after{animation:none!important;will-change:auto}
 }
+
+
+/* MOBILE VIEWPORT GUARD — prevent sideways page drift and keep NAVI reachable. */
+@media(max-width:600px){
+  html,body{
+    max-width:100%;
+    overflow-x:clip;
+  }
+  .nava-orbit-stage{
+    overflow-x:clip;
+    overflow-y:visible;
+  }
+  .navi-assistant-widget{
+    position:fixed;
+    right:12px;
+    bottom:calc(12px + env(safe-area-inset-bottom, 0px));
+    left:auto;
+    z-index:1200;
+    max-width:calc(100vw - 24px);
+  }
+  .navi-widget-panel{
+    width:min(440px,calc(100vw - 24px));
+    max-height:min(78dvh,calc(100dvh - 104px));
+    overflow-x:hidden;
+    overflow-y:auto;
+    overscroll-behavior-y:contain;
+    -webkit-overflow-scrolling:touch;
+    touch-action:pan-y;
+  }
+}
