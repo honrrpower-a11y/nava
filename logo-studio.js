@@ -98,19 +98,23 @@
     results.scrollIntoView({behavior:"smooth",block:"start"});
   });
   document.getElementById("logoBriefToNavi")?.addEventListener("click",()=>{
-    const brief=[
-      "برای طراحی هویت لوگوی این برند کمکم کن:",
-      "نام برند: "+nameInput.value.trim(),
-      "حوزه فعالیت: "+industryInput.value.trim(),
-      "مخاطب: "+audienceInput.value.trim(),
-      "شخصیت برند: "+personalityInput.options[personalityInput.selectedIndex].text,
-      "نوع لوگو: "+formatInput.options[formatInput.selectedIndex].text,
-      "رنگ‌ها: "+(palettes[paletteInput.value]||palettes.gold).name,
-      "شعار: "+sloganInput.value.trim(),
-      "لطفاً یک بریف حرفه‌ای و پیشنهادهای طراحی ارائه کن؛ هنوز هیچ لوگویی را نهایی نکن."
-    ].join("\n");
+    const context={
+      brandName:nameInput.value.trim(),
+      slogan:sloganInput.value.trim(),
+      industry:industryInput.value.trim(),
+      audience:audienceInput.value.trim(),
+      personality:personalityInput.options[personalityInput.selectedIndex].text,
+      format:formatInput.options[formatInput.selectedIndex].text,
+      palette:(palettes[paletteInput.value]||palettes.gold).name
+    };
+    const message="می‌خواهم بریف برندم را بررسی کنیم و قبل از نهایی‌کردن لوگو، سه مسیر مفهومی واقعاً متفاوت پیشنهاد بدهی. اول نقاط قوت و ضعف اطلاعات فعلی را بگو و اگر اطلاعات مهمی کم است از من سؤال کن.";
+    if(typeof window.openNaviAssistant==="function"){
+      window.openNaviAssistant({service:"طراحی لوگو",context,message});
+      return;
+    }
     const composer=document.getElementById("userRequest"),selector=document.getElementById("serviceSelect");
-    if(composer)composer.value=brief;if(selector)selector.value="طراحی لوگو";
-    if(typeof window.chooseService==="function")window.chooseService("طراحی لوگو");
+    if(composer)composer.value=message+"\\n\\n"+Object.entries(context).map(([key,value])=>key+": "+value).join("\\n");
+    if(selector)selector.value="طراحی لوگو";
+    document.getElementById("naviWidgetToggle")?.click();
   });
 })();
