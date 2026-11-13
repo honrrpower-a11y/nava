@@ -2263,9 +2263,37 @@ async function handleChat({
 }
 
 // ======================================
+async function handleProjects({ request, env, origin, corsOrigin }) {
+  const auth = await authorize(request, env, origin, corsOrigin);
+  if (!auth.valid) return auth.response;
+  const userId = auth.user.id;
+  if (!env.NAVA_DB) return errorResponse("اتصال دیتابیس NAVI برقرار نیست.", 500, corsOrigin);
+  const defaults = [["general","عمومی","گفت‌وگوهای عمومی."],["nava","NAVA","پلتفرم نوا، برند و استودیوها."],["navi","NAVI","توسعه دستیار، حافظه و زیرساخت."],["ritmetan","Ritmetan","محتوای ورزشی و شبکه‌های اجتماعی."]];
+  try {
+    for (const [slug,name,description] of defaults) {
+      await env.NAVA_DB.prepare("INSERT OR IGNORE INTO navi_projects_v1 (project_id,owner_id,slug,name,description,is_system,created_at,updated_at) VALUES (?,?,?,?,?,1,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)").bind("project-"+slug,userId,slug,name,description).run();
+    }
+    if (request.method === "GET") {
+      const result = await env.NAVA_DB.prepare("SELECT project_id,slug,name,description,is_system FROM navi_projects_v1 WHERE owner_id = ? ORDER BY is_system DESC,name COLLATE NOCASE").bind(userId).all();
+      return successResponse({ projects: result.results || [] }, corsOrigin);
+    }
+    let input; try { input = await request.json(); } catch { return errorResponse("اطلاعات ارسالی معتبر نیست.",400,corsOrigin); }
+    const name = safeNaviText(input?.name || "",60).trim();
+    if (name.length < 2) return errorResponse("نام پروژه باید دست‌کم دو نویسه باشد.",400,corsOrigin);
+    const duplicate = await env.NAVA_DB.prepare("SELECT project_id FROM navi_projects_v1 WHERE owner_id = ? AND lower(name)=lower(?) LIMIT 1").bind(userId,name).first();
+    if (duplicate) return errorResponse("پروژه‌ای با این نام از قبل وجود دارد.",409,corsOrigin);
+    const projectId = "project-"+crypto.randomUUID();
+    const slug = "custom-"+crypto.randomUUID().replace(/-/g,"").slice(0,16);
+    const description = safeNaviText(input?.description || "",240).trim();
+    const inserted = await env.NAVA_DB.prepare("INSERT INTO navi_projects_v1 (project_id,owner_id,slug,name,description,is_system,created_at,updated_at) VALUES (?,?,?,?,?,0,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)").bind(projectId,userId,slug,name,description).run();
+    if (!inserted.success) throw new Error("Could not create project.");
+    return successResponse({ project: { project_id: projectId,slug,name,description,is_system:0 } },corsOrigin,201);
+  } catch (error) { logError("Project workspace operation failed",error); return errorResponse("مدیریت پروژه‌ها ناموفق بود.",500,corsOrigin,{diagnostic:diagnostic(error)}); }
+}
+
+// ======================================
 // CONVERSATION THREADS
 // ======================================
-
 async function handleThreads({ request, env, origin, corsOrigin }) {
   const auth = await authorize(request, env, origin, corsOrigin);
   if (!auth.valid) return auth.response;
