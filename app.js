@@ -392,7 +392,12 @@ function positionNaviWidgetOnOrbit() {
     : null;
 
   if (orbit) {
-    const rect = orbit.getBoundingClientRect();
+    let rect = orbit.getBoundingClientRect();
+    const orbitCenterY = rect.top + rect.height / 2;
+    if (orbitCenterY < 80 || orbitCenterY > window.innerHeight - 80) {
+      orbit.scrollIntoView({ behavior: "auto", block: "center" });
+      rect = orbit.getBoundingClientRect();
+    }
     naviWidgetPanel.style.setProperty("--navi-panel-top", (rect.top + rect.height / 2) + "px");
     naviWidgetPanel.style.setProperty("--navi-panel-left", (rect.left + rect.width / 2) + "px");
   } else {
