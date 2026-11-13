@@ -185,6 +185,42 @@ test("isolated SQLite end-to-end: owner login, invited account, memory isolation
     assert.equal(secondLoginData.user.role, "user");
     let secondToken = secondLoginData.token;
 
+    // Owner-only built-in workspaces and custom projects must not leak into
+    // another account's project picker or be usable through the threads API.
+    const ownerPrivateProjectResponse = await callNavi(env, "/navi-projects", "POST", {
+      token: ownerToken,
+      body: { name: "پروژه خصوصی مالک" }
+    });
+    assert.equal(ownerPrivateProjectResponse.status, 201);
+    const ownerPrivateProject = (await ownerPrivateProjectResponse.json()).project;
+
+    const ownerProjectList = await callNavi(env, "/navi-projects", "GET", { token: ownerToken });
+    const ownerProjectData = await ownerProjectList.json();
+    assert.ok(ownerProjectData.projects.some(project => project.project_id === ownerPrivateProject.project_id));
+    assert.ok(ownerProjectData.projects.some(project => project.project_id === "project-nava"));
+
+    const secondProjectList = await callNavi(env, "/navi-projects", "GET", { token: secondToken });
+    const secondProjectData = await secondProjectList.json();
+    assert.equal(secondProjectList.status, 200);
+    assert.deepEqual(secondProjectData.projects.map(project => project.project_id), ["project-general"]);
+    assert.ok(!JSON.stringify(secondProjectData.projects).includes("پروژه خصوصی مالک"));
+    assert.ok(!secondProjectData.projects.some(project => ["project-nava", "project-navi", "project-ritmetan"].includes(project.project_id)));
+
+    const secondOwnProjectResponse = await callNavi(env, "/navi-projects", "POST", {
+      token: secondToken,
+      body: { name: "پروژه اختصاصی کاربر دوم" }
+    });
+    assert.equal(secondOwnProjectResponse.status, 201);
+    const secondOwnProject = (await secondOwnProjectResponse.json()).project;
+    const secondProjectListAfterCreate = await callNavi(env, "/navi-projects", "GET", { token: secondToken });
+    const secondProjectsAfterCreate = await secondProjectListAfterCreate.json();
+    assert.ok(secondProjectsAfterCreate.projects.some(project => project.project_id === secondOwnProject.project_id));
+    const crossOwnerProjectThread = await callNavi(env, "/navi-threads", "POST", {
+      token: secondToken,
+      body: { title: "نباید ساخته شود", projectId: ownerPrivateProject.project_id }
+    });
+    assert.equal(crossOwnerProjectThread.status, 404);
+
     // Public registration remains pending until the owner explicitly approves it.
     const registrationResponse = await callNavi(env, "/navi-register", "POST", {
       body: { displayName: "Pending Applicant", username: "pending.user", passwordHash: await makeVerifier("pending-user-password-123") }
