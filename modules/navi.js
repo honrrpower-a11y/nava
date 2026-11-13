@@ -993,12 +993,27 @@ async function handleMemory({
     // GET: approved + pending
 
     if (request.method === "GET") {
-      const projectId = String(url?.searchParams.get("project_id") || "project-general").slice(0,100);
-      const project = await env.NAVA_DB.prepare("SELECT project_id FROM navi_projects_v1 WHERE project_id = ? AND owner_id = ? LIMIT 1").bind(projectId,userId).first();
-      if (!project) return errorResponse("پروژه انتخاب‌شده پیدا نشد.",404,corsOrigin);
-      const result = await env.NAVA_DB.prepare("SELECT t.thread_id,t.title,t.project_id,t.created_at,t.updated_at,(SELECT COUNT(*) FROM navi_chat_messages_v1 m WHERE m.thread_id=t.thread_id) AS message_count FROM navi_chat_threads_v1 t WHERE t.owner_id=? AND t.project_id=? ORDER BY CASE WHEN t.thread_id=? THEN 0 ELSE 1 END,t.updated_at DESC LIMIT 50").bind(userId,projectId,getNaviMainThreadId(userId)).all();
-      return successResponse({ threads: result.results || [], projectId },corsOrigin);
+      const [
+        memories,
+        proposals,
+        archived
+      ] = await Promise.all([
+        getNaviApprovedMemory(env.NAVA_DB, userId),
+        getNaviPendingMemory(env.NAVA_DB, userId),
+        getNaviArchivedMemory(env.NAVA_DB, userId)
+      ]);
+
+      return successResponse({
+        memories,
+        proposals,
+        archived,
+        count: memories.length,
+        proposalCount: proposals.length,
+        archivedCount: archived.length,
+        version: NAVI_VERSION
+      }, corsOrigin);
     }
+
     let input;
 
     try {
@@ -1595,7 +1610,7 @@ ${memoryContext}
 </memory_context>
 
 RELEVANT PAST CONVERSATIONS:
-The following excerpts were retrieved from saved NAVI chat history across threads.
+The following excerpts were retrieved only from saved NAVI chat history in the active project workspace.
 Each excerpt includes its conversation title, stable thread ID, and database timestamp.
 Database timestamps are stored in UTC; do not silently convert them to the user's local time.
 Use the title, thread ID, and timestamp together to distinguish separate conversations.
@@ -2298,15 +2313,11 @@ async function handleThreads({ request, env, origin, corsOrigin, url }) {
   try {
     await ensureNaviMainThread(env.NAVA_DB, userId);
     if (request.method === "GET") {
-      const result = await env.NAVA_DB.prepare(`
-        SELECT t.thread_id, t.title, t.created_at, t.updated_at,
-          (SELECT COUNT(*) FROM navi_chat_messages_v1 m WHERE m.thread_id = t.thread_id) AS message_count
-        FROM navi_chat_threads_v1 t
-        WHERE t.owner_id = ?
-        ORDER BY CASE WHEN t.thread_id = ? THEN 0 ELSE 1 END, t.updated_at DESC
-        LIMIT 50
-      `).bind(userId, getNaviMainThreadId(userId)).all();
-      return successResponse({ threads: result.results || [] }, corsOrigin);
+      const projectId = String(url?.searchParams.get("project_id") || "project-general").slice(0,100);
+      const project = await env.NAVA_DB.prepare("SELECT project_id FROM navi_projects_v1 WHERE project_id = ? AND owner_id = ? LIMIT 1").bind(projectId,userId).first();
+      if (!project) return errorResponse("پروژه انتخاب‌شده پیدا نشد.",404,corsOrigin);
+      const result = await env.NAVA_DB.prepare("SELECT t.thread_id,t.title,t.project_id,t.created_at,t.updated_at,(SELECT COUNT(*) FROM navi_chat_messages_v1 m WHERE m.thread_id=t.thread_id) AS message_count FROM navi_chat_threads_v1 t WHERE t.owner_id=? AND t.project_id=? ORDER BY CASE WHEN t.thread_id=? THEN 0 ELSE 1 END,t.updated_at DESC LIMIT 50").bind(userId,projectId,getNaviMainThreadId(userId)).all();
+      return successResponse({ threads: result.results || [], projectId },corsOrigin);
     }
     let input;
     try { input = await request.json(); } catch { return errorResponse("اطلاعات ارسالی معتبر نیست.", 400, corsOrigin); }
