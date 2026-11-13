@@ -48,6 +48,7 @@ function createDb() {
       memory_value TEXT NOT NULL,
       source TEXT,
       status TEXT NOT NULL,
+      project_id TEXT,
       created_at TEXT,
       updated_at TEXT
     );
