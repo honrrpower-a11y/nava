@@ -706,7 +706,7 @@ test("checked correction prompt requires the exact approved-memory target", () =
   assert.match(prompt, /correctionTargetId/);
   assert.match(prompt, /memory id: N/);
   assert.match(prompt, /exact complete old memory_value/);
-  assert.match(prompt, /If the exact target is unavailable or/);
+  assert.match(prompt, /If either target detail is unavailable or ambiguous/);
 });
 
 test("SQLite integration: explicit correction updates one exact target and archives only exact duplicate copies", async () => {
