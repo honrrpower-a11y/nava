@@ -1571,3 +1571,65 @@ body.light .nava-orbit-icon{color:#a96d20;border-color:rgba(193,127,37,.28);back
     animation:naviWidgetCenteredIn .24s cubic-bezier(.2,.8,.2,1) both;
   }
 }
+
+
+/* NAVA choice overlay — place the guest/account prompt directly over the solar-system orbit. */
+.nava-orbit-stage{position:relative}
+.nava-access-panel{
+  position:absolute;
+  top:50%;
+  left:50%;
+  z-index:20;
+  width:min(980px,calc(100% - 28px));
+  margin:0;
+  transform:translate(-50%,-50%);
+}
+.nava-access-panel.is-dismissed{display:none!important}
+
+/* NAVI dialog follows the center of the homepage orbit instead of the page header/viewport. */
+.navi-widget-panel{
+  top:var(--navi-panel-top,50vh);
+  left:var(--navi-panel-left,50vw);
+  right:auto;
+  bottom:auto;
+  transform:translate(-50%,-50%);
+  transform-origin:center;
+}
+.navi-widget-panel.is-open{
+  animation:naviWidgetCenteredIn .24s cubic-bezier(.2,.8,.2,1) both;
+}
+@keyframes naviWidgetCenteredIn{
+  from{opacity:0;transform:translate(-50%,-47%) scale(.98)}
+  to{opacity:1;transform:translate(-50%,-50%) scale(1)}
+}
+
+/* Smaller, lively NAVI mark inside the chat launcher. */
+.navi-widget-orb{
+  width:31px;
+  height:31px;
+  animation:naviWidgetOrbFloat 3.8s ease-in-out infinite;
+}
+.navi-widget-orb:before{
+  inset:-5px;
+  animation:naviWidgetRing 7s linear infinite!important;
+}
+.navi-widget-orb:after{inset:-2px}
+.navi-widget-orb-core{
+  width:7px;
+  height:7px;
+  box-shadow:0 0 9px 4px rgba(255,242,194,.85);
+}
+@keyframes naviWidgetOrbFloat{
+  0%,100%{transform:translateY(0) scale(1)}
+  50%{transform:translateY(-3px) scale(1.07)}
+}
+@media(max-width:600px){
+  .nava-access-panel{
+    width:calc(100% - 18px);
+    padding:14px;
+  }
+  .navi-widget-orb{width:28px;height:28px}
+}
+@media(prefers-reduced-motion:reduce){
+  .navi-widget-orb,.navi-widget-orb:before{animation:none!important}
+}
