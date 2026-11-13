@@ -141,3 +141,17 @@ test("saving to a thread owned by another account is rejected", async () => {
   );
   db.sqlite.close();
 });
+
+test("project memories stay separate while global profile facts remain shared", async () => {
+  const db = createDb();
+  await saveNaviMemoryFact(db, "جزئیات اختصاصی پروژه آلفا", "یادداشت پروژه", "test", "owner", "project-alpha");
+  await saveNaviMemoryFact(db, "جزئیات اختصاصی پروژه بتا", "یادداشت پروژه", "test", "owner", "project-beta");
+  await saveNaviMemoryFact(db, "نام نمایشی کاربر", "نام کاربر", "test", "owner", "project-alpha");
+  const alpha = await getNaviApprovedMemory(db, "owner", "project-alpha");
+  const beta = await getNaviApprovedMemory(db, "owner", "project-beta");
+  assert.equal(alpha.length, 2);
+  assert.equal(beta.length, 1);
+  assert.match(alpha.find(item => item.memory_key === "یادداشت پروژه").memory_value, /آلفا/);
+  assert.match(beta[0].memory_value, /بتا/);
+  db.sqlite.close();
+});
