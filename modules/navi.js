@@ -306,6 +306,15 @@ export function parseNaviMemoryCommandSafely(message) {
   return parseNaviMemoryCommand(message);
 }
 
+/**
+ * A checked composer-save control is explicit consent for this message's
+ * extracted fact. It must take precedence over the conversational command
+ * parser, which otherwise diverts the request before the chat save path runs.
+ */
+export function shouldHandleNaviExplicitMemoryCommand(memoryCommand, saveToMemory) {
+  return memoryCommand?.isCommand === true && saveToMemory !== true;
+}
+
 // Deterministic safety net for clear, first-person durable preferences.
 // Gemini remains the primary extractor; this only fills an empty proposal list.
 export function extractNaviDeterministicMemoryProposal(message) {
@@ -1478,13 +1487,25 @@ export function buildSystemInstruction({
   pageContext,
   memoryContext,
   conversationContext,
-  currentUser
+  currentUser,
+  explicitComposerSave = false
 }) {
   const accountRole = currentUser?.role === "owner" ? "owner" : "user";
   const displayName = safeNaviText(
     currentUser?.display_name || (accountRole === "owner" ? "مالک" : "کاربر"),
     100
   );
+  const composerMemoryContext = explicitComposerSave
+    ? `COMPOSER SAVE CHECKED:
+The user explicitly checked the "save this message to memory" control.
+Treat this as consent to save the single most useful durable, non-sensitive fact
+clearly stated in the current user message. Extract that fact into exactly one
+memoryProposals item. Do not ask what information the user wants to save when
+the fact is already present in the message. Do not save the instruction itself,
+temporary details, secrets, or sensitive information. If the message does not
+contain a clear fact to retain, return an empty memoryProposals array and explain
+briefly that no clear durable fact was found.`
+    : `${composerMemoryContext}`;
   const roleContext = accountRole === "owner"
     ? `- The authenticated account is the NAVA platform owner and creator (role: owner).
 - Address this person as the owner when relevant. The owner may discuss their own NAVA/NAVI development work.
@@ -1945,7 +1966,7 @@ async function handleChat({
     message
   );
 
-  if (memoryCommand.isCommand) {
+  if (shouldHandleNaviExplicitMemoryCommand(memoryCommand, input.saveToMemory)) {
     const requestedThreadId = String(input.threadId || getNaviMainThreadId(userId));
     const validThread = await env.NAVA_DB.prepare(`
       SELECT thread_id FROM navi_chat_threads_v1
@@ -2057,7 +2078,8 @@ async function handleChat({
     pageContext,
     memoryContext,
     conversationContext,
-    currentUser: auth.user
+    currentUser: auth.user,
+    explicitComposerSave: input.saveToMemory === true
   });
 
   // ----------------------------------
