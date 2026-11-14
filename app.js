@@ -773,7 +773,7 @@ function setNaviStatus(message) {
 }
 
 function showNaviReply(reply) {
-  requestResponse.textContent = String(reply || "");
+  requestResponse.value = String(reply || "");
   requestResponse.classList.add("show");
 }
 
@@ -883,7 +883,7 @@ function clearNaviSession() {
   if (naviCreateUserStatus) naviCreateUserStatus.textContent = "";
 
   if (requestResponse) {
-    requestResponse.textContent = "";
+    requestResponse.value = "";
     requestResponse.classList.remove("show");
   }
 
@@ -2417,7 +2417,7 @@ function renderNaviThreads() {
       naviActiveThreadId = thread.thread_id;
       setNaviStoredValue("nava_navi_active_thread", naviActiveThreadId);
       renderNaviThreads();
-      requestResponse.textContent = "";
+      requestResponse.value = "";
       requestResponse.classList.remove("show");
       naviHistory = [];
       await loadNaviHistory();
@@ -2459,7 +2459,7 @@ async function deleteNaviThread() {
       naviActiveThreadId = naviThreads[0].thread_id;
       setNaviStoredValue("nava_navi_active_thread", naviActiveThreadId);
       naviHistory = [];
-      requestResponse.textContent = "";
+      requestResponse.value = "";
       requestResponse.classList.remove("show");
       await loadNaviHistory();
     }
@@ -2561,7 +2561,7 @@ async function createNaviThread() {
     naviActiveThreadId = data.thread.thread_id;
     setNaviStoredValue("nava_navi_active_thread", naviActiveThreadId);
     naviHistory = [];
-    requestResponse.textContent = "";
+    requestResponse.value = "";
     requestResponse.classList.remove("show");
     await loadNaviThreads();
     await loadNaviHistory();
@@ -2638,7 +2638,7 @@ async function deleteNaviProject() {
     removeNaviStoredValue("nava_navi_active_thread");
     naviHistory = [];
     naviMemoryLoaded = false;
-    requestResponse.textContent = "";
+    requestResponse.value = "";
     requestResponse.classList.remove("show");
 
     const projectsLoaded = await loadNaviProjects();
@@ -2680,7 +2680,7 @@ naviProjectSelect?.addEventListener("change", async () => {
   naviActiveThreadId = "";
   naviHistory = [];
   naviMemoryLoaded = false;
-  requestResponse.textContent = "";
+  requestResponse.value = "";
   requestResponse.classList.remove("show");
   const loaded = await loadNaviThreads();
   if (!loaded) { if (naviProjectStatus) naviProjectStatus.textContent = "گفت‌وگوهای این پروژه بارگذاری نشدند."; return; }
