@@ -82,3 +82,9 @@ body.light .logo-control{background:#fff;color:#273143}
 .logo-ai-visual-review p{margin:3px 0;color:var(--muted)}
 .logo-ai-rubric{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
 .logo-ai-rubric span{display:inline-flex;align-items:center;padding:5px 8px;border:1px solid var(--border);border-radius:999px;color:var(--muted);font-size:10px;line-height:1.4;background:rgba(201,162,74,.055)}
+
+/* Local, no-API logo checks and preference feedback */
+.logo-ai-feedback{display:flex;flex-wrap:wrap;align-items:center;gap:7px;padding:10px 14px 14px;border-top:1px solid var(--border)}
+.logo-ai-feedback strong{flex-basis:100%;font-size:11px;color:var(--text)}
+.logo-ai-feedback button{flex:1;min-height:36px;font-size:11px}
+.logo-ai-feedback button[aria-pressed="true"]{border-color:var(--gold);color:var(--gold);background:rgba(201,162,74,.1)}
