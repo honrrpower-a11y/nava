@@ -2319,3 +2319,35 @@ body.light .nava-account-workspace .navi-workspace-tab{
     animation: none !important;
   }
 }
+
+
+/* NAVI ACCOUNT WORKSPACE — overview dashboard */
+.navi-account-dashboard{position:relative;overflow:hidden;margin:5px 0 14px;padding:17px;border:1px solid rgba(229,184,94,.34);border-radius:19px;background:radial-gradient(ellipse at 100% 0%,rgba(37,202,255,.12),transparent 48%),radial-gradient(ellipse at 0% 100%,rgba(229,184,94,.12),transparent 48%),linear-gradient(145deg,color-mix(in srgb,var(--panel2) 92%,#152b43),var(--panel));box-shadow:0 12px 30px rgba(0,0,0,.13),inset 0 1px 0 rgba(255,255,255,.035)}
+.navi-account-dashboard:after{content:"";position:absolute;left:-36px;top:-48px;width:128px;height:128px;border:1px solid rgba(229,184,94,.12);border-radius:50%;box-shadow:0 0 0 13px rgba(229,184,94,.025),0 0 0 27px rgba(37,202,255,.025);pointer-events:none}
+.navi-dashboard-topline{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:13px}
+.navi-dashboard-kicker{color:var(--gold);font-size:9px;font-weight:900;letter-spacing:2px;direction:ltr}
+.navi-dashboard-secure{display:inline-flex;align-items:center;gap:5px;color:var(--muted);font-size:9px}
+.navi-dashboard-secure span{color:#65c99a;font-size:8px;text-shadow:0 0 8px #65c99a}
+.navi-account-dashboard h2{position:relative;z-index:1;margin:0 0 4px;color:var(--text);font-size:19px;line-height:1.6;font-weight:800}
+.navi-dashboard-intro{position:relative;z-index:1;margin:0 0 14px;color:var(--muted);font-size:10px;line-height:1.9}
+.navi-dashboard-project{position:relative;z-index:1;display:flex;align-items:center;gap:10px;padding:11px;border:1px solid rgba(229,184,94,.20);border-radius:13px;background:rgba(4,10,20,.22)}
+.navi-dashboard-project-icon{display:grid;place-items:center;flex:0 0 34px;width:34px;height:34px;border-radius:11px;color:var(--gold2);background:linear-gradient(145deg,rgba(229,184,94,.22),rgba(37,202,255,.10));border:1px solid rgba(229,184,94,.25);font-size:17px}
+.navi-dashboard-project-copy{display:flex;flex:1;min-width:0;flex-direction:column;gap:3px}
+.navi-dashboard-project-copy small{color:var(--muted);font-size:9px}
+.navi-dashboard-project-copy strong{overflow:hidden;color:var(--text);font-size:11px;text-overflow:ellipsis;white-space:nowrap}
+.navi-dashboard-project>button{flex:0 0 auto;padding:7px 8px;border:1px solid var(--border);border-radius:9px;background:rgba(229,184,94,.08);color:var(--gold2);font:inherit;font-size:9px;font-weight:700;cursor:pointer}
+.navi-dashboard-project>button:hover{border-color:var(--gold);background:rgba(229,184,94,.15)}
+.navi-dashboard-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin:10px 0}
+.navi-dashboard-stats>div{display:flex;flex-direction:column;gap:3px;padding:9px 10px;border:1px solid var(--border);border-radius:11px;background:color-mix(in srgb,var(--panel) 84%,transparent)}
+.navi-dashboard-stats strong{color:var(--gold2);font-size:14px;font-weight:800}
+.navi-dashboard-stats span{color:var(--muted);font-size:9px}
+.navi-dashboard-actions{display:flex;align-items:center;flex-wrap:wrap;gap:9px}
+.navi-dashboard-primary{display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:38px;padding:8px 12px;border:0;border-radius:10px;background:linear-gradient(110deg,#f2ce80,#bd8735 62%,#2878ff);color:#17120a;font:inherit;font-size:10px;font-weight:800;box-shadow:0 5px 15px rgba(190,135,53,.17);cursor:pointer}
+.navi-dashboard-primary:hover{filter:brightness(1.06);transform:translateY(-1px)}
+.navi-dashboard-primary>span{font-size:17px;line-height:1}
+.navi-dashboard-hint{color:var(--muted);font-size:9px;line-height:1.8}
+body.light .navi-account-dashboard{background:radial-gradient(ellipse at 100% 0%,rgba(22,121,213,.08),transparent 48%),radial-gradient(ellipse at 0% 100%,rgba(193,127,37,.09),transparent 48%),linear-gradient(145deg,#fffdf8,#f7f0e4);box-shadow:0 12px 28px rgba(42,49,68,.08),inset 0 1px 0 rgba(255,255,255,.8)}
+body.light .navi-dashboard-project{background:rgba(255,255,255,.62)}
+body.light .navi-dashboard-stats>div{background:rgba(255,255,255,.68)}
+@media(max-width:420px){.navi-account-dashboard{padding:14px;border-radius:16px}.navi-account-dashboard h2{font-size:17px}.navi-dashboard-project{gap:7px;padding:9px}.navi-dashboard-project>button{font-size:8px;padding:7px 6px}.navi-dashboard-stats>div{padding:8px}.navi-dashboard-hint{flex-basis:100%}}
+@media(prefers-reduced-motion:reduce){.navi-dashboard-primary{transition:none}}

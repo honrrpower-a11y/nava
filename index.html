@@ -6,10 +6,10 @@
   <meta name="theme-color" content="#080d19">
   <meta name="description" content="NAVA؛ استودیوی هوشمند برای ساخت، طراحی و رشد کسب‌وکارها">
   <title>NAVA | One Vision. One Mission. One NAVA.</title>
-  <link rel="stylesheet" href="style.css?v=nava-mobile-navi-bottom-dock-6">
+  <link rel="stylesheet" href="style.css?v=navi-account-dashboard-20261114-1">
   <link rel="stylesheet" href="logo-studio.css?v=logo-studio-mvp-1">
   <link rel="stylesheet" href="brand-content-studios.css?v=brand-content-20261114-1">
-  <script src="app.js?v=nava-inline-navi-side-dock-5" defer></script>
+  <script src="app.js?v=navi-account-dashboard-20261114-1" defer></script>
   <script src="logo-studio.js?v=nava-orbit-overlay-2" defer></script>
 </head>
 <body>
@@ -367,6 +367,14 @@
         </div>
 
         <div class="navi-chat-area" id="naviChatArea" hidden>
+          <section class="navi-account-dashboard" aria-label="نمای کلی فضای کاری">
+            <div class="navi-dashboard-topline"><span class="navi-dashboard-kicker">NAVA WORKSPACE</span><span class="navi-dashboard-secure"><span aria-hidden="true">●</span> فضای امن و شخصی</span></div>
+            <h2 id="naviDashboardGreeting">سلام، خوش آمدی</h2>
+            <p class="navi-dashboard-intro">پروژه‌ها و گفت‌وگوهایت را از همین‌جا مدیریت کن.</p>
+            <div class="navi-dashboard-project"><span class="navi-dashboard-project-icon" aria-hidden="true">✦</span><span class="navi-dashboard-project-copy"><small>پروژه فعال</small><strong id="naviDashboardProjectName">عمومی</strong></span><button id="naviDashboardOpenProjects" type="button">مدیریت پروژه‌ها <span aria-hidden="true">←</span></button></div>
+            <div class="navi-dashboard-stats" aria-label="خلاصه فضای کاری"><div><strong id="naviDashboardThreadCount">۰</strong><span>گفت‌وگو</span></div><div><strong id="naviDashboardProjectCount">۰</strong><span>پروژه</span></div><div><strong>فعال</strong><span>وضعیت حساب</span></div></div>
+            <div class="navi-dashboard-actions"><button class="navi-dashboard-primary" id="naviDashboardNewChat" type="button"><span aria-hidden="true">＋</span> شروع گفت‌وگوی تازه</button><span class="navi-dashboard-hint">برای شروع، ایده‌ات را با ناوی مطرح کن.</span></div>
+          </section>
           <div class="navi-chat-toolbar">
             <span class="navi-status" id="naviLoginStatus">نشست امن ناوی فعال است.</span><span class="navi-user-display" id="naviUserDisplay" aria-live="polite"></span>
             <button class="navi-logout" id="naviLogout" type="button">خروج از ناوی</button>
