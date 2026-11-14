@@ -91,12 +91,14 @@
     addTextLockup(card,data);
     const copy=document.createElement("div");copy.className="logo-concept-copy";
     const title=document.createElement("h3");title.textContent=image.concept||("کانسپت "+(index+1));
-    const desc=document.createElement("p");desc.textContent=image.description||"این مسیر طراحی بر اساس بریف برند ساخته شده؛ نام و شعار جداگانه و خوانا اضافه شده‌اند.";
+    const desc=document.createElement("p");desc.textContent=image.description||"منطق این مسیر طراحی از بریف برند استخراج شده است.";
+    const visual=document.createElement("p");visual.className="logo-concept-visual-direction";
+    visual.textContent=image.visualDirection||"ساختار بصری بر اساس مسیر هنری انتخاب‌شده شکل گرفته است.";
     const rubric=document.createElement("div");rubric.className="logo-ai-rubric";
-    ["تمایز سیلوئت","تناسب با برند","خوانایی در اندازه کوچک","تعادل طلایی و سرمه‌ای"].forEach(label=>{
+    ["ساختار متمایز","ارتباط با بریف","خوانایی در اندازه کوچک","رعایت پالت انتخابی"].forEach(label=>{
       const item=document.createElement("span");item.textContent=label;rubric.appendChild(item);
     });
-    copy.append(title,desc,rubric);card.appendChild(copy);
+    copy.append(title,desc,visual,rubric);card.appendChild(copy);
     const actions=document.createElement("div");actions.className="logo-concept-actions";
     const button=document.createElement("button");button.type="button";button.className="btn-primary";
     button.textContent="دریافت لوگو با نام برند";
