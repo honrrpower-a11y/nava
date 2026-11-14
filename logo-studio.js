@@ -82,6 +82,42 @@
       window.open(url,"_blank","noopener");
     }
   }
+  const feedbackKey="nava_logo_feedback_v1";
+  const hexToRgb=hex=>{const m=/^#([0-9a-f]{6})$/i.exec(String(hex||""));return m?[parseInt(m[1].slice(0,2),16),parseInt(m[1].slice(2,4),16),parseInt(m[1].slice(4,6),16)]:null;};
+  function selectedPalette(data){
+    if(data.palette==="آبی و نقره‌ای")return [[63,112,168],[220,228,237]];
+    if(data.palette==="سبز و کرم")return [[53,107,85],[233,225,206]];
+    if(data.palette==="بنفش و یاسی")return [[118,86,166],[220,206,240]];
+    if(data.palette==="تک‌رنگ")return [[34,37,43],[255,255,255]];
+    if(data.palette==="رنگ اختصاصی")return [hexToRgb(data.primaryColor),hexToRgb(data.darkColor)].filter(Boolean);
+    return [[201,162,74],[16,29,53]];
+  }
+  function analyzeImage(img,data){
+    try{
+      const canvas=document.createElement("canvas"),ctx=canvas.getContext("2d",{willReadFrequently:true});canvas.width=96;canvas.height=96;ctx.drawImage(img,0,0,96,96);
+      const pixels=ctx.getImageData(0,0,96,96).data,palette=selectedPalette(data);let white=0,transparent=0,ink=0,near=0,sampled=0;
+      for(let i=0;i<pixels.length;i+=16){const r=pixels[i],g=pixels[i+1],b=pixels[i+2],a=pixels[i+3];sampled++;if(a<245){transparent++;continue;}if(r>242&&g>242&&b>242){white++;continue;}ink++;if(palette.some(c=>Math.hypot(r-c[0],g-c[1],b-c[2])<58))near++;}
+      const colored=ink?Math.round(near/ink*100):0,whitePct=Math.round(white/sampled*100),transparencyPct=Math.round(transparent/sampled*100),notes=[];
+      if(colored<65)notes.push("بخشی از رنگ‌های تصویر با پالت انتخابی فاصله دارد؛ نتیجه را دستی بررسی کن.");
+      if(whitePct<20)notes.push("پس‌زمینه به‌اندازه کافی سفید به نظر نمی‌رسد.");
+      if(transparencyPct>2)notes.push("تصویر دارای پیکسل‌های شفاف است.");
+      if(!notes.length)notes.push("کنترل‌های پایه رنگ و زمینه قابل‌قبول‌اند؛ این بررسی درباره زیبایی یا معنای لوگو قضاوت نمی‌کند.");
+      return{width:img.naturalWidth,height:img.naturalHeight,colored,whitePct,notes};
+    }catch(_){return{width:img.naturalWidth,height:img.naturalHeight,colored:null,whitePct:null,notes:["مرورگر اجازه خواندن پیکسل‌های تصویر را نداد؛ بررسی فنی انجام نشد."]};}
+  }
+  function addQualityPanel(card,img,data){
+    const panel=document.createElement("div");panel.className="logo-ai-visual-review";
+    const heading=document.createElement("strong");heading.textContent="کنترل فنی تصویر (بدون امتیازدهی سلیقه‌ای)";
+    const render=report=>{panel.replaceChildren(heading);const details=document.createElement("p");details.textContent="ابعاد: "+report.width+"×"+report.height+" · انطباق رنگ نمونه‌برداری‌شده: "+(report.colored===null?"نامشخص":report.colored+"٪")+" · زمینه سفید: "+(report.whitePct===null?"نامشخص":report.whitePct+"٪");panel.appendChild(details);report.notes.forEach(note=>{const p=document.createElement("p");p.textContent=note;panel.appendChild(p);});};
+    if(img.complete&&img.naturalWidth)render(analyzeImage(img,data));else img.addEventListener("load",()=>render(analyzeImage(img,data)),{once:true});
+    img.addEventListener("error",()=>render({width:0,height:0,colored:null,whitePct:null,notes:["بارگذاری تصویر ناموفق بود."]}),{once:true});card.appendChild(panel);
+  }
+  function addPreferenceFeedback(card,image){
+    const wrap=document.createElement("div");wrap.className="logo-ai-feedback";const label=document.createElement("strong");label.textContent="نظرت درباره این مسیر طراحی چیست؟";
+    let saved={};try{saved=JSON.parse(localStorage.getItem(feedbackKey)||"{}");}catch(_){}
+    [["like","می‌پسندم"],["dislike","نمی‌پسندم"]].forEach(([value,title])=>{const button=document.createElement("button");button.type="button";button.className="btn-secondary";button.textContent=(saved[image.directionId]===value?"✓ ":"")+title;button.setAttribute("aria-pressed",String(saved[image.directionId]===value));button.addEventListener("click",()=>{let current={};try{current=JSON.parse(localStorage.getItem(feedbackKey)||"{}");}catch(_){}current[image.directionId]=value;try{localStorage.setItem(feedbackKey,JSON.stringify(current));}catch(_){}wrap.querySelectorAll("button").forEach(b=>{b.setAttribute("aria-pressed","false");b.textContent=b.textContent.replace(/^✓ /,"");});button.setAttribute("aria-pressed","true");button.textContent="✓ "+title;});wrap.appendChild(button);});
+    wrap.prepend(label);card.appendChild(wrap);
+  }
   function buildCard(image,index,data) {
     const card=document.createElement("article");card.className="logo-concept-card logo-ai-card";
     const preview=document.createElement("div");preview.className="logo-concept-preview logo-ai-preview";
@@ -89,14 +125,29 @@
     img.loading="lazy";img.decoding="async";img.referrerPolicy="no-referrer";
     preview.appendChild(img);card.appendChild(preview);
     addTextLockup(card,data);
+    addQualityPanel(card,img,data);
+    addPreferenceFeedback(card,image);
     const copy=document.createElement("div");copy.className="logo-concept-copy";
     const title=document.createElement("h3");title.textContent=image.concept||("کانسپت "+(index+1));
-    const desc=document.createElement("p");desc.textContent=image.description||"این مسیر طراحی بر اساس بریف برند ساخته شده؛ نام و شعار جداگانه و خوانا اضافه شده‌اند.";
+    const desc=document.createElement("p");desc.textContent=image.description||"منطق این مسیر طراحی از بریف برند استخراج شده است.";
+    const visual=document.createElement("p");visual.className="logo-concept-visual-direction";
+    visual.textContent=image.visualDirection||"ساختار بصری بر اساس مسیر هنری انتخاب‌شده شکل گرفته است.";
     const rubric=document.createElement("div");rubric.className="logo-ai-rubric";
-    ["تمایز سیلوئت","تناسب با برند","خوانایی در اندازه کوچک","تعادل طلایی و سرمه‌ای"].forEach(label=>{
+    ["ساختار متمایز","ارتباط با بریف","خوانایی در اندازه کوچک","رعایت پالت انتخابی"].forEach(label=>{
       const item=document.createElement("span");item.textContent=label;rubric.appendChild(item);
     });
-    copy.append(title,desc,rubric);card.appendChild(copy);
+    copy.append(title,desc,visual);
+    if(image.review){
+      const review=document.createElement("div");review.className="logo-ai-visual-review";
+      const score=document.createElement("strong");score.textContent="ارزیابی تصویری: "+image.review.overall+"/۱۰";
+      const details=document.createElement("p");
+      details.textContent="ارتباط با برند: "+image.review.relevance+"/۱۰ · تمایز: "+image.review.distinctiveness+"/۱۰ · رنگ: "+image.review.palette+"/۱۰ · خوانایی: "+image.review.legibility+"/۱۰";
+      const strengths=document.createElement("p");strengths.textContent="نقطه قوت: "+(image.review.strengths||"مشخص نشده");
+      const issues=document.createElement("p");issues.textContent="نیاز به اصلاح: "+(image.review.issues||"موردی گزارش نشده");
+      const recommendation=document.createElement("p");recommendation.textContent="پیشنهاد: "+(image.review.recommendation||"—");
+      review.append(score,details,strengths,issues,recommendation);copy.appendChild(review);
+    }
+    copy.append(rubric);card.appendChild(copy);
     const actions=document.createElement("div");actions.className="logo-concept-actions";
     const button=document.createElement("button");button.type="button";button.className="btn-primary";
     button.textContent="دریافت لوگو با نام برند";
@@ -153,7 +204,7 @@
       results.replaceChildren();
       result.images.forEach((image,index)=>results.appendChild(buildCard(image,index,data)));
       empty.hidden=true;
-      status.textContent="سه مسیر هنری مستقل آماده شد. آن‌ها را از نظر تمایز سیلوئت، تناسب با برند، خوانایی و تعادل رنگ مقایسه کن."
+      status.textContent="سه کانسپت ساخته شدند. کنترل فنی رنگ و ابعاد در همین مرورگر انجام می‌شود؛ بازخورد فقط روی همین دستگاه ذخیره خواهد شد.";
       results.scrollIntoView({behavior:"smooth",block:"start"});
     } catch(error) {
       status.textContent=error.name==="AbortError"
