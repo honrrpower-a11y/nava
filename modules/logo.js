@@ -65,23 +65,18 @@ function buildPrompt(data, direction) {
       : "Create a combination-logo emblem that can sit beside a separately typeset brand name.";
 
   return [
-    "You are the lead brand identity art director. Treat the user brief as a design problem, not as a request for decorative image generation.",
+    "You are a senior brand identity art director. Solve the brand brief; do not make decorative AI art.",
     direction.guidance,
-    "BRAND STRATEGY INPUTS:",
-    "Brand name for context only (never render it as text): " + data.brandName + ".",
-    "Industry: " + (industry || "not specified") + ".",
-    "Target audience: " + (audience || "broad professional audience") + ".",
-    "Personality: " + (personality || "modern and confident") + ".",
-    "Core idea / desired symbolism: " + (symbol || "derive a relevant visual idea from the industry and brand personality") + ".",
-    "Brand format preference: " + format + ". " + formatGuidance,
-    "COLOR SYSTEM — mandatory for this request: requested palette " + (palette || "gold and deep navy") + ". Required colors: warm gold #C9A24A and midnight navy #101D35. User-selected main color: " + (primaryColor || "#C9A24A") + "; companion color: " + (darkColor || "#101D35") + ". Both colors must be clearly visible as substantial, distinct parts of the mark itself.",
-    "Later wordmark typography direction (do not render text): " + (typography || "clear, refined typography") + ".",
-    "DIFFERENTIATION RULE: this concept must follow ONLY its assigned art direction. Do not blend it with the other directions. The three concepts in this set must have visibly different outer silhouettes, construction logic and composition—not just different small details.",
-    "DESIGN QUALITY: create a professional identity mark with intentional proportions, optical balance, meaningful negative space, crisp edges, strong contrast and recognizability at small sizes. Avoid stock icons, clip-art, generic AI motifs, random decoration and excessive detail.",
-    "OUTPUT: one isolated logo mark, centered, front-facing, on a perfectly pure white background. The mark should occupy about 65–75 percent of the canvas, with clean margins.",
-    "COLOR REQUIREMENT — STRICT: use BOTH warm gold (#C9A24A) and midnight navy (#101D35) in clearly distinguishable, substantial areas of the emblem. Gold must not be a tiny dot or hairline. No navy-only, monochrome, black/gray-only or all-gold result. Use crisp flat fills, not metallic gradients.",
-    "NO TEXT, NO LETTERS, NO WORDS, NO NUMBERS, NO SLOGAN, NO WATERMARK, NO MOCKUP, NO BUSINESS CARD, NO STATIONERY, NO PRESENTATION BOARD, NO MULTIPLE LOGOS, NO GRID.",
-    "Do not add shadows, 3D rendering, photorealism or background decoration. White background only."
+    "Brand: " + data.brandName + ". Industry: " + (industry || "not specified") + ". Audience: " + (audience || "broad") + ". Personality: " + (personality || "modern and confident") + ".",
+    "Core idea: " + (symbol || "derive a relevant metaphor from the brand and industry") + ".",
+    "Brand format: " + format + ". " + formatGuidance,
+    "Palette: " + (palette || "gold and deep navy") + ". Required colors in the mark itself: warm gold #C9A24A AND midnight navy #101D35, both clearly visible in substantial distinct areas. User colors: " + (primaryColor || "#C9A24A") + " and " + (darkColor || "#101D35") + ".",
+    "Wordmark typography reference only; do not render text: " + (typography || "refined and legible") + ".",
+    "This concept must follow only its assigned art direction. Make its outer silhouette, construction and composition visibly different from the other two concepts.",
+    "Professional identity design: intentional proportions, optical balance, meaningful negative space, crisp edges, strong silhouette and small-size legibility. No stock icons, clip-art, generic AI motifs or random decoration.",
+    "One isolated centered front-facing logo mark on pure white. Mark occupies 65–75% of canvas.",
+    "STRICT COLOR: both gold #C9A24A and navy #101D35 must be clearly distinguishable and substantial. No navy-only, monochrome, black/gray-only or all-gold mark. Flat crisp fills, no gradients.",
+    "NO TEXT, letters, words, numbers, slogan, watermark, mockup, stationery, presentation board, multiple logos or grid. No shadows, 3D or photorealism. White background only."
   ].join("\n");
 }
 
