@@ -23,6 +23,8 @@ const DIRECTIONS = [
 
 function buildPrompt(data, direction) {
   const palette = safeText(data.palette, 80);
+  const primaryColor = safeText(data.primaryColor, 12);
+  const darkColor = safeText(data.darkColor, 12);
   const symbol = safeText(data.symbolIdea, 180);
   const industry = safeText(data.industry, 100);
   const audience = safeText(data.audience, 120);
@@ -43,7 +45,7 @@ function buildPrompt(data, direction) {
     "Target audience: " + (audience || "broad professional audience") + ".",
     "Brand personality: " + (personality || "modern and confident") + ".",
     "Core concept: " + (symbol || "derive a distinctive visual metaphor from the brand category and personality") + ".",
-    "Requested color direction: " + (palette || "choose a sophisticated, restrained palette") + ".",
+    "Requested color direction: " + (palette || "choose a sophisticated, restrained palette") + " (main color " + primaryColor + ", dark companion " + darkColor + ").",
     "Typography direction for the later typeset wordmark: " + (typography || "clear, refined typography") + ".",
     formatGuidance,
     "OUTPUT: one single isolated logo mark, centered, front-facing, on a perfectly pure white background.",
@@ -138,6 +140,8 @@ export async function handleLogoRoute({ request, env, origin, corsOrigin }) {
   });
   const quotaResponse = await handleGuestTrial({ request: quotaRequest, env, origin, corsOrigin });
   if (!quotaResponse.ok) return quotaResponse;
+  let quota = {};
+  try { quota = await quotaResponse.json(); } catch {}
 
   const prompts = DIRECTIONS.map(direction => buildPrompt(data, direction));
   try {
@@ -145,6 +149,7 @@ export async function handleLogoRoute({ request, env, origin, corsOrigin }) {
     return json({
       success: true,
       brandName: data.brandName,
+      remaining: quota.remaining ?? null,
       images: images.map((image, index) => ({
         url: image.url,
         width: image.width || 1024,
