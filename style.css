@@ -2455,70 +2455,39 @@ body.navi-studio-context .navi-widget-panel .navi-send-toolbar .btn-primary {
   min-height: 41px;
 }
 @media (max-width: 600px) {
-  /* On phones, turn the studio companion into a roomy in-page dialog.
-     It stays over the current studio instead of feeling like a separate page. */
   body.navi-studio-context .navi-assistant-widget {
-    top: auto !important;
-    right: auto !important;
-    bottom: auto !important;
-    left: auto !important;
-    width: 0;
-    height: 0;
-    max-width: none;
-  }
-  body.navi-studio-context .navi-widget-toggle {
-    position: fixed !important;
     top: calc(112px + env(safe-area-inset-top, 0px)) !important;
     left: 10px !important;
-    z-index: 1401 !important;
+    max-width: calc(100vw - 20px);
+  }
+  body.navi-studio-context .navi-widget-toggle {
     min-height: 42px;
     padding: 6px 9px;
   }
   body.navi-studio-context .navi-widget-panel,
   body.navi-studio-context .navi-widget-panel.is-open {
-    position: fixed !important;
-    inset: calc(env(safe-area-inset-top, 0px) + 8px) 8px calc(env(safe-area-inset-bottom, 0px) + 8px) !important;
-    width: auto !important;
-    height: auto !important;
-    min-height: 0 !important;
-    max-height: none !important;
-    z-index: 1402 !important;
-    display: flex !important;
-    flex-direction: column !important;
-    overflow: hidden !important;
-    border-radius: 18px !important;
+    top: calc(100% + 8px) !important;
+    left: 0 !important;
+    width: calc(100vw - 20px) !important;
+    height: min(58dvh,490px) !important;
+    min-height: 245px !important;
+    max-height: calc(100dvh - 140px) !important;
+    border-radius: 16px !important;
   }
   body.navi-studio-context .navi-widget-panel .navi-widget-panel-head {
-    flex: 0 0 48px;
-    min-height: 48px;
+    flex-basis: 45px;
+    min-height: 45px;
   }
   body.navi-studio-context .navi-widget-panel .navi-assistant-context {
-    flex: 0 0 auto;
-    max-height: 72px;
-    overflow-y: auto;
-    margin: 6px 8px 0;
-  }
-  body.navi-studio-context .navi-widget-panel .request-panel {
-    flex: 1 1 auto;
-    min-height: 0;
-    overflow-x: hidden;
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
+    max-height: 52px;
+    margin: 5px 8px 0;
   }
   body.navi-studio-context .navi-widget-panel .request-content {
-    min-height: 100%;
-    padding: 8px 10px 16px;
+    padding: 8px 10px 12px;
   }
   body.navi-studio-context .navi-widget-panel .request-textarea {
-    min-height: 82px;
-    max-height: 150px;
-  }
-  body.navi-studio-context .navi-widget-panel .response-box {
-    max-height: none !important;
-    overflow: visible !important;
-    white-space: pre-wrap;
-    overflow-wrap: anywhere;
-    line-height: 1.9;
+    min-height: 70px;
+    max-height: 108px;
   }
 }
 @media (prefers-reduced-motion: reduce) {
