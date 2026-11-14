@@ -4,6 +4,7 @@ import { json } from "./modules/shared.js";
 import { handleNaviRoute } from "./modules/navi.js";
 import { handleLyricsRoute } from "./modules/lyrics.js";
 import { handleMusicRoute } from "./modules/music.js";
+import { handleLogoRoute } from "./modules/logo.js";
 
 export default {
   async fetch(request, env) {
@@ -33,6 +34,10 @@ export default {
         version: "nava-modular-1.0",
         timestamp: new Date().toISOString()
       }, 200, corsOrigin);
+    }
+
+    if (url.pathname === "/logo/generate") {
+      return await handleLogoRoute({ request, env, origin, corsOrigin });
     }
 
     const naviContext = { request, env, url, origin, corsOrigin };

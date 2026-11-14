@@ -60,3 +60,17 @@ body.light .logo-control{background:#fff;color:#273143}
 .logo-concept-copy{min-height:118px}
 .logo-concept-actions button{min-width:0}
 @media(max-width:760px){.logo-concept-results{grid-template-columns:1fr}.logo-concept-card:first-child{grid-column:auto}.logo-custom-colors{grid-template-columns:1fr 1fr}}
+
+/* Real AI logo image concepts */
+.logo-concept-results{grid-template-columns:repeat(2,minmax(0,1fr));align-items:start}
+.logo-concept-card:first-child{grid-column:1/-1}
+.logo-ai-preview{padding:12px;background:#fff;min-height:230px}
+.logo-ai-preview img{display:block;width:100%;height:auto;max-height:430px;object-fit:contain;background:#fff}
+.logo-ai-card:first-child .logo-ai-preview img{max-height:520px}
+.logo-ai-lockup{display:flex;flex-direction:column;align-items:center;gap:7px;padding:12px 16px 6px;background:#fff;text-align:center}
+.logo-ai-lockup strong{font-family:Tahoma,Arial,sans-serif;font-size:clamp(24px,4vw,36px);font-weight:800;color:var(--logo-dark);direction:auto;unicode-bidi:plaintext}
+.logo-ai-lockup span{font-family:Tahoma,Arial,sans-serif;font-size:13px;color:#687386;direction:auto;unicode-bidi:plaintext}
+.logo-ai-card .logo-concept-copy{min-height:unset}
+.logo-ai-card .logo-concept-actions{padding-top:6px}
+.logo-ai-card .logo-concept-actions button{width:100%;min-height:43px}
+@media(max-width:760px){.logo-concept-results{grid-template-columns:1fr}.logo-concept-card:first-child{grid-column:auto}.logo-ai-preview{min-height:180px}.logo-ai-preview img{max-height:360px}}
