@@ -182,8 +182,8 @@
     if(token)headers.Authorization="Bearer "+token;
     const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),125000);
     const submit=form.querySelector('button[type="submit"]');
-    submit.disabled=true;submit.textContent="در حال طراحی سه کانسپت...";
-    status.textContent="موتور طراحی در حال ساخت سه مسیر بصری مستقل است. این مرحله ممکن است کمی زمان ببرد.";
+    submit.disabled=true;submit.textContent="ناوی در حال تحلیل بریف...";
+    status.textContent="ناوی ابتدا بریف برند را تحلیل می‌کند؛ سپس سه مسیر طراحی برای موتور تصویر آماده می‌شود. این مرحله ممکن است کمی زمان ببرد.";
     try {
       const response=await fetch("https://nava-music-api.honrrpower.workers.dev/logo/generate",{
         method:"POST",headers,cache:"no-store",signal:controller.signal,
@@ -202,9 +202,17 @@
         return;
       }
       results.replaceChildren();
+      if(result.planning){
+        const strategy=document.createElement("section");
+        strategy.className="logo-ai-strategy-summary";
+        const heading=document.createElement("h3");heading.textContent="تحلیل بریف توسط ناوی";
+        const core=document.createElement("p");core.textContent=result.planning.brandCore||"";
+        const detail=document.createElement("p");detail.textContent=result.planning.strategy||"";
+        strategy.append(heading,core,detail);results.appendChild(strategy);
+      }
       result.images.forEach((image,index)=>results.appendChild(buildCard(image,index,data)));
       empty.hidden=true;
-      status.textContent="سه کانسپت ساخته شدند. کنترل فنی رنگ و ابعاد در همین مرورگر انجام می‌شود؛ بازخورد فقط روی همین دستگاه ذخیره خواهد شد.";
+      status.textContent="ناوی بریف را تحلیل کرد و سه مسیر طراحی را بر اساس آن ساخت. کنترل فنی رنگ و ابعاد در مرورگر انجام می‌شود؛ بازخورد فقط روی همین دستگاه ذخیره خواهد شد.";
       results.scrollIntoView({behavior:"smooth",block:"start"});
     } catch(error) {
       status.textContent=error.name==="AbortError"
