@@ -2493,3 +2493,27 @@ body.navi-studio-context .navi-widget-panel .navi-send-toolbar .btn-primary {
 @media (prefers-reduced-motion: reduce) {
   body.navi-studio-context .navi-widget-panel.is-open { animation: none !important; }
 }
+
+
+/* Inline NAVI output inside NAVA studio workspaces */
+.studio-live-output-heading {
+  margin: 1.25rem 0 .55rem;
+  color: var(--gold, #d7b56d);
+  font-weight: 700;
+}
+.studio-live-output {
+  min-height: 5rem;
+  margin-top: .75rem;
+  padding: 1rem;
+  border: 1px solid rgba(215,181,109,.28);
+  border-radius: 14px;
+  background: rgba(8,18,35,.48);
+  color: var(--text, #f3f4f6);
+  line-height: 1.9;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.studio-live-output[data-state="loading"] { opacity: .78; }
+.studio-live-output[data-state="error"] { border-color: rgba(226,139,130,.55); color: #e9a29a; }
+.studio-live-output[data-state="success"] { border-color: rgba(215,181,109,.45); }
+#storyMessage { white-space: pre-wrap; overflow-wrap: anywhere; }
