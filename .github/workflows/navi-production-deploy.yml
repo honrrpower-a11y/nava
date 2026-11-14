@@ -86,7 +86,8 @@ jobs:
             'modules/navi.js',
             'modules/navi-auth.js',
             'modules/navi-memory.js',
-            'modules/shared.js'
+            'modules/shared.js',
+            'modules/logo.js'
           ];
           for (const file of requiredFiles) {
             if (!fs.existsSync(file)) {
