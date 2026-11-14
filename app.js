@@ -248,7 +248,42 @@ function collectNaviStudioContext(pageId) {
       keyPoints: value("contentKeyPoints"), callToAction: value("contentCTA"),
       keywords: value("contentKeywords")
     },
-    storyPage: { content: value("storyInput") }
+    storyPage: { content: value("storyInput") },
+    articlePage: {
+      task: selected("studioTask-article"),
+      audience: value("studioAudience-article"),
+      brief: value("studioBrief-article")
+    },
+    officePage: {
+      task: selected("studioTask-office"),
+      audience: value("studioAudience-office"),
+      brief: value("studioBrief-office")
+    },
+    composePage: {
+      task: selected("studioTask-compose"),
+      audience: value("studioAudience-compose"),
+      brief: value("studioBrief-compose")
+    },
+    avPage: {
+      task: selected("studioTask-av"),
+      audience: value("studioAudience-av"),
+      brief: value("studioBrief-av")
+    },
+    seoPage: {
+      task: selected("studioTask-seo"),
+      audience: value("studioAudience-seo"),
+      brief: value("studioBrief-seo")
+    },
+    adsPage: {
+      task: selected("studioTask-ads"),
+      audience: value("studioAudience-ads"),
+      brief: value("studioBrief-ads")
+    },
+    bizPage: {
+      task: selected("studioTask-biz"),
+      audience: value("studioAudience-biz"),
+      brief: value("studioBrief-biz")
+    }
   };
   return Object.fromEntries(Object.entries(contexts[pageId] || {})
     .filter(([, item]) => typeof item === "string" && item.trim()));
@@ -270,7 +305,14 @@ function showPage(pageId) {
   const studioByPage = {
     logoPage: "طراحی لوگو", brandPage: "برندینگ",
     contentPage: "تولید محتوا", storyPage: "استوری‌ساز",
-    musicPage: "تولید موسیقی"
+    musicPage: "تولید موسیقی",
+    articlePage: "مقاله و وبلاگ",
+    officePage: "کارهای اداری و آفیس",
+    composePage: "آهنگ‌سازی و نت‌نویسی",
+    avPage: "ویدئو و صدا",
+    seoPage: "سئو",
+    adsPage: "تبلیغات",
+    bizPage: "ابزارهای کسب‌وکار"
   };
   const studioName = studioByPage[pageId];
   document.body.classList.toggle("navi-studio-context", Boolean(studioName));
@@ -308,7 +350,14 @@ function syncNaviStudioContextFromActivePage() {
     brandPage: "برندینگ",
     contentPage: "تولید محتوا",
     storyPage: "استوری‌ساز",
-    musicPage: "تولید موسیقی"
+    musicPage: "تولید موسیقی",
+    articlePage: "مقاله و وبلاگ",
+    officePage: "کارهای اداری و آفیس",
+    composePage: "آهنگ‌سازی و نت‌نویسی",
+    avPage: "ویدئو و صدا",
+    seoPage: "سئو",
+    adsPage: "تبلیغات",
+    bizPage: "ابزارهای کسب‌وکار"
   };
   const studioName = studioByPage[activePage.id];
   if (!studioName) return;
