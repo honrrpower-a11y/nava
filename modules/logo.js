@@ -1,4 +1,4 @@
-// NAVA Logo Studio: real image generation through a server-side fal.ai proxy.
+// NAVA Logo Studio: real image generation through Cloudflare Workers AI free allocation.
 import { json, safeText } from "./shared.js";
 import { handleGuestTrial } from "./guest-trial.js";
 
@@ -56,43 +56,56 @@ function buildPrompt(data, direction) {
   ].join("\n");
 }
 
-async function generateOne({ prompt, apiKey }) {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 55000);
-  try {
-    const response = await fetch("https://fal.run/fal-ai/flux/dev", {
-      method: "POST",
-      headers: {
-        "Authorization": "Key " + apiKey,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        prompt,
-        image_size: "square_hd",
-        num_images: 1,
-        num_inference_steps: 28,
-        guidance_scale: 3.5,
-        output_format: "png",
-        enable_safety_checker: true
-      }),
-      signal: controller.signal
-    });
-    let result;
-    try { result = await response.json(); }
-    catch { throw new Error("Image provider returned an unreadable response."); }
-    if (!response.ok) {
-      const error = new Error("Image provider request failed.");
-      error.status = response.status;
-      throw error;
-    }
-    const image = Array.isArray(result.images) ? result.images[0] : null;
-    if (!image || typeof image.url !== "string" || !image.url.startsWith("https://")) {
-      throw new Error("Image provider did not return a valid image.");
-    }
-    return image;
-  } finally {
-    clearTimeout(timer);
+async function generateOne({ prompt, ai }) {
+  if (!ai || typeof ai.run !== "function") {
+    throw new Error("Cloudflare Workers AI binding is not enabled.");
   }
+  const result = await ai.run("@cf/black-forest-labs/flux-1-schnell", {
+    prompt: prompt.slice(0, 2048),
+    steps: 4
+  });
+  if (!result || typeof result.image !== "string" || !result.image.length) {
+    throw new Error("Cloudflare Workers AI returned no image.");
+  }
+  return {
+    dataUri: "data:image/jpeg;charset=utf-8;base64," + result.image,
+    width: 512,
+    height: 512
+  };
+}
+
+const FREE_LOGO_DAILY_LIMIT = 10;
+
+async function reserveFreeDailySlot(env) {
+  if (!env.NAVA_DB) throw new Error("Logo daily limit database is unavailable.");
+  const day = new Date().toISOString().slice(0, 10);
+  await env.NAVA_DB.prepare(`
+    CREATE TABLE IF NOT EXISTS nava_logo_ai_daily_limits (
+      day TEXT PRIMARY KEY,
+      used_count INTEGER NOT NULL DEFAULT 0 CHECK (used_count >= 0),
+      updated_at INTEGER NOT NULL
+    )
+  `).run();
+  const reserved = await env.NAVA_DB.prepare(`
+    INSERT INTO nava_logo_ai_daily_limits (day, used_count, updated_at)
+    VALUES (?, 1, ?)
+    ON CONFLICT(day) DO UPDATE SET
+      used_count = nava_logo_ai_daily_limits.used_count + 1,
+      updated_at = excluded.updated_at
+    WHERE nava_logo_ai_daily_limits.used_count < ?
+    RETURNING used_count
+  `).bind(day, Math.floor(Date.now() / 1000), FREE_LOGO_DAILY_LIMIT).first();
+  return reserved ? { day, used: Number(reserved.used_count) } : null;
+}
+
+async function releaseFreeDailySlot(env, day) {
+  if (!day || !env.NAVA_DB) return;
+  await env.NAVA_DB.prepare(`
+    UPDATE nava_logo_ai_daily_limits
+    SET used_count = CASE WHEN used_count > 0 THEN used_count - 1 ELSE 0 END,
+        updated_at = ?
+    WHERE day = ?
+  `).bind(Math.floor(Date.now() / 1000), day).run();
 }
 
 export async function handleLogoRoute({ request, env, origin, corsOrigin }) {
@@ -102,8 +115,8 @@ export async function handleLogoRoute({ request, env, origin, corsOrigin }) {
   if (request.method !== "POST") {
     return fail("روش درخواست پشتیبانی نمی‌شود.", 405, corsOrigin);
   }
-  if (!env.FAL_KEY) {
-    return fail("موتور طراحی تصویری هنوز به حساب تولید تصویر متصل نشده است. تنظیم امن کلید سرویس لازم است.", 503, corsOrigin, {
+  if (!env.AI || typeof env.AI.run !== "function") {
+    return fail("سرویس رایگان تولید تصویر در Cloudflare هنوز فعال نشده است.", 503, corsOrigin, {
       code: "LOGO_IMAGE_PROVIDER_NOT_CONFIGURED"
     });
   }
@@ -131,6 +144,22 @@ export async function handleLogoRoute({ request, env, origin, corsOrigin }) {
   };
   if (!data.brandName) return fail("نام برند برای طراحی لازم است.", 400, corsOrigin);
 
+  // Reserve a small daily global budget so the logo studio stays comfortably
+  // inside Cloudflare's free Workers AI allocation. No paid fallback is used.
+  let dailySlot;
+  try {
+    dailySlot = await reserveFreeDailySlot(env);
+  } catch (error) {
+    console.error("[NAVA LOGO] Free daily limit unavailable:", String(error?.message || error));
+    return fail("بررسی سهمیه رایگان امروز ممکن نشد. کمی بعد دوباره تلاش کن.", 503, corsOrigin);
+  }
+  if (!dailySlot) {
+    return fail("سهمیه رایگان روزانه نوا برای ساخت لوگو تکمیل شده است. فردا دوباره تلاش کن؛ هیچ هزینه یا مسیر پولی فعال نمی‌شود.", 429, corsOrigin, {
+      code: "FREE_IMAGE_QUOTA_EXHAUSTED",
+      dailyLimit: FREE_LOGO_DAILY_LIMIT
+    });
+  }
+
   // Reuse the existing server-enforced logo trial and NAVI session validation.
   const quotaRequest = new Request(request.url, {
     method: "POST",
@@ -141,32 +170,40 @@ export async function handleLogoRoute({ request, env, origin, corsOrigin }) {
     })
   });
   const quotaResponse = await handleGuestTrial({ request: quotaRequest, env, origin, corsOrigin });
-  if (!quotaResponse.ok) return quotaResponse;
+  if (!quotaResponse.ok) {
+    await releaseFreeDailySlot(env, dailySlot.day);
+    return quotaResponse;
+  }
   let quota = {};
   try { quota = await quotaResponse.json(); } catch {}
 
+
   const prompts = DIRECTIONS.map(direction => buildPrompt(data, direction));
   try {
-    const images = await Promise.all(prompts.map(prompt => generateOne({ prompt, apiKey: env.FAL_KEY })));
+    const images = [];
+    // Sequential calls reduce burst pressure on the shared free daily allocation.
+    for (const prompt of prompts) {
+      images.push(await generateOne({ prompt, ai: env.AI }));
+    }
     return json({
       success: true,
       brandName: data.brandName,
       remaining: quota.remaining ?? null,
+      freeDailyRemaining: Math.max(0, FREE_LOGO_DAILY_LIMIT - dailySlot.used),
       images: images.map((image, index) => ({
-        url: image.url,
-        width: image.width || 1024,
-        height: image.height || 1024,
+        url: image.dataUri,
+        width: image.width,
+        height: image.height,
         concept: DIRECTIONS[index].title
       }))
     }, 200, corsOrigin);
   } catch (error) {
+    await releaseFreeDailySlot(env, dailySlot.day).catch(() => {});
     console.error("[NAVA LOGO] Image generation failed:", String(error?.message || error).slice(0, 300));
-    if (error?.name === "AbortError") {
-      return fail("زمان ساخت تصویر تمام شد. دوباره تلاش کن.", 504, corsOrigin);
+    const message = String(error?.message || "");
+    if (/limit|quota|exceed|daily|neurons|capacity/i.test(message)) {
+      return fail("سهمیه رایگان روزانه ساخت تصویر تمام شده است. پس از بازنشانی سهمیه دوباره تلاش کن؛ هیچ مسیر پولی جایگزین نمی‌شود.", 429, corsOrigin, { code: "FREE_IMAGE_QUOTA_EXHAUSTED" });
     }
-    if (error?.status === 401 || error?.status === 403) {
-      return fail("کلید سرویس تصویر معتبر نیست یا دسترسی ساخت تصویر ندارد.", 502, corsOrigin);
-    }
-    return fail("ساخت کانسپت‌ها انجام نشد. اعتبار سرویس تصویر و وضعیت آن را بررسی کن.", 502, corsOrigin);
+    return fail("ساخت کانسپت‌ها انجام نشد. وضعیت سرویس رایگان Cloudflare را بررسی کن و دوباره تلاش کن.", 502, corsOrigin);
   }
 }

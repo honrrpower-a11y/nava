@@ -64,6 +64,10 @@ jobs:
             throw new Error('STOP: expected exactly one production D1 binding.');
           }
 
+          if (!config.ai || config.ai.binding !== 'AI') {
+            throw new Error('STOP: expected the free Workers AI binding named AI.');
+          }
+
           const prod = config.d1_databases[0];
           const actual = {
             binding: norm(prod.binding),
@@ -94,7 +98,7 @@ jobs:
               throw new Error('STOP: required Worker source file is missing: ' + file);
             }
           }
-          console.log('Verified production Worker nava-music-api and exact nava-memory D1 target. No database migrations will run.');
+          console.log('Verified production Worker, free Workers AI binding, and exact nava-memory D1 target. No database migrations will run.');
           NODE
 
       - name: Deploy production Worker only (no D1 migrations)
