@@ -110,7 +110,14 @@
     event.preventDefault();
     const data=readData();
     if(!data.brandName){status.textContent="نام برند را وارد کن.";fields.name.focus();return;}
-    const token=sessionStorage.getItem("nava_navi_session")||"";
+    // NAVI credentials are stored persistently in localStorage by app.js.
+    // Keep the legacy sessionStorage fallback for older active tabs.
+    let token="";
+    try {
+      token=localStorage.getItem("nava_navi_session")||sessionStorage.getItem("nava_navi_session")||"";
+    } catch (_) {
+      try { token=sessionStorage.getItem("nava_navi_session")||""; } catch (_) {}
+    }
     let visitorId="";
     if(!token){
       visitorId=localStorage.getItem("nava_guest_trial_id")||"";
@@ -133,9 +140,13 @@
       });
       const result=await response.json();
       if(!response.ok||!result.success){
-        status.textContent=result.error||"ساخت لوگو انجام نشد.";
-        if((response.status===401||response.status===429)&&typeof window.openNaviAssistant==="function"){
-          window.openNaviAssistant({service:"طراحی لوگو",context:data});
+        const message=result.error||"ساخت لوگو انجام نشد."; 
+        if(response.status===401){
+          status.textContent=message+" برای ادامه، از بخش گفت‌وگو با NAVI دوباره وارد حساب نوا شو؛ سپس به همین صفحه برگرد.";
+        } else if(response.status===429){
+          status.textContent=message+" برای جلوگیری از خروج ناخواسته، گفت‌وگوی NAVI خودکار باز نمی‌شود.";
+        } else {
+          status.textContent=message;
         }
         return;
       }
