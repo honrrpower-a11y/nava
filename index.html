@@ -8,6 +8,7 @@
   <title>NAVA | One Vision. One Mission. One NAVA.</title>
   <link rel="stylesheet" href="style.css?v=nava-mobile-navi-bottom-dock-6">
   <link rel="stylesheet" href="logo-studio.css?v=logo-studio-mvp-1">
+  <link rel="stylesheet" href="brand-content-studios.css?v=brand-content-20261114-1">
   <script src="app.js?v=nava-inline-navi-side-dock-5" defer></script>
   <script src="logo-studio.js?v=nava-orbit-overlay-2" defer></script>
 </head>
@@ -100,10 +101,10 @@
           <button class="nava-orbit-button" type="button" onclick="showPage('logoPage')" aria-label="ورود به استودیوی طراحی لوگو"><span class="nava-orbit-icon" aria-hidden="true">✦</span><span class="nava-orbit-title">طراحی لوگو</span><span class="nava-orbit-caption">هویت بصری</span></button>
         </div>
         <div class="nava-orbit-item nava-orbit-item--brand">
-          <button class="nava-orbit-button" type="button" onclick="chooseService('برندینگ')" aria-label="ورود به استودیوی برندینگ"><span class="nava-orbit-icon" aria-hidden="true">◇</span><span class="nava-orbit-title">برندینگ</span><span class="nava-orbit-caption">شخصیت و هویت برند</span></button>
+          <button class="nava-orbit-button" type="button" onclick="showPage('brandPage')" aria-label="ورود به استودیوی برندینگ"><span class="nava-orbit-icon" aria-hidden="true">◇</span><span class="nava-orbit-title">برندینگ</span><span class="nava-orbit-caption">شخصیت و هویت برند</span></button>
         </div>
         <div class="nava-orbit-item nava-orbit-item--content">
-          <button class="nava-orbit-button" type="button" onclick="chooseService('تولید محتوا')" aria-label="ورود به استودیوی تولید محتوا"><span class="nava-orbit-icon" aria-hidden="true">✧</span><span class="nava-orbit-title">تولید محتوا</span><span class="nava-orbit-caption">ایده تا انتشار</span></button>
+          <button class="nava-orbit-button" type="button" onclick="showPage('contentPage')" aria-label="ورود به استودیوی تولید محتوا"><span class="nava-orbit-icon" aria-hidden="true">✧</span><span class="nava-orbit-title">تولید محتوا</span><span class="nava-orbit-caption">ایده تا انتشار</span></button>
         </div>
         <div class="nava-orbit-item nava-orbit-item--article">
           <button class="nava-orbit-button" type="button" onclick="chooseService('مقاله و وبلاگ')" aria-label="ورود به استودیوی مقاله و وبلاگ"><span class="nava-orbit-icon" aria-hidden="true">▤</span><span class="nava-orbit-title">مقاله و وبلاگ</span><span class="nava-orbit-caption">نوشتار تخصصی</span></button>
@@ -174,6 +175,83 @@
           <div class="logo-studio-empty" id="logoStudioEmpty"><div class="logo-studio-empty-mark" aria-hidden="true">✦</div><strong>هنوز طرحی ساخته نشده</strong><span>فرم شناخت برند را کامل کن و روی «ساخت سه طرح اولیه» بزن.</span></div>
           <div class="logo-concept-results" id="logoConceptResults" aria-live="polite"></div>
         </section>
+      </div>
+    </div>
+  </section>
+
+  <section class="page" id="brandPage">
+    <div class="nava-strategy-page">
+      <div class="nava-strategy-head">
+        <div><span class="nava-strategy-kicker">NAVA CREATIVE STUDIO / 02</span><h1>استودیوی استراتژی برند</h1></div>
+        <button class="btn-secondary" type="button" onclick="showPage('homePage')">بازگشت به استودیوها</button>
+      </div>
+      <div class="nava-strategy-intro">
+        <span class="nava-strategy-kicker">BUILD A BRAND WITH MEANING</span>
+        <h2>از یک نام تا <span>هویتی ماندگار</span></h2>
+        <p>بریف برندت را بساز؛ سپس با کمک ناوی جایگاه‌یابی، ارزش پیشنهادی، شخصیت، لحن و پیام‌های اصلی برند را تدوین کن. تصمیم‌های استراتژیک بدون اطلاعات و تأیید تو نهایی نمی‌شوند.</p>
+      </div>
+      <div class="nava-strategy-layout">
+        <form class="nava-strategy-form" id="brandStrategyForm">
+          <h3>شناخت و استراتژی اولیه برند</h3><p>فیلدهای ستاره‌دار برای شروع ضروری‌اند.</p>
+          <div class="nava-strategy-fields">
+            <div class="nava-strategy-field"><label for="brandName">نام برند *</label><input class="nava-strategy-control" id="brandName" maxlength="80" required placeholder="نام برند"></div>
+            <div class="nava-strategy-field"><label for="brandIndustry">حوزه فعالیت *</label><input class="nava-strategy-control" id="brandIndustry" maxlength="120" required placeholder="مثلاً فناوری، آموزش، پوشاک"></div>
+            <div class="nava-strategy-field full"><label for="brandAudience">مخاطب اصلی *</label><textarea class="nava-strategy-control" id="brandAudience" maxlength="600" required placeholder="مخاطب چه کسی است؟ چه نیاز یا مسئله‌ای دارد؟"></textarea></div>
+            <div class="nava-strategy-field"><label for="brandPersonality">شخصیت برند</label><select class="nava-strategy-control" id="brandPersonality"><option>حرفه‌ای و قابل اعتماد</option><option>نوآور و آینده‌نگر</option><option>صمیمی و انسانی</option><option>جسور و پیشرو</option><option>لوکس و مینیمال</option><option>آموزشی و الهام‌بخش</option></select></div>
+            <div class="nava-strategy-field"><label for="brandValues">ارزش‌های اصلی</label><input class="nava-strategy-control" id="brandValues" maxlength="240" placeholder="مثلاً کیفیت، سادگی، نوآوری"></div>
+            <div class="nava-strategy-field full"><label for="brandDifference">تفاوت واقعی با رقبا</label><textarea class="nava-strategy-control" id="brandDifference" maxlength="600" placeholder="چه چیزی را بهتر، متفاوت یا برای گروه خاصی ارائه می‌کنی؟"></textarea></div>
+            <div class="nava-strategy-field full"><label for="brandPromise">وعده برند</label><textarea class="nava-strategy-control" id="brandPromise" maxlength="400" placeholder="مخاطب با انتخاب این برند چه نتیجه‌ای باید بگیرد؟"></textarea></div>
+            <div class="nava-strategy-field full"><label for="brandCompetitors">رقبا یا نمونه‌های الهام‌بخش</label><input class="nava-strategy-control" id="brandCompetitors" maxlength="300" placeholder="نام برندها یا لینک/توضیح کوتاه"></div>
+          </div>
+          <div class="nava-strategy-actions"><button class="btn-primary" type="submit">ساخت بریف و ادامه با ناوی</button><button class="btn-secondary" id="brandStudioReset" type="button">پاک کردن فرم</button></div>
+          <div class="nava-strategy-status" id="brandStudioStatus" role="status" aria-live="polite">اطلاعات برند را وارد کن تا بریف استراتژیک آماده شود.</div>
+        </form>
+        <aside class="nava-strategy-guide"><h3>در این استودیو چه می‌سازیم؟</h3><ul>
+          <li><strong>جایگاه‌یابی:</strong> برند برای چه کسی و در چه جایگاهی معنا دارد؟</li>
+          <li><strong>ارزش پیشنهادی:</strong> چرا مخاطب باید این برند را انتخاب کند؟</li>
+          <li><strong>شخصیت و لحن:</strong> برند چگونه حرف می‌زند و رفتار می‌کند؟</li>
+          <li><strong>معماری پیام:</strong> پیام محوری و ستون‌های ارتباطی برند چیست؟</li>
+          <li><strong>شعار و جهت بصری:</strong> مسیرهای پیشنهادی برای ادامه طراحی.</li>
+        </ul><div class="nava-strategy-note">این نسخه بریف را در همین صفحه آماده می‌کند و برای تحلیل به NAVI می‌فرستد. هنوز سامانه مستقل تحقیقات بازار یا اعتبارسنجی خودکار رقبا نیست.</div></aside>
+      </div>
+    </div>
+  </section>
+
+
+  <section class="page" id="contentPage">
+    <div class="nava-strategy-page">
+      <div class="nava-strategy-head">
+        <div><span class="nava-strategy-kicker">NAVA CREATIVE STUDIO / 03</span><h1>استودیوی تولید محتوا</h1></div>
+        <button class="btn-secondary" type="button" onclick="showPage('homePage')">بازگشت به استودیوها</button>
+      </div>
+      <div class="nava-strategy-intro">
+        <span class="nava-strategy-kicker">FROM IDEA TO PUBLISHABLE CONTENT</span>
+        <h2>محتوایی با <span>هدف و مخاطب مشخص</span></h2>
+        <p>موضوع، پلتفرم و هدف را تعیین کن تا ناوی به‌جای متن‌های عمومی، محتوایی متناسب با کانال انتشار و نیاز مخاطب طراحی کند.</p>
+      </div>
+      <div class="nava-strategy-layout">
+        <form class="nava-strategy-form" id="contentStudioForm">
+          <h3>بریف تولید محتوا</h3><p>موضوع و مخاطب هدف برای شروع ضروری‌اند.</p>
+          <div class="nava-strategy-fields">
+            <div class="nava-strategy-field"><label for="contentPlatform">پلتفرم انتشار</label><select class="nava-strategy-control" id="contentPlatform"><option>اینستاگرام</option><option>یوتیوب</option><option>وب‌سایت</option><option>تلگرام</option><option>لینکدین</option><option>چند پلتفرم</option></select></div>
+            <div class="nava-strategy-field"><label for="contentFormat">قالب محتوا</label><select class="nava-strategy-control" id="contentFormat"><option>پست اسلایدی</option><option>ویدئوی کوتاه / ریلز</option><option>ویدئوی بلند</option><option>کپشن و متن شبکه اجتماعی</option><option>مقاله وبلاگ</option><option>سناریو ویدئو</option><option>تقویم محتوایی</option></select></div>
+            <div class="nava-strategy-field"><label for="contentObjective">هدف محتوا</label><select class="nava-strategy-control" id="contentObjective"><option>آگاهی از برند</option><option>آموزش و ارزش‌آفرینی</option><option>تعامل و مشارکت</option><option>جذب مخاطب جدید</option><option>معرفی محصول یا خدمت</option><option>فروش و تبدیل</option></select></div>
+            <div class="nava-strategy-field"><label for="contentTone">لحن محتوا</label><select class="nava-strategy-control" id="contentTone"><option>صمیمی و محاوره‌ای</option><option>حرفه‌ای و دقیق</option><option>آموزشی و ساده</option><option>الهام‌بخش</option><option>طنز کنترل‌شده</option><option>رسمی</option></select></div>
+            <div class="nava-strategy-field full"><label for="contentTopic">موضوع یا ایده اصلی *</label><textarea class="nava-strategy-control" id="contentTopic" maxlength="800" required placeholder="دقیقاً درباره چه چیزی محتوا می‌خواهی؟"></textarea></div>
+            <div class="nava-strategy-field full"><label for="contentAudience">مخاطب هدف *</label><textarea class="nava-strategy-control" id="contentAudience" maxlength="600" required placeholder="برای چه کسانی می‌نویسیم؟ سطح آشنایی و نیازشان چیست؟"></textarea></div>
+            <div class="nava-strategy-field full"><label for="contentKeyPoints">نکات یا اطلاعاتی که باید حتماً پوشش داده شوند</label><textarea class="nava-strategy-control" id="contentKeyPoints" maxlength="1000" placeholder="اطلاعات واقعی، محدودیت‌ها، منابع یا نکات کلیدی"></textarea></div>
+            <div class="nava-strategy-field"><label for="contentCTA">دعوت به اقدام</label><input class="nava-strategy-control" id="contentCTA" maxlength="180" placeholder="مثلاً ذخیره کن یا نظر بده"></div>
+            <div class="nava-strategy-field"><label for="contentKeywords">کلیدواژه‌ها</label><input class="nava-strategy-control" id="contentKeywords" maxlength="240" placeholder="کلمات مهم و مرتبط"></div>
+          </div>
+          <div class="nava-strategy-actions"><button class="btn-primary" type="submit">ساخت بریف و ادامه با ناوی</button><button class="btn-secondary" id="contentStudioReset" type="button">پاک کردن فرم</button></div>
+          <div class="nava-strategy-status" id="contentStudioStatus" role="status" aria-live="polite">بریف محتوا را تکمیل کن تا ناوی بر اساس آن خروجی بسازد.</div>
+        </form>
+        <aside class="nava-strategy-guide"><h3>خروجی متناسب با قالب</h3><ul>
+          <li><strong>شبکه اجتماعی:</strong> ایده، هوک، ساختار، کپشن و دعوت به تعامل.</li>
+          <li><strong>ویدئو:</strong> سناریو، ترتیب نماها، متن گوینده و پایان‌بندی.</li>
+          <li><strong>مقاله:</strong> تیتر، ساختار H2/H3، پاسخ به نیاز جست‌وجو و پیشنهاد سئو.</li>
+          <li><strong>تقویم محتوا:</strong> ستون‌های محتوایی و برنامه انتشار قابل اجرا.</li>
+        </ul><div class="nava-strategy-note">ناوی پیش‌نویس را تولید می‌کند؛ صحت اطلاعات، لحن نهایی و انتشار همچنان با تأیید تو انجام می‌شود.</div></aside>
       </div>
     </div>
   </section>
@@ -453,5 +531,6 @@
   </div>
 </footer>
 
+  <script src="brand-content-studios.js?v=brand-content-20261114-1" defer></script>
 </body>
 </html>
