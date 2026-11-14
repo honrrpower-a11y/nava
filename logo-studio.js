@@ -91,8 +91,12 @@
     addTextLockup(card,data);
     const copy=document.createElement("div");copy.className="logo-concept-copy";
     const title=document.createElement("h3");title.textContent=image.concept||("کانسپت "+(index+1));
-    const desc=document.createElement("p");desc.textContent="طرح تصویری تولیدشده بر اساس بریف برند؛ نام و شعار به‌صورت جداگانه و خوانا اضافه شده‌اند.";
-    copy.append(title,desc);card.appendChild(copy);
+    const desc=document.createElement("p");desc.textContent=image.description||"این مسیر طراحی بر اساس بریف برند ساخته شده؛ نام و شعار جداگانه و خوانا اضافه شده‌اند.";
+    const rubric=document.createElement("div");rubric.className="logo-ai-rubric";
+    ["تمایز سیلوئت","تناسب با برند","خوانایی در اندازه کوچک","تعادل طلایی و سرمه‌ای"].forEach(label=>{
+      const item=document.createElement("span");item.textContent=label;rubric.appendChild(item);
+    });
+    copy.append(title,desc,rubric);card.appendChild(copy);
     const actions=document.createElement("div");actions.className="logo-concept-actions";
     const button=document.createElement("button");button.type="button";button.className="btn-primary";
     button.textContent="دریافت لوگو با نام برند";
@@ -138,7 +142,7 @@
       results.replaceChildren();
       result.images.forEach((image,index)=>results.appendChild(buildCard(image,index,data)));
       empty.hidden=true;
-      status.textContent="سه کانسپت تصویری آماده شد. هر طرح را بررسی کن و نسخه دلخواه را دریافت کن.";
+      status.textContent="سه مسیر هنری مستقل آماده شد. آن‌ها را از نظر تمایز سیلوئت، تناسب با برند، خوانایی و تعادل رنگ مقایسه کن."
       results.scrollIntoView({behavior:"smooth",block:"start"});
     } catch(error) {
       status.textContent=error.name==="AbortError"
