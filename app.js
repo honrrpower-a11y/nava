@@ -261,7 +261,11 @@ function collectNaviStudioContext(pageId) {
     },
     composePage: {
       task: selected("studioTask-compose"),
-      audience: value("studioAudience-compose"),
+      style: value("studioStyle-compose"),
+      keyOrMode: value("studioKey-compose"),
+      tempoBpm: value("studioTempo-compose"),
+      timeSignature: value("studioMeter-compose"),
+      instruments: value("studioInstruments-compose"),
       brief: value("studioBrief-compose")
     },
     avPage: {
