@@ -7,46 +7,9 @@ function fail(message, status, corsOrigin, extra = {}) {
   return json({ success: false, error: message, ...extra }, status, corsOrigin);
 }
 
-// Three genuinely different art directions. Each direction changes the logo's visual
-// grammar, silhouette, composition and design logic—not merely its surface decoration.
-const DIRECTIONS = [
-  {
-    id: "conceptual-symbol",
-    title: "نماد مفهومی",
-    shortDescription: "یک نماد مستقل و استعاری با سیلوئت منحصربه‌فرد؛ مناسب شناسایی سریع برند.",
-    guidance: [
-      "ART DIRECTION A — CONCEPTUAL SYMBOL.",
-      "Design a standalone pictorial symbol built around ONE intelligent visual metaphor derived from the brand brief.",
-      "Use an organic, fluid, sculptural or symbolic silhouette where appropriate; do NOT default to a generic geometric tech icon.",
-      "The mark should communicate an idea at a glance and remain recognizable as a small app icon.",
-      "Composition: one dominant central symbol, generous negative space, no enclosing badge unless the metaphor genuinely requires it."
-    ].join(" ")
-  },
-  {
-    id: "custom-letterform",
-    title: "فرم اختصاصی حروف",
-    shortDescription: "ساختار نشانه بر پایه فرم حروف و فضای منفی؛ نه یک آیکون عمومی.",
-    guidance: [
-      "ART DIRECTION B — CUSTOM LETTERFORM / MONOGRAM.",
-      "Create a bespoke abstract letterform mark inspired by the brand name or its initials, using interlocking strokes, cut-outs and carefully controlled negative space.",
-      "The letterform must be custom constructed, not a typed font glyph and not a generic icon placed beside a letter.",
-      "If the brand name is non-Latin, use its visual rhythm and calligraphic structure as inspiration without attempting to render readable text.",
-      "Composition: compact, balanced, distinctive silhouette with a clear internal structure; avoid the pictorial metaphor approach of a standalone mascot."
-    ].join(" ")
-  },
-  {
-    id: "signature-emblem",
-    title: "نشان امضایی",
-    shortDescription: "یک نشان ساختاریافته و متمایز با قاب یا ترکیب‌بندی اختصاصی؛ مناسب هویت رسمی برند.",
-    guidance: [
-      "ART DIRECTION C — SIGNATURE EMBLEM.",
-      "Create a structured signature emblem with a deliberate outer boundary or architectural composition, such as a custom shield, seal, framed mark or modular crest.",
-      "Build the identity through the relationship between the outer container and a simple inner motif; the container itself must be custom and meaningful, never a stock badge.",
-      "Use a more formal, composed and institutional visual language than the other two directions.",
-      "Composition: clearly legible outer silhouette, disciplined internal hierarchy, strong balance; do not create a free-floating pictorial icon or monogram."
-    ].join(" ")
-  }
-];
+// NAVI chooses the visual grammar from the actual brand brief.
+// No fixed concept templates are imposed: the three concepts must be distinct,
+// but each may use the logo form that best serves the brand.
 
 function getPaletteSpec(data) {
   const palette = safeText(data.palette, 80);
@@ -120,10 +83,12 @@ async function planBrandConcepts(data, apiKey) {
     "Return exactly one JSON object, no markdown, with keys brandCore, strategy, and concepts.",
     "brandCore: one concise Persian sentence describing the visual essence inferred from the brief.",
     "strategy: one concise Persian paragraph explaining why the visual idea fits the actual brief and what clichés to avoid.",
-    "concepts: exactly 3 genuinely different concepts, each with title, rationale, symbolDescription, silhouette, composition, and avoid.",
-    "Each concept must be a different design solution rooted in the same brand strategy, not random unrelated alternatives.",
-    "symbolDescription must describe a concrete drawable symbol, not abstract adjectives. silhouette describes its outer contour. composition describes placement and negative space. avoid lists specific likely failure modes.",
-    "Use concise Persian. Each field maximum 220 characters. Titles must be distinct.",
+    "concepts: exactly 3 genuinely different logo concepts, each with title, rationale, logoType, visualGrammar, symbolDescription, silhouette, composition, and avoid.",
+    "Choose the most suitable logoType independently for each concept from: pictorial mark, abstract symbol, custom letterform, monogram, wordmark, combination mark, emblem, mascot, or another clearly explained form. Do NOT force one concept into each preset category.",
+    "The three concepts must be genuinely distinct in their central visual idea and construction, while all expressing the same brand strategy. Do not produce three decorative variations of one icon.",
+    "Base every concept on specific facts in the brief. If no defensible symbol exists, prefer a distinctive abstract form or typographic solution over inventing an unrelated object.",
+    "symbolDescription must be a concrete drawable instruction, not vague adjectives. visualGrammar explains the construction logic. silhouette describes the outer contour. composition describes placement and negative space. avoid lists likely image-generation mistakes.",
+    "Use concise Persian. Keep each field under 180 characters. Titles must be distinct.",
     "Do not ask questions. If the brief is sparse, state a conservative visual hypothesis and avoid fabricated specifics."
   ].join(" ");
   const controller = new AbortController();
@@ -153,11 +118,13 @@ async function planBrandConcepts(data, apiKey) {
     if (!plan || !Array.isArray(plan.concepts) || plan.concepts.length !== 3) {
       throw new Error("NAVI strategy planner did not return three concepts.");
     }
-    const clean = value => safeText(value, 140);
+    const clean = value => safeText(value, 170);
     const concepts = plan.concepts.map((item, index) => ({
-      ...DIRECTIONS[index],
+      id: "navi-concept-" + (index + 1),
+      title: clean(item?.logoType) || "NAVI-selected logo form",
       conceptTitle: clean(item?.title) || "مسیر طراحی " + (index + 1),
       rationale: clean(item?.rationale),
+      visualGrammar: clean(item?.visualGrammar),
       conceptIdea: clean(item?.symbolDescription),
       silhouette: clean(item?.silhouette),
       composition: clean(item?.composition),
@@ -182,30 +149,36 @@ function buildPrompt(data, direction, strategy) {
   const paletteSpec = getPaletteSpec(data);
   const format = safeText(data.format, 40);
   const formatGuidance = format === "wordmark"
-    ? "The final wordmark will be typeset separately; create only a distinctive supporting mark."
+    ? "Create a true typographic wordmark; lettering is the primary logo, not a separate icon."
     : format === "monogram"
-      ? "Create an abstract monogram-inspired mark; do not render readable letters."
-      : "Create a combination-logo symbol designed to sit beside separately typeset Persian brand lettering.";
+      ? "Create a custom monogram based on the brand name or initials; letters may be visible if legible."
+      : "Create a coherent combination mark with a symbol and reserved space for separately typeset brand lettering.";
+  // Keep the strongest semantic instructions first. Never truncate the end of a
+  // long prompt, because that used to silently remove palette and render constraints.
   const lines = [
-    "Professional logo identity mark, not decorative AI artwork.",
-    "Brand name: " + data.brandName + ". Industry: " + (data.industry || "not specified") + ". Audience: " + (data.audience || "not specified") + ".",
-    "Brand personality: " + (data.personality || "not specified") + ". Strategic visual essence: " + (strategy.brandCore || "") + ".",
-    "Art direction: " + direction.title + " — " + direction.conceptTitle + ".",
-    "Overall strategy: " + (strategy.strategy || "") + ".",
-    "Why it fits: " + direction.rationale + ".",
-    "Draw this exact symbol idea: " + direction.conceptIdea + ".",
-    "Silhouette: " + direction.silhouette + ".",
-    "Composition: " + direction.composition + ".",
-    "Avoid: " + (direction.avoid || "generic stock icons, unrelated symbols") + ".",
-    "User's explicit symbol idea: " + (data.symbolIdea || "none supplied") + ". It is a key constraint, not permission to invent unrelated imagery.",
-    "Logo format: " + format + ". " + formatGuidance,
+    "Create a professional, commercially usable logo identity. This is a logo, not an illustration, poster, mascot scene or decorative AI artwork.",
+    "Brand: " + data.brandName + ". Business: " + (data.industry || "not specified") + ". Audience: " + (data.audience || "not specified") + ".",
+    "Brand personality: " + (data.personality || "not specified") + ".",
+    "Brand essence: " + (strategy.brandCore || "") + ". Strategy: " + (strategy.strategy || "") + ".",
+    "Selected logo form: " + direction.title + ". Concept: " + direction.conceptTitle + ". Why it fits: " + direction.rationale + ".",
+    "Visual construction: " + direction.visualGrammar + ".",
+    "Draw this specific idea: " + direction.conceptIdea + ". Silhouette: " + direction.silhouette + ". Composition: " + direction.composition + ".",
+    "Avoid: " + (direction.avoid || "generic stock icons, unrelated symbols, visual clichés") + ".",
+    "User's explicit symbol brief: " + (data.symbolIdea || "none supplied") + ". Respect it when provided; do not invent unrelated imagery.",
+    "Requested format: " + format + ". " + formatGuidance,
     "Palette: " + paletteSpec.instruction,
-    "Typography direction for separately typeset name: " + (data.typography || "clear Persian lettering") + ". Do not render any text.",
-    "One centered flat logo mark; distinct silhouette, balanced geometry, meaningful negative space, legible at 24px.",
-    "No stock icons, random blobs, clip-art, gradients, 3D, mockups or extra objects.",
-    "Pure white background. No letters, words, numbers, slogan or watermark."
+    "Typography reference: " + (data.typography || "clear, distinctive brand typography") + ".",
+    "Visual requirements: one centered logo on a plain white background; strong memorable silhouette; simple vector-like flat shapes; deliberate negative space; balanced proportions; recognizable at 24px; clean professional brand identity.",
+    "Strict exclusions: no mockup, no 3D, no gradients, no scene, no extra objects, no random abstract blobs, no stock clip-art, no watermark, no slogan or decorative text."
   ];
-  return lines.join("\n").slice(0, 1950);
+  let prompt = lines.join("\n");
+  // Enforce model limit without cutting a line or dropping the final constraints.
+  while (prompt.length > 2048 && lines.length > 8) {
+    lines.splice(7, 1);
+    prompt = lines.join("\n");
+  }
+  if (prompt.length > 2048) prompt = prompt.slice(0, 2048);
+  return prompt;
 }
 
 // Browser Canvas performs local technical checks after generation; no extra model call.
