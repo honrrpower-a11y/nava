@@ -74,6 +74,40 @@ async function generateOne({ prompt, ai }) {
   };
 }
 
+const FREE_LOGO_DAILY_LIMIT = 10;
+
+async function reserveFreeDailySlot(env) {
+  if (!env.NAVA_DB) throw new Error("Logo daily limit database is unavailable.");
+  const day = new Date().toISOString().slice(0, 10);
+  await env.NAVA_DB.prepare(`
+    CREATE TABLE IF NOT EXISTS nava_logo_ai_daily_limits (
+      day TEXT PRIMARY KEY,
+      used_count INTEGER NOT NULL DEFAULT 0 CHECK (used_count >= 0),
+      updated_at INTEGER NOT NULL
+    )
+  `).run();
+  const reserved = await env.NAVA_DB.prepare(`
+    INSERT INTO nava_logo_ai_daily_limits (day, used_count, updated_at)
+    VALUES (?, 1, ?)
+    ON CONFLICT(day) DO UPDATE SET
+      used_count = nava_logo_ai_daily_limits.used_count + 1,
+      updated_at = excluded.updated_at
+    WHERE nava_logo_ai_daily_limits.used_count < ?
+    RETURNING used_count
+  `).bind(day, Math.floor(Date.now() / 1000), FREE_LOGO_DAILY_LIMIT).first();
+  return reserved ? { day, used: Number(reserved.used_count) } : null;
+}
+
+async function releaseFreeDailySlot(env, day) {
+  if (!day || !env.NAVA_DB) return;
+  await env.NAVA_DB.prepare(`
+    UPDATE nava_logo_ai_daily_limits
+    SET used_count = CASE WHEN used_count > 0 THEN used_count - 1 ELSE 0 END,
+        updated_at = ?
+    WHERE day = ?
+  `).bind(Math.floor(Date.now() / 1000), day).run();
+}
+
 export async function handleLogoRoute({ request, env, origin, corsOrigin }) {
   if (origin !== "https://honrrpower-a11y.github.io") {
     return fail("مبدأ درخواست مجاز نیست.", 403, corsOrigin);
@@ -110,6 +144,22 @@ export async function handleLogoRoute({ request, env, origin, corsOrigin }) {
   };
   if (!data.brandName) return fail("نام برند برای طراحی لازم است.", 400, corsOrigin);
 
+  // Reserve a small daily global budget so the logo studio stays comfortably
+  // inside Cloudflare's free Workers AI allocation. No paid fallback is used.
+  let dailySlot;
+  try {
+    dailySlot = await reserveFreeDailySlot(env);
+  } catch (error) {
+    console.error("[NAVA LOGO] Free daily limit unavailable:", String(error?.message || error));
+    return fail("بررسی سهمیه رایگان امروز ممکن نشد. کمی بعد دوباره تلاش کن.", 503, corsOrigin);
+  }
+  if (!dailySlot) {
+    return fail("سهمیه رایگان روزانه نوا برای ساخت لوگو تکمیل شده است. فردا دوباره تلاش کن؛ هیچ هزینه یا مسیر پولی فعال نمی‌شود.", 429, corsOrigin, {
+      code: "FREE_IMAGE_QUOTA_EXHAUSTED",
+      dailyLimit: FREE_LOGO_DAILY_LIMIT
+    });
+  }
+
   // Reuse the existing server-enforced logo trial and NAVI session validation.
   const quotaRequest = new Request(request.url, {
     method: "POST",
@@ -120,9 +170,13 @@ export async function handleLogoRoute({ request, env, origin, corsOrigin }) {
     })
   });
   const quotaResponse = await handleGuestTrial({ request: quotaRequest, env, origin, corsOrigin });
-  if (!quotaResponse.ok) return quotaResponse;
+  if (!quotaResponse.ok) {
+    await releaseFreeDailySlot(env, dailySlot.day);
+    return quotaResponse;
+  }
   let quota = {};
   try { quota = await quotaResponse.json(); } catch {}
+
 
   const prompts = DIRECTIONS.map(direction => buildPrompt(data, direction));
   try {
@@ -135,6 +189,7 @@ export async function handleLogoRoute({ request, env, origin, corsOrigin }) {
       success: true,
       brandName: data.brandName,
       remaining: quota.remaining ?? null,
+      freeDailyRemaining: Math.max(0, FREE_LOGO_DAILY_LIMIT - dailySlot.used),
       images: images.map((image, index) => ({
         url: image.dataUri,
         width: image.width,
@@ -143,6 +198,7 @@ export async function handleLogoRoute({ request, env, origin, corsOrigin }) {
       }))
     }, 200, corsOrigin);
   } catch (error) {
+    await releaseFreeDailySlot(env, dailySlot.day).catch(() => {});
     console.error("[NAVA LOGO] Image generation failed:", String(error?.message || error).slice(0, 300));
     const message = String(error?.message || "");
     if (/limit|quota|exceed|daily|neurons|capacity/i.test(message)) {
