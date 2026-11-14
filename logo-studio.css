@@ -74,3 +74,8 @@ body.light .logo-control{background:#fff;color:#273143}
 .logo-ai-card .logo-concept-actions{padding-top:6px}
 .logo-ai-card .logo-concept-actions button{width:100%;min-height:43px}
 @media(max-width:760px){.logo-concept-results{grid-template-columns:1fr}.logo-concept-card:first-child{grid-column:auto}.logo-ai-preview{min-height:180px}.logo-ai-preview img{max-height:360px}}
+
+
+/* Distinct art-direction review cues */
+.logo-ai-rubric{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.logo-ai-rubric span{display:inline-flex;align-items:center;padding:5px 8px;border:1px solid var(--border);border-radius:999px;color:var(--muted);font-size:10px;line-height:1.4;background:rgba(201,162,74,.055)}
