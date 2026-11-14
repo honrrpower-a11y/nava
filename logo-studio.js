@@ -12,175 +12,150 @@
   };
   const results = $("logoConceptResults"), status = $("logoStudioStatus"), empty = $("logoStudioEmpty");
   const customColors = $("logoCustomColors");
-  const palettes = {
-    gold:{main:"#c99b48",dark:"#172238",light:"#f4e6c8",preview:"#172238",name:"طلایی و سرمه‌ای"},
-    blue:{main:"#7bb9ed",dark:"#17334e",light:"#e5f2ff",preview:"#edf4fa",name:"آبی و نقره‌ای"},
-    green:{main:"#78b69b",dark:"#193d32",light:"#e3f2e9",preview:"#edf4ef",name:"سبز و کرم"},
-    violet:{main:"#a98bd4",dark:"#332449",light:"#f0e8fa",preview:"#f2eef8",name:"بنفش و یاسی"},
-    mono:{main:"#252525",dark:"#111111",light:"#f4f4f4",preview:"#eeeeee",name:"تک‌رنگ"}
+  const paletteNames = {
+    gold:"طلایی و سرمه‌ای",blue:"آبی و نقره‌ای",green:"سبز و کرم",
+    violet:"بنفش و یاسی",mono:"تک‌رنگ",custom:"رنگ اختصاصی"
   };
-  const escapeXml = value => String(value || "").replace(/[&<>"']/g, ch => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&apos;"}[ch]));
-  const safeFileName = value => String(value || "nava-logo").trim().replace(/[^\p{L}\p{N}-]+/gu,"-").replace(/^-+|-+$/g,"") || "nava-logo";
-  const initials = value => {
-    const words=String(value||"").trim().split(/\s+/).filter(Boolean);
-    if(!words.length)return "ن";
-    return words.length>1?words.slice(0,2).map(word=>Array.from(word)[0]).join(""):Array.from(words[0]).slice(0,2).join("");
-  };
+  const safeFileName = value => String(value || "nava-logo").trim()
+    .replace(/[^\p{L}\p{N}-]+/gu,"-").replace(/^-+|-+$/g,"") || "nava-logo";
   function readData() {
-    const selected = palettes[fields.palette.value] || palettes.gold;
-    const palette = fields.palette.value === "custom"
-      ? {...selected,main:fields.primaryColor.value,dark:fields.darkColor.value,preview:"#f2f1ed",name:"رنگ اختصاصی"}
-      : selected;
+    const paletteKey=fields.palette.value;
     return {
-      name:fields.name.value.trim(), slogan:fields.slogan.value.trim(),
+      brandName:fields.name.value.trim(), slogan:fields.slogan.value.trim(),
       industry:fields.industry.value.trim(), audience:fields.audience.value.trim(),
-      symbolIdea:fields.symbolIdea.value.trim(), personality:fields.personality.value,
-      typography:fields.typography.value, format:fields.format.value, palette
+      symbolIdea:fields.symbolIdea.value.trim(),
+      personality:fields.personality.selectedOptions[0]?.textContent.trim()||"",
+      typography:fields.typography.selectedOptions[0]?.textContent.trim()||"",
+      format:paletteKey?fields.format.value:"combination",
+      formatLabel:fields.format.selectedOptions[0]?.textContent.trim()||"",
+      palette:paletteNames[paletteKey]||paletteKey,
+      primaryColor:fields.primaryColor.value,darkColor:fields.darkColor.value
     };
   }
-  function textStyle(data, size, fill, weight) {
-    const family = data.typography === "elegant"
-      ? 'Georgia, Times New Roman, Tahoma, serif'
-      : 'Vazirmatn, IRANSans, Tahoma, Arial, sans-serif';
-    return 'font-family="'+family+'" font-size="'+size+'" font-weight="'+weight+'" fill="'+fill+'" direction="rtl" unicode-bidi="plaintext"';
+  function addTextLockup(card,data) {
+    const lockup=document.createElement("div");
+    lockup.className="logo-ai-lockup";
+    lockup.style.setProperty("--logo-primary",data.primaryColor||"#c99b48");
+    lockup.style.setProperty("--logo-dark",data.darkColor||"#172238");
+    const name=document.createElement("strong");name.textContent=data.brandName;
+    lockup.appendChild(name);
+    if(data.slogan){const slogan=document.createElement("span");slogan.textContent=data.slogan;lockup.appendChild(slogan);}
+    card.appendChild(lockup);
   }
-  function mark(data, variant) {
-    const p=data.palette, letter=escapeXml(initials(data.name));
-    const stroke=data.personality==="elegant"?7:data.personality==="bold"?15:10;
-    if (data.format === "monogram") {
-      if (variant===0) return '<circle cx="450" cy="185" r="112" fill="none" stroke="'+p.main+'" stroke-width="'+stroke+'"/><text x="450" y="218" text-anchor="middle" '+textStyle(data,94,p.dark,700)+'>'+letter+'</text>';
-      if (variant===1) return '<path d="M450 75 L555 185 L450 295 L345 185 Z" fill="'+p.dark+'"/><path d="M450 93 L538 185 L450 277 L362 185 Z" fill="none" stroke="'+p.main+'" stroke-width="9"/><text x="450" y="216" text-anchor="middle" '+textStyle(data,76,p.light,700)+'>'+letter+'</text>';
-      return '<text x="450" y="220" text-anchor="middle" '+textStyle(data,142,p.main,700)+'>'+letter+'</text><path d="M320 255 H580" stroke="'+p.dark+'" stroke-width="5" stroke-linecap="round"/>';
+  async function downloadPng(url,data,index) {
+    status.textContent="در حال آماده‌سازی فایل PNG...";
+    try {
+      const response=await fetch(url,{mode:"cors",credentials:"omit"});
+      if(!response.ok)throw new Error("image fetch failed");
+      const blob=await response.blob();
+      const objectUrl=URL.createObjectURL(blob);
+      const image=new Image();
+      image.onload=()=>{
+        const canvas=document.createElement("canvas");
+        canvas.width=1200;canvas.height=1400;
+        const ctx=canvas.getContext("2d");
+        ctx.fillStyle="#ffffff";ctx.fillRect(0,0,canvas.width,canvas.height);
+        const size=1080;ctx.drawImage(image,60,20,size,size);
+        ctx.textAlign="center";ctx.textBaseline="middle";
+        ctx.direction=/[\u0600-\u06FF]/.test(data.brandName)?"rtl":"ltr";
+        ctx.fillStyle=data.darkColor||"#172238";
+        ctx.font="700 82px Tahoma, Arial, sans-serif";
+        ctx.fillText(data.brandName,600,1190,1060);
+        if(data.slogan){
+          ctx.fillStyle="#687386";ctx.font="400 34px Tahoma, Arial, sans-serif";
+          ctx.fillText(data.slogan,600,1280,1040);
+        }
+        canvas.toBlob(output=>{
+          URL.revokeObjectURL(objectUrl);
+          if(!output){status.textContent="ساخت PNG ناموفق بود.";return;}
+          const outputUrl=URL.createObjectURL(output),link=document.createElement("a");
+          link.href=outputUrl;link.download=safeFileName(data.brandName)+"-logo-concept-"+(index+1)+".png";
+          document.body.appendChild(link);link.click();link.remove();
+          setTimeout(()=>URL.revokeObjectURL(outputUrl),1500);
+          status.textContent="فایل PNG آماده شد. این خروجی تصویری است، نه فایل برداری SVG.";
+        },"image/png");
+      };
+      image.onerror=()=>{URL.revokeObjectURL(objectUrl);status.textContent="تصویر دریافت شد اما آماده‌سازی فایل دانلود ممکن نشد.";};
+      image.src=objectUrl;
+    } catch(error) {
+      status.textContent="مرورگر اجازه دریافت مستقیم فایل را نداد؛ تصویر را باز کن و از منوی مرورگر ذخیره کن.";
+      window.open(url,"_blank","noopener");
     }
-    if (variant===0) return '<circle cx="450" cy="178" r="112" fill="none" stroke="'+p.main+'" stroke-width="'+stroke+'"/><circle cx="450" cy="178" r="91" fill="none" stroke="'+p.main+'" stroke-width="2" opacity=".55"/><path d="M450 92 L470 155 L536 178 L470 201 L450 264 L430 201 L364 178 L430 155 Z" fill="'+p.main+'"/><circle cx="450" cy="178" r="14" fill="'+p.dark+'"/>';
-    if (variant===1) return '<path d="M450 65 L558 175 L450 285 L342 175 Z" fill="'+p.dark+'"/><path d="M450 91 L532 175 L450 259 L368 175 Z" fill="none" stroke="'+p.main+'" stroke-width="9"/><path d="M450 120 V230 M395 175 H505" stroke="'+p.main+'" stroke-width="12" stroke-linecap="round"/>';
-    return '<path d="M350 238 C335 160 389 91 458 88 C524 86 568 140 550 205 C532 270 454 298 389 262" fill="none" stroke="'+p.main+'" stroke-width="17" stroke-linecap="round"/><path d="M405 221 L450 132 L495 221" fill="none" stroke="'+p.dark+'" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/><circle cx="450" cy="221" r="8" fill="'+p.main+'"/>';
   }
-  function createSvg(data, variant) {
-    const p=data.palette, name=escapeXml(data.name), slogan=escapeXml(data.slogan);
-    const markUp=mark(data,variant);
-    let content="";
-    if (data.format === "wordmark") {
-      if (variant===0) {
-        content='<circle cx="450" cy="145" r="7" fill="'+p.main+'"/><text x="450" y="255" text-anchor="middle" '+textStyle(data,112,p.dark,700)+'>'+name+'</text><path d="M290 300 H610" stroke="'+p.main+'" stroke-width="7" stroke-linecap="round"/>';
-      } else if (variant===1) {
-        content='<text x="450" y="235" text-anchor="middle" '+textStyle(data,88,p.dark,700)+'>'+name+'</text><path d="M270 270 Q450 315 630 270" fill="none" stroke="'+p.main+'" stroke-width="8" stroke-linecap="round"/>';
-      } else {
-        content='<path d="M300 160 H600" stroke="'+p.main+'" stroke-width="2"/><text x="450" y="245" text-anchor="middle" '+textStyle(data,104,p.dark,700)+'>'+name+'</text><path d="M350 285 H550" stroke="'+p.main+'" stroke-width="5" stroke-linecap="round"/>';
-      }
-      if(slogan)content+='<text x="450" y="365" text-anchor="middle" '+textStyle(data,24,"#687386",400)+'>'+slogan+'</text>';
-      return '<svg xmlns="http://www.w3.org/2000/svg" width="900" height="560" viewBox="0 0 900 560" role="img" aria-label="لوگوتایپ '+name+'">'+content+'</svg>';
-    }
-    if (data.format === "monogram") {
-      if (variant===0) {
-        content='<g>'+markUp+'</g><text x="450" y="390" text-anchor="middle" '+textStyle(data,50,p.dark,700)+'>'+name+'</text>';
-      } else if (variant===1) {
-        content='<g transform="translate(-285 0)">'+markUp+'</g><text x="650" y="190" text-anchor="end" '+textStyle(data,58,p.dark,700)+'>'+name+'</text><path d="M620 230 H300" stroke="'+p.main+'" stroke-width="5" stroke-linecap="round"/>';
-      } else {
-        content='<g transform="translate(0 -28)">'+markUp+'</g><text x="450" y="390" text-anchor="middle" '+textStyle(data,28,p.main,700)+'>'+name+'</text>';
-      }
-      if(slogan)content+='<text x="450" y="455" text-anchor="middle" '+textStyle(data,22,"#687386",400)+'>'+slogan+'</text>';
-      return '<svg xmlns="http://www.w3.org/2000/svg" width="900" height="560" viewBox="0 0 900 560" role="img" aria-label="مونوگرام '+name+'">'+content+'</svg>';
-    }
-    if (variant===0) {
-      content='<g>'+markUp+'</g><path d="M300 330 H600" stroke="'+p.main+'" stroke-width="2" opacity=".7"/><text x="450" y="400" text-anchor="middle" '+textStyle(data,58,p.dark,700)+'>'+name+'</text>';
-      if(slogan)content+='<text x="450" y="450" text-anchor="middle" '+textStyle(data,23,"#687386",400)+'>'+slogan+'</text>';
-    } else if (variant===1) {
-      content='<g transform="translate(-285 0)">'+markUp+'</g><text x="650" y="190" text-anchor="end" '+textStyle(data,60,p.dark,700)+'>'+name+'</text>';
-      content+='<path d="M620 230 H300" stroke="'+p.main+'" stroke-width="5" stroke-linecap="round"/>';
-      if(slogan)content+='<text x="650" y="280" text-anchor="end" '+textStyle(data,22,"#687386",400)+'>'+slogan+'</text>';
-    } else {
-      content='<text x="450" y="245" text-anchor="middle" '+textStyle(data,112,p.dark,700)+'>'+name+'</text><path d="M245 285 Q450 325 655 285" fill="none" stroke="'+p.main+'" stroke-width="9" stroke-linecap="round"/>';
-      if(slogan)content+='<text x="450" y="365" text-anchor="middle" '+textStyle(data,25,"#687386",400)+'>'+slogan+'</text>';
-      content+='<circle cx="450" cy="150" r="8" fill="'+p.main+'"/>';
-    }
-    return '<svg xmlns="http://www.w3.org/2000/svg" width="900" height="560" viewBox="0 0 900 560" role="img" aria-label="کانسپت لوگوی '+name+'">'+content+'</svg>';
-  }
-  function downloadSvg(svg,name,index) {
-    const blob=new Blob([svg],{type:"image/svg+xml;charset=utf-8"}),url=URL.createObjectURL(blob),link=document.createElement("a");
-    link.href=url;link.download=safeFileName(name)+"-concept-"+(index+1)+".svg";link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
-  }
-  function downloadPng(svg,name,index) {
-    const blob=new Blob([svg],{type:"image/svg+xml;charset=utf-8"}),url=URL.createObjectURL(blob),img=new Image();
-    img.onload=()=>{
-      const canvas=document.createElement("canvas");canvas.width=1800;canvas.height=1120;
-      const ctx=canvas.getContext("2d");ctx.clearRect(0,0,canvas.width,canvas.height);ctx.drawImage(img,0,0,canvas.width,canvas.height);URL.revokeObjectURL(url);
-      canvas.toBlob(png=>{
-        if(!png){status.textContent="ساخت فایل PNG انجام نشد؛ خروجی SVG همچنان در دسترس است.";return;}
-        const pngUrl=URL.createObjectURL(png),link=document.createElement("a");link.href=pngUrl;link.download=safeFileName(name)+"-concept-"+(index+1)+".png";link.click();setTimeout(()=>URL.revokeObjectURL(pngUrl),1000);
-      },"image/png");
-    };
-    img.onerror=()=>{URL.revokeObjectURL(url);status.textContent="مرورگر نتوانست پیش‌نمایش را به PNG تبدیل کند.";};
-    img.src=url;
-  }
-  function buildCard(data,index,title,description) {
-    const card=document.createElement("article");card.className="logo-concept-card";
-    const svg=createSvg(data,index);
-    const preview=document.createElement("div");preview.className="logo-concept-preview";preview.style.background=data.palette.preview;preview.innerHTML=svg;
+  function buildCard(image,index,data) {
+    const card=document.createElement("article");card.className="logo-concept-card logo-ai-card";
+    const preview=document.createElement("div");preview.className="logo-concept-preview logo-ai-preview";
+    const img=document.createElement("img");img.src=image.url;img.alt="کانسپت "+image.concept+" برای برند "+data.brandName;
+    img.loading="lazy";img.decoding="async";img.referrerPolicy="no-referrer";
+    preview.appendChild(img);card.appendChild(preview);
+    addTextLockup(card,data);
     const copy=document.createElement("div");copy.className="logo-concept-copy";
-    const head=document.createElement("div");head.innerHTML='<span class="logo-concept-kicker">CONCEPT 0'+(index+1)+'</span><h3>'+title+'</h3>';
-    const desc=document.createElement("p");desc.textContent=description;
-    const meta=document.createElement("span");meta.className="logo-concept-palette";meta.textContent=data.palette.name+" · "+(data.symbolIdea||"مفهوم آزاد");
-    copy.append(head,desc,meta);
+    const title=document.createElement("h3");title.textContent=image.concept||("کانسپت "+(index+1));
+    const desc=document.createElement("p");desc.textContent="طرح تصویری تولیدشده بر اساس بریف برند؛ نام و شعار به‌صورت جداگانه و خوانا اضافه شده‌اند.";
+    copy.append(title,desc);card.appendChild(copy);
     const actions=document.createElement("div");actions.className="logo-concept-actions";
-    const svgButton=document.createElement("button");svgButton.type="button";svgButton.className="btn-secondary";svgButton.textContent="دریافت SVG";svgButton.addEventListener("click",()=>downloadSvg(svg,data.name,index));
-    const pngButton=document.createElement("button");pngButton.type="button";pngButton.className="btn-primary";pngButton.textContent="دریافت PNG";pngButton.addEventListener("click",()=>downloadPng(svg,data.name,index));
-    actions.append(svgButton,pngButton);card.append(preview,copy,actions);return card;
+    const button=document.createElement("button");button.type="button";button.className="btn-primary";
+    button.textContent="دریافت لوگو با نام برند";
+    button.addEventListener("click",()=>downloadPng(image.url,data,index));
+    actions.appendChild(button);card.appendChild(actions);
+    return card;
   }
   fields.palette.addEventListener("change",()=>{customColors.hidden=fields.palette.value!=="custom";});
   form.addEventListener("reset",()=>setTimeout(()=>{customColors.hidden=fields.palette.value!=="custom";},0));
   form.addEventListener("submit",async event=>{
     event.preventDefault();
     const data=readData();
-    if(!data.name){status.textContent="برای شروع، نام برند را وارد کن.";fields.name.focus();return;}
-    status.textContent="در حال بررسی سهمیه و آماده‌سازی کانسپت‌ها...";
-    let trialData;
-    try {
-      const token=sessionStorage.getItem("nava_navi_session")||"",headers={"Content-Type":"application/json"};
-      if(token)headers.Authorization="Bearer "+token;
-      let visitorId="";
-      if(!token){
-        visitorId=localStorage.getItem("nava_guest_trial_id")||"";
-        if(!/^[a-f0-9-]{32,40}$/i.test(visitorId)){
-          visitorId=typeof crypto.randomUUID==="function"?crypto.randomUUID():Array.from(crypto.getRandomValues(new Uint8Array(16)),byte=>byte.toString(16).padStart(2,"0")).join("");
-          localStorage.setItem("nava_guest_trial_id",visitorId);
-        }
+    if(!data.brandName){status.textContent="نام برند را وارد کن.";fields.name.focus();return;}
+    const token=sessionStorage.getItem("nava_navi_session")||"";
+    let visitorId="";
+    if(!token){
+      visitorId=localStorage.getItem("nava_guest_trial_id")||"";
+      if(!/^[a-f0-9-]{32,40}$/i.test(visitorId)){
+        visitorId=typeof crypto.randomUUID==="function"?crypto.randomUUID():
+          Array.from(crypto.getRandomValues(new Uint8Array(16)),byte=>byte.toString(16).padStart(2,"0")).join("");
+        localStorage.setItem("nava_guest_trial_id",visitorId);
       }
-      const response=await fetch("https://nava-music-api.honrrpower.workers.dev/navi-guest-trial",{method:"POST",headers,body:JSON.stringify({studio:"logo",visitorId}),cache:"no-store"});
-      trialData=await response.json();
-      if(!response.ok||!trialData.success){
-        status.textContent=trialData.error||"برای ادامه، ابتدا وارد حساب نوا شو.";
+    }
+    const headers={"Content-Type":"application/json"};
+    if(token)headers.Authorization="Bearer "+token;
+    const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),125000);
+    const submit=form.querySelector('button[type="submit"]');
+    submit.disabled=true;submit.textContent="در حال طراحی سه کانسپت...";
+    status.textContent="موتور طراحی در حال ساخت سه مسیر بصری مستقل است. این مرحله ممکن است کمی زمان ببرد.";
+    try {
+      const response=await fetch("https://nava-music-api.honrrpower.workers.dev/logo/generate",{
+        method:"POST",headers,cache:"no-store",signal:controller.signal,
+        body:JSON.stringify({...data,visitorId})
+      });
+      const result=await response.json();
+      if(!response.ok||!result.success){
+        status.textContent=result.error||"ساخت لوگو انجام نشد.";
         if((response.status===401||response.status===429)&&typeof window.openNaviAssistant==="function"){
-          window.openNaviAssistant({service:"طراحی لوگو",context:{brandName:data.name,slogan:data.slogan,industry:data.industry,audience:data.audience,symbolIdea:data.symbolIdea,personality:data.personality,typography:data.typography,format:data.format,palette:data.palette.name}});
+          window.openNaviAssistant({service:"طراحی لوگو",context:data});
         }
         return;
       }
+      results.replaceChildren();
+      result.images.forEach((image,index)=>results.appendChild(buildCard(image,index,data)));
+      empty.hidden=true;
+      status.textContent="سه کانسپت تصویری آماده شد. هر طرح را بررسی کن و نسخه دلخواه را دریافت کن.";
+      results.scrollIntoView({behavior:"smooth",block:"start"});
     } catch(error) {
-      status.textContent="فعلاً امکان بررسی سهمیه وجود ندارد؛ برای جلوگیری از ثبت نادرست سهمیه، ساخت طرح انجام نشد. کمی بعد دوباره تلاش کن.";
-      return;
+      status.textContent=error.name==="AbortError"
+        ?"زمان ساخت طولانی شد. وضعیت سرویس را بررسی کن و دوباره تلاش کن."
+        :"ارتباط با موتور طراحی برقرار نشد. کمی بعد دوباره تلاش کن.";
+    } finally {
+      clearTimeout(timer);submit.disabled=false;submit.textContent="ساخت ۳ کانسپت با موتور تصویر";
     }
-    results.replaceChildren();
-    const concepts=[
-      ["نشان امضایی","نشان مستقل و متقارن؛ مناسب آیکن، مهر و تصویر پروفایل."],
-      ["ترکیب افقی","نماد و نام برند در یک ردیف؛ مناسب سربرگ، وب‌سایت و امضا."],
-      ["لوگوتایپ","تمرکز بر نام برند و ریتم نوشتار؛ مناسب هویت نوشتاری." ]
-    ];
-    concepts.forEach((item,index)=>results.appendChild(buildCard(data,index,item[0],item[1])));
-    empty.hidden=true;
-    status.textContent=trialData.remaining===null||trialData.remaining===undefined
-      ?"سه کانسپت آماده شد. نسخه‌ها را مقایسه کن؛ پیش از استفاده تجاری، تناسب و یکتایی طرح را بررسی کن."
-      :"سه کانسپت آماده شد. "+trialData.remaining+" فرصت آزمایشی دیگر داری.";
-    results.scrollIntoView({behavior:"smooth",block:"start"});
   });
   $("logoBriefToNavi")?.addEventListener("click",()=>{
     const data=readData();
     const context={
-      brandName:data.name,slogan:data.slogan,industry:data.industry,audience:data.audience,
-      symbolIdea:data.symbolIdea,personality:fields.personality.selectedOptions[0].textContent,
-      typography:fields.typography.selectedOptions[0].textContent,
-      format:fields.format.selectedOptions[0].textContent,palette:data.palette.name
+      brandName:data.brandName,slogan:data.slogan,industry:data.industry,audience:data.audience,
+      symbolIdea:data.symbolIdea,personality:data.personality,typography:data.typography,
+      format:data.formatLabel,palette:data.palette,primaryColor:data.primaryColor,darkColor:data.darkColor
     };
-    const message="بریف طراحی لوگوی من را مثل یک مدیر هنری بررسی کن. سه مسیر بصری متمایز و قابل اجرا پیشنهاد بده؛ برای هر مسیر ایده نماد، منطق تایپوگرافی فارسی، ترکیب‌بندی، کاربردپذیری در اندازه کوچک و نقاط قوت/ضعف را مشخص کن. اگر اطلاعات مهمی کم است، پیش از جمع‌بندی سؤال بپرس.";
+    const message="بریف طراحی لوگوی من را مثل یک مدیر هنری حرفه‌ای بررسی کن. سه مسیر بصری متمایز پیشنهاد بده؛ برای هر مسیر ایده نماد، منطق تایپوگرافی فارسی، ترکیب‌بندی، کاربردپذیری در اندازه کوچک و نقاط قوت و ضعف را توضیح بده. از کلیشه‌های رایج و نمادهای آماده دوری کن.";
     if(typeof window.openNaviAssistant==="function"){window.openNaviAssistant({service:"طراحی لوگو",context,message});return;}
     const composer=$("userRequest"),selector=$("serviceSelect");
     if(composer)composer.value=message+"\n\n"+Object.entries(context).map(([key,value])=>key+": "+value).join("\n");
