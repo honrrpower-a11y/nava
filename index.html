@@ -316,7 +316,7 @@
         </form>
         <aside class="studio-output-card">
           <span class="studio-step">فضای پروژه</span><h2>مراحل انجام کار</h2>
-          <ol><li>ثبت بریف و هدف پروژه</li><li>بررسی نیازها با NAVI</li><li>تدوین پیش‌نویس و اصلاح آن</li><li>آماده‌سازی خروجی پس از فعال‌شدن ابزار تخصصی</li></ol>
+          <ol><li>انتخاب نوع سند یا کار اداری</li><li>بررسی اطلاعات و تکمیل موارد ضروری با NAVI</li><li>تهیه پیش‌نویس و بازبینی متن</li><li>دریافت نسخه Word یا PDF از خروجی متنی</li></ol>
           <div class="studio-output-placeholder"><span aria-hidden="true">✦</span><strong>فضای خروجی پروژه</strong><p>نتیجه‌ها و فایل‌های این استودیو پس از تکمیل ابزار تخصصی در این قسمت نمایش داده می‌شوند.</p></div>
         </aside>
       </div>
@@ -325,16 +325,25 @@
   <section class="page nava-studio-page" id="officePage" data-studio-service="کارهای اداری و آفیس">
     <div class="studio-workspace">
       <div class="studio-workspace-head">
-        <div><span class="studio-kicker">NAVA WORKSPACE / STUDIO</span><h1>استودیوی کارهای اداری و آفیس</h1><p>برای تدوین نامه، گزارش، صورت‌جلسه، برنامه و اسناد کاری با کمک NAVI.</p></div>
+        <div><span class="studio-kicker">NAVA WORKSPACE / STUDIO</span><h1>استودیوی کارهای اداری و آفیس</h1><p>برای تهیه و ویرایش اسناد کاری، نامه‌ها، گزارش‌ها، صورت‌جلسه‌ها و برنامه‌های اجرایی با کمک NAVI.</p></div>
         <button class="btn-secondary" type="button" onclick="showPage('homePage')">بازگشت به استودیوها</button>
       </div>
       <div class="studio-workspace-grid">
         <form class="studio-brief-card" onsubmit="event.preventDefault(); chooseService('کارهای اداری و آفیس');">
           <span class="studio-step">شروع کار</span><h2>بریف پروژه</h2>
           <p>اطلاعات اولیه را وارد کن تا NAVI بتواند درخواست را دقیق‌تر دنبال کند.</p>
-          <label for="studioTask-office">نوع سند یا کار اداری</label>
+          <label for="studioTask-office">چه کاری می‌خواهی انجام بدهی؟</label>
           <select id="studioTask-office" class="studio-control">
-            <option>پیشنهاد مناسب را NAVI انتخاب کند</option><option>ایده‌پردازی و برنامه‌ریزی</option><option>تولید پیش‌نویس</option><option>بازبینی و بهبود</option><option>راهنمای مرحله‌به‌مرحله</option>
+            <option>پیشنهاد مناسب را NAVI انتخاب کند</option>
+            <option>تنظیم نامه رسمی و اداری</option>
+            <option>تهیه گزارش کاری یا مدیریتی</option>
+            <option>تنظیم صورت‌جلسه و ثبت مصوبات</option>
+            <option>ساخت یا بازنویسی رزومه</option>
+            <option>تهیه درخواست یا فرم اداری</option>
+            <option>طراحی برنامه اجرایی و زمان‌بندی</option>
+            <option>نوشتن دستورالعمل و روش اجرایی</option>
+            <option>بازبینی و ویرایش سند موجود</option>
+            <option>راهنمای انجام یک کار در Word یا Excel یا PowerPoint</option>
           </select>
           <label for="studioAudience-office">مخاطب یا دریافت‌کننده سند</label>
           <input id="studioAudience-office" class="studio-control" type="text" maxlength="180" placeholder="مخاطب یا استفاده‌کننده را مشخص کن">
