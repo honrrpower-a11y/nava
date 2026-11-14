@@ -88,3 +88,23 @@ body.light .logo-control{background:#fff;color:#273143}
 .logo-ai-feedback strong{flex-basis:100%;font-size:11px;color:var(--text)}
 .logo-ai-feedback button{flex:1;min-height:36px;font-size:11px}
 .logo-ai-feedback button[aria-pressed="true"]{border-color:var(--gold);color:var(--gold);background:rgba(201,162,74,.1)}
+
+
+/* NAVI-directed logo strategy summary */
+.logo-ai-strategy-summary {
+  margin: 0 0 1.25rem;
+  padding: 1rem 1.1rem;
+  border: 1px solid rgba(201,162,74,.34);
+  border-radius: 16px;
+  background: rgba(16,29,53,.42);
+  color: inherit;
+}
+.logo-ai-strategy-summary h3 {
+  margin: 0 0 .65rem;
+  color: var(--nava-gold, #c9a24a);
+  font-size: 1rem;
+}
+.logo-ai-strategy-summary p {
+  margin: .45rem 0 0;
+  line-height: 1.9;
+}
