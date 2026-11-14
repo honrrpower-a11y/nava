@@ -25,3 +25,11 @@ test("Office upload accepts common image formats and keeps file processing clien
   assert.match(html, /فایل اصلی فقط روی دستگاهت پردازش می‌شود/);
   assert.match(office, /متن استخراج‌شده از فایل/);
 });
+
+
+test("NAVI response has a dedicated mobile-safe text selection control", () => {
+  assert.match(html, /id="selectNaviResponse"[^>]*aria-controls="requestResponse"/);
+  const app = readFileSync(new URL("../app.js", import.meta.url), "utf8");
+  assert.match(app, /requestResponse\.setSelectionRange\(0, requestResponse\.value\.length\)/);
+  assert.match(app, /selectNaviResponseButton\?\.addEventListener\("click"/);
+});
