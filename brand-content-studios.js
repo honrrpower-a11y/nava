@@ -1,7 +1,7 @@
 
 /* NAVA BRAND + CONTENT STUDIOS
-   Local brief builders. No external API calls; the authenticated NAVI assistant
-   receives the completed brief only after the user presses the handoff button.
+   Studio requests use the authenticated NAVI endpoint and render the answer
+   inside the current studio workspace. The floating chat remains user-controlled.
 */
 (() => {
   "use strict";
@@ -31,6 +31,70 @@
     node.style.color = isError ? "#e28b82" : "";
   }
 
+  async function requestStudioOutput(service, context, message, target, button) {
+    const token = typeof getNaviToken === "function" ? getNaviToken() : null;
+    if (!token) {
+      target.textContent = "برای استفاده از خروجی مستقیم، ابتدا وارد حساب NAVI شو.";
+      target.dataset.state = "error";
+      return;
+    }
+    const projectId = localStorage.getItem("nava_navi_active_project") || "project-general";
+    const threadId = localStorage.getItem("nava_navi_active_thread") || "owner-main";
+    const originalLabel = button?.textContent || "";
+    if (button) { button.disabled = true; button.textContent = "در حال تولید خروجی..."; }
+    target.textContent = "درخواست به NAVI ارسال شد؛ پاسخ در همین فضای پروژه نمایش داده می‌شود...";
+    target.dataset.state = "loading";
+    try {
+      const response = await fetch("https://nava-music-api.honrrpower.workers.dev/navi-chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
+        body: JSON.stringify({
+          message,
+          page: window.location.pathname + "#studio-" + service,
+          threadId,
+          saveToMemory: false
+        })
+      });
+      const data = await response.json();
+      if (response.status === 401 || response.status === 403) {
+        target.textContent = "نشست NAVI معتبر نیست یا پایان یافته است. دوباره وارد حساب شو.";
+        target.dataset.state = "error";
+        return;
+      }
+      if (!response.ok || !data.success || !String(data.reply || "").trim()) {
+        throw new Error(data.error || data.diagnostic || "دریافت خروجی از NAVI ناموفق بود.");
+      }
+      target.textContent = String(data.reply).trim();
+      target.dataset.state = "success";
+    } catch (error) {
+      target.textContent = error.message || "ارتباط با NAVI برقرار نشد. دوباره تلاش کن.";
+      target.dataset.state = "error";
+    } finally {
+      if (button) { button.disabled = false; button.textContent = originalLabel; }
+    }
+  }
+
+  function studioOutput(page, service) {
+    const aside = page.querySelector(".studio-output-card");
+    if (!aside) return null;
+    let output = aside.querySelector("[data-studio-live-output]");
+    if (!output) {
+      const heading = document.createElement("div");
+      heading.className = "studio-live-output-heading";
+      heading.textContent = "خروجی NAVI";
+      output = document.createElement("div");
+      output.dataset.studioLiveOutput = service;
+      output.className = "studio-live-output";
+      output.setAttribute("role", "status");
+      output.setAttribute("aria-live", "polite");
+      output.textContent = "پس از ارسال بریف، نتیجه در همین قسمت نمایش داده می‌شود.";
+      const placeholder = aside.querySelector(".studio-output-placeholder");
+      if (placeholder) placeholder.replaceWith(heading, output);
+      else aside.append(heading, output);
+    }
+    return output;
+  }
+
   $("brandStrategyForm")?.addEventListener("submit", event => {
     event.preventDefault();
     const context = {
@@ -54,8 +118,11 @@
       "هیچ داده یا مزیت رقابتی را بدون شواهد من نساز.",
       "اطلاعات بریف:\n" + Object.entries(context).map(([k,v]) => k + ": " + (v || "مشخص نشده")).join("\n")
     ].join("\n\n");
-    status("brandStudioStatus", "بریف آماده شد؛ پنجره ناوی باز می‌شود تا بررسی و تدوین استراتژی را ادامه بدهی.");
-    handoff("برندینگ", context, message);
+    status("brandStudioStatus", "درخواست ارسال شد؛ خروجی در فضای همین استودیو نمایش داده می‌شود.");
+    const output = document.querySelector("#brandPage .nava-strategy-layout");
+    let result = document.querySelector("#brandStudioOutput");
+    if (!result && output) { result = document.createElement("div"); result.id = "brandStudioOutput"; result.className = "studio-live-output"; output.append(result); }
+    if (result) requestStudioOutput("برندینگ", context, message, result, document.querySelector("#brandStrategyForm button[type='submit']"));
   });
 
   $("contentStudioForm")?.addEventListener("submit", event => {
@@ -82,8 +149,11 @@
       "اگر محتوای شبکه اجتماعی است، نسخه کپشن و هشتگ‌های مرتبط را هم ارائه بده؛ اگر مقاله است، تیترها و ساختار سئو را اضافه کن.",
       "بریف محتوا:\n" + Object.entries(context).map(([k,v]) => k + ": " + (v || "مشخص نشده")).join("\n")
     ].join("\n\n");
-    status("contentStudioStatus", "بریف آماده شد؛ ناوی برای تولید محتوا باز می‌شود.");
-    handoff("تولید محتوا", context, message);
+    status("contentStudioStatus", "درخواست ارسال شد؛ خروجی در فضای همین استودیو نمایش داده می‌شود.");
+    const output = document.querySelector("#contentPage .nava-strategy-layout");
+    let result = document.querySelector("#contentStudioOutput");
+    if (!result && output) { result = document.createElement("div"); result.id = "contentStudioOutput"; result.className = "studio-live-output"; output.append(result); }
+    if (result) requestStudioOutput("تولید محتوا", context, message, result, document.querySelector("#contentStudioForm button[type='submit']"));
   });
 
   $("improveStoryWithNavi")?.addEventListener("click", () => {
@@ -101,8 +171,16 @@
       "معنای اصلی را حفظ کن، متن را بی‌دلیل طولانی نکن و ادعای تأییدنشده اضافه نکن.",
       "متن اولیه:\n" + story
     ].join("\n\n");
-    status("storyMessage", "متن برای بازطراحی آماده شد؛ ناوی باز می‌شود.");
-    handoff("استوری‌ساز", context, message);
+    status("درخواست ارسال شد؛ نسخه پیشنهادی در پیش‌نمایش استوری نمایش داده می‌شود.");
+    const preview = $("previewText");
+    if (preview) { preview.textContent = "در حال دریافت نسخه بازطراحی‌شده..."; preview.classList.remove("empty"); }
+    const output = $("storyMessage");
+    requestStudioOutput("استوری‌ساز", context, message, output, $("improveStoryWithNavi"));
+    const observer = new MutationObserver(() => {
+      if (output?.dataset.state === "success" && preview) preview.textContent = output.textContent;
+      observer.disconnect();
+    });
+    if (output) observer.observe(output, { childList: true, characterData: true, subtree: true });
   });
 
   $("brandStudioReset")?.addEventListener("click", () => {
@@ -216,8 +294,10 @@
       note.setAttribute("role", "status");
       form.append(note);
     }
-    note.textContent = "بریف آماده شد؛ ناوی با دستورالعمل تخصصی این استودیو باز می‌شود.";
-    handoff(config.service, context, message);
+    note.textContent = "درخواست ارسال شد؛ خروجی در فضای همین پروژه نمایش داده می‌شود.";
+    const output = studioOutput(page, config.service);
+    const submitButton = form.querySelector('button[type="submit"]');
+    if (output) requestStudioOutput(config.service, context, message, output, submitButton);
   }, true);
 
 })();
