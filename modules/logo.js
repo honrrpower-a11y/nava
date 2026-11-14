@@ -6,18 +6,44 @@ function fail(message, status, corsOrigin, extra = {}) {
   return json({ success: false, error: message, ...extra }, status, corsOrigin);
 }
 
+// Three genuinely different art directions. Each direction changes the logo's visual
+// grammar, silhouette, composition and design logic—not merely its surface decoration.
 const DIRECTIONS = [
   {
-    title: "نشان مفهومی",
-    guidance: "Create a memorable abstract emblem based on the brand's core idea. Use a clever visual metaphor and a distinctive silhouette. Avoid obvious clip-art symbols."
+    id: "conceptual-symbol",
+    title: "نماد مفهومی",
+    shortDescription: "یک نماد مستقل و استعاری با سیلوئت منحصربه‌فرد؛ مناسب شناسایی سریع برند.",
+    guidance: [
+      "ART DIRECTION A — CONCEPTUAL SYMBOL.",
+      "Design a standalone pictorial symbol built around ONE intelligent visual metaphor derived from the brand brief.",
+      "Use an organic, fluid, sculptural or symbolic silhouette where appropriate; do NOT default to a generic geometric tech icon.",
+      "The mark should communicate an idea at a glance and remain recognizable as a small app icon.",
+      "Composition: one dominant central symbol, generous negative space, no enclosing badge unless the metaphor genuinely requires it."
+    ].join(" ")
   },
   {
-    title: "هندسه اختصاصی",
-    guidance: "Create a refined geometric brand mark with intentional negative space, balanced proportions, and a unique construction. It must feel custom-designed, not like a generic icon."
+    id: "custom-letterform",
+    title: "فرم اختصاصی حروف",
+    shortDescription: "ساختار نشانه بر پایه فرم حروف و فضای منفی؛ نه یک آیکون عمومی.",
+    guidance: [
+      "ART DIRECTION B — CUSTOM LETTERFORM / MONOGRAM.",
+      "Create a bespoke abstract letterform mark inspired by the brand name or its initials, using interlocking strokes, cut-outs and carefully controlled negative space.",
+      "The letterform must be custom constructed, not a typed font glyph and not a generic icon placed beside a letter.",
+      "If the brand name is non-Latin, use its visual rhythm and calligraphic structure as inspiration without attempting to render readable text.",
+      "Composition: compact, balanced, distinctive silhouette with a clear internal structure; avoid the pictorial metaphor approach of a standalone mascot."
+    ].join(" ")
   },
   {
-    title: "نشان مینیمال لوکس",
-    guidance: "Create a restrained premium identity mark with excellent optical balance, confident negative space, and a highly recognizable silhouette. Avoid decorative clutter."
+    id: "signature-emblem",
+    title: "نشان امضایی",
+    shortDescription: "یک نشان ساختاریافته و متمایز با قاب یا ترکیب‌بندی اختصاصی؛ مناسب هویت رسمی برند.",
+    guidance: [
+      "ART DIRECTION C — SIGNATURE EMBLEM.",
+      "Create a structured signature emblem with a deliberate outer boundary or architectural composition, such as a custom shield, seal, framed mark or modular crest.",
+      "Build the identity through the relationship between the outer container and a simple inner motif; the container itself must be custom and meaningful, never a stock badge.",
+      "Use a more formal, composed and institutional visual language than the other two directions.",
+      "Composition: clearly legible outer silhouette, disciplined internal hierarchy, strong balance; do not create a free-floating pictorial icon or monogram."
+    ].join(" ")
   }
 ];
 
@@ -39,20 +65,23 @@ function buildPrompt(data, direction) {
       : "Create a combination-logo emblem that can sit beside a separately typeset brand name.";
 
   return [
-    "You are an award-winning senior brand identity designer creating an original, production-minded logo symbol.",
+    "You are the lead brand identity art director. Treat the user brief as a design problem, not as a request for decorative image generation.",
     direction.guidance,
-    "Brand category: " + (industry || "not specified") + ".",
+    "BRAND STRATEGY INPUTS:",
+    "Brand name for context only (never render it as text): " + data.brandName + ".",
+    "Industry: " + (industry || "not specified") + ".",
     "Target audience: " + (audience || "broad professional audience") + ".",
-    "Brand personality: " + (personality || "modern and confident") + ".",
-    "Core concept: " + (symbol || "derive a distinctive visual metaphor from the brand category and personality") + ".",
-    "Requested color direction: " + (palette || "gold and deep navy") + ". Exact required colors: warm gold #C9A24A and deep midnight navy #101D35. User color values, when supplied, take priority: main color " + (primaryColor || "#C9A24A") + ", dark companion " + (darkColor || "#101D35") + ". The emblem itself must visibly contain both colors.",
-    "Typography direction for the later typeset wordmark: " + (typography || "clear, refined typography") + ".",
-    formatGuidance,
-    "OUTPUT: one single isolated logo mark, centered, front-facing, on a perfectly pure white background.",
-    "Make it look like a carefully art-directed professional vector identity: precise geometry, clean contours, balanced negative space, strong silhouette, restrained details, excellent small-size legibility.",
-    "COLOR REQUIREMENT — STRICT AND NON-NEGOTIABLE: the logo symbol itself MUST visibly use BOTH requested brand colors. For the gold-and-navy palette, use rich metallic-looking warm gold (#C9A24A) as a clearly visible primary/accent shape and deep midnight navy (#101D35) as the second major shape. Both colors must occupy substantial, clearly distinguishable areas of the emblem; do not render a navy-only, monochrome, black, gray, or all-gold logo. Gold must not be reduced to a tiny dot, hairline, or barely visible trim. Preserve crisp flat vector-like fills (not metallic gradients). White background.",
-    "ABSOLUTELY NO TEXT, NO LETTERS, NO WORDS, NO NUMBERS, NO SLOGAN, NO WATERMARK, NO MOCKUP, NO BUSINESS CARD, NO STATIONERY, NO PRESENTATION BOARD, NO MULTIPLE LOGOS, NO GRID.",
-    "The logo symbol must occupy a generous central area with clear margins. White background only."
+    "Personality: " + (personality || "modern and confident") + ".",
+    "Core idea / desired symbolism: " + (symbol || "derive a relevant visual idea from the industry and brand personality") + ".",
+    "Brand format preference: " + format + ". " + formatGuidance,
+    "COLOR SYSTEM — mandatory for this request: requested palette " + (palette || "gold and deep navy") + ". Required colors: warm gold #C9A24A and midnight navy #101D35. User-selected main color: " + (primaryColor || "#C9A24A") + "; companion color: " + (darkColor || "#101D35") + ". Both colors must be clearly visible as substantial, distinct parts of the mark itself.",
+    "Later wordmark typography direction (do not render text): " + (typography || "clear, refined typography") + ".",
+    "DIFFERENTIATION RULE: this concept must follow ONLY its assigned art direction. Do not blend it with the other directions. The three concepts in this set must have visibly different outer silhouettes, construction logic and composition—not just different small details.",
+    "DESIGN QUALITY: create a professional identity mark with intentional proportions, optical balance, meaningful negative space, crisp edges, strong contrast and recognizability at small sizes. Avoid stock icons, clip-art, generic AI motifs, random decoration and excessive detail.",
+    "OUTPUT: one isolated logo mark, centered, front-facing, on a perfectly pure white background. The mark should occupy about 65–75 percent of the canvas, with clean margins.",
+    "COLOR REQUIREMENT — STRICT: use BOTH warm gold (#C9A24A) and midnight navy (#101D35) in clearly distinguishable, substantial areas of the emblem. Gold must not be a tiny dot or hairline. No navy-only, monochrome, black/gray-only or all-gold result. Use crisp flat fills, not metallic gradients.",
+    "NO TEXT, NO LETTERS, NO WORDS, NO NUMBERS, NO SLOGAN, NO WATERMARK, NO MOCKUP, NO BUSINESS CARD, NO STATIONERY, NO PRESENTATION BOARD, NO MULTIPLE LOGOS, NO GRID.",
+    "Do not add shadows, 3D rendering, photorealism or background decoration. White background only."
   ].join("\n");
 }
 
