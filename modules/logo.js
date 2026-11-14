@@ -153,7 +153,7 @@ async function planBrandConcepts(data, apiKey) {
     if (!plan || !Array.isArray(plan.concepts) || plan.concepts.length !== 3) {
       throw new Error("NAVI strategy planner did not return three concepts.");
     }
-    const clean = value => safeText(value, 220);
+    const clean = value => safeText(value, 140);
     const concepts = plan.concepts.map((item, index) => ({
       ...DIRECTIONS[index],
       conceptTitle: clean(item?.title) || "مسیر طراحی " + (index + 1),
@@ -192,17 +192,17 @@ function buildPrompt(data, direction, strategy) {
     "Brand personality: " + (data.personality || "not specified") + ". Strategic visual essence: " + (strategy.brandCore || "") + ".",
     "Art direction: " + direction.title + " — " + direction.conceptTitle + ".",
     "Overall strategy: " + (strategy.strategy || "") + ".",
-    "Why this concept fits: " + direction.rationale + ".",
+    "Why it fits: " + direction.rationale + ".",
     "Draw this exact symbol idea: " + direction.conceptIdea + ".",
-    "Required outer silhouette: " + direction.silhouette + ".",
-    "Composition and negative space: " + direction.composition + ".",
-    "Avoid these specific mistakes: " + (direction.avoid || "generic stock icons, unrelated symbols") + ".",
+    "Silhouette: " + direction.silhouette + ".",
+    "Composition: " + direction.composition + ".",
+    "Avoid: " + (direction.avoid || "generic stock icons, unrelated symbols") + ".",
     "User's explicit symbol idea: " + (data.symbolIdea || "none supplied") + ". It is a key constraint, not permission to invent unrelated imagery.",
     "Logo format: " + format + ". " + formatGuidance,
     "Palette: " + paletteSpec.instruction,
     "Typography direction for separately typeset name: " + (data.typography || "clear Persian lettering") + ". Do not render any text.",
-    "Create ONE centered, isolated, flat vector-like logo mark. Strong memorable silhouette, deliberate geometry, optical balance, meaningful negative space, simple enough to recognize at 24px.",
-    "No stock icon, no circuit brain, no random abstract blob, no clip-art, no gradients, no 3D, no mockup, no stationery, no extra objects.",
+    "One centered flat logo mark; distinct silhouette, balanced geometry, meaningful negative space, legible at 24px.",
+    "No stock icons, random blobs, clip-art, gradients, 3D, mockups or extra objects.",
     "Pure white background. No letters, words, numbers, slogan or watermark."
   ];
   return lines.join("\n").slice(0, 1950);
