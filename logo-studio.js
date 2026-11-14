@@ -60,6 +60,28 @@
     const p=data.palette, name=escapeXml(data.name), slogan=escapeXml(data.slogan);
     const markUp=mark(data,variant);
     let content="";
+    if (data.format === "wordmark") {
+      if (variant===0) {
+        content='<circle cx="450" cy="145" r="7" fill="'+p.main+'"/><text x="450" y="255" text-anchor="middle" '+textStyle(data,112,p.dark,700)+'>'+name+'</text><path d="M290 300 H610" stroke="'+p.main+'" stroke-width="7" stroke-linecap="round"/>';
+      } else if (variant===1) {
+        content='<text x="450" y="235" text-anchor="middle" '+textStyle(data,88,p.dark,700)+'>'+name+'</text><path d="M270 270 Q450 315 630 270" fill="none" stroke="'+p.main+'" stroke-width="8" stroke-linecap="round"/>';
+      } else {
+        content='<path d="M300 160 H600" stroke="'+p.main+'" stroke-width="2"/><text x="450" y="245" text-anchor="middle" '+textStyle(data,104,p.dark,700)+'>'+name+'</text><path d="M350 285 H550" stroke="'+p.main+'" stroke-width="5" stroke-linecap="round"/>';
+      }
+      if(slogan)content+='<text x="450" y="365" text-anchor="middle" '+textStyle(data,24,"#687386",400)+'>'+slogan+'</text>';
+      return '<svg xmlns="http://www.w3.org/2000/svg" width="900" height="560" viewBox="0 0 900 560" role="img" aria-label="لوگوتایپ '+name+'">'+content+'</svg>';
+    }
+    if (data.format === "monogram") {
+      if (variant===0) {
+        content='<g>'+markUp+'</g><text x="450" y="390" text-anchor="middle" '+textStyle(data,50,p.dark,700)+'>'+name+'</text>';
+      } else if (variant===1) {
+        content='<g transform="translate(-285 0)">'+markUp+'</g><text x="650" y="190" text-anchor="end" '+textStyle(data,58,p.dark,700)+'>'+name+'</text><path d="M620 230 H300" stroke="'+p.main+'" stroke-width="5" stroke-linecap="round"/>';
+      } else {
+        content='<g transform="translate(0 -28)">'+markUp+'</g><text x="450" y="390" text-anchor="middle" '+textStyle(data,28,p.main,700)+'>'+name+'</text>';
+      }
+      if(slogan)content+='<text x="450" y="455" text-anchor="middle" '+textStyle(data,22,"#687386",400)+'>'+slogan+'</text>';
+      return '<svg xmlns="http://www.w3.org/2000/svg" width="900" height="560" viewBox="0 0 900 560" role="img" aria-label="مونوگرام '+name+'">'+content+'</svg>';
+    }
     if (variant===0) {
       content='<g>'+markUp+'</g><path d="M300 330 H600" stroke="'+p.main+'" stroke-width="2" opacity=".7"/><text x="450" y="400" text-anchor="middle" '+textStyle(data,58,p.dark,700)+'>'+name+'</text>';
       if(slogan)content+='<text x="450" y="450" text-anchor="middle" '+textStyle(data,23,"#687386",400)+'>'+slogan+'</text>';
@@ -106,6 +128,7 @@
     actions.append(svgButton,pngButton);card.append(preview,copy,actions);return card;
   }
   fields.palette.addEventListener("change",()=>{customColors.hidden=fields.palette.value!=="custom";});
+  form.addEventListener("reset",()=>setTimeout(()=>{customColors.hidden=fields.palette.value!=="custom";},0));
   form.addEventListener("submit",async event=>{
     event.preventDefault();
     const data=readData();
