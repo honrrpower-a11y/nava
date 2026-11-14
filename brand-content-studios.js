@@ -149,7 +149,7 @@
       "اگر محتوای شبکه اجتماعی است، نسخه کپشن و هشتگ‌های مرتبط را هم ارائه بده؛ اگر مقاله است، تیترها و ساختار سئو را اضافه کن.",
       "بریف محتوا:\n" + Object.entries(context).map(([k,v]) => k + ": " + (v || "مشخص نشده")).join("\n")
     ].join("\n\n");
-    status("درخواست ارسال شد؛ خروجی در فضای همین استودیو نمایش داده می‌شود.", "contentStudioStatus");
+    status("contentStudioStatus", "درخواست ارسال شد؛ خروجی در فضای همین استودیو نمایش داده می‌شود.");
     const output = document.querySelector("#contentPage .nava-strategy-layout");
     let result = document.querySelector("#contentStudioOutput");
     if (!result && output) { result = document.createElement("div"); result.id = "contentStudioOutput"; result.className = "studio-live-output"; output.append(result); }
