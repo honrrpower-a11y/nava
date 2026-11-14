@@ -21,3 +21,22 @@
 .studio-output-placeholder p{font-size:12px;line-height:2;margin:0;max-width:360px}
 @media(max-width:760px){.nava-studio-page{padding:20px 0 45px}.studio-workspace-head{flex-direction:column;padding:18px}.studio-workspace-head .btn-secondary{width:100%}.studio-workspace-grid{grid-template-columns:1fr}.studio-brief-card,.studio-output-card{padding:18px}.studio-brief-actions button{flex:1;min-width:130px}}
 body.light .studio-workspace-head,body.light .studio-brief-card,body.light .studio-output-card{background:rgba(255,253,248,.92);border-color:rgba(193,127,37,.2)}
+
+
+/* Composition and staff-writing workspace */
+.composition-intro{margin:0 0 20px;padding:17px 21px;border:1px solid rgba(229,184,94,.24);border-radius:16px;background:rgba(229,184,94,.055)}
+.composition-intro strong{display:block;color:var(--gold);font-size:14px;margin-bottom:5px}
+.composition-intro p{margin:0;color:var(--muted);font-size:13px;line-height:2}
+.composition-field-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 14px}
+.composition-score-card>p{margin:0;color:var(--muted);font-size:12px;line-height:2}
+.composition-staff-preview{position:relative;min-height:170px;margin:22px 0 16px;padding:28px 18px 22px 62px;border:1px solid var(--border);border-radius:14px;background:var(--bg);overflow:hidden;display:flex;align-items:center}
+.composition-staff-lines{width:100%;display:flex;flex-direction:column;gap:15px}
+.composition-staff-lines i{display:block;height:1px;background:var(--text);opacity:.7}
+.composition-clef{position:absolute;left:15px;top:50%;transform:translateY(-53%);font-family:serif;font-size:76px;line-height:1;color:var(--gold)}
+.composition-score-status{display:flex;gap:12px;align-items:flex-start;padding:14px;border-radius:12px;background:rgba(229,184,94,.07)}
+.composition-score-status>span{font-size:25px;color:var(--gold);line-height:1}
+.composition-score-status strong,.composition-next-steps>strong{color:var(--text);font-size:13px}
+.composition-score-status p{margin:5px 0 0;color:var(--muted);font-size:11px;line-height:1.9}
+.composition-next-steps{margin-top:22px}
+.composition-next-steps ol{margin:9px 0 0;padding-right:22px;color:var(--muted);font-size:12px;line-height:2.35}
+@media(max-width:760px){.composition-field-grid{grid-template-columns:1fr}.composition-staff-preview{min-height:145px}.composition-intro{padding:14px}}
