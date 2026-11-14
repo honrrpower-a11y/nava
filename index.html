@@ -117,7 +117,7 @@
           <button class="nava-orbit-button" type="button" onclick="showPage('musicPage')" aria-label="ورود به استودیوی تولید موسیقی"><span class="nava-orbit-icon" aria-hidden="true">♫</span><span class="nava-orbit-title">تولید موسیقی</span><span class="nava-orbit-caption">خلق صدا و تنظیم</span></button>
         </div>
         <div class="nava-orbit-item nava-orbit-item--composition">
-          <button class="nava-orbit-button" type="button" onclick="showPage('composePage')" aria-label="ورود به استودیوی آهنگ‌سازی و نت‌نویسی"><span class="nava-orbit-icon" aria-hidden="true">𝄞</span><span class="nava-orbit-title">آهنگ‌سازی</span><span class="nava-orbit-caption">نت‌نویسی و هارمونی</span></button>
+          <button class="nava-orbit-button" type="button" onclick="showPage('composePage')" aria-label="ورود به استودیوی آهنگ‌سازی و نت‌نویسی"><span class="nava-orbit-icon" aria-hidden="true">𝄞</span><span class="nava-orbit-title">آهنگ‌سازی و نت‌نویسی</span><span class="nava-orbit-caption">ساخت ملودی و نت روی حامل</span></button>
         </div>
         <div class="nava-orbit-item nava-orbit-item--story">
           <button class="nava-orbit-button" type="button" onclick="showPage('storyPage')" aria-label="ورود به استوری‌ساز"><span class="nava-orbit-icon" aria-hidden="true">▧</span><span class="nava-orbit-title">استوری‌ساز</span><span class="nava-orbit-caption">روایت تصویری</span></button>
@@ -347,30 +347,52 @@
     </div>
   </section>
   <section class="page nava-studio-page" id="composePage" data-studio-service="آهنگ‌سازی و نت‌نویسی">
-    <div class="studio-workspace">
+    <div class="studio-workspace composition-workspace">
       <div class="studio-workspace-head">
-        <div><span class="studio-kicker">NAVA WORKSPACE / STUDIO</span><h1>استودیوی آهنگ‌سازی و نت‌نویسی</h1><p>فضای آماده برای شرح ایده موسیقایی، ساختار قطعه، ملودی و نیازهای نت‌نویسی.</p></div>
+        <div><span class="studio-kicker">NAVA COMPOSITION STUDIO</span><h1>استودیوی آهنگ‌سازی و نت‌نویسی</h1><p>ایده موسیقایی‌ات را با NAVI به ملودی، هارمونی و نت قابل‌خواندن روی خطوط حامل تبدیل کن.</p></div>
         <button class="btn-secondary" type="button" onclick="showPage('homePage')">بازگشت به استودیوها</button>
       </div>
+      <div class="composition-intro">
+        <strong>همکاری آهنگ‌ساز و NAVI</strong>
+        <p>از یک ایده کوتاه یا ملودی اولیه شروع کن. درباره گام، ریتم، آکوردها و سازبندی تصمیم بگیر و مرحله‌به‌مرحله قطعه را بساز و اصلاح کن.</p>
+      </div>
       <div class="studio-workspace-grid">
-        <form class="studio-brief-card" onsubmit="event.preventDefault(); chooseService('آهنگ‌سازی و نت‌نویسی');">
-          <span class="studio-step">شروع کار</span><h2>بریف پروژه</h2>
-          <p>اطلاعات اولیه را وارد کن تا NAVI بتواند درخواست را دقیق‌تر دنبال کند.</p>
-          <label for="studioTask-compose">نوع خروجی موسیقایی</label>
+        <form class="studio-brief-card composition-brief-card" onsubmit="event.preventDefault(); chooseService('آهنگ‌سازی و نت‌نویسی');">
+          <span class="studio-step">پروژه آهنگ‌سازی</span><h2>مشخصات قطعه</h2>
+          <p>هرقدر جزئیات دقیق‌تری بدهی، NAVI بهتر می‌تواند در ساخت قطعه همراهت باشد.</p>
+          <label for="studioTask-compose">می‌خواهی روی چه چیزی کار کنیم؟</label>
           <select id="studioTask-compose" class="studio-control">
-            <option>پیشنهاد مناسب را NAVI انتخاب کند</option><option>ایده‌پردازی و برنامه‌ریزی</option><option>تولید پیش‌نویس</option><option>بازبینی و بهبود</option><option>راهنمای مرحله‌به‌مرحله</option>
+            <option>پیشنهاد مناسب را NAVI انتخاب کند</option>
+            <option>ساخت ملودی از صفر</option>
+            <option>توسعه و تکمیل یک ایده ملودیک</option>
+            <option>ساخت آکورد و هارمونی</option>
+            <option>تنظیم قطعه برای سازها</option>
+            <option>تبدیل ملودی به نت روی خطوط حامل</option>
+            <option>بازبینی و اصلاح نت‌ها</option>
+            <option>ساخت بخش‌های مختلف قطعه</option>
           </select>
-          <label for="studioAudience-compose">سبک یا مخاطب شنیداری</label>
-          <input id="studioAudience-compose" class="studio-control" type="text" maxlength="180" placeholder="مخاطب یا استفاده‌کننده را مشخص کن">
-          <label for="studioBrief-compose">شرح درخواست و جزئیات</label>
-          <textarea id="studioBrief-compose" class="studio-control studio-brief-input" maxlength="3000" placeholder="حال‌وهوا، تمپو، سازها، ساختار و ایده ملودیک"></textarea>
-          <div class="studio-brief-actions"><button class="btn-primary" type="submit">ادامه با NAVI</button><button class="btn-secondary" type="reset">پاک کردن فرم</button></div>
-          <p class="studio-note">این صفحه فعلاً قالب کاری و بریف پروژه است؛ تولید تخصصی فایل یا خروجی نهایی تا زمان اتصال ابزار مربوطه فعال محسوب نمی‌شود.</p>
+          <label for="studioStyle-compose">سبک یا فضای موسیقی</label>
+          <input id="studioStyle-compose" class="studio-control" type="text" maxlength="180" placeholder="مثلاً ایرانی، کلاسیک، جَز، پاپ، محلی...">
+          <div class="composition-field-grid">
+            <div><label for="studioKey-compose">گام یا مُد (در صورت مشخص بودن)</label><input id="studioKey-compose" class="studio-control" type="text" maxlength="80" placeholder="مثلاً لا مینور یا شور"></div>
+            <div><label for="studioTempo-compose">تمپو (BPM)</label><input id="studioTempo-compose" class="studio-control" type="number" min="30" max="240" placeholder="مثلاً ۹۲"></div>
+            <div><label for="studioMeter-compose">میزان‌نما</label><input id="studioMeter-compose" class="studio-control" type="text" maxlength="20" placeholder="مثلاً ۴/۴"></div>
+            <div><label for="studioInstruments-compose">سازها یا ترکیب اجرایی</label><input id="studioInstruments-compose" class="studio-control" type="text" maxlength="220" placeholder="مثلاً پیانو و ویولن"></div>
+          </div>
+          <label for="studioBrief-compose">ایده و توضیحات آهنگ‌سازی</label>
+          <textarea id="studioBrief-compose" class="studio-control studio-brief-input" maxlength="4000" placeholder="ملودی را توصیف کن، نت‌های اولیه را بنویس، حس و ساختار قطعه را توضیح بده یا بگو چه چیزی باید ساخته شود..."></textarea>
+          <div class="studio-brief-actions"><button class="btn-primary" type="submit">شروع آهنگ‌سازی با NAVI</button><button class="btn-secondary" type="reset">پاک کردن فرم</button></div>
+          <p class="studio-note">NAVI در این بخش همکار آهنگ‌سازی و نت‌نویسی است؛ هدف، ساخت و اصلاح محتوای موسیقایی و نمایش نت روی حامل است، نه تولید فایل صوتی. ویرایشگر و خروجی واقعی پارتیتور در مرحله پیاده‌سازی ابزار تخصصی قرار دارد.</p>
         </form>
-        <aside class="studio-output-card">
-          <span class="studio-step">فضای پروژه</span><h2>مراحل انجام کار</h2>
-          <ol><li>ثبت بریف و هدف پروژه</li><li>بررسی نیازها با NAVI</li><li>تدوین پیش‌نویس و اصلاح آن</li><li>آماده‌سازی خروجی پس از فعال‌شدن ابزار تخصصی</li></ol>
-          <div class="studio-output-placeholder"><span aria-hidden="true">✦</span><strong>فضای خروجی پروژه</strong><p>نتیجه‌ها و فایل‌های این استودیو پس از تکمیل ابزار تخصصی در این قسمت نمایش داده می‌شوند.</p></div>
+        <aside class="studio-output-card composition-score-card">
+          <span class="studio-step">میز کار نت‌نویسی</span><h2>پیش‌نمایش خطوط حامل</h2>
+          <p>نت‌های قطعه پس از ساخته‌شدن و تأیید تو در این بخش روی حامل نمایش داده می‌شوند.</p>
+          <div class="composition-staff-preview" role="img" aria-label="پنج خط حامل خالی برای پیش‌نمایش نت موسیقی">
+            <span class="composition-clef" aria-hidden="true">𝄞</span>
+            <div class="composition-staff-lines"><i></i><i></i><i></i><i></i><i></i></div>
+          </div>
+          <div class="composition-score-status"><span aria-hidden="true">♪</span><div><strong>هنوز نتی ثبت نشده است</strong><p>ابتدا ایده قطعه را با NAVI مطرح کن؛ حامل نت پس از آماده‌شدن ابزار نت‌نویسی با نت‌های موسیقی پر می‌شود.</p></div></div>
+          <div class="composition-next-steps"><strong>مسیر ساخت قطعه</strong><ol><li>تعریف ایده، سبک و ساختار</li><li>ساخت ملودی و ریتم</li><li>افزودن آکورد و هارمونی</li><li>نت‌نویسی روی حامل و بازبینی</li><li>آماده‌سازی پارتیتور و خروجی استاندارد</li></ol></div>
         </aside>
       </div>
     </div>
