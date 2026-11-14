@@ -883,6 +883,8 @@ function showNaviChat() {
   clearLoginError();
 
   const displayName = getNaviStoredValue(NAVI_USER_NAME_KEY) || "کاربر";
+  const dashboardGreeting = document.getElementById("naviDashboardGreeting");
+  if (dashboardGreeting) dashboardGreeting.textContent = "سلام، " + displayName;
   const isOwner = getNaviStoredValue(NAVI_USER_ROLE_KEY) === "owner";
   naviLoginStatus.textContent = "نشست امن ناوی فعال است.";
   if (naviUserDisplay) naviUserDisplay.textContent = "حساب فعال: " + displayName;
@@ -2219,6 +2221,8 @@ async function loadNaviProjects() {
     }
     if (!response.ok || !data.success) throw new Error(data.error || "دریافت پروژه‌ها ناموفق بود.");
     naviProjects = Array.isArray(data.projects) ? data.projects : [];
+    const dashboardProjectCount = document.getElementById("naviDashboardProjectCount");
+    if (dashboardProjectCount) dashboardProjectCount.textContent = String(naviProjects.length).replace(/[0-9]/g, digit => "۰۱۲۳۴۵۶۷۸۹"[Number(digit)]);
     const savedProject = getNaviStoredValue("nava_navi_active_project");
     if (savedProject && naviProjects.some(item => item.project_id === savedProject)) naviActiveProjectId = savedProject;
     if (!naviProjects.some(item => item.project_id === naviActiveProjectId)) naviActiveProjectId = "project-general";
@@ -2233,8 +2237,10 @@ async function loadNaviProjects() {
 }
 
 function updateNaviProjectControls() {
-  if (!naviDeleteProjectButton) return;
   const selected = naviProjects.find(project => project.project_id === naviActiveProjectId);
+  const dashboardProject = document.getElementById("naviDashboardProjectName");
+  if (dashboardProject) dashboardProject.textContent = selected?.name || "عمومی";
+  if (!naviDeleteProjectButton) return;
   const deletable = Boolean(selected && Number(selected.is_system) === 0 && selected.project_id !== "project-general");
   naviDeleteProjectButton.disabled = !deletable;
   naviDeleteProjectButton.title = deletable
@@ -2263,6 +2269,8 @@ function renderNaviThreads() {
   if (naviDeleteThreadButton) {
     naviDeleteThreadButton.disabled = !naviThreads.some(item => item.thread_id === naviActiveThreadId);
   }
+  const dashboardThreadCount = document.getElementById("naviDashboardThreadCount");
+  if (dashboardThreadCount) dashboardThreadCount.textContent = String(naviThreads.length).replace(/[0-9]/g, digit => "۰۱۲۳۴۵۶۷۸۹"[Number(digit)]);
   naviThreads.forEach(thread => {
     const button = document.createElement("button");
     button.type = "button";
@@ -2472,6 +2480,11 @@ async function deleteNaviProject() {
   }
 }
 
+document.getElementById("naviDashboardNewChat")?.addEventListener("click", () => {
+  setNaviWorkspaceTab("chat");
+  createNaviThread();
+});
+document.getElementById("naviDashboardOpenProjects")?.addEventListener("click", () => setNaviWorkspaceTab("projects"));
 naviCreateProjectButton?.addEventListener("click", createNaviProject);
 naviDeleteProjectButton?.addEventListener("click", deleteNaviProject);
 naviNewProjectName?.addEventListener("keydown", event => { if (event.key === "Enter") createNaviProject(); });
