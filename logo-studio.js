@@ -40,8 +40,8 @@
   }
   function textStyle(data, size, fill, weight) {
     const family = data.typography === "elegant"
-      ? 'Georgia, "Times New Roman", Tahoma, serif'
-      : 'Vazirmatn, "IRANSans", Tahoma, Arial, sans-serif';
+      ? 'Georgia, Times New Roman, Tahoma, serif'
+      : 'Vazirmatn, IRANSans, Tahoma, Arial, sans-serif';
     return 'font-family="'+family+'" font-size="'+size+'" font-weight="'+weight+'" fill="'+fill+'" direction="rtl" unicode-bidi="plaintext"';
   }
   function mark(data, variant) {
