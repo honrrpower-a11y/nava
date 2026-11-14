@@ -125,7 +125,9 @@ export async function handleLogoRoute({ request, env, origin, corsOrigin }) {
     personality: safeText(input?.personality, 80),
     typography: safeText(input?.typography, 80),
     format: ["combination", "wordmark", "monogram"].includes(input?.format) ? input.format : "combination",
-    palette: safeText(input?.palette, 80)
+    palette: safeText(input?.palette, 80),
+    primaryColor: safeText(input?.primaryColor, 12),
+    darkColor: safeText(input?.darkColor, 12)
   };
   if (!data.brandName) return fail("نام برند برای طراحی لازم است.", 400, corsOrigin);
 
