@@ -113,4 +113,111 @@
     $("contentStudioForm")?.reset();
     status("contentStudioStatus", "فرم محتوا پاک شد.");
   });
+
+  // Task-specific handoff for the remaining brief-based studios.
+  // These workflows use NAVI to create usable, copy-ready work products;
+  // they do not claim to perform external research, render files, or publish content.
+  const assistedStudios = {
+    articlePage: {
+      service: "مقاله و وبلاگ",
+      ids: ["studioTask-article", "studioAudience-article", "studioBrief-article"],
+      labels: ["نوع خروجی", "مخاطب مقاله", "شرح درخواست"],
+      instruction: "در نقش دبیر و نویسنده حرفه‌ای فارسی عمل کن. ابتدا اگر موضوع، هدف یا اطلاعات منبع برای نوشتن دقیق کافی نیست، فقط مهم‌ترین سؤال ضروری را بپرس. سپس عنوان‌های پیشنهادی، زاویه مقاله، ساختار H1/H2/H3، مقدمه، متن کامل، جمع‌بندی و توضیحات متای پیشنهادی را آماده کن. کلیدواژه یا آمار ساختگی نساز و اگر تحقیق زنده یا منبع لازم است، محدودیت را شفاف بگو."
+    },
+    officePage: {
+      service: "کارهای اداری و آفیس",
+      ids: ["studioTask-office", "studioAudience-office", "studioBrief-office"],
+      labels: ["نوع سند یا کار", "مخاطب یا دریافت‌کننده", "شرح درخواست"],
+      instruction: "در نقش کارشناس امور اداری و تهیه اسناد عمل کن. خروجی را متناسب با نوع سند، با عنوان‌بندی، لحن رسمی و بخش‌بندی استاندارد آماده کن؛ در صورت نیاز جدول را به شکل قابل کپی ارائه بده. اطلاعات، اعداد، تاریخ‌ها و تعهدات را جعل نکن؛ جای خالی داده‌های ناموجود را مشخص کن. در پایان نسخه نهایی یکپارچه و آماده کپی بده."
+    },
+    composePage: {
+      service: "آهنگ‌سازی و نت‌نویسی",
+      ids: ["studioTask-compose", "studioStyle-compose", "studioKey-compose", "studioTempo-compose", "studioMeter-compose", "studioInstruments-compose", "studioBrief-compose"],
+      labels: ["کار درخواستی", "سبک یا فضای موسیقی", "گام یا مُد", "تمپو", "میزان‌نما", "سازها", "شرح ایده"],
+      instruction: "در نقش دستیار آهنگ‌ساز و تنظیم‌کننده عمل کن. ایده را از نظر فرم، ملودی، ریتم، هارمونی و سازبندی توسعه بده. اگر داده کافی نیست یک سؤال تعیین‌کننده بپرس. خروجی را مرحله‌بندی و تا حد ممکن اجرایی ارائه کن؛ برای ملودی از نام نت‌ها، کشش‌ها و میزان‌بندی متنی استفاده کن. ادعا نکن که فایل صوتی، پارتیتور گرافیکی یا MIDI ساخته‌ای؛ این استودیو فعلاً همراهی متنی و طراحی موسیقایی است."
+    },
+    avPage: {
+      service: "ویدئو و صدا",
+      ids: ["studioTask-av", "studioAudience-av", "studioBrief-av"],
+      labels: ["نوع پروژه", "مخاطب نهایی", "شرح درخواست"],
+      instruction: "در نقش تهیه‌کننده و طراح محتوای صوتی‌تصویری عمل کن. متناسب با درخواست، سناریو، ساختار زمانی، شات‌لیست یا استوری‌بورد متنی، متن گویندگی، پیشنهاد صدا و موسیقی و چک‌لیست تولید ارائه بده. مدت، پلتفرم و امکانات واقعی را رعایت کن؛ اگر چیزی مشخص نیست فقط سؤال ضروری را بپرس. ادعا نکن فایل ویدئو یا صوت رندر کرده‌ای."
+    },
+    seoPage: {
+      service: "سئو",
+      ids: ["studioTask-seo", "studioAudience-seo", "studioBrief-seo"],
+      labels: ["هدف یا خروجی سئو", "مخاطب و بازار هدف", "شرح درخواست"],
+      instruction: "در نقش متخصص سئوی محتوا و وب‌سایت عمل کن. بر اساس اطلاعات ارائه‌شده، پیشنهادهای ساختار صفحه، نیت جست‌وجو، خوشه موضوعی، عنوان و توضیحات متا، هدینگ‌ها و چک‌لیست فنی/محتوایی را تفکیک کن. بدون دسترسی و بررسی واقعی سایت، ادعای ممیزی یا رتبه و حجم جست‌وجو نکن؛ داده‌های حدسی را به‌عنوان واقعیت ننویس."
+    },
+    adsPage: {
+      service: "تبلیغات",
+      ids: ["studioTask-ads", "studioAudience-ads", "studioBrief-ads"],
+      labels: ["نوع کمپین یا تبلیغ", "مخاطب هدف", "شرح درخواست"],
+      instruction: "در نقش استراتژیست تبلیغات عمل کن. هدف، مخاطب، پیشنهاد ارزش، پیام محوری، ایده خلاق، چند نسخه متن تبلیغ، CTA، کانال‌های مناسب و شاخص‌های سنجش را طراحی کن. بودجه یا نتیجه تضمینی نساز؛ اگر اطلاعات محصول یا مزیت رقابتی کافی نیست سؤال بپرس و از ادعاهای تأییدنشده پرهیز کن."
+    },
+    bizPage: {
+      service: "ابزارهای کسب‌وکار",
+      ids: ["studioTask-biz", "studioAudience-biz", "studioBrief-biz"],
+      labels: ["نوع مسئله یا ابزار", "کاربر یا ذی‌نفع اصلی", "شرح درخواست"],
+      instruction: "در نقش مشاور عملیاتی کسب‌وکار عمل کن. مسئله را به هدف، فرض‌ها، مراحل اجرا، منابع موردنیاز، ریسک‌ها و شاخص‌های سنجش تبدیل کن. اگر مناسب است جدول، چک‌لیست، برنامه اجرایی یا الگوی قابل کپی بساز. اعداد مالی و داده‌های بازار را بدون منبع قطعی اعلام نکن و فرض‌ها را از واقعیت جدا نگه دار."
+    }
+  };
+
+  document.addEventListener("submit", event => {
+    const form = event.target;
+    if (!(form instanceof HTMLFormElement)) return;
+    const page = form.closest(".page");
+    const config = page && assistedStudios[page.id];
+    if (!config) return;
+
+    event.preventDefault();
+    event.stopImmediatePropagation();
+
+    const values = {};
+    config.ids.forEach((id, index) => {
+      const field = $(id);
+      const value = field?.tagName === "SELECT"
+        ? (field.selectedOptions?.[0]?.textContent || "").trim()
+        : (field?.value || "").trim();
+      if (value) values[config.labels[index]] = value;
+    });
+
+    const isCompose = page.id === "composePage";
+    const required = isCompose
+      ? Boolean(values["شرح ایده"] || values["کار درخواستی"] !== "پیشنهاد مناسب را NAVI انتخاب کند")
+      : Boolean(values["شرح درخواست"]);
+    if (!required) {
+      let note = form.querySelector("[data-nava-studio-status]");
+      if (!note) {
+        note = document.createElement("p");
+        note.dataset.navaStudioStatus = "true";
+        note.className = "studio-note";
+        note.setAttribute("role", "status");
+        form.append(note);
+      }
+      note.textContent = "لطفاً شرح درخواست یا ایده‌ات را وارد کن تا ناوی بتواند خروجی مشخصی آماده کند.";
+      $(config.ids[config.ids.length - 1])?.focus();
+      return;
+    }
+
+    const context = { ...values };
+    const message = [
+      "در استودیوی «" + config.service + "» نوا هستیم.",
+      config.instruction,
+      "درخواست و اطلاعات ثبت‌شده:",
+      Object.entries(values).map(([key, value]) => key + ": " + value).join("\n"),
+      "خروجی را به فارسی، منظم و قابل استفاده مستقیم ارائه کن. اگر محدودیت ابزار یا داده‌ای مانع انجام بخشی است، صریح بگو و آن را انجام‌شده جلوه نده."
+    ].join("\n\n");
+
+    let note = form.querySelector("[data-nava-studio-status]");
+    if (!note) {
+      note = document.createElement("p");
+      note.dataset.navaStudioStatus = "true";
+      note.className = "studio-note";
+      note.setAttribute("role", "status");
+      form.append(note);
+    }
+    note.textContent = "بریف آماده شد؛ ناوی با دستورالعمل تخصصی این استودیو باز می‌شود.";
+    handoff(config.service, context, message);
+  }, true);
+
 })();
