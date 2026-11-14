@@ -4,6 +4,7 @@
 const CDN="https://unpkg.com/docx@9/dist/index.iife.js";
 let loading=null;
 const cleanName=s=>String(s||"NAVA-document").replace(/[\\/:*?"<>|]/g,"-").replace(/\s+/g,"-").slice(0,70)||"NAVA-document";
+const uniqueName=(base,ext)=>{const d=new Date(),stamp=[d.getFullYear(),String(d.getMonth()+1).padStart(2,"0"),String(d.getDate()).padStart(2,"0"),"-",String(d.getHours()).padStart(2,"0"),String(d.getMinutes()).padStart(2,"0"),String(d.getSeconds()).padStart(2,"0"),"-",String(d.getMilliseconds()).padStart(3,"0")].join("");return cleanName(base)+"-"+stamp+"."+ext;};
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const lines=s=>String(s||"").replace(/\r\n?/g,"\n").split("\n").map(x=>x.trimEnd());
 function loadDocx(){
@@ -64,8 +65,8 @@ function attach(target,service){
  const pb=document.createElement("button");pb.type="button";pb.className="btn-secondary";pb.textContent="دریافت PDF";
  const note=document.createElement("p");note.className="nava-export-status";note.setAttribute("role","status");note.setAttribute("aria-live","polite");
  const base=service==="مقاله و وبلاگ"?"NAVA-article":"NAVA-office-document";
- wb.addEventListener("click",()=>word(target.textContent,cleanName(base)+".docx",wb,note));
- pb.addEventListener("click",()=>pdf(target.textContent,cleanName(base)+".pdf",note));
+ wb.addEventListener("click",()=>word(target.textContent,uniqueName(base,"docx"),wb,note));
+ pb.addEventListener("click",()=>pdf(target.textContent,uniqueName(base,"pdf"),note));
  box.append(wb,pb,note);target.insertAdjacentElement("afterend",box);
 }
 window.NavaDocumentExport={attach};
