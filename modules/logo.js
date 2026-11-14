@@ -223,7 +223,9 @@ export async function handleLogoRoute({ request, env, origin, corsOrigin }) {
         url: image.dataUri,
         width: image.width,
         height: image.height,
-        concept: DIRECTIONS[index].title
+        concept: DIRECTIONS[index].title,
+        description: DIRECTIONS[index].shortDescription,
+        directionId: DIRECTIONS[index].id
       }))
     }, 200, corsOrigin);
   } catch (error) {
