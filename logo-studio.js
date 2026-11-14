@@ -64,10 +64,9 @@
       content='<g>'+markUp+'</g><path d="M300 330 H600" stroke="'+p.main+'" stroke-width="2" opacity=".7"/><text x="450" y="400" text-anchor="middle" '+textStyle(data,58,p.dark,700)+'>'+name+'</text>';
       if(slogan)content+='<text x="450" y="450" text-anchor="middle" '+textStyle(data,23,"#687386",400)+'>'+slogan+'</text>';
     } else if (variant===1) {
-      content='<g transform="translate(0 0)">'+markUp+'</g><text x="650" y="190" text-anchor="end" '+textStyle(data,60,p.dark,700)+'>'+name+'</text>';
+      content='<g transform="translate(-285 0)">'+markUp+'</g><text x="650" y="190" text-anchor="end" '+textStyle(data,60,p.dark,700)+'>'+name+'</text>';
       content+='<path d="M620 230 H300" stroke="'+p.main+'" stroke-width="5" stroke-linecap="round"/>';
       if(slogan)content+='<text x="650" y="280" text-anchor="end" '+textStyle(data,22,"#687386",400)+'>'+slogan+'</text>';
-      content=content.replace('cx="450" cy="178"','cx="165" cy="178"').replace('cx="450" cy="185"','cx="165" cy="185"').replace(/x="450"/g,'x="165"').replace('M450 65 L558 175 L450 285 L342 175 Z','M165 65 L273 175 L165 285 L57 175 Z').replace('M450 91 L532 175 L450 259 L368 175 Z','M165 91 L247 175 L165 259 L83 175 Z').replace('M450 120 V230 M395 175 H505','M165 120 V230 M110 175 H220').replace('M350 238 C335 160 389 91 458 88 C524 86 568 140 550 205 C532 270 454 298 389 262','M65 238 C50 160 104 91 173 88 C239 86 283 140 265 205 C247 270 169 298 104 262').replace('M405 221 L450 132 L495 221','M120 221 L165 132 L210 221').replace('cx="450" cy="221"','cx="165" cy="221"').replace('cx="450" cy="178"','cx="165" cy="178"').replace('cx="450" cy="185"','cx="165" cy="185"');
     } else {
       content='<text x="450" y="245" text-anchor="middle" '+textStyle(data,112,p.dark,700)+'>'+name+'</text><path d="M245 285 Q450 325 655 285" fill="none" stroke="'+p.main+'" stroke-width="9" stroke-linecap="round"/>';
       if(slogan)content+='<text x="450" y="365" text-anchor="middle" '+textStyle(data,25,"#687386",400)+'>'+slogan+'</text>';
@@ -129,7 +128,7 @@
       if(!response.ok||!trialData.success){
         status.textContent=trialData.error||"برای ادامه، ابتدا وارد حساب نوا شو.";
         if((response.status===401||response.status===429)&&typeof window.openNaviAssistant==="function"){
-          window.openNaviAssistant({service:"طراحی لوگو",context:data});
+          window.openNaviAssistant({service:"طراحی لوگو",context:{brandName:data.name,slogan:data.slogan,industry:data.industry,audience:data.audience,symbolIdea:data.symbolIdea,personality:data.personality,typography:data.typography,format:data.format,palette:data.palette.name}});
         }
         return;
       }
