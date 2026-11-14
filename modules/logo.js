@@ -1,4 +1,4 @@
-// NAVA Logo Studio: real image generation through a server-side fal.ai proxy.
+// NAVA Logo Studio: real image generation through Cloudflare Workers AI free allocation.
 import { json, safeText } from "./shared.js";
 import { handleGuestTrial } from "./guest-trial.js";
 
