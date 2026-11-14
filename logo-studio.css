@@ -46,3 +46,17 @@ body.light .logo-control{background:#fff;color:#273143}
 .logo-concept-actions button{width:100%}
 }
 .logo-studio-disclaimer{margin-top:9px!important;font-size:11px!important;color:var(--muted)!important;opacity:.9}
+
+/* Professional logo concept controls and transparent vector previews */
+.logo-custom-colors{display:grid;grid-template-columns:1fr 1fr;gap:8px 14px;margin-top:8px;padding:12px;border:1px solid var(--border);border-radius:12px;background:rgba(201,155,72,.045)}
+.logo-custom-colors[hidden]{display:none}
+.logo-custom-colors .logo-field{grid-column:1/-1;margin:4px 0 0}
+.logo-color-control{width:100%;height:42px;padding:4px;border:1px solid var(--border);border-radius:9px;background:var(--bg);cursor:pointer}
+.logo-concept-results{grid-template-columns:repeat(2,minmax(0,1fr))}
+.logo-concept-card:first-child{grid-column:1/-1}
+.logo-concept-preview{min-height:190px;display:flex;align-items:center;justify-content:center}
+.logo-concept-preview svg{max-height:230px;overflow:visible}
+.logo-concept-card:first-child .logo-concept-preview svg{max-height:280px}
+.logo-concept-copy{min-height:118px}
+.logo-concept-actions button{min-width:0}
+@media(max-width:760px){.logo-concept-results{grid-template-columns:1fr}.logo-concept-card:first-child{grid-column:auto}.logo-custom-colors{grid-template-columns:1fr 1fr}}
