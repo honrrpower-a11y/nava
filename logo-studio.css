@@ -77,5 +77,8 @@ body.light .logo-control{background:#fff;color:#273143}
 
 
 /* Distinct art-direction review cues */
+.logo-ai-visual-review{margin-top:12px;padding:12px;border:1px solid var(--border);border-radius:12px;background:rgba(16,29,53,.045);font-size:12px;line-height:1.8}
+.logo-ai-visual-review strong{display:block;color:var(--text);font-size:13px;margin-bottom:4px}
+.logo-ai-visual-review p{margin:3px 0;color:var(--muted)}
 .logo-ai-rubric{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
 .logo-ai-rubric span{display:inline-flex;align-items:center;padding:5px 8px;border:1px solid var(--border);border-radius:999px;color:var(--muted);font-size:10px;line-height:1.4;background:rgba(201,162,74,.055)}
