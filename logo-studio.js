@@ -98,7 +98,18 @@
     ["ساختار متمایز","ارتباط با بریف","خوانایی در اندازه کوچک","رعایت پالت انتخابی"].forEach(label=>{
       const item=document.createElement("span");item.textContent=label;rubric.appendChild(item);
     });
-    copy.append(title,desc,visual,rubric);card.appendChild(copy);
+    copy.append(title,desc,visual);
+    if(image.review){
+      const review=document.createElement("div");review.className="logo-ai-visual-review";
+      const score=document.createElement("strong");score.textContent="ارزیابی تصویری: "+image.review.overall+"/۱۰";
+      const details=document.createElement("p");
+      details.textContent="ارتباط با برند: "+image.review.relevance+"/۱۰ · تمایز: "+image.review.distinctiveness+"/۱۰ · رنگ: "+image.review.palette+"/۱۰ · خوانایی: "+image.review.legibility+"/۱۰";
+      const strengths=document.createElement("p");strengths.textContent="نقطه قوت: "+(image.review.strengths||"مشخص نشده");
+      const issues=document.createElement("p");issues.textContent="نیاز به اصلاح: "+(image.review.issues||"موردی گزارش نشده");
+      const recommendation=document.createElement("p");recommendation.textContent="پیشنهاد: "+(image.review.recommendation||"—");
+      review.append(score,details,strengths,issues,recommendation);copy.appendChild(review);
+    }
+    copy.append(rubric);card.appendChild(copy);
     const actions=document.createElement("div");actions.className="logo-concept-actions";
     const button=document.createElement("button");button.type="button";button.className="btn-primary";
     button.textContent="دریافت لوگو با نام برند";
@@ -155,7 +166,9 @@
       results.replaceChildren();
       result.images.forEach((image,index)=>results.appendChild(buildCard(image,index,data)));
       empty.hidden=true;
-      status.textContent="سه مسیر هنری مستقل آماده شد. آن‌ها را از نظر تمایز سیلوئت، تناسب با برند، خوانایی و تعادل رنگ مقایسه کن."
+      status.textContent=result.visualReview?.status==="completed"
+        ?"سه کانسپت ساخته و با ارزیابی تصویری بررسی شدند. امتیازها و پیشنهادهای اصلاح هر طرح را ببین."
+        :"سه کانسپت ساخته شدند. ارزیابی تصویری هنوز فعال نیست و هیچ امتیاز کیفیتی به‌صورت حدسی نمایش داده نمی‌شود.";
       results.scrollIntoView({behavior:"smooth",block:"start"});
     } catch(error) {
       status.textContent=error.name==="AbortError"
