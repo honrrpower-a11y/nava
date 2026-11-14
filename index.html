@@ -151,8 +151,8 @@
       <div class="logo-studio-intro">
         <span class="logo-studio-eyebrow">FROM IDEA TO IDENTITY</span>
         <h1>هویت برندت را <span>شکل بده</span></h1>
-        <p>اطلاعات برند را وارد کن تا سه مسیر اولیه برای نشان و لوگوتایپ بسازیم. می‌توانی طرح‌ها را مقایسه کنی و نسخه برداری SVG یا PNG بگیری.</p>
-        <p class="logo-studio-disclaimer">این نسخه، سازنده طرح‌های برداری اولیه است؛ هنوز موتور تولید لوگوی هوش مصنوعی یا ابزار کامل ویرایش حرفه‌ای نیست.</p>
+        <p>بریف برند را تعریف کن تا سه مسیر بصری متفاوت بسازیم؛ از نشان مستقل تا ترکیب نماد و لوگوتایپ. خروجی‌ها برداری و قابل دریافت هستند.</p>
+        <p class="logo-studio-disclaimer">این مرحله یک ابزار ساخت کانسپت برداری است؛ پیشنهادهای NAVI در کنار آن برای جهت‌دهی خلاقانه استفاده می‌شوند. خروجی نهایی حرفه‌ای به بازبینی و تأیید طراح نیاز دارد.</p>
       </div>
       <div class="logo-studio-layout">
         <form class="logo-studio-form" id="logoStudioForm">
@@ -161,18 +161,22 @@
           <label class="logo-field" for="logoSlogan">شعار برند (اختیاری)</label><input class="logo-control" id="logoSlogan" maxlength="80" placeholder="یک جمله کوتاه درباره برند">
           <label class="logo-field" for="logoIndustry">حوزه فعالیت</label><input class="logo-control" id="logoIndustry" maxlength="80" placeholder="مثلاً فناوری، پوشاک، کافه...">
           <label class="logo-field" for="logoAudience">مخاطب اصلی</label><input class="logo-control" id="logoAudience" maxlength="100" placeholder="این برند برای چه کسانی است؟">
+          <label class="logo-field" for="logoSymbolIdea">ایده یا مفهوم نماد (اختیاری)</label><input class="logo-control" id="logoSymbolIdea" maxlength="120" placeholder="مثلاً موج، رشد، اعتماد، حرف اول نام برند...">
+          <label class="logo-field" for="logoTypography">جهت تایپوگرافی</label>
+          <select class="logo-control" id="logoTypography"><option value="persian">فارسی خوانا و اصیل</option><option value="geometric">هندسی و مدرن</option><option value="elegant">ظریف و لوکس</option><option value="bold">ضخیم و قدرتمند</option></select>
           <label class="logo-field" for="logoPersonality">شخصیت برند</label>
           <select class="logo-control" id="logoPersonality"><option value="minimal">مینیمال و ساده</option><option value="bold">جسور و قدرتمند</option><option value="elegant">ظریف و لوکس</option><option value="friendly">صمیمی و دوستانه</option><option value="tech">مدرن و فناورانه</option></select>
           <label class="logo-field" for="logoFormat">ساختار لوگو</label>
           <select class="logo-control" id="logoFormat"><option value="combination">نماد + نام برند</option><option value="wordmark">لوگوتایپ (نوشتاری)</option><option value="monogram">مونوگرام (حروف اختصاری)</option></select>
           <label class="logo-field" for="logoPalette">پالت رنگی</label>
-          <select class="logo-control" id="logoPalette"><option value="gold">طلایی و سرمه‌ای</option><option value="blue">آبی و نقره‌ای</option><option value="green">سبز و کرم</option><option value="violet">بنفش و یاسی</option><option value="mono">تک‌رنگ</option></select>
+          <select class="logo-control" id="logoPalette"><option value="gold">طلایی و سرمه‌ای</option><option value="blue">آبی و نقره‌ای</option><option value="green">سبز و کرم</option><option value="violet">بنفش و یاسی</option><option value="mono">تک‌رنگ</option><option value="custom">رنگ دلخواه</option></select>
+          <div class="logo-custom-colors" id="logoCustomColors" hidden><label class="logo-field" for="logoPrimaryColor">رنگ اصلی</label><input class="logo-color-control" id="logoPrimaryColor" type="color" value="#c99b48"><label class="logo-field" for="logoDarkColor">رنگ مکمل تیره</label><input class="logo-color-control" id="logoDarkColor" type="color" value="#172238"></div>
           <button class="btn-primary" type="submit">ساخت سه طرح اولیه</button>
           <div class="logo-brief-actions"><button class="btn-secondary" id="logoBriefToNavi" type="button">بررسی بریف با ناوی</button></div>
           <div class="logo-studio-status" id="logoStudioStatus" role="status" aria-live="polite">برای شروع، نام برند را وارد کن.</div>
         </form>
         <section class="logo-studio-results" aria-labelledby="logoResultsTitle">
-          <h2 id="logoResultsTitle">مسیرهای پیشنهادی طراحی</h2><p>سه برداشت اولیه با ساختارهای متفاوت؛ هیچ‌کدام تا زمان تأیید تو نهایی نمی‌شوند.</p>
+          <h2 id="logoResultsTitle">مسیرهای پیشنهادی طراحی</h2><p>سه مسیر مستقل برای مقایسه: نشان نمادین، ترکیب افقی و لوگوتایپ. فایل SVG پس‌زمینه شفاف دارد.</p>
           <div class="logo-studio-empty" id="logoStudioEmpty"><div class="logo-studio-empty-mark" aria-hidden="true">✦</div><strong>هنوز طرحی ساخته نشده</strong><span>فرم شناخت برند را کامل کن و روی «ساخت سه طرح اولیه» بزن.</span></div>
           <div class="logo-concept-results" id="logoConceptResults" aria-live="polite"></div>
         </section>
