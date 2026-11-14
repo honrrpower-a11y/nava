@@ -1,0 +1,11 @@
+/* Office file upload and local extraction */
+.office-file-panel{margin-top:18px;padding:16px;border:1px dashed var(--border);border-radius:14px;background:var(--panel)}
+.office-file-panel>label{display:block;margin-bottom:7px;color:var(--gold);font-weight:800}
+.office-file-help,.office-file-status{display:block;color:var(--muted);font-size:12px;line-height:1.9}
+.office-file-input{margin-top:10px}
+.office-file-actions{display:flex;align-items:center;flex-wrap:wrap;gap:10px;margin-top:10px}
+.office-file-status{flex:1;min-width:180px}
+.office-file-status[data-state="success"]{color:#65c99a}
+.office-file-status[data-state="error"]{color:#e28b82}
+body.light .office-file-status[data-state="success"]{color:#287b58}
+body.light .office-file-status[data-state="error"]{color:#b0443d}
