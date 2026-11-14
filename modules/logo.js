@@ -205,6 +205,80 @@ function buildPrompt(data, direction) {
   ].join("\n");
 }
 
+// Optional visual review: one vision-model call evaluates all three concepts together.
+// It is deliberately disabled unless the owner explicitly enables it, so image generation
+// keeps its current request count and free-allocation behavior by default.
+function parseVisionJson(raw) {
+  if (typeof raw !== "string") return null;
+  const cleaned = raw.trim().replace(/^\x60\x60\x60(?:json)?/i, "").replace(/\x60\x60\x60$/i, "").trim();
+  try { return JSON.parse(cleaned); } catch {}
+  const match = cleaned.match(/\{[\s\S]*\}/);
+  if (!match) return null;
+  try { return JSON.parse(match[0]); } catch { return null; }
+}
+
+function normalizeVisionReview(raw, concepts) {
+  const parsed = parseVisionJson(raw);
+  if (!parsed || !Array.isArray(parsed.items)) return null;
+  const items = concepts.map((concept, index) => {
+    const item = parsed.items.find(entry => Number(entry?.index) === index + 1) || parsed.items[index] || {};
+    const score = value => Math.max(0, Math.min(10, Math.round(Number(value) || 0)));
+    return {
+      index: index + 1,
+      concept: concept.conceptTitle,
+      overall: score(item.overall),
+      relevance: score(item.relevance),
+      distinctiveness: score(item.distinctiveness),
+      palette: score(item.palette),
+      legibility: score(item.legibility),
+      strengths: safeText(item.strengths, 240),
+      issues: safeText(item.issues, 240),
+      recommendation: safeText(item.recommendation, 240)
+    };
+  });
+  return { status: "completed", items };
+}
+
+async function reviewLogoConcepts({ images, concepts, data, ai }) {
+  if (!ai || typeof ai.run !== "function") throw new Error("Workers AI binding is unavailable for visual review.");
+  const palette = getPaletteSpec(data);
+  const content = [
+    {
+      type: "text",
+      text: [
+        "You are a strict visual identity quality reviewer. Evaluate the THREE attached logo images together against this exact brief.",
+        "Brand: " + data.brandName,
+        "Industry: " + (data.industry || "not specified"),
+        "Audience: " + (data.audience || "not specified"),
+        "Brand personality: " + (data.personality || "not specified"),
+        "Selected palette: " + palette.name + ". " + palette.instruction,
+        "Concept plans: " + concepts.map((concept, index) => (index + 1) + ") " + concept.conceptTitle + ": " + concept.conceptIdea).join(" | "),
+        "Score each image from 0 to 10 for relevance to this brief, distinctiveness from the other two, palette compliance, and small-size legibility. Give an overall score from 0 to 10.",
+        "Be strict: generic tech icons, unrelated symbols, random color use, mockups, unreadable clutter, or three near-identical marks must receive low scores.",
+        "Do not assume facts about the company beyond this brief. Do not claim the images are vector artwork.",
+        "Return ONLY valid JSON with this schema: {\"items\":[{\"index\":1,\"overall\":0,\"relevance\":0,\"distinctiveness\":0,\"palette\":0,\"legibility\":0,\"strengths\":\"short Persian text\",\"issues\":\"short Persian text\",\"recommendation\":\"short Persian text\"}]}",
+        "Include exactly three items with indices 1, 2, and 3."
+      ].join("\n")
+    },
+    ...images.map((image, index) => ({
+      type: "image_url",
+      image_url: { url: image.dataUri }
+    }))
+  ];
+  const response = await ai.run("@cf/meta/llama-3.2-11b-vision-instruct", {
+    messages: [
+      { role: "system", content: "Return only valid JSON. Evaluate images conservatively and never invent details." },
+      { role: "user", content }
+    ],
+    max_tokens: 900,
+    temperature: 0.1
+  });
+  const raw = response?.response || response?.result || response?.output || "";
+  const normalized = normalizeVisionReview(raw, concepts);
+  if (!normalized) throw new Error("Vision review returned an unreadable response.");
+  return normalized;
+}
+
 async function generateOne({ prompt, ai }) {
   if (!ai || typeof ai.run !== "function") {
     throw new Error("Cloudflare Workers AI binding is not enabled.");
@@ -335,11 +409,25 @@ export async function handleLogoRoute({ request, env, origin, corsOrigin }) {
     for (const prompt of prompts) {
       images.push(await generateOne({ prompt, ai: env.AI }));
     }
+
+    // Visual review is opt-in because it adds one extra Workers AI inference call.
+    // The model's Meta license must be accepted by the account before enabling this flag.
+    let visualReview = { status: "disabled", reason: "OPT_IN_REQUIRED" };
+    if (env.NAVA_LOGO_VISION_REVIEW === "true") {
+      try {
+        visualReview = await reviewLogoConcepts({ images, concepts, data, ai: env.AI });
+      } catch (reviewError) {
+        console.error("[NAVA LOGO] Visual review unavailable:", String(reviewError?.message || reviewError).slice(0, 300));
+        visualReview = { status: "unavailable", reason: "VISION_REVIEW_FAILED" };
+      }
+    }
+
     return json({
       success: true,
       brandName: data.brandName,
       remaining: quota.remaining ?? null,
       freeDailyRemaining: Math.max(0, FREE_LOGO_DAILY_LIMIT - dailySlot.used),
+      visualReview,
       planning: {
         method: "deterministic-brief-planner",
         extraModelCalls: 0,
