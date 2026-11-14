@@ -777,6 +777,15 @@ function showNaviReply(reply) {
   requestResponse.classList.add("show");
 }
 
+// Select only NAVI response text; this avoids Android browsers applying
+// the generic "Select all" command to the whole document.
+const selectNaviResponseButton = document.getElementById("selectNaviResponse");
+selectNaviResponseButton?.addEventListener("click", () => {
+  if (!requestResponse || !requestResponse.value) return;
+  requestResponse.focus({ preventScroll: true });
+  requestResponse.setSelectionRange(0, requestResponse.value.length);
+});
+
 function showLoginError(message) {
   naviLoginError.textContent = message;
   naviLoginError.classList.add("show");
