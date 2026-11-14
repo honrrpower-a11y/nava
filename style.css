@@ -108,6 +108,10 @@ nav{display:flex;gap:8px;padding:0 0 13px;overflow-x:auto}
 .request-select:focus,.request-textarea:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,202,255,.09),0 0 15px rgba(229,184,94,.08)}
 .response-box{display:none;background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:15px;margin-top:15px;line-height:2;font-size:13px;white-space:pre-wrap;overflow-wrap:anywhere}
 .response-box.show{display:block}
+.response-actions{display:none;justify-content:flex-start;margin-top:8px}
+.response-box.show + .response-actions{display:flex}
+.response-select-button{background:transparent;color:var(--gold);border:1px solid var(--border);border-radius:9px;padding:8px 12px;font-size:12px;cursor:pointer;touch-action:manipulation}
+.response-select-button:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
 .navi-label{display:block;color:var(--gold);font-size:12px;font-weight:bold;margin-bottom:8px}
 .navi-status{color:var(--muted);font-size:11px;margin-top:12px;line-height:1.9}
 #requestResponse{min-height:55px}
