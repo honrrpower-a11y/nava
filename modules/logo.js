@@ -1,5 +1,6 @@
 // NAVA Logo Studio: real image generation through Cloudflare Workers AI free allocation.
 import { json, safeText } from "./shared.js";
+import { GEMINI_MODEL } from "./config.js";
 import { handleGuestTrial } from "./guest-trial.js";
 
 function fail(message, status, corsOrigin, extra = {}) {
@@ -190,7 +191,8 @@ function buildPrompt(data, direction, strategy) {
     "Professional logo identity mark, not decorative AI artwork.",
     "Brand name: " + data.brandName + ". Industry: " + (data.industry || "not specified") + ". Audience: " + (data.audience || "not specified") + ".",
     "Brand personality: " + (data.personality || "not specified") + ". Strategic visual essence: " + (strategy.brandCore || "") + ".",
-    "Art direction: " + direction.title + ".",
+    "Art direction: " + direction.title + " — " + direction.conceptTitle + ".",
+    "Overall strategy: " + (strategy.strategy || "") + ".",
     "Why this concept fits: " + direction.rationale + ".",
     "Draw this exact symbol idea: " + direction.conceptIdea + ".",
     "Required outer silhouette: " + direction.silhouette + ".",
