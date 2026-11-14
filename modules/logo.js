@@ -45,12 +45,12 @@ function buildPrompt(data, direction) {
     "Target audience: " + (audience || "broad professional audience") + ".",
     "Brand personality: " + (personality || "modern and confident") + ".",
     "Core concept: " + (symbol || "derive a distinctive visual metaphor from the brand category and personality") + ".",
-    "Requested color direction: " + (palette || "choose a sophisticated, restrained palette") + " (main color " + primaryColor + ", dark companion " + darkColor + ").",
+    "Requested color direction: " + (palette || "gold and deep navy") + ". Exact required colors: warm gold #C9A24A and deep midnight navy #101D35. User color values, when supplied, take priority: main color " + (primaryColor || "#C9A24A") + ", dark companion " + (darkColor || "#101D35") + ". The emblem itself must visibly contain both colors.",
     "Typography direction for the later typeset wordmark: " + (typography || "clear, refined typography") + ".",
     formatGuidance,
     "OUTPUT: one single isolated logo mark, centered, front-facing, on a perfectly pure white background.",
     "Make it look like a carefully art-directed professional vector identity: precise geometry, clean contours, balanced negative space, strong silhouette, restrained details, excellent small-size legibility.",
-    "Use a disciplined maximum of two or three colors. No gradients, no glow, no shadows, no 3D, no texture, no photography.",
+    "COLOR REQUIREMENT — STRICT AND NON-NEGOTIABLE: the logo symbol itself MUST visibly use BOTH requested brand colors. For the gold-and-navy palette, use rich metallic-looking warm gold (#C9A24A) as a clearly visible primary/accent shape and deep midnight navy (#101D35) as the second major shape. Both colors must occupy substantial, clearly distinguishable areas of the emblem; do not render a navy-only, monochrome, black, gray, or all-gold logo. Gold must not be reduced to a tiny dot, hairline, or barely visible trim. Preserve crisp flat vector-like fills (not metallic gradients). White background.",
     "ABSOLUTELY NO TEXT, NO LETTERS, NO WORDS, NO NUMBERS, NO SLOGAN, NO WATERMARK, NO MOCKUP, NO BUSINESS CARD, NO STATIONERY, NO PRESENTATION BOARD, NO MULTIPLE LOGOS, NO GRID.",
     "The logo symbol must occupy a generous central area with clear margins. White background only."
   ].join("\n");
