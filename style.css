@@ -2351,3 +2351,174 @@ body.light .navi-dashboard-project{background:rgba(255,255,255,.62)}
 body.light .navi-dashboard-stats>div{background:rgba(255,255,255,.68)}
 @media(max-width:420px){.navi-account-dashboard{padding:14px;border-radius:16px}.navi-account-dashboard h2{font-size:17px}.navi-dashboard-project{gap:7px;padding:9px}.navi-dashboard-project>button{font-size:8px;padding:7px 6px}.navi-dashboard-stats>div{padding:8px}.navi-dashboard-hint{flex-basis:100%}}
 @media(prefers-reduced-motion:reduce){.navi-dashboard-primary{transition:none}}
+
+
+/* NAVI STUDIO COMPANION — a compact, context-aware chat anchored to the active studio.
+   It reuses the authenticated NAVI conversation; the central workspace remains unchanged. */
+body.navi-studio-context .navi-assistant-widget {
+  position: fixed !important;
+  top: calc(126px + env(safe-area-inset-top, 0px)) !important;
+  right: auto !important;
+  bottom: auto !important;
+  left: 16px !important;
+  z-index: 1400 !important;
+  width: max-content;
+  min-height: 46px;
+  max-width: calc(100vw - 32px);
+  overflow: visible;
+}
+body.navi-studio-context .navi-widget-toggle {
+  min-height: 46px;
+  padding: 7px 12px;
+  border: 1px solid rgba(37,202,255,.34);
+  border-radius: 14px;
+  background: linear-gradient(125deg,rgba(13,27,45,.97),rgba(24,39,57,.96));
+  box-shadow: 0 8px 26px rgba(0,0,0,.24),0 0 18px rgba(37,202,255,.10);
+}
+body.light.navi-studio-context .navi-widget-toggle {
+  background: linear-gradient(125deg,rgba(255,255,255,.98),rgba(239,246,251,.98));
+  box-shadow: 0 8px 24px rgba(23,43,62,.13),0 0 14px rgba(37,154,205,.09);
+}
+body.navi-studio-context .navi-widget-toggle-copy strong {
+  font-size: 11px;
+}
+body.navi-studio-context .navi-widget-toggle-copy small {
+  font-size: 9px;
+}
+body.navi-studio-context .navi-widget-panel {
+  position: absolute !important;
+  top: calc(100% + 9px) !important;
+  right: auto !important;
+  bottom: auto !important;
+  left: 0 !important;
+  width: min(410px,calc(100vw - 32px)) !important;
+  height: min(590px,64dvh) !important;
+  min-height: 280px !important;
+  max-height: calc(100dvh - 180px) !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+  margin: 0 !important;
+  transform: none !important;
+  transform-origin: top left !important;
+  border: 1px solid rgba(37,202,255,.24);
+  border-radius: 18px !important;
+  box-shadow: 0 18px 54px rgba(0,0,0,.38),0 0 26px rgba(37,202,255,.10);
+}
+body.navi-studio-context.navi-widget-open .navi-widget-panel {
+  display: flex !important;
+}
+body.navi-studio-context .navi-widget-panel.is-open {
+  animation: naviStudioPopoverIn .2s cubic-bezier(.2,.8,.2,1) both !important;
+}
+@keyframes naviStudioPopoverIn {
+  from { opacity: 0; transform: translateY(-7px) scale(.985) !important; }
+  to { opacity: 1; transform: none !important; }
+}
+body.navi-studio-context .navi-widget-panel .navi-widget-panel-head {
+  flex: 0 0 50px;
+  min-height: 50px;
+}
+body.navi-studio-context .navi-widget-panel .navi-assistant-context {
+  flex: 0 0 auto;
+  max-height: 66px;
+  overflow: auto;
+  margin: 7px 10px 0;
+  padding: 7px 9px;
+}
+body.navi-studio-context .navi-widget-panel .request-panel {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+body.navi-studio-context .navi-widget-panel .request-content {
+  min-height: 0;
+  padding: 9px 12px 14px;
+}
+body.navi-studio-context .navi-widget-panel .navi-account-dashboard,
+body.navi-studio-context .navi-widget-panel .navi-chat-toolbar,
+body.navi-studio-context .navi-widget-panel .navi-workspace-tabs,
+body.navi-studio-context .navi-widget-panel .navi-thread-toolbar,
+body.navi-studio-context .navi-widget-panel .navi-thread-list,
+body.navi-studio-context .navi-widget-panel #naviHistoryToggle,
+body.navi-studio-context .navi-widget-panel #naviHistoryContent,
+body.navi-studio-context .navi-widget-panel #serviceSelect,
+body.navi-studio-context .navi-widget-panel label[for="serviceSelect"] {
+  display: none !important;
+}
+body.navi-studio-context .navi-widget-panel .request-content:has(#naviChatArea:not([hidden])) > h2,
+body.navi-studio-context .navi-widget-panel .request-content:has(#naviChatArea:not([hidden])) > p {
+  display: none !important;
+}
+body.navi-studio-context .navi-widget-panel .navi-workspace-panel[data-navi-panel="chat"] {
+  padding-top: 0;
+}
+body.navi-studio-context .navi-widget-panel .navi-composer {
+  padding: 7px;
+}
+body.navi-studio-context .navi-widget-panel .request-textarea {
+  min-height: 86px;
+  max-height: 150px;
+}
+body.navi-studio-context .navi-widget-panel .navi-send-toolbar {
+  margin: 8px 0 3px;
+}
+body.navi-studio-context .navi-widget-panel .navi-send-toolbar .btn-primary {
+  min-height: 41px;
+}
+body.navi-studio-context.navi-widget-open main.container {
+  width: min(1120px,92%);
+  max-width: 1120px;
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+@media (max-width: 600px) {
+  body.navi-studio-context .navi-assistant-widget {
+    top: calc(116px + env(safe-area-inset-top, 0px)) !important;
+    left: 10px !important;
+    min-height: 43px;
+    max-width: calc(100vw - 20px);
+  }
+  body.navi-studio-context .navi-widget-toggle {
+    min-height: 43px;
+    padding: 6px 9px;
+    border-radius: 13px;
+  }
+  body.navi-studio-context .navi-widget-toggle-copy strong { font-size: 10px; }
+  body.navi-studio-context .navi-widget-panel {
+    top: calc(100% + 8px) !important;
+    left: 0 !important;
+    right: auto !important;
+    width: calc(100vw - 20px) !important;
+    height: min(58dvh,500px) !important;
+    min-height: 250px !important;
+    max-height: calc(100dvh - 145px) !important;
+    border-radius: 16px !important;
+  }
+  body.navi-studio-context.navi-widget-open .navi-widget-panel {
+    display: flex !important;
+  }
+  body.navi-studio-context .navi-widget-panel .navi-widget-panel-head {
+    min-height: 46px;
+    flex-basis: 46px;
+  }
+  body.navi-studio-context .navi-widget-panel .navi-assistant-context {
+    max-height: 56px;
+    margin: 5px 8px 0;
+    padding: 6px 8px;
+  }
+  body.navi-studio-context .navi-widget-panel .request-content {
+    padding: 8px 10px 12px;
+  }
+  body.navi-studio-context .navi-widget-panel .request-textarea {
+    min-height: 72px;
+    max-height: 112px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  body.navi-studio-context .navi-widget-panel.is-open {
+    animation: none !important;
+  }
+}

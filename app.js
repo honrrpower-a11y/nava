@@ -222,7 +222,54 @@ document.addEventListener("click", event => {
 const navButtons = document.querySelectorAll(".nav-btn");
 const pages = document.querySelectorAll(".page");
 
+function collectNaviStudioContext(pageId) {
+  const value = id => document.getElementById(id)?.value?.trim() || "";
+  const selected = id => {
+    const field = document.getElementById(id);
+    return field?.selectedOptions?.[0]?.textContent?.trim() || "";
+  };
+  const contexts = {
+    logoPage: {
+      brandName: value("logoBrandName"),
+      slogan: value("logoSlogan"),
+      industry: value("logoIndustry"),
+      audience: value("logoAudience"),
+      personality: selected("logoPersonality"),
+      format: selected("logoFormat"),
+      palette: selected("logoPalette")
+    },
+    brandPage: {
+      brandName: value("brandName"),
+      industry: value("brandIndustry"),
+      audience: value("brandAudience"),
+      personality: selected("brandPersonality"),
+      values: value("brandValues"),
+      difference: value("brandDifference"),
+      promise: value("brandPromise"),
+      competitors: value("brandCompetitors")
+    },
+    contentPage: {
+      platform: selected("contentPlatform"),
+      format: selected("contentFormat"),
+      objective: selected("contentObjective"),
+      topic: value("contentTopic"),
+      audience: value("contentAudience"),
+      tone: selected("contentTone"),
+      keyPoints: value("contentKeyPoints"),
+      callToAction: value("contentCTA"),
+      keywords: value("contentKeywords")
+    },
+    storyPage: { content: value("storyInput") }
+  };
+  const context = contexts[pageId] || {};
+  return Object.fromEntries(
+    Object.entries(context).filter(([, item]) => typeof item === "string" && item.trim())
+  );
+}
+
 function showPage(pageId) {
+  if (naviWidgetPanel && !naviWidgetPanel.hidden) setNaviWidgetOpen(false);
+
   pages.forEach(page => {
     page.classList.toggle("active", page.id === pageId);
   });
@@ -233,30 +280,17 @@ function showPage(pageId) {
 
   const studioByPage = {
     logoPage: "طراحی لوگو",
+    brandPage: "برندینگ",
+    contentPage: "تولید محتوا",
     storyPage: "استوری‌ساز",
     musicPage: "تولید موسیقی"
   };
-  if (studioByPage[pageId]) {
-    let studioContext = {};
-    if (pageId === "logoPage") {
-      const value = id => document.getElementById(id)?.value?.trim() || "";
-      const selected = id => {
-        const field = document.getElementById(id);
-        return field?.selectedOptions?.[0]?.textContent?.trim() || "";
-      };
-      studioContext = {
-        brandName: value("logoBrandName"),
-        slogan: value("logoSlogan"),
-        industry: value("logoIndustry"),
-        audience: value("logoAudience"),
-        personality: selected("logoPersonality"),
-        format: selected("logoFormat"),
-        palette: selected("logoPalette")
-      };
-    } else if (pageId === "storyPage") {
-      studioContext = { content: document.getElementById("storyInput")?.value?.trim() || "" };
-    }
-    updateNaviAssistantContext(studioByPage[pageId], studioContext);
+  const isStudioPage = Boolean(studioByPage[pageId]);
+  document.body.classList.toggle("navi-studio-context", isStudioPage);
+  syncNaviWidgetMode();
+
+  if (isStudioPage) {
+    updateNaviAssistantContext(studioByPage[pageId], collectNaviStudioContext(pageId));
     if (Array.from(serviceSelect.options).some(option => option.value === studioByPage[pageId])) {
       serviceSelect.value = studioByPage[pageId];
     }
@@ -423,8 +457,19 @@ function positionNaviWidgetOnOrbit() {
   naviWidgetPanel.style.removeProperty("--navi-panel-left");
 }
 
+function syncNaviWidgetMode() {
+  const isStudio = document.body.classList.contains("navi-studio-context");
+  const title = naviWidgetToggle?.querySelector(".navi-widget-toggle-copy strong");
+  if (title) title.textContent = isStudio ? "همراه استودیو" : "گفت‌وگو با ناوی";
+  naviWidgetToggle?.setAttribute(
+    "aria-label",
+    isStudio ? "باز کردن همراه ناوی در این استودیو" : "باز کردن گفت‌وگو با ناوی"
+  );
+}
+
 function setNaviWidgetOpen(isOpen, focusComposer = false) {
   if (!naviWidgetPanel || !naviWidgetToggle) return;
+  syncNaviWidgetMode();
 
   if (isOpen && !getNaviToken()) captureNavaReturnContext();
   if (isOpen) positionNaviWidgetOnOrbit();
@@ -434,9 +479,12 @@ function setNaviWidgetOpen(isOpen, focusComposer = false) {
   naviWidgetPanel.classList.toggle("is-open", isOpen);
   document.body.classList.toggle("navi-widget-open", isOpen);
   naviWidgetToggle.setAttribute("aria-expanded", isOpen ? "true" : "false");
+  const isStudioMode = document.body.classList.contains("navi-studio-context");
   naviWidgetToggle.setAttribute(
     "aria-label",
-    isOpen ? "بستن گفت‌وگو با ناوی" : "باز کردن گفت‌وگو با ناوی"
+    isOpen
+      ? "بستن همراه ناوی"
+      : isStudioMode ? "باز کردن همراه ناوی در این استودیو" : "باز کردن گفت‌وگو با ناوی"
   );
 
   if (!isOpen) {
@@ -481,7 +529,7 @@ document.addEventListener("keydown", event => {
 
 function normalizeNaviStudioContext(context) {
   if (!context || typeof context !== "object" || Array.isArray(context)) return {};
-  const allowed = ["brandName","slogan","industry","audience","personality","format","palette","content","goal"];
+  const allowed = ["brandName","slogan","industry","audience","personality","format","palette","content","goal","values","difference","promise","competitors","platform","objective","topic","tone","keyPoints","callToAction","keywords"];
   const result = {};
   for (const key of allowed) {
     const value = context[key];
@@ -497,7 +545,10 @@ function updateNaviAssistantContext(service, context = {}) {
   if (naviAssistantContextSummary) {
     const labels = {
       brandName: "نام برند", slogan: "شعار", industry: "حوزه", audience: "مخاطب",
-      personality: "شخصیت", format: "ساختار", palette: "رنگ‌ها", content: "محتوا", goal: "هدف"
+      personality: "شخصیت", format: "ساختار", palette: "رنگ‌ها", content: "محتوا", goal: "هدف",
+      values: "ارزش‌ها", difference: "تمایز", promise: "وعده برند", competitors: "رقبا",
+      platform: "پلتفرم", objective: "هدف محتوا", topic: "موضوع", tone: "لحن",
+      keyPoints: "نکات کلیدی", callToAction: "دعوت به اقدام", keywords: "کلیدواژه‌ها"
     };
     const lines = Object.entries(normalized).map(([key, value]) => (labels[key] || key) + ": " + value);
     naviAssistantContextSummary.textContent = lines.length ? lines.join(" • ") : "ناوی می‌داند اکنون در این استودیو هستی.";
@@ -515,7 +566,10 @@ window.openNaviAssistant = function(options = {}) {
   const service = String(options.service || "گفت‌وگوی عمومی");
   const available = Array.from(serviceSelect.options).some(option => option.value === service);
   if (available) serviceSelect.value = service;
-  updateNaviAssistantContext(service, options.context || {});
+  const suppliedContext = options.context && Object.keys(options.context).length
+    ? options.context
+    : collectNaviStudioContext(document.querySelector(".page.active")?.id);
+  updateNaviAssistantContext(service, suppliedContext);
   if (typeof options.message === "string" && options.message.trim()) userRequest.value = options.message.trim();
   setNaviWidgetOpen(true, true);
 };
