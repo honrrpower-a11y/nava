@@ -1,0 +1,30 @@
+
+/* NAVA BRAND + CONTENT STUDIOS — isolated styles */
+.nava-strategy-page{max-width:1120px;margin:0 auto;padding:24px 0 42px;color:var(--text)}
+.nava-strategy-head{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:22px}
+.nava-strategy-head h1{margin:6px 0;font-size:clamp(23px,4vw,34px)}
+.nava-strategy-kicker{font-size:10px;letter-spacing:1.5px;color:var(--gold);font-weight:800}
+.nava-strategy-intro{padding:24px;border:1px solid var(--border);border-radius:20px;background:linear-gradient(130deg,color-mix(in srgb,var(--gold) 9%,var(--panel)),var(--panel2));margin-bottom:20px}
+.nava-strategy-intro h2{font-size:clamp(21px,3vw,29px);margin:0 0 9px}
+.nava-strategy-intro h2 span{color:var(--gold)}
+.nava-strategy-intro p{color:var(--muted);line-height:1.9;margin:0;max-width:760px}
+.nava-strategy-layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(260px,.72fr);gap:18px;align-items:start}
+.nava-strategy-form,.nava-strategy-guide{padding:22px;border:1px solid var(--border);border-radius:18px;background:var(--panel)}
+.nava-strategy-form h3,.nava-strategy-guide h3{margin:0 0 7px;font-size:17px}
+.nava-strategy-form>p,.nava-strategy-guide>p{margin:0 0 18px;color:var(--muted);font-size:12px;line-height:1.8}
+.nava-strategy-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}
+.nava-strategy-field{display:grid;gap:7px;min-width:0}
+.nava-strategy-field.full{grid-column:1/-1}
+.nava-strategy-field label{font-size:12px;color:var(--muted)}
+.nava-strategy-control{width:100%;min-width:0;padding:12px 13px;border:1px solid var(--border);border-radius:11px;background:var(--panel2);color:var(--text);font:inherit;font-size:13px;outline:none}
+.nava-strategy-control:focus{border-color:var(--gold);box-shadow:0 0 0 3px color-mix(in srgb,var(--gold) 13%,transparent)}
+.nava-strategy-control::placeholder{color:var(--muted);opacity:.75}
+textarea.nava-strategy-control{min-height:94px;resize:vertical;line-height:1.8}
+.nava-strategy-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:17px}
+.nava-strategy-actions button{flex:1 1 180px}
+.nava-strategy-status{min-height:22px;margin-top:12px;color:var(--muted);font-size:12px;line-height:1.8}
+.nava-strategy-guide ul{padding:0 18px 0 0;margin:12px 0;display:grid;gap:10px}
+.nava-strategy-guide li{font-size:12px;line-height:1.8;color:var(--muted)}
+.nava-strategy-guide li strong{color:var(--text)}
+.nava-strategy-note{margin-top:15px;padding:12px;border-radius:12px;background:var(--panel2);border:1px solid var(--border);font-size:11px;color:var(--muted);line-height:1.9}
+@media(max-width:760px){.nava-strategy-layout{grid-template-columns:1fr}.nava-strategy-head{align-items:flex-start;flex-direction:column}.nava-strategy-fields{grid-template-columns:1fr}.nava-strategy-field.full{grid-column:auto}.nava-strategy-form,.nava-strategy-guide{padding:17px}.nava-strategy-intro{padding:19px}}
