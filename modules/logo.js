@@ -85,8 +85,7 @@ function getPaletteSpec(data) {
   return presets[palette] || presets["طلایی و سرمه‌ای"];
 }
 
-// A deterministic art-direction planner: no extra model call, API charge, or quota use.
-// It turns the user's brief into three distinct, explainable visual hypotheses.
+// NAVI creates one semantic strategy and three concrete, validated art directions per batch.
 function extractJsonObject(raw) {
   const text = String(raw || "").trim();
   try { return JSON.parse(text); } catch (_) {}
