@@ -47,10 +47,45 @@ const DIRECTIONS = [
   }
 ];
 
-function buildPrompt(data, direction) {
+function getPaletteSpec(data) {
   const palette = safeText(data.palette, 80);
-  const primaryColor = safeText(data.primaryColor, 12);
-  const darkColor = safeText(data.darkColor, 12);
+  const presets = {
+    "طلایی و سرمه‌ای": {
+      name: "gold and midnight navy",
+      instruction: "Use ONLY these two brand colors as the main palette: gold #C9A24A and midnight navy #101D35. Both must be visibly present."
+    },
+    "آبی و نقره‌ای": {
+      name: "blue and silver",
+      instruction: "Use ONLY this palette as the main colors: blue #3F70A8 and silver #DCE4ED. Do not introduce gold or yellow."
+    },
+    "سبز و کرم": {
+      name: "green and cream",
+      instruction: "Use ONLY this palette as the main colors: deep green #356B55 and warm cream #E9E1CE. Do not introduce gold or blue."
+    },
+    "بنفش و یاسی": {
+      name: "violet and lilac",
+      instruction: "Use ONLY this palette as the main colors: violet #7656A6 and lilac #DCCEF0. Do not introduce gold or navy."
+    },
+    "تک‌رنگ": {
+      name: "monochrome",
+      instruction: "Use a strictly monochrome treatment: one ink color #22252B with white negative space. No secondary hue, no gold, no navy, no colored accents."
+    }
+  };
+
+  if (palette === "رنگ اختصاصی") {
+    const primary = /^#[0-9a-fA-F]{6}$/.test(data.primaryColor || "") ? data.primaryColor : "#C9A24A";
+    const secondary = /^#[0-9a-fA-F]{6}$/.test(data.darkColor || "") ? data.darkColor : "#172238";
+    return {
+      name: "user-defined custom colors",
+      instruction: "Use the user's exact selected colors as the only main colors: " + primary + " and " + secondary + ". Do not substitute gold, yellow, navy or any unrelated palette."
+    };
+  }
+
+  return presets[palette] || presets["طلایی و سرمه‌ای"];
+}
+
+function buildPrompt(data, direction) {
+  const paletteSpec = getPaletteSpec(data);
   const symbol = safeText(data.symbolIdea, 180);
   const industry = safeText(data.industry, 100);
   const audience = safeText(data.audience, 120);
@@ -68,14 +103,14 @@ function buildPrompt(data, direction) {
     "You are a senior brand identity art director. Solve the brand brief; do not make decorative AI art.",
     direction.guidance,
     "Brand: " + data.brandName + ". Industry: " + (industry || "not specified") + ". Audience: " + (audience || "broad") + ". Personality: " + (personality || "modern and confident") + ".",
-    "Core idea: " + (symbol || "derive a relevant metaphor from the brand and industry") + ".",
+    "Core idea: " + (symbol || "derive a relevant, specific visual metaphor from the actual brand name and industry; avoid generic technology clichés") + ".",
     "Brand format: " + format + ". " + formatGuidance,
-    "Palette: " + (palette || "gold and deep navy") + ". Required colors in the mark itself: warm gold #C9A24A AND midnight navy #101D35, both clearly visible in substantial distinct areas. User colors: " + (primaryColor || "#C9A24A") + " and " + (darkColor || "#101D35") + ".",
+    "Selected palette: " + paletteSpec.name + ". " + paletteSpec.instruction,
     "Wordmark typography reference only; do not render text: " + (typography || "refined and legible") + ".",
-    "This concept must follow only its assigned art direction. Make its outer silhouette, construction and composition visibly different from the other two concepts.",
+    "This concept must follow only its assigned art direction. Make its silhouette, construction and composition visibly different from the other two concepts.",
     "Professional identity design: intentional proportions, optical balance, meaningful negative space, crisp edges, strong silhouette and small-size legibility. No stock icons, clip-art, generic AI motifs or random decoration.",
     "One isolated centered front-facing logo mark on pure white. Mark occupies 65–75% of canvas.",
-    "STRICT COLOR: both gold #C9A24A and navy #101D35 must be clearly distinguishable and substantial. No navy-only, monochrome, black/gray-only or all-gold mark. Flat crisp fills, no gradients.",
+    "COLOR COMPLIANCE IS MANDATORY: follow the selected palette instruction exactly. Do not add colors from another preset. Flat crisp fills, no gradients.",
     "NO TEXT, letters, words, numbers, slogan, watermark, mockup, stationery, presentation board, multiple logos or grid. No shadows, 3D or photorealism. White background only."
   ].join("\n");
 }
