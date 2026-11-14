@@ -86,6 +86,25 @@
     handoff("تولید محتوا", context, message);
   });
 
+  $("improveStoryWithNavi")?.addEventListener("click", () => {
+    const story = read("storyInput");
+    if (!story) {
+      status("storyMessage", "ابتدا متن یا ایده استوری را بنویس.", true);
+      $("storyInput")?.focus();
+      return;
+    }
+    const context = { draft: story };
+    const message = [
+      "در استودیوی استوری‌ساز نوا هستیم. متن یا ایده زیر را به یک استوری مؤثر و آماده انتشار تبدیل کن.",
+      "ابتدا هدف و مخاطب را از متن تشخیص بده؛ اگر ابهام تعیین‌کننده‌ای وجود دارد فقط یک سؤال ضروری بپرس.",
+      "خروجی را کاربردی و فارسی ارائه کن: نسخه نهایی کوتاه و خوانا، تقسیم‌بندی پیشنهادی در چند اسلاید در صورت نیاز، تأکیدهای بصری و پیشنهاد CTA.",
+      "معنای اصلی را حفظ کن، متن را بی‌دلیل طولانی نکن و ادعای تأییدنشده اضافه نکن.",
+      "متن اولیه:\n" + story
+    ].join("\n\n");
+    status("storyMessage", "متن برای بازطراحی آماده شد؛ ناوی باز می‌شود.");
+    handoff("استوری‌ساز", context, message);
+  });
+
   $("brandStudioReset")?.addEventListener("click", () => {
     $("brandStrategyForm")?.reset();
     status("brandStudioStatus", "فرم برند پاک شد.");
