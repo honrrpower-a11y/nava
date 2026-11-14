@@ -2517,3 +2517,10 @@ body.navi-studio-context .navi-widget-panel .navi-send-toolbar .btn-primary {
 .studio-live-output[data-state="error"] { border-color: rgba(226,139,130,.55); color: #e9a29a; }
 .studio-live-output[data-state="success"] { border-color: rgba(215,181,109,.45); }
 #storyMessage { white-space: pre-wrap; overflow-wrap: anywhere; }
+
+
+/* NAVI response is a read-only text field so Select all stays inside the answer. */
+#requestResponse.response-box{width:100%;min-height:120px;max-height:52vh;resize:vertical;display:none;box-sizing:border-box;font:inherit;line-height:2;direction:rtl;text-align:right;white-space:pre-wrap;overflow-wrap:anywhere;color:var(--text);}
+#requestResponse.response-box.show{display:block;}
+#requestResponse.response-box:focus{outline:2px solid rgba(37,202,255,.35);outline-offset:2px;}
+body.light #requestResponse.response-box{color:#263a56;}
