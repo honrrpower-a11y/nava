@@ -2362,6 +2362,8 @@ body.navi-studio-context .navi-assistant-widget {
   bottom: auto !important;
   left: 16px !important;
   z-index: 1400 !important;
+  width: max-content;
+  min-height: 46px;
   max-width: calc(100vw - 32px);
   overflow: visible;
 }
@@ -2383,8 +2385,7 @@ body.navi-studio-context .navi-widget-toggle-copy strong {
 body.navi-studio-context .navi-widget-toggle-copy small {
   font-size: 9px;
 }
-body.navi-studio-context .navi-widget-panel,
-body.navi-studio-context.navi-widget-open .navi-widget-panel {
+body.navi-studio-context .navi-widget-panel {
   position: absolute !important;
   top: calc(100% + 9px) !important;
   right: auto !important;
@@ -2394,7 +2395,6 @@ body.navi-studio-context.navi-widget-open .navi-widget-panel {
   height: min(590px,64dvh) !important;
   min-height: 280px !important;
   max-height: calc(100dvh - 180px) !important;
-  display: flex !important;
   flex-direction: column !important;
   overflow: hidden !important;
   margin: 0 !important;
@@ -2403,6 +2403,9 @@ body.navi-studio-context.navi-widget-open .navi-widget-panel {
   border: 1px solid rgba(37,202,255,.24);
   border-radius: 18px !important;
   box-shadow: 0 18px 54px rgba(0,0,0,.38),0 0 26px rgba(37,202,255,.10);
+}
+body.navi-studio-context.navi-widget-open .navi-widget-panel {
+  display: flex !important;
 }
 body.navi-studio-context .navi-widget-panel.is-open {
   animation: naviStudioPopoverIn .2s cubic-bezier(.2,.8,.2,1) both !important;
@@ -2475,6 +2478,7 @@ body.navi-studio-context.navi-widget-open main.container {
   body.navi-studio-context .navi-assistant-widget {
     top: calc(116px + env(safe-area-inset-top, 0px)) !important;
     left: 10px !important;
+    min-height: 43px;
     max-width: calc(100vw - 20px);
   }
   body.navi-studio-context .navi-widget-toggle {
@@ -2483,8 +2487,7 @@ body.navi-studio-context.navi-widget-open main.container {
     border-radius: 13px;
   }
   body.navi-studio-context .navi-widget-toggle-copy strong { font-size: 10px; }
-  body.navi-studio-context .navi-widget-panel,
-  body.navi-studio-context.navi-widget-open .navi-widget-panel {
+  body.navi-studio-context .navi-widget-panel {
     top: calc(100% + 8px) !important;
     left: 0 !important;
     right: auto !important;
@@ -2493,6 +2496,9 @@ body.navi-studio-context.navi-widget-open main.container {
     min-height: 250px !important;
     max-height: calc(100dvh - 145px) !important;
     border-radius: 16px !important;
+  }
+  body.navi-studio-context.navi-widget-open .navi-widget-panel {
+    display: flex !important;
   }
   body.navi-studio-context .navi-widget-panel .navi-widget-panel-head {
     min-height: 46px;
