@@ -66,6 +66,7 @@
       }
       target.textContent = String(data.reply).trim();
       target.dataset.state = "success";
+      if (window.NavaDocumentExport) window.NavaDocumentExport.attach(target, service);
     } catch (error) {
       target.textContent = error.message || "ارتباط با NAVI برقرار نشد. دوباره تلاش کن.";
       target.dataset.state = "error";
