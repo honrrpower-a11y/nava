@@ -84,6 +84,93 @@ function getPaletteSpec(data) {
   return presets[palette] || presets["طلایی و سرمه‌ای"];
 }
 
+// A deterministic art-direction planner: no extra model call, API charge, or quota use.
+// It turns the user's brief into three distinct, explainable visual hypotheses.
+function planBrandConcepts(data) {
+  const industry = safeText(data.industry, 100).toLowerCase();
+  const name = safeText(data.brandName, 48);
+  const explicitIdea = safeText(data.symbolIdea, 180);
+  const sectors = [
+    {
+      test: /فناور|تکنولوژ|نرم.?افزار|داده|دیجیتال|هوش مصنوعی|\bit\b|software|technology|data|digital/i,
+      core: "clarity and intelligent connection",
+      concepts: [
+        { title: "مسیر داده تا روشنایی", idea: "A single continuous data pathway that resolves into a precise aperture of light; use a distinctive flowing silhouette, not a circuit-board icon.", rationale: "Connects the idea of data with clarity and insight while remaining a simple ownable symbol." },
+        { title: "مونوگرام ساختاریافته", idea: "An abstract custom letterform derived from the rhythm of the brand name, with one deliberate negative-space channel suggesting a data path.", rationale: "Builds recognition from the brand name rather than borrowing a generic technology symbol." },
+        { title: "نشان شبکه منسجم", idea: "A compact architectural emblem made from a few interdependent modules converging around one clear center; avoid nodes-and-lines network clichés.", rationale: "Suggests a reliable technology system and organized infrastructure through a distinct outer silhouette." }
+      ]
+    },
+    {
+      test: /آموزش|مدرسه|دانشگاه|یادگیر|education|school|learning/i,
+      core: "discovery and growth through knowledge",
+      concepts: [
+        { title: "جرقه کشف", idea: "A distinctive opening or unfolding form that suggests a moment of discovery, not a literal graduation cap or book.", rationale: "Expresses learning as insight and discovery rather than a stock education icon." },
+        { title: "حروفِ در حال رشد", idea: "A custom letterform whose strokes gradually open or extend, using negative space to suggest development.", rationale: "Links the visual identity to the brand name and the idea of progress." },
+        { title: "نشان مسیر یادگیری", idea: "A structured emblem with an intentional sequence of nested forms leading toward a focal point.", rationale: "Communicates a guided, dependable learning journey." }
+      ]
+    },
+    {
+      test: /سلامت|پزشک|درمان|بهداشت|health|medical|clinic/i,
+      core: "care, confidence and wellbeing",
+      concepts: [
+        { title: "تعادل و مراقبت", idea: "A calm, balanced organic symbol formed by two protective shapes; avoid literal crosses and generic heart icons.", rationale: "Communicates care through balance and protection without relying on medical clichés." },
+        { title: "مونوگرام آرام", idea: "A soft but precise custom letterform with a protective negative-space enclosure.", rationale: "Makes the brand name the source of recognition while retaining a reassuring tone." },
+        { title: "نشان اعتماد", idea: "A composed emblem with a stable outer boundary and a calm central form.", rationale: "Suggests reliability and professional care." }
+      ]
+    },
+    {
+      test: /مالی|بانک|سرمایه|حسابدار|finance|bank|investment/i,
+      core: "trust, stewardship and measured progress",
+      concepts: [
+        { title: "رشد سنجیده", idea: "A restrained ascending form built from a single continuous stroke; avoid literal coins, currency signs and arrows.", rationale: "Suggests progress and financial discipline without generic money imagery." },
+        { title: "مونوگرام دقیق", idea: "A geometric custom letterform with carefully balanced proportions and a stable baseline.", rationale: "Makes the identity feel precise and dependable." },
+        { title: "نشان اعتبار", idea: "A formal emblem with a strong perimeter and a minimal central structure.", rationale: "Creates a sense of stability and institutional trust." }
+      ]
+    },
+    {
+      test: /غذا|کافه|رستوران|خوراک|food|cafe|restaurant/i,
+      core: "craft, warmth and sensory appeal",
+      concepts: [
+        { title: "امضای طعم", idea: "An expressive organic mark inspired by the craft or character of the offering, not a literal fork, spoon or chef hat.", rationale: "Creates a memorable identity around experience and craft." },
+        { title: "حروف خوش‌ساخت", idea: "A custom typographic symbol with a warm rhythm and one distinctive cut or ligature.", rationale: "Makes the brand name itself recognizable." },
+        { title: "نشانِ خانه‌وار", idea: "A compact framed emblem suggesting hospitality through its proportions and open center, not a stock badge.", rationale: "Communicates welcome and consistency." }
+      ]
+    },
+    {
+      test: /پوشاک|مد|زیور|جواهر|fashion|apparel|jewelry/i,
+      core: "individuality and crafted expression",
+      concepts: [
+        { title: "امضای فرمی", idea: "A sculptural, highly reduced silhouette with a distinctive contour; avoid clothing hangers and generic fashion symbols.", rationale: "Positions the brand through a recognizable visual signature." },
+        { title: "مونوگرام لوکس", idea: "An interlocking custom letterform with deliberate spacing and elegant negative space.", rationale: "Uses the brand's own letters as its signature." },
+        { title: "نشان مجموعه", idea: "A carefully proportioned emblem with a unique frame and restrained central motif.", rationale: "Feels like a considered maker's mark rather than a template badge." }
+      ]
+    }
+  ];
+  const sector = sectors.find(item => item.test.test(industry)) || {
+    core: "distinctiveness and clear brand recognition",
+    concepts: [
+      { title: "استعاره اختصاصی", idea: "Derive one simple visual metaphor from the actual brand name, stated industry and user-provided idea; do not invent unrelated objects.", rationale: "Prioritizes a meaningful connection to the actual brief." },
+      { title: "امضای حروف", idea: "Construct a custom abstract letterform from the brand name's initials or letter rhythm, with intentional negative space.", rationale: "Builds recognition from the name itself." },
+      { title: "نشان ساختاری", idea: "Create a distinctive emblem whose outer silhouette and internal structure express the brand's stated character.", rationale: "Provides a more formal alternative without using a stock badge." }
+    ]
+  };
+
+  return DIRECTIONS.map((direction, index) => {
+    const concept = sector.concepts[index];
+    const idea = explicitIdea
+      ? concept.idea + " Integrate the user's stated idea as a meaningful secondary cue: " + explicitIdea + ". Do not let it replace the main concept."
+      : concept.idea;
+    return {
+      ...direction,
+      conceptTitle: concept.title,
+      conceptIdea: idea,
+      rationale: concept.rationale,
+      brandCore: sector.core,
+      brandName: name
+    };
+  });
+}
+
 function buildPrompt(data, direction) {
   const paletteSpec = getPaletteSpec(data);
   const symbol = safeText(data.symbolIdea, 180);
@@ -107,7 +194,7 @@ function buildPrompt(data, direction) {
     "Brand format: " + format + ". " + formatGuidance,
     "Selected palette: " + paletteSpec.name + ". " + paletteSpec.instruction,
     "Wordmark typography reference only; do not render text: " + (typography || "refined and legible") + ".",
-    "This concept must follow only its assigned art direction. Make its silhouette, construction and composition visibly different from the other two concepts.",
+    "This concept must follow only its assigned art direction and its own named concept plan. Do not reuse the same visual metaphor across the three outputs. Make silhouette, construction and composition visibly different.",
     "Professional identity design: intentional proportions, optical balance, meaningful negative space, crisp edges, strong silhouette and small-size legibility. No stock icons, clip-art, generic AI motifs or random decoration.",
     "One isolated centered front-facing logo mark on pure white. Mark occupies 65–75% of canvas.",
     "COLOR COMPLIANCE IS MANDATORY: follow the selected palette instruction exactly. Do not add colors from another preset. Flat crisp fills, no gradients.",
@@ -237,7 +324,8 @@ export async function handleLogoRoute({ request, env, origin, corsOrigin }) {
   try { quota = await quotaResponse.json(); } catch {}
 
 
-  const prompts = DIRECTIONS.map(direction => buildPrompt(data, direction));
+  const concepts = planBrandConcepts(data);
+  const prompts = concepts.map(direction => buildPrompt(data, direction));
   try {
     const images = [];
     // Sequential calls reduce burst pressure on the shared free daily allocation.
@@ -249,13 +337,20 @@ export async function handleLogoRoute({ request, env, origin, corsOrigin }) {
       brandName: data.brandName,
       remaining: quota.remaining ?? null,
       freeDailyRemaining: Math.max(0, FREE_LOGO_DAILY_LIMIT - dailySlot.used),
+      planning: {
+        method: "deterministic-brief-planner",
+        extraModelCalls: 0,
+        brandCore: concepts[0].brandCore,
+        note: "These are design hypotheses derived from the submitted brief, not verified facts about the company."
+      },
       images: images.map((image, index) => ({
         url: image.dataUri,
         width: image.width,
         height: image.height,
-        concept: DIRECTIONS[index].title,
-        description: DIRECTIONS[index].shortDescription,
-        directionId: DIRECTIONS[index].id
+        concept: concepts[index].conceptTitle,
+        description: concepts[index].rationale,
+        visualDirection: concepts[index].conceptIdea,
+        directionId: concepts[index].id
       }))
     }, 200, corsOrigin);
   } catch (error) {
