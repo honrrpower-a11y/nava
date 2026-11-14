@@ -38,8 +38,17 @@
       target.dataset.state = "error";
       return;
     }
-    const projectId = localStorage.getItem("nava_navi_active_project") || "project-general";
-    const threadId = localStorage.getItem("nava_navi_active_thread") || "owner-main";
+    if (typeof window.getNaviActiveContext !== "function") {
+      target.textContent = "اتصال ناوی آماده نیست؛ صفحه را تازه‌سازی و دوباره تلاش کن.";
+      target.dataset.state = "error";
+      return;
+    }
+    const naviContext = await window.getNaviActiveContext();
+    if (!naviContext?.threadId) {
+      target.textContent = "گفت‌وگوی معتبر ناوی پیدا نشد. پنل ناوی را باز کن و دوباره تلاش کن.";
+      target.dataset.state = "error";
+      return;
+    }
     const originalLabel = button?.textContent || "";
     if (button) { button.disabled = true; button.textContent = "در حال تولید خروجی..."; }
     target.textContent = "درخواست به NAVI ارسال شد؛ پاسخ در همین فضای پروژه نمایش داده می‌شود...";
@@ -51,7 +60,7 @@
         body: JSON.stringify({
           message,
           page: window.location.pathname + "#studio-" + service,
-          threadId,
+          threadId: naviContext.threadId,
           saveToMemory: false
         })
       });
