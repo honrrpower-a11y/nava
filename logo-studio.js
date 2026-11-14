@@ -134,8 +134,10 @@
       const result=await response.json();
       if(!response.ok||!result.success){
         status.textContent=result.error||"ساخت لوگو انجام نشد.";
-        if((response.status===401||response.status===429)&&typeof window.openNaviAssistant==="function"){
-          window.openNaviAssistant({service:"طراحی لوگو",context:data});
+        if(response.status===401){
+          status.textContent="نشست ورود معتبر نیست یا منقضی شده است. از حساب NAVI خارج شو و دوباره وارد شو؛ این صفحه را ترک نکن.";
+        } else if(response.status===429){
+          status.textContent=result.error||"سهمیه ساخت لوگو فعلاً در دسترس نیست. این صفحه را ترک نکن؛ جزئیات محدودیت را همین‌جا بررسی می‌کنیم.";
         }
         return;
       }
