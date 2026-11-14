@@ -8,7 +8,7 @@ const html = readFileSync(new URL("../index.html", import.meta.url), "utf8");
 test("Office OCR supports Persian and English recognition in the browser", () => {
   assert.match(office, /tesseract\.js@5\.1\.1/);
   assert.match(office, /createWorker\("fas\+eng",1/);
-  assert.match(office, /worker\.recognize\(canvas\)/);
+  assert.match(office, /ocrWorker\.recognize\(canvas\)/);
   assert.match(office, /worker\.recognize\(file\)/);
 });
 
