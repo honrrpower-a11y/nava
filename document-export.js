@@ -26,14 +26,27 @@ async function word(text,name,button,status){
  button.disabled=true;const label=button.textContent;button.textContent="در حال ساخت Word...";
  try{
   const d=await loadDocx(),{Document,Paragraph,TextRun,Packer,HeadingLevel,AlignmentType}=d,children=[];
-  for(const raw of lines(text)){const x=raw.trim();if(!x){children.push(new Paragraph({text:"",bidirectional:true,alignment:AlignmentType.RIGHT,spacing:{after:100}}));continue;}
-   const h=x.match(/^(#{1,3})\s+(.+)$/),b=x.match(/^[-*•]\s+(.+)$/),n=x.match(/^\d+[.)]\s+(.+)$/);
-   const value=(h?.[2]||b?.[1]||n?.[1]||x).replace(/\*\*(.*?)\*\*/g,"$1").replace(/\x60([^\x60]+)\x60/g,"$1");
-   const opts={bidirectional:true,alignment:AlignmentType.RIGHT,spacing:{after:h?180:100,line:360},children:[new TextRun({text:(b||n?"• ":"")+value,rightToLeft:true,font:"Arial",size:h?30:24,bold:!!h})]};
+  const rtlPattern=/[\\u0590-\\u08FF]/;
+  const latinPattern=/[A-Za-z]/;
+  const directionOf=value=>{
+   const firstRtl=value.search(rtlPattern),firstLatin=value.search(latinPattern);
+   if(firstRtl<0&&firstLatin<0)return "rtl";
+   if(firstRtl<0)return "ltr";
+   if(firstLatin<0)return "rtl";
+   return firstRtl<firstLatin?"rtl":"ltr";
+  };
+  for(const raw of lines(text)){
+   const x=raw.trim();
+   if(!x){children.push(new Paragraph({text:"",bidirectional:true,alignment:AlignmentType.RIGHT,spacing:{after:100}}));continue;}
+   const h=x.match(/^(#{1,3})\\s+(.+)$/),b=x.match(/^[-*•]\\s+(.+)$/),n=x.match(/^\\d+[.)]\\s+(.+)$/);
+   const value=(h?.[2]||b?.[1]||n?.[1]||x).replace(/\\*\\*(.*?)\\*\\*/g,"$1").replace(/\\x60([^\\x60]+)\\x60/g,"$1");
+   const rtl=directionOf(value)==="rtl";
+   const alignment=h?(rtl?AlignmentType.RIGHT:AlignmentType.LEFT):(rtl?(b||n?AlignmentType.RIGHT:AlignmentType.JUSTIFIED):AlignmentType.LEFT);
+   const opts={bidirectional:rtl,alignment,spacing:{after:h?180:100,line:360},children:[new TextRun({text:(b||n?(rtl?"• ":"• "):"")+value,rightToLeft:rtl,font:"Arial",size:h?30:24,bold:!!h})]};
    if(h)opts.heading=h[1].length===1?HeadingLevel.HEADING_1:h[1].length===2?HeadingLevel.HEADING_2:HeadingLevel.HEADING_3;
    children.push(new Paragraph(opts));
   }
-  const doc=new Document({creator:"NAVA",title:name.replace(/\.docx$/i,""),description:"سند ساخته‌شده در استودیوی نوا",sections:[{properties:{page:{margin:{top:1134,right:1134,bottom:1134,left:1134}}},children}]});
+  const doc=new Document({creator:"NAVA",title:name.replace(/\\.docx$/i,""),description:"سند ساخته‌شده در استودیوی نوا",sections:[{properties:{page:{margin:{top:1134,right:1134,bottom:1134,left:1134}}},children}]});
   download(await Packer.toBlob(doc),name);status.textContent="فایل Word ساخته شد و دانلود آن آغاز شد.";
  }catch(e){status.textContent=e.message||"ساخت فایل Word ناموفق بود.";}
  finally{button.disabled=false;button.textContent=label;}
