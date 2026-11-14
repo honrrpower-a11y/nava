@@ -2388,7 +2388,13 @@ async function loadNaviThreads() {
     const data = await response.json();
     if (!response.ok || !data.success) throw new Error(data.error || "دریافت فهرست گفت‌وگوها ناموفق بود.");
     naviThreads = Array.isArray(data.threads) ? data.threads : [];
-    if (!naviThreads.some(item => item.thread_id === naviActiveThreadId)) naviActiveThreadId = naviThreads[0]?.thread_id || "";
+    if (!naviThreads.some(item => item.thread_id === naviActiveThreadId)) {
+      naviActiveThreadId = naviThreads[0]?.thread_id || "";
+    }
+    if (naviActiveThreadId) {
+      setNaviStoredValue("nava_navi_active_thread", naviActiveThreadId);
+    }
+    setNaviStoredValue("nava_navi_active_project", naviActiveProjectId);
     renderNaviThreads();
     return true;
   } catch (error) { console.error("NAVI threads error:", error); return false; }
@@ -2491,6 +2497,53 @@ async function nameNaviThreadFromFirstMessage(message) {
   thread.title = title;
   renderNaviThreads();
 }
+
+// Public bridge for studio handoffs: always resolve a thread from NAVI's
+// authenticated project/thread lists instead of trusting stale localStorage IDs.
+window.getNaviActiveContext = async function () {
+  const token = getNaviToken();
+  if (!token) return null;
+
+  const projectsLoaded = await loadNaviProjects();
+  if (!projectsLoaded || !getNaviToken()) return null;
+
+  const threadsLoaded = await loadNaviThreads();
+  if (!threadsLoaded || !getNaviToken()) return null;
+
+  if (!naviActiveThreadId || !naviThreads.some(item => item.thread_id === naviActiveThreadId)) {
+    try {
+      const response = await fetch(NAVI_THREADS_API, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer " + token
+        },
+        body: JSON.stringify({
+          title: "گفت‌وگوی جدید",
+          projectId: naviActiveProjectId
+        }),
+        cache: "no-store"
+      });
+      const data = await response.json();
+      if (!response.ok || !data.success || !data.thread?.thread_id) {
+        throw new Error(data.error || "ساخت گفت‌وگوی معتبر برای استودیو ناموفق بود.");
+      }
+      naviActiveThreadId = data.thread.thread_id;
+      await loadNaviThreads();
+    } catch (error) {
+      console.error("NAVI studio thread resolution failed:", error);
+      return null;
+    }
+  }
+
+  if (!naviActiveThreadId || !naviThreads.some(item => item.thread_id === naviActiveThreadId)) return null;
+  setNaviStoredValue("nava_navi_active_project", naviActiveProjectId);
+  setNaviStoredValue("nava_navi_active_thread", naviActiveThreadId);
+  return {
+    projectId: naviActiveProjectId,
+    threadId: naviActiveThreadId
+  };
+};
 
 async function createNaviThread() {
   const token = getNaviToken();
