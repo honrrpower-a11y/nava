@@ -222,50 +222,70 @@ document.addEventListener("click", event => {
 const navButtons = document.querySelectorAll(".nav-btn");
 const pages = document.querySelectorAll(".page");
 
-function showPage(pageId) {
-  pages.forEach(page => {
-    page.classList.toggle("active", page.id === pageId);
-  });
+function collectNaviStudioContext(pageId) {
+  const value = id => document.getElementById(id)?.value?.trim() || "";
+  const selected = id => {
+    const field = document.getElementById(id);
+    return field?.selectedOptions?.[0]?.textContent?.trim() || "";
+  };
+  const contexts = {
+    logoPage: {
+      brandName: value("logoBrandName"), slogan: value("logoSlogan"),
+      industry: value("logoIndustry"), audience: value("logoAudience"),
+      personality: selected("logoPersonality"), format: selected("logoFormat"),
+      palette: selected("logoPalette")
+    },
+    brandPage: {
+      brandName: value("brandName"), industry: value("brandIndustry"),
+      audience: value("brandAudience"), personality: selected("brandPersonality"),
+      values: value("brandValues"), difference: value("brandDifference"),
+      promise: value("brandPromise"), competitors: value("brandCompetitors")
+    },
+    contentPage: {
+      platform: selected("contentPlatform"), format: selected("contentFormat"),
+      objective: selected("contentObjective"), tone: selected("contentTone"),
+      topic: value("contentTopic"), audience: value("contentAudience"),
+      keyPoints: value("contentKeyPoints"), callToAction: value("contentCTA"),
+      keywords: value("contentKeywords")
+    },
+    storyPage: { content: value("storyInput") }
+  };
+  return Object.fromEntries(Object.entries(contexts[pageId] || {})
+    .filter(([, item]) => typeof item === "string" && item.trim()));
+}
 
-  navButtons.forEach(button => {
-    button.classList.toggle("active", button.dataset.page === pageId);
-  });
+function syncNaviWidgetMode() {
+  const studioMode = document.body.classList.contains("navi-studio-context");
+  const title = naviWidgetToggle?.querySelector(".navi-widget-toggle-copy strong");
+  if (title) title.textContent = studioMode ? "همراه ناوی" : "گفت‌وگو با ناوی";
+  naviWidgetToggle?.setAttribute("aria-label",
+    studioMode ? "باز کردن همراه ناوی در این استودیو" : "باز کردن گفت‌وگو با ناوی");
+}
+
+function showPage(pageId) {
+  if (naviWidgetPanel && !naviWidgetPanel.hidden) setNaviWidgetOpen(false);
+  pages.forEach(page => page.classList.toggle("active", page.id === pageId));
+  navButtons.forEach(button => button.classList.toggle("active", button.dataset.page === pageId));
 
   const studioByPage = {
-    logoPage: "طراحی لوگو",
-    storyPage: "استوری‌ساز",
+    logoPage: "طراحی لوگو", brandPage: "برندینگ",
+    contentPage: "تولید محتوا", storyPage: "استوری‌ساز",
     musicPage: "تولید موسیقی"
   };
-  if (studioByPage[pageId]) {
-    let studioContext = {};
-    if (pageId === "logoPage") {
-      const value = id => document.getElementById(id)?.value?.trim() || "";
-      const selected = id => {
-        const field = document.getElementById(id);
-        return field?.selectedOptions?.[0]?.textContent?.trim() || "";
-      };
-      studioContext = {
-        brandName: value("logoBrandName"),
-        slogan: value("logoSlogan"),
-        industry: value("logoIndustry"),
-        audience: value("logoAudience"),
-        personality: selected("logoPersonality"),
-        format: selected("logoFormat"),
-        palette: selected("logoPalette")
-      };
-    } else if (pageId === "storyPage") {
-      studioContext = { content: document.getElementById("storyInput")?.value?.trim() || "" };
-    }
-    updateNaviAssistantContext(studioByPage[pageId], studioContext);
-    if (Array.from(serviceSelect.options).some(option => option.value === studioByPage[pageId])) {
-      serviceSelect.value = studioByPage[pageId];
+  const studioName = studioByPage[pageId];
+  document.body.classList.toggle("navi-studio-context", Boolean(studioName));
+  syncNaviWidgetMode();
+
+  if (studioName) {
+    updateNaviAssistantContext(studioName, collectNaviStudioContext(pageId));
+    if (Array.from(serviceSelect.options).some(option => option.value === studioName)) {
+      serviceSelect.value = studioName;
     }
   } else if (pageId === "homePage") {
     naviAssistantContext = null;
     if (naviAssistantContextPanel) naviAssistantContextPanel.hidden = true;
     serviceSelect.value = "انتخاب نشده";
   }
-
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
@@ -425,6 +445,7 @@ function positionNaviWidgetOnOrbit() {
 
 function setNaviWidgetOpen(isOpen, focusComposer = false) {
   if (!naviWidgetPanel || !naviWidgetToggle) return;
+  syncNaviWidgetMode();
 
   if (isOpen && !getNaviToken()) captureNavaReturnContext();
   if (isOpen) positionNaviWidgetOnOrbit();
@@ -434,10 +455,10 @@ function setNaviWidgetOpen(isOpen, focusComposer = false) {
   naviWidgetPanel.classList.toggle("is-open", isOpen);
   document.body.classList.toggle("navi-widget-open", isOpen);
   naviWidgetToggle.setAttribute("aria-expanded", isOpen ? "true" : "false");
-  naviWidgetToggle.setAttribute(
-    "aria-label",
-    isOpen ? "بستن گفت‌وگو با ناوی" : "باز کردن گفت‌وگو با ناوی"
-  );
+  const studioMode = document.body.classList.contains("navi-studio-context");
+  naviWidgetToggle.setAttribute("aria-label",
+    isOpen ? "بستن همراه ناوی" :
+    studioMode ? "باز کردن همراه ناوی در این استودیو" : "باز کردن گفت‌وگو با ناوی");
 
   if (!isOpen) {
     naviWidgetPanel.style.removeProperty("--navi-panel-top");
@@ -481,7 +502,7 @@ document.addEventListener("keydown", event => {
 
 function normalizeNaviStudioContext(context) {
   if (!context || typeof context !== "object" || Array.isArray(context)) return {};
-  const allowed = ["brandName","slogan","industry","audience","personality","format","palette","content","goal"];
+  const allowed = ["brandName","slogan","industry","audience","personality","format","palette","content","goal","values","difference","promise","competitors","platform","objective","topic","tone","keyPoints","callToAction","keywords"];
   const result = {};
   for (const key of allowed) {
     const value = context[key];
@@ -497,7 +518,10 @@ function updateNaviAssistantContext(service, context = {}) {
   if (naviAssistantContextSummary) {
     const labels = {
       brandName: "نام برند", slogan: "شعار", industry: "حوزه", audience: "مخاطب",
-      personality: "شخصیت", format: "ساختار", palette: "رنگ‌ها", content: "محتوا", goal: "هدف"
+      personality: "شخصیت", format: "ساختار", palette: "رنگ‌ها", content: "محتوا", goal: "هدف",
+      values: "ارزش‌ها", difference: "تمایز", promise: "وعده برند", competitors: "رقبا",
+      platform: "پلتفرم", objective: "هدف محتوا", topic: "موضوع", tone: "لحن",
+      keyPoints: "نکات کلیدی", callToAction: "دعوت به اقدام", keywords: "کلیدواژه‌ها"
     };
     const lines = Object.entries(normalized).map(([key, value]) => (labels[key] || key) + ": " + value);
     naviAssistantContextSummary.textContent = lines.length ? lines.join(" • ") : "ناوی می‌داند اکنون در این استودیو هستی.";
@@ -515,7 +539,10 @@ window.openNaviAssistant = function(options = {}) {
   const service = String(options.service || "گفت‌وگوی عمومی");
   const available = Array.from(serviceSelect.options).some(option => option.value === service);
   if (available) serviceSelect.value = service;
-  updateNaviAssistantContext(service, options.context || {});
+  const pageId = document.querySelector(".page.active")?.id;
+  const context = options.context && Object.keys(options.context).length
+    ? options.context : collectNaviStudioContext(pageId);
+  updateNaviAssistantContext(service, context);
   if (typeof options.message === "string" && options.message.trim()) userRequest.value = options.message.trim();
   setNaviWidgetOpen(true, true);
 };

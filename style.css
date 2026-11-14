@@ -2351,3 +2351,145 @@ body.light .navi-dashboard-project{background:rgba(255,255,255,.62)}
 body.light .navi-dashboard-stats>div{background:rgba(255,255,255,.68)}
 @media(max-width:420px){.navi-account-dashboard{padding:14px;border-radius:16px}.navi-account-dashboard h2{font-size:17px}.navi-dashboard-project{gap:7px;padding:9px}.navi-dashboard-project>button{font-size:8px;padding:7px 6px}.navi-dashboard-stats>div{padding:8px}.navi-dashboard-hint{flex-basis:100%}}
 @media(prefers-reduced-motion:reduce){.navi-dashboard-primary{transition:none}}
+
+
+/* NAVI STUDIO COMPANION
+   Compact popover anchored to the studio launcher; same authenticated NAVI thread and memory. */
+body.navi-studio-context .navi-assistant-widget {
+  position: fixed !important;
+  top: calc(124px + env(safe-area-inset-top, 0px)) !important;
+  right: auto !important;
+  bottom: auto !important;
+  left: 16px !important;
+  z-index: 1400 !important;
+  max-width: calc(100vw - 32px);
+}
+body.navi-studio-context .navi-widget-toggle {
+  min-height: 45px;
+  padding: 7px 12px;
+  border: 1px solid rgba(37,202,255,.38);
+  border-radius: 14px;
+  background: linear-gradient(125deg,rgba(13,27,45,.97),rgba(24,39,57,.96));
+  box-shadow: 0 8px 26px rgba(0,0,0,.24),0 0 18px rgba(37,202,255,.10);
+}
+body.light.navi-studio-context .navi-widget-toggle {
+  background: linear-gradient(125deg,rgba(255,255,255,.98),rgba(239,246,251,.98));
+}
+body.navi-studio-context .navi-widget-panel,
+body.navi-studio-context .navi-widget-panel.is-open {
+  position: absolute !important;
+  top: calc(100% + 9px) !important;
+  left: 0 !important;
+  right: auto !important;
+  bottom: auto !important;
+  width: min(410px,calc(100vw - 32px)) !important;
+  height: min(590px,64dvh) !important;
+  min-height: 270px !important;
+  max-height: calc(100dvh - 170px) !important;
+  margin: 0 !important;
+  transform: none !important;
+  transform-origin: top left !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+  border: 1px solid rgba(37,202,255,.26);
+  border-radius: 18px !important;
+  box-shadow: 0 18px 54px rgba(0,0,0,.38),0 0 26px rgba(37,202,255,.10);
+}
+body.navi-studio-context .navi-widget-panel.is-open {
+  display: flex !important;
+  animation: naviStudioPopoverIn .2s ease-out both !important;
+}
+@keyframes naviStudioPopoverIn {
+  from { opacity: 0; transform: translateY(-7px) scale(.985) !important; }
+  to { opacity: 1; transform: none !important; }
+}
+body.navi-studio-context .navi-widget-panel .navi-widget-panel-head {
+  flex: 0 0 49px;
+  min-height: 49px;
+}
+body.navi-studio-context .navi-widget-panel .navi-assistant-context {
+  flex: 0 0 auto;
+  max-height: 62px;
+  overflow: auto;
+  margin: 6px 10px 0;
+  padding: 6px 9px;
+}
+body.navi-studio-context .navi-widget-panel .request-panel {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+body.navi-studio-context .navi-widget-panel .request-content {
+  min-height: 0;
+  padding: 9px 12px 13px;
+}
+body.navi-studio-context .navi-widget-panel .navi-account-dashboard,
+body.navi-studio-context .navi-widget-panel .navi-chat-toolbar,
+body.navi-studio-context .navi-widget-panel .navi-workspace-tabs,
+body.navi-studio-context .navi-widget-panel .navi-thread-toolbar,
+body.navi-studio-context .navi-widget-panel .navi-thread-list,
+body.navi-studio-context .navi-widget-panel #naviHistoryToggle,
+body.navi-studio-context .navi-widget-panel #naviHistoryContent,
+body.navi-studio-context .navi-widget-panel #serviceSelect,
+body.navi-studio-context .navi-widget-panel label[for="serviceSelect"] {
+  display: none !important;
+}
+body.navi-studio-context .navi-widget-panel .request-content:has(#naviChatArea:not([hidden])) > h2,
+body.navi-studio-context .navi-widget-panel .request-content:has(#naviChatArea:not([hidden])) > p {
+  display: none !important;
+}
+body.navi-studio-context .navi-widget-panel .navi-workspace-panel[data-navi-panel="chat"] {
+  padding-top: 0;
+}
+body.navi-studio-context .navi-widget-panel .request-textarea {
+  min-height: 82px;
+  max-height: 140px;
+}
+body.navi-studio-context .navi-widget-panel .navi-send-toolbar {
+  margin: 8px 0 3px;
+}
+body.navi-studio-context .navi-widget-panel .navi-send-toolbar .btn-primary {
+  min-height: 41px;
+}
+@media (max-width: 600px) {
+  body.navi-studio-context .navi-assistant-widget {
+    top: calc(112px + env(safe-area-inset-top, 0px)) !important;
+    left: 10px !important;
+    max-width: calc(100vw - 20px);
+  }
+  body.navi-studio-context .navi-widget-toggle {
+    min-height: 42px;
+    padding: 6px 9px;
+  }
+  body.navi-studio-context .navi-widget-panel,
+  body.navi-studio-context .navi-widget-panel.is-open {
+    top: calc(100% + 8px) !important;
+    left: 0 !important;
+    width: calc(100vw - 20px) !important;
+    height: min(58dvh,490px) !important;
+    min-height: 245px !important;
+    max-height: calc(100dvh - 140px) !important;
+    border-radius: 16px !important;
+  }
+  body.navi-studio-context .navi-widget-panel .navi-widget-panel-head {
+    flex-basis: 45px;
+    min-height: 45px;
+  }
+  body.navi-studio-context .navi-widget-panel .navi-assistant-context {
+    max-height: 52px;
+    margin: 5px 8px 0;
+  }
+  body.navi-studio-context .navi-widget-panel .request-content {
+    padding: 8px 10px 12px;
+  }
+  body.navi-studio-context .navi-widget-panel .request-textarea {
+    min-height: 70px;
+    max-height: 108px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  body.navi-studio-context .navi-widget-panel.is-open { animation: none !important; }
+}
