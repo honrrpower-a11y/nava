@@ -28,3 +28,9 @@ textarea.nava-strategy-control{min-height:94px;resize:vertical;line-height:1.8}
 .nava-strategy-guide li strong{color:var(--text)}
 .nava-strategy-note{margin-top:15px;padding:12px;border-radius:12px;background:var(--panel2);border:1px solid var(--border);font-size:11px;color:var(--muted);line-height:1.9}
 @media(max-width:760px){.nava-strategy-layout{grid-template-columns:1fr}.nava-strategy-head{align-items:flex-start;flex-direction:column}.nava-strategy-fields{grid-template-columns:1fr}.nava-strategy-field.full{grid-column:auto}.nava-strategy-form,.nava-strategy-guide{padding:17px}.nava-strategy-intro{padding:19px}}
+
+/* NAVA local document export controls */
+.nava-export-actions{display:flex;flex-wrap:wrap;align-items:center;gap:9px;margin-top:14px;padding-top:13px;border-top:1px solid var(--border)}
+.nava-export-actions button{min-height:42px;padding:9px 15px}
+.nava-export-status{flex:1 1 100%;min-height:20px;margin:0;color:var(--muted);font-size:11px;line-height:1.8}
+.nava-export-actions button:disabled{opacity:.65;cursor:wait}
