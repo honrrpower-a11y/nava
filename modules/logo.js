@@ -148,36 +148,46 @@ async function planBrandConcepts(data, apiKey) {
 function buildPrompt(data, direction, strategy) {
   const paletteSpec = getPaletteSpec(data);
   const format = safeText(data.format, 40);
+  const clip = (value, max) => safeText(value, max);
   const formatGuidance = format === "wordmark"
-    ? "Create a true typographic wordmark; lettering is the primary logo, not a separate icon."
+    ? "True typographic wordmark; lettering is primary, not a separate icon."
     : format === "monogram"
-      ? "Create a custom monogram based on the brand name or initials; letters may be visible if legible."
-      : "Create a coherent combination mark with a symbol and reserved space for separately typeset brand lettering.";
-  // Keep the strongest semantic instructions first. Never truncate the end of a
-  // long prompt, because that used to silently remove palette and render constraints.
+      ? "Custom monogram based on the brand name or initials."
+      : "Coherent combination mark; reserve space for separately typeset brand lettering.";
+  // Compact each variable field independently. Never remove the palette,
+  // requested format or final logo constraints to make the prompt fit.
   const lines = [
-    "Create a professional, commercially usable logo identity. This is a logo, not an illustration, poster, mascot scene or decorative AI artwork.",
-    "Brand: " + data.brandName + ". Business: " + (data.industry || "not specified") + ". Audience: " + (data.audience || "not specified") + ".",
-    "Brand personality: " + (data.personality || "not specified") + ".",
-    "Brand essence: " + (strategy.brandCore || "") + ". Strategy: " + (strategy.strategy || "") + ".",
-    "Selected logo form: " + direction.title + ". Concept: " + direction.conceptTitle + ". Why it fits: " + direction.rationale + ".",
-    "Visual construction: " + direction.visualGrammar + ".",
-    "Draw this specific idea: " + direction.conceptIdea + ". Silhouette: " + direction.silhouette + ". Composition: " + direction.composition + ".",
-    "Avoid: " + (direction.avoid || "generic stock icons, unrelated symbols, visual clichés") + ".",
-    "User's explicit symbol brief: " + (data.symbolIdea || "none supplied") + ". Respect it when provided; do not invent unrelated imagery.",
-    "Requested format: " + format + ". " + formatGuidance,
+    "Professional commercially usable logo, not an illustration, poster, scene or decorative AI artwork.",
+    "Brand: " + clip(data.brandName, 48) + ". Business: " + clip(data.industry || "not specified", 75) + ". Audience: " + clip(data.audience || "not specified", 75) + ".",
+    "Personality: " + clip(data.personality || "not specified", 55) + ". Brand essence: " + clip(strategy.brandCore, 110) + ".",
+    "Strategy: " + clip(strategy.strategy, 125) + ".",
+    "Logo form: " + clip(direction.title, 55) + ". Concept: " + clip(direction.conceptTitle, 75) + ". Fit: " + clip(direction.rationale, 105) + ".",
+    "Visual construction: " + clip(direction.visualGrammar, 110) + ".",
+    "Draw this idea: " + clip(direction.conceptIdea, 140) + ". Silhouette: " + clip(direction.silhouette, 80) + ". Composition: " + clip(direction.composition, 90) + ".",
+    "Avoid: " + clip(direction.avoid || "generic stock icons, unrelated symbols and clichés", 75) + ".",
+    "User symbol brief: " + clip(data.symbolIdea || "none supplied", 115) + ". Respect it; do not invent unrelated imagery.",
+    "Format: " + format + ". " + formatGuidance,
     "Palette: " + paletteSpec.instruction,
-    "Typography reference: " + (data.typography || "clear, distinctive brand typography") + ".",
-    "Visual requirements: one centered logo on a plain white background; strong memorable silhouette; simple vector-like flat shapes; deliberate negative space; balanced proportions; recognizable at 24px; clean professional brand identity.",
-    "Strict exclusions: no mockup, no 3D, no gradients, no scene, no extra objects, no random abstract blobs, no stock clip-art, no watermark, no slogan or decorative text."
+    "Typography: " + clip(data.typography || "distinctive, clear brand typography", 65) + ".",
+    "One centered logo on plain white; strong memorable silhouette; flat vector-like shapes; deliberate negative space; balanced proportions; legible at 24px.",
+    "No mockup, 3D, gradients, scene, extra objects, random blobs, stock clip-art, watermark, slogan or decorative text."
   ];
   let prompt = lines.join("\n");
-  // Enforce model limit without cutting a line or dropping the final constraints.
-  while (prompt.length > 2048 && lines.length > 8) {
-    lines.splice(7, 1);
-    prompt = lines.join("\n");
+  if (prompt.length > 2048) {
+    // Reduce only descriptive prose; preserve the user's brief, chosen form,
+    // palette and non-negotiable rendering constraints.
+    const reductions = [
+      [5, 75], [6, 90], [3, 80], [4, 80], [7, 55], [2, 75], [1, 90]
+    ];
+    for (const [index, max] of reductions) {
+      if (prompt.length <= 2048) break;
+      lines[index] = clip(lines[index], max);
+      prompt = lines.join("\n");
+    }
   }
-  if (prompt.length > 2048) prompt = prompt.slice(0, 2048);
+  if (prompt.length > 2048) {
+    throw new Error("Logo prompt exceeds the image model's 2048-character limit.");
+  }
   return prompt;
 }
 
