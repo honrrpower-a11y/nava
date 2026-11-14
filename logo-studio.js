@@ -168,7 +168,9 @@
       empty.hidden=true;
       status.textContent=result.visualReview?.status==="completed"
         ?"سه کانسپت ساخته و با ارزیابی تصویری بررسی شدند. امتیازها و پیشنهادهای اصلاح هر طرح را ببین."
-        :"سه کانسپت ساخته شدند. ارزیابی تصویری هنوز فعال نیست و هیچ امتیاز کیفیتی به‌صورت حدسی نمایش داده نمی‌شود.";
+        :result.visualReview?.status==="unavailable"
+          ?"سه کانسپت ساخته شدند، اما سرویس ارزیابی تصویری پاسخ نداد. هیچ امتیاز حدسی نمایش داده نمی‌شود."
+          :"سه کانسپت ساخته شدند. ارزیابی تصویری هنوز توسط مدیر نوا فعال نشده و هیچ امتیاز کیفیتی به‌صورت حدسی نمایش داده نمی‌شود.";
       results.scrollIntoView({behavior:"smooth",block:"start"});
     } catch(error) {
       status.textContent=error.name==="AbortError"
