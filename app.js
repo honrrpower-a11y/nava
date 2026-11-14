@@ -232,8 +232,10 @@ function collectNaviStudioContext(pageId) {
     logoPage: {
       brandName: value("logoBrandName"), slogan: value("logoSlogan"),
       industry: value("logoIndustry"), audience: value("logoAudience"),
+      symbolIdea: value("logoSymbolIdea"), typography: selected("logoTypography"),
       personality: selected("logoPersonality"), format: selected("logoFormat"),
-      palette: selected("logoPalette")
+      palette: selected("logoPalette"),
+      primaryColor: value("logoPrimaryColor"), darkColor: value("logoDarkColor")
     },
     brandPage: {
       brandName: value("brandName"), industry: value("brandIndustry"),
