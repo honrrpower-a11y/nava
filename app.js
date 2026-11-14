@@ -293,6 +293,54 @@ navButtons.forEach(button => {
   button.addEventListener("click", () => showPage(button.dataset.page));
 });
 
+/*
+ * Keep NAVI's active studio brief synchronized with the form while the user works.
+ * This only updates local context; it does not call the AI API or write to memory.
+ */
+function syncNaviStudioContextFromActivePage() {
+  if (!document.body.classList.contains("navi-studio-context")) return;
+
+  const activePage = document.querySelector(".page.active");
+  if (!activePage) return;
+
+  const studioByPage = {
+    logoPage: "طراحی لوگو",
+    brandPage: "برندینگ",
+    contentPage: "تولید محتوا",
+    storyPage: "استوری‌ساز",
+    musicPage: "تولید موسیقی"
+  };
+  const studioName = studioByPage[activePage.id];
+  if (!studioName) return;
+
+  updateNaviAssistantContext(studioName, collectNaviStudioContext(activePage.id));
+}
+
+function handleNaviStudioFieldChange(event) {
+  const field = event.target;
+  if (!(field instanceof Element) ||
+      !field.matches("input, textarea, select")) return;
+
+  const fieldType = String(field.type || "").toLowerCase();
+  if (["password", "file", "hidden"].includes(fieldType)) return;
+
+  const activePage = field.closest(".page.active");
+  if (!activePage || !activePage.contains(field)) return;
+
+  syncNaviStudioContextFromActivePage();
+}
+
+// Delegated listeners also cover controls added to a studio after page load.
+document.addEventListener("input", handleNaviStudioFieldChange, true);
+document.addEventListener("change", handleNaviStudioFieldChange, true);
+
+// Native form resets fire before browser controls receive their reset values.
+document.addEventListener("reset", event => {
+  const form = event.target;
+  if (!(form instanceof Element) || !form.matches("form")) return;
+  window.setTimeout(syncNaviStudioContextFromActivePage, 0);
+}, true);
+
 /* NAVA THEME */
 
 function applyNavaTheme(theme) {
