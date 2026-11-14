@@ -56,43 +56,22 @@ function buildPrompt(data, direction) {
   ].join("\n");
 }
 
-async function generateOne({ prompt, apiKey }) {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 55000);
-  try {
-    const response = await fetch("https://fal.run/fal-ai/flux/dev", {
-      method: "POST",
-      headers: {
-        "Authorization": "Key " + apiKey,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        prompt,
-        image_size: "square_hd",
-        num_images: 1,
-        num_inference_steps: 28,
-        guidance_scale: 3.5,
-        output_format: "png",
-        enable_safety_checker: true
-      }),
-      signal: controller.signal
-    });
-    let result;
-    try { result = await response.json(); }
-    catch { throw new Error("Image provider returned an unreadable response."); }
-    if (!response.ok) {
-      const error = new Error("Image provider request failed.");
-      error.status = response.status;
-      throw error;
-    }
-    const image = Array.isArray(result.images) ? result.images[0] : null;
-    if (!image || typeof image.url !== "string" || !image.url.startsWith("https://")) {
-      throw new Error("Image provider did not return a valid image.");
-    }
-    return image;
-  } finally {
-    clearTimeout(timer);
+async function generateOne({ prompt, ai }) {
+  if (!ai || typeof ai.run !== "function") {
+    throw new Error("Cloudflare Workers AI binding is not enabled.");
   }
+  const result = await ai.run("@cf/black-forest-labs/flux-1-schnell", {
+    prompt: prompt.slice(0, 2048),
+    steps: 4
+  });
+  if (!result || typeof result.image !== "string" || !result.image.length) {
+    throw new Error("Cloudflare Workers AI returned no image.");
+  }
+  return {
+    dataUri: "data:image/jpeg;charset=utf-8;base64," + result.image,
+    width: 512,
+    height: 512
+  };
 }
 
 export async function handleLogoRoute({ request, env, origin, corsOrigin }) {
@@ -102,8 +81,8 @@ export async function handleLogoRoute({ request, env, origin, corsOrigin }) {
   if (request.method !== "POST") {
     return fail("روش درخواست پشتیبانی نمی‌شود.", 405, corsOrigin);
   }
-  if (!env.FAL_KEY) {
-    return fail("موتور طراحی تصویری هنوز به حساب تولید تصویر متصل نشده است. تنظیم امن کلید سرویس لازم است.", 503, corsOrigin, {
+  if (!env.AI || typeof env.AI.run !== "function") {
+    return fail("سرویس رایگان تولید تصویر در Cloudflare هنوز فعال نشده است.", 503, corsOrigin, {
       code: "LOGO_IMAGE_PROVIDER_NOT_CONFIGURED"
     });
   }
@@ -147,26 +126,28 @@ export async function handleLogoRoute({ request, env, origin, corsOrigin }) {
 
   const prompts = DIRECTIONS.map(direction => buildPrompt(data, direction));
   try {
-    const images = await Promise.all(prompts.map(prompt => generateOne({ prompt, apiKey: env.FAL_KEY })));
+    const images = [];
+    // Sequential calls reduce burst pressure on the shared free daily allocation.
+    for (const prompt of prompts) {
+      images.push(await generateOne({ prompt, ai: env.AI }));
+    }
     return json({
       success: true,
       brandName: data.brandName,
       remaining: quota.remaining ?? null,
       images: images.map((image, index) => ({
-        url: image.url,
-        width: image.width || 1024,
-        height: image.height || 1024,
+        url: image.dataUri,
+        width: image.width,
+        height: image.height,
         concept: DIRECTIONS[index].title
       }))
     }, 200, corsOrigin);
   } catch (error) {
     console.error("[NAVA LOGO] Image generation failed:", String(error?.message || error).slice(0, 300));
-    if (error?.name === "AbortError") {
-      return fail("زمان ساخت تصویر تمام شد. دوباره تلاش کن.", 504, corsOrigin);
+    const message = String(error?.message || "");
+    if (/limit|quota|exceed|daily|neurons|capacity/i.test(message)) {
+      return fail("سهمیه رایگان روزانه ساخت تصویر تمام شده است. پس از بازنشانی سهمیه دوباره تلاش کن؛ هیچ مسیر پولی جایگزین نمی‌شود.", 429, corsOrigin, { code: "FREE_IMAGE_QUOTA_EXHAUSTED" });
     }
-    if (error?.status === 401 || error?.status === 403) {
-      return fail("کلید سرویس تصویر معتبر نیست یا دسترسی ساخت تصویر ندارد.", 502, corsOrigin);
-    }
-    return fail("ساخت کانسپت‌ها انجام نشد. اعتبار سرویس تصویر و وضعیت آن را بررسی کن.", 502, corsOrigin);
+    return fail("ساخت کانسپت‌ها انجام نشد. وضعیت سرویس رایگان Cloudflare را بررسی کن و دوباره تلاش کن.", 502, corsOrigin);
   }
 }
