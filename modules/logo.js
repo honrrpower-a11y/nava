@@ -441,6 +441,7 @@ export async function handleLogoRoute({ request, env, origin, corsOrigin }) {
         concept: concepts[index].conceptTitle,
         description: concepts[index].rationale,
         visualDirection: concepts[index].conceptIdea,
+        review: visualReview.status === "completed" ? visualReview.items[index] : null,
         directionId: concepts[index].id
       }))
     }, 200, corsOrigin);
