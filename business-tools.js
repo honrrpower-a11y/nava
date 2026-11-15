@@ -89,5 +89,6 @@
     }
     setTimeout(()=>{button.textContent="کپی گزارش"},1800);
   });
+  window.NavaBusinessTools = { getReport: () => latestReport };
   calculate(false);
 })();
