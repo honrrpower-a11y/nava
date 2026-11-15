@@ -264,12 +264,15 @@ export async function handleLogoRoute({ request, env, origin, corsOrigin }) {
     personalityValue: safeText(input?.personalityValue, 30),
     typography: safeText(input?.typography, 80),
     typographyValue: safeText(input?.typographyValue, 30),
-    format: input?.format,
+    format: ["combination", "wordmark", "monogram"].includes(input?.format) ? input.format : "",
     formatLabel: safeText(input?.formatLabel, 60),
     palette: safeText(input?.palette, 80),
     primaryColor: safeText(input?.primaryColor, 12),
     darkColor: safeText(input?.darkColor, 12)
   };
+  if (!["combination", "wordmark", "monogram"].includes(data.format)) {
+    return fail("ساختار لوگوی انتخاب‌شده معتبر نیست. دوباره از فرم سایت انتخاب کن.", 400, corsOrigin);
+  }
   if (!/^#[0-9a-fA-F]{6}$/.test(data.primaryColor) || !/^#[0-9a-fA-F]{6}$/.test(data.darkColor)) {
     return fail("رنگ‌های انتخاب‌شده از سایت معتبر نیستند. پالت را دوباره انتخاب کن.", 400, corsOrigin);
   }
