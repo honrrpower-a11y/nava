@@ -30,11 +30,11 @@ test("business profile accepts supported types and normalizes optional fields", 
     businessType: "store",
     industry: "مواد غذایی",
     description: "فروش محصولات محلی",
-    currency: "irr"
+    currency: "toman"
   });
   assert.equal(result.value.name, "فروشگاه آزمایشی");
   assert.equal(result.value.business_type, "store");
-  assert.equal(result.value.currency, "IRR");
+  assert.equal(result.value.currency, "TOMAN");
 });
 
 test("business profile rejects short names and unsupported types", async () => {
@@ -88,7 +88,7 @@ test("financial records reject malformed periods, empty reports and oversized pa
 test("business advisor context contains only bounded profile and financial report fields", async () => {
   const api = await loadBusinessApi();
   const context = api.buildBusinessAdvisorContext(
-    { name: "فروشگاه", business_type: "store", industry: "مواد غذایی", description: "فروش محلی", currency: "IRR" },
+    { name: "فروشگاه", business_type: "store", industry: "مواد غذایی", description: "فروش محلی", currency: "TOMAN" },
     [{
       record_type: "cost_calculation",
       title: "قیمت تمام‌شده",
@@ -114,4 +114,55 @@ test("business advisor context remains bounded when report text is oversized", a
     }))
   );
   assert.ok(context.length <= 20000);
+});
+
+
+async function loadBusinessTransactionApi() {
+  let source = await readFile(new URL("../modules/business-transactions.js", import.meta.url), "utf8");
+  source = source
+    .replace(/^import\s+.*?;\s*$/gm, "")
+    .replace(/\bexport\s+(?=(?:async\s+)?function)/g, "");
+  source += "\nglobalThis.__transactionApi = { normalizeBusinessTransactionInput };";
+  const sandbox = {
+    console, JSON, Object, String, Number, Date, Set,
+    safeNaviText(value, maxLength = 3000) {
+      return String(value ?? "").replace(/\u0000/g, "").replace(/[\u0001-\u0008\u000B\u000C\u000E-\u001F]/g, "").trim().slice(0, maxLength);
+    }
+  };
+  vm.runInNewContext(source, sandbox);
+  return sandbox.__transactionApi;
+}
+
+test("business transactions accept Toman sales and expenses with valid dates", async () => {
+  const api = await loadBusinessTransactionApi();
+  const sale = api.normalizeBusinessTransactionInput({
+    transactionType: "sale", title: "فروش محصول", amountToman: 200000,
+    transactionDate: "2026-11-15", category: "فروش", quantity: 10, unitPriceToman: 20000
+  });
+  assert.equal(sale.value.transaction_type, "sale");
+  assert.equal(sale.value.amount_toman, 200000);
+  assert.equal(sale.value.quantity, 10);
+  const expense = api.normalizeBusinessTransactionInput({
+    transactionType: "expense", title: "خرید مواد اولیه", amountToman: 85000,
+    transactionDate: "2026-11-15", category: "مواد اولیه"
+  });
+  assert.equal(expense.value.transaction_type, "expense");
+  assert.equal(expense.value.amount_toman, 85000);
+});
+
+test("business transactions reject invalid amounts, dates and inconsistent sales", async () => {
+  const api = await loadBusinessTransactionApi();
+  const base = { transactionType: "sale", title: "فروش محصول", amountToman: 200000, transactionDate: "2026-11-15" };
+  assert.match(api.normalizeBusinessTransactionInput({ ...base, amountToman: 200000.5 }).error, /عدد صحیح/);
+  assert.match(api.normalizeBusinessTransactionInput({ ...base, transactionDate: "2026-02-30" }).error, /تاریخ/);
+  assert.match(api.normalizeBusinessTransactionInput({ ...base, quantity: 3, unitPriceToman: 50000 }).error, /برابر/);
+  assert.match(api.normalizeBusinessTransactionInput({ ...base, transactionType: "expense", quantity: 2 }).error, /هزینه/);
+});
+
+test("business transaction partial updates accept only supplied valid fields", async () => {
+  const api = await loadBusinessTransactionApi();
+  const result = api.normalizeBusinessTransactionInput({ title: "اصلاح عنوان", amountToman: 125000 }, true);
+  assert.equal(result.value.title, "اصلاح عنوان");
+  assert.equal(result.value.amount_toman, 125000);
+  assert.equal(result.value.transaction_date, undefined);
 });
