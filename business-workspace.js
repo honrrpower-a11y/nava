@@ -205,6 +205,57 @@
     }
   });
 
+  const advisorButton = $("bizNaviAskButton");
+  const advisorQuestion = $("bizNaviQuestion");
+  const advisorOutput = $("bizNaviAdvisorOutput");
+  advisorButton?.addEventListener("click", async () => {
+    const business = selectedBusiness();
+    if (!business) { setStatus("ابتدا یک پرونده کسب‌وکار انتخاب کن."); return; }
+    if (!getToken()) { setStatus("برای گفت‌وگو با NAVI ابتدا وارد حساب شو."); return; }
+    if (typeof window.getNaviActiveContext !== "function") {
+      advisorOutput.textContent = "اتصال گفت‌وگوی NAVI آماده نیست؛ صفحه را تازه‌سازی کن و دوباره تلاش کن.";
+      return;
+    }
+    const question = advisorQuestion?.value.trim() ||
+      "بر اساس اطلاعات پرونده فعال و گزارش‌های مالی ذخیره‌شده، وضعیت این کسب‌وکار را تحلیل کن. اعداد مهم، نکات مثبت، ریسک‌ها و سه اقدام عملی اولویت‌دار را جداگانه توضیح بده. اگر داده کافی وجود ندارد، دقیقاً بگو چه اطلاعاتی کم است و هیچ عددی را حدس نزن.";
+    advisorButton.disabled = true;
+    advisorButton.textContent = "در حال بررسی پرونده...";
+    advisorOutput.textContent = "در حال دریافت سوابق امن پرونده و ارسال پرسش به NAVI...";
+    try {
+      const naviContext = await window.getNaviActiveContext();
+      if (!naviContext?.threadId) throw new Error("گفت‌وگوی معتبری با NAVI پیدا نشد. پنل NAVI را باز کن و دوباره تلاش کن.");
+      const response = await fetch("https://nava-music-api.honrrpower.workers.dev/navi-chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer " + getToken()
+        },
+        body: JSON.stringify({
+          message: question,
+          page: window.location.pathname + "#business-" + business.id,
+          threadId: naviContext.threadId,
+          saveToMemory: false,
+          businessId: business.id
+        })
+      });
+      const data = await response.json().catch(() => ({}));
+      if (response.status === 401 || response.status === 403) {
+        throw new Error("نشست NAVI معتبر نیست یا پایان یافته است. دوباره وارد حساب شو.");
+      }
+      if (!response.ok || !data.success || !String(data.reply || "").trim()) {
+        throw new Error(data.error || data.diagnostic || "تحلیل پرونده توسط NAVI ناموفق بود.");
+      }
+      advisorOutput.textContent = String(data.reply).trim();
+      advisorOutput.dataset.state = "success";
+    } catch (error) {
+      advisorOutput.textContent = error?.message || "ارتباط با NAVI برقرار نشد. دوباره تلاش کن.";
+      advisorOutput.dataset.state = "error";
+    } finally {
+      advisorButton.disabled = false;
+      advisorButton.textContent = "تحلیل پرونده با NAVI";
+    }
+  });
+
   saveButton.addEventListener("click", async () => {
     const business = selectedBusiness();
     const report = window.NavaBusinessTools?.getReport?.() || "";
