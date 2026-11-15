@@ -29,7 +29,8 @@
       format:paletteKey?fields.format.value:"combination",
       formatLabel:fields.format.selectedOptions[0]?.textContent.trim()||"",
       palette:paletteNames[paletteKey]||paletteKey,
-      primaryColor:fields.primaryColor.value,darkColor:fields.darkColor.value
+      primaryColor:paletteKey==="custom"?fields.primaryColor.value:(fields.palette.selectedOptions[0]?.dataset.foreground||""),
+      darkColor:paletteKey==="custom"?fields.darkColor.value:(fields.palette.selectedOptions[0]?.dataset.background||"")
     };
   }
   function addTextLockup(card,data) {
