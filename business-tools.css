@@ -167,6 +167,14 @@
 #bizPage .biz-dashboard-heading h3{margin:6px 0;font-size:19px}
 #bizPage .biz-dashboard-heading p{margin:0;color:var(--muted);font-size:11px;line-height:1.8}
 #bizPage .biz-dashboard-period{flex-shrink:0;padding:6px 10px;border:1px solid var(--border);border-radius:20px;color:var(--gold);font-size:10px}
+#bizPage .biz-dashboard-filters{display:grid;gap:10px;padding:13px;border:1px solid var(--border);border-radius:13px;background:var(--panel2)}
+#bizPage .biz-dashboard-filter-field{display:grid;gap:6px;min-width:0;color:var(--muted);font-size:11px}
+#bizPage .biz-dashboard-filter-field select,#bizPage .biz-dashboard-filter-field input{width:100%;min-width:0;min-height:40px;padding:8px 10px;border:1px solid var(--border);border-radius:9px;background:var(--panel);color:var(--text);font:inherit;font-size:12px}
+#bizPage .biz-dashboard-filter-group{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+#bizPage .biz-dashboard-filter-actions{display:flex;gap:8px;flex-wrap:wrap}
+#bizPage .biz-dashboard-filter-actions button{min-height:38px;padding:8px 14px;border:1px solid var(--border);border-radius:9px;background:var(--panel);color:var(--text);font:inherit;font-size:11px;cursor:pointer}
+#bizPage .biz-dashboard-filter-actions button:first-child{border-color:color-mix(in srgb,var(--gold) 45%,var(--border));color:var(--gold)}
+#bizPage .biz-dashboard-filter-status{min-height:16px;margin:0;color:var(--muted);font-size:10px}
 #bizPage .biz-dashboard-kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
 #bizPage .biz-dashboard-kpi{display:grid;gap:8px;min-width:0;padding:14px;border:1px solid var(--border);border-radius:13px;background:var(--panel2)}
 #bizPage .biz-dashboard-kpi>span{color:var(--muted);font-size:11px}
