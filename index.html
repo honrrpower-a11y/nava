@@ -541,7 +541,22 @@
           <label class="biz-field"><span>نوع تراکنش</span><select id="bizTransactionType"><option value="sale">فروش ثبت‌شده</option><option value="expense">هزینه ثبت‌شده</option></select></label>
           <label class="biz-field"><span>عنوان</span><input id="bizTransactionTitle" type="text" maxlength="160" placeholder="مثلاً فروش محصول یا خرید مواد اولیه" required></label>
           <label class="biz-field"><span>مبلغ (تومان)</span><input id="bizTransactionAmount" type="number" min="1" max="1000000000000" step="1" inputmode="numeric" placeholder="مثلاً ۲۰۰۰۰۰" required></label>
-          <label class="biz-field"><span>تاریخ</span><input id="bizTransactionDate" type="date" required></label>
+          <label class="biz-field biz-transaction-date-field"><span>تاریخ شمسی</span>
+            <div class="biz-persian-date-control">
+              <input id="bizTransactionDateDisplay" type="text" placeholder="انتخاب تاریخ شمسی" readonly aria-label="تاریخ تراکنش به شمسی">
+              <button id="bizTransactionCalendarToggle" type="button" aria-label="باز کردن تقویم شمسی" aria-expanded="false">▦</button>
+            </div>
+            <input id="bizTransactionDate" type="hidden">
+            <div id="bizTransactionCalendar" class="biz-persian-calendar" hidden>
+              <div class="biz-persian-calendar-head">
+                <button id="bizCalendarPrev" type="button" aria-label="ماه قبل">‹</button>
+                <strong id="bizCalendarMonth"></strong>
+                <button id="bizCalendarNext" type="button" aria-label="ماه بعد">›</button>
+              </div>
+              <div class="biz-persian-calendar-weekdays" aria-hidden="true"><span>ش</span><span>ی</span><span>د</span><span>س</span><span>چ</span><span>پ</span><span>ج</span></div>
+              <div id="bizPersianCalendarDays" class="biz-persian-calendar-days"></div>
+            </div>
+          </label>
           <label class="biz-field"><span>دسته‌بندی</span><input id="bizTransactionCategory" type="text" maxlength="80" placeholder="مثلاً فروش محصول، مواد اولیه، حمل‌ونقل"></label>
           <label class="biz-field biz-transaction-notes"><span>توضیحات (اختیاری)</span><input id="bizTransactionNotes" type="text" maxlength="1200" placeholder="جزئیات تکمیلی"></label>
           <button class="btn-primary" id="bizTransactionSubmit" type="submit">ثبت تراکنش</button>
@@ -942,10 +957,10 @@
   </div>
 </footer>
 
-  <script src="brand-content-studios.js?v=business-form-submit-fix-20261115-1" defer></script>
+  <script src="brand-content-studios.js?v=business-transaction-submit-fix-20261116-1" defer></script>
   <script src="business-tools.js?v=business-suite-20261115-2" defer></script>
   <script src="business-workspace.js?v=business-transactions-toman-20261116-2" defer></script>
-  <script src="business-transactions-ui.js?v=business-transactions-toman-20261116-1" defer></script>
+  <script src="business-transactions-ui.js?v=persian-calendar-20261116-1" defer></script>
   <script src="document-export.js?v=studio-response-select-20261115-1" defer></script>
   <link rel="stylesheet" href="office-file-tools.css?v=office-persian-ocr-20261115-1">
   <script src="office-structured-files.js?v=office-pptx-xlsx-20261115-1" defer></script>
