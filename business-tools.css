@@ -159,3 +159,33 @@
 #bizPage .biz-persian-calendar-days button:hover{border-color:var(--gold)}
 #bizPage .biz-persian-calendar-days button.is-selected{background:color-mix(in srgb,var(--gold) 22%,var(--panel2));border-color:var(--gold);color:var(--gold);font-weight:800}
 #bizPage .biz-persian-calendar-days .biz-calendar-empty{min-height:34px}
+
+
+/* NAVA BUSINESS financial dashboard v1 */
+#bizPage .biz-financial-dashboard{display:grid;gap:14px;margin:18px 0;padding:20px;border:1px solid var(--border);border-radius:18px;background:var(--panel)}
+#bizPage .biz-dashboard-heading{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+#bizPage .biz-dashboard-heading h3{margin:6px 0;font-size:19px}
+#bizPage .biz-dashboard-heading p{margin:0;color:var(--muted);font-size:11px;line-height:1.8}
+#bizPage .biz-dashboard-period{flex-shrink:0;padding:6px 10px;border:1px solid var(--border);border-radius:20px;color:var(--gold);font-size:10px}
+#bizPage .biz-dashboard-kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+#bizPage .biz-dashboard-kpi{display:grid;gap:8px;min-width:0;padding:14px;border:1px solid var(--border);border-radius:13px;background:var(--panel2)}
+#bizPage .biz-dashboard-kpi>span{color:var(--muted);font-size:11px}
+#bizPage .biz-dashboard-kpi>strong{font-size:clamp(15px,2.2vw,21px);overflow-wrap:anywhere;direction:rtl}
+#bizPage .biz-dashboard-kpi>small{color:var(--muted);font-size:10px}
+#bizPage .biz-dashboard-kpi[data-kind="sale"]>strong{color:#56b58a}
+#bizPage .biz-dashboard-kpi[data-kind="expense"]>strong{color:#d58a72}
+#bizPage .biz-dashboard-kpi[data-kind="difference"]>strong{color:var(--gold)}
+#bizPage .biz-dashboard-trend-title{margin:5px 0 0;font-size:14px}
+#bizPage .biz-dashboard-trend{display:grid;gap:10px}
+#bizPage .biz-dashboard-month{display:grid;grid-template-columns:76px minmax(0,1fr);gap:12px;align-items:center;padding:10px;border:1px solid var(--border);border-radius:11px;background:var(--panel2)}
+#bizPage .biz-dashboard-month>strong{font-size:11px}
+#bizPage .biz-dashboard-bars{display:grid;gap:7px;min-width:0}
+#bizPage .biz-dashboard-bar-row{display:grid;grid-template-columns:34px minmax(30px,1fr) minmax(88px,auto);gap:8px;align-items:center;font-size:10px}
+#bizPage .biz-dashboard-bar-row>span{color:var(--muted)}
+#bizPage .biz-dashboard-bar-row>small{color:var(--muted);text-align:left;direction:rtl;white-space:nowrap}
+#bizPage .biz-dashboard-bar-track{height:9px;overflow:hidden;border-radius:20px;background:var(--border)}
+#bizPage .biz-dashboard-bar-fill{display:block;height:100%;border-radius:20px;background:#56b58a}
+#bizPage .biz-dashboard-bar-fill[data-kind="expense"]{background:#d58a72}
+#bizPage .biz-dashboard-empty,#bizPage .biz-dashboard-legend{margin:0;color:var(--muted);font-size:10px;line-height:1.8}
+#bizPage .biz-dashboard-disclaimer{margin:0;padding:11px 13px;border-radius:10px;background:var(--panel2);color:var(--muted);font-size:10px;line-height:1.9}
+@media(max-width:680px){#bizPage .biz-financial-dashboard{padding:14px}#bizPage .biz-dashboard-kpis{grid-template-columns:1fr}#bizPage .biz-dashboard-heading{flex-direction:column}#bizPage .biz-dashboard-month{grid-template-columns:58px minmax(0,1fr);gap:8px}#bizPage .biz-dashboard-bar-row{grid-template-columns:30px minmax(20px,1fr) minmax(75px,auto);gap:5px}}
