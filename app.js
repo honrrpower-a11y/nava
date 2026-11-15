@@ -929,8 +929,8 @@ function clearNaviSession() {
     panel.classList.remove("is-active");
   });
   if (naviLoginPanel) naviLoginPanel.hidden = false;
-  document.querySelector(".nava-access-panel")?.classList.remove("is-dismissed");
-  setNavaAccessGate(true);
+  // Clearing an expired/local session must not reopen the first-visit choice gate.
+  // Startup owns that decision explicitly; account login must remain visible in NAVI.
   if (naviPassword) naviPassword.value = "";
   if (naviUsername) naviUsername.value = "";
   if (naviUserDisplay) naviUserDisplay.textContent = "";
