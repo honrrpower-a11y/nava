@@ -2585,8 +2585,8 @@ body:has(> .nava-access-panel.is-gate-active){overflow:hidden}
 }
 
 
-/* Keep NAVI account actions reachable on compact phone viewports.
-   The dialog itself scrolls; submit actions stay pinned inside its scroll area. */
+/* Keep the NAVI auth dialog naturally scrollable on compact phone viewports.
+   Submit buttons remain in normal document flow and are reached by scrolling. */
 @media(max-width:600px){
   .navi-widget-panel.is-auth-entry{
     display:flex!important;
@@ -2652,13 +2652,10 @@ body:has(> .nava-access-panel.is-gate-active){overflow:hidden}
     font-size:13px!important;
   }
   .navi-widget-panel.is-auth-entry .navi-auth-tab-panel .btn-primary{
-    position:sticky!important;
-    bottom:0!important;
-    z-index:7!important;
+    position:static!important;
     min-height:42px!important;
     padding:7px 12px!important;
     margin-top:7px!important;
-    box-shadow:0 -5px 12px color-mix(in srgb,var(--panel) 85%,transparent);
   }
   .navi-widget-panel.is-auth-entry .navi-auth-error:empty{
     display:none!important;
