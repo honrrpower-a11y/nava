@@ -33,3 +33,10 @@ test("NAVI response has a dedicated mobile-safe text selection control", () => {
   assert.match(app, /requestResponse\.setSelectionRange\(0, requestResponse\.value\.length\)/);
   assert.match(app, /selectNaviResponseButton\?\.addEventListener\("click"/);
 });
+
+\ntest("Office accepts PowerPoint and Excel files and loads the local structured parser", () => {
+  assert.match(html, /\\.pptx,\\.xlsx/);
+  assert.match(html, /office-structured-files\\.js/);
+  assert.match(office, /"pptx","xlsx"/);
+  assert.match(office, /NavaOfficeStructured\\.read\\(file\\)/);
+});
