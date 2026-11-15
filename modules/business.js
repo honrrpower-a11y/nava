@@ -198,14 +198,17 @@ export function buildBusinessAdvisorContext(business, records = []) {
 export async function loadNaviBusinessContext(db, ownerId, businessId) {
   const business = await ownsBusiness(db, businessId, ownerId);
   if (!business || business.status !== "active") return null;
-  const [records, transactions] = await Promise.all([
-    db.prepare(
-      "SELECT record_type, title, period_key, report_text, payload_json, created_at FROM business_financial_records_v1 WHERE business_id = ? AND owner_id = ? ORDER BY created_at DESC LIMIT 8"
-    ).bind(businessId, ownerId).all(),
-    db.prepare(
+  const records = await db.prepare(
+    "SELECT record_type, title, period_key, report_text, payload_json, created_at FROM business_financial_records_v1 WHERE business_id = ? AND owner_id = ? ORDER BY created_at DESC LIMIT 8"
+  ).bind(businessId, ownerId).all();
+  let transactions = { results: [] };
+  try {
+    transactions = await db.prepare(
       "SELECT transaction_type, title, amount_toman, transaction_date, category, notes FROM business_transactions_v1 WHERE business_id = ? AND owner_id = ? ORDER BY transaction_date DESC, created_at DESC LIMIT 30"
-    ).bind(businessId, ownerId).all()
-  ]);
+    ).bind(businessId, ownerId).all();
+  } catch (error) {
+    console.warn("[NAVA BUSINESS] Transaction ledger is not available yet; apply migration 0005.", error);
+  }
   const base = buildBusinessAdvisorContext(business, records.results || []);
   let sales = 0;
   let expenses = 0;
