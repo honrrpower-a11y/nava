@@ -75,6 +75,27 @@ test("SVG renderer creates three distinct compositions with separate lockup geom
   assert.match(layouts[2], /translate\(155 40\) scale\(\.69\)/);
 });
 
+
+test("SVG uses the selected palette background and automatically contrasting Persian text", () => {
+  const elements = [
+    { type: "path", d: "M200 500 C300 200 700 200 800 500" },
+    { type: "path", d: "M250 520 Q500 760 750 520" },
+    { type: "circle", cx: 500, cy: 360, r: 90 },
+    { type: "rect", x: 420, y: 420, width: 160, height: 80 },
+    { type: "line", x1: 300, y1: 600, x2: 700, y2: 600 },
+    { type: "ellipse", cx: 500, cy: 500, rx: 180, ry: 55 },
+    { type: "path", d: "M350 300 Q500 150 650 300" },
+    { type: "path", d: "M400 650 Q500 720 600 650" }
+  ];
+  const base = { brandName: "نوا", slogan: "", primaryColor: "#D6A84F", format: "combination", typographyValue: "persian" };
+  const dark = decodeURIComponent(renderConceptSvg({ ...base, darkColor: "#101B30" }, { composition: "stacked", elements }, 0).split(",")[1]);
+  assert.match(dark, /<rect width="1000" height="1000" fill="#101B30"\/>/);
+  assert.match(dark, /fill="#FFFFFF">نوا<\/text>/);
+  const light = decodeURIComponent(renderConceptSvg({ ...base, darkColor: "#DCE4ED" }, { composition: "stacked", elements }, 0).split(",")[1]);
+  assert.match(light, /<rect width="1000" height="1000" fill="#DCE4ED"\/>/);
+  assert.match(light, /fill="#172238">نوا<\/text>/);
+});
+
 class FakeD1 {
   constructor() {
     this.visitorUsed = 0;
