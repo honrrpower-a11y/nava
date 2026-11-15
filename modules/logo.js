@@ -13,41 +13,18 @@ function fail(message, status, corsOrigin, extra = {}) {
 
 function getPaletteSpec(data) {
   const palette = safeText(data.palette, 80);
-  const presets = {
-    "طلایی و سرمه‌ای": {
-      name: "gold and midnight navy",
-      background: "#101B30",
-      foreground: "#D6A84F",
-      instruction: "Use ONLY these exact brand colors: gold #D6A84F and midnight navy #101B30. The background MUST be solid midnight navy #101B30. The logo symbol MUST be gold #D6A84F. No white, cream, orange, black, gradients or third colors."
-    },
-    "آبی و نقره‌ای": {
-      name: "blue and silver", background: "#DCE4ED", foreground: "#3F70A8",
-      instruction: "Use ONLY this palette as the main colors: blue #3F70A8 and silver #DCE4ED. Do not introduce gold or yellow."
-    },
-    "سبز و کرم": {
-      name: "green and cream", background: "#E9E1CE", foreground: "#356B55",
-      instruction: "Use ONLY this palette as the main colors: deep green #356B55 and warm cream #E9E1CE. Do not introduce gold or blue."
-    },
-    "بنفش و یاسی": {
-      name: "violet and lilac", background: "#DCCEF0", foreground: "#7656A6",
-      instruction: "Use ONLY this palette as the main colors: violet #7656A6 and lilac #DCCEF0. Do not introduce gold or navy."
-    },
-    "تک‌رنگ": {
-      name: "monochrome", background: "#FFFFFF", foreground: "#22252B",
-      instruction: "Use a strictly monochrome treatment: one ink color #22252B with white negative space. No secondary hue, no gold, no navy, no colored accents."
-    }
-  };
-
-  if (palette === "رنگ اختصاصی") {
-    const primary = /^#[0-9a-fA-F]{6}$/.test(data.primaryColor || "") ? data.primaryColor : "#C9A24A";
-    const secondary = /^#[0-9a-fA-F]{6}$/.test(data.darkColor || "") ? data.darkColor : "#172238";
-    return {
-      name: "user-defined custom colors", background: secondary, foreground: primary,
-      instruction: "Use the user's exact selected colors as the only main colors: " + primary + " and " + secondary + ". Do not substitute gold, yellow, navy or any unrelated palette."
-    };
+  const isHex = value => /^#[0-9a-fA-F]{6}$/.test(value || "");
+  const foreground = data.primaryColor;
+  const background = data.darkColor;
+  if (!isHex(foreground) || !isHex(background)) {
+    throw new Error("رنگ‌های انتخاب‌شده از فرم سایت معتبر نیستند؛ دوباره پالت را انتخاب کن.");
   }
-
-  return presets[palette] || presets["طلایی و سرمه‌ای"];
+  return {
+    name: palette,
+    foreground,
+    background,
+    instruction: "Use the exact colors submitted by the Nava website form. Foreground/logo color: " + foreground + ". Background color: " + background + ". These values are authoritative user selections; do not substitute or reinterpret them."
+  };
 }
 
 // NAVI creates one semantic strategy and three concrete, validated art directions per batch.
@@ -282,6 +259,9 @@ export async function handleLogoRoute({ request, env, origin, corsOrigin }) {
     primaryColor: safeText(input?.primaryColor, 12),
     darkColor: safeText(input?.darkColor, 12)
   };
+  if (!/^#[0-9a-fA-F]{6}$/.test(data.primaryColor) || !/^#[0-9a-fA-F]{6}$/.test(data.darkColor)) {
+    return fail("رنگ‌های انتخاب‌شده از سایت معتبر نیستند. پالت را دوباره انتخاب کن.", 400, corsOrigin);
+  }
   if (!data.brandName) return fail("نام برند برای طراحی لازم است.", 400, corsOrigin);
 
   // Reserve a small daily global budget so the logo studio stays comfortably
