@@ -6,6 +6,7 @@
   if (!form) return;
   const list = $("bizTransactionList");
   const summary = $("bizTransactionSummary");
+  const dashboard = $("bizFinancialDashboard");
   const status = $("bizTransactionStatus");
   const submit = $("bizTransactionSubmit");
   const dateInput = $("bizTransactionDate");
@@ -166,18 +167,104 @@
         !dateDisplay?.contains(event.target)) showCalendar(false);
   });
 
+  function renderDashboard(totals, monthlyTrend) {
+    if (!dashboard) return;
+    dashboard.replaceChildren();
+    const sales = Number(totals.salesToman || 0);
+    const expenses = Number(totals.expensesToman || 0);
+    const difference = sales - expenses;
+    const cards = [
+      { label: "مجموع فروش ثبت‌شده", value: sales, count: Number(totals.salesCount || 0), kind: "sale" },
+      { label: "مجموع هزینه ثبت‌شده", value: expenses, count: Number(totals.expensesCount || 0), kind: "expense" },
+      { label: "تفاضل فروش و هزینه", value: difference, count: Number(totals.transactionCount || 0), kind: "difference" }
+    ];
+    const grid = document.createElement("div");
+    grid.className = "biz-dashboard-kpis";
+    for (const item of cards) {
+      const card = document.createElement("article");
+      card.className = "biz-dashboard-kpi";
+      card.dataset.kind = item.kind;
+      const label = document.createElement("span");
+      label.textContent = item.label;
+      const value = document.createElement("strong");
+      value.textContent = (item.kind === "difference" && difference > 0 ? "+" : "") + money(item.value);
+      const count = document.createElement("small");
+      count.textContent = item.kind === "difference"
+        ? Number(totals.transactionCount || 0).toLocaleString("fa-IR") + " تراکنش در مجموع"
+        : Number(item.count).toLocaleString("fa-IR") + (item.kind === "sale" ? " مورد فروش" : " مورد هزینه");
+      card.append(label, value, count);
+      grid.append(card);
+    }
+    dashboard.append(grid);
+
+    const trendTitle = document.createElement("h4");
+    trendTitle.className = "biz-dashboard-trend-title";
+    trendTitle.textContent = "روند شش ماه اخیر";
+    dashboard.append(trendTitle);
+    if (!monthlyTrend.length) {
+      const empty = document.createElement("p");
+      empty.className = "biz-dashboard-empty";
+      empty.textContent = "برای نمایش روند ماهانه، هنوز تراکنش کافی ثبت نشده است.";
+      dashboard.append(empty);
+      return;
+    }
+    const maxValue = Math.max(1, ...monthlyTrend.flatMap(row => [Number(row.salesToman || 0), Number(row.expensesToman || 0)]));
+    const chart = document.createElement("div");
+    chart.className = "biz-dashboard-trend";
+    for (const row of monthlyTrend) {
+      const monthDate = utcDate(row.month + "-01");
+      const monthLabel = new Intl.DateTimeFormat("fa-IR-u-ca-persian", {
+        month: "short", year: "2-digit", timeZone: "UTC"
+      }).format(monthDate);
+      const group = document.createElement("div");
+      group.className = "biz-dashboard-month";
+      const label = document.createElement("strong");
+      label.textContent = monthLabel;
+      const bars = document.createElement("div");
+      bars.className = "biz-dashboard-bars";
+      for (const kind of ["sale", "expense"]) {
+        const value = Number(row[kind === "sale" ? "salesToman" : "expensesToman"] || 0);
+        const barRow = document.createElement("div");
+        barRow.className = "biz-dashboard-bar-row";
+        const name = document.createElement("span");
+        name.textContent = kind === "sale" ? "فروش" : "هزینه";
+        const track = document.createElement("div");
+        track.className = "biz-dashboard-bar-track";
+        const fill = document.createElement("i");
+        fill.className = "biz-dashboard-bar-fill";
+        fill.dataset.kind = kind;
+        fill.style.width = (value ? Math.max(2, value / maxValue * 100) : 0) + "%";
+        track.append(fill);
+        const amount = document.createElement("small");
+        amount.textContent = money(value);
+        barRow.append(name, track, amount);
+        bars.append(barRow);
+      }
+      group.append(label, bars);
+      chart.append(group);
+    }
+    dashboard.append(chart);
+    const legend = document.createElement("p");
+    legend.className = "biz-dashboard-legend";
+    legend.textContent = "مقیاس میله‌ها برای مقایسه نسبی ماه‌هاست؛ مبالغ کنار هر میله مقدار دقیق را نشان می‌دهند.";
+    dashboard.append(legend);
+  }
+
   async function load() {
     const id = businessId();
     if (!id) {
       if (list) list.textContent = "برای نمایش تراکنش‌ها یک پرونده فعال انتخاب کن.";
       if (summary) summary.textContent = "";
+      if (dashboard) dashboard.textContent = "برای نمایش داشبورد، یک پرونده فعال انتخاب کن.";
       return;
     }
     const data = await api("/" + encodeURIComponent(id) + "/transactions?limit=100");
     const rows = data.transactions || [];
-    const sales = rows.filter(x => x.transactionType === "sale").reduce((a, x) => a + Number(x.amountToman || 0), 0);
-    const expenses = rows.filter(x => x.transactionType === "expense").reduce((a, x) => a + Number(x.amountToman || 0), 0);
-    summary.textContent = "۱۰۰ تراکنش اخیر — فروش: " + money(sales) + " | هزینه: " + money(expenses) + " | تفاضل فروش و هزینه ثبت‌شده: " + money(sales - expenses);
+    const totals = data.summary || {};
+    const sales = Number(totals.salesToman || 0);
+    const expenses = Number(totals.expensesToman || 0);
+    summary.textContent = "کل سوابق — فروش ثبت‌شده: " + money(sales) + " | هزینه ثبت‌شده: " + money(expenses) + " | تفاضل ثبت‌شده: " + money(sales - expenses);
+    renderDashboard(totals, data.monthlyTrend || []);
     list.replaceChildren();
     if (!rows.length) {
       list.textContent = "هنوز تراکنش واقعی در این پرونده ثبت نشده است.";
