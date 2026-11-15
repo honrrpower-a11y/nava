@@ -258,21 +258,20 @@
         status.textContent=result.error||"تحلیل بریف انجام نشد.";
         return;
       }
-      showBriefReview(result,data,headers);
-      if(quick)await renderApprovedBrief(true);
+      // One-click flow: keep the brief internal, then render the three concepts immediately.
+      // The resulting cards include a compact explanation of NAVI's strategy.
+      pendingBrief=result.plan;
+      pendingData=data;
+      pendingHeaders=headers;
+      await renderApprovedBrief(true);
     } catch(error) {
       status.textContent=error.name==="AbortError"?"زمان تحلیل طولانی شد؛ دوباره تلاش کن.":"ارتباط با NAVI برقرار نشد؛ کمی بعد دوباره تلاش کن.";
     } finally {
-      submit.disabled=false;submit.textContent="تحلیل بریف با NAVI";
+      submit.disabled=false;submit.textContent="طراحی لوگو با NAVI";
     }
   }
 
-  form.addEventListener("submit",event=>{event.preventDefault();requestBrief(false);});
-  const quickButton=document.createElement("button");
-  quickButton.type="button";quickButton.className="btn-secondary";
-  quickButton.textContent="ساخت با تشخیص NAVI";
-  quickButton.addEventListener("click",()=>requestBrief(true));
-  form.querySelector('button[type="submit"]')?.insertAdjacentElement("afterend",quickButton);
+  form.addEventListener("submit",event=>{event.preventDefault();requestBrief(true);});
 
   $("logoBriefToNavi")?.addEventListener("click",()=>{
     const data=readData();
