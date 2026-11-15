@@ -99,7 +99,7 @@ export async function handleBusinessTransactionRoute({ request, env, url, corsOr
       const dateClause = (from ? " AND transaction_date >= ?" : "") + (to ? " AND transaction_date <= ?" : "");
       const dateParams = [businessId, ownerId, ...(from ? [from] : []), ...(to ? [to] : [])];
       const result = await env.NAVA_DB.prepare(
-        "SELECT id, transaction_type, title, amount_toman, transaction_date, category, notes, quantity, unit_price_toman, created_at, updated_at FROM business_transactions_v1 WHERE business_id = ? AND owner_id = ?" + dateClause + " ORDER BY transaction_date DESC, created_at DESC LIMIT ?"
+        "SELECT id, transaction_type, title, amount_toman, transaction_date, category, notes, quantity, unit_price_toman, created_at, updated_at FROM business_transactions_v1 WHERE business_id = ? AND owner_id = ?" + dateClause + " ORDER BY transaction_date DESC, created_at DESC LIMIT ? OFFSET ?"
       ).bind(...dateParams, limit, offset).all();
       const totals = await env.NAVA_DB.prepare(
         "SELECT COUNT(CASE WHEN transaction_type = 'sale' THEN 1 END) AS sales_count, COUNT(CASE WHEN transaction_type = 'expense' THEN 1 END) AS expenses_count, COALESCE(SUM(CASE WHEN transaction_type = 'sale' THEN amount_toman ELSE 0 END), 0) AS sales_toman, COALESCE(SUM(CASE WHEN transaction_type = 'expense' THEN amount_toman ELSE 0 END), 0) AS expenses_toman, COUNT(*) AS transaction_count FROM business_transactions_v1 WHERE business_id = ? AND owner_id = ?" + dateClause
