@@ -15,6 +15,16 @@
   const calendarToggle = $("bizTransactionCalendarToggle");
   const calendarMonthLabel = $("bizCalendarMonth");
   const calendarDays = $("bizPersianCalendarDays");
+  const filterMode = $("bizDashboardFilterMode");
+  const monthFilter = $("bizDashboardMonthFilter");
+  const rangeFilter = $("bizDashboardRangeFilter");
+  const filterYear = $("bizDashboardYear");
+  const filterMonth = $("bizDashboardMonth");
+  const rangeFrom = $("bizDashboardFrom");
+  const rangeTo = $("bizDashboardTo");
+  const applyFilterButton = $("bizDashboardApplyFilter");
+  const resetFilterButton = $("bizDashboardResetFilter");
+  const filterStatus = $("bizDashboardFilterStatus");
   const persianPartsFormatter = new Intl.DateTimeFormat("en-US-u-ca-persian-nu-latn", {
     year: "numeric", month: "numeric", day: "numeric", timeZone: "UTC"
   });
@@ -214,7 +224,7 @@
     for (const row of monthlyTrend) {
       const monthDate = utcDate(row.month + "-01");
       const monthLabel = new Intl.DateTimeFormat("fa-IR-u-ca-persian", {
-        month: "short", year: "2-digit", timeZone: "UTC"
+        month: "long", year: "numeric", timeZone: "UTC"
       }).format(monthDate);
       const group = document.createElement("div");
       group.className = "biz-dashboard-month";
@@ -250,6 +260,77 @@
     dashboard.append(legend);
   }
 
+  function normalizeDigits(value) {
+    return String(value || "").replace(/[۰-۹]/g, digit => String("۰۱۲۳۴۵۶۷۸۹".indexOf(digit)))
+      .replace(/[٠-٩]/g, digit => String("٠١٢٣٤٥٦٧٨٩".indexOf(digit)));
+  }
+
+  function parsePersianDate(value) {
+    const match = normalizeDigits(value).trim().match(/^(\\d{4})[\\/.-](\\d{1,2})[\\/.-](\\d{1,2})$/);
+    if (!match) return null;
+    const year = Number(match[1]), month = Number(match[2]), day = Number(match[3]);
+    if (month < 1 || month > 12 || day < 1 || day > 31) return null;
+    const found = findPersianMonthDates(year, month).find(item => item.day === day);
+    return found ? found.iso : null;
+  }
+
+  function setupDashboardFilters() {
+    if (!filterYear || !filterMonth) return;
+    const today = persianParts(localToday());
+    for (let year = today.year - 5; year <= today.year + 1; year++) {
+      const option = document.createElement("option");
+      option.value = String(year);
+      option.textContent = year.toLocaleString("fa-IR");
+      if (year === today.year) option.selected = true;
+      filterYear.append(option);
+    }
+    const monthNames = ["فروردین","اردیبهشت","خرداد","تیر","مرداد","شهریور","مهر","آبان","آذر","دی","بهمن","اسفند"];
+    monthNames.forEach((name, index) => {
+      const option = document.createElement("option");
+      option.value = String(index + 1);
+      option.textContent = name;
+      filterMonth.append(option);
+    });
+    filterMode?.addEventListener("change", () => {
+      if (monthFilter) monthFilter.hidden = filterMode.value !== "month";
+      if (rangeFilter) rangeFilter.hidden = filterMode.value !== "range";
+      if (filterStatus) filterStatus.textContent = "";
+    });
+    applyFilterButton?.addEventListener("click", () => load().catch(error => say(error.message)));
+    resetFilterButton?.addEventListener("click", () => {
+      if (filterMode) filterMode.value = "all";
+      if (monthFilter) monthFilter.hidden = true;
+      if (rangeFilter) rangeFilter.hidden = true;
+      if (rangeFrom) rangeFrom.value = "";
+      if (rangeTo) rangeTo.value = "";
+      if (filterStatus) filterStatus.textContent = "نمایش همه سوابق";
+      load().catch(error => say(error.message));
+    });
+  }
+
+  function selectedDateRange() {
+    if (!filterMode || filterMode.value === "all") return { from: "", to: "", label: "کل سوابق ثبت‌شده" };
+    if (filterMode.value === "month") {
+      const year = Number(filterYear?.value);
+      const month = Number(filterMonth?.value);
+      const dates = findPersianMonthDates(year, month);
+      if (!dates.length) throw new Error("ماه انتخاب‌شده معتبر نیست.");
+      return {
+        from: dates[0].iso,
+        to: dates[dates.length - 1].iso,
+        label: persianMonthFormatter.format(utcDate(dates[0].iso))
+      };
+    }
+    const fromText = rangeFrom?.value.trim() || "";
+    const toText = rangeTo?.value.trim() || "";
+    const from = fromText ? parsePersianDate(fromText) : "";
+    const to = toText ? parsePersianDate(toText) : "";
+    if ((fromText && !from) || (toText && !to)) throw new Error("تاریخ را به شکل سال/ماه/روز شمسی وارد کن؛ مثال: ۱۴۰۵/۰۸/۰۱");
+    if (!from && !to) throw new Error("حداقل یکی از تاریخ شروع یا پایان را وارد کن.");
+    if (from && to && from > to) throw new Error("تاریخ شروع نباید بعد از تاریخ پایان باشد.");
+    return { from, to, label: (fromText || "ابتدا") + " تا " + (toText || "امروز") };
+  }
+
   async function load() {
     const id = businessId();
     if (!id) {
@@ -258,13 +339,22 @@
       if (dashboard) dashboard.textContent = "برای نمایش داشبورد، یک پرونده فعال انتخاب کن.";
       return;
     }
-    const data = await api("/" + encodeURIComponent(id) + "/transactions?limit=100");
+    let range;
+    try { range = selectedDateRange(); }
+    catch (error) { if (filterStatus) filterStatus.textContent = error.message; return; }
+    const params = new URLSearchParams({ limit: "200" });
+    if (range.from) params.set("from", range.from);
+    if (range.to) params.set("to", range.to);
+    const data = await api("/" + encodeURIComponent(id) + "/transactions?" + params.toString());
     const rows = data.transactions || [];
     const totals = data.summary || {};
     const sales = Number(totals.salesToman || 0);
     const expenses = Number(totals.expensesToman || 0);
     summary.textContent = "کل سوابق — فروش ثبت‌شده: " + money(sales) + " | هزینه ثبت‌شده: " + money(expenses) + " | تفاضل ثبت‌شده: " + money(sales - expenses);
     renderDashboard(totals, data.monthlyTrend || []);
+    const periodBadge = document.querySelector("#bizPage .biz-dashboard-period");
+    if (periodBadge) periodBadge.textContent = range.label;
+    if (filterStatus) filterStatus.textContent = "نمایش " + Number(totals.transactionCount || 0).toLocaleString("fa-IR") + " تراکنش در این بازه";
     list.replaceChildren();
     if (!rows.length) {
       list.textContent = "هنوز تراکنش واقعی در این پرونده ثبت نشده است.";
