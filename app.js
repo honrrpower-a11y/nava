@@ -601,6 +601,7 @@ function setNaviWidgetOpen(isOpen, focusComposer = false) {
   naviWidgetPanel.hidden = !isOpen;
   naviWidgetToggle.hidden = isOpen;
   naviWidgetPanel.classList.toggle("is-open", isOpen);
+  naviWidgetPanel.classList.toggle("is-auth-entry", isOpen && !getNaviToken());
   document.body.classList.toggle("navi-widget-open", isOpen);
   naviWidgetToggle.setAttribute("aria-expanded", isOpen ? "true" : "false");
   const studioMode = document.body.classList.contains("navi-studio-context");
@@ -707,6 +708,35 @@ document.addEventListener("keydown", event => {
   const style = document.createElement("style");
   style.id = "navaAccountUiStyles";
   style.textContent = `
+    /* Keep first-time visitors focused on account access, not generic chat context. */
+    .navi-widget-panel.is-auth-entry .navi-assistant-context,
+    .navi-widget-panel.is-auth-entry #requestSection > .request-content > h2,
+    .navi-widget-panel.is-auth-entry #requestSection > .request-content > p {
+      display: none !important;
+    }
+    .navi-widget-panel.is-auth-entry .navi-auth-panel { margin-top: 0; }
+    .navi-widget-panel.is-auth-entry .navi-auth-panel::before {
+      content: "ورود یا عضویت در نوا";
+      display: block;
+      margin: 0 0 8px;
+      color: var(--gold);
+      font-size: 20px;
+      font-weight: 800;
+    }
+    .navi-widget-panel.is-auth-entry .navi-auth-panel > p {
+      margin: 0 0 16px;
+      color: var(--muted);
+      line-height: 1.9;
+    }
+    .navi-widget-panel.is-auth-entry .navi-registration-details {
+      margin: 0 0 18px;
+      border-color: var(--gold);
+      background: var(--panel2);
+    }
+    .navi-widget-panel.is-auth-entry .navi-registration-details > summary {
+      font-size: 15px;
+      padding: 8px 2px;
+    }
     .navi-auth-error.navi-registration-success {
       display: block;
       color: #65c99a;
