@@ -266,7 +266,7 @@ export async function handleLogoRoute({ request, env, origin, corsOrigin }) {
     return fail("بریف تأییدشده معتبر نیست؛ ابتدا بریف را دوباره بررسی کن.", 400, corsOrigin);
   }
   try {
-    const concepts = plan.concepts.map((item, index) => {
+    const concepts = ensureDistinctCompositions(plan.concepts.map((item, index) => {
       const elements = Array.isArray(item.elements) ? item.elements.slice(0, 22) : [];
       const valid = elements.map(element => renderElement(element, {
         primary: data.primaryColor, secondary: data.darkColor
