@@ -16,22 +16,24 @@ function getPaletteSpec(data) {
   const presets = {
     "طلایی و سرمه‌ای": {
       name: "gold and midnight navy",
-      instruction: "Use ONLY these two brand colors as the main palette: gold #C9A24A and midnight navy #101D35. Both must be visibly present."
+      background: "#101B30",
+      foreground: "#D6A84F",
+      instruction: "Use ONLY these exact brand colors: gold #D6A84F and midnight navy #101B30. The background MUST be solid midnight navy #101B30. The logo symbol MUST be gold #D6A84F. No white, cream, orange, black, gradients or third colors."
     },
     "آبی و نقره‌ای": {
-      name: "blue and silver",
+      name: "blue and silver", background: "#DCE4ED", foreground: "#3F70A8",
       instruction: "Use ONLY this palette as the main colors: blue #3F70A8 and silver #DCE4ED. Do not introduce gold or yellow."
     },
     "سبز و کرم": {
-      name: "green and cream",
+      name: "green and cream", background: "#E9E1CE", foreground: "#356B55",
       instruction: "Use ONLY this palette as the main colors: deep green #356B55 and warm cream #E9E1CE. Do not introduce gold or blue."
     },
     "بنفش و یاسی": {
-      name: "violet and lilac",
+      name: "violet and lilac", background: "#DCCEF0", foreground: "#7656A6",
       instruction: "Use ONLY this palette as the main colors: violet #7656A6 and lilac #DCCEF0. Do not introduce gold or navy."
     },
     "تک‌رنگ": {
-      name: "monochrome",
+      name: "monochrome", background: "#FFFFFF", foreground: "#22252B",
       instruction: "Use a strictly monochrome treatment: one ink color #22252B with white negative space. No secondary hue, no gold, no navy, no colored accents."
     }
   };
@@ -40,7 +42,7 @@ function getPaletteSpec(data) {
     const primary = /^#[0-9a-fA-F]{6}$/.test(data.primaryColor || "") ? data.primaryColor : "#C9A24A";
     const secondary = /^#[0-9a-fA-F]{6}$/.test(data.darkColor || "") ? data.darkColor : "#172238";
     return {
-      name: "user-defined custom colors",
+      name: "user-defined custom colors", background: secondary, foreground: primary,
       instruction: "Use the user's exact selected colors as the only main colors: " + primary + " and " + secondary + ". Do not substitute gold, yellow, navy or any unrelated palette."
     };
   }
@@ -169,9 +171,9 @@ function buildPrompt(data, direction, strategy) {
     "Format: " + format + ". " + formatGuidance,
     "Palette: " + paletteSpec.instruction,
     "Typography: " + clip(data.typography || "distinctive, clear brand typography", 65) + ".",
-    "Render ONLY the logo symbol or mark, centered on a perfectly plain solid white background. Flat 2D vector artwork, crisp clean edges, simple controlled geometry, strong silhouette and deliberate negative space.",
+    "Render ONLY the logo symbol or mark, centered on a perfectly plain solid background " + paletteSpec.background + ". The symbol must use " + paletteSpec.foreground + " only. Flat 2D vector artwork, crisp clean edges, simple controlled geometry, strong silhouette and deliberate negative space.",
     "CRITICAL: Do NOT draw the brand name, slogan, letters, words, numbers, typography, pseudo-writing, signatures or watermark inside the image. The exact brand name and slogan are typeset separately by the website; leave all lettering out of the generated artwork.",
-    "No mockup, product scene, landscape, sunset, horizon, sky, photography, 3D, gradients, shadows, texture, extra objects, random blobs, stock clip-art or decorative text."
+    "No mockup, product scene, landscape, sunset, horizon, sky, photography, 3D, gradients, shadows, texture, extra objects, random blobs, stock clip-art or decorative text. Do not replace, approximate or reinterpret the exact palette hex codes."
   ];
   let prompt = lines.join("\n");
   if (prompt.length > 2048) {
