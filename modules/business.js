@@ -148,6 +148,61 @@ async function archiveBusiness(db, ownerId, id, corsOrigin) {
   return response({ archived: true, businessId: id }, 200, corsOrigin);
 }
 
+export function buildBusinessAdvisorContext(business, records = []) {
+  const typeLabels = {
+    freelancer: "فریلنسر",
+    store: "فروشگاه",
+    home_business: "کسب‌وکار خانگی",
+    small_company: "شرکت کوچک",
+    idea: "ایده در مرحله راه‌اندازی",
+    other: "سایر"
+  };
+  const recordLabels = {
+    cost_calculation: "قیمت تمام‌شده",
+    break_even: "نقطه سربه‌سر",
+    monthly_budget: "بودجه ماهانه",
+    note: "یادداشت مالی"
+  };
+  const lines = [
+    "پرونده کسب‌وکار: " + safeNaviText(business.name || "بدون نام", 120),
+    "نوع کسب‌وکار: " + (typeLabels[business.business_type] || "نامشخص"),
+    "حوزه فعالیت: " + safeNaviText(business.industry || "ثبت نشده", 120),
+    "توضیحات: " + safeNaviText(business.description || "ثبت نشده", 500),
+    "واحد پول: " + safeNaviText(business.currency || "IRR", 12),
+    "گزارش‌های مالی ذخیره‌شده (جدیدترین موارد):"
+  ];
+  let used = lines.join("\n").length;
+  for (const record of records) {
+    const report = safeNaviText(record.report_text || "", 3500);
+    const payload = safeNaviText(record.payload_json || "{}", 1800);
+    const section = [
+      "---",
+      "نوع گزارش: " + (recordLabels[record.record_type] || "گزارش مالی"),
+      "عنوان: " + safeNaviText(record.title || "بدون عنوان", 120),
+      "دوره: " + safeNaviText(record.period_key || "ثبت نشده", 20),
+      "تاریخ ثبت: " + safeNaviText(record.created_at || "نامشخص", 40),
+      "متن گزارش:",
+      report || "متن گزارش موجود نیست.",
+      "داده‌های ساختاریافته:",
+      payload
+    ].join("\n");
+    if (used + section.length > 20000) break;
+    lines.push(section);
+    used += section.length;
+  }
+  if (!records.length) lines.push("هنوز هیچ گزارش مالی در این پرونده ثبت نشده است.");
+  return lines.join("\n");
+}
+
+export async function loadNaviBusinessContext(db, ownerId, businessId) {
+  const business = await ownsBusiness(db, businessId, ownerId);
+  if (!business || business.status !== "active") return null;
+  const result = await db.prepare(
+    "SELECT record_type, title, period_key, report_text, payload_json, created_at FROM business_financial_records_v1 WHERE business_id = ? AND owner_id = ? ORDER BY created_at DESC LIMIT 8"
+  ).bind(businessId, ownerId).all();
+  return buildBusinessAdvisorContext(business, result.results || []);
+}
+
 async function listRecords(db, ownerId, businessId, url, corsOrigin) {
   const business = await ownsBusiness(db, businessId, ownerId);
   if (!business || business.status !== "active") return fail("پرونده کسب‌وکار پیدا نشد.", 404, corsOrigin);
