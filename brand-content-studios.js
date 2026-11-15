@@ -256,6 +256,7 @@
   document.addEventListener("submit", event => {
     const form = event.target;
     if (!(form instanceof HTMLFormElement)) return;
+    if (form.matches("[data-business-tool-form]")) return;
     const page = form.closest(".page");
     const config = page && assistedStudios[page.id];
     if (!config) return;
