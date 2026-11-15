@@ -67,6 +67,7 @@
     select.value = businesses.some(item => item.id === currentId) ? currentId : businesses[0].id;
     try { localStorage.setItem(ACTIVE_KEY, select.value); } catch {}
     const selected = selectedBusiness();
+    window.dispatchEvent(new CustomEvent("nava:business-selection-changed"));
     activeName.textContent = selected ? "پرونده فعال: " + selected.name : "";
     saveButton.disabled = !selected;
     loadRecords().catch(error => { recent.textContent = error.message; });
@@ -199,6 +200,7 @@
     const business = selectedBusiness();
     if (business) {
       try { localStorage.setItem(ACTIVE_KEY, business.id); } catch {}
+      window.dispatchEvent(new CustomEvent("nava:business-selection-changed"));
       activeName.textContent = "پرونده فعال: " + business.name;
       saveButton.disabled = false;
       loadRecords().catch(error => { recent.textContent = error.message; });
