@@ -66,27 +66,43 @@ export function renderConceptSvg(data, concept, index) {
   const secondary = validColor(data.darkColor, "#172238");
   const colors = { primary, secondary };
   const elements = concept.elements.map(item => renderElement(item, colors)).filter(Boolean);
-  if (elements.length < 3) throw new Error("NAVI vector concept has too few valid geometry elements.");
-  const isWordmark = data.format === "wordmark";
-  const isMonogram = data.format === "monogram";
+  if (elements.length < 5) throw new Error("NAVI vector concept has too few valid geometry elements.");
   const brand = escapeXml(data.brandName);
   const slogan = escapeXml(data.slogan);
   const font = data.typographyValue === "elegant"
-    ? "Georgia, 'Times New Roman', serif"
-    : "Tahoma, Arial, sans-serif";
+    ? "'Vazirmatn', 'Noto Naskh Arabic', Tahoma, sans-serif"
+    : "'Vazirmatn', 'Noto Sans Arabic', Tahoma, sans-serif";
+  const layouts = ["stacked", "horizontal", "emblem"];
+  const composition = layouts.includes(concept.composition) ? concept.composition : layouts[index % 3];
   const mark = elements.join("");
+  const isWordmark = data.format === "wordmark";
+  const isMonogram = data.format === "monogram";
+  const firstCharacter = escapeXml(Array.from(data.brandName)[0] || "");
+  const nameSize = data.brandName.length > 16 ? 54 : data.brandName.length > 10 ? 66 : 78;
+  const symbolTransform = composition === "horizontal"
+    ? "translate(45 205) scale(.56)"
+    : composition === "emblem" ? "translate(155 40) scale(.69)" : "translate(110 25) scale(.78)";
+  const symbol = '<g transform="' + symbolTransform + '">' + mark + '</g>';
   const monogram = isMonogram
-    ? '<text x="500" y="420" text-anchor="middle" dominant-baseline="middle" font-family="' + font + '" font-size="190" font-weight="700" fill="' + secondary + '">' + escapeXml(Array.from(data.brandName)[0] || "") + '</text>'
+    ? '<text x="500" y="420" text-anchor="middle" dominant-baseline="central" font-family="' + font + '" font-size="190" font-weight="700" fill="' + secondary + '">' + firstCharacter + '</text>'
     : "";
-  const nameY = isWordmark ? 520 : 790;
-  const nameSize = data.brandName.length > 16 ? 58 : data.brandName.length > 10 ? 72 : 88;
-  const word = '<text x="500" y="' + nameY + '" text-anchor="middle" direction="rtl" unicode-bidi="plaintext" font-family="' + font + '" font-size="' + nameSize + '" font-weight="700" fill="' + secondary + '">' + brand + '</text>';
-  const sloganText = slogan
-    ? '<text x="500" y="' + (nameY + 72) + '" text-anchor="middle" direction="rtl" unicode-bidi="plaintext" font-family="' + font + '" font-size="30" fill="' + secondary + '" opacity=".78">' + slogan + '</text>'
-    : "";
+  let word = "";
+  let sloganText = "";
+  let background = '<rect width="1000" height="1000" fill="#FFFFFF"/>';
+  if (composition === "horizontal") {
+    word = '<text x="900" y="465" text-anchor="end" direction="rtl" unicode-bidi="plaintext" font-family="' + font + '" font-size="' + nameSize + '" font-weight="700" fill="' + secondary + '">' + brand + '</text>';
+    if (slogan) sloganText = '<text x="900" y="525" text-anchor="end" direction="rtl" unicode-bidi="plaintext" font-family="' + font + '" font-size="27" fill="' + secondary + '" opacity=".76">' + slogan + '</text>';
+  } else if (composition === "emblem") {
+    word = '<text x="500" y="800" text-anchor="middle" direction="rtl" unicode-bidi="plaintext" font-family="' + font + '" font-size="' + nameSize + '" font-weight="700" fill="' + secondary + '">' + brand + '</text>';
+    if (slogan) sloganText = '<text x="500" y="855" text-anchor="middle" direction="rtl" unicode-bidi="plaintext" font-family="' + font + '" font-size="26" fill="' + secondary + '" opacity=".76">' + slogan + '</text>';
+    background = '<rect x="24" y="24" width="952" height="952" rx="52" fill="#FFFFFF"/>';
+  } else {
+    word = '<text x="500" y="' + (isWordmark ? 690 : 805) + '" text-anchor="middle" direction="rtl" unicode-bidi="plaintext" font-family="' + font + '" font-size="' + (isWordmark ? Math.min(96, nameSize + 12) : nameSize) + '" font-weight="700" fill="' + secondary + '">' + brand + '</text>';
+    if (slogan) sloganText = '<text x="500" y="' + (isWordmark ? 750 : 865) + '" text-anchor="middle" direction="rtl" unicode-bidi="plaintext" font-family="' + font + '" font-size="26" fill="' + secondary + '" opacity=".76">' + slogan + '</text>';
+  }
   const svg = '<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1200" viewBox="0 0 1000 1000" role="img" aria-label="' + brand + '">' +
-    '<rect width="1000" height="1000" fill="#FFFFFF"/>' +
-    '<g>' + mark + monogram + '</g>' + word + sloganText + '</svg>';
+    '<title>' + brand + ' — ' + escapeXml(concept.concept || "کانسپت لوگو") + '</title>' +
+    background + '<g>' + symbol + monogram + '</g>' + word + sloganText + '</svg>';
   return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
 }
 
@@ -104,17 +120,20 @@ async function planVectorConcepts(data, apiKey) {
     "You are NAVI, a senior Persian brand identity art director and vector logo designer.",
     "You are the sole creative decision-maker. Read every field of the website brief and create three genuinely different professional logo concepts for this exact brand.",
     "Return exactly one JSON object with Persian strings and keys brandCore, strategy, concepts.",
-    "concepts must contain exactly 3 objects. Each object: title, rationale, visualDirection, elements.",
-    "elements is an array of 5 to 14 geometry objects that together draw the concept's symbol. Use only type path, circle, ellipse, rect, line, polygon, polyline.",
-    "Coordinates use a 1000 by 1000 viewBox. Keep the symbol in x=120..880 and y=100..680. Make deliberate negative space, coherent proportions, a distinctive silhouette and optical balance.",
-    "For path use d with only SVG path commands M L H V C S Q T A Z and numeric coordinates. No transforms, styles, scripts, text, image, filters, gradients or raw markup.",
+    "concepts must contain exactly 3 objects. Each object: title, rationale, visualDirection, composition, elements.",
+    "The three concepts MUST use three different compositions, exactly one each: stacked, horizontal, emblem. composition is a structural layout choice, not a decorative label.",
+    "elements is an array of 8 to 22 geometry objects that together draw a distinctive, production-ready symbol. Use only type path, circle, ellipse, rect, line, polygon, polyline. Prefer custom Bézier paths over piles of primitive circles and rectangles.",
+    "Coordinates use a 1000 by 1000 viewBox. Keep the main symbol within x=120..880 and y=100..680. Use intentional negative space, consistent stroke logic, strong silhouette, optical balance, restrained detail and clear hierarchy. The mark must remain recognizable when reduced to 24 pixels.",
+    "For path use d with only SVG path commands M L H V C S Q T A Z and numeric coordinates. No transforms, styles, scripts, text, image, filters or raw markup.",
     "For circle use cx,cy,r; ellipse cx,cy,rx,ry; rect x,y,width,height,rx; line x1,y1,x2,y2; polygon/polyline use points as numeric coordinate pairs.",
     "Every element may set fill and stroke to primary, secondary, or none; strokeWidth is numeric. The website will apply the exact HEX colors supplied by the user.",
-    "Respect the selected logo structure: combination means symbol plus separately typeset brand name; wordmark means lettering is primary and geometry is restrained; monogram means the brand's real first character is typeset inside/with the symbol.",
-    "Do not draw letters or words as paths. The website typesets the exact Persian brand name and slogan separately, preserving real text.",
-    "All three concepts must differ in central idea and geometry, not merely frame, rotation, or ornament. Derive their meaning from name, sector, audience, personality and symbol brief. Avoid generic stock symbols and unrelated decoration.",
+    "Respect the selected logo structure. Combination means symbol plus brand name. Wordmark means lettering is primary and the symbol is restrained. Monogram means the mark meaningfully integrates the brand initial.",
+    "Do not draw letters or words as paths. The website typesets the exact brand name and slogan separately.",
+    "Every concept must have a different core metaphor and silhouette. Do not reuse the same base shape, rotate a symbol, add a frame, or change only ornament. Build the symbol from the exact brand name, sector, audience and personality; explain the connection in rationale.",
+    "Avoid clichés such as generic lightbulbs, rockets, swooshes, crowns, leaves, globes, random loops and stock-looking initials unless the brief specifically justifies them.",
+    "A professional mark should be simple but not primitive: use a memorable silhouette, intentional geometry, balanced filled and open areas, and no unnecessary micro-details. Do not add decorative shapes just to reach the element count.",
     "Do not invent facts. If the brief is sparse, make a conservative design interpretation.",
-    "Keep each Persian explanatory field under 240 characters. Each concept must have at least 5 valid drawable elements."
+    "Keep each Persian explanatory field under 240 characters. Each concept must have at least 8 valid drawable elements."
   ].join(" ");
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 65000);
@@ -146,6 +165,7 @@ async function planVectorConcepts(data, apiKey) {
       return {
         id: "navi-vector-" + (index + 1),
         concept: safeText(item.title, 90) || "کانسپت " + (index + 1),
+        composition: ["stacked", "horizontal", "emblem"].includes(item.composition) ? item.composition : ["stacked", "horizontal", "emblem"][index],
         description: safeText(item.rationale, 240),
         visualDirection: safeText(item.visualDirection, 240),
         elements
