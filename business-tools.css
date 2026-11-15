@@ -326,3 +326,42 @@ body.light #bizPage .biz-tab.is-active{
   #bizPage .biz-tabs{gap:6px;margin:14px -2px 12px;padding:5px;border-radius:13px}
   #bizPage .biz-tab{flex:0 0 auto;min-width:108px;min-height:44px;padding:9px 11px;font-size:11px}
 }
+
+/* NAVA BUSINESS — product and service catalogue */
+#bizPage .biz-catalog-workspace{margin:8px 0 24px}
+#bizPage .biz-catalog-heading{display:flex;align-items:center;justify-content:space-between;gap:16px;margin:12px 0 18px;padding:20px 22px;border:1px solid var(--border);border-radius:17px;background:linear-gradient(125deg,color-mix(in srgb,var(--gold) 9%,var(--panel)),var(--panel2))}
+#bizPage .biz-catalog-heading h2{margin:6px 0;font-size:22px}
+#bizPage .biz-catalog-heading p{margin:0;color:var(--muted);font-size:12px;line-height:1.9}
+#bizPage .biz-catalog-count{flex:0 0 auto;padding:9px 12px;border:1px solid var(--border);border-radius:12px;color:var(--gold);font-size:12px;font-weight:800}
+#bizPage .biz-catalog-layout{display:grid;grid-template-columns:minmax(280px,.78fr) minmax(0,1.22fr);gap:16px;align-items:start}
+#bizPage .biz-catalog-form,#bizPage .biz-catalog-list-panel{min-width:0;padding:19px;border:1px solid var(--border);border-radius:16px;background:var(--panel)}
+#bizPage .biz-catalog-form{display:grid;gap:13px}
+#bizPage .biz-catalog-form-head h3{margin:5px 0 0;font-size:16px}
+#bizPage .biz-catalog-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+#bizPage .biz-catalog-form input,#bizPage .biz-catalog-form select,#bizPage .biz-catalog-form textarea{width:100%;min-width:0;min-height:43px;padding:10px 11px;border:1px solid var(--border);border-radius:10px;background:var(--panel2);color:var(--text);font:inherit;font-size:13px}
+#bizPage .biz-catalog-form textarea{resize:vertical;min-height:84px}
+#bizPage .biz-catalog-form-actions{display:flex;flex-wrap:wrap;gap:8px}
+#bizPage .biz-catalog-form-actions button{flex:1 1 130px}
+#bizPage .biz-catalog-list-head{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+#bizPage .biz-catalog-list-head h3{margin:0;font-size:16px}
+#bizPage .biz-catalog-filters{display:flex;gap:8px;flex-wrap:wrap}
+#bizPage .biz-catalog-filters label{display:flex;align-items:center;gap:6px;color:var(--muted);font-size:11px}
+#bizPage .biz-catalog-filters select{max-width:130px;min-height:36px;padding:6px 8px;border:1px solid var(--border);border-radius:9px;background:var(--panel2);color:var(--text);font:inherit}
+#bizPage .biz-catalog-list{display:grid;gap:10px}
+#bizPage .biz-catalog-empty{padding:24px 12px;border:1px dashed var(--border);border-radius:12px;color:var(--muted);font-size:12px;text-align:center;line-height:1.9}
+#bizPage .biz-catalog-item{display:grid;gap:11px;padding:14px;border:1px solid var(--border);border-radius:13px;background:var(--panel2)}
+#bizPage .biz-catalog-item-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+#bizPage .biz-catalog-item-title{display:grid;gap:5px;min-width:0}
+#bizPage .biz-catalog-item-title strong{font-size:14px;overflow-wrap:anywhere}
+#bizPage .biz-catalog-item-meta{display:flex;flex-wrap:wrap;gap:6px;color:var(--muted);font-size:10px}
+#bizPage .biz-catalog-chip{padding:3px 7px;border:1px solid var(--border);border-radius:20px}
+#bizPage .biz-catalog-prices{display:flex;flex-wrap:wrap;gap:12px;color:var(--muted);font-size:11px}
+#bizPage .biz-catalog-prices strong{color:var(--text);font-weight:700}
+#bizPage .biz-catalog-description{margin:0;color:var(--muted);font-size:11px;line-height:1.8;overflow-wrap:anywhere}
+#bizPage .biz-catalog-item-actions{display:flex;flex-wrap:wrap;gap:7px}
+#bizPage .biz-catalog-item-actions button{min-height:34px;padding:6px 10px;border:1px solid var(--border);border-radius:8px;background:var(--panel);color:var(--text);font:inherit;font-size:11px;cursor:pointer}
+#bizPage .biz-catalog-item-actions button[data-action="archive"]{color:var(--danger,var(--muted))}
+#bizPage .biz-catalog-item[data-status="archived"]{opacity:.75}
+#bizPage .biz-catalog-note{margin:13px 2px;color:var(--muted);font-size:11px;line-height:1.9}
+@media(max-width:800px){#bizPage .biz-catalog-layout{grid-template-columns:1fr}}
+@media(max-width:560px){#bizPage .biz-catalog-heading{align-items:flex-start;flex-direction:column}#bizPage .biz-catalog-fields{grid-template-columns:1fr}#bizPage .biz-catalog-list-head{align-items:flex-start;flex-direction:column}}
