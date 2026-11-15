@@ -2,7 +2,7 @@
 // No image-generation provider, image quota, or raster model is used in this route.
 import { json, safeText } from "./shared.js";
 import { GEMINI_MODEL } from "./config.js";
-import { handleGuestTrial } from "./guest-trial.js";
+import { handleGuestTrial, releaseGuestTrialReservation } from "./guest-trial.js";
 
 function fail(message, status, corsOrigin, extra = {}) {
   return json({ success: false, error: message, ...extra }, status, corsOrigin);
@@ -205,6 +205,9 @@ export async function handleLogoRoute({ request, env, origin, corsOrigin }) {
     if (!quotaResponse.ok) return quotaResponse;
     let quota = {};
     try { quota = await quotaResponse.json(); } catch {}
+    if (!quota.authenticated && !quota.reservationId) {
+      return fail("رزرو سهمیه مهمان کامل نشد. کمی بعد دوباره تلاش کن.", 503, corsOrigin);
+    }
     try {
       const plan = await planVectorConcepts(data, env.GEMINI_API_KEY);
       return json({
@@ -213,8 +216,11 @@ export async function handleLogoRoute({ request, env, origin, corsOrigin }) {
         planning: { method: "navi-authored-design-brief", brandCore: plan.brandCore, strategy: plan.strategy }
       }, 200, corsOrigin);
     } catch (error) {
+      if (quota.reservationId) {
+        await releaseGuestTrialReservation({ env, reservationId: quota.reservationId });
+      }
       console.error("[NAVA LOGO] NAVI brief failed:", String(error?.message || error).slice(0, 400));
-      return fail("ناوی نتوانست بریف طراحی معتبری آماده کند. می‌توانی اطلاعات فرم را اصلاح و دوباره تلاش کنی.", 502, corsOrigin, { code: "NAVI_BRIEF_FAILED" });
+      return fail("ناوی نتوانست بریف طراحی معتبری آماده کند. فرصت آزمایشی مهمان آزاد شد؛ می‌توانی دوباره تلاش کنی.", 502, corsOrigin, { code: "NAVI_BRIEF_FAILED" });
     }
   }
 
