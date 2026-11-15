@@ -17,7 +17,7 @@
     return Number.isFinite(value) ? value : NaN;
   }
   function setText(id,value) { const node=$(id); if(node) node.textContent=value; }
-  function readValues(ids) { return Object.fromEntries(ids.map(id=>[id,readNumber(id)])); }
+  function readValues(mapping) { return Object.fromEntries(Object.entries(mapping).map(([key,id])=>[key,readNumber(id)])); }
   function nonNegative(values,ids) { return ids.every(id=>Number.isFinite(values[id]) && values[id]>=0); }
 
   function calculateCost(values) {
@@ -71,7 +71,7 @@
   }
 
   function renderCost() {
-    const values=readValues(["materials","packaging","labor","overhead","shipping","quantity","margin","salesQuantity"]);
+    const values=readValues({materials:"bizMaterials",packaging:"bizPackaging",labor:"bizLabor",overhead:"bizOverhead",shipping:"bizShipping",quantity:"bizQuantity",margin:"bizMargin",salesQuantity:"bizSalesQuantity"});
     const result=calculateCost(values);
     if (!result) return null;
     if (result.error) { setText("bizCostStatus",result.error); return null; }
@@ -89,7 +89,7 @@
   }
 
   function renderBreakEven() {
-    const values=readValues(["fixed","variable","price","targetProfit"]);
+    const values=readValues({fixed:"bizBreakEvenFixed",variable:"bizBreakEvenVariable",price:"bizBreakEvenPrice",targetProfit:"bizBreakEvenTarget"});
     const result=calculateBreakEven(values);
     if (!result) return null;
     if (result.error) { setText("bizBreakEvenStatus",result.error); return null; }
@@ -113,7 +113,7 @@
   }
 
   function renderBudget() {
-    const values=readValues(["revenue","direct","fixed","payroll","marketing","other","reserve"]);
+    const values=readValues({revenue:"bizBudgetRevenue",direct:"bizBudgetDirect",fixed:"bizBudgetFixed",payroll:"bizBudgetPayroll",marketing:"bizBudgetMarketing",other:"bizBudgetOther",reserve:"bizBudgetReserve"});
     const result=calculateBudget(values);
     if (!result) return null;
     if (result.error) { setText("bizBudgetStatus",result.error); return null; }
