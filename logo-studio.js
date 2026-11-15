@@ -148,10 +148,22 @@
     }
     copy.append(rubric);card.appendChild(copy);
     const actions=document.createElement("div");actions.className="logo-concept-actions";
-    const button=document.createElement("button");button.type="button";button.className="btn-primary";
-    button.textContent="دریافت لوگو با نام برند";
+    const svgButton=document.createElement("button");svgButton.type="button";svgButton.className="btn-primary";
+    svgButton.textContent="دریافت فایل برداری SVG";
+    svgButton.addEventListener("click",async()=>{
+      try {
+        const response=await fetch(image.url);
+        if(!response.ok)throw new Error("SVG download failed");
+        const blob=await response.blob(),url=URL.createObjectURL(blob),link=document.createElement("a");
+        link.href=url;link.download=safeFileName(data.brandName)+"-logo-concept-"+(index+1)+".svg";
+        document.body.appendChild(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),1500);
+        status.textContent="فایل SVG برداری آماده شد و بدون موتور تصویر تولید شده است.";
+      } catch (_) { status.textContent="دریافت SVG ناموفق بود؛ دوباره تلاش کن."; }
+    });
+    const button=document.createElement("button");button.type="button";button.className="btn-secondary";
+    button.textContent="دریافت PNG";
     button.addEventListener("click",()=>downloadPng(image.url,data,index));
-    actions.appendChild(button);card.appendChild(actions);
+    actions.append(svgButton,button);card.appendChild(actions);
     return card;
   }
   fields.palette.addEventListener("change",()=>{customColors.hidden=fields.palette.value!=="custom";});
@@ -182,7 +194,7 @@
     const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),125000);
     const submit=form.querySelector('button[type="submit"]');
     submit.disabled=true;submit.textContent="ناوی در حال تحلیل بریف...";
-    status.textContent="ناوی ابتدا بریف برند را تحلیل می‌کند؛ سپس سه مسیر طراحی برای موتور تصویر آماده می‌شود. این مرحله ممکن است کمی زمان ببرد.";
+    status.textContent="ناوی در حال طراحی سه کانسپت برداری اختصاصی است؛ خروجی با کدنویسی SVG ساخته می‌شود و سهمیه تصویر مصرف نمی‌کند."
     try {
       const response=await fetch("https://nava-music-api.honrrpower.workers.dev/logo/generate",{
         method:"POST",headers,cache:"no-store",signal:controller.signal,
@@ -211,14 +223,14 @@
       }
       result.images.forEach((image,index)=>results.appendChild(buildCard(image,index,data)));
       empty.hidden=true;
-      status.textContent="ناوی بریف را تحلیل کرد و سه مسیر طراحی را بر اساس آن ساخت. کنترل فنی رنگ و ابعاد در مرورگر انجام می‌شود؛ بازخورد فقط روی همین دستگاه ذخیره خواهد شد.";
+      status.textContent="ناوی سه کانسپت را طراحی کرد؛ SVGها با هندسه معتبر ساخته شده‌اند و نام و شعار فارسی به‌صورت متن واقعی رندر شده‌اند."
       results.scrollIntoView({behavior:"smooth",block:"start"});
     } catch(error) {
       status.textContent=error.name==="AbortError"
         ?"زمان ساخت طولانی شد. وضعیت سرویس را بررسی کن و دوباره تلاش کن."
         :"ارتباط با موتور طراحی برقرار نشد. کمی بعد دوباره تلاش کن.";
     } finally {
-      clearTimeout(timer);submit.disabled=false;submit.textContent="ساخت ۳ کانسپت با موتور تصویر";
+      clearTimeout(timer);submit.disabled=false;submit.textContent="ساخت ۳ کانسپت برداری با NAVI";
     }
   });
   $("logoBriefToNavi")?.addEventListener("click",()=>{
