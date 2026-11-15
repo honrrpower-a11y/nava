@@ -9,7 +9,7 @@
   <link rel="stylesheet" href="style.css?v=navi-response-button-20261115-1">
   <link rel="stylesheet" href="logo-studio.css?v=navi-directed-logo-20261114-1">
   <link rel="stylesheet" href="brand-content-studios.css?v=studio-output-inline-20261114-1">
-  <link rel="stylesheet" href="business-tools.css?v=business-transactions-toman-20261116-1">
+  <link rel="stylesheet" href="business-tools.css?v=business-export-daynight-20261116-1">
   <link rel="stylesheet" href="studio-workspaces.css?v=composition-staff-20261114-1">
   <script src="app.js?v=navi-response-button-20261115-1" defer></script>
   <script src="logo-studio.js?v=navi-image-logo-engine-20261115-1" defer></script>
@@ -560,6 +560,29 @@
           </div>
           <p id="bizDashboardFilterStatus" class="biz-dashboard-filter-status" role="status" aria-live="polite"></p>
         </div>
+        <section class="biz-financial-export" aria-labelledby="bizFinancialExportTitle">
+          <div class="biz-financial-export-heading">
+            <div><h4 id="bizFinancialExportTitle">خروجی گزارش مالی</h4><p>گزارش رسمی ماهانه یا سالانه پرونده را دریافت کن.</p></div>
+            <span aria-hidden="true">⇩</span>
+          </div>
+          <div class="biz-financial-export-period">
+            <label class="biz-dashboard-filter-field">سال گزارش<select id="bizExportYear"></select></label>
+            <label class="biz-dashboard-filter-field" id="bizExportMonthField">ماه گزارش<select id="bizExportMonth"></select></label>
+          </div>
+          <div class="biz-financial-export-actions">
+            <div class="biz-financial-export-group">
+              <strong>گزارش ماهانه</strong>
+              <button type="button" data-business-export="month" data-format="pdf">دریافت PDF ماهانه</button>
+              <button type="button" data-business-export="month" data-format="xlsx">دریافت Excel ماهانه</button>
+            </div>
+            <div class="biz-financial-export-group">
+              <strong>گزارش سالانه</strong>
+              <button type="button" data-business-export="year" data-format="pdf">دریافت PDF سالانه</button>
+              <button type="button" data-business-export="year" data-format="xlsx">دریافت Excel سالانه</button>
+            </div>
+          </div>
+          <p id="bizFinancialExportStatus" class="biz-dashboard-filter-status" role="status" aria-live="polite">گزارش‌ها بر اساس تراکنش‌های ثبت‌شده در پرونده فعال ساخته می‌شوند.</p>
+        </section>
         <div id="bizFinancialDashboard" class="biz-financial-dashboard-content" aria-live="polite">
           <p class="biz-dashboard-empty">پس از انتخاب پرونده، خلاصه مالی اینجا نمایش داده می‌شود.</p>
         </div>
@@ -993,7 +1016,8 @@
   <script src="brand-content-studios.js?v=business-transaction-submit-fix-20261116-1" defer></script>
   <script src="business-tools.js?v=business-suite-20261115-2" defer></script>
   <script src="business-workspace.js?v=business-transactions-toman-20261116-2" defer></script>
-  <script src="business-transactions-ui.js?v=financial-dashboard-filters-20261116-1" defer></script>
+  <script src="business-transactions-ui.js?v=financial-dashboard-filters-20261116-2" defer></script>
+  <script src="business-financial-export.js?v=financial-export-daynight-20261116-1" defer></script>
   <script src="document-export.js?v=studio-response-select-20261115-1" defer></script>
   <link rel="stylesheet" href="office-file-tools.css?v=office-persian-ocr-20261115-1">
   <script src="office-structured-files.js?v=office-pptx-xlsx-20261115-1" defer></script>
