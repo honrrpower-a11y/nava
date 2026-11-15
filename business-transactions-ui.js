@@ -104,6 +104,11 @@
       updateSaleTotal();
     }
   });
+  $("bizTransactionAmount")?.addEventListener("input", event => {
+    const field = event.currentTarget;
+    const normalized = normalizeDigits(field.value);
+    if (field.value !== normalized) field.value = normalized;
+  });
   quantityInput?.addEventListener("input", updateSaleTotal);
   unitPriceInput?.addEventListener("input", updateSaleTotal);
   $("bizTransactionType")?.addEventListener("change", syncTransactionType);
@@ -489,7 +494,7 @@
     if (!id) { say("ابتدا یک پرونده کسب‌وکار انتخاب کن."); return; }
     const transactionType = $("bizTransactionType").value;
     const title = $("bizTransactionTitle").value.trim();
-    const amountToman = Number($("bizTransactionAmount").value);
+    const amountToman = Number(normalizeDigits($("bizTransactionAmount").value || "").trim());
     const transactionDate = $("bizTransactionDate").value;
     if (title.length < 2 || !Number.isSafeInteger(amountToman) || amountToman <= 0 || !transactionDate) {
       say("عنوان، مبلغ صحیح و تاریخ را کامل کن.");
