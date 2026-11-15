@@ -8,7 +8,7 @@ async function loadBusinessApi() {
   source = source
     .replace(/^import\s+.*?;\s*$/gm, "")
     .replace(/\bexport\s+(?=(?:async\s+)?function)/g, "");
-  source += "\nglobalThis.__businessApi = { normalizeBusinessProfileInput, normalizeBusinessRecordInput };";
+  source += "\nglobalThis.__businessApi = { normalizeBusinessProfileInput, normalizeBusinessRecordInput, buildBusinessAdvisorContext };";
   const sandbox = {
     console,
     JSON,
@@ -82,4 +82,36 @@ test("financial records reject malformed periods, empty reports and oversized pa
   assert.match(api.normalizeBusinessRecordInput({
     recordType: "note", title: "گزارش", reportText: "متن", payload: { text: "x".repeat(21000) }
   }).error, /بیش از حد بزرگ/);
+});
+
+
+test("business advisor context contains only bounded profile and financial report fields", async () => {
+  const api = await loadBusinessApi();
+  const context = api.buildBusinessAdvisorContext(
+    { name: "فروشگاه", business_type: "store", industry: "مواد غذایی", description: "فروش محلی", currency: "IRR" },
+    [{
+      record_type: "cost_calculation",
+      title: "قیمت تمام‌شده",
+      period_key: "2026-11",
+      report_text: "هزینه هر واحد: ۶۰۰۰ تومان",
+      payload_json: '{"unitCost":6000}',
+      created_at: "2026-11-15"
+    }]
+  );
+  assert.match(context, /پرونده کسب‌وکار: فروشگاه/);
+  assert.match(context, /هزینه هر واحد: ۶۰۰۰ تومان/);
+  assert.match(context, /unitCost/);
+  assert.doesNotMatch(context, /owner_id|password_hash|auth_subject/);
+});
+
+test("business advisor context remains bounded when report text is oversized", async () => {
+  const api = await loadBusinessApi();
+  const context = api.buildBusinessAdvisorContext(
+    { name: "فروشگاه", business_type: "store" },
+    Array.from({ length: 8 }, (_, index) => ({
+      record_type: "note", title: "گزارش " + index, report_text: "x".repeat(12000),
+      payload_json: "{}", created_at: "2026-11-15"
+    }))
+  );
+  assert.ok(context.length <= 20000);
 });
