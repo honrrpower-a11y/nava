@@ -170,77 +170,87 @@ export async function handleLogoRoute({ request, env, origin, corsOrigin }) {
   let input;
   try {
     const raw = await request.text();
-    if (raw.length > 12000) return fail("حجم بریف بیش از حد مجاز است.", 413, corsOrigin);
+    if (raw.length > 24000) return fail("حجم درخواست بیش از حد مجاز است.", 413, corsOrigin);
     input = JSON.parse(raw);
-  } catch {
-    return fail("اطلاعات بریف معتبر نیست.", 400, corsOrigin);
-  }
+  } catch { return fail("اطلاعات درخواست معتبر نیست.", 400, corsOrigin); }
+
+  const action = input?.action === "render" ? "render" : "brief";
   const data = {
-    brandName: safeText(input?.brandName, 48),
-    slogan: safeText(input?.slogan, 100),
-    industry: safeText(input?.industry, 100),
-    audience: safeText(input?.audience, 120),
-    symbolIdea: safeText(input?.symbolIdea, 180),
-    personality: safeText(input?.personality, 80),
-    personalityValue: safeText(input?.personalityValue, 30),
-    typography: safeText(input?.typography, 80),
-    typographyValue: safeText(input?.typographyValue, 30),
-    format: ["combination", "wordmark", "monogram"].includes(input?.format) ? input.format : "",
-    formatLabel: safeText(input?.formatLabel, 60),
-    palette: safeText(input?.palette, 80),
-    primaryColor: safeText(input?.primaryColor, 12),
-    darkColor: safeText(input?.darkColor, 12)
+    brandName: safeText(input?.data?.brandName ?? input?.brandName, 48),
+    slogan: safeText(input?.data?.slogan ?? input?.slogan, 100),
+    industry: safeText(input?.data?.industry ?? input?.industry, 100),
+    audience: safeText(input?.data?.audience ?? input?.audience, 120),
+    symbolIdea: safeText(input?.data?.symbolIdea ?? input?.symbolIdea, 180),
+    personality: safeText(input?.data?.personality ?? input?.personality, 80),
+    personalityValue: safeText(input?.data?.personalityValue ?? input?.personalityValue, 30),
+    typography: safeText(input?.data?.typography ?? input?.typography, 80),
+    typographyValue: safeText(input?.data?.typographyValue ?? input?.typographyValue, 30),
+    format: ["combination", "wordmark", "monogram"].includes(input?.data?.format ?? input?.format) ? (input?.data?.format ?? input?.format) : "",
+    formatLabel: safeText(input?.data?.formatLabel ?? input?.formatLabel, 60),
+    palette: safeText(input?.data?.palette ?? input?.palette, 80),
+    primaryColor: safeText(input?.data?.primaryColor ?? input?.primaryColor, 12),
+    darkColor: safeText(input?.data?.darkColor ?? input?.darkColor, 12)
   };
-  if (!data.format) return fail("ساختار لوگوی انتخاب‌شده معتبر نیست.", 400, corsOrigin);
+  if (!data.format || !data.brandName) return fail("نام برند و ساختار لوگو را بررسی کن.", 400, corsOrigin);
   if (!/^#[0-9a-fA-F]{6}$/.test(data.primaryColor) || !/^#[0-9a-fA-F]{6}$/.test(data.darkColor)) {
     return fail("رنگ‌های انتخاب‌شده از سایت معتبر نیستند.", 400, corsOrigin);
   }
-  if (!data.brandName) return fail("نام برند برای طراحی لازم است.", 400, corsOrigin);
 
-  const quotaRequest = new Request(request.url, {
-    method: "POST",
-    headers: request.headers,
-    body: JSON.stringify({
-      studio: "logo",
-      visitorId: typeof input.visitorId === "string" ? input.visitorId : ""
-    })
-  });
-  const quotaResponse = await handleGuestTrial({ request: quotaRequest, env, origin, corsOrigin });
-  if (!quotaResponse.ok) return quotaResponse;
-  let quota = {};
-  try { quota = await quotaResponse.json(); } catch {}
+  if (action === "brief") {
+    const quotaRequest = new Request(request.url, {
+      method: "POST", headers: request.headers,
+      body: JSON.stringify({ studio: "logo", visitorId: typeof input.visitorId === "string" ? input.visitorId : "" })
+    });
+    const quotaResponse = await handleGuestTrial({ request: quotaRequest, env, origin, corsOrigin });
+    if (!quotaResponse.ok) return quotaResponse;
+    let quota = {};
+    try { quota = await quotaResponse.json(); } catch {}
+    try {
+      const plan = await planVectorConcepts(data, env.GEMINI_API_KEY);
+      return json({
+        success: true, stage: "brief", data, plan,
+        remaining: quota.remaining ?? null,
+        planning: { method: "navi-authored-design-brief", brandCore: plan.brandCore, strategy: plan.strategy }
+      }, 200, corsOrigin);
+    } catch (error) {
+      console.error("[NAVA LOGO] NAVI brief failed:", String(error?.message || error).slice(0, 400));
+      return fail("ناوی نتوانست بریف طراحی معتبری آماده کند. می‌توانی اطلاعات فرم را اصلاح و دوباره تلاش کنی.", 502, corsOrigin, { code: "NAVI_BRIEF_FAILED" });
+    }
+  }
 
-  let plan;
+  // Rendering is deliberately a separate, quota-free execution step. The renderer
+  // accepts only the constrained geometry vocabulary and never invents design choices.
+  const plan = input?.plan;
+  if (!plan || !Array.isArray(plan.concepts) || plan.concepts.length !== 3) {
+    return fail("بریف تأییدشده معتبر نیست؛ ابتدا بریف را دوباره بررسی کن.", 400, corsOrigin);
+  }
   try {
-    plan = await planVectorConcepts(data, env.GEMINI_API_KEY);
-    const images = plan.concepts.map((concept, index) => ({
-      url: renderConceptSvg(data, concept, index),
-      width: 1200,
-      height: 1200,
-      concept: concept.concept,
-      description: concept.description,
-      visualDirection: concept.visualDirection,
-      review: null,
-      directionId: concept.id
+    const concepts = plan.concepts.map((item, index) => {
+      const elements = Array.isArray(item.elements) ? item.elements.slice(0, 14) : [];
+      const valid = elements.map(element => renderElement(element, {
+        primary: data.primaryColor, secondary: data.darkColor
+      })).filter(Boolean);
+      if (valid.length < 5) throw new Error("Invalid concept geometry.");
+      return {
+        id: "navi-vector-" + (index + 1),
+        concept: safeText(item.concept ?? item.title, 90) || "کانسپت " + (index + 1),
+        description: safeText(item.description ?? item.rationale, 240),
+        visualDirection: safeText(item.visualDirection, 240),
+        elements
+      };
+    });
+    const images = concepts.map((concept, index) => ({
+      url: renderConceptSvg(data, concept, index), width: 1200, height: 1200,
+      concept: concept.concept, description: concept.description,
+      visualDirection: concept.visualDirection, review: null, directionId: concept.id
     }));
     return json({
-      success: true,
-      brandName: data.brandName,
-      remaining: quota.remaining ?? null,
-      freeDailyRemaining: null,
-      planning: {
-        method: "navi-native-vector-design",
-        strategy: plan.strategy,
-        brandCore: plan.brandCore,
-        extraModelCalls: 0,
-        note: "NAVI authored the vector geometry; Nava rendered SVG locally without an image-generation service."
-      },
+      success: true, stage: "rendered", brandName: data.brandName,
+      planning: { method: "navi-approved-vector-plan", strategy: safeText(plan.strategy, 600), brandCore: safeText(plan.brandCore, 300), extraModelCalls: 0 },
       images
     }, 200, corsOrigin);
   } catch (error) {
-    console.error("[NAVA LOGO] NAVI vector design failed:", String(error?.message || error).slice(0, 400));
-    return fail("ناوی نتوانست سه طرح برداری معتبر بسازد. سهمیه‌ی تولید تصویر مصرف نشده است؛ می‌توانی پس از اصلاح بریف دوباره تلاش کنی.", 502, corsOrigin, {
-      code: "NAVI_VECTOR_DESIGN_FAILED"
-    });
+    console.error("[NAVA LOGO] SVG rendering failed:", String(error?.message || error).slice(0, 300));
+    return fail("اجرای بریف تأییدشده ممکن نشد. بریف را دوباره بررسی کن.", 422, corsOrigin, { code: "LOGO_RENDER_FAILED" });
   }
 }
