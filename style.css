@@ -2528,3 +2528,27 @@ body.navi-studio-context .navi-widget-panel .navi-send-toolbar .btn-primary {
 #requestResponse.response-box.show{display:block;}
 #requestResponse.response-box:focus{outline:2px solid rgba(37,202,255,.35);outline-offset:2px;}
 body.light #requestResponse.response-box{color:#263a56;}
+
+/* The first-visit access choice is a real blocking dialog, not a decorative card. */
+.nava-access-panel.is-gate-active{
+  position:fixed!important;
+  top:50%!important;
+  left:50%!important;
+  right:auto!important;
+  bottom:auto!important;
+  z-index:10050!important;
+  width:min(980px,calc(100vw - 28px))!important;
+  max-height:calc(100dvh - 32px);
+  overflow:auto;
+  transform:translate(-50%,-50%)!important;
+  box-shadow:0 24px 90px rgba(0,0,0,.58),0 0 0 100vmax rgba(3,7,16,.78);
+  pointer-events:auto;
+}
+.nava-access-panel.is-gate-active button{pointer-events:auto}
+body:has(.nava-access-panel.is-gate-active){overflow:hidden}
+@media(max-width:700px){
+  .nava-access-panel.is-gate-active{
+    width:calc(100vw - 24px)!important;
+    max-height:calc(100dvh - 24px);
+  }
+}
