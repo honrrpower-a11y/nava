@@ -106,13 +106,13 @@
     const file=input.files&&input.files[0];if(!file)return;
     if(file.size>MAX_BYTES){input.value="";setStatus("حجم فایل بیشتر از ۱۵ مگابایت است.","error");return;}
     const ext=(file.name.split(".").pop()||"").toLowerCase();
-    const supported=["docx","pdf","txt","png","jpg","jpeg","webp"];
-    if(!supported.includes(ext)){input.value="";setStatus("فرمت پشتیبانی‌شده: DOCX، PDF، TXT، PNG، JPG و WEBP.","error");return;}
+    const supported=["docx","pdf","txt","png","jpg","jpeg","webp","pptx","xlsx"];
+    if(!supported.includes(ext)){input.value="";setStatus("فرمت پشتیبانی‌شده: DOCX، PDF، PPTX، XLSX، TXT و تصاویر PNG، JPG و WEBP.","error");return;}
     clear.disabled=true;setStatus("در حال خواندن فایل روی دستگاه شما...");
     try{
       originalBrief=brief.value.trim();
       let extracted="",ocrPages=0;
-      if(ext==="docx")extracted=await readDocx(file);
+      if(ext==="pptx"||ext==="xlsx")extracted=await window.NavaOfficeStructured.read(file);\n      else if(ext==="docx")extracted=await readDocx(file);
       else if(ext==="pdf"){
         const result=await readPdf(file);extracted=result.text;ocrPages=result.ocrPages;
       }else if(ext==="txt")extracted=await file.text();
@@ -125,7 +125,7 @@
       brief.value=(originalBrief?originalBrief+"\n\n":"")+attachment;
       brief.dispatchEvent(new Event("input",{bubbles:true}));
       clear.disabled=false;
-      const ocrNote=ocrPages?" با OCR فارسی از "+ocrPages+" صفحه اسکن‌شده.":(["png","jpg","jpeg","webp"].includes(ext)?" با OCR فارسی.":"");
+      const ocrNote=ocrPages?" با OCR فارسی از "+ocrPages+" صفحه اسکن‌شده.":(["png","jpg","jpeg","webp"].includes(ext)?" با OCR فارسی.":ext==="pptx"?"؛ اسلایدها و یادداشت‌های متنی استخراج شدند.":ext==="xlsx"?"؛ شیت‌ها، داده‌های سلولی و فرمول‌های موجود استخراج شدند.":"");
       setStatus("متن فایل «"+file.name+"» استخراج شد"+ocrNote+" و به درخواست NAVI اضافه شد."+(wasTruncated?" فقط ۱۲ هزار نویسه اول خوانده شد.":""),"success");
     }catch(error){
       input.value="";originalBrief="";
