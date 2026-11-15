@@ -262,7 +262,7 @@ export async function handleLogoRoute({ request, env, origin, corsOrigin }) {
   }
   try {
     const concepts = plan.concepts.map((item, index) => {
-      const elements = Array.isArray(item.elements) ? item.elements.slice(0, 14) : [];
+      const elements = Array.isArray(item.elements) ? item.elements.slice(0, 22) : [];
       const valid = elements.map(element => renderElement(element, {
         primary: data.primaryColor, secondary: data.darkColor
       })).filter(Boolean);
@@ -272,6 +272,7 @@ export async function handleLogoRoute({ request, env, origin, corsOrigin }) {
         concept: safeText(item.concept ?? item.title, 90) || "کانسپت " + (index + 1),
         description: safeText(item.description ?? item.rationale, 240),
         visualDirection: safeText(item.visualDirection, 240),
+        composition: ["stacked", "horizontal", "emblem"].includes(item.composition) ? item.composition : ["stacked", "horizontal", "emblem"][index],
         elements
       };
     });
