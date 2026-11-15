@@ -62,12 +62,15 @@ function attach(target,service){
  const p=target.parentElement;if(!p)return;p.querySelector("[data-nava-export-actions]")?.remove();
  const box=document.createElement("div");box.dataset.navaExportActions="true";box.className="nava-export-actions";
  const wb=document.createElement("button");wb.type="button";wb.className="btn-primary";wb.textContent="دریافت فایل Word";
+ const sb=document.createElement("button");sb.type="button";sb.className="btn-secondary";sb.textContent="انتخاب متن پاسخ";
+ sb.addEventListener("click",()=>{const selection=window.getSelection();if(!selection||!target.isConnected)return;const range=document.createRange();range.selectNodeContents(target);selection.removeAllRanges();selection.addRange(range);note.textContent="متن همین پاسخ انتخاب شد؛ اکنون از منوی گوشی «کپی» را بزن.";
+ });
  const pb=document.createElement("button");pb.type="button";pb.className="btn-secondary";pb.textContent="دریافت PDF";
  const note=document.createElement("p");note.className="nava-export-status";note.setAttribute("role","status");note.setAttribute("aria-live","polite");
  const base=service==="مقاله و وبلاگ"?"NAVA-article":"NAVA-office-document";
  wb.addEventListener("click",()=>word(target.textContent,uniqueName(base,"docx"),wb,note));
  pb.addEventListener("click",()=>pdf(target.textContent,uniqueName(base,"pdf"),note));
- box.append(wb,pb,note);target.insertAdjacentElement("afterend",box);
+ box.append(sb,wb,pb,note);target.insertAdjacentElement("afterend",box);
 }
 window.NavaDocumentExport={attach};
 })();
