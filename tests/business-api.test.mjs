@@ -8,6 +8,7 @@ async function loadBusinessApi() {
   source = source
     .replace(/^import \{ json, safeNaviText \} from "\.\/shared\.js";\s*$/m, "")
     .replace(/^import \{ authorizeNaviRequest \} from "\.\/navi-auth\.js";\s*$/m, "")
+    .replace(/^import \{ ALLOWED_ORIGIN \} from "\.\/config\.js";\s*$/m, "")
     .replace(/\bexport\s+(?=(?:async\s+)?function)/g, "");
   source += "\nglobalThis.__businessApi = { normalizeBusinessProfileInput, normalizeBusinessRecordInput };";
   const sandbox = {
