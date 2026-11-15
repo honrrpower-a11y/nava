@@ -103,3 +103,15 @@
 #bizPage .biz-record-delete{min-height:34px;padding:6px 12px;border:1px solid color-mix(in srgb,#d65b5b 45%,var(--border));border-radius:9px;background:transparent;color:var(--text);font:inherit;font-size:10px;cursor:pointer}
 #bizPage .biz-record-delete:hover{background:color-mix(in srgb,#d65b5b 10%,var(--panel))}
 #bizPage .biz-record-delete:disabled{opacity:.55;cursor:wait}
+
+
+/* NAVI business advisor */
+#bizPage .biz-navi-advisor{grid-column:1/-1;display:grid;gap:12px;margin-top:14px;padding:17px;border:1px solid color-mix(in srgb,var(--gold) 35%,var(--border));border-radius:15px;background:var(--panel2)}
+#bizPage .biz-navi-advisor h3{margin:5px 0;font-size:16px}
+#bizPage .biz-navi-advisor p{margin:0;color:var(--muted);font-size:11px;line-height:1.9}
+#bizPage .biz-navi-advisor textarea{width:100%;min-height:88px;resize:vertical;padding:11px;border:1px solid var(--border);border-radius:10px;background:var(--panel);color:var(--text);font:inherit;font-size:12px;line-height:1.9}
+#bizPage .biz-navi-advisor button{justify-self:start;min-width:190px}
+#bizPage .biz-navi-advisor-output{min-height:48px;max-height:520px;overflow:auto;padding:13px;border:1px solid var(--border);border-radius:11px;background:var(--panel);color:var(--text);font-size:12px;line-height:2;white-space:pre-wrap;overflow-wrap:anywhere}
+#bizPage .biz-navi-advisor-output[data-state="error"]{border-color:#b85d58;color:#e49a94}
+#bizPage .biz-navi-advisor-output[data-state="success"]{border-color:color-mix(in srgb,var(--gold) 35%,var(--border))}
+@media(max-width:560px){#bizPage .biz-navi-advisor{padding:13px}#bizPage .biz-navi-advisor button{width:100%}}
