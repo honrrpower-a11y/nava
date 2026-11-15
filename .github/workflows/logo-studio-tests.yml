@@ -1,0 +1,37 @@
+name: NAVI logo studio tests
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "modules/logo.js"
+      - "modules/guest-trial.js"
+      - "logo-studio.js"
+      - "index.html"
+      - "tests/logo-studio.test.mjs"
+      - ".github/workflows/logo-studio-tests.yml"
+  push:
+    branches: [feat/navi-native-vector-logo]
+    paths:
+      - "modules/logo.js"
+      - "modules/guest-trial.js"
+      - "logo-studio.js"
+      - "index.html"
+      - "tests/logo-studio.test.mjs"
+      - ".github/workflows/logo-studio-tests.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  logo-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Check logo studio JavaScript syntax
+        run: node --check modules/logo.js && node --check modules/guest-trial.js && node --check logo-studio.js
+      - name: Run logo studio regression tests
+        run: node --test tests/logo-studio.test.mjs tests/guest-trial.test.mjs
