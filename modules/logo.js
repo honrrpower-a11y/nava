@@ -103,21 +103,22 @@ export function renderConceptSvg(data, concept, index) {
     : "";
   let word = "";
   let sloganText = "";
+  let emblemFrame = "";
   let background = '<rect width="1000" height="1000" fill="' + backgroundColor + '"/>';
   if (composition === "horizontal") {
     word = '<text x="900" y="465" text-anchor="end" direction="rtl" unicode-bidi="plaintext" font-family="' + font + '" font-size="' + nameSize + '" font-weight="700" fill="' + secondary + '">' + brand + '</text>';
     if (slogan) sloganText = '<text x="900" y="525" text-anchor="end" direction="rtl" unicode-bidi="plaintext" font-family="' + font + '" font-size="27" fill="' + secondary + '" opacity=".76">' + slogan + '</text>';
   } else if (composition === "emblem") {
-    word = '<text x="500" y="800" text-anchor="middle" direction="rtl" unicode-bidi="plaintext" font-family="' + font + '" font-size="' + nameSize + '" font-weight="700" fill="' + secondary + '">' + brand + '</text>';
-    if (slogan) sloganText = '<text x="500" y="855" text-anchor="middle" direction="rtl" unicode-bidi="plaintext" font-family="' + font + '" font-size="26" fill="' + secondary + '" opacity=".76">' + slogan + '</text>';
-    background = '<rect x="24" y="24" width="952" height="952" rx="52" fill="' + backgroundColor + '"/>';
+    word = '<text x="500" y="760" text-anchor="middle" direction="rtl" unicode-bidi="plaintext" font-family="' + font + '" font-size="' + nameSize + '" font-weight="700" fill="' + secondary + '">' + brand + '</text>';
+    if (slogan) sloganText = '<text x="500" y="815" text-anchor="middle" direction="rtl" unicode-bidi="plaintext" font-family="' + font + '" font-size="26" fill="' + secondary + '" opacity=".76">' + slogan + '</text>';
+    emblemFrame = '<path d="M500 70 C625 135 750 155 825 165 L825 430 C825 590 690 715 500 875 C310 715 175 590 175 430 L175 165 C250 155 375 135 500 70 Z" fill="none" stroke="' + primary + '" stroke-width="18" stroke-linejoin="round"/>';
   } else {
     word = '<text x="500" y="' + (isWordmark ? 690 : 805) + '" text-anchor="middle" direction="rtl" unicode-bidi="plaintext" font-family="' + font + '" font-size="' + (isWordmark ? Math.min(96, nameSize + 12) : nameSize) + '" font-weight="700" fill="' + secondary + '">' + brand + '</text>';
     if (slogan) sloganText = '<text x="500" y="' + (isWordmark ? 750 : 865) + '" text-anchor="middle" direction="rtl" unicode-bidi="plaintext" font-family="' + font + '" font-size="26" fill="' + secondary + '" opacity=".76">' + slogan + '</text>';
   }
   const svg = '<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1200" viewBox="0 0 1000 1000" role="img" aria-label="' + brand + '">' +
     '<title>' + brand + ' — ' + escapeXml(concept.concept || "کانسپت لوگو") + '</title>' +
-    background + '<g>' + symbol + monogram + '</g>' + word + sloganText + '</svg>';
+    background + '<g>' + emblemFrame + symbol + monogram + '</g>' + word + sloganText + '</svg>';
   return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
 }
 
