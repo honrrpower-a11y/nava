@@ -1848,6 +1848,15 @@ body.light .nava-account-workspace .navi-workspace-tab{
 .nava-account-workspace{margin-top:12px}
 .navi-widget-panel{position:fixed!important;top:50vh!important;left:50vw!important;right:auto!important;bottom:auto!important;transform:translate(-50%,-50%)!important;max-height:calc(100dvh - 28px);z-index:1301}
 .navi-widget-panel.is-open{animation:naviWidgetCenteredIn .24s cubic-bezier(.2,.8,.2,1) both}
+/* Keep the first-time account dialog near the top on phones instead of centering
+   a tall panel around the viewport midpoint. */
+@media(max-width:760px){
+ .navi-widget-panel.is-auth-entry{
+   top:max(12px,env(safe-area-inset-top) + 8px)!important;
+   max-height:calc(100dvh - max(20px,env(safe-area-inset-top) + 16px))!important;
+   transform:translateX(-50%)!important;
+ }
+}
 @media(max-width:760px){
  .header-inner{min-height:112px;align-items:flex-start}
  .brand{padding-top:9px}
