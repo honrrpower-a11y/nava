@@ -33,6 +33,12 @@ export function normalizeBusinessTransactionInput(input, partial = false) {
   }
   if (!partial || Object.hasOwn(input, "category")) value.category = clean(input.category || "", 80);
   if (!partial || Object.hasOwn(input, "notes")) value.notes = clean(input.notes || "", 1200);
+  if (Object.hasOwn(input, "catalogItemId")) {
+    const itemId = String(input.catalogItemId || "").trim();
+    if (!itemId) value.catalog_item_id = null;
+    else if (!/^item-[0-9a-f-]{36}$/i.test(itemId)) return { error: "شناسه محصول یا خدمت معتبر نیست." };
+    else value.catalog_item_id = itemId;
+  } else if (!partial) value.catalog_item_id = null;
   if (Object.hasOwn(input, "quantity")) {
     if (input.quantity === "" || input.quantity === null) value.quantity = null;
     else {
@@ -49,7 +55,7 @@ export function normalizeBusinessTransactionInput(input, partial = false) {
       value.unit_price_toman = n;
     }
   } else if (!partial) value.unit_price_toman = null;
-  if (value.transaction_type === "expense" && (value.quantity || value.unit_price_toman)) return { error: "برای ثبت هزینه، تعداد و قیمت واحد را خالی بگذار." };
+  if (value.transaction_type === "expense" && (value.quantity || value.unit_price_toman || value.catalog_item_id)) return { error: "برای ثبت هزینه، محصول، تعداد و قیمت واحد را انتخاب نکن." };
   if (value.transaction_type === "sale" && value.quantity && value.unit_price_toman && value.amount_toman !== undefined && value.amount_toman !== value.quantity * value.unit_price_toman) {
     return { error: "مبلغ کل فروش باید برابر تعداد ضربدر قیمت واحد باشد." };
   }
@@ -59,7 +65,7 @@ export function normalizeBusinessTransactionInput(input, partial = false) {
 
 function publicTransaction(row) {
   return {
-    id: row.id, transactionType: row.transaction_type, title: row.title,
+    id: row.id, transactionType: row.transaction_type, title: row.title, catalogItemId: row.catalog_item_id || null,
     amountToman: Number(row.amount_toman), transactionDate: row.transaction_date,
     category: row.category || "", notes: row.notes || "",
     quantity: row.quantity == null ? null : Number(row.quantity),
@@ -99,7 +105,7 @@ export async function handleBusinessTransactionRoute({ request, env, url, corsOr
       const dateClause = (from ? " AND transaction_date >= ?" : "") + (to ? " AND transaction_date <= ?" : "");
       const dateParams = [businessId, ownerId, ...(from ? [from] : []), ...(to ? [to] : [])];
       const result = await env.NAVA_DB.prepare(
-        "SELECT id, transaction_type, title, amount_toman, transaction_date, category, notes, quantity, unit_price_toman, created_at, updated_at FROM business_transactions_v1 WHERE business_id = ? AND owner_id = ?" + dateClause + " ORDER BY transaction_date DESC, created_at DESC LIMIT ? OFFSET ?"
+        "SELECT id, transaction_type, title, amount_toman, transaction_date, category, notes, quantity, unit_price_toman, catalog_item_id, created_at, updated_at FROM business_transactions_v1 WHERE business_id = ? AND owner_id = ?" + dateClause + " ORDER BY transaction_date DESC, created_at DESC LIMIT ? OFFSET ?"
       ).bind(...dateParams, limit, offset).all();
       const totals = await env.NAVA_DB.prepare(
         "SELECT COUNT(CASE WHEN transaction_type = 'sale' THEN 1 END) AS sales_count, COUNT(CASE WHEN transaction_type = 'expense' THEN 1 END) AS expenses_count, COALESCE(SUM(CASE WHEN transaction_type = 'sale' THEN amount_toman ELSE 0 END), 0) AS sales_toman, COALESCE(SUM(CASE WHEN transaction_type = 'expense' THEN amount_toman ELSE 0 END), 0) AS expenses_toman, COUNT(*) AS transaction_count FROM business_transactions_v1 WHERE business_id = ? AND owner_id = ?" + dateClause
@@ -129,13 +135,22 @@ export async function handleBusinessTransactionRoute({ request, env, url, corsOr
       const normalized = normalizeBusinessTransactionInput(input);
       if (normalized.error) return fail(normalized.error, 400, corsOrigin);
       const v = normalized.value;
+      if (v.catalog_item_id) {
+        if (v.transaction_type !== "sale" || !v.quantity || !v.unit_price_toman) {
+          return fail("برای ثبت فروش از کاتالوگ، تعداد و قیمت واحد را کامل کن.", 400, corsOrigin);
+        }
+        const item = await env.NAVA_DB.prepare(
+          "SELECT id FROM business_catalog_items_v1 WHERE id = ? AND business_id = ? AND owner_id = ? AND status = 'active' LIMIT 1"
+        ).bind(v.catalog_item_id, businessId, ownerId).first();
+        if (!item) return fail("محصول یا خدمت انتخاب‌شده فعال نیست یا به این پرونده تعلق ندارد.", 404, corsOrigin);
+      }
       const id = "txn-" + crypto.randomUUID();
       const result = await env.NAVA_DB.prepare(
-        "INSERT INTO business_transactions_v1 (id, business_id, owner_id, transaction_type, title, amount_toman, transaction_date, category, notes, quantity, unit_price_toman, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))"
-      ).bind(id, businessId, ownerId, v.transaction_type, v.title, v.amount_toman, v.transaction_date, v.category, v.notes, v.quantity, v.unit_price_toman).run();
+        "INSERT INTO business_transactions_v1 (id, business_id, owner_id, transaction_type, title, amount_toman, transaction_date, category, notes, quantity, unit_price_toman, catalog_item_id, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))"
+      ).bind(id, businessId, ownerId, v.transaction_type, v.title, v.amount_toman, v.transaction_date, v.category, v.notes, v.quantity, v.unit_price_toman, v.catalog_item_id).run();
       if (!result.success || Number(result.meta?.changes || 0) !== 1) throw new Error("Transaction insert not confirmed");
       const row = await env.NAVA_DB.prepare(
-        "SELECT id, transaction_type, title, amount_toman, transaction_date, category, notes, quantity, unit_price_toman, created_at, updated_at FROM business_transactions_v1 WHERE id = ? AND owner_id = ?"
+        "SELECT id, transaction_type, title, amount_toman, transaction_date, category, notes, quantity, unit_price_toman, catalog_item_id, created_at, updated_at FROM business_transactions_v1 WHERE id = ? AND owner_id = ?"
       ).bind(id, ownerId).first();
       return reply({ transaction: publicTransaction(row), saved: true }, 201, corsOrigin);
     }
@@ -145,12 +160,21 @@ export async function handleBusinessTransactionRoute({ request, env, url, corsOr
       const normalized = normalizeBusinessTransactionInput(input, true);
       if (normalized.error) return fail(normalized.error, 400, corsOrigin);
       const current = await env.NAVA_DB.prepare(
-        "SELECT transaction_type, title, amount_toman, transaction_date, category, notes, quantity, unit_price_toman FROM business_transactions_v1 WHERE id = ? AND business_id = ? AND owner_id = ?"
+        "SELECT transaction_type, title, amount_toman, transaction_date, category, notes, quantity, unit_price_toman, catalog_item_id FROM business_transactions_v1 WHERE id = ? AND business_id = ? AND owner_id = ?"
       ).bind(transactionId, businessId, ownerId).first();
       if (!current) return fail("تراکنش پیدا نشد.", 404, corsOrigin);
       const v = { ...current, ...normalized.value };
-      if (v.transaction_type === "expense" && (v.quantity || v.unit_price_toman)) return fail("برای ثبت هزینه، تعداد و قیمت واحد باید خالی باشد.", 400, corsOrigin);
+      if (v.transaction_type === "expense" && (v.quantity || v.unit_price_toman || v.catalog_item_id)) return fail("برای ثبت هزینه، محصول، تعداد و قیمت واحد باید خالی باشد.", 400, corsOrigin);
       if (v.transaction_type === "sale" && v.quantity && v.unit_price_toman && v.amount_toman !== v.quantity * v.unit_price_toman) return fail("مبلغ کل فروش باید برابر تعداد ضربدر قیمت واحد باشد.", 400, corsOrigin);
+      if (Object.hasOwn(normalized.value, "catalog_item_id") && v.catalog_item_id) {
+        if (v.transaction_type !== "sale" || !v.quantity || !v.unit_price_toman) {
+          return fail("برای اتصال محصول به فروش، تعداد و قیمت واحد را کامل کن.", 400, corsOrigin);
+        }
+        const item = await env.NAVA_DB.prepare(
+          "SELECT id FROM business_catalog_items_v1 WHERE id = ? AND business_id = ? AND owner_id = ? AND status = 'active' LIMIT 1"
+        ).bind(v.catalog_item_id, businessId, ownerId).first();
+        if (!item) return fail("محصول یا خدمت انتخاب‌شده فعال نیست یا به این پرونده تعلق ندارد.", 404, corsOrigin);
+      }
       const keys = Object.keys(normalized.value);
       const assignments = keys.map(key => key + " = ?").join(", ");
       const updated = await env.NAVA_DB.prepare(
