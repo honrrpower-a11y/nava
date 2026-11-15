@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { handleLogoRoute, renderElement, renderConceptSvg } from "../modules/logo.js";
+import { releaseGuestTrialReservation } from "../modules/guest-trial.js";
 
 const COLORS = { primary: "#C99B48", secondary: "#172238" };
 
@@ -122,6 +123,10 @@ test("failed Gemini planning refunds the guest trial but retains the IP abuse li
     assert.equal(db.visitorUsed, 0, "the failed model attempt must not consume a guest trial");
     assert.equal(db.ipUsed, 1, "the IP rate-limit must still count failed attempts");
     assert.equal([...db.reservations.values()][0].status, "refunded");
+    const reservationId = [...db.reservations.keys()][0];
+    assert.equal(await releaseGuestTrialReservation({ env: { NAVA_DB: db }, reservationId }), false,
+      "a repeated refund must be a no-op");
+    assert.equal(db.visitorUsed, 0, "an idempotent refund must not decrement twice");
   } finally {
     globalThis.fetch = originalFetch;
   }
