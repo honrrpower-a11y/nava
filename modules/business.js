@@ -294,7 +294,7 @@ export async function handleBusinessRoute({ request, env, url, origin, corsOrigi
       return fail("روش درخواست برای این پرونده مجاز نیست.", 405, corsOrigin);
     }
     if (parts[2] === "transactions") {
-      return await handleBusinessTransactionRoute({ request, env, url, origin, corsOrigin, businessId, transactionId: parts[3] || "" });
+      return await handleBusinessTransactionRoute({ request, env, url, corsOrigin, businessId, ownerId: user.id, transactionId: parts[3] || "" });
     }
     if (parts[2] === "records") {
       if (parts.length === 3) {
