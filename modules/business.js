@@ -198,10 +198,34 @@ export function buildBusinessAdvisorContext(business, records = []) {
 export async function loadNaviBusinessContext(db, ownerId, businessId) {
   const business = await ownsBusiness(db, businessId, ownerId);
   if (!business || business.status !== "active") return null;
-  const result = await db.prepare(
-    "SELECT record_type, title, period_key, report_text, payload_json, created_at FROM business_financial_records_v1 WHERE business_id = ? AND owner_id = ? ORDER BY created_at DESC LIMIT 8"
-  ).bind(businessId, ownerId).all();
-  return buildBusinessAdvisorContext(business, result.results || []);
+  const [records, transactions] = await Promise.all([
+    db.prepare(
+      "SELECT record_type, title, period_key, report_text, payload_json, created_at FROM business_financial_records_v1 WHERE business_id = ? AND owner_id = ? ORDER BY created_at DESC LIMIT 8"
+    ).bind(businessId, ownerId).all(),
+    db.prepare(
+      "SELECT transaction_type, title, amount_toman, transaction_date, category, notes FROM business_transactions_v1 WHERE business_id = ? AND owner_id = ? ORDER BY transaction_date DESC, created_at DESC LIMIT 30"
+    ).bind(businessId, ownerId).all()
+  ]);
+  const base = buildBusinessAdvisorContext(business, records.results || []);
+  let sales = 0;
+  let expenses = 0;
+  const lines = ["تراکنش‌های واقعی ثبت‌شده (تومان):"];
+  for (const item of transactions.results || []) {
+    const amount = Number(item.amount_toman || 0);
+    if (item.transaction_type === "sale") sales += amount;
+    if (item.transaction_type === "expense") expenses += amount;
+    lines.push("- " + (item.transaction_type === "sale" ? "فروش" : "هزینه") +
+      " | " + safeNaviText(item.title || "", 120) +
+      " | " + amount.toLocaleString("en-US") + " تومان" +
+      " | " + safeNaviText(item.transaction_date || "", 20) +
+      " | " + safeNaviText(item.category || "", 80) +
+      " | " + safeNaviText(item.notes || "", 250));
+  }
+  lines.push("جمع فروش در ۳۰ تراکنش اخیر: " + sales.toLocaleString("en-US") + " تومان");
+  lines.push("جمع هزینه در ۳۰ تراکنش اخیر: " + expenses.toLocaleString("en-US") + " تومان");
+  if (!(transactions.results || []).length) lines.push("هنوز تراکنش واقعی فروش یا هزینه‌ای ثبت نشده است.");
+  lines.push("این جمع‌ها فقط مربوط به حداکثر ۳۰ تراکنش اخیر هستند و جمع کل تاریخی نیستند.");
+  return (base + "\n" + lines.join("\n")).slice(0, 24000);
 }
 
 async function listRecords(db, ownerId, businessId, url, corsOrigin) {
