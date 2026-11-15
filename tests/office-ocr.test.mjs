@@ -4,6 +4,7 @@ import { readFileSync } from "node:fs";
 
 const office = readFileSync(new URL("../office-file-tools.js", import.meta.url), "utf8");
 const html = readFileSync(new URL("../index.html", import.meta.url), "utf8");
+const structured = readFileSync(new URL("../office-structured-files.js", import.meta.url), "utf8");
 
 test("Office OCR supports Persian and English recognition in the browser", () => {
   assert.match(office, /tesseract\.js@5\.1\.1/);
@@ -35,8 +36,11 @@ test("NAVI response has a dedicated mobile-safe text selection control", () => {
 });
 
 \ntest("Office accepts PowerPoint and Excel files and loads the local structured parser", () => {
-  assert.match(html, /\\.pptx,\\.xlsx/);
-  assert.match(html, /office-structured-files\\.js/);
+  assert.match(html, /\.pptx,\.xlsx/);
+  assert.match(html, /office-structured-files\.js/);
   assert.match(office, /"pptx","xlsx"/);
-  assert.match(office, /NavaOfficeStructured\\.read\\(file\\)/);
+  assert.match(office, /NavaOfficeStructured\.read\(file\)/);
+  assert.match(structured, /readPowerPoint/);
+  assert.match(structured, /readExcel/);
+  assert.match(structured, /cell\.f/);
 });
