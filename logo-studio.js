@@ -55,19 +55,12 @@
       const image=new Image();
       image.onload=()=>{
         const canvas=document.createElement("canvas");
-        canvas.width=1200;canvas.height=1400;
+        canvas.width=1200;canvas.height=1200;
         const ctx=canvas.getContext("2d");
+        if(!ctx){URL.revokeObjectURL(objectUrl);status.textContent="ساخت PNG در این مرورگر پشتیبانی نمی‌شود.";return;}
         ctx.fillStyle="#ffffff";ctx.fillRect(0,0,canvas.width,canvas.height);
-        const size=1080;ctx.drawImage(image,60,20,size,size);
-        ctx.textAlign="center";ctx.textBaseline="middle";
-        ctx.direction=/[\u0600-\u06FF]/.test(data.brandName)?"rtl":"ltr";
-        ctx.fillStyle=data.darkColor||"#172238";
-        ctx.font="700 82px Tahoma, Arial, sans-serif";
-        ctx.fillText(data.brandName,600,1190,1060);
-        if(data.slogan){
-          ctx.fillStyle="#687386";ctx.font="400 34px Tahoma, Arial, sans-serif";
-          ctx.fillText(data.slogan,600,1280,1040);
-        }
+        // The SVG already contains the exact brand name and slogan; do not typeset them twice.
+        ctx.drawImage(image,0,0,1200,1200);
         canvas.toBlob(output=>{
           URL.revokeObjectURL(objectUrl);
           if(!output){status.textContent="ساخت PNG ناموفق بود.";return;}
