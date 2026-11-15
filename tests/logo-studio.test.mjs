@@ -55,6 +55,8 @@ class FakeD1 {
     const db = this;
     let args = [];
     return {
+      get sql() { return sql; },
+      get args() { return args; },
       bind(...values) { args = values; return this; },
       async run() {
         if (sql.includes("INSERT INTO nava_guest_trial_reservations")) {
