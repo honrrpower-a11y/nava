@@ -9,7 +9,7 @@
   <link rel="stylesheet" href="style.css?v=navi-response-button-20261115-1">
   <link rel="stylesheet" href="logo-studio.css?v=navi-directed-logo-20261114-1">
   <link rel="stylesheet" href="brand-content-studios.css?v=studio-output-inline-20261114-1">
-  <link rel="stylesheet" href="business-tools.css?v=cost-calculator-20261115-1">
+  <link rel="stylesheet" href="business-tools.css?v=business-suite-20261115-1">
   <link rel="stylesheet" href="studio-workspaces.css?v=composition-staff-20261114-1">
   <script src="app.js?v=navi-response-button-20261115-1" defer></script>
   <script src="logo-studio.js?v=navi-image-logo-engine-20261115-1" defer></script>
@@ -571,7 +571,58 @@
         <div class="studio-output-placeholder"><span aria-hidden="true">✦</span><strong>تحلیل و پیشنهادهای اجرایی</strong><p>پس از ارسال درخواست، پاسخ NAVI در این قسمت نمایش داده می‌شود.</p></div>
       </aside>
     </div>
-    <p class="biz-roadmap-note">این نسخه با محاسبه‌گر قیمت و سود شروع شده است. ابزارهای نقطه سربه‌سر، بودجه‌بندی، فروش و موجودی در مراحل بعدی به همین فضای کاری اضافه می‌شوند.</p>
+    <section class="biz-extra-tools" aria-labelledby="bizExtraToolsTitle">
+      <div class="biz-extra-heading">
+        <div><span class="biz-eyebrow">ابزارهای مالی تکمیلی</span><h2 id="bizExtraToolsTitle">تصویر دقیق‌تری از وضعیت مالی کسب‌وکارت</h2><p>دو ابزار مستقل برای تصمیم‌گیری درباره فروش، هزینه و جریان مالی ماهانه.</p></div>
+      </div>
+      <div class="biz-secondary-tool-grid">
+        <section class="biz-secondary-card" aria-labelledby="bizBreakEvenTitle">
+          <div class="biz-secondary-head"><div><span class="studio-step">ابزار مالی ۰۲</span><h3 id="bizBreakEvenTitle">محاسبه نقطه سربه‌سر</h3><p>مشخص کن حداقل چند واحد باید بفروشی تا هزینه‌هایت پوشش داده شوند.</p></div><span class="biz-tool-mini-mark">◎</span></div>
+          <form id="bizBreakEvenForm" data-business-tool-form novalidate>
+            <div class="biz-fields-grid">
+              <label class="biz-field"><span>هزینه ثابت دوره (تومان)</span><input id="bizBreakEvenFixed" type="number" min="0" step="any" value="0" inputmode="decimal"></label>
+              <label class="biz-field"><span>هزینه متغیر هر واحد (تومان)</span><input id="bizBreakEvenVariable" type="number" min="0" step="any" value="0" inputmode="decimal"></label>
+              <label class="biz-field"><span>قیمت فروش هر واحد (تومان)</span><input id="bizBreakEvenPrice" type="number" min="0" step="any" value="0" inputmode="decimal"></label>
+              <label class="biz-field"><span>سود هدف در دوره (تومان)</span><input id="bizBreakEvenTarget" type="number" min="0" step="any" value="0" inputmode="decimal"></label>
+            </div>
+            <button class="btn-primary biz-secondary-submit" type="submit">محاسبه نقطه سربه‌سر</button>
+            <p class="biz-validation" id="bizBreakEvenStatus" role="status" aria-live="polite">هزینه ثابت، هزینه متغیر و قیمت فروش را وارد کن.</p>
+          </form>
+          <div class="biz-secondary-results" aria-live="polite">
+            <div><span>حداقل فروش برای سربه‌سر</span><strong id="bizBreakEvenUnits">—</strong></div>
+            <div><span>درآمد متناظر با نقطه سربه‌سر</span><strong id="bizBreakEvenRevenue">—</strong></div>
+            <div><span>تعداد فروش برای رسیدن به سود هدف</span><strong id="bizTargetUnits">—</strong></div>
+          </div>
+          <p class="biz-secondary-note">فرض محاسبه: قیمت و هزینه متغیر هر واحد ثابت است و هزینه ثابت مربوط به یک دوره مشخص است.</p>
+        </section>
+
+        <section class="biz-secondary-card" aria-labelledby="bizBudgetTitle">
+          <div class="biz-secondary-head"><div><span class="studio-step">ابزار مالی ۰۳</span><h3 id="bizBudgetTitle">برنامه‌ریز بودجه ماهانه</h3><p>درآمد و هزینه‌های پیش‌بینی‌شده را کنار هم بگذار و مانده عملیاتی را ببین.</p></div><span class="biz-tool-mini-mark">▤</span></div>
+          <form id="bizBudgetForm" data-business-tool-form novalidate>
+            <div class="biz-fields-grid">
+              <label class="biz-field"><span>درآمد یا فروش پیش‌بینی‌شده</span><input id="bizBudgetRevenue" type="number" min="0" step="any" value="0" inputmode="decimal"></label>
+              <label class="biz-field"><span>هزینه مستقیم کالا/خدمات</span><input id="bizBudgetDirect" type="number" min="0" step="any" value="0" inputmode="decimal"></label>
+              <label class="biz-field"><span>هزینه‌های ثابت</span><input id="bizBudgetFixed" type="number" min="0" step="any" value="0" inputmode="decimal"></label>
+              <label class="biz-field"><span>حقوق و دستمزد</span><input id="bizBudgetPayroll" type="number" min="0" step="any" value="0" inputmode="decimal"></label>
+              <label class="biz-field"><span>بازاریابی و تبلیغات</span><input id="bizBudgetMarketing" type="number" min="0" step="any" value="0" inputmode="decimal"></label>
+              <label class="biz-field"><span>سایر هزینه‌ها</span><input id="bizBudgetOther" type="number" min="0" step="any" value="0" inputmode="decimal"></label>
+              <label class="biz-field"><span>درصد ذخیره از مازاد (٪)</span><input id="bizBudgetReserve" type="number" min="0" max="100" step="0.1" value="10" inputmode="decimal"></label>
+            </div>
+            <button class="btn-primary biz-secondary-submit" type="submit">محاسبه بودجه ماهانه</button>
+            <p class="biz-validation" id="bizBudgetStatus" role="status" aria-live="polite">مبالغ ماهانه را وارد کن تا بودجه محاسبه شود.</p>
+          </form>
+          <div class="biz-secondary-results" aria-live="polite">
+            <div><span>مجموع هزینه‌های ماهانه</span><strong id="bizBudgetExpenses">—</strong></div>
+            <div><span>مازاد / کسری عملیاتی</span><strong id="bizBudgetOperatingProfit">—</strong></div>
+            <div><span>مبلغ ذخیره پیشنهادی</span><strong id="bizBudgetReserveAmount">—</strong></div>
+            <div><span>مانده پس از ذخیره</span><strong id="bizBudgetNet">—</strong></div>
+            <div><span>حاشیه عملیاتی</span><strong id="bizBudgetMargin">—</strong></div>
+          </div>
+          <p class="biz-secondary-note">این برنامه‌ریز، بودجه پیش‌بینی‌شده است؛ مالیات، بهره و جریان نقد واقعی فقط در صورت ثبت جداگانه لحاظ می‌شوند.</p>
+        </section>
+      </div>
+    </section>
+    <p class="biz-roadmap-note">ابزارهای مالی پایه اکنون شامل قیمت‌گذاری، نقطه سربه‌سر و بودجه ماهانه هستند. مدیریت فروش، موجودی و ذخیره امن سوابق کسب‌وکار در مراحل بعدی توسعه می‌یابند.</p>
   </div>
 </section>
 <section class="page nava-studio-page" id="musicPage">
@@ -840,7 +891,7 @@
 </footer>
 
   <script src="brand-content-studios.js?v=navi-thread-context-20261114-3" defer></script>
-  <script src="business-tools.js?v=cost-calculator-20261115-1" defer></script>
+  <script src="business-tools.js?v=business-suite-20261115-1" defer></script>
   <script src="document-export.js?v=studio-response-select-20261115-1" defer></script>
   <link rel="stylesheet" href="office-file-tools.css?v=office-persian-ocr-20261115-1">
   <script src="office-structured-files.js?v=office-pptx-xlsx-20261115-1" defer></script>
