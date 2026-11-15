@@ -31,29 +31,28 @@
     node.style.color = isError ? "#e28b82" : "";
   }
 
-  async function requestStudioOutput(service, context, message, target, button) {
-    const token = typeof getNaviToken === "function" ? getNaviToken() : null;
-    if (!token) {
-      target.textContent = "برای استفاده از خروجی مستقیم، ابتدا وارد حساب NAVI شو.";
-      target.dataset.state = "error";
-      return;
-    }
-    if (typeof window.getNaviActiveContext !== "function") {
-      target.textContent = "اتصال ناوی آماده نیست؛ صفحه را تازه‌سازی و دوباره تلاش کن.";
-      target.dataset.state = "error";
-      return;
-    }
-    const naviContext = await window.getNaviActiveContext();
-    if (!naviContext?.threadId) {
-      target.textContent = "گفت‌وگوی معتبر ناوی پیدا نشد. پنل ناوی را باز کن و دوباره تلاش کن.";
-      target.dataset.state = "error";
-      return;
-    }
+  async function requestStudioOutput(service, context, message, target, button, onSuccess) {
     const originalLabel = button?.textContent || "";
     if (button) { button.disabled = true; button.textContent = "در حال تولید خروجی..."; }
-    target.textContent = "درخواست به NAVI ارسال شد؛ پاسخ در همین فضای پروژه نمایش داده می‌شود...";
+    target.textContent = "در حال آماده‌سازی درخواست برای NAVI...";
     target.dataset.state = "loading";
+
     try {
+      const token = typeof getNaviToken === "function" ? getNaviToken() : null;
+      if (!token) throw new Error("برای استفاده از خروجی مستقیم، ابتدا وارد حساب NAVI شو.");
+      if (typeof window.getNaviActiveContext !== "function") {
+        throw new Error("اتصال ناوی آماده نیست؛ صفحه را تازه‌سازی و دوباره تلاش کن.");
+      }
+
+      // Resolve the active thread inside the guarded flow. This can reject
+      // while NAVI is restoring a session; it must never become an unhandled
+      // promise or leave the submit button stuck.
+      const naviContext = await window.getNaviActiveContext();
+      if (!naviContext?.threadId) {
+        throw new Error("گفت‌وگوی معتبر ناوی پیدا نشد. پنل ناوی را باز کن و دوباره تلاش کن.");
+      }
+
+      target.textContent = "درخواست به NAVI ارسال شد؛ پاسخ در همین فضای پروژه نمایش داده می‌شود...";
       const response = await fetch("https://nava-music-api.honrrpower.workers.dev/navi-chat", {
         method: "POST",
         headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
@@ -64,20 +63,20 @@
           saveToMemory: false
         })
       });
-      const data = await response.json();
+      const data = await response.json().catch(() => ({}));
       if (response.status === 401 || response.status === 403) {
-        target.textContent = "نشست NAVI معتبر نیست یا پایان یافته است. دوباره وارد حساب شو.";
-        target.dataset.state = "error";
-        return;
+        throw new Error("نشست NAVI معتبر نیست یا پایان یافته است. دوباره وارد حساب شو.");
       }
       if (!response.ok || !data.success || !String(data.reply || "").trim()) {
         throw new Error(data.error || data.diagnostic || "دریافت خروجی از NAVI ناموفق بود.");
       }
+
       target.textContent = String(data.reply).trim();
       target.dataset.state = "success";
       if (window.NavaDocumentExport) window.NavaDocumentExport.attach(target, service);
+      if (typeof onSuccess === "function") onSuccess(target.textContent);
     } catch (error) {
-      target.textContent = error.message || "ارتباط با NAVI برقرار نشد. دوباره تلاش کن.";
+      target.textContent = error?.message || "ارتباط با NAVI برقرار نشد. دوباره تلاش کن.";
       target.dataset.state = "error";
     } finally {
       if (button) { button.disabled = false; button.textContent = originalLabel; }
@@ -185,12 +184,16 @@
     const preview = $("previewText");
     if (preview) { preview.textContent = "در حال دریافت نسخه بازطراحی‌شده..."; preview.classList.remove("empty"); }
     const output = $("storyMessage");
-    requestStudioOutput("استوری‌ساز", context, message, output, $("improveStoryWithNavi"));
-    const observer = new MutationObserver(() => {
-      if (output?.dataset.state === "success" && preview) preview.textContent = output.textContent;
-      observer.disconnect();
-    });
-    if (output) observer.observe(output, { childList: true, characterData: true, subtree: true });
+    requestStudioOutput(
+      "استوری‌ساز",
+      context,
+      message,
+      output,
+      $("improveStoryWithNavi"),
+      reply => {
+        if (preview) preview.textContent = reply;
+      }
+    );
   });
 
   $("brandStudioReset")?.addEventListener("click", () => {
