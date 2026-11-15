@@ -52,7 +52,7 @@
     const rows = data.transactions || [];
     const sales = rows.filter(x => x.transactionType === "sale").reduce((a, x) => a + Number(x.amountToman || 0), 0);
     const expenses = rows.filter(x => x.transactionType === "expense").reduce((a, x) => a + Number(x.amountToman || 0), 0);
-    summary.textContent = "۱۰۰ تراکنش اخیر — فروش: " + money(sales) + " | هزینه: " + money(expenses) + " | مانده: " + money(sales - expenses);
+    summary.textContent = "۱۰۰ تراکنش اخیر — فروش: " + money(sales) + " | هزینه: " + money(expenses) + " | تفاضل فروش و هزینه ثبت‌شده: " + money(sales - expenses);
     list.replaceChildren();
     if (!rows.length) {
       list.textContent = "هنوز تراکنش واقعی در این پرونده ثبت نشده است.";
@@ -66,7 +66,7 @@
       const heading = document.createElement("strong");
       heading.textContent = row.title;
       const meta = document.createElement("small");
-      meta.textContent = (row.transactionType === "sale" ? "فروش واقعی" : "هزینه واقعی") + " | " + row.transactionDate + (row.category ? " | " + row.category : "");
+      meta.textContent = (row.transactionType === "sale" ? "فروش ثبت‌شده" : "هزینه ثبت‌شده") + " | " + row.transactionDate + (row.category ? " | " + row.category : "");
       const amount = document.createElement("b");
       amount.dataset.type = row.transactionType;
       amount.textContent = (row.transactionType === "sale" ? "+" : "−") + money(row.amountToman);
