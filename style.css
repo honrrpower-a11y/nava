@@ -2583,3 +2583,67 @@ body:has(> .nava-access-panel.is-gate-active){overflow:hidden}
     padding:10px 12px;
   }
 }
+
+
+/* Compact first-time NAVI access so both account tabs fit on a phone screen. */
+@media(max-width:600px){
+  .navi-widget-panel.is-auth-entry{
+    overflow:hidden!important;
+    height:auto!important;
+    max-height:calc(100dvh - max(20px,env(safe-area-inset-top) + 16px))!important;
+  }
+  .navi-widget-panel.is-auth-entry .request-panel{
+    overflow:hidden!important;
+  }
+  .navi-widget-panel.is-auth-entry .request-content{
+    padding:5px 8px 8px!important;
+  }
+  .navi-widget-panel.is-auth-entry .navi-auth-panel{
+    padding:7px 10px 10px!important;
+  }
+  .navi-widget-panel.is-auth-entry .navi-auth-heading{
+    margin-bottom:3px!important;
+  }
+  .navi-widget-panel.is-auth-entry .navi-auth-panel::before{
+    margin-bottom:3px!important;
+    font-size:17px!important;
+  }
+  .navi-widget-panel.is-auth-entry .navi-auth-panel>p{
+    display:none!important;
+  }
+  .navi-widget-panel.is-auth-entry .navi-auth-tabs{
+    margin:7px 0 8px!important;
+    padding:3px!important;
+    gap:5px!important;
+  }
+  .navi-widget-panel.is-auth-entry .navi-auth-tab{
+    min-height:37px!important;
+  }
+  .navi-widget-panel.is-auth-entry .navi-auth-tab-panel>p{
+    display:none!important;
+  }
+  .navi-widget-panel.is-auth-entry .navi-auth-tab-panel form{
+    display:grid;
+    grid-template-columns:1fr;
+    gap:3px!important;
+  }
+  .navi-widget-panel.is-auth-entry .navi-auth-tab-panel .field-label{
+    margin:2px 0 0!important;
+    font-size:11px!important;
+    line-height:1.35!important;
+  }
+  .navi-widget-panel.is-auth-entry .navi-auth-tab-panel .navi-password{
+    min-height:36px!important;
+    height:36px!important;
+    padding:6px 10px!important;
+    font-size:13px!important;
+  }
+  .navi-widget-panel.is-auth-entry .navi-auth-tab-panel .btn-primary{
+    min-height:38px!important;
+    padding:7px 12px!important;
+    margin-top:5px!important;
+  }
+  .navi-widget-panel.is-auth-entry .navi-auth-error:empty{
+    display:none!important;
+  }
+}
