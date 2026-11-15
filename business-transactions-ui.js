@@ -449,6 +449,7 @@
   });
 
   if (dateInput && !dateInput.value) setDateValue(localToday());
+  setupDashboardFilters();
   $("bizProfileSelect")?.addEventListener("change", () => load().catch(error => say(error.message)));
   window.addEventListener("nava:business-selection-changed", () => load().catch(error => say(error.message)));
   window.addEventListener("nava:business-auth-changed", () => load().catch(error => say(error.message)));
