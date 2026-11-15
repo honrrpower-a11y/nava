@@ -81,7 +81,7 @@ export async function handleBusinessTransactionRoute({ request, env, url, corsOr
     if (!business) return fail("پرونده کسب‌وکار پیدا نشد.", 404, corsOrigin);
     if (!transactionId && request.method === "GET") {
       const requested = Number(url.searchParams.get("limit") || 50);
-      const limit = Number.isInteger(requested) ? Math.max(1, Math.min(requested, 200)) : 50;
+      const limit = Number.isInteger(requested) ? Math.max(1, Math.min(requested, 5000)) : 50;
       const from = String(url.searchParams.get("from") || "");
       const to = String(url.searchParams.get("to") || "");
       const validDate = value => {
