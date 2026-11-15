@@ -512,6 +512,27 @@
       <button class="btn-secondary" type="button" onclick="showPage('homePage')">بازگشت به استودیوها</button>
     </div>
 
+    <section class="biz-profile-panel" aria-labelledby="bizProfileTitle">
+      <div class="biz-profile-copy">
+        <span class="biz-eyebrow">پرونده اختصاصی</span>
+        <h2 id="bizProfileTitle">کسب‌وکارهای من</h2>
+        <p>اطلاعات و گزارش‌های مالی هر کسب‌وکار در پرونده مستقل خودش نگهداری می‌شود.</p>
+      </div>
+      <div class="biz-profile-controls">
+        <label class="biz-field" for="bizProfileSelect"><span>پرونده فعال</span><select id="bizProfileSelect" disabled><option value="">ابتدا وارد حساب نوا شو</option></select></label>
+        <form id="bizProfileCreateForm" class="biz-profile-create">
+          <label class="biz-field"><span>نام کسب‌وکار جدید</span><input id="bizProfileName" type="text" maxlength="120" placeholder="مثلاً فروشگاه آنلاین من" required></label>
+          <label class="biz-field"><span>نوع کسب‌وکار</span><select id="bizProfileType"><option value="freelancer">فریلنسر</option><option value="store">فروشگاه</option><option value="home_business">کسب‌وکار خانگی</option><option value="small_company">شرکت کوچک</option><option value="idea">ایده در مرحله راه‌اندازی</option><option value="other">سایر</option></select></label>
+          <button class="btn-primary" id="bizProfileCreateButton" type="submit">ایجاد پرونده</button>
+        </form>
+      </div>
+      <p class="biz-profile-status" id="bizProfileStatus" role="status" aria-live="polite">برای ساخت و ذخیره پرونده، ابتدا وارد حساب NAVI شو.</p>
+      <div class="biz-profile-record-actions">
+        <span id="bizProfileActiveName">هنوز پرونده‌ای انتخاب نشده است.</span>
+        <button class="btn-secondary" type="button" id="bizSaveFinancialRecord" disabled>ذخیره گزارش مالی در پرونده</button>
+      </div>
+    </section>
+
     <div class="biz-tool-intro">
       <div><span class="biz-eyebrow">ابزار فعال</span><h2>محاسبه‌گر قیمت تمام‌شده و سود</h2><p>هزینه‌های یک نوبت تولید را وارد کن تا هزینه هر واحد، قیمت فروش پیشنهادی و سود احتمالی محاسبه شود.</p></div>
       <span class="biz-tool-mark" aria-hidden="true">٪</span>
