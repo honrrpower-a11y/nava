@@ -969,7 +969,6 @@ function saveNaviSession(token, expiresIn) {
 
 function clearNaviSession() {
   naviSessionVersion++;
-  window.dispatchEvent(new Event("nava:business-auth-changed"));
 
   try {
     removeNaviStoredValue(NAVI_SESSION_KEY);
@@ -1031,6 +1030,7 @@ function clearNaviSession() {
   }
 
   resetNaviMemoryPanel();
+  window.dispatchEvent(new Event("nava:business-auth-changed"));
 }
 
 
