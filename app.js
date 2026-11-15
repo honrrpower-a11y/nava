@@ -303,41 +303,48 @@ function syncNaviWidgetMode() {
     studioMode ? "باز کردن همراه ناوی در این استودیو" : "باز کردن گفت‌وگو با ناوی");
 }
 
-/* Initial account/guest choice: keep the rest of the site inert until a path is chosen. */
+/* Initial account/guest choice: keep the rest of the site inert until a path is chosen.
+   Move the dialog to <body> while active so transformed orbit artwork cannot shift its
+   fixed-position coordinates away from the actual viewport center. */
 let navaAccessGateActive = false;
+let navaAccessPanelPlaceholder = null;
+let navaAccessPanelOriginalParent = null;
+let navaAccessPanelOriginalNextSibling = null;
+
 function setNavaAccessGate(active) {
   navaAccessGateActive = Boolean(active);
   const accessPanel = document.querySelector(".nava-access-panel");
-  const orbitStage = document.querySelector(".nava-orbit-stage");
-  const homePage = document.getElementById("homePage");
+  const main = document.querySelector("main");
   const header = document.querySelector("header");
   const footer = document.querySelector("footer");
 
+  if (!accessPanel) return;
+
+  if (navaAccessGateActive && accessPanel.parentElement !== document.body) {
+    navaAccessPanelOriginalParent = accessPanel.parentElement;
+    navaAccessPanelOriginalNextSibling = accessPanel.nextSibling;
+    navaAccessPanelPlaceholder = document.createComment("NAVA access dialog position");
+    navaAccessPanelOriginalParent?.insertBefore(navaAccessPanelPlaceholder, accessPanel);
+    document.body.appendChild(accessPanel);
+  } else if (!navaAccessGateActive && accessPanel.parentElement === document.body &&
+             navaAccessPanelOriginalParent) {
+    navaAccessPanelOriginalParent.insertBefore(
+      accessPanel,
+      navaAccessPanelPlaceholder || navaAccessPanelOriginalNextSibling
+    );
+    navaAccessPanelPlaceholder?.remove();
+    navaAccessPanelPlaceholder = null;
+    navaAccessPanelOriginalParent = null;
+    navaAccessPanelOriginalNextSibling = null;
+  }
+
   if (header) header.inert = navaAccessGateActive;
   if (footer) footer.inert = navaAccessGateActive;
+  if (main) main.inert = navaAccessGateActive;
 
-  document.querySelectorAll("main > .page").forEach(page => {
-    page.inert = navaAccessGateActive && page !== homePage;
-  });
-
-  if (homePage && accessPanel) {
-    /* Inert every sibling along the path to the dialog, but never inert its ancestors. */
-    let current = accessPanel;
-    while (current && current !== homePage) {
-      const parent = current.parentElement;
-      if (!parent) break;
-      Array.from(parent.children).forEach(sibling => {
-        if (sibling !== current) sibling.inert = navaAccessGateActive;
-      });
-      current = parent;
-    }
-  }
-
-  if (accessPanel) {
-    accessPanel.classList.toggle("is-gate-active", navaAccessGateActive);
-    accessPanel.setAttribute("aria-modal", navaAccessGateActive ? "true" : "false");
-    accessPanel.setAttribute("role", navaAccessGateActive ? "dialog" : "region");
-  }
+  accessPanel.classList.toggle("is-gate-active", navaAccessGateActive);
+  accessPanel.setAttribute("aria-modal", navaAccessGateActive ? "true" : "false");
+  accessPanel.setAttribute("role", navaAccessGateActive ? "dialog" : "region");
 }
 
 function showPage(pageId) {
