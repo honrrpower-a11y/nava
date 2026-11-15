@@ -708,6 +708,39 @@ document.addEventListener("keydown", event => {
   const style = document.createElement("style");
   style.id = "navaAccountUiStyles";
   style.textContent = `
+    .navi-widget-panel.is-auth-entry .navi-auth-tabs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin: 18px 0 16px;
+      padding: 5px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: var(--panel2);
+    }
+    .navi-widget-panel.is-auth-entry .navi-auth-tab {
+      min-height: 46px;
+      border: 1px solid transparent;
+      border-radius: 10px;
+      background: transparent;
+      color: var(--muted);
+      font: inherit;
+      font-weight: 800;
+      cursor: pointer;
+    }
+    .navi-widget-panel.is-auth-entry .navi-auth-tab.is-active {
+      color: var(--gold);
+      border-color: var(--gold);
+      background: var(--panel);
+      box-shadow: 0 2px 10px rgba(0,0,0,.06);
+    }
+    .navi-widget-panel.is-auth-entry .navi-auth-tab-panel[hidden] { display: none !important; }
+    .navi-widget-panel.is-auth-entry .navi-auth-tab-panel > p {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.9;
+      margin: 0 0 14px;
+    }
     /* Keep first-time visitors focused on account access, not generic chat context. */
     .navi-widget-panel.is-auth-entry .navi-assistant-context,
     .navi-widget-panel.is-auth-entry #requestSection > .request-content > h2,
@@ -3235,6 +3268,24 @@ function setNaviRegistrationStatus(message, success = false) {
   naviRegistrationStatus.classList.add("show");
   naviRegistrationStatus.classList.toggle("navi-registration-success", Boolean(success));
 }
+
+const naviLoginTab = document.getElementById("naviLoginTab");
+const naviRegisterTab = document.getElementById("naviRegisterTab");
+const naviLoginTabPanel = document.getElementById("naviLoginTabPanel");
+const naviRegisterTabPanel = document.getElementById("naviRegisterTabPanel");
+
+function setNaviAuthTab(tab) {
+  const showRegister = tab === "register";
+  naviLoginTab?.classList.toggle("is-active", !showRegister);
+  naviRegisterTab?.classList.toggle("is-active", showRegister);
+  naviLoginTab?.setAttribute("aria-selected", String(!showRegister));
+  naviRegisterTab?.setAttribute("aria-selected", String(showRegister));
+  if (naviLoginTabPanel) naviLoginTabPanel.hidden = showRegister;
+  if (naviRegisterTabPanel) naviRegisterTabPanel.hidden = !showRegister;
+}
+naviLoginTab?.addEventListener("click", () => setNaviAuthTab("login"));
+naviRegisterTab?.addEventListener("click", () => setNaviAuthTab("register"));
+setNaviAuthTab("login");
 
 if (naviRegistrationForm) {
   naviRegistrationForm.addEventListener("submit", async event => {
