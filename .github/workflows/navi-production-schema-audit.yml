@@ -6,6 +6,7 @@ on:
       - main
     paths:
       - ".github/workflows/navi-production-schema-audit.yml"
+      - "migrations/navi-production-reconcile/0007_business_sales_catalog_link.sql"
   workflow_dispatch:
 
 permissions:
