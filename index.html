@@ -527,12 +527,22 @@
         </form>
       </div>
       <p class="biz-profile-status" id="bizProfileStatus" role="status" aria-live="polite">برای ساخت و ذخیره پرونده، ابتدا وارد حساب NAVI شو.</p>
-      <div class="biz-profile-recent" id="bizProfileRecent" aria-live="polite">سوابق مالی ذخیره‌شده پس از انتخاب پرونده اینجا نمایش داده می‌شوند.</div>
       <div class="biz-profile-record-actions">
         <span id="bizProfileActiveName">هنوز پرونده‌ای انتخاب نشده است.</span>
         <span class="biz-profile-save-hint">پس از محاسبه، گزارش را از کارت نتیجه ذخیره کن.</span>
       </div>
-      <section class="biz-financial-dashboard" aria-labelledby="bizFinancialDashboardTitle">
+    </section>
+
+    <nav class="biz-tabs" role="tablist" aria-label="بخش‌های کسب‌وکار">
+      <button class="biz-tab is-active" id="bizTabDashboard" type="button" role="tab" data-biz-tab="dashboard" aria-controls="bizPanelDashboard" aria-selected="true"><span aria-hidden="true">▦</span><span>داشبورد</span></button>
+      <button class="biz-tab" id="bizTabTransactions" type="button" role="tab" data-biz-tab="transactions" aria-controls="bizPanelTransactions" aria-selected="false" tabindex="-1"><span aria-hidden="true">↕</span><span>فروش و هزینه</span></button>
+      <button class="biz-tab" id="bizTabTools" type="button" role="tab" data-biz-tab="tools" aria-controls="bizPanelTools" aria-selected="false" tabindex="-1"><span aria-hidden="true">⌗</span><span>ابزارهای مالی</span></button>
+      <button class="biz-tab" id="bizTabReports" type="button" role="tab" data-biz-tab="reports" aria-controls="bizPanelReports" aria-selected="false" tabindex="-1"><span aria-hidden="true">▤</span><span>گزارش‌ها</span></button>
+      <button class="biz-tab" id="bizTabAdvisor" type="button" role="tab" data-biz-tab="advisor" aria-controls="bizPanelAdvisor" aria-selected="false" tabindex="-1"><span aria-hidden="true">✦</span><span>مشاور NAVI</span></button>
+    </nav>
+    <div class="biz-tab-panels">
+      <section class="biz-tab-panel is-active" id="bizPanelDashboard" data-biz-panel="dashboard" role="tabpanel" aria-labelledby="bizTabDashboard">
+        <section class="biz-financial-dashboard" aria-labelledby="bizFinancialDashboardTitle">
         <div class="biz-dashboard-heading">
           <div><span class="biz-eyebrow">NAVA BUSINESS OVERVIEW</span><h3 id="bizFinancialDashboardTitle">داشبورد مالی</h3>
             <p>نمای کلی بر اساس تمام فروش‌ها و هزینه‌هایی که در این پرونده ثبت کرده‌ای.</p></div>
@@ -560,35 +570,15 @@
           </div>
           <p id="bizDashboardFilterStatus" class="biz-dashboard-filter-status" role="status" aria-live="polite"></p>
         </div>
-        <section class="biz-financial-export" aria-labelledby="bizFinancialExportTitle">
-          <div class="biz-financial-export-heading">
-            <div><h4 id="bizFinancialExportTitle">خروجی گزارش مالی</h4><p>گزارش رسمی ماهانه یا سالانه پرونده را دریافت کن.</p></div>
-            <span aria-hidden="true">⇩</span>
-          </div>
-          <div class="biz-financial-export-period">
-            <label class="biz-dashboard-filter-field">سال گزارش<select id="bizExportYear"></select></label>
-            <label class="biz-dashboard-filter-field" id="bizExportMonthField">ماه گزارش<select id="bizExportMonth"></select></label>
-          </div>
-          <div class="biz-financial-export-actions">
-            <div class="biz-financial-export-group">
-              <strong>گزارش ماهانه</strong>
-              <button type="button" data-business-export="month" data-format="pdf">دریافت PDF ماهانه</button>
-              <button type="button" data-business-export="month" data-format="xlsx">دریافت Excel ماهانه</button>
-            </div>
-            <div class="biz-financial-export-group">
-              <strong>گزارش سالانه</strong>
-              <button type="button" data-business-export="year" data-format="pdf">دریافت PDF سالانه</button>
-              <button type="button" data-business-export="year" data-format="xlsx">دریافت Excel سالانه</button>
-            </div>
-          </div>
-          <p id="bizFinancialExportStatus" class="biz-dashboard-filter-status" role="status" aria-live="polite">گزارش‌ها بر اساس تراکنش‌های ثبت‌شده در پرونده فعال ساخته می‌شوند.</p>
-        </section>
+        
         <div id="bizFinancialDashboard" class="biz-financial-dashboard-content" aria-live="polite">
           <p class="biz-dashboard-empty">پس از انتخاب پرونده، خلاصه مالی اینجا نمایش داده می‌شود.</p>
         </div>
         <p class="biz-dashboard-disclaimer">توجه: تفاضل فروش و هزینه ثبت‌شده، سود قطعی یا موجودی نقدی نیست. برای محاسبه سود واقعی باید بهای تمام‌شده، مطالبات وصول‌شده و بدهی‌های پرداخت‌شده نیز مشخص باشند. محاسبات قیمت‌گذاری و سود احتمالی در بخش گزارش‌های تخمینی جداگانه نگهداری می‌شوند.</p>
       </section>
-      <section class="biz-transactions-panel" aria-labelledby="bizTransactionsTitle">
+      </section>
+      <section class="biz-tab-panel" id="bizPanelTransactions" data-biz-panel="transactions" role="tabpanel" aria-labelledby="bizTabTransactions" hidden>
+        <section class="biz-transactions-panel" aria-labelledby="bizTransactionsTitle">
         <div class="biz-transactions-heading">
           <div><span class="biz-eyebrow">دفتر مالی واقعی</span><h3 id="bizTransactionsTitle">ثبت فروش و هزینه</h3>
             <p>فروش‌ها و هزینه‌های انجام‌شده را ثبت کن؛ این دفتر به‌تنهایی وضعیت وصول مطالبات یا پرداخت بدهی را مشخص نمی‌کند. همه مبالغ به تومان هستند.</p></div>
@@ -621,21 +611,9 @@
         <div id="bizTransactionSummary" class="biz-transaction-summary"></div>
         <div id="bizTransactionList" class="biz-transaction-list" aria-live="polite">تراکنش‌های پرونده پس از انتخاب آن نمایش داده می‌شوند.</div>
       </section>
-      <section class="biz-navi-advisor" aria-labelledby="bizNaviAdvisorTitle">
-        <div>
-          <span class="biz-eyebrow">NAVI BUSINESS ADVISOR</span>
-          <h3 id="bizNaviAdvisorTitle">مشاور هوشمند کسب‌وکار</h3>
-          <p>ناوی می‌تواند با بررسی اطلاعات پرونده فعال و گزارش‌های مالی ذخیره‌شده، به پرسش‌هایت پاسخ بدهد.</p>
-        </div>
-        <label class="biz-field" for="bizNaviQuestion"><span>پرسش از ناوی</span>
-          <textarea id="bizNaviQuestion" rows="3" maxlength="3000" placeholder="مثلاً وضعیت مالی فروشگاهم را بر اساس گزارش‌های ثبت‌شده تحلیل کن و بگو چه چیزهایی نیاز به توجه دارد."></textarea>
-        </label>
-        <button class="btn-primary" id="bizNaviAskButton" type="button">تحلیل پرونده با NAVI</button>
-        <div class="biz-navi-advisor-output" id="bizNaviAdvisorOutput" role="status" aria-live="polite">پاسخ ناوی پس از ارسال پرسش در این قسمت نمایش داده می‌شود.</div>
       </section>
-    </section>
-
-    <div class="biz-tool-intro">
+      <section class="biz-tab-panel" id="bizPanelTools" data-biz-panel="tools" role="tabpanel" aria-labelledby="bizTabTools" hidden>
+        <div class="biz-tool-intro">
       <div><span class="biz-eyebrow">ابزار فعال</span><h2>محاسبه‌گر قیمت تمام‌شده و سود</h2><p>هزینه‌های یک نوبت تولید را وارد کن تا هزینه هر واحد، قیمت فروش پیشنهادی و سود احتمالی محاسبه شود.</p></div>
       <span class="biz-tool-mark" aria-hidden="true">٪</span>
     </div>
@@ -676,24 +654,6 @@
       </aside>
     </div>
 
-    <div class="biz-advisor-layout">
-      <div class="biz-advisor-copy"><span class="studio-step">مشاور هوشمند</span><h2>تحلیل کسب‌وکار با NAVI</h2><p>بعد از محاسبه، می‌توانی مسئله کسب‌وکارت را برای تحلیل، برنامه‌ریزی یا بررسی راهکارها به NAVI بسپاری.</p></div>
-      <form class="studio-brief-card biz-advisor-form">
-        <label for="studioTask-biz">نوع مسئله یا ابزار</label>
-        <select id="studioTask-biz" class="studio-control">
-          <option>تحلیل نتیجه محاسبه و قیمت‌گذاری</option><option>ایده‌پردازی و برنامه‌ریزی</option><option>بررسی امکان‌پذیری کسب‌وکار</option><option>برنامه فروش و توسعه</option><option>بازبینی و بهبود فرایند</option>
-        </select>
-        <label for="studioAudience-biz">نوع کسب‌وکار یا مخاطب</label>
-        <input id="studioAudience-biz" class="studio-control" type="text" maxlength="180" placeholder="مثلاً تولید خانگی، فروشگاه یا شرکت کوچک">
-        <label for="studioBrief-biz">شرح درخواست و جزئیات</label>
-        <textarea id="studioBrief-biz" class="studio-control studio-brief-input" maxlength="3000" placeholder="مسئله، هدف، محدودیت‌ها و نتیجه مورد انتظار را بنویس"></textarea>
-        <div class="studio-brief-actions"><button class="btn-primary" type="submit">بررسی با NAVI</button><button class="btn-secondary" type="reset">پاک کردن فرم</button></div>
-      </form>
-      <aside class="studio-output-card biz-advisor-output">
-        <span class="studio-step">فضای مشاوره</span><h3>پاسخ NAVI</h3>
-        <div class="studio-output-placeholder"><span aria-hidden="true">✦</span><strong>تحلیل و پیشنهادهای اجرایی</strong><p>پس از ارسال درخواست، پاسخ NAVI در این قسمت نمایش داده می‌شود.</p></div>
-      </aside>
-    </div>
     <section class="biz-extra-tools" aria-labelledby="bizExtraToolsTitle">
       <div class="biz-extra-heading">
         <div><span class="biz-eyebrow">ابزارهای مالی تکمیلی</span><h2 id="bizExtraToolsTitle">تصویر دقیق‌تری از وضعیت مالی کسب‌وکارت</h2><p>دو ابزار مستقل برای تصمیم‌گیری درباره فروش، هزینه و جریان مالی ماهانه.</p></div>
@@ -746,6 +706,67 @@
       </div>
     </section>
     <p class="biz-roadmap-note">ابزارهای مالی پایه اکنون شامل قیمت‌گذاری، نقطه سربه‌سر و بودجه ماهانه هستند. مدیریت فروش، موجودی و ذخیره امن سوابق کسب‌وکار در مراحل بعدی توسعه می‌یابند.</p>
+      </section>
+      <section class="biz-tab-panel" id="bizPanelReports" data-biz-panel="reports" role="tabpanel" aria-labelledby="bizTabReports" hidden>
+        <div class="biz-profile-recent" id="bizProfileRecent" aria-live="polite">سوابق مالی ذخیره‌شده پس از انتخاب پرونده اینجا نمایش داده می‌شوند.</div>
+        <section class="biz-financial-export" aria-labelledby="bizFinancialExportTitle">
+          <div class="biz-financial-export-heading">
+            <div><h4 id="bizFinancialExportTitle">خروجی گزارش مالی</h4><p>گزارش رسمی ماهانه یا سالانه پرونده را دریافت کن.</p></div>
+            <span aria-hidden="true">⇩</span>
+          </div>
+          <div class="biz-financial-export-period">
+            <label class="biz-dashboard-filter-field">سال گزارش<select id="bizExportYear"></select></label>
+            <label class="biz-dashboard-filter-field" id="bizExportMonthField">ماه گزارش<select id="bizExportMonth"></select></label>
+          </div>
+          <div class="biz-financial-export-actions">
+            <div class="biz-financial-export-group">
+              <strong>گزارش ماهانه</strong>
+              <button type="button" data-business-export="month" data-format="pdf">دریافت PDF ماهانه</button>
+              <button type="button" data-business-export="month" data-format="xlsx">دریافت Excel ماهانه</button>
+            </div>
+            <div class="biz-financial-export-group">
+              <strong>گزارش سالانه</strong>
+              <button type="button" data-business-export="year" data-format="pdf">دریافت PDF سالانه</button>
+              <button type="button" data-business-export="year" data-format="xlsx">دریافت Excel سالانه</button>
+            </div>
+          </div>
+          <p id="bizFinancialExportStatus" class="biz-dashboard-filter-status" role="status" aria-live="polite">گزارش‌ها بر اساس تراکنش‌های ثبت‌شده در پرونده فعال ساخته می‌شوند.</p>
+        </section>
+      </section>
+      <section class="biz-tab-panel" id="bizPanelAdvisor" data-biz-panel="advisor" role="tabpanel" aria-labelledby="bizTabAdvisor" hidden>
+        <section class="biz-navi-advisor" aria-labelledby="bizNaviAdvisorTitle">
+        <div>
+          <span class="biz-eyebrow">NAVI BUSINESS ADVISOR</span>
+          <h3 id="bizNaviAdvisorTitle">مشاور هوشمند کسب‌وکار</h3>
+          <p>ناوی می‌تواند با بررسی اطلاعات پرونده فعال و گزارش‌های مالی ذخیره‌شده، به پرسش‌هایت پاسخ بدهد.</p>
+        </div>
+        <label class="biz-field" for="bizNaviQuestion"><span>پرسش از ناوی</span>
+          <textarea id="bizNaviQuestion" rows="3" maxlength="3000" placeholder="مثلاً وضعیت مالی فروشگاهم را بر اساس گزارش‌های ثبت‌شده تحلیل کن و بگو چه چیزهایی نیاز به توجه دارد."></textarea>
+        </label>
+        <button class="btn-primary" id="bizNaviAskButton" type="button">تحلیل پرونده با NAVI</button>
+        <div class="biz-navi-advisor-output" id="bizNaviAdvisorOutput" role="status" aria-live="polite">پاسخ ناوی پس از ارسال پرسش در این قسمت نمایش داده می‌شود.</div>
+      </section>
+        <div class="biz-advisor-layout">
+      <div class="biz-advisor-copy"><span class="studio-step">مشاور هوشمند</span><h2>تحلیل کسب‌وکار با NAVI</h2><p>بعد از محاسبه، می‌توانی مسئله کسب‌وکارت را برای تحلیل، برنامه‌ریزی یا بررسی راهکارها به NAVI بسپاری.</p></div>
+      <form class="studio-brief-card biz-advisor-form">
+        <label for="studioTask-biz">نوع مسئله یا ابزار</label>
+        <select id="studioTask-biz" class="studio-control">
+          <option>تحلیل نتیجه محاسبه و قیمت‌گذاری</option><option>ایده‌پردازی و برنامه‌ریزی</option><option>بررسی امکان‌پذیری کسب‌وکار</option><option>برنامه فروش و توسعه</option><option>بازبینی و بهبود فرایند</option>
+        </select>
+        <label for="studioAudience-biz">نوع کسب‌وکار یا مخاطب</label>
+        <input id="studioAudience-biz" class="studio-control" type="text" maxlength="180" placeholder="مثلاً تولید خانگی، فروشگاه یا شرکت کوچک">
+        <label for="studioBrief-biz">شرح درخواست و جزئیات</label>
+        <textarea id="studioBrief-biz" class="studio-control studio-brief-input" maxlength="3000" placeholder="مسئله، هدف، محدودیت‌ها و نتیجه مورد انتظار را بنویس"></textarea>
+        <div class="studio-brief-actions"><button class="btn-primary" type="submit">بررسی با NAVI</button><button class="btn-secondary" type="reset">پاک کردن فرم</button></div>
+      </form>
+      <aside class="studio-output-card biz-advisor-output">
+        <span class="studio-step">فضای مشاوره</span><h3>پاسخ NAVI</h3>
+        <div class="studio-output-placeholder"><span aria-hidden="true">✦</span><strong>تحلیل و پیشنهادهای اجرایی</strong><p>پس از ارسال درخواست، پاسخ NAVI در این قسمت نمایش داده می‌شود.</p></div>
+      </aside>
+    </div>
+      </section>
+    </div>
+
   </div>
 </section>
 <section class="page nava-studio-page" id="musicPage">
@@ -1018,6 +1039,7 @@
   <script src="business-workspace.js?v=business-transactions-toman-20261116-2" defer></script>
   <script src="business-transactions-ui.js?v=financial-dashboard-filters-20261116-2" defer></script>
   <script src="business-financial-export.js?v=financial-export-daynight-20261116-1" defer></script>
+  <script src="business-tabs.js?v=business-five-tabs-20261116-1" defer></script>
   <script src="document-export.js?v=studio-response-select-20261115-1" defer></script>
   <link rel="stylesheet" href="office-file-tools.css?v=office-persian-ocr-20261115-1">
   <script src="office-structured-files.js?v=office-pptx-xlsx-20261115-1" defer></script>
