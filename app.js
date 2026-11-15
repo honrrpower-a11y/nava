@@ -627,11 +627,23 @@ if (naviWidgetToggle) {
     setNaviWidgetOpen(naviWidgetPanel?.hidden !== false, true);
   });
 }
+function closeNaviWidgetRespectingAccessChoice() {
+  const hasSession = Boolean(getNaviToken());
+  setNaviWidgetOpen(false);
+
+  // An unauthenticated visitor who closes NAVI must return to the access
+  // choice (sign in / continue as guest), not silently land on the homepage.
+  if (!hasSession) {
+    document.querySelector(".nava-access-panel")?.classList.remove("is-dismissed");
+    setNavaAccessGate(true);
+  }
+}
+
 if (naviWidgetClose) {
   naviWidgetClose.addEventListener("click", event => {
     event.preventDefault();
     event.stopPropagation();
-    setNaviWidgetOpen(false);
+    closeNaviWidgetRespectingAccessChoice();
   });
 }
 
@@ -640,12 +652,12 @@ const naviLoginPanelClose = document.getElementById("naviLoginPanelClose");
 naviLoginPanelClose?.addEventListener("click", event => {
   event.preventDefault();
   event.stopPropagation();
-  setNaviWidgetOpen(false);
+  closeNaviWidgetRespectingAccessChoice();
 });
 
 document.addEventListener("keydown", event => {
   if (event.key === "Escape" && naviWidgetPanel && !naviWidgetPanel.hidden) {
-    setNaviWidgetOpen(false);
+    closeNaviWidgetRespectingAccessChoice();
   }
 });
 
