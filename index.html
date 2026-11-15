@@ -532,6 +532,18 @@
         <span id="bizProfileActiveName">هنوز پرونده‌ای انتخاب نشده است.</span>
         <span class="biz-profile-save-hint">پس از محاسبه، گزارش را از کارت نتیجه ذخیره کن.</span>
       </div>
+      <section class="biz-navi-advisor" aria-labelledby="bizNaviAdvisorTitle">
+        <div>
+          <span class="biz-eyebrow">NAVI BUSINESS ADVISOR</span>
+          <h3 id="bizNaviAdvisorTitle">مشاور هوشمند کسب‌وکار</h3>
+          <p>ناوی می‌تواند با بررسی اطلاعات پرونده فعال و گزارش‌های مالی ذخیره‌شده، به پرسش‌هایت پاسخ بدهد.</p>
+        </div>
+        <label class="biz-field" for="bizNaviQuestion"><span>پرسش از ناوی</span>
+          <textarea id="bizNaviQuestion" rows="3" maxlength="3000" placeholder="مثلاً وضعیت مالی فروشگاهم را بر اساس گزارش‌های ثبت‌شده تحلیل کن و بگو چه چیزهایی نیاز به توجه دارد."></textarea>
+        </label>
+        <button class="btn-primary" id="bizNaviAskButton" type="button">تحلیل پرونده با NAVI</button>
+        <div class="biz-navi-advisor-output" id="bizNaviAdvisorOutput" role="status" aria-live="polite">پاسخ ناوی پس از ارسال پرسش در این قسمت نمایش داده می‌شود.</div>
+      </section>
     </section>
 
     <div class="biz-tool-intro">
