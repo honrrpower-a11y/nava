@@ -66,7 +66,7 @@ export function renderConceptSvg(data, concept, index) {
   const secondary = validColor(data.darkColor, "#172238");
   const colors = { primary, secondary };
   const elements = concept.elements.map(item => renderElement(item, colors)).filter(Boolean);
-  if (elements.length < 5) throw new Error("NAVI vector concept has too few valid geometry elements.");
+  if (elements.length < 8) throw new Error("NAVI vector concept has too few valid geometry elements.");
   const brand = escapeXml(data.brandName);
   const slogan = escapeXml(data.slogan);
   const font = data.typographyValue === "elegant"
@@ -157,17 +157,18 @@ async function planVectorConcepts(data, apiKey) {
     const plan = extractJsonObject(raw);
     if (!Array.isArray(plan.concepts) || plan.concepts.length !== 3) throw new Error("NAVI did not return three vector concepts.");
     const concepts = plan.concepts.map((item, index) => {
-      const elements = Array.isArray(item.elements) ? item.elements.slice(0, 14) : [];
+      const elements = Array.isArray(item.elements) ? item.elements.slice(0, 22) : [];
       const valid = elements.map(element => renderElement(element, {
         primary: data.primaryColor, secondary: data.darkColor
       })).filter(Boolean);
-      if (valid.length < 5) throw new Error("A NAVI vector concept did not contain enough valid geometry.");
+      if (valid.length < 8) throw new Error("A NAVI vector concept did not contain enough valid geometry.");
       return {
         id: "navi-vector-" + (index + 1),
         concept: safeText(item.title, 90) || "کانسپت " + (index + 1),
         composition: ["stacked", "horizontal", "emblem"].includes(item.composition) ? item.composition : ["stacked", "horizontal", "emblem"][index],
         description: safeText(item.rationale, 240),
         visualDirection: safeText(item.visualDirection, 240),
+        composition: ["stacked", "horizontal", "emblem"].includes(item.composition) ? item.composition : ["stacked", "horizontal", "emblem"][index],
         elements
       };
     });
@@ -256,7 +257,7 @@ export async function handleLogoRoute({ request, env, origin, corsOrigin }) {
       const valid = elements.map(element => renderElement(element, {
         primary: data.primaryColor, secondary: data.darkColor
       })).filter(Boolean);
-      if (valid.length < 5) throw new Error("Invalid concept geometry.");
+      if (valid.length < 8) throw new Error("Invalid concept geometry.");
       return {
         id: "navi-vector-" + (index + 1),
         concept: safeText(item.concept ?? item.title, 90) || "کانسپت " + (index + 1),
@@ -268,7 +269,7 @@ export async function handleLogoRoute({ request, env, origin, corsOrigin }) {
     const images = concepts.map((concept, index) => ({
       url: renderConceptSvg(data, concept, index), width: 1200, height: 1200,
       concept: concept.concept, description: concept.description,
-      visualDirection: concept.visualDirection, review: null, directionId: concept.id
+      visualDirection: concept.visualDirection, composition: concept.composition, review: null, directionId: concept.id
     }));
     return json({
       success: true, stage: "rendered", brandName: data.brandName,
