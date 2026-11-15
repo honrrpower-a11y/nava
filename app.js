@@ -320,15 +320,17 @@ function setNavaAccessGate(active) {
     page.inert = navaAccessGateActive && page !== homePage;
   });
 
-  if (homePage) {
-    Array.from(homePage.children).forEach(child => {
-      child.inert = navaAccessGateActive && child !== orbitStage;
-    });
-  }
-  if (orbitStage) {
-    Array.from(orbitStage.children).forEach(child => {
-      child.inert = navaAccessGateActive && child !== accessPanel;
-    });
+  if (homePage && accessPanel) {
+    /* Inert every sibling along the path to the dialog, but never inert its ancestors. */
+    let current = accessPanel;
+    while (current && current !== homePage) {
+      const parent = current.parentElement;
+      if (!parent) break;
+      Array.from(parent.children).forEach(sibling => {
+        if (sibling !== current) sibling.inert = navaAccessGateActive;
+      });
+      current = parent;
+    }
   }
 
   if (accessPanel) {
