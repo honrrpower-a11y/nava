@@ -74,7 +74,7 @@ function renderConceptSvg(data, concept, index) {
   const font = data.typographyValue === "elegant"
     ? "Georgia, 'Times New Roman', serif"
     : "Tahoma, Arial, sans-serif";
-  const mark = isWordmark ? "" : elements.join("");
+  const mark = elements.join("");
   const monogram = isMonogram
     ? '<text x="500" y="420" text-anchor="middle" dominant-baseline="middle" font-family="' + font + '" font-size="190" font-weight="700" fill="' + secondary + '">' + escapeXml(Array.from(data.brandName)[0] || "") + '</text>'
     : "";
