@@ -25,11 +25,14 @@
       industry:fields.industry.value.trim(), audience:fields.audience.value.trim(),
       symbolIdea:fields.symbolIdea.value.trim(),
       personality:fields.personality.selectedOptions[0]?.textContent.trim()||"",
+      personalityValue:fields.personality.value,
       typography:fields.typography.selectedOptions[0]?.textContent.trim()||"",
-      format:paletteKey?fields.format.value:"combination",
+      typographyValue:fields.typography.value,
+      format:fields.format.value,
       formatLabel:fields.format.selectedOptions[0]?.textContent.trim()||"",
       palette:paletteNames[paletteKey]||paletteKey,
-      primaryColor:fields.primaryColor.value,darkColor:fields.darkColor.value
+      primaryColor:paletteKey==="custom"?fields.primaryColor.value:(fields.palette.selectedOptions[0]?.dataset.foreground||""),
+      darkColor:paletteKey==="custom"?fields.darkColor.value:(fields.palette.selectedOptions[0]?.dataset.background||"")
     };
   }
   function addTextLockup(card,data) {
@@ -85,12 +88,8 @@
   const feedbackKey="nava_logo_feedback_v1";
   const hexToRgb=hex=>{const m=/^#([0-9a-f]{6})$/i.exec(String(hex||""));return m?[parseInt(m[1].slice(0,2),16),parseInt(m[1].slice(2,4),16),parseInt(m[1].slice(4,6),16)]:null;};
   function selectedPalette(data){
-    if(data.palette==="آبی و نقره‌ای")return [[63,112,168],[220,228,237]];
-    if(data.palette==="سبز و کرم")return [[53,107,85],[233,225,206]];
-    if(data.palette==="بنفش و یاسی")return [[118,86,166],[220,206,240]];
-    if(data.palette==="تک‌رنگ")return [[34,37,43],[255,255,255]];
-    if(data.palette==="رنگ اختصاصی")return [hexToRgb(data.primaryColor),hexToRgb(data.darkColor)].filter(Boolean);
-    return [[201,162,74],[16,29,53]];
+    // The form's submitted HEX values are the sole source of truth for every preset and custom palette.
+    return [hexToRgb(data.primaryColor),hexToRgb(data.darkColor)].filter(Boolean);
   }
   function analyzeImage(img,data){
     try{
