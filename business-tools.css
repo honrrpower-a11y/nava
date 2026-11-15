@@ -115,3 +115,29 @@
 #bizPage .biz-navi-advisor-output[data-state="error"]{border-color:#b85d58;color:#e49a94}
 #bizPage .biz-navi-advisor-output[data-state="success"]{border-color:color-mix(in srgb,var(--gold) 35%,var(--border))}
 @media(max-width:560px){#bizPage .biz-navi-advisor{padding:13px}#bizPage .biz-navi-advisor button{width:100%}}
+
+
+/* Toman real sales and expense ledger */
+#bizPage .biz-transactions-panel{grid-column:1/-1;display:grid;gap:13px;margin:16px 0;padding:18px;border:1px solid var(--border);border-radius:16px;background:var(--panel2)}
+#bizPage .biz-transactions-heading h3{margin:6px 0;font-size:17px}
+#bizPage .biz-transactions-heading p{margin:0;color:var(--muted);font-size:11px;line-height:1.9}
+#bizPage .biz-transaction-form{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;align-items:end}
+#bizPage .biz-transaction-form input,#bizPage .biz-transaction-form select{width:100%;min-width:0;min-height:42px;padding:9px 11px;border:1px solid var(--border);border-radius:10px;background:var(--panel);color:var(--text);font:inherit;font-size:12px}
+#bizPage .biz-transaction-form button{min-height:42px}
+#bizPage .biz-transaction-notes{grid-column:span 2}
+#bizPage .biz-transaction-summary{padding:11px 13px;border:1px solid var(--border);border-radius:10px;color:var(--gold);font-size:11px;line-height:1.9}
+#bizPage .biz-transaction-list{min-width:0}
+#bizPage .biz-transaction-items{display:grid;gap:9px}
+#bizPage .biz-transaction-item{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px;border:1px solid var(--border);border-radius:11px;background:var(--panel)}
+#bizPage .biz-transaction-main{display:grid;gap:5px;min-width:0}
+#bizPage .biz-transaction-main strong{font-size:12px;overflow-wrap:anywhere}
+#bizPage .biz-transaction-main small{font-size:10px;color:var(--muted)}
+#bizPage .biz-transaction-main b{font-size:12px;direction:rtl}
+#bizPage .biz-transaction-main b[data-type="sale"]{color:#56b58a}
+#bizPage .biz-transaction-main b[data-type="expense"]{color:#d58a72}
+#bizPage .biz-transaction-main p{margin:0;color:var(--muted);font-size:10px}
+#bizPage .biz-transaction-actions{display:flex;gap:6px;flex-shrink:0}
+#bizPage .biz-transaction-actions button{min-height:32px;padding:5px 10px;border:1px solid var(--border);border-radius:8px;background:var(--panel2);color:var(--text);font:inherit;font-size:10px;cursor:pointer}
+#bizPage .biz-transaction-actions button:disabled{opacity:.5}
+@media(max-width:760px){#bizPage .biz-transaction-form{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:520px){#bizPage .biz-transactions-panel{padding:13px}#bizPage .biz-transaction-form{grid-template-columns:1fr}#bizPage .biz-transaction-notes{grid-column:auto}#bizPage .biz-transaction-item{align-items:flex-start;flex-direction:column}#bizPage .biz-transaction-actions{width:100%}#bizPage .biz-transaction-actions button{flex:1}}
