@@ -1,0 +1,36 @@
+name: NAVA business tools tests
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "business-tools.js"
+      - "business-tools.css"
+      - "index.html"
+      - "tests/business-tools.test.mjs"
+      - ".github/workflows/business-tools-tests.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "business-tools.js"
+      - "business-tools.css"
+      - "index.html"
+      - "tests/business-tools.test.mjs"
+      - ".github/workflows/business-tools-tests.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  business-tools:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Check business tool JavaScript syntax
+        run: node --check business-tools.js
+      - name: Run business calculator regression tests
+        run: node --test tests/business-tools.test.mjs
