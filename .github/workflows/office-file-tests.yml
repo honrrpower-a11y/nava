@@ -13,6 +13,7 @@ on:
     branches: [main]
     paths:
       - "office-file-tools.js"
+      - "office-structured-files.js"
       - "index.html"
       - "tests/office-ocr.test.mjs"
       - ".github/workflows/office-file-tests.yml"
