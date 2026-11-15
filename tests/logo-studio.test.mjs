@@ -31,12 +31,15 @@ test("SVG export escapes Persian brand name and slogan as XML text", () => {
     primaryColor: "#C99B48", darkColor: "#172238",
     format: "combination", typographyValue: "persian"
   };
-  const concept = { elements: [
+  const concept = { composition: "stacked", concept: "نشان پیوند", elements: [
     { type: "circle", cx: 500, cy: 300, r: 120 },
     { type: "line", x1: 300, y1: 300, x2: 700, y2: 300 },
     { type: "rect", x: 400, y: 400, width: 200, height: 80 },
     { type: "circle", cx: 500, cy: 300, r: 60 },
-    { type: "line", x1: 350, y1: 350, x2: 650, y2: 350 }
+    { type: "line", x1: 350, y1: 350, x2: 650, y2: 350 },
+    { type: "path", d: "M300 500 C380 420 620 420 700 500" },
+    { type: "path", d: "M320 520 Q500 650 680 520" },
+    { type: "ellipse", cx: 500, cy: 500, rx: 170, ry: 45 }
   ] };
   const uri = renderConceptSvg(data, concept, 0);
   assert.match(uri, /^data:image\/svg\+xml;charset=utf-8,/);
@@ -44,6 +47,32 @@ test("SVG export escapes Persian brand name and slogan as XML text", () => {
   assert.match(svg, /نوا &lt;script&gt;alert\(1\)&lt;\/script&gt; &amp; Co/);
   assert.match(svg, /موسیقی &quot;خلاق&quot; &amp; آزاد/);
   assert.equal(svg.includes("<script>"), false);
+});
+
+
+test("SVG renderer creates three distinct compositions with separate lockup geometry", () => {
+  const data = {
+    brandName: "نوا", slogan: "", primaryColor: "#C99B48", darkColor: "#172238",
+    format: "combination", typographyValue: "persian"
+  };
+  const elements = [
+    { type: "path", d: "M200 500 C300 200 700 200 800 500" },
+    { type: "path", d: "M250 520 Q500 760 750 520" },
+    { type: "circle", cx: 500, cy: 360, r: 90 },
+    { type: "rect", x: 420, y: 420, width: 160, height: 80 },
+    { type: "line", x1: 300, y1: 600, x2: 700, y2: 600 },
+    { type: "ellipse", cx: 500, cy: 500, rx: 180, ry: 55 },
+    { type: "path", d: "M350 300 Q500 150 650 300" },
+    { type: "path", d: "M400 650 Q500 720 600 650" }
+  ];
+  const layouts = ["stacked", "horizontal", "emblem"].map(composition =>
+    decodeURIComponent(renderConceptSvg(data, { composition, concept: composition, elements }, 0).split(",")[1])
+  );
+  assert.notEqual(layouts[0], layouts[1]);
+  assert.notEqual(layouts[1], layouts[2]);
+  assert.match(layouts[0], /translate\(110 25\) scale\(\.78\)/);
+  assert.match(layouts[1], /translate\(45 205\) scale\(\.56\)/);
+  assert.match(layouts[2], /translate\(155 40\) scale\(\.69\)/);
 });
 
 class FakeD1 {
