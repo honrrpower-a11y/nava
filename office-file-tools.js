@@ -112,7 +112,8 @@
     try{
       originalBrief=brief.value.trim();
       let extracted="",ocrPages=0;
-      if(ext==="pptx"||ext==="xlsx")extracted=await window.NavaOfficeStructured.read(file);\n      else if(ext==="docx")extracted=await readDocx(file);
+      if(ext==="pptx"||ext==="xlsx")extracted=await window.NavaOfficeStructured.read(file);
+      else if(ext==="docx")extracted=await readDocx(file);
       else if(ext==="pdf"){
         const result=await readPdf(file);extracted=result.text;ocrPages=result.ocrPages;
       }else if(ext==="txt")extracted=await file.text();
