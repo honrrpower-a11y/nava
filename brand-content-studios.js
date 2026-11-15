@@ -260,7 +260,12 @@
     // The business profile form is handled by business-workspace.js, not the generic NAVI advisor.
     if (form.id === "bizProfileCreateForm" || form.id === "bizTransactionForm") return;
     const page = form.closest(".page");
-    const config = page && assistedStudios[page.id];
+    if (!page) return;
+    // The business page contains several independent forms (profile, transactions,
+    // catalogue and calculators). Only its dedicated advisor form may be routed
+    // to NAVI; every other form must reach its own module handler.
+    if (page.id === "bizPage" && !form.matches(".biz-advisor-form")) return;
+    const config = assistedStudios[page.id];
     if (!config) return;
 
     event.preventDefault();
