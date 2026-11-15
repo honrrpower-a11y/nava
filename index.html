@@ -590,18 +590,8 @@
 
         <div class="navi-auth-panel" id="naviLoginPanel">
           <div class="navi-auth-heading"><h3>ورود اختصاصی به ناوی</h3><button class="navi-login-panel-close" id="naviLoginPanelClose" type="button" aria-label="بستن پنجره ناوی">×</button></div>
-          <p>برای دسترسی به گفت‌وگو و حافظه شخصی، یک بار وارد حساب نوا شو؛ پس از ورود می‌توانی در همه استودیوها با همین ناوی ادامه بدهی.</p>
-          <form id="naviLoginForm">
-            <label class="field-label" for="naviUsername">نام کاربری</label>
-            <input class="navi-password" id="naviUsername" type="text"
-              placeholder="نام کاربری حساب" autocomplete="username" autocapitalize="none">
-            <label class="field-label" for="naviPassword">رمز عبور</label>
-            <input class="navi-password" id="naviPassword" type="password"
-              placeholder="رمز عبور" autocomplete="current-password" required>
-            <button class="btn-primary" id="naviLoginButton" type="submit">ورود به ناوی</button>
-          </form>
-          <div class="navi-auth-error" id="naviLoginError" role="alert"></div>
-          <details class="navi-registration-details">
+          <p>برای دسترسی به فضای شخصی و امکانات کامل نوا وارد حساب شو. اگر هنوز حساب نداری، ابتدا درخواست عضویت را ثبت کن.</p>
+                    <details class="navi-registration-details" open>
             <summary>درخواست عضویت در ناوی</summary>
             <p class="navi-memory-description">درخواست شما پس از ثبت بررسی می‌شود. زمان معمول رسیدگی تا حدود یک ساعت است و حساب پس از تأیید مالک فعال خواهد شد.</p>
             <form id="naviRegistrationForm">
@@ -617,6 +607,17 @@
             </form>
             <div class="navi-auth-error" id="naviRegistrationStatus" role="status" aria-live="polite"></div>
           </details>
+          <form id="naviLoginForm">
+            <label class="field-label" for="naviUsername">نام کاربری</label>
+            <input class="navi-password" id="naviUsername" type="text"
+              placeholder="نام کاربری حساب" autocomplete="username" autocapitalize="none">
+            <label class="field-label" for="naviPassword">رمز عبور</label>
+            <input class="navi-password" id="naviPassword" type="password"
+              placeholder="رمز عبور" autocomplete="current-password" required>
+            <button class="btn-primary" id="naviLoginButton" type="submit">ورود به ناوی</button>
+          </form>
+          <div class="navi-auth-error" id="naviLoginError" role="alert"></div>
+
         </div>
 
         <div class="navi-chat-area" id="naviChatArea" hidden>
