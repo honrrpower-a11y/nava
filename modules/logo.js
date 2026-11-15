@@ -36,7 +36,7 @@ function validColor(value, fallback) {
 
 // Only a small SVG geometry vocabulary is accepted. NAVI chooses the geometry;
 // this renderer only validates and serializes it. Raw SVG/HTML is never accepted.
-function renderElement(element, colors) {
+export function renderElement(element, colors) {
   if (!element || typeof element !== "object") return "";
   const type = String(element.type || "");
   const fill = element.fill === "none" ? "none" : (element.fill === "secondary" ? colors.secondary : colors.primary);
@@ -61,7 +61,7 @@ function renderElement(element, colors) {
   return "";
 }
 
-function renderConceptSvg(data, concept, index) {
+export function renderConceptSvg(data, concept, index) {
   const primary = validColor(data.primaryColor, "#C99B48");
   const secondary = validColor(data.darkColor, "#172238");
   const colors = { primary, secondary };
