@@ -291,6 +291,9 @@
       return;
     }
 
+    if (page.id === "bizPage" && window.NavaBusinessTools?.getReport()) {
+      values["گزارش محاسبه‌گر نوا"] = window.NavaBusinessTools.getReport();
+    }
     const context = { ...values };
     const message = [
       "در استودیوی «" + config.service + "» نوا هستیم.",
