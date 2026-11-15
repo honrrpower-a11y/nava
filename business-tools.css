@@ -47,3 +47,25 @@
 #bizPage .biz-roadmap-note{margin:16px 0 0;color:var(--muted);font-size:11px;line-height:1.9}
 @media(max-width:900px){#bizPage .biz-calculator-layout{grid-template-columns:1fr}#bizPage .biz-results-card{position:static}#bizPage .biz-advisor-layout{grid-template-columns:1fr 1fr}#bizPage .biz-advisor-copy{grid-column:1/-1}}
 @media(max-width:560px){#bizPage .biz-calculator-card,#bizPage .biz-results-card{padding:15px}#bizPage .biz-fields-grid{grid-template-columns:1fr}#bizPage .biz-tool-intro{padding:17px}#bizPage .biz-advisor-layout{grid-template-columns:1fr}#bizPage .biz-advisor-copy{grid-column:auto}#bizPage .biz-result-list>div{font-size:11px}}
+
+
+/* Additional financial tools */
+#bizPage .biz-extra-tools{margin-top:24px}
+#bizPage .biz-extra-heading{margin-bottom:14px}
+#bizPage .biz-extra-heading h2{margin:6px 0;font-size:clamp(19px,2.7vw,25px)}
+#bizPage .biz-extra-heading p{margin:0;color:var(--muted);font-size:12px;line-height:1.8}
+#bizPage .biz-secondary-tool-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;align-items:start}
+#bizPage .biz-secondary-card{min-width:0;padding:20px;border:1px solid var(--border);border-radius:18px;background:var(--panel)}
+#bizPage .biz-secondary-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:15px}
+#bizPage .biz-secondary-head h3{margin:5px 0;font-size:17px}
+#bizPage .biz-secondary-head p{margin:0;color:var(--muted);font-size:11px;line-height:1.8}
+#bizPage .biz-tool-mini-mark{display:grid;place-items:center;flex:0 0 42px;width:42px;height:42px;border-radius:13px;background:color-mix(in srgb,var(--gold) 13%,var(--panel2));color:var(--gold);font-size:23px;font-weight:800}
+#bizPage .biz-secondary-submit{width:100%;margin-top:14px}
+#bizPage .biz-secondary-results{display:grid;gap:0;margin-top:13px;padding:0 12px;border:1px solid var(--border);border-radius:12px;background:var(--panel2)}
+#bizPage .biz-secondary-results>div{display:flex;justify-content:space-between;gap:10px;padding:11px 0;border-bottom:1px solid var(--border);font-size:11px}
+#bizPage .biz-secondary-results>div:last-child{border-bottom:0}
+#bizPage .biz-secondary-results span{color:var(--muted)}
+#bizPage .biz-secondary-results strong{direction:ltr;text-align:left;overflow-wrap:anywhere}
+#bizPage .biz-secondary-note{margin:12px 0 0;color:var(--muted);font-size:10px;line-height:1.8}
+@media(max-width:900px){#bizPage .biz-secondary-tool-grid{grid-template-columns:1fr}}
+@media(max-width:560px){#bizPage .biz-secondary-card{padding:15px}#bizPage .biz-secondary-results>div{font-size:10px}}
