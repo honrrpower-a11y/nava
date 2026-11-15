@@ -108,7 +108,7 @@
   function fileBase(report, periodType) {
     const year = yearSelect.value;
     const month = monthSelect.value.padStart(2, "0");
-    const clean = report.profile.name.replace(/[\\/:*?"<>|]/g, "-").replace(/\\s+/g, "-").slice(0, 35);
+    const clean = report.profile.name.replace(/[\\/:*?"<>|]/g, "-").replace(/\s+/g, "-").slice(0, 35);
     return "NAVA-" + clean + "-" + (periodType === "month" ? year + "-" + month : year) + "-financial-report";
   }
   function downloadExcel(report, filename) {
@@ -210,7 +210,7 @@ th{background:#edf1f7;color:#243c5a}tbody tr:nth-child(even){background:#f8fafc}
 <h2>ریز تراکنش‌ها</h2>
 <table><thead><tr><th>ردیف</th><th>تاریخ</th><th>نوع</th><th>عنوان</th><th>دسته‌بندی</th><th>مبلغ (تومان)</th><th>توضیحات</th></tr></thead><tbody>${rows || '<tr><td colspan="7">در این بازه تراکنشی ثبت نشده است.</td></tr>'}</tbody></table>
 <div class="note">توجه: تفاضل فروش و هزینه ثبت‌شده به‌تنهایی سود قطعی یا موجودی نقدی نیست. این گزارش بر اساس تراکنش‌های ثبت‌شده در پرونده تهیه شده است.</div>
-<script>window.addEventListener("load",()=>setTimeout(()=>window.print(),500));<\\/script>
+<script>window.addEventListener("load",()=>setTimeout(()=>window.print(),500));</script>
 </body></html>`;
   }
   async function runExport(button) {
@@ -220,11 +220,10 @@ th{background:#edf1f7;color:#243c5a}tbody tr:nth-child(even){background:#f8fafc}
     if (!profile.id) { status.textContent = "ابتدا یک پرونده کسب‌وکار انتخاب کن."; status.dataset.state = "error"; return; }
     const year = Number(yearSelect.value);
     const month = Number(monthSelect.value);
+    const firstMonth = findMonthDates(year, 1);
+    const lastMonth = findMonthDates(year, 12);
     const dates = periodType === "month" ? findMonthDates(year, month) : [
-      ...findMonthDates(year, 1), ...findMonthDates(year, 2), ...findMonthDates(year, 3),
-      ...findMonthDates(year, 4), ...findMonthDates(year, 5), ...findMonthDates(year, 6),
-      ...findMonthDates(year, 7), ...findMonthDates(year, 8), ...findMonthDates(year, 9),
-      ...findMonthDates(year, 10), ...findMonthDates(year, 11), ...findMonthDates(year, 12)
+      firstMonth[0], lastMonth[lastMonth.length - 1]
     ];
     if (!dates.length) { status.textContent = "تاریخ گزارش معتبر نیست."; status.dataset.state = "error"; return; }
     const from = dates[0], to = dates[dates.length - 1];
