@@ -969,6 +969,7 @@ function saveNaviSession(token, expiresIn) {
 
 function clearNaviSession() {
   naviSessionVersion++;
+  window.dispatchEvent(new Event("nava:business-auth-changed"));
 
   try {
     removeNaviStoredValue(NAVI_SESSION_KEY);
@@ -2930,6 +2931,7 @@ naviLoginForm.addEventListener("submit", async event => {
     const expiresIn = Number(data.expiresIn || 43200);
 
     saveNaviSession(data.token, expiresIn);
+    window.dispatchEvent(new Event("nava:business-auth-changed"));
     setNaviStoredValue(NAVI_USER_NAME_KEY, String(data.user?.displayName || username || "مالک"));
     setNaviStoredValue(NAVI_USER_ROLE_KEY, String(data.user?.role || "user"));
     setNaviStoredValue(NAVI_USER_ID_KEY, String(data.user?.id || data.user?.username || username || "owner"));
