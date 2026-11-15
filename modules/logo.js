@@ -42,6 +42,12 @@ function contrastInk(background) {
   return luminance > 0.42 ? "#172238" : "#FFFFFF";
 }
 
+function ensureDistinctCompositions(concepts) {
+  const layouts = ["stacked", "horizontal", "emblem"];
+  if (new Set(concepts.map(item => item.composition)).size === 3) return concepts;
+  return concepts.map((item, index) => ({ ...item, composition: layouts[index] }));
+}
+
 // Only a small SVG geometry vocabulary is accepted. NAVI chooses the geometry;
 // this renderer only validates and serializes it. Raw SVG/HTML is never accepted.
 export function renderElement(element, colors) {
@@ -165,7 +171,7 @@ async function planVectorConcepts(data, apiKey) {
     const raw = (payload.candidates?.[0]?.content?.parts || []).map(part => part.text || "").join("");
     const plan = extractJsonObject(raw);
     if (!Array.isArray(plan.concepts) || plan.concepts.length !== 3) throw new Error("NAVI did not return three vector concepts.");
-    const concepts = plan.concepts.map((item, index) => {
+    const concepts = ensureDistinctCompositions(plan.concepts.map((item, index) => {
       const elements = Array.isArray(item.elements) ? item.elements.slice(0, 22) : [];
       const valid = elements.map(element => renderElement(element, {
         primary: data.primaryColor, secondary: data.darkColor
@@ -177,10 +183,9 @@ async function planVectorConcepts(data, apiKey) {
         composition: ["stacked", "horizontal", "emblem"].includes(item.composition) ? item.composition : ["stacked", "horizontal", "emblem"][index],
         description: safeText(item.rationale, 240),
         visualDirection: safeText(item.visualDirection, 240),
-        composition: ["stacked", "horizontal", "emblem"].includes(item.composition) ? item.composition : ["stacked", "horizontal", "emblem"][index],
         elements
       };
-    });
+    }));
     if (new Set(concepts.map(item => item.concept.toLowerCase())).size !== 3) {
       throw new Error("NAVI returned duplicate concept titles.");
     }
@@ -275,7 +280,7 @@ export async function handleLogoRoute({ request, env, origin, corsOrigin }) {
         composition: ["stacked", "horizontal", "emblem"].includes(item.composition) ? item.composition : ["stacked", "horizontal", "emblem"][index],
         elements
       };
-    });
+    }));
     const images = concepts.map((concept, index) => ({
       url: renderConceptSvg(data, concept, index), width: 1200, height: 1200,
       concept: concept.concept, description: concept.description,
