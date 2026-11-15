@@ -14,6 +14,16 @@
   let busy = false;
 
   const money = value => Number(value || 0).toLocaleString("fa-IR") + " تومان";
+  const latinDigits = value => String(value ?? "")
+    .replace(/[۰-۹]/g, digit => String("۰۱۲۳۴۵۶۷۸۹".indexOf(digit)))
+    .replace(/[٠-٩]/g, digit => String("٠١٢٣٤٥٦٧٨٩".indexOf(digit)))
+    .replace(/[٬,،\s]/g, "");
+  const readInteger = value => {
+    const normalized = latinDigits(value);
+    if (!/^\d+$/.test(normalized)) return null;
+    const number = Number(normalized);
+    return Number.isSafeInteger(number) ? number : null;
+  };
   const setStatus = (message, state = "") => {
     const node = $("bizCatalogStatus");
     if (node) {
@@ -51,7 +61,7 @@
     $("bizCatalogItemId").value = "";
     $("bizCatalogItemType").value = "product";
     $("bizCatalogUnit").value = "عدد";
-    $("bizCatalogSalePrice").value = "0";
+    $("bizCatalogSalePrice").value = "";
     $("bizCatalogSubmit").textContent = "ثبت در کاتالوگ";
     $("bizCatalogFormStep").textContent = "ثبت مورد جدید";
     $("bizCatalogFormTitle").textContent = "اطلاعات محصول یا خدمت";
@@ -203,12 +213,13 @@
     const id = businessId();
     if (!id) { setStatus("ابتدا یک پرونده کسب‌وکار انتخاب کن.", "error"); return; }
     const name = $("bizCatalogName").value.trim();
-    const salePriceToman = Number($("bizCatalogSalePrice").value);
+    const saleRaw = $("bizCatalogSalePrice").value.trim();
+    const salePriceToman = readInteger(saleRaw);
     const costRaw = $("bizCatalogCostPrice").value.trim();
-    const costPriceToman = costRaw === "" ? null : Number(costRaw);
-    if (name.length < 2 || !Number.isSafeInteger(salePriceToman) || salePriceToman < 0 ||
-        (costPriceToman !== null && (!Number.isSafeInteger(costPriceToman) || costPriceToman < 0))) {
-      setStatus("نام و قیمت فروش معتبر را وارد کن؛ بهای تمام‌شده نیز باید عدد صحیح صفر یا بیشتر باشد.", "error");
+    const costPriceToman = costRaw === "" ? null : readInteger(costRaw);
+    if (name.length < 2 || saleRaw === "" || salePriceToman === null || salePriceToman < 0 ||
+        (costRaw !== "" && (costPriceToman === null || costPriceToman < 0))) {
+      setStatus("نام و قیمت فروش را درست وارد کن. بهای تمام‌شده اختیاری است، اما اگر وارد شود باید عدد صحیح باشد.", "error");
       return;
     }
     const body = {
@@ -223,7 +234,10 @@
     };
     const itemId = $("bizCatalogItemId").value;
     busy = true;
-    $("bizCatalogSubmit").disabled = true;
+    const submit = $("bizCatalogSubmit");
+    submit.disabled = true;
+    submit.textContent = itemId ? "در حال ذخیره..." : "در حال ثبت...";
+    setStatus(itemId ? "در حال ذخیره تغییرات..." : "در حال ثبت محصول یا خدمت...", "pending");
     try {
       await api("/" + encodeURIComponent(id) + "/items" + (itemId ? "/" + encodeURIComponent(itemId) : ""), itemId ? "PATCH" : "POST", body);
       resetForm();
@@ -233,7 +247,8 @@
       setStatus(error.message, "error");
     } finally {
       busy = false;
-      $("bizCatalogSubmit").disabled = false;
+      submit.disabled = false;
+      submit.textContent = $("bizCatalogItemId").value ? "ذخیره تغییرات" : "ثبت در کاتالوگ";
     }
   });
 
