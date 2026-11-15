@@ -56,7 +56,8 @@
 
   function updateSaleTotal() {
     if (!catalogSelect?.value) return;
-    const quantity = Number(normalizeDigits(quantityInput?.value || ""));
+    const quantityText = normalizeDigits(quantityInput?.value || "").trim();
+    const quantity = quantityText ? Number(quantityText) : 1;
     const unitPrice = Number(normalizeDigits(unitPriceInput?.value || ""));
     const total = quantity * unitPrice;
     if (Number.isSafeInteger(quantity) && quantity > 0 && Number.isSafeInteger(unitPrice) && unitPrice > 0 && Number.isSafeInteger(total)) {
@@ -98,7 +99,6 @@
     const item = catalogItems.find(entry => entry.id === catalogSelect.value);
     if (item) {
       $("bizTransactionTitle").value = item.name;
-      quantityInput.value = "1";
       unitPriceInput.value = String(item.salePriceToman);
       $("bizTransactionCategory").value = item.category || "";
       updateSaleTotal();
