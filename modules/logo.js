@@ -169,8 +169,9 @@ function buildPrompt(data, direction, strategy) {
     "Format: " + format + ". " + formatGuidance,
     "Palette: " + paletteSpec.instruction,
     "Typography: " + clip(data.typography || "distinctive, clear brand typography", 65) + ".",
-    "One centered logo on plain white; strong memorable silhouette; flat vector-like shapes; deliberate negative space; balanced proportions; legible at 24px.",
-    "No mockup, 3D, gradients, scene, extra objects, random blobs, stock clip-art, watermark, slogan or decorative text."
+    "Render ONLY the logo symbol or mark, centered on a perfectly plain solid white background. Flat 2D vector artwork, crisp clean edges, simple controlled geometry, strong silhouette and deliberate negative space.",
+    "CRITICAL: Do NOT draw the brand name, slogan, letters, words, numbers, typography, pseudo-writing, signatures or watermark inside the image. The exact brand name and slogan are typeset separately by the website; leave all lettering out of the generated artwork.",
+    "No mockup, product scene, landscape, sunset, horizon, sky, photography, 3D, gradients, shadows, texture, extra objects, random blobs, stock clip-art or decorative text."
   ];
   let prompt = lines.join("\n");
   if (prompt.length > 2048) {
