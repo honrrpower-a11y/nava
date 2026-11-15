@@ -630,15 +630,15 @@
                 <label class="biz-field"><span>کد کالا / شناسه (اختیاری)</span><input id="bizCatalogSku" type="text" maxlength="64" placeholder="مثلاً PR-001" dir="ltr"></label>
                 <label class="biz-field"><span>دسته‌بندی</span><input id="bizCatalogCategory" type="text" maxlength="80" placeholder="مثلاً دیجیتال، خوراکی"></label>
                 <label class="biz-field"><span>واحد</span><input id="bizCatalogUnit" type="text" maxlength="32" placeholder="عدد، بسته، ساعت، پروژه"></label>
-                <label class="biz-field"><span>قیمت فروش (تومان)</span><input id="bizCatalogSalePrice" type="number" min="0" max="1000000000000" step="1" inputmode="numeric" value="0" required></label>
-                <label class="biz-field"><span>بهای تمام‌شده (تومان، اختیاری)</span><input id="bizCatalogCostPrice" type="number" min="0" max="1000000000000" step="1" inputmode="numeric" placeholder="در صورت مشخص بودن"></label>
+                <label class="biz-field"><span>قیمت فروش (تومان)</span><input id="bizCatalogSalePrice" type="text" inputmode="numeric" dir="ltr" maxlength="13" placeholder="مثلاً 100000" autocomplete="off" required></label>
+                <label class="biz-field"><span>بهای تمام‌شده (تومان، اختیاری)</span><input id="bizCatalogCostPrice" type="text" inputmode="numeric" dir="ltr" maxlength="13" placeholder="اختیاری؛ مثلاً 60000" autocomplete="off"></label>
               </div>
               <label class="biz-field"><span>توضیحات (اختیاری)</span><textarea id="bizCatalogDescription" rows="3" maxlength="1200" placeholder="ویژگی‌ها، جزئیات یا شرایط ارائه"></textarea></label>
               <div class="biz-catalog-form-actions">
                 <button class="btn-primary" id="bizCatalogSubmit" type="submit">ثبت در کاتالوگ</button>
                 <button class="btn-secondary" id="bizCatalogCancelEdit" type="button" hidden>انصراف از ویرایش</button>
               </div>
-              <p class="biz-profile-status" id="bizCatalogStatus" role="status" aria-live="polite">برای مدیریت کاتالوگ، یک پرونده فعال انتخاب کن.</p>
+              <p class="biz-profile-status" id="bizCatalogStatus" role="status" aria-live="polite">ثبت مورد جدید به‌صورت پیش‌فرض فعال است. برای غیرفعال‌کردن، بعداً آن را بایگانی کن.</p>
             </form>
             <section class="biz-catalog-list-panel" aria-label="فهرست محصولات و خدمات">
               <div class="biz-catalog-list-head">
