@@ -9,6 +9,7 @@
   const money = value => numberFormat.format(Math.round(value)) + " تومان";
   const percent = value => new Intl.NumberFormat("fa-IR",{maximumFractionDigits:1}).format(value) + "٪";
   let latestReport = "";
+  let latestRecordType = "cost_calculation";
 
   function readNumber(id) {
     const raw = $(id)?.value;
@@ -84,6 +85,7 @@
     setText("bizCalculationSummary","با فروش "+numberFormat.format(result.sold)+" واحد از "+numberFormat.format(result.quantity)+" واحد تولیدشده، سود برآوردی "+money(result.totalProfit)+" است."+(result.unsold?" تعداد فروش واردشده از موجودی این نوبت بیشتر است؛ محاسبه بر اساس کل موجودی تولیدشده محدود شد.":""));
     setText("bizCostStatus","محاسبه با موفقیت انجام شد. برای تحلیل فرض‌ها می‌توانی نتیجه را به NAVI بدهی.");
     latestReport=reportCost(values,result);
+    latestRecordType="cost_calculation";
     const copy=$("bizCopyResult"); if(copy) copy.disabled=false;
     return result;
   }
@@ -97,6 +99,7 @@
     setText("bizBreakEvenRevenue",money(result.revenue));
     setText("bizTargetUnits",numberFormat.format(result.targetUnits)+" واحد");
     setText("bizBreakEvenStatus","محاسبه انجام شد. حاشیه مشارکت هر واحد "+money(result.contribution)+" است.");
+    latestRecordType="break_even";
     latestReport=[
       "گزارش نقطه سربه‌سر نوا",
       "هزینه ثابت دوره: "+money(values.fixed),
@@ -123,6 +126,7 @@
     setText("bizBudgetNet",(result.netAfterReserve<0?"کسری ":"مانده ")+money(Math.abs(result.netAfterReserve)));
     setText("bizBudgetMargin",result.margin===null?"قابل محاسبه نیست":percent(result.margin));
     setText("bizBudgetStatus",result.operatingProfit>=0?"بودجه مازاد عملیاتی دارد. ذخیره فقط از مازاد مثبت محاسبه شده است.":"بودجه با کسری عملیاتی روبه‌روست؛ ذخیره‌ای از کسری کسر نشده است.");
+    latestRecordType="monthly_budget";
     latestReport=[
       "گزارش برنامه‌ریزی بودجه ماهانه نوا",
       "درآمد یا فروش پیش‌بینی‌شده: "+money(result.revenue),
@@ -169,6 +173,7 @@
 
   window.NavaBusinessTools={
     getReport:()=>latestReport,
+    getRecordType:()=>latestRecordType,
     calculateCost,
     calculateBreakEven,
     calculateBudget
