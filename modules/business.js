@@ -187,7 +187,7 @@ export async function handleBusinessRoute({ request, env, url, origin, corsOrigi
     if (access.error) return access.error;
     const { user } = access;
     const parts = pathname.split("/").filter(Boolean);
-    if (parts.length < 1 || parts.length > 3 || parts[0] !== "businesses") return fail("مسیر درخواست معتبر نیست.", 404, corsOrigin);
+    if (parts.length < 1 || parts.length > 4 || parts[0] !== "businesses") return fail("مسیر درخواست معتبر نیست.", 404, corsOrigin);
     if (parts.length === 1) {
       if (request.method === "GET") return await listBusinesses(env.NAVA_DB, user.id, corsOrigin);
       if (request.method === "POST") {
@@ -210,13 +210,28 @@ export async function handleBusinessRoute({ request, env, url, origin, corsOrigi
       return fail("روش درخواست برای این پرونده مجاز نیست.", 405, corsOrigin);
     }
     if (parts[2] === "records") {
-      if (request.method === "GET") return await listRecords(env.NAVA_DB, user.id, businessId, url, corsOrigin);
-      if (request.method === "POST") {
-        let input;
-        try { input = await request.json(); } catch { return fail("بدنه درخواست معتبر نیست.", 400, corsOrigin); }
-        return await createRecord(env.NAVA_DB, user.id, businessId, input, corsOrigin);
+      if (parts.length === 3) {
+        if (request.method === "GET") return await listRecords(env.NAVA_DB, user.id, businessId, url, corsOrigin);
+        if (request.method === "POST") {
+          let input;
+          try { input = await request.json(); } catch { return fail("بدنه درخواست معتبر نیست.", 400, corsOrigin); }
+          return await createRecord(env.NAVA_DB, user.id, businessId, input, corsOrigin);
+        }
+        return fail("برای سوابق مالی فقط دریافت یا ثبت مجاز است.", 405, corsOrigin);
       }
-      return fail("برای سوابق مالی فقط دریافت یا ثبت مجاز است.", 405, corsOrigin);
+      if (parts.length === 4 && request.method === "DELETE") {
+        const recordId = parts[3];
+        if (!/^fin-[0-9a-f-]{36}$/i.test(recordId)) return fail("شناسه گزارش مالی معتبر نیست.", 400, corsOrigin);
+        const business = await ownsBusiness(env.NAVA_DB, businessId, user.id);
+        if (!business || business.status !== "active") return fail("پرونده کسب‌وکار پیدا نشد.", 404, corsOrigin);
+        const deleted = await env.NAVA_DB.prepare(
+          "DELETE FROM business_financial_records_v1 WHERE id = ? AND business_id = ? AND owner_id = ?"
+        ).bind(recordId, businessId, user.id).run();
+        if (!deleted.success) throw new Error("Financial record delete was not confirmed.");
+        if (Number(deleted.meta?.changes || 0) !== 1) return fail("گزارش پیدا نشد یا قبلاً حذف شده است.", 404, corsOrigin);
+        return response({ deleted: true, recordId }, 200, corsOrigin);
+      }
+      return fail("مسیر سوابق مالی معتبر نیست.", 404, corsOrigin);
     }
     return fail("مسیر درخواست پیدا نشد.", 404, corsOrigin);
   } catch (error) {
