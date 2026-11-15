@@ -169,7 +169,7 @@ export function buildBusinessAdvisorContext(business, records = []) {
     "نوع کسب‌وکار: " + (typeLabels[business.business_type] || "نامشخص"),
     "حوزه فعالیت: " + safeNaviText(business.industry || "ثبت نشده", 120),
     "توضیحات: " + safeNaviText(business.description || "ثبت نشده", 500),
-    "واحد پول: " + safeNaviText(business.currency || "IRR", 12),
+    "واحد پول: تومان",
     "گزارش‌های مالی ذخیره‌شده (جدیدترین موارد):"
   ];
   let used = lines.join("\n").length;
