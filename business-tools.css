@@ -260,3 +260,17 @@ body.light #bizPage .biz-financial-export-group{background:rgba(255,253,248,.82)
 body.light #bizPage .biz-financial-export-group>strong{color:#263a56}
 body.light #bizPage .biz-financial-export-group button[data-format="xlsx"]{background:linear-gradient(120deg,#e7f5eb,#edf5fb);border-color:rgba(55,145,101,.38);color:#245d43}
 @media(max-width:520px){#bizPage .biz-financial-export-actions{grid-template-columns:1fr}#bizPage .biz-financial-export-period{grid-template-columns:1fr}#bizPage .biz-dashboard-filter-actions button{flex:1}}
+
+#bizPage .biz-transaction-actions button{
+  min-height:36px;padding:7px 13px;border:1px solid var(--border);border-radius:10px;
+  background:linear-gradient(135deg,rgba(229,184,94,.13),rgba(37,202,255,.06)),var(--panel);
+  color:var(--text);font:inherit;font-size:11px;font-weight:700;
+  box-shadow:0 2px 8px rgba(0,0,0,.10);transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease;
+}
+#bizPage .biz-transaction-actions button:last-child{border-color:rgba(213,117,105,.42);color:#e59a8f}
+#bizPage .biz-transaction-actions button:hover{transform:translateY(-1px);border-color:var(--gold);box-shadow:0 5px 13px rgba(0,0,0,.14)}
+#bizPage .biz-transaction-actions button:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+#bizPage .biz-transaction-actions button:disabled{opacity:.5;cursor:wait;transform:none}
+body.light #bizPage .biz-transaction-actions button{background:linear-gradient(135deg,#fffdf8,#f4eadb);color:#33445d;border-color:rgba(190,125,37,.32);box-shadow:0 2px 8px rgba(80,66,45,.06)}
+body.light #bizPage .biz-transaction-actions button:last-child{background:linear-gradient(135deg,#fff7f3,#fff0eb);color:#a34e45;border-color:rgba(185,89,77,.30)}
+body.light #bizPage .biz-transaction-actions button:hover{box-shadow:0 5px 13px rgba(80,66,45,.11)}
