@@ -86,3 +86,20 @@
 #bizPage .biz-profile-save-hint{font-size:10px;color:var(--muted)}
 @media(max-width:760px){#bizPage .biz-profile-panel{grid-template-columns:1fr}#bizPage .biz-profile-create{grid-template-columns:1fr 1fr}#bizPage .biz-profile-create button{grid-column:1/-1}#bizPage .biz-profile-record-actions{align-items:flex-start;flex-direction:column}}
 @media(max-width:560px){#bizPage .biz-result-actions{grid-template-columns:1fr}}
+
+
+/* Detailed financial record archive */
+#bizPage .biz-record-list{display:grid;gap:12px;margin-top:14px}
+#bizPage .biz-record-item{min-width:0;padding:14px;border:1px solid var(--border);border-radius:13px;background:var(--panel2)}
+#bizPage .biz-record-header{display:grid;gap:6px}
+#bizPage .biz-record-header strong{font-size:13px}
+#bizPage .biz-record-header small{color:var(--muted);font-size:10px}
+#bizPage .biz-record-details{margin-top:11px;border-top:1px solid var(--border);padding-top:10px}
+#bizPage .biz-record-details summary{color:var(--gold);font-size:11px;font-weight:700;cursor:pointer}
+#bizPage .biz-record-report{max-height:360px;overflow:auto;margin:10px 0 0;padding:12px;border:1px solid var(--border);border-radius:10px;background:var(--panel);color:var(--text);font:inherit;font-size:11px;line-height:2;white-space:pre-wrap;overflow-wrap:anywhere;direction:rtl;text-align:right}
+#bizPage .biz-record-data-heading{display:block;margin-top:14px;font-size:11px}
+#bizPage .biz-record-payload{direction:ltr;text-align:left}
+#bizPage .biz-record-actions{display:flex;justify-content:flex-end;margin-top:10px}
+#bizPage .biz-record-delete{min-height:34px;padding:6px 12px;border:1px solid color-mix(in srgb,#d65b5b 45%,var(--border));border-radius:9px;background:transparent;color:var(--text);font:inherit;font-size:10px;cursor:pointer}
+#bizPage .biz-record-delete:hover{background:color-mix(in srgb,#d65b5b 10%,var(--panel))}
+#bizPage .biz-record-delete:disabled{opacity:.55;cursor:wait}
