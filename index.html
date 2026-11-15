@@ -587,7 +587,15 @@
         <form id="bizTransactionForm" class="biz-transaction-form">
           <label class="biz-field"><span>نوع تراکنش</span><select id="bizTransactionType"><option value="sale">فروش ثبت‌شده</option><option value="expense">هزینه ثبت‌شده</option></select></label>
           <label class="biz-field"><span>عنوان</span><input id="bizTransactionTitle" type="text" maxlength="160" placeholder="مثلاً فروش محصول یا خرید مواد اولیه" required></label>
-          <label class="biz-field"><span>مبلغ (تومان)</span><input id="bizTransactionAmount" type="number" min="1" max="1000000000000" step="1" inputmode="numeric" placeholder="مثلاً ۲۰۰۰۰۰" required></label>
+          <div id="bizSaleCatalogDetails" class="biz-sale-catalog-details">
+            <label class="biz-field"><span>اتصال فروش به کاتالوگ (اختیاری)</span><select id="bizTransactionCatalogItem"><option value="">فروش دستی / بدون اتصال به کاتالوگ</option></select></label>
+            <div class="biz-fields-grid">
+              <label class="biz-field"><span>تعداد</span><input id="bizTransactionQuantity" type="text" inputmode="numeric" value="1" maxlength="10"></label>
+              <label class="biz-field"><span>قیمت واحد (تومان)</span><input id="bizTransactionUnitPrice" type="text" inputmode="numeric" maxlength="13" placeholder="قیمت واحد"></label>
+            </div>
+            <p class="biz-form-note">با انتخاب محصول یا خدمت، عنوان و قیمت آن از کاتالوگ وارد می‌شود. با تغییر تعداد یا قیمت واحد، مبلغ کل فروش خودکار محاسبه خواهد شد.</p>
+          </div>
+          <label class="biz-field"><span>مبلغ کل (تومان)</span><input id="bizTransactionAmount" type="number" min="1" max="1000000000000" step="1" inputmode="numeric" placeholder="مثلاً ۲۰۰۰۰۰" required></label>
           <label class="biz-field biz-transaction-date-field"><span>تاریخ شمسی</span>
             <div class="biz-persian-date-control">
               <input id="bizTransactionDateDisplay" type="text" placeholder="انتخاب تاریخ شمسی" readonly aria-label="تاریخ تراکنش به شمسی">
@@ -651,7 +659,7 @@
               <div id="bizCatalogList" class="biz-catalog-list" aria-live="polite">پس از انتخاب پرونده، فهرست اینجا نمایش داده می‌شود.</div>
             </section>
           </div>
-          <p class="biz-catalog-note">در این مرحله کاتالوگ مستقل محصولات و خدمات ساخته شده است. مدیریت موجودی، ثبت سفارش و اتصال مستقیم فروش به کالا در مراحل بعدی اضافه می‌شود.</p>
+          <p class="biz-catalog-note">در این مرحله کاتالوگ مستقل محصولات و خدمات ساخته شده است. مدیریت موجودی، ثبت سفارش و اتصال فروش به کاتالوگ فعال است؛ کنترل موجودی و ثبت سفارش در مراحل بعدی اضافه می‌شود.</p>
         </section>
       </section>
       <section class="biz-tab-panel" id="bizPanelTools" data-biz-panel="tools" role="tabpanel" aria-labelledby="bizTabTools" hidden>
@@ -1080,7 +1088,7 @@
   <script src="business-tools.js?v=business-suite-20261115-2" defer></script>
   <script src="business-workspace.js?v=business-transactions-toman-20261116-2" defer></script>
   <script src="business-catalog-ui.js?v=business-catalog-20261116-1" defer></script>
-  <script src="business-transactions-ui.js?v=financial-dashboard-filters-20261116-2" defer></script>
+  <script src="business-transactions-ui.js?v=sales-catalog-link-20261116-1" defer></script>
   <script src="business-financial-export.js?v=financial-export-daynight-20261116-1" defer></script>
   <script src="business-tabs.js?v=business-five-tabs-20261116-1" defer></script>
   <script src="document-export.js?v=studio-response-select-20261115-1" defer></script>
