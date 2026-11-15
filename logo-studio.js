@@ -39,7 +39,7 @@
     const lockup=document.createElement("div");
     lockup.className="logo-ai-lockup";
     lockup.style.setProperty("--logo-primary",data.primaryColor||"#c99b48");
-    lockup.style.setProperty("--logo-dark",data.darkColor||"#172238");
+    lockup.style.setProperty("--logo-dark",contrastInk(data.darkColor));
     const name=document.createElement("strong");name.textContent=data.brandName;
     lockup.appendChild(name);
     if(data.slogan){const slogan=document.createElement("span");slogan.textContent=data.slogan;lockup.appendChild(slogan);}
@@ -81,26 +81,31 @@
   const feedbackKey="nava_logo_feedback_v1";
   const hexToRgb=hex=>{const m=/^#([0-9a-f]{6})$/i.exec(String(hex||""));return m?[parseInt(m[1].slice(0,2),16),parseInt(m[1].slice(2,4),16),parseInt(m[1].slice(4,6),16)]:null;};
   function selectedPalette(data){
-    // The form's submitted HEX values are the sole source of truth for every preset and custom palette.
     return [hexToRgb(data.primaryColor),hexToRgb(data.darkColor)].filter(Boolean);
+  }
+  function contrastInk(hex){
+    const rgb=hexToRgb(hex);if(!rgb)return "#172238";
+    const channels=rgb.map(value=>{value/=255;return value<=.04045?value/12.92:Math.pow((value+.055)/1.055,2.4);});
+    const luminance=.2126*channels[0]+.7152*channels[1]+.0722*channels[2];
+    return luminance>.42?"#172238":"#FFFFFF";
   }
   function analyzeImage(img,data){
     try{
       const canvas=document.createElement("canvas"),ctx=canvas.getContext("2d",{willReadFrequently:true});canvas.width=96;canvas.height=96;ctx.drawImage(img,0,0,96,96);
-      const pixels=ctx.getImageData(0,0,96,96).data,palette=selectedPalette(data);let white=0,transparent=0,ink=0,near=0,sampled=0;
-      for(let i=0;i<pixels.length;i+=16){const r=pixels[i],g=pixels[i+1],b=pixels[i+2],a=pixels[i+3];sampled++;if(a<245){transparent++;continue;}if(r>242&&g>242&&b>242){white++;continue;}ink++;if(palette.some(c=>Math.hypot(r-c[0],g-c[1],b-c[2])<58))near++;}
-      const colored=ink?Math.round(near/ink*100):0,whitePct=Math.round(white/sampled*100),transparencyPct=Math.round(transparent/sampled*100),notes=[];
+      const pixels=ctx.getImageData(0,0,96,96).data,palette=selectedPalette(data),background=hexToRgb(data.darkColor);let transparent=0,ink=0,near=0,backgroundNear=0,sampled=0;
+      for(let i=0;i<pixels.length;i+=16){const r=pixels[i],g=pixels[i+1],b=pixels[i+2],a=pixels[i+3];sampled++;if(a<245){transparent++;continue;}ink++;if(palette.some(c=>Math.hypot(r-c[0],g-c[1],b-c[2])<58))near++;if(background&&Math.hypot(r-background[0],g-background[1],b-background[2])<42)backgroundNear++;}
+      const colored=ink?Math.round(near/ink*100):0,backgroundPct=Math.round(backgroundNear/sampled*100),transparencyPct=Math.round(transparent/sampled*100),notes=[];
       if(colored<65)notes.push("بخشی از رنگ‌های تصویر با پالت انتخابی فاصله دارد؛ نتیجه را دستی بررسی کن.");
-      if(whitePct<20)notes.push("پس‌زمینه به‌اندازه کافی سفید به نظر نمی‌رسد.");
+      if(backgroundPct<55)notes.push("رنگ زمینه با رنگ پس‌زمینه انتخاب‌شده تطابق کافی ندارد.");
       if(transparencyPct>2)notes.push("تصویر دارای پیکسل‌های شفاف است.");
-      if(!notes.length)notes.push("کنترل‌های پایه رنگ و زمینه قابل‌قبول‌اند؛ این بررسی درباره زیبایی یا معنای لوگو قضاوت نمی‌کند.");
-      return{width:img.naturalWidth,height:img.naturalHeight,colored,whitePct,notes};
-    }catch(_){return{width:img.naturalWidth,height:img.naturalHeight,colored:null,whitePct:null,notes:["مرورگر اجازه خواندن پیکسل‌های تصویر را نداد؛ بررسی فنی انجام نشد."]};}
+      if(!notes.length)notes.push("کنترل پایه رنگ و زمینه قابل‌قبول است؛ این بررسی درباره زیبایی یا معنای لوگو قضاوت نمی‌کند.");
+      return{width:img.naturalWidth,height:img.naturalHeight,colored,backgroundPct,notes};
+    }catch(_){return{width:img.naturalWidth,height:img.naturalHeight,colored:null,backgroundPct:null,notes:["مرورگر اجازه خواندن پیکسل‌های تصویر را نداد؛ بررسی فنی انجام نشد."]};}
   }
   function addQualityPanel(card,img,data){
     const panel=document.createElement("div");panel.className="logo-ai-visual-review";
     const heading=document.createElement("strong");heading.textContent="کنترل فنی تصویر (بدون امتیازدهی سلیقه‌ای)";
-    const render=report=>{panel.replaceChildren(heading);const details=document.createElement("p");details.textContent="ابعاد: "+report.width+"×"+report.height+" · انطباق رنگ نمونه‌برداری‌شده: "+(report.colored===null?"نامشخص":report.colored+"٪")+" · زمینه سفید: "+(report.whitePct===null?"نامشخص":report.whitePct+"٪");panel.appendChild(details);report.notes.forEach(note=>{const p=document.createElement("p");p.textContent=note;panel.appendChild(p);});};
+    const render=report=>{panel.replaceChildren(heading);const details=document.createElement("p");details.textContent="ابعاد: "+report.width+"×"+report.height+" · انطباق رنگ نمونه‌برداری‌شده: "+(report.colored===null?"نامشخص":report.colored+"٪")+" · انطباق زمینه: "+(report.backgroundPct===null?"نامشخص":report.backgroundPct+"٪");panel.appendChild(details);report.notes.forEach(note=>{const p=document.createElement("p");p.textContent=note;panel.appendChild(p);});};
     if(img.complete&&img.naturalWidth)render(analyzeImage(img,data));else img.addEventListener("load",()=>render(analyzeImage(img,data)),{once:true});
     img.addEventListener("error",()=>render({width:0,height:0,colored:null,whitePct:null,notes:["بارگذاری تصویر ناموفق بود."]}),{once:true});card.appendChild(panel);
   }
