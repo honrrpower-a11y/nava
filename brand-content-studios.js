@@ -257,6 +257,8 @@
     const form = event.target;
     if (!(form instanceof HTMLFormElement)) return;
     if (form.matches("[data-business-tool-form]")) return;
+    // The business profile form is handled by business-workspace.js, not the generic NAVI advisor.
+    if (form.id === "bizProfileCreateForm") return;
     const page = form.closest(".page");
     const config = page && assistedStudios[page.id];
     if (!config) return;
