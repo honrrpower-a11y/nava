@@ -303,7 +303,43 @@ function syncNaviWidgetMode() {
     studioMode ? "باز کردن همراه ناوی در این استودیو" : "باز کردن گفت‌وگو با ناوی");
 }
 
+/* Initial account/guest choice: keep the rest of the site inert until a path is chosen. */
+let navaAccessGateActive = false;
+function setNavaAccessGate(active) {
+  navaAccessGateActive = Boolean(active);
+  const accessPanel = document.querySelector(".nava-access-panel");
+  const orbitStage = document.querySelector(".nava-orbit-stage");
+  const homePage = document.getElementById("homePage");
+  const header = document.querySelector("header");
+  const footer = document.querySelector("footer");
+
+  if (header) header.inert = navaAccessGateActive;
+  if (footer) footer.inert = navaAccessGateActive;
+
+  document.querySelectorAll("main > .page").forEach(page => {
+    page.inert = navaAccessGateActive && page !== homePage;
+  });
+
+  if (homePage) {
+    Array.from(homePage.children).forEach(child => {
+      child.inert = navaAccessGateActive && child !== orbitStage;
+    });
+  }
+  if (orbitStage) {
+    Array.from(orbitStage.children).forEach(child => {
+      child.inert = navaAccessGateActive && child !== accessPanel;
+    });
+  }
+
+  if (accessPanel) {
+    accessPanel.classList.toggle("is-gate-active", navaAccessGateActive);
+    accessPanel.setAttribute("aria-modal", navaAccessGateActive ? "true" : "false");
+    accessPanel.setAttribute("role", navaAccessGateActive ? "dialog" : "region");
+  }
+}
+
 function showPage(pageId) {
+  if (navaAccessGateActive && pageId !== "homePage") return;
   if (naviWidgetPanel && !naviWidgetPanel.hidden) setNaviWidgetOpen(false);
   pages.forEach(page => page.classList.toggle("active", page.id === pageId));
   navButtons.forEach(button => button.classList.toggle("active", button.dataset.page === pageId));
@@ -885,6 +921,7 @@ function clearNaviSession() {
   });
   if (naviLoginPanel) naviLoginPanel.hidden = false;
   document.querySelector(".nava-access-panel")?.classList.remove("is-dismissed");
+  setNavaAccessGate(true);
   if (naviPassword) naviPassword.value = "";
   if (naviUsername) naviUsername.value = "";
   if (naviUserDisplay) naviUserDisplay.textContent = "";
@@ -1015,6 +1052,7 @@ document.querySelectorAll("#naviWorkspaceTabs [data-navi-tab]").forEach(button =
 });
 
 function showNaviChat() {
+  setNavaAccessGate(false);
   document.querySelector(".nava-access-panel")?.classList.add("is-dismissed");
   naviLoginPanel.hidden = true;
   naviChatArea.hidden = false;
@@ -2727,6 +2765,7 @@ if (existingNaviToken) {
 } else {
   clearNaviSession();
   showNaviWelcome("guest");
+  setNavaAccessGate(true);
 }
 
 
@@ -3633,6 +3672,7 @@ copyStory.addEventListener("click", async () => {
   ].filter(Boolean);
   loginButtons.forEach(button => button.addEventListener("click", () => {
     // The choice card disappears as soon as the visitor chooses the account path.
+    setNavaAccessGate(false);
     document.querySelector(".nava-access-panel")?.classList.add("is-dismissed");
     if (typeof window.openNaviAssistant === "function") {
       window.openNaviAssistant({ service: "گفت‌وگوی عمومی" });
@@ -3642,6 +3682,7 @@ copyStory.addEventListener("click", async () => {
   const guestButton = document.getElementById("navaGuestExplore");
   guestButton?.addEventListener("click", () => {
     // Close the choice card and any NAVI overlay directly; do not scroll the page to hide either one.
+    setNavaAccessGate(false);
     document.querySelector(".nava-access-panel")?.classList.add("is-dismissed");
     setNaviWidgetOpen(false);
     if (naviWelcomeBubble) naviWelcomeBubble.hidden = true;
