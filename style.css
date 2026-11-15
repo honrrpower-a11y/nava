@@ -2529,26 +2529,48 @@ body.navi-studio-context .navi-widget-panel .navi-send-toolbar .btn-primary {
 #requestResponse.response-box:focus{outline:2px solid rgba(37,202,255,.35);outline-offset:2px;}
 body.light #requestResponse.response-box{color:#263a56;}
 
-/* The first-visit access choice is a real blocking dialog, not a decorative card. */
-.nava-access-panel.is-gate-active{
+/* The first-visit access choice is a true viewport-centered blocking dialog. */
+body > .nava-access-panel.is-gate-active{
   position:fixed!important;
-  top:50%!important;
-  left:50%!important;
+  top:50dvh!important;
+  left:50vw!important;
   right:auto!important;
   bottom:auto!important;
   z-index:10050!important;
-  width:min(980px,calc(100vw - 28px))!important;
-  max-height:calc(100dvh - 32px);
-  overflow:auto;
+  display:grid!important;
+  width:min(980px,calc(100vw - 32px))!important;
+  max-height:calc(100dvh - 32px)!important;
+  margin:0!important;
+  overflow-x:hidden!important;
+  overflow-y:auto!important;
+  overscroll-behavior:contain;
+  -webkit-overflow-scrolling:touch;
   transform:translate(-50%,-50%)!important;
   box-shadow:0 24px 90px rgba(0,0,0,.58),0 0 0 100vmax rgba(3,7,16,.78);
   pointer-events:auto;
 }
-.nava-access-panel.is-gate-active button{pointer-events:auto}
-body:has(.nava-access-panel.is-gate-active){overflow:hidden}
+body > .nava-access-panel.is-gate-active button{pointer-events:auto}
+body:has(> .nava-access-panel.is-gate-active){overflow:hidden}
 @media(max-width:700px){
-  .nava-access-panel.is-gate-active{
+  body > .nava-access-panel.is-gate-active{
     width:calc(100vw - 24px)!important;
-    max-height:calc(100dvh - 24px);
+    max-height:calc(100dvh - 24px)!important;
+    gap:12px;
+    padding:16px;
+  }
+  body > .nava-access-panel.is-gate-active .nava-access-copy h2{
+    font-size:clamp(18px,5vw,22px);
+    line-height:1.5;
+  }
+  body > .nava-access-panel.is-gate-active .nava-access-copy p{
+    margin-bottom:0;
+    font-size:11px;
+    line-height:1.75;
+  }
+  body > .nava-access-panel.is-gate-active .nava-access-actions{gap:8px}
+  body > .nava-access-panel.is-gate-active .nava-access-login,
+  body > .nava-access-panel.is-gate-active .nava-access-guest{
+    min-height:58px;
+    padding:10px 12px;
   }
 }
