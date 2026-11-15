@@ -81,7 +81,12 @@ export async function handleBusinessTransactionRoute({ request, env, url, corsOr
     if (!business) return fail("پرونده کسب‌وکار پیدا نشد.", 404, corsOrigin);
     if (!transactionId && request.method === "GET") {
       const requested = Number(url.searchParams.get("limit") || 50);
-      const limit = Number.isInteger(requested) ? Math.max(1, Math.min(requested, 5000)) : 50;
+      const limit = Number.isInteger(requested) ? Math.max(1, Math.min(requested, 500)) : 50;
+      const requestedOffset = Number(url.searchParams.get("offset") || 0);
+      const offset = Number.isSafeInteger(requestedOffset) ? Math.max(0, Math.min(requestedOffset, 1000000)) : 0;
+      if (!Number.isSafeInteger(requestedOffset) || requestedOffset < 0 || requestedOffset > 1000000) {
+        return fail("شماره صفحه معتبر نیست.", 400, corsOrigin);
+      }
       const from = String(url.searchParams.get("from") || "");
       const to = String(url.searchParams.get("to") || "");
       const validDate = value => {
@@ -95,7 +100,7 @@ export async function handleBusinessTransactionRoute({ request, env, url, corsOr
       const dateParams = [businessId, ownerId, ...(from ? [from] : []), ...(to ? [to] : [])];
       const result = await env.NAVA_DB.prepare(
         "SELECT id, transaction_type, title, amount_toman, transaction_date, category, notes, quantity, unit_price_toman, created_at, updated_at FROM business_transactions_v1 WHERE business_id = ? AND owner_id = ?" + dateClause + " ORDER BY transaction_date DESC, created_at DESC LIMIT ?"
-      ).bind(...dateParams, limit).all();
+      ).bind(...dateParams, limit, offset).all();
       const totals = await env.NAVA_DB.prepare(
         "SELECT COUNT(CASE WHEN transaction_type = 'sale' THEN 1 END) AS sales_count, COUNT(CASE WHEN transaction_type = 'expense' THEN 1 END) AS expenses_count, COALESCE(SUM(CASE WHEN transaction_type = 'sale' THEN amount_toman ELSE 0 END), 0) AS sales_toman, COALESCE(SUM(CASE WHEN transaction_type = 'expense' THEN amount_toman ELSE 0 END), 0) AS expenses_toman, COUNT(*) AS transaction_count FROM business_transactions_v1 WHERE business_id = ? AND owner_id = ?" + dateClause
       ).bind(...dateParams).first();
