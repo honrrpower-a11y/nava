@@ -589,11 +589,24 @@
         </p>
 
         <div class="navi-auth-panel" id="naviLoginPanel">
-          <div class="navi-auth-heading"><h3>ورود اختصاصی به ناوی</h3><button class="navi-login-panel-close" id="naviLoginPanelClose" type="button" aria-label="بستن پنجره ناوی">×</button></div>
-          <p>برای دسترسی به فضای شخصی و امکانات کامل نوا وارد حساب شو. اگر هنوز حساب نداری، ابتدا درخواست عضویت را ثبت کن.</p>
-                    <details class="navi-registration-details" open>
-            <summary>درخواست عضویت در ناوی</summary>
-            <p class="navi-memory-description">درخواست شما پس از ثبت بررسی می‌شود. زمان معمول رسیدگی تا حدود یک ساعت است و حساب پس از تأیید مالک فعال خواهد شد.</p>
+          <div class="navi-auth-heading"><h3>حساب کاربری نوا</h3><button class="navi-login-panel-close" id="naviLoginPanelClose" type="button" aria-label="بستن پنجره ناوی">×</button></div>
+          <p>برای ورود به فضای شخصی نوا وارد حساب شو؛ اگر حساب نداری، از بخش عضویت درخواستت را ثبت کن.</p>
+          <div class="navi-auth-tabs" role="tablist" aria-label="ورود یا عضویت">
+            <button class="navi-auth-tab is-active" id="naviLoginTab" type="button" role="tab" aria-selected="true" aria-controls="naviLoginTabPanel">ورود</button>
+            <button class="navi-auth-tab" id="naviRegisterTab" type="button" role="tab" aria-selected="false" aria-controls="naviRegisterTabPanel">عضویت</button>
+          </div>
+          <section class="navi-auth-tab-panel" id="naviLoginTabPanel" role="tabpanel" aria-labelledby="naviLoginTab">
+            <form id="naviLoginForm">
+              <label class="field-label" for="naviUsername">نام کاربری</label>
+              <input class="navi-password" id="naviUsername" type="text" placeholder="نام کاربری حساب" autocomplete="username" autocapitalize="none">
+              <label class="field-label" for="naviPassword">رمز عبور</label>
+              <input class="navi-password" id="naviPassword" type="password" placeholder="رمز عبور" autocomplete="current-password" required>
+              <button class="btn-primary" id="naviLoginButton" type="submit">ورود به ناوی</button>
+            </form>
+            <div class="navi-auth-error" id="naviLoginError" role="alert"></div>
+          </section>
+          <section class="navi-auth-tab-panel" id="naviRegisterTabPanel" role="tabpanel" aria-labelledby="naviRegisterTab" hidden>
+            <p class="navi-memory-description">درخواست عضویت پس از ثبت بررسی می‌شود. زمان معمول رسیدگی تا حدود یک ساعت است و حساب پس از تأیید مالک فعال خواهد شد.</p>
             <form id="naviRegistrationForm">
               <label class="field-label" for="naviRegisterDisplayName">نام نمایشی</label>
               <input class="navi-password" id="naviRegisterDisplayName" type="text" minlength="2" maxlength="80" autocomplete="name" required>
@@ -606,18 +619,7 @@
               <button class="btn-primary" type="submit">ارسال درخواست عضویت</button>
             </form>
             <div class="navi-auth-error" id="naviRegistrationStatus" role="status" aria-live="polite"></div>
-          </details>
-          <form id="naviLoginForm">
-            <label class="field-label" for="naviUsername">نام کاربری</label>
-            <input class="navi-password" id="naviUsername" type="text"
-              placeholder="نام کاربری حساب" autocomplete="username" autocapitalize="none">
-            <label class="field-label" for="naviPassword">رمز عبور</label>
-            <input class="navi-password" id="naviPassword" type="password"
-              placeholder="رمز عبور" autocomplete="current-password" required>
-            <button class="btn-primary" id="naviLoginButton" type="submit">ورود به ناوی</button>
-          </form>
-          <div class="navi-auth-error" id="naviLoginError" role="alert"></div>
-
+          </section>
         </div>
 
         <div class="navi-chat-area" id="naviChatArea" hidden>
