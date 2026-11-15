@@ -529,7 +529,7 @@
       <p class="biz-profile-status" id="bizProfileStatus" role="status" aria-live="polite">برای ساخت و ذخیره پرونده، ابتدا وارد حساب NAVI شو.</p>
       <div class="biz-profile-record-actions">
         <span id="bizProfileActiveName">هنوز پرونده‌ای انتخاب نشده است.</span>
-        <button class="btn-secondary" type="button" id="bizSaveFinancialRecord" disabled>ذخیره گزارش مالی در پرونده</button>
+        <span class="biz-profile-save-hint">پس از محاسبه، گزارش را از کارت نتیجه ذخیره کن.</span>
       </div>
     </section>
 
@@ -570,7 +570,7 @@
           <div><span>سود کل با فروش مورد انتظار</span><strong id="bizTotalProfit">—</strong></div>
           <div><span>درآمد کل فروش مورد انتظار</span><strong id="bizExpectedRevenue">—</strong></div>
         </div>
-        <div class="biz-result-footer"><p id="bizCalculationSummary">برای دیدن گزارش، هزینه‌ها و تعداد تولید را وارد کن.</p><button type="button" class="btn-secondary" id="bizCopyResult" disabled>کپی گزارش</button></div>
+        <div class="biz-result-footer"><p id="bizCalculationSummary">برای دیدن گزارش، هزینه‌ها و تعداد تولید را وارد کن.</p><div class="biz-result-actions"><button type="button" class="btn-secondary" id="bizCopyResult" disabled>کپی گزارش</button><button type="button" class="btn-primary" id="bizSaveFinancialRecord" disabled>ذخیره گزارش در پرونده</button></div></div>
       </aside>
     </div>
 
@@ -912,7 +912,8 @@
 </footer>
 
   <script src="brand-content-studios.js?v=navi-thread-context-20261114-3" defer></script>
-  <script src="business-tools.js?v=business-suite-20261115-1" defer></script>
+  <script src="business-tools.js?v=business-suite-20261115-2" defer></script>
+  <script src="business-workspace.js?v=business-workspace-20261115-1" defer></script>
   <script src="document-export.js?v=studio-response-select-20261115-1" defer></script>
   <link rel="stylesheet" href="office-file-tools.css?v=office-persian-ocr-20261115-1">
   <script src="office-structured-files.js?v=office-pptx-xlsx-20261115-1" defer></script>
