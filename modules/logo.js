@@ -34,6 +34,14 @@ function validColor(value, fallback) {
   return /^#[0-9a-fA-F]{6}$/.test(String(value || "")) ? value : fallback;
 }
 
+function contrastInk(background) {
+  const hex = validColor(background, "#FFFFFF").slice(1);
+  const channels = [0, 2, 4].map(index => parseInt(hex.slice(index, index + 2), 16) / 255)
+    .map(value => value <= 0.04045 ? value / 12.92 : Math.pow((value + 0.055) / 1.055, 2.4));
+  const luminance = 0.2126 * channels[0] + 0.7152 * channels[1] + 0.0722 * channels[2];
+  return luminance > 0.42 ? "#172238" : "#FFFFFF";
+}
+
 // Only a small SVG geometry vocabulary is accepted. NAVI chooses the geometry;
 // this renderer only validates and serializes it. Raw SVG/HTML is never accepted.
 export function renderElement(element, colors) {
@@ -63,7 +71,8 @@ export function renderElement(element, colors) {
 
 export function renderConceptSvg(data, concept, index) {
   const primary = validColor(data.primaryColor, "#C99B48");
-  const secondary = validColor(data.darkColor, "#172238");
+  const backgroundColor = validColor(data.darkColor, "#172238");
+  const secondary = contrastInk(backgroundColor);
   const colors = { primary, secondary };
   const elements = concept.elements.map(item => renderElement(item, colors)).filter(Boolean);
   if (elements.length < 8) throw new Error("NAVI vector concept has too few valid geometry elements.");
@@ -88,14 +97,14 @@ export function renderConceptSvg(data, concept, index) {
     : "";
   let word = "";
   let sloganText = "";
-  let background = '<rect width="1000" height="1000" fill="#FFFFFF"/>';
+  let background = '<rect width="1000" height="1000" fill="' + backgroundColor + '"/>';
   if (composition === "horizontal") {
     word = '<text x="900" y="465" text-anchor="end" direction="rtl" unicode-bidi="plaintext" font-family="' + font + '" font-size="' + nameSize + '" font-weight="700" fill="' + secondary + '">' + brand + '</text>';
     if (slogan) sloganText = '<text x="900" y="525" text-anchor="end" direction="rtl" unicode-bidi="plaintext" font-family="' + font + '" font-size="27" fill="' + secondary + '" opacity=".76">' + slogan + '</text>';
   } else if (composition === "emblem") {
     word = '<text x="500" y="800" text-anchor="middle" direction="rtl" unicode-bidi="plaintext" font-family="' + font + '" font-size="' + nameSize + '" font-weight="700" fill="' + secondary + '">' + brand + '</text>';
     if (slogan) sloganText = '<text x="500" y="855" text-anchor="middle" direction="rtl" unicode-bidi="plaintext" font-family="' + font + '" font-size="26" fill="' + secondary + '" opacity=".76">' + slogan + '</text>';
-    background = '<rect x="24" y="24" width="952" height="952" rx="52" fill="#FFFFFF"/>';
+    background = '<rect x="24" y="24" width="952" height="952" rx="52" fill="' + backgroundColor + '"/>';
   } else {
     word = '<text x="500" y="' + (isWordmark ? 690 : 805) + '" text-anchor="middle" direction="rtl" unicode-bidi="plaintext" font-family="' + font + '" font-size="' + (isWordmark ? Math.min(96, nameSize + 12) : nameSize) + '" font-weight="700" fill="' + secondary + '">' + brand + '</text>';
     if (slogan) sloganText = '<text x="500" y="' + (isWordmark ? 750 : 865) + '" text-anchor="middle" direction="rtl" unicode-bidi="plaintext" font-family="' + font + '" font-size="26" fill="' + secondary + '" opacity=".76">' + slogan + '</text>';
