@@ -99,7 +99,7 @@ test("business advisor context contains only bounded profile and financial repor
     }]
   );
   assert.match(context, /پرونده کسب‌وکار: فروشگاه/);
-  assert.match(context, /هزینه هر واحد: ۶۰۰۰ تومان/);
+  assert.match(context, /هزینه هر واحد\\s*۶۰۰۰ تومان/);
   assert.match(context, /داده‌های ساختاریافته/);
   assert.doesNotMatch(context, /owner_id|password_hash|auth_subject/);
 });
