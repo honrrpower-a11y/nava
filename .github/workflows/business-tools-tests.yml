@@ -5,6 +5,10 @@ on:
     branches: [main]
     paths:
       - "business-tools.js"
+      - "business-workspace.js"
+      - "modules/business.js"
+      - "migrations/navi-production-reconcile/0004_nava_business_foundation.sql"
+      - "tests/business-api.test.mjs"
       - "business-tools.css"
       - "index.html"
       - "tests/business-tools.test.mjs"
@@ -32,5 +36,9 @@ jobs:
           node-version: 22
       - name: Check business tool JavaScript syntax
         run: node --check business-tools.js
-      - name: Run business calculator regression tests
-        run: node --test tests/business-tools.test.mjs
+      - name: Check business workspace and API JavaScript syntax
+        run: |
+          node --check business-workspace.js
+          node --check modules/business.js
+      - name: Run business calculator and API validation tests
+        run: node --test tests/business-tools.test.mjs tests/business-api.test.mjs
