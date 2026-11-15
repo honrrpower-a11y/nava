@@ -3,6 +3,8 @@
 (() => {
   "use strict";
   const MAX_OUTPUT = 12000;
+  const MAX_EXCEL_SCANNED_CELLS = 20000;
+  const MAX_EXCEL_SCANNED_ROWS = 5000;
   const loadScript = (src, globalName) => new Promise((resolve, reject) => {
     if (window[globalName]) return resolve(window[globalName]);
     const existing = document.querySelector('script[data-office-structured="' + globalName + '"]');
@@ -53,10 +55,17 @@
       output.push("\nشیت: " + sheetName);
       const range = XLSX.utils.decode_range(sheet["!ref"] || "A1:A1");
       output.push("ابعاد محدوده استفاده‌شده: " + (range.e.r+1) + " ردیف × " + (range.e.c+1) + " ستون");
-      let count = 0;
+      let count = 0, scannedCells = 0, scannedRows = 0, scanLimited = false;
       for (let row=range.s.r; row<=range.e.r && output.join("\n").length<MAX_OUTPUT; row++) {
+        if (scannedRows >= MAX_EXCEL_SCANNED_ROWS || scannedCells >= MAX_EXCEL_SCANNED_CELLS) {
+          scanLimited = true;
+          break;
+        }
+        scannedRows++;
         const cells=[];
         for (let col=range.s.c; col<=range.e.c; col++) {
+          if (scannedCells >= MAX_EXCEL_SCANNED_CELLS) { scanLimited = true; break; }
+          scannedCells++;
           const address=XLSX.utils.encode_cell({r:row,c:col}), cell=sheet[address];
           if (!cell || (cell.v===undefined && !cell.f)) continue;
           let value=cell.w !== undefined ? cell.w : String(cell.v ?? "");
@@ -64,7 +73,10 @@
           cells.push(address + "=" + value);
         }
         if (cells.length) { output.push(cells.join(" | ")); count++; }
-        if (count>=250) { output.push("[برای محدودماندن حجم، ادامه ردیف‌های این شیت در این مرحله استخراج نشد.]"); break; }
+        if (scanLimited || count>=250) {
+          output.push("[برای محدودماندن حجم، ادامه محدوده این شیت در این مرحله استخراج نشد.]");
+          break;
+        }
       }
     }
     return trimOutput(output.join("\n"));
