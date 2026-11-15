@@ -133,6 +133,24 @@ async function loadBusinessTransactionApi() {
   return sandbox.__transactionApi;
 }
 
+test("business transaction accepts a linked catalogue item and rejects malformed IDs", async () => {
+  const api = await loadBusinessTransactionApi();
+  const itemId = "item-12345678-1234-1234-1234-123456789012";
+  const linked = api.normalizeBusinessTransactionInput({
+    transactionType: "sale", title: "بسته قهوه", amountToman: 60000,
+    transactionDate: "2026-11-16", catalogItemId: itemId, quantity: 2, unitPriceToman: 30000
+  });
+  assert.equal(linked.value.catalog_item_id, itemId);
+  assert.match(api.normalizeBusinessTransactionInput({
+    transactionType: "sale", title: "فروش", amountToman: 100,
+    transactionDate: "2026-11-16", catalogItemId: "not-an-item"
+  }).error, /شناسه محصول/);
+  assert.match(api.normalizeBusinessTransactionInput({
+    transactionType: "expense", title: "هزینه", amountToman: 100,
+    transactionDate: "2026-11-16", catalogItemId: itemId
+  }).error, /برای ثبت هزینه/);
+});
+
 test("business transactions accept Toman sales and expenses with valid dates", async () => {
   const api = await loadBusinessTransactionApi();
   const sale = api.normalizeBusinessTransactionInput({
