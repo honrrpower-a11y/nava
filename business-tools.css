@@ -274,3 +274,55 @@ body.light #bizPage .biz-financial-export-group button[data-format="xlsx"]{backg
 body.light #bizPage .biz-transaction-actions button{background:linear-gradient(135deg,#fffdf8,#f4eadb);color:#33445d;border-color:rgba(190,125,37,.32);box-shadow:0 2px 8px rgba(80,66,45,.06)}
 body.light #bizPage .biz-transaction-actions button:last-child{background:linear-gradient(135deg,#fff7f3,#fff0eb);color:#a34e45;border-color:rgba(185,89,77,.30)}
 body.light #bizPage .biz-transaction-actions button:hover{box-shadow:0 5px 13px rgba(80,66,45,.11)}
+
+
+/* NAVA BUSINESS — five-tab workspace */
+#bizPage .biz-tabs{
+  display:flex;gap:8px;align-items:stretch;margin:18px 0 16px;padding:7px;
+  border:1px solid var(--border);border-radius:16px;
+  background:linear-gradient(145deg,rgba(229,184,94,.08),rgba(37,202,255,.035)),var(--panel2);
+  overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;
+}
+#bizPage .biz-tabs::-webkit-scrollbar{display:none}
+#bizPage .biz-tab{
+  flex:1 0 112px;display:flex;align-items:center;justify-content:center;gap:8px;min-height:48px;
+  padding:10px 13px;border:1px solid transparent;border-radius:11px;
+  background:transparent;color:var(--muted);font:inherit;font-size:12px;font-weight:750;
+  white-space:nowrap;cursor:pointer;transition:background .18s ease,color .18s ease,border-color .18s ease,transform .18s ease;
+}
+#bizPage .biz-tab>span:first-child{font-size:17px;line-height:1;color:var(--gold)}
+#bizPage .biz-tab:hover{color:var(--text);background:rgba(229,184,94,.08)}
+#bizPage .biz-tab.is-active{
+  color:var(--text);border-color:rgba(229,184,94,.45);
+  background:linear-gradient(135deg,rgba(229,184,94,.19),rgba(37,202,255,.08)),var(--panel);
+  box-shadow:0 4px 14px rgba(0,0,0,.12),inset 0 1px 0 rgba(255,255,255,.06);
+}
+#bizPage .biz-tab:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+#bizPage .biz-tab-panel[hidden],#bizPage .biz-tab[hidden]{display:none!important}
+#bizPage .biz-tab-panel{min-width:0;animation:bizTabReveal .2s ease both}
+#bizPage .biz-tab-panel>.biz-financial-dashboard,
+#bizPage .biz-tab-panel>.biz-transactions-panel,
+#bizPage .biz-tab-panel>.biz-navi-advisor,
+#bizPage .biz-tab-panel>.biz-tool-intro,
+#bizPage .biz-tab-panel>.biz-calculator-layout,
+#bizPage .biz-tab-panel>.biz-extra-tools,
+#bizPage .biz-tab-panel>.biz-roadmap-note,
+#bizPage .biz-tab-panel>.biz-advisor-layout,
+#bizPage .biz-tab-panel>.biz-financial-export{margin-top:16px}
+#bizPage #bizPanelReports .biz-profile-recent{margin:0 0 16px}
+@keyframes bizTabReveal{from{opacity:.65;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+body.light #bizPage .biz-tabs{
+  background:linear-gradient(145deg,#fffdf8,#f5ecdf 65%,#edf3f9);
+  border-color:rgba(177,132,69,.25);box-shadow:0 5px 18px rgba(75,65,48,.06);
+}
+body.light #bizPage .biz-tab{color:#687487}
+body.light #bizPage .biz-tab>span:first-child{color:#a96e28}
+body.light #bizPage .biz-tab.is-active{
+  color:#253750;border-color:rgba(190,132,49,.42);
+  background:linear-gradient(135deg,#fff0d0,#fce8d7 55%,#edf3fb);
+  box-shadow:0 4px 13px rgba(94,75,48,.10),inset 0 1px 0 #fff;
+}
+@media(max-width:680px){
+  #bizPage .biz-tabs{gap:6px;margin:14px -2px 12px;padding:5px;border-radius:13px}
+  #bizPage .biz-tab{flex:0 0 auto;min-width:108px;min-height:44px;padding:9px 11px;font-size:11px}
+}
