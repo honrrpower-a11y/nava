@@ -532,6 +532,24 @@
         <span id="bizProfileActiveName">هنوز پرونده‌ای انتخاب نشده است.</span>
         <span class="biz-profile-save-hint">پس از محاسبه، گزارش را از کارت نتیجه ذخیره کن.</span>
       </div>
+      <section class="biz-transactions-panel" aria-labelledby="bizTransactionsTitle">
+        <div class="biz-transactions-heading">
+          <div><span class="biz-eyebrow">دفتر مالی واقعی</span><h3 id="bizTransactionsTitle">ثبت فروش و هزینه</h3>
+            <p>فقط دریافت‌ها و پرداخت‌های انجام‌شده را ثبت کن؛ مبالغ این بخش همگی به تومان هستند.</p></div>
+        </div>
+        <form id="bizTransactionForm" class="biz-transaction-form">
+          <label class="biz-field"><span>نوع تراکنش</span><select id="bizTransactionType"><option value="sale">فروش / دریافت واقعی</option><option value="expense">هزینه / پرداخت واقعی</option></select></label>
+          <label class="biz-field"><span>عنوان</span><input id="bizTransactionTitle" type="text" maxlength="160" placeholder="مثلاً فروش محصول یا خرید مواد اولیه" required></label>
+          <label class="biz-field"><span>مبلغ (تومان)</span><input id="bizTransactionAmount" type="number" min="1" max="1000000000000" step="1" inputmode="numeric" placeholder="مثلاً ۲۰۰۰۰۰" required></label>
+          <label class="biz-field"><span>تاریخ</span><input id="bizTransactionDate" type="date" required></label>
+          <label class="biz-field"><span>دسته‌بندی</span><input id="bizTransactionCategory" type="text" maxlength="80" placeholder="مثلاً فروش محصول، مواد اولیه، حمل‌ونقل"></label>
+          <label class="biz-field biz-transaction-notes"><span>توضیحات (اختیاری)</span><input id="bizTransactionNotes" type="text" maxlength="1200" placeholder="جزئیات تکمیلی"></label>
+          <button class="btn-primary" id="bizTransactionSubmit" type="submit">ثبت تراکنش</button>
+        </form>
+        <p id="bizTransactionStatus" class="biz-profile-status" role="status" aria-live="polite">برای ثبت تراکنش، یک پرونده فعال انتخاب کن.</p>
+        <div id="bizTransactionSummary" class="biz-transaction-summary"></div>
+        <div id="bizTransactionList" class="biz-transaction-list" aria-live="polite">تراکنش‌های پرونده پس از انتخاب آن نمایش داده می‌شوند.</div>
+      </section>
       <section class="biz-navi-advisor" aria-labelledby="bizNaviAdvisorTitle">
         <div>
           <span class="biz-eyebrow">NAVI BUSINESS ADVISOR</span>
@@ -926,7 +944,7 @@
 
   <script src="brand-content-studios.js?v=business-form-submit-fix-20261115-1" defer></script>
   <script src="business-tools.js?v=business-suite-20261115-2" defer></script>
-  <script src="business-workspace.js?v=navi-business-advisor-20261115-1" defer></script>
+  <script src="business-workspace.js?v=business-transactions-toman-20261116-1" defer></script>
   <script src="document-export.js?v=studio-response-select-20261115-1" defer></script>
   <link rel="stylesheet" href="office-file-tools.css?v=office-persian-ocr-20261115-1">
   <script src="office-structured-files.js?v=office-pptx-xlsx-20261115-1" defer></script>
