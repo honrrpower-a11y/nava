@@ -351,8 +351,8 @@
           <textarea id="studioBrief-office" class="studio-control studio-brief-input" maxlength="18000" placeholder="موضوع، نکات ضروری، داده‌ها و قالب مورد انتظار؛ یا پس از استخراج فایل، درخواستت را اینجا بنویس"></textarea>
           <div class="office-file-panel" id="officeFilePanel">
             <label for="officeSourceFile">افزودن فایل برای بررسی یا ویرایش</label>
-            <p class="office-file-help">فایل Word، PDF، TXT یا تصویر اسناد را انتخاب کن. PDFهای اسکن‌شده و عکس‌ها با OCR فارسی خوانده می‌شوند؛ فایل اصلی فقط روی دستگاهت پردازش می‌شود و به سرور آپلود نمی‌شود. حداکثر ۱۵ مگابایت.</p>
-            <input id="officeSourceFile" class="studio-control office-file-input" type="file" aria-label="انتخاب فایل برای بررسی در Office" accept=".docx,.pdf,.txt,.png,.jpg,.jpeg,.webp,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/pdf,text/plain,image/png,image/jpeg,image/webp">
+            <p class="office-file-help">فایل Word، PowerPoint، Excel، PDF، TXT یا تصویر اسناد را انتخاب کن. PDFهای اسکن‌شده و عکس‌ها با OCR فارسی خوانده می‌شوند؛ فایل اصلی فقط روی دستگاهت پردازش می‌شود و به سرور آپلود نمی‌شود. حداکثر ۱۵ مگابایت.</p>
+            <input id="officeSourceFile" class="studio-control office-file-input" type="file" aria-label="انتخاب فایل برای بررسی در Office" accept=".docx,.pdf,.pptx,.xlsx,.txt,.png,.jpg,.jpeg,.webp,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.openxmlformats-officedocument.presentationml.presentation,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/pdf,text/plain,image/png,image/jpeg,image/webp">
             <div class="office-file-actions"><button class="btn-secondary" id="officeClearFile" type="button" disabled>حذف فایل از درخواست</button><span id="officeFileStatus" class="office-file-status" role="status" aria-live="polite">حداکثر حجم فایل ۱۵ مگابایت است.</span></div>
           </div>
           <div class="studio-brief-actions"><button class="btn-primary" type="submit">ادامه با NAVI</button><button class="btn-secondary" type="reset">پاک کردن فرم</button></div>
@@ -798,6 +798,7 @@
   <script src="brand-content-studios.js?v=navi-thread-context-20261114-3" defer></script>
   <script src="document-export.js?v=studio-response-select-20261115-1" defer></script>
   <link rel="stylesheet" href="office-file-tools.css?v=office-persian-ocr-20261115-1">
-  <script src="office-file-tools.js?v=office-persian-ocr-20261115-1" defer></script>
+  <script src="office-structured-files.js?v=office-pptx-xlsx-20261115-1" defer></script>
+  <script src="office-file-tools.js?v=office-pptx-xlsx-20261115-1" defer></script>
 </body>
 </html>

@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - "office-file-tools.js"
+      - "office-structured-files.js"
       - "index.html"
       - "tests/office-ocr.test.mjs"
       - ".github/workflows/office-file-tests.yml"
@@ -31,6 +32,6 @@ jobs:
         with:
           node-version: 22
       - name: Check Office JavaScript syntax
-        run: node --check office-file-tools.js
+        run: node --check office-file-tools.js && node --check office-structured-files.js
       - name: Run Office extraction and OCR regression tests
         run: node --test tests/office-ocr.test.mjs
