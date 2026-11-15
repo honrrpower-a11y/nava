@@ -210,6 +210,14 @@ export async function loadNaviBusinessContext(db, ownerId, businessId) {
   } catch (error) {
     console.warn("[NAVA BUSINESS] Transaction ledger is not available yet; apply migration 0005.", error);
   }
+  let catalog = { results: [] };
+  try {
+    catalog = await db.prepare(
+      "SELECT item_type, name, sku, category, unit, sale_price_toman, cost_price_toman FROM business_catalog_items_v1 WHERE business_id = ? AND owner_id = ? AND status = 'active' ORDER BY item_type, name COLLATE NOCASE LIMIT 100"
+    ).bind(businessId, ownerId).all();
+  } catch (error) {
+    console.warn("[NAVA BUSINESS] Product/service catalogue is not available yet; apply migration 0006.", error);
+  }
   const base = buildBusinessAdvisorContext(business, records.results || []);
   let sales = 0;
   let expenses = 0;
@@ -230,7 +238,19 @@ export async function loadNaviBusinessContext(db, ownerId, businessId) {
   if (!(transactions.results || []).length) lines.push("هنوز تراکنش واقعی فروش یا هزینه‌ای ثبت نشده است.");
   lines.push("این جمع‌ها فقط مربوط به حداکثر ۳۰ تراکنش اخیر هستند و جمع کل تاریخی نیستند.");
   lines.push("این مبالغ فروش و هزینه ثبت‌شده‌اند؛ وضعیت وصول یا پرداخت را مشخص نمی‌کنند و تفاضل آن‌ها به‌تنهایی سود قطعی یا مانده نقدی نیست.");
-  return (base + "\n" + lines.join("\n")).slice(0, 24000);
+  lines.push("کاتالوگ فعال محصولات و خدمات:");
+  for (const item of catalog.results || []) {
+    lines.push("- " + (item.item_type === "product" ? "محصول" : "خدمت") +
+      " | " + safeNaviText(item.name || "", 140) +
+      " | کد: " + safeNaviText(item.sku || "ثبت نشده", 64) +
+      " | دسته: " + safeNaviText(item.category || "ثبت نشده", 80) +
+      " | واحد: " + safeNaviText(item.unit || "", 32) +
+      " | قیمت فروش: " + Number(item.sale_price_toman || 0).toLocaleString("en-US") + " تومان" +
+      " | بهای تمام‌شده: " + (item.cost_price_toman == null ? "ثبت نشده" : Number(item.cost_price_toman).toLocaleString("en-US") + " تومان"));
+  }
+  if (!(catalog.results || []).length) lines.push("در کاتالوگ هنوز محصول یا خدمت فعالی ثبت نشده است.");
+  lines.push("فهرست بالا فقط کاتالوگ فعال است و به‌معنای موجودی انبار یا تعداد قابل فروش نیست.");
+  return (base + "\n" + lines.join("\n")).slice(0, 26000);
 }
 
 async function listRecords(db, ownerId, businessId, url, corsOrigin) {
