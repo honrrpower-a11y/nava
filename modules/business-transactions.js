@@ -1,7 +1,5 @@
 // NAVA BUSINESS — account-scoped sales and expense transactions.
 import { json, safeNaviText } from "./shared.js";
-import { ALLOWED_ORIGIN } from "./config.js";
-import { authorizeNaviRequest } from "./navi-auth.js";
 
 const TYPES = new Set(["sale", "expense"]);
 const MAX_AMOUNT = 1000000000000;
@@ -74,19 +72,9 @@ async function getOwnedBusiness(db, businessId, ownerId) {
   return db.prepare("SELECT id FROM business_profiles_v1 WHERE id = ? AND owner_id = ? AND status = 'active' LIMIT 1").bind(businessId, ownerId).first();
 }
 
-async function authorized(request, env, origin, corsOrigin) {
-  if (origin !== ALLOWED_ORIGIN) return { error: fail("مبدأ درخواست مجاز نیست.", 403, corsOrigin) };
-  const auth = await authorizeNaviRequest(request, env);
-  if (!auth.valid) return { error: fail(auth.error || "برای دسترسی وارد حساب شو.", auth.status || 401, corsOrigin) };
-  if (!env.NAVA_DB) return { error: fail("دیتابیس کسب‌وکار در دسترس نیست.", 503, corsOrigin) };
-  return { user: auth.user };
-}
-
-export async function handleBusinessTransactionRoute({ request, env, url, origin, corsOrigin, businessId, transactionId = "" }) {
+export async function handleBusinessTransactionRoute({ request, env, url, corsOrigin, businessId, transactionId = "", ownerId }) {
   try {
-    const access = await authorized(request, env, origin, corsOrigin);
-    if (access.error) return access.error;
-    const ownerId = access.user.id;
+    if (!env.NAVA_DB) return fail("دیتابیس کسب‌وکار در دسترس نیست.", 503, corsOrigin);
     if (!/^biz-[0-9a-f-]{36}$/i.test(businessId || "")) return fail("شناسه کسب‌وکار معتبر نیست.", 400, corsOrigin);
     if (transactionId && !/^txn-[0-9a-f-]{36}$/i.test(transactionId)) return fail("شناسه تراکنش معتبر نیست.", 400, corsOrigin);
     const business = await getOwnedBusiness(env.NAVA_DB, businessId, ownerId);
