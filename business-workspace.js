@@ -37,6 +37,7 @@
     });
     let data;
     try { data = await response.json(); } catch { throw new Error("پاسخ سرویس کسب‌وکار معتبر نیست."); }
+    if (response.status === 404) throw new Error("API پرونده‌های کسب‌وکار هنوز روی Worker فعال نشده است؛ نسخه جدید Worker باید Deploy شود.");
     if (!response.ok || !data.success) throw new Error(data.error || "درخواست کسب‌وکار انجام نشد.");
     return data;
   }
@@ -122,7 +123,7 @@
       setStatus(businesses.length ? "پرونده‌ها به‌صورت اختصاصی برای حساب واردشده بارگذاری شدند." : "هنوز پرونده‌ای نداری؛ می‌توانی اولین کسب‌وکارت را ثبت کنی.");
     } catch (error) {
       setStatus(error.message);
-      if (/ساختار دیتابیس|عملیات کسب‌وکار/.test(error.message)) {
+      if (/ساختار دیتابیس|عملیات کسب‌وکار|هنوز روی Worker فعال/.test(error.message)) {
         recent.textContent = "ساختار دیتابیس هنوز روی سرویس فعال نشده است؛ پس از اجرای Migration، دوباره بارگذاری کن.";
       }
     }
