@@ -55,19 +55,12 @@
       const image=new Image();
       image.onload=()=>{
         const canvas=document.createElement("canvas");
-        canvas.width=1200;canvas.height=1400;
+        canvas.width=1200;canvas.height=1200;
         const ctx=canvas.getContext("2d");
+        if(!ctx){URL.revokeObjectURL(objectUrl);status.textContent="ساخت PNG در این مرورگر پشتیبانی نمی‌شود.";return;}
         ctx.fillStyle="#ffffff";ctx.fillRect(0,0,canvas.width,canvas.height);
-        const size=1080;ctx.drawImage(image,60,20,size,size);
-        ctx.textAlign="center";ctx.textBaseline="middle";
-        ctx.direction=/[\u0600-\u06FF]/.test(data.brandName)?"rtl":"ltr";
-        ctx.fillStyle=data.darkColor||"#172238";
-        ctx.font="700 82px Tahoma, Arial, sans-serif";
-        ctx.fillText(data.brandName,600,1190,1060);
-        if(data.slogan){
-          ctx.fillStyle="#687386";ctx.font="400 34px Tahoma, Arial, sans-serif";
-          ctx.fillText(data.slogan,600,1280,1040);
-        }
+        // The SVG already contains the exact brand name and slogan; do not typeset them twice.
+        ctx.drawImage(image,0,0,1200,1200);
         canvas.toBlob(output=>{
           URL.revokeObjectURL(objectUrl);
           if(!output){status.textContent="ساخت PNG ناموفق بود.";return;}
@@ -148,79 +141,139 @@
     }
     copy.append(rubric);card.appendChild(copy);
     const actions=document.createElement("div");actions.className="logo-concept-actions";
-    const button=document.createElement("button");button.type="button";button.className="btn-primary";
-    button.textContent="دریافت لوگو با نام برند";
+    const svgButton=document.createElement("button");svgButton.type="button";svgButton.className="btn-primary";
+    svgButton.textContent="دریافت فایل برداری SVG";
+    svgButton.addEventListener("click",async()=>{
+      try {
+        const response=await fetch(image.url);
+        if(!response.ok)throw new Error("SVG download failed");
+        const blob=await response.blob(),url=URL.createObjectURL(blob),link=document.createElement("a");
+        link.href=url;link.download=safeFileName(data.brandName)+"-logo-concept-"+(index+1)+".svg";
+        document.body.appendChild(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),1500);
+        status.textContent="فایل SVG برداری آماده شد و بدون موتور تصویر تولید شده است.";
+      } catch (_) { status.textContent="دریافت SVG ناموفق بود؛ دوباره تلاش کن."; }
+    });
+    const button=document.createElement("button");button.type="button";button.className="btn-secondary";
+    button.textContent="دریافت PNG";
     button.addEventListener("click",()=>downloadPng(image.url,data,index));
-    actions.appendChild(button);card.appendChild(actions);
+    actions.append(svgButton,button);card.appendChild(actions);
     return card;
   }
   fields.palette.addEventListener("change",()=>{customColors.hidden=fields.palette.value!=="custom";});
   form.addEventListener("reset",()=>setTimeout(()=>{customColors.hidden=fields.palette.value!=="custom";},0));
-  form.addEventListener("submit",async event=>{
-    event.preventDefault();
-    const data=readData();
-    if(!data.brandName){status.textContent="نام برند را وارد کن.";fields.name.focus();return;}
-    // NAVI credentials are stored persistently in localStorage by app.js.
-    // Keep the legacy sessionStorage fallback for older active tabs.
-    let token="";
-    try {
-      token=localStorage.getItem("nava_navi_session")||sessionStorage.getItem("nava_navi_session")||"";
-    } catch (_) {
-      try { token=sessionStorage.getItem("nava_navi_session")||""; } catch (_) {}
-    }
-    let visitorId="";
-    if(!token){
-      visitorId=localStorage.getItem("nava_guest_trial_id")||"";
-      if(!/^[a-f0-9-]{32,40}$/i.test(visitorId)){
-        visitorId=typeof crypto.randomUUID==="function"?crypto.randomUUID():
-          Array.from(crypto.getRandomValues(new Uint8Array(16)),byte=>byte.toString(16).padStart(2,"0")).join("");
-        localStorage.setItem("nava_guest_trial_id",visitorId);
-      }
-    }
-    const headers={"Content-Type":"application/json"};
-    if(token)headers.Authorization="Bearer "+token;
-    const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),125000);
-    const submit=form.querySelector('button[type="submit"]');
-    submit.disabled=true;submit.textContent="ناوی در حال تحلیل بریف...";
-    status.textContent="ناوی ابتدا بریف برند را تحلیل می‌کند؛ سپس سه مسیر طراحی برای موتور تصویر آماده می‌شود. این مرحله ممکن است کمی زمان ببرد.";
+  let pendingBrief = null;
+  let pendingData = null;
+  let pendingHeaders = null;
+
+  function showBriefReview(result, data, headers) {
+    pendingBrief = result.plan;
+    pendingData = data;
+    pendingHeaders = headers;
+    results.replaceChildren();
+    const panel=document.createElement("section");
+    panel.className="logo-ai-strategy-summary";
+    const heading=document.createElement("h3");heading.textContent="بریف طراحی پیشنهادی NAVI";
+    const core=document.createElement("p");core.textContent=result.plan.brandCore||"";
+    const strategy=document.createElement("p");strategy.textContent=result.plan.strategy||"";
+    panel.append(heading,core,strategy);
+    const list=document.createElement("div");list.className="logo-brief-directions";
+    result.plan.concepts.forEach((concept,index)=>{
+      const item=document.createElement("article");item.className="logo-brief-direction";
+      const title=document.createElement("h4");title.textContent=(index+1)+". "+(concept.concept||concept.title||"مسیر طراحی");
+      const rationale=document.createElement("p");rationale.textContent=concept.description||concept.rationale||"";
+      const visual=document.createElement("p");visual.textContent=concept.visualDirection||"";
+      item.append(title,rationale,visual);list.appendChild(item);
+    });
+    panel.appendChild(list);
+    const actions=document.createElement("div");actions.className="logo-brief-review-actions";
+    const approve=document.createElement("button");approve.type="button";approve.className="btn-primary";approve.textContent="تأیید بریف و ساخت ۳ لوگو";
+    const edit=document.createElement("button");edit.type="button";edit.className="btn-secondary";edit.textContent="اصلاح اطلاعات بریف";
+    approve.addEventListener("click",()=>renderApprovedBrief(false));
+    edit.addEventListener("click",()=>{
+      pendingBrief=null;pendingData=null;
+      status.textContent="اطلاعات فرم را اصلاح کن و دوباره بریف NAVI را بگیر.";
+      form.scrollIntoView({behavior:"smooth",block:"start"});
+    });
+    actions.append(approve,edit);panel.appendChild(actions);
+    results.appendChild(panel);empty.hidden=true;
+    status.textContent="NAVI بریف را آماده کرده است. پس از بررسی، آن را تأیید کن یا اطلاعات فرم را اصلاح کن.";
+    results.scrollIntoView({behavior:"smooth",block:"start"});
+  }
+
+  async function renderApprovedBrief(quick) {
+    if(!pendingBrief||!pendingData||!pendingHeaders)return;
+    const buttons=results.querySelectorAll("button");buttons.forEach(button=>button.disabled=true);
+    status.textContent=quick?"در حال اجرای مستقیم تصمیم‌های NAVI...":"بریف تأیید شد؛ در حال ساخت لوگو بر اساس همان تصمیم‌ها...";
     try {
       const response=await fetch("https://nava-music-api.honrrpower.workers.dev/logo/generate",{
-        method:"POST",headers,cache:"no-store",signal:controller.signal,
-        body:JSON.stringify({...data,visitorId})
+        method:"POST",headers:pendingHeaders,cache:"no-store",
+        body:JSON.stringify({action:"render",data:pendingData,plan:pendingBrief})
       });
       const result=await response.json();
-      if(!response.ok||!result.success){
-        const message=result.error||"ساخت لوگو انجام نشد."; 
-        if(response.status===401){
-          status.textContent=message+" برای ادامه، از بخش گفت‌وگو با NAVI دوباره وارد حساب نوا شو؛ سپس به همین صفحه برگرد.";
-        } else if(response.status===429){
-          status.textContent=message+" برای جلوگیری از خروج ناخواسته، گفت‌وگوی NAVI خودکار باز نمی‌شود.";
-        } else {
-          status.textContent=message;
-        }
-        return;
-      }
+      if(!response.ok||!result.success)throw new Error(result.error||"SVG rendering failed");
       results.replaceChildren();
       if(result.planning){
-        const strategy=document.createElement("section");
-        strategy.className="logo-ai-strategy-summary";
-        const heading=document.createElement("h3");heading.textContent="تحلیل بریف توسط ناوی";
+        const strategy=document.createElement("section");strategy.className="logo-ai-strategy-summary";
+        const heading=document.createElement("h3");heading.textContent="بریف تأییدشده و اجراشده توسط NAVI";
         const core=document.createElement("p");core.textContent=result.planning.brandCore||"";
         const detail=document.createElement("p");detail.textContent=result.planning.strategy||"";
         strategy.append(heading,core,detail);results.appendChild(strategy);
       }
-      result.images.forEach((image,index)=>results.appendChild(buildCard(image,index,data)));
-      empty.hidden=true;
-      status.textContent="ناوی بریف را تحلیل کرد و سه مسیر طراحی را بر اساس آن ساخت. کنترل فنی رنگ و ابعاد در مرورگر انجام می‌شود؛ بازخورد فقط روی همین دستگاه ذخیره خواهد شد.";
+      result.images.forEach((image,index)=>results.appendChild(buildCard(image,index,pendingData)));
+      pendingBrief=null;
+      status.textContent="سه کانسپت بر اساس بریف تأییدشده ساخته شدند. موتور فقط تصمیم‌های NAVI را به SVG تبدیل کرد.";
       results.scrollIntoView({behavior:"smooth",block:"start"});
     } catch(error) {
-      status.textContent=error.name==="AbortError"
-        ?"زمان ساخت طولانی شد. وضعیت سرویس را بررسی کن و دوباره تلاش کن."
-        :"ارتباط با موتور طراحی برقرار نشد. کمی بعد دوباره تلاش کن.";
-    } finally {
-      clearTimeout(timer);submit.disabled=false;submit.textContent="ساخت ۳ کانسپت با موتور تصویر";
+      status.textContent=error.message||"اجرای بریف ناموفق بود؛ می‌توانی دوباره تأیید کنی.";
+      buttons.forEach(button=>button.disabled=false);
     }
-  });
+  }
+
+  async function requestBrief(quick) {
+    const data=readData();
+    if(!data.brandName){status.textContent="نام برند را وارد کن.";fields.name.focus();return;}
+    let token="";
+    try { token=localStorage.getItem("nava_navi_session")||sessionStorage.getItem("nava_navi_session")||""; } catch (_) {}
+    let visitorId="";
+    if(!token){
+      try { visitorId=localStorage.getItem("nava_guest_trial_id")||""; } catch (_) {}
+      if(!/^[a-f0-9-]{32,40}$/i.test(visitorId)){
+        visitorId=typeof crypto.randomUUID==="function"?crypto.randomUUID():Array.from(crypto.getRandomValues(new Uint8Array(16)),byte=>byte.toString(16).padStart(2,"0")).join("");
+        try { localStorage.setItem("nava_guest_trial_id",visitorId); } catch (_) {}
+      }
+    }
+    const headers={"Content-Type":"application/json"};
+    if(token)headers.Authorization="Bearer "+token;
+    pendingData=data;pendingHeaders=headers;
+    const submit=form.querySelector('button[type="submit"]');
+    submit.disabled=true;submit.textContent="NAVI در حال تحلیل بریف...";
+    status.textContent="NAVI در حال تحلیل برند و طراحی سه مسیر متمایز است...";
+    try {
+      const response=await fetch("https://nava-music-api.honrrpower.workers.dev/logo/generate",{
+        method:"POST",headers,cache:"no-store",
+        body:JSON.stringify({action:"brief",...data,visitorId})
+      });
+      const result=await response.json();
+      if(!response.ok||!result.success){
+        status.textContent=result.error||"تحلیل بریف انجام نشد.";
+        return;
+      }
+      showBriefReview(result,data,headers);
+      if(quick)await renderApprovedBrief(true);
+    } catch(error) {
+      status.textContent=error.name==="AbortError"?"زمان تحلیل طولانی شد؛ دوباره تلاش کن.":"ارتباط با NAVI برقرار نشد؛ کمی بعد دوباره تلاش کن.";
+    } finally {
+      submit.disabled=false;submit.textContent="تحلیل بریف با NAVI";
+    }
+  }
+
+  form.addEventListener("submit",event=>{event.preventDefault();requestBrief(false);});
+  const quickButton=document.createElement("button");
+  quickButton.type="button";quickButton.className="btn-secondary";
+  quickButton.textContent="ساخت با تشخیص NAVI";
+  quickButton.addEventListener("click",()=>requestBrief(true));
+  form.querySelector('button[type="submit"]')?.insertAdjacentElement("afterend",quickButton);
+
   $("logoBriefToNavi")?.addEventListener("click",()=>{
     const data=readData();
     const context={

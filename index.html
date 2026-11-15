@@ -11,7 +11,7 @@
   <link rel="stylesheet" href="brand-content-studios.css?v=studio-output-inline-20261114-1">
   <link rel="stylesheet" href="studio-workspaces.css?v=composition-staff-20261114-1">
   <script src="app.js?v=navi-response-button-20261115-1" defer></script>
-  <script src="logo-studio.js?v=logo-art-direction-20261114-1" defer></script>
+  <script src="logo-studio.js?v=navi-brief-approval-20261115-1" defer></script>
 </head>
 <body>
 
@@ -151,8 +151,8 @@
       <div class="logo-studio-intro">
         <span class="logo-studio-eyebrow">FROM IDEA TO IDENTITY</span>
         <h1>هویت برندت را <span>شکل بده</span></h1>
-        <p>بریف برند را تعریف کن تا سه مسیر مفهومی متفاوت پیشنهاد و تصویرسازی کنیم. اکنون دو روش ساخت در دسترس است: تصویرسازی با موتور تصویر و ساخت مستقیم لوگوی برداری با JavaScript؛ خروجی SVG قابل ویرایش و PNG را می‌توانی دریافت کنی.</p>
-        <p class="logo-studio-disclaimer">روش تصویرسازی از موتور تولید تصویر استفاده می‌کند؛ روش برداری مستقل در مرورگر و بدون مصرف سهمیهٔ تصویر اجرا می‌شود. نام برند جداگانه و خوانا روی خروجی قرار می‌گیرد؛ برای استفاده نهایی، طرح را از نظر حقوقی و هویت بصری بازبینی کن.</p>
+        <p>بریف برند را تعریف کن تا NAVI آن را تحلیل کند و سه مسیر مفهومی متفاوت پیشنهاد دهد. پس از بررسی و تأیید بریف، همان تصمیم‌ها به سه لوگوی برداری SVG و تصویر PNG تبدیل می‌شوند.</p>
+        <p class="logo-studio-disclaimer">تصمیم‌های خلاقانه را ناوی می‌گیرد و موتور اجرا فقط بریف تأییدشده را به خروجی تبدیل می‌کند. می‌توانی بریف را تأیید کنی، اطلاعاتش را اصلاح کنی یا ساخت سریع با تشخیص ناوی را انتخاب کنی.</p>
       </div>
       <div class="logo-studio-layout">
         <form class="logo-studio-form" id="logoStudioForm">
@@ -171,13 +171,13 @@
           <label class="logo-field" for="logoPalette">پالت رنگی</label>
           <select class="logo-control" id="logoPalette"><option value="gold" data-foreground="#D6A84F" data-background="#101B30">طلایی و سرمه‌ای</option><option value="blue" data-foreground="#3F70A8" data-background="#DCE4ED">آبی و نقره‌ای</option><option value="green" data-foreground="#356B55" data-background="#E9E1CE">سبز و کرم</option><option value="violet" data-foreground="#7656A6" data-background="#DCCEF0">بنفش و یاسی</option><option value="mono" data-foreground="#22252B" data-background="#FFFFFF">تک‌رنگ</option><option value="custom" data-foreground="#C99B48" data-background="#172238">رنگ دلخواه</option></select>
           <div class="logo-custom-colors" id="logoCustomColors" hidden><label class="logo-field" for="logoPrimaryColor">رنگ اصلی</label><input class="logo-color-control" id="logoPrimaryColor" type="color" value="#c99b48"><label class="logo-field" for="logoDarkColor">رنگ مکمل تیره</label><input class="logo-color-control" id="logoDarkColor" type="color" value="#172238"></div>
-          <button class="btn-primary" type="submit">ساخت ۳ کانسپت تصویری (با سهمیه)</button>
-          <div class="logo-brief-actions"><button class="btn-secondary" id="logoBriefToNavi" type="button">بررسی بریف با ناوی</button></div>
+          <button class="btn-primary" type="submit">تحلیل بریف با NAVI</button>
+          <p class="logo-brief-hint">ابتدا بریف را در همین استودیو بررسی و تأیید می‌کنی؛ نیازی به ارسال پیام جداگانه در گفت‌وگوی ناوی نیست.</p>
           <div class="logo-studio-status" id="logoStudioStatus" role="status" aria-live="polite">برای شروع، نام برند را وارد کن.</div>
         </form>
         <section class="logo-studio-results" aria-labelledby="logoResultsTitle">
-          <h2 id="logoResultsTitle">مسیرهای پیشنهادی طراحی</h2><p>سه کانسپت را از مسیر تصویرسازی یا موتور برداری مستقل مقایسه کن. نام برند و شعار در پیش‌نمایش با حروف خوانا تکمیل می‌شوند.</p>
-          <div class="logo-studio-empty" id="logoStudioEmpty"><div class="logo-studio-empty-mark" aria-hidden="true">✦</div><strong>هنوز طرحی ساخته نشده</strong><span>فرم شناخت برند را کامل کن و یکی از دو روش ساخت را انتخاب کن.</span></div>
+          <h2 id="logoResultsTitle">مسیرهای پیشنهادی طراحی</h2><p>سه مسیر پیشنهادی ناوی را بررسی کن. پس از تأیید بریف، هر سه لوگو با همان تصمیم‌ها اجرا می‌شوند و نام و شعار فارسی به‌صورت متن واقعی درج می‌شوند.</p>
+          <div class="logo-studio-empty" id="logoStudioEmpty"><div class="logo-studio-empty-mark" aria-hidden="true">✦</div><strong>هنوز طرحی ساخته نشده</strong><span>فرم شناخت برند را کامل کن تا NAVI سه مسیر طراحی پیشنهاد دهد.</span></div>
           <div class="logo-concept-results" id="logoConceptResults" aria-live="polite"></div>
         </section>
       </div>
@@ -803,6 +803,5 @@
   <link rel="stylesheet" href="office-file-tools.css?v=office-persian-ocr-20261115-1">
   <script src="office-structured-files.js?v=office-pptx-xlsx-20261115-1" defer></script>
   <script src="office-file-tools.js?v=office-pptx-xlsx-20261115-1" defer></script>
-  <script src="logo-vector-engine.js?v=vector-logo-20261115-1" defer></script>
 </body>
 </html>
