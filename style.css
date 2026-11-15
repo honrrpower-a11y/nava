@@ -2661,3 +2661,22 @@ body:has(> .nava-access-panel.is-gate-active){overflow:hidden}
     display:none!important;
   }
 }
+
+
+/* Unauthenticated NAVI uses the panel itself as the only scroll container.
+   The mobile companion-dock rules otherwise set overflow:hidden on the panel
+   and make the inner request panel scroll independently, trapping the auth form. */
+@media (max-width: 600px) {
+  body.navi-widget-open .navi-widget-panel.is-auth-entry {
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  body.navi-widget-open .navi-widget-panel.is-auth-entry .request-panel {
+    flex: 0 0 auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+  }
+}
