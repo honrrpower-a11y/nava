@@ -266,7 +266,7 @@
   }
 
   function parsePersianDate(value) {
-    const match = normalizeDigits(value).trim().match(/^(\\d{4})[\\/.-](\\d{1,2})[\\/.-](\\d{1,2})$/);
+    const match = normalizeDigits(value).trim().match(/^(\d{4})[\/.-](\d{1,2})[\/.-](\d{1,2})$/);
     if (!match) return null;
     const year = Number(match[1]), month = Number(match[2]), day = Number(match[3]);
     if (month < 1 || month > 12 || day < 1 || day > 31) return null;
@@ -291,6 +291,7 @@
       option.textContent = name;
       filterMonth.append(option);
     });
+    filterMonth.value = String(today.month);
     filterMode?.addEventListener("change", () => {
       if (monthFilter) monthFilter.hidden = filterMode.value !== "month";
       if (rangeFilter) rangeFilter.hidden = filterMode.value !== "range";
