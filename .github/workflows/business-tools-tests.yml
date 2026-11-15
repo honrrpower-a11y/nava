@@ -7,6 +7,7 @@ on:
       - "business-tools.js"
       - "business-workspace.js"
       - "business-transactions-ui.js"
+      - "business-financial-export.js"
       - "modules/business-transactions.js"
       - "modules/business.js"
       - "migrations/navi-production-reconcile/0004_nava_business_foundation.sql"
@@ -43,6 +44,7 @@ jobs:
         run: |
           node --check business-workspace.js
           node --check business-transactions-ui.js
+          node --check business-financial-export.js
           node --check modules/business-transactions.js
           node --check modules/business.js
       - name: Run business calculator and API validation tests
