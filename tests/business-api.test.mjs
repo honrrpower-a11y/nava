@@ -6,9 +6,7 @@ import { readFile } from "node:fs/promises";
 async function loadBusinessApi() {
   let source = await readFile(new URL("../modules/business.js", import.meta.url), "utf8");
   source = source
-    .replace(/^import \{ json, safeNaviText \} from "\.\/shared\.js";\s*$/m, "")
-    .replace(/^import \{ authorizeNaviRequest \} from "\.\/navi-auth\.js";\s*$/m, "")
-    .replace(/^import \{ ALLOWED_ORIGIN \} from "\.\/config\.js";\s*$/m, "")
+    .replace(/^import\s+.*?;\s*$/gm, "")
     .replace(/\bexport\s+(?=(?:async\s+)?function)/g, "");
   source += "\nglobalThis.__businessApi = { normalizeBusinessProfileInput, normalizeBusinessRecordInput };";
   const sandbox = {
