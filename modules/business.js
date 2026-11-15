@@ -228,6 +228,7 @@ export async function loadNaviBusinessContext(db, ownerId, businessId) {
   lines.push("جمع هزینه در ۳۰ تراکنش اخیر: " + expenses.toLocaleString("en-US") + " تومان");
   if (!(transactions.results || []).length) lines.push("هنوز تراکنش واقعی فروش یا هزینه‌ای ثبت نشده است.");
   lines.push("این جمع‌ها فقط مربوط به حداکثر ۳۰ تراکنش اخیر هستند و جمع کل تاریخی نیستند.");
+  lines.push("این مبالغ فروش و هزینه ثبت‌شده‌اند؛ وضعیت وصول یا پرداخت را مشخص نمی‌کنند و تفاضل آن‌ها به‌تنهایی سود قطعی یا مانده نقدی نیست.");
   return (base + "\n" + lines.join("\n")).slice(0, 24000);
 }
 
