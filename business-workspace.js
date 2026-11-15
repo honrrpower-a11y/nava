@@ -88,14 +88,58 @@
       recent.append(empty);
       return;
     }
-    const list = document.createElement("ul");
+    const list = document.createElement("div");
+    list.className = "biz-record-list";
     for (const record of data.records) {
-      const item = document.createElement("li");
-      const title = document.createElement("span");
-      title.textContent = record.title + " — " + labelType(record.recordType);
+      const item = document.createElement("article");
+      item.className = "biz-record-item";
+      const header = document.createElement("div");
+      header.className = "biz-record-header";
+      const title = document.createElement("strong");
+      const typeLabel = labelType(record.recordType);
+      title.textContent = record.title && record.title !== typeLabel ? record.title + " — " + typeLabel : typeLabel;
       const date = document.createElement("small");
-      date.textContent = record.createdAt || "";
-      item.append(title, date);
+      date.textContent = "تاریخ ثبت: " + (record.createdAt || "نامشخص");
+      header.append(title, date);
+
+      const details = document.createElement("details");
+      details.className = "biz-record-details";
+      const summary = document.createElement("summary");
+      summary.textContent = "مشاهده جزئیات گزارش";
+      const report = document.createElement("pre");
+      report.className = "biz-record-report";
+      report.textContent = record.reportText || "متن جزئیات برای این گزارش ذخیره نشده است.";
+      details.append(summary, report);
+      if (record.payload && Object.keys(record.payload).length) {
+        const payloadHeading = document.createElement("strong");
+        payloadHeading.className = "biz-record-data-heading";
+        payloadHeading.textContent = "داده‌های ساختاریافته محاسبه";
+        const payload = document.createElement("pre");
+        payload.className = "biz-record-report biz-record-payload";
+        payload.textContent = JSON.stringify(record.payload, null, 2);
+        details.append(payloadHeading, payload);
+      }
+
+      const actions = document.createElement("div");
+      actions.className = "biz-record-actions";
+      const remove = document.createElement("button");
+      remove.type = "button";
+      remove.className = "biz-record-delete";
+      remove.textContent = "حذف گزارش";
+      remove.addEventListener("click", async () => {
+        if (!window.confirm("این گزارش مالی برای همیشه حذف شود؟")) return;
+        remove.disabled = true;
+        try {
+          await api("/" + encodeURIComponent(business.id) + "/records/" + encodeURIComponent(record.id), { method:"DELETE" });
+          setStatus("گزارش «" + typeLabel + "» حذف شد.");
+          await loadRecords();
+        } catch (error) {
+          setStatus(error.message);
+          remove.disabled = false;
+        }
+      });
+      actions.append(remove);
+      item.append(header, details, actions);
       list.append(item);
     }
     recent.append(list);
