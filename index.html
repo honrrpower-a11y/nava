@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="style.css?v=navi-response-button-20261115-1">
   <link rel="stylesheet" href="logo-studio.css?v=navi-directed-logo-20261114-1">
   <link rel="stylesheet" href="brand-content-studios.css?v=studio-output-inline-20261114-1">
+  <link rel="stylesheet" href="business-tools.css?v=cost-calculator-20261115-1">
   <link rel="stylesheet" href="studio-workspaces.css?v=composition-staff-20261114-1">
   <script src="app.js?v=navi-response-button-20261115-1" defer></script>
   <script src="logo-studio.js?v=navi-image-logo-engine-20261115-1" defer></script>
@@ -505,35 +506,75 @@
     </div>
   </section>
   <section class="page nava-studio-page" id="bizPage" data-studio-service="ابزارهای کسب‌وکار">
-    <div class="studio-workspace">
-      <div class="studio-workspace-head">
-        <div><span class="studio-kicker">NAVA WORKSPACE / STUDIO</span><h1>استودیوی ابزارهای کسب‌وکار</h1><p>برای برنامه‌ریزی، تحلیل، ایده‌پردازی و ساخت ابزارهای متنی موردنیاز کسب‌وکار.</p></div>
-        <button class="btn-secondary" type="button" onclick="showPage('homePage')">بازگشت به استودیوها</button>
-      </div>
-      <div class="studio-workspace-grid">
-        <form class="studio-brief-card" onsubmit="event.preventDefault(); chooseService('ابزارهای کسب‌وکار');">
-          <span class="studio-step">شروع کار</span><h2>بریف پروژه</h2>
-          <p>اطلاعات اولیه را وارد کن تا NAVI بتواند درخواست را دقیق‌تر دنبال کند.</p>
-          <label for="studioTask-biz">نوع مسئله یا ابزار</label>
-          <select id="studioTask-biz" class="studio-control">
-            <option>پیشنهاد مناسب را NAVI انتخاب کند</option><option>ایده‌پردازی و برنامه‌ریزی</option><option>تولید پیش‌نویس</option><option>بازبینی و بهبود</option><option>راهنمای مرحله‌به‌مرحله</option>
-          </select>
-          <label for="studioAudience-biz">کاربر یا ذی‌نفع اصلی</label>
-          <input id="studioAudience-biz" class="studio-control" type="text" maxlength="180" placeholder="مخاطب یا استفاده‌کننده را مشخص کن">
-          <label for="studioBrief-biz">شرح درخواست و جزئیات</label>
-          <textarea id="studioBrief-biz" class="studio-control studio-brief-input" maxlength="3000" placeholder="شرح مسئله، هدف، محدودیت‌ها و نتیجه مورد انتظار"></textarea>
-          <div class="studio-brief-actions"><button class="btn-primary" type="submit">ادامه با NAVI</button><button class="btn-secondary" type="reset">پاک کردن فرم</button></div>
-          <p class="studio-note">این صفحه فعلاً قالب کاری و بریف پروژه است؛ تولید تخصصی فایل یا خروجی نهایی تا زمان اتصال ابزار مربوطه فعال محسوب نمی‌شود.</p>
-        </form>
-        <aside class="studio-output-card">
-          <span class="studio-step">فضای پروژه</span><h2>مراحل انجام کار</h2>
-          <ol><li>ثبت بریف و هدف پروژه</li><li>بررسی نیازها با NAVI</li><li>تدوین پیش‌نویس و اصلاح آن</li><li>آماده‌سازی خروجی پس از فعال‌شدن ابزار تخصصی</li></ol>
-          <div class="studio-output-placeholder"><span aria-hidden="true">✦</span><strong>فضای خروجی پروژه</strong><p>نتیجه‌ها و فایل‌های این استودیو پس از تکمیل ابزار تخصصی در این قسمت نمایش داده می‌شوند.</p></div>
-        </aside>
-      </div>
+  <div class="studio-workspace biz-workspace">
+    <div class="studio-workspace-head">
+      <div><span class="studio-kicker">NAVA BUSINESS / TOOLS</span><h1>ابزارهای کسب‌وکار</h1><p>محاسبه، تحلیل و تصمیم‌گیری با ابزارهای کاربردی؛ محاسبات مالی به‌صورت مستقیم و شفاف انجام می‌شوند.</p></div>
+      <button class="btn-secondary" type="button" onclick="showPage('homePage')">بازگشت به استودیوها</button>
     </div>
-  </section>
-  <section class="page nava-studio-page" id="musicPage">
+
+    <div class="biz-tool-intro">
+      <div><span class="biz-eyebrow">ابزار فعال</span><h2>محاسبه‌گر قیمت تمام‌شده و سود</h2><p>هزینه‌های یک نوبت تولید را وارد کن تا هزینه هر واحد، قیمت فروش پیشنهادی و سود احتمالی محاسبه شود.</p></div>
+      <span class="biz-tool-mark" aria-hidden="true">٪</span>
+    </div>
+
+    <div class="biz-calculator-layout">
+      <form class="biz-calculator-card" id="bizCostForm" data-business-tool-form novalidate>
+        <div class="biz-card-heading"><div><span class="studio-step">مرحله ۱</span><h3>هزینه‌های تولید</h3></div><span class="biz-unit-hint">مبالغ به تومان</span></div>
+        <div class="biz-fields-grid">
+          <label class="biz-field"><span>هزینه مواد اولیه</span><input id="bizMaterials" type="number" min="0" step="any" value="0" inputmode="decimal"></label>
+          <label class="biz-field"><span>هزینه بسته‌بندی</span><input id="bizPackaging" type="number" min="0" step="any" value="0" inputmode="decimal"></label>
+          <label class="biz-field"><span>دستمزد و نیروی کار</span><input id="bizLabor" type="number" min="0" step="any" value="0" inputmode="decimal"></label>
+          <label class="biz-field"><span>هزینه‌های سربار</span><input id="bizOverhead" type="number" min="0" step="any" value="0" inputmode="decimal"></label>
+          <label class="biz-field"><span>حمل‌ونقل و سایر هزینه‌ها</span><input id="bizShipping" type="number" min="0" step="any" value="0" inputmode="decimal"></label>
+          <label class="biz-field"><span>تعداد محصول تولیدشده</span><input id="bizQuantity" type="number" min="1" step="1" value="100" inputmode="numeric" required></label>
+        </div>
+        <div class="biz-form-divider"></div>
+        <div class="biz-card-heading"><div><span class="studio-step">مرحله ۲</span><h3>هدف قیمت‌گذاری</h3></div></div>
+        <div class="biz-fields-grid biz-fields-compact">
+          <label class="biz-field"><span>حاشیه سود هدف (درصد)</span><input id="bizMargin" type="number" min="0" max="99.9" step="0.1" value="30" inputmode="decimal"></label>
+          <label class="biz-field"><span>تعداد واحدی که انتظار فروش داری</span><input id="bizSalesQuantity" type="number" min="0" step="1" value="100" inputmode="numeric"></label>
+        </div>
+        <p class="biz-form-note">حاشیه سود با درصدی از قیمت فروش محاسبه می‌شود، نه درصدی از هزینه تولید. مالیات، کارمزد فروش و تخفیف را فعلاً در هزینه‌ها وارد کن تا در محاسبه لحاظ شوند.</p>
+        <button class="btn-primary biz-calculate-button" type="submit">محاسبه قیمت و سود</button>
+        <p class="biz-validation" id="bizCostStatus" role="status" aria-live="polite"></p>
+      </form>
+
+      <aside class="biz-results-card" aria-live="polite">
+        <div class="biz-results-head"><div><span class="studio-step">نتیجه محاسبه</span><h3>گزارش مالی تولید</h3></div><span class="biz-live-indicator">محاسبه‌گر فعال</span></div>
+        <div class="biz-primary-result"><span>قیمت فروش پیشنهادی هر واحد</span><strong id="bizSuggestedPrice">—</strong><small>بر اساس حاشیه سود هدف</small></div>
+        <div class="biz-result-list">
+          <div><span>کل هزینه تولید</span><strong id="bizTotalCost">—</strong></div>
+          <div><span>هزینه تمام‌شده هر واحد</span><strong id="bizUnitCost">—</strong></div>
+          <div><span>سود هر واحد</span><strong id="bizUnitProfit">—</strong></div>
+          <div><span>سود کل با فروش مورد انتظار</span><strong id="bizTotalProfit">—</strong></div>
+          <div><span>درآمد کل فروش مورد انتظار</span><strong id="bizExpectedRevenue">—</strong></div>
+        </div>
+        <div class="biz-result-footer"><p id="bizCalculationSummary">برای دیدن گزارش، هزینه‌ها و تعداد تولید را وارد کن.</p><button type="button" class="btn-secondary" id="bizCopyResult" disabled>کپی گزارش</button></div>
+      </aside>
+    </div>
+
+    <div class="biz-advisor-layout">
+      <div class="biz-advisor-copy"><span class="studio-step">مشاور هوشمند</span><h2>تحلیل کسب‌وکار با NAVI</h2><p>بعد از محاسبه، می‌توانی مسئله کسب‌وکارت را برای تحلیل، برنامه‌ریزی یا بررسی راهکارها به NAVI بسپاری.</p></div>
+      <form class="studio-brief-card biz-advisor-form">
+        <label for="studioTask-biz">نوع مسئله یا ابزار</label>
+        <select id="studioTask-biz" class="studio-control">
+          <option>تحلیل نتیجه محاسبه و قیمت‌گذاری</option><option>ایده‌پردازی و برنامه‌ریزی</option><option>بررسی امکان‌پذیری کسب‌وکار</option><option>برنامه فروش و توسعه</option><option>بازبینی و بهبود فرایند</option>
+        </select>
+        <label for="studioAudience-biz">نوع کسب‌وکار یا مخاطب</label>
+        <input id="studioAudience-biz" class="studio-control" type="text" maxlength="180" placeholder="مثلاً تولید خانگی، فروشگاه یا شرکت کوچک">
+        <label for="studioBrief-biz">شرح درخواست و جزئیات</label>
+        <textarea id="studioBrief-biz" class="studio-control studio-brief-input" maxlength="3000" placeholder="مسئله، هدف، محدودیت‌ها و نتیجه مورد انتظار را بنویس"></textarea>
+        <div class="studio-brief-actions"><button class="btn-primary" type="submit">بررسی با NAVI</button><button class="btn-secondary" type="reset">پاک کردن فرم</button></div>
+      </form>
+      <aside class="studio-output-card biz-advisor-output">
+        <span class="studio-step">فضای مشاوره</span><h3>پاسخ NAVI</h3>
+        <div class="studio-output-placeholder"><span aria-hidden="true">✦</span><strong>تحلیل و پیشنهادهای اجرایی</strong><p>پس از ارسال درخواست، پاسخ NAVI در این قسمت نمایش داده می‌شود.</p></div>
+      </aside>
+    </div>
+    <p class="biz-roadmap-note">این نسخه با محاسبه‌گر قیمت و سود شروع شده است. ابزارهای نقطه سربه‌سر، بودجه‌بندی، فروش و موجودی در مراحل بعدی به همین فضای کاری اضافه می‌شوند.</p>
+  </div>
+</section>
+<section class="page nava-studio-page" id="musicPage">
     <div class="studio-workspace">
       <div class="studio-workspace-head"><div><span class="studio-kicker">NAVA WORKSPACE / STUDIO</span><h1>استودیوی موسیقی نوا</h1><p>فضای پایه استودیوی موسیقی؛ ابزار تولید و پردازش تخصصی در مرحله توسعه قرار دارد.</p></div><button class="btn-secondary" type="button" onclick="showPage('homePage')">بازگشت به استودیوها</button></div>
     </div>
@@ -799,6 +840,7 @@
 </footer>
 
   <script src="brand-content-studios.js?v=navi-thread-context-20261114-3" defer></script>
+  <script src="business-tools.js?v=cost-calculator-20261115-1" defer></script>
   <script src="document-export.js?v=studio-response-select-20261115-1" defer></script>
   <link rel="stylesheet" href="office-file-tools.css?v=office-persian-ocr-20261115-1">
   <script src="office-structured-files.js?v=office-pptx-xlsx-20261115-1" defer></script>
