@@ -9,6 +9,10 @@
   const dashboard = $("bizFinancialDashboard");
   const status = $("bizTransactionStatus");
   const submit = $("bizTransactionSubmit");
+  const catalogSelect = $("bizTransactionCatalogItem");
+  const saleDetails = $("bizSaleCatalogDetails");
+  const quantityInput = $("bizTransactionQuantity");
+  const unitPriceInput = $("bizTransactionUnitPrice");
   const dateInput = $("bizTransactionDate");
   const dateDisplay = $("bizTransactionDateDisplay");
   const calendar = $("bizTransactionCalendar");
@@ -48,6 +52,61 @@
   const businessId = () => $("bizProfileSelect")?.value || "";
   const money = value => Number(value || 0).toLocaleString("fa-IR") + " تومان";
   const say = message => { if (status) status.textContent = message; };
+  let catalogItems = [];
+
+  function updateSaleTotal() {
+    if (!catalogSelect?.value) return;
+    const quantity = Number(normalizeDigits(quantityInput?.value || ""));
+    const unitPrice = Number(normalizeDigits(unitPriceInput?.value || ""));
+    const total = quantity * unitPrice;
+    if (Number.isSafeInteger(quantity) && quantity > 0 && Number.isSafeInteger(unitPrice) && unitPrice > 0 && Number.isSafeInteger(total)) {
+      $("bizTransactionAmount").value = String(total);
+    }
+  }
+
+  function renderCatalogOptions(items) {
+    if (!catalogSelect) return;
+    const selected = catalogSelect.value;
+    catalogSelect.replaceChildren();
+    const empty = document.createElement("option");
+    empty.value = "";
+    empty.textContent = "فروش دستی / بدون اتصال به کاتالوگ";
+    catalogSelect.append(empty);
+    for (const item of items) {
+      const option = document.createElement("option");
+      option.value = item.id;
+      option.textContent = item.name + " — " + money(item.salePriceToman) + " / " + (item.unit || "عدد");
+      catalogSelect.append(option);
+    }
+    if (items.some(item => item.id === selected)) catalogSelect.value = selected;
+  }
+
+  async function loadCatalogItems(id) {
+    if (!catalogSelect || !id) { catalogItems = []; renderCatalogOptions([]); return; }
+    const data = await api("/" + encodeURIComponent(id) + "/items?status=active&type=all");
+    catalogItems = Array.isArray(data.items) ? data.items : [];
+    renderCatalogOptions(catalogItems);
+  }
+
+  function syncTransactionType() {
+    const isSale = $("bizTransactionType")?.value === "sale";
+    if (saleDetails) saleDetails.hidden = !isSale;
+    if (!isSale && catalogSelect) catalogSelect.value = "";
+  }
+
+  catalogSelect?.addEventListener("change", () => {
+    const item = catalogItems.find(entry => entry.id === catalogSelect.value);
+    if (item) {
+      $("bizTransactionTitle").value = item.name;
+      quantityInput.value = "1";
+      unitPriceInput.value = String(item.salePriceToman);
+      $("bizTransactionCategory").value = item.category || "";
+      updateSaleTotal();
+    }
+  });
+  quantityInput?.addEventListener("input", updateSaleTotal);
+  unitPriceInput?.addEventListener("input", updateSaleTotal);
+  $("bizTransactionType")?.addEventListener("change", syncTransactionType);
 
   async function api(path, method = "GET", body) {
     const auth = token();
@@ -346,6 +405,8 @@
     const params = new URLSearchParams({ limit: "200" });
     if (range.from) params.set("from", range.from);
     if (range.to) params.set("to", range.to);
+    await loadCatalogItems(id);
+    syncTransactionType();
     const data = await api("/" + encodeURIComponent(id) + "/transactions?" + params.toString());
     const rows = data.transactions || [];
     const totals = data.summary || {};
@@ -439,9 +500,15 @@
       await api("/" + encodeURIComponent(id) + "/transactions", "POST", {
         transactionType, title, amountToman, transactionDate,
         category: $("bizTransactionCategory").value.trim(),
-        notes: $("bizTransactionNotes").value.trim()
+        notes: $("bizTransactionNotes").value.trim(),
+        ...(transactionType === "sale" && catalogSelect?.value ? {
+          catalogItemId: catalogSelect.value,
+          quantity: Number(normalizeDigits(quantityInput.value)),
+          unitPriceToman: Number(normalizeDigits(unitPriceInput.value))
+        } : {})
       });
       form.reset();
+      syncTransactionType();
       setDateValue(localToday());
       say("تراکنش در پرونده فعال ثبت شد.");
       await load();
