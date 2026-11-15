@@ -131,11 +131,68 @@ export async function handleGuestTrial({ request, env, origin, corsOrigin }) {
         429, corsOrigin, { code: "GUEST_TRIAL_LIMIT", remaining: 0, limit: GUEST_TRIAL_LIMIT });
     }
 
+    const reservationId = crypto.randomUUID();
+    try {
+      await env.NAVA_DB.prepare(`
+        INSERT INTO nava_guest_trial_reservations
+          (reservation_id, visitor_hash, status, created_at, updated_at)
+        VALUES (?, ?, 'reserved', ?, ?)
+      `).bind(reservationId, visitorHash, now, now).run();
+    } catch (reservationError) {
+      await env.NAVA_DB.prepare(`
+        UPDATE nava_guest_trials
+        SET used_count = CASE WHEN used_count > 0 THEN used_count - 1 ELSE 0 END,
+            updated_at = ?
+        WHERE visitor_hash = ?
+      `).bind(now, visitorHash).run().catch(() => {});
+      throw reservationError;
+    }
+
     return json({ success: true, authenticated: false,
+      reservationId,
       remaining: Math.max(0, GUEST_TRIAL_LIMIT - Number(consumed.used_count)),
       limit: GUEST_TRIAL_LIMIT }, 200, corsOrigin);
   } catch (cause) {
     console.error("[NAVA] Guest trial check failed:", cause);
     return error("بررسی سهمیه آزمایشی انجام نشد. کمی بعد دوباره تلاش کن.", 503, corsOrigin);
+  }
+}
+
+
+/**
+ * Refunds a guest's reserved logo attempt after NAVI planning fails.
+ * The IP window counter is intentionally retained as an abuse/rate limit;
+ * only the user's two-use trial entitlement is restored.
+ * D1 batch runs transactionally, and the status transition makes refunds idempotent.
+ */
+export async function releaseGuestTrialReservation({ env, reservationId }) {
+  if (!env?.NAVA_DB || typeof reservationId !== "string" || !reservationId) return false;
+  const now = Math.floor(Date.now() / 1000);
+  try {
+    const results = await env.NAVA_DB.batch([
+      env.NAVA_DB.prepare(`
+        UPDATE nava_guest_trial_reservations
+        SET status = 'refunding', updated_at = ?
+        WHERE reservation_id = ? AND status = 'reserved'
+      `).bind(now, reservationId),
+      env.NAVA_DB.prepare(`
+        UPDATE nava_guest_trials
+        SET used_count = CASE WHEN used_count > 0 THEN used_count - 1 ELSE 0 END,
+            updated_at = ?
+        WHERE visitor_hash = (
+          SELECT visitor_hash FROM nava_guest_trial_reservations
+          WHERE reservation_id = ? AND status = 'refunding'
+        )
+      `).bind(now, reservationId),
+      env.NAVA_DB.prepare(`
+        UPDATE nava_guest_trial_reservations
+        SET status = 'refunded', updated_at = ?
+        WHERE reservation_id = ? AND status = 'refunding'
+      `).bind(now, reservationId)
+    ]);
+    return Boolean(results?.[0]?.meta?.changes);
+  } catch (error) {
+    console.error("[NAVA] Guest trial reservation refund failed:", error);
+    return false;
   }
 }
