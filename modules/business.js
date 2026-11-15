@@ -2,6 +2,7 @@
 // Business data is deliberately separate from NAVI conversation memory.
 
 import { json, safeNaviText } from "./shared.js";
+import { ALLOWED_ORIGIN } from "./config.js";
 import { authorizeNaviRequest } from "./navi-auth.js";
 
 const BUSINESS_TYPES = new Set(["freelancer", "store", "home_business", "small_company", "idea", "other"]);
@@ -73,7 +74,7 @@ export function normalizeBusinessRecordInput(input) {
 }
 
 async function authorize(request, env, origin, corsOrigin) {
-  if (origin !== "https://honrrpower-a11y.github.io") {
+  if (origin !== ALLOWED_ORIGIN) {
     return { error: fail("مبدأ درخواست مجاز نیست.", 403, corsOrigin) };
   }
   const auth = await authorizeNaviRequest(request, env);
