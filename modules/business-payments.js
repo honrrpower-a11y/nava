@@ -21,7 +21,9 @@ export function normalizeCustomerPaymentInput(input){
  if(!validDate(paymentDate))return{error:"تاریخ دریافت وجه معتبر نیست."};
  const method=String(input.paymentMethod||"");
  if(!METHODS.has(method))return{error:"روش دریافت وجه معتبر نیست."};
- const cashAccountId=String(input.cashAccountId||"").trim();\n if(cashAccountId&&!validId(cashAccountId,"cash"))return{error:"شناسه حساب مالی معتبر نیست."};\n return{value:{customer_id:customerId,cash_account_id:cashAccountId||null,amount_toman:amount,payment_date:paymentDate,payment_method:method,reference:clean(input.reference,120),notes:clean(input.notes,800)}};
+ const cashAccountId=String(input.cashAccountId||"").trim();
+ if(cashAccountId&&!validId(cashAccountId,"cash"))return{error:"شناسه حساب مالی معتبر نیست."};
+ return{value:{customer_id:customerId,cash_account_id:cashAccountId||null,amount_toman:amount,payment_date:paymentDate,payment_method:method,reference:clean(input.reference,120),notes:clean(input.notes,800)}};
 }
 function paymentOut(r){return{id:r.id,customerId:r.customer_id,customerName:r.customer_name||"",amountToman:Number(r.amount_toman),paymentDate:r.payment_date,paymentMethod:r.payment_method,reference:r.reference||"",notes:r.notes||"",status:r.status,createdAt:r.created_at};}
 async function owns(db,b,o){
