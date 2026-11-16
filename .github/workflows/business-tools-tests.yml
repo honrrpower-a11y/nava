@@ -9,6 +9,9 @@ on:
       - "business-transactions-ui.js"
       - "business-financial-export.js"
       - "business-tabs.js"
+      - "business-crm-ui.js"
+      - "modules/business-crm.js"
+      - "migrations/navi-production-reconcile/0009_business_customers_orders.sql"
       - "modules/business-transactions.js"
       - "business-inventory-ui.js"
       - "modules/business-inventory.js"
@@ -52,6 +55,8 @@ jobs:
           node --check business-transactions-ui.js
           node --check business-financial-export.js
           node --check business-tabs.js
+          node --check business-crm-ui.js
+          node --check modules/business-crm.js
           node --check modules/business-transactions.js
           node --check modules/business-inventory.js
           node --check business-inventory-ui.js
