@@ -243,3 +243,51 @@ test("customer receipts validate customer, amount, date and payment method", asy
     customerId: "bad-id", amountToman: 100, paymentDate: "2026-11-16", paymentMethod: "cash"
   }).error, /مشتری/);
 });
+
+
+async function loadBusinessLedgerBootstrap() {
+  let source = await readFile(new URL("../modules/business-ledger.js", import.meta.url), "utf8");
+  source = source
+    .replace(/^import\\s+.*?;\\s*$/gm, "")
+    .replace(/\\bexport\\s+(?=(?:async\\s+)?function)/g, "");
+  source += "\\nglobalThis.__ledgerBootstrap = { ensureBusinessCashLedger };";
+  const sandbox = {
+    console, JSON, Object, String, Number, Date, Set, RegExp,
+    crypto: { randomUUID: () => "12345678-1234-1234-1234-123456789012" },
+    safeNaviText(value, maxLength = 3000) {
+      return String(value ?? "").replace(/\\u0000/g, "").replace(/[\\u0001-\\u0008\\u000B\\u000C\\u000E-\\u001F]/g, "").trim().slice(0, maxLength);
+    },
+    json() {}
+  };
+  vm.runInNewContext(source, sandbox);
+  return sandbox.__ledgerBootstrap;
+}
+
+test("cash ledger bootstrap idempotently seeds the primary account and imports old receipts", async () => {
+  const api = await loadBusinessLedgerBootstrap();
+  const statements = [];
+  const db = {
+    prepare(sql) {
+      const item = { sql, values: [] };
+      item.bind = (...values) => { item.values = values; return item; };
+      statements.push(item);
+      return item;
+    },
+    async batch(items) {
+      assert.equal(items.length, 3);
+      return items.map(() => ({ success: true, meta: { changes: 0 } }));
+    }
+  };
+  await api.ensureBusinessCashLedger(db, "biz-12345678-1234-1234-1234-123456789012", "user-1");
+  assert.match(statements[0].sql, /INSERT INTO business_cash_accounts_v1/);
+  assert.match(statements[0].sql, /WHERE NOT EXISTS/);
+  assert.match(statements[1].sql, /UPDATE business_customer_payments_v1/);
+  assert.match(statements[1].sql, /cash_account_id IS NULL/);
+  assert.match(statements[2].sql, /INSERT INTO business_cash_movements_v1/);
+  assert.match(statements[2].sql, /source_type='customer_receipt'/);
+  assert.match(statements[2].sql, /NOT EXISTS/);
+  assert.deepEqual(statements[0].values.slice(1), [
+    "biz-12345678-1234-1234-1234-123456789012", "user-1",
+    "biz-12345678-1234-1234-1234-123456789012", "user-1"
+  ]);
+});
