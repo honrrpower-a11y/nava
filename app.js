@@ -1354,7 +1354,7 @@ async function saveNaviHistoryMessage(messageId, button) {
    HISTORY — LOAD FROM D1
 ========================================= */
 
-async function loadNaviHistory({ silent = false } = {})
+async function loadNaviHistory({ silent = false } = {}) {
   const token = getNaviToken();
 
   if (!token) return false;
