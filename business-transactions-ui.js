@@ -575,6 +575,7 @@
   window.addEventListener("nava:business-auth-changed", () => load().catch(error => say(error.message)));
   window.addEventListener("nava:business-suppliers-updated", () => load().catch(error => say(error.message)));
   window.addEventListener("nava:business-order-updated", () => load().catch(error => say(error.message)));
+  window.addEventListener("nava:business-purchase-updated", () => load().catch(error => say(error.message)));
   window.addEventListener("focus", () => load().catch(error => say(error.message)));
   load().catch(error => say(error.message));
 })();
