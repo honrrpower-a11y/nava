@@ -198,49 +198,86 @@ export function buildBusinessAdvisorContext(business, records = []) {
   return lines.join("\n");
 }
 
-export async function loadNaviBusinessContext(db, ownerId, businessId) {
+export async function loadNaviBusinessContext(db, ownerId, businessId, options = {}) {
   const business = await ownsBusiness(db, businessId, ownerId);
   if (!business || business.status !== "active") return null;
+
+  const pageTab = String(options.pageTab || "");
+  const userMessage = safeNaviText(options.message || "", 12000);
+  const wantsCustomerDirectory = pageTab === "customers" ||
+    /مشتری|مشتریان|مخاطب(?:ان)?/u.test(userMessage);
+  const wantsCustomerContacts = wantsCustomerDirectory &&
+    /شماره|تلفن|موبایل|تماس|ایمیل|آدرس|نشانی/u.test(userMessage);
+  const wantsOrders = pageTab === "orders" ||
+    /سفارش|سفارش‌ها|سفارشات/u.test(userMessage);
+  const wantsInventory = pageTab === "inventory" ||
+    /موجودی|انبار|ورود کالا|خروج کالا|گردش انبار/u.test(userMessage);
+
   const records = await db.prepare(
     "SELECT record_type, title, period_key, report_text, payload_json, created_at FROM business_financial_records_v1 WHERE business_id = ? AND owner_id = ? ORDER BY created_at DESC LIMIT 8"
   ).bind(businessId, ownerId).all();
+
   let transactions = { results: [] };
+  let transactionTotals = null;
   try {
     transactions = await db.prepare(
       "SELECT transaction_type, title, amount_toman, transaction_date, category, notes FROM business_transactions_v1 WHERE business_id = ? AND owner_id = ? ORDER BY transaction_date DESC, created_at DESC LIMIT 30"
     ).bind(businessId, ownerId).all();
+    transactionTotals = await db.prepare(
+      "SELECT COUNT(*) AS transaction_count, " +
+      "COALESCE(SUM(CASE WHEN transaction_type='sale' THEN amount_toman ELSE 0 END),0) AS all_time_sales, " +
+      "COALESCE(SUM(CASE WHEN transaction_type='expense' THEN amount_toman ELSE 0 END),0) AS all_time_expenses, " +
+      "SUM(CASE WHEN transaction_type='sale' THEN 1 ELSE 0 END) AS sale_count, " +
+      "SUM(CASE WHEN transaction_type='expense' THEN 1 ELSE 0 END) AS expense_count " +
+      "FROM business_transactions_v1 WHERE business_id=? AND owner_id=?"
+    ).bind(businessId, ownerId).first();
   } catch (error) {
-    console.warn("[NAVA BUSINESS] Transaction ledger is not available yet; apply migration 0005.", error);
+    console.warn("[NAVA BUSINESS] Transaction ledger is not available.", error);
   }
+
   let catalog = { results: [] };
   try {
     catalog = await db.prepare(
       "SELECT c.item_type, c.name, c.sku, c.category, c.unit, c.sale_price_toman, c.cost_price_toman, c.track_inventory, CASE WHEN c.track_inventory = 1 THEN COALESCE((SELECT SUM(m.quantity_delta) FROM business_inventory_movements_v1 m WHERE m.catalog_item_id = c.id AND m.business_id = c.business_id AND m.owner_id = c.owner_id), 0) ELSE NULL END AS stock_quantity FROM business_catalog_items_v1 c WHERE c.business_id = ? AND c.owner_id = ? AND c.status = 'active' ORDER BY c.item_type, c.name COLLATE NOCASE LIMIT 100"
     ).bind(businessId, ownerId).all();
   } catch (error) {
-    console.warn("[NAVA BUSINESS] Product/service catalogue is not available yet; apply migration 0006.", error);
+    console.warn("[NAVA BUSINESS] Product/service catalogue is not available.", error);
   }
+
   const base = buildBusinessAdvisorContext(business, records.results || []);
-  let sales = 0;
-  let expenses = 0;
-  const lines = ["تراکنش‌های واقعی ثبت‌شده (تومان):"];
+  let recentSales = 0;
+  let recentExpenses = 0;
+  const lines = [
+    "وضعیت زنده پرونده در زمان همین درخواست (واحد پول همه مبالغ: تومان):",
+    "تراکنش‌های واقعی ثبت‌شده؛ جدیدترین حداکثر ۳۰ مورد:"
+  ];
   for (const item of transactions.results || []) {
     const amount = Number(item.amount_toman || 0);
-    if (item.transaction_type === "sale") sales += amount;
-    if (item.transaction_type === "expense") expenses += amount;
+    if (item.transaction_type === "sale") recentSales += amount;
+    if (item.transaction_type === "expense") recentExpenses += amount;
     lines.push("- " + (item.transaction_type === "sale" ? "فروش" : "هزینه") +
       " | " + safeNaviText(item.title || "", 120) +
       " | " + amount.toLocaleString("en-US") + " تومان" +
-      " | " + safeNaviText(item.transaction_date || "", 20) +
-      " | " + safeNaviText(item.category || "", 80) +
-      " | " + safeNaviText(item.notes || "", 250));
+      " | تاریخ: " + safeNaviText(item.transaction_date || "", 20) +
+      " | دسته: " + safeNaviText(item.category || "", 80) +
+      " | توضیح: " + safeNaviText(item.notes || "", 180));
   }
-  lines.push("جمع فروش در ۳۰ تراکنش اخیر: " + sales.toLocaleString("en-US") + " تومان");
-  lines.push("جمع هزینه در ۳۰ تراکنش اخیر: " + expenses.toLocaleString("en-US") + " تومان");
+  if (transactionTotals) {
+    lines.push("خلاصه کل تاریخچه تراکنش‌ها (تمام رکوردهای ثبت‌شده):");
+    lines.push("- تعداد کل تراکنش‌ها: " + Number(transactionTotals.transaction_count || 0).toLocaleString("en-US"));
+    lines.push("- تعداد فروش‌ها: " + Number(transactionTotals.sale_count || 0).toLocaleString("en-US"));
+    lines.push("- تعداد هزینه‌ها: " + Number(transactionTotals.expense_count || 0).toLocaleString("en-US"));
+    lines.push("- مجموع کل فروش ثبت‌شده: " + Number(transactionTotals.all_time_sales || 0).toLocaleString("en-US") + " تومان");
+    lines.push("- مجموع کل هزینه ثبت‌شده: " + Number(transactionTotals.all_time_expenses || 0).toLocaleString("en-US") + " تومان");
+  } else {
+    lines.push("خلاصه کامل تراکنش‌ها در دسترس نبود؛ از ارقام ناقص نتیجه قطعی نگیر.");
+  }
+  lines.push("- جمع فروش در ۳۰ تراکنش اخیر: " + recentSales.toLocaleString("en-US") + " تومان");
+  lines.push("- جمع هزینه در ۳۰ تراکنش اخیر: " + recentExpenses.toLocaleString("en-US") + " تومان");
   if (!(transactions.results || []).length) lines.push("هنوز تراکنش واقعی فروش یا هزینه‌ای ثبت نشده است.");
-  lines.push("این جمع‌ها فقط مربوط به حداکثر ۳۰ تراکنش اخیر هستند و جمع کل تاریخی نیستند.");
-  lines.push("این مبالغ فروش و هزینه ثبت‌شده‌اند؛ وضعیت وصول یا پرداخت را مشخص نمی‌کنند و تفاضل آن‌ها به‌تنهایی سود قطعی یا مانده نقدی نیست.");
-  lines.push("کاتالوگ فعال محصولات و خدمات:");
+  lines.push("مهم: این‌ها مبالغ فروش و هزینه ثبت‌شده‌اند؛ وضعیت وصول یا پرداخت را مشخص نمی‌کنند. تفاضل فروش و هزینه به‌تنهایی سود قطعی، مانده نقدی، طلب مشتری یا بدهی تأمین‌کننده نیست.");
+
+  lines.push("", "کاتالوگ فعال محصولات و خدمات:");
   for (const item of catalog.results || []) {
     lines.push("- " + (item.item_type === "product" ? "محصول" : "خدمت") +
       " | " + safeNaviText(item.name || "", 140) +
@@ -253,7 +290,100 @@ export async function loadNaviBusinessContext(db, ownerId, businessId) {
   }
   if (!(catalog.results || []).length) lines.push("در کاتالوگ هنوز محصول یا خدمت فعالی ثبت نشده است.");
   lines.push("موجودی محصولات دارای کنترل موجودی از گردش‌های ثبت‌شده محاسبه می‌شود؛ محصولات بدون کنترل موجودی تعداد انبار ثبت‌شده ندارند.");
-  return (base + "\n" + lines.join("\n")).slice(0, 26000);
+
+  // CRM summaries are scoped to the authenticated owner and selected business.
+  try {
+    const customerCounts = await db.prepare(
+      "SELECT COUNT(*) AS total, SUM(CASE WHEN status='active' THEN 1 ELSE 0 END) AS active, SUM(CASE WHEN status='archived' THEN 1 ELSE 0 END) AS archived FROM business_customers_v1 WHERE business_id=? AND owner_id=?"
+    ).bind(businessId, ownerId).first();
+    lines.push("", "خلاصه زنده مشتریان:");
+    lines.push("- کل پرونده‌های مشتری: " + Number(customerCounts?.total || 0).toLocaleString("en-US"));
+    lines.push("- مشتریان فعال: " + Number(customerCounts?.active || 0).toLocaleString("en-US"));
+    lines.push("- مشتریان بایگانی‌شده: " + Number(customerCounts?.archived || 0).toLocaleString("en-US"));
+    if (wantsCustomerDirectory) {
+      const customerRows = await db.prepare(
+        "SELECT name, phone, email, status, created_at FROM business_customers_v1 WHERE business_id=? AND owner_id=? ORDER BY CASE WHEN status='active' THEN 0 ELSE 1 END,name COLLATE NOCASE LIMIT 100"
+      ).bind(businessId, ownerId).all();
+      lines.push("فهرست مشتریان (حداکثر ۱۰۰ پرونده):");
+      for (const customer of customerRows.results || []) {
+        lines.push("- " + safeNaviText(customer.name || "", 120) +
+          " | وضعیت: " + (customer.status === "active" ? "فعال" : "بایگانی‌شده") +
+          (wantsCustomerContacts ? " | تلفن: " + safeNaviText(customer.phone || "ثبت نشده", 40) + " | ایمیل: " + safeNaviText(customer.email || "ثبت نشده", 160) : ""));
+      }
+      if (!(customerRows.results || []).length) lines.push("هنوز مشتری‌ای در این پرونده ثبت نشده است.");
+      if (!wantsCustomerContacts) lines.push("برای حفظ حداقل‌گرایی داده، جزئیات تماس مشتریان در این پاسخ بارگذاری نشده است.");
+    }
+  } catch (error) {
+    console.warn("[NAVA BUSINESS] CRM customer context is not available.", error);
+    lines.push("", "اطلاعات زنده مشتریان فعلاً قابل خواندن نبود؛ درباره تعداد یا نام مشتریان حدس نزن.");
+  }
+
+  try {
+    const orderCounts = await db.prepare(
+      "SELECT COUNT(*) AS total, SUM(CASE WHEN status='draft' THEN 1 ELSE 0 END) AS drafts, SUM(CASE WHEN status='confirmed' THEN 1 ELSE 0 END) AS confirmed, SUM(CASE WHEN status='cancelled' THEN 1 ELSE 0 END) AS cancelled, COALESCE(SUM(CASE WHEN status='confirmed' THEN total_toman ELSE 0 END),0) AS confirmed_total FROM business_orders_v1 WHERE business_id=? AND owner_id=?"
+    ).bind(businessId, ownerId).first();
+    lines.push("", "خلاصه زنده سفارش‌ها:");
+    lines.push("- کل سفارش‌ها: " + Number(orderCounts?.total || 0).toLocaleString("en-US"));
+    lines.push("- پیش‌نویس‌ها: " + Number(orderCounts?.drafts || 0).toLocaleString("en-US"));
+    lines.push("- تأییدشده‌ها: " + Number(orderCounts?.confirmed || 0).toLocaleString("en-US"));
+    lines.push("- لغوشده‌ها: " + Number(orderCounts?.cancelled || 0).toLocaleString("en-US"));
+    lines.push("- مبلغ سفارش‌های تأییدشده: " + Number(orderCounts?.confirmed_total || 0).toLocaleString("en-US") + " تومان");
+    if (wantsOrders) {
+      const orderRows = await db.prepare(
+        "SELECT o.id,o.status,o.order_date,o.total_toman,c.name AS customer_name," +
+        "(SELECT json_group_array(json_object('name',i.item_name,'quantity',i.quantity,'unitPriceToman',i.unit_price_toman,'lineTotalToman',i.line_total_toman)) FROM business_order_items_v1 i WHERE i.order_id=o.id AND i.business_id=o.business_id AND i.owner_id=o.owner_id) AS items_json " +
+        "FROM business_orders_v1 o LEFT JOIN business_customers_v1 c ON c.id=o.customer_id AND c.business_id=o.business_id AND c.owner_id=o.owner_id " +
+        "WHERE o.business_id=? AND o.owner_id=? ORDER BY o.order_date DESC,o.created_at DESC LIMIT 30"
+      ).bind(businessId, ownerId).all();
+      lines.push("آخرین سفارش‌ها (حداکثر ۳۰ مورد؛ بدون یادداشت خصوصی):");
+      for (const order of orderRows.results || []) {
+        let items = [];
+        try { items = JSON.parse(order.items_json || "[]"); } catch {}
+        const statusLabel = order.status === "draft" ? "پیش‌نویس" : order.status === "confirmed" ? "تأییدشده" : "لغوشده";
+        lines.push("- " + safeNaviText(order.id || "", 60) +
+          " | مشتری: " + safeNaviText(order.customer_name || "بدون اتصال به مشتری", 120) +
+          " | وضعیت: " + statusLabel +
+          " | تاریخ: " + safeNaviText(order.order_date || "", 20) +
+          " | مبلغ: " + Number(order.total_toman || 0).toLocaleString("en-US") + " تومان" +
+          " | اقلام: " + items.slice(0, 20).map(item =>
+            safeNaviText(item.name || "", 100) + " × " + Number(item.quantity || 0).toLocaleString("en-US") +
+            " (" + Number(item.lineTotalToman || 0).toLocaleString("en-US") + " تومان)"
+          ).join("، "));
+      }
+      if (!(orderRows.results || []).length) lines.push("هنوز سفارشی در این پرونده ثبت نشده است.");
+    }
+  } catch (error) {
+    console.warn("[NAVA BUSINESS] CRM order context is not available.", error);
+    lines.push("", "اطلاعات زنده سفارش‌ها فعلاً قابل خواندن نبود؛ درباره سفارش‌ها حدس نزن.");
+  }
+
+  if (wantsInventory) {
+    try {
+      const movementRows = await db.prepare(
+        "SELECT i.name,m.movement_type,m.quantity_delta,m.movement_date,m.notes FROM business_inventory_movements_v1 m JOIN business_catalog_items_v1 i ON i.id=m.catalog_item_id AND i.business_id=m.business_id AND i.owner_id=m.owner_id WHERE m.business_id=? AND m.owner_id=? ORDER BY m.created_at DESC LIMIT 25"
+      ).bind(businessId, ownerId).all();
+      lines.push("", "آخرین گردش‌های انبار (حداکثر ۲۵ مورد):");
+      for (const movement of movementRows.results || []) {
+        const kind = ({opening:"موجودی اولیه",inbound:"ورود",outbound:"خروج",adjustment:"اصلاح",sale:"خروج بابت فروش"})[movement.movement_type] || movement.movement_type;
+        lines.push("- " + safeNaviText(movement.name || "", 120) + " | " + kind +
+          " | تغییر تعداد: " + Number(movement.quantity_delta || 0).toLocaleString("en-US") +
+          " | تاریخ: " + safeNaviText(movement.movement_date || "", 20) +
+          " | توضیح: " + safeNaviText(movement.notes || "", 160));
+      }
+      if (!(movementRows.results || []).length) lines.push("هنوز گردش انباری ثبت نشده است.");
+    } catch (error) {
+      console.warn("[NAVA BUSINESS] Inventory movement context is not available.", error);
+      lines.push("جزئیات گردش‌های انبار فعلاً قابل خواندن نبود؛ فقط موجودی فعلی کاتالوگ در دسترس است.");
+    }
+  }
+
+  lines.push("", "قواعد پاسخ‌گویی به داده‌های پرونده:");
+  lines.push("- این داده‌ها از دیتابیس زنده و فقط از پرونده فعال همین مالک خوانده شده‌اند.");
+  lines.push("- اگر اطلاعاتی در این زمینه وجود ندارد یا یک بخش بارگذاری نشده، صریح بگو در داده‌های فعلی موجود نیست؛ عدد، مشتری، سفارش یا رویدادی نساز.");
+  lines.push("- پیش‌نویس سفارش فروش قطعی نیست و موجودی را کم نمی‌کند؛ فقط سفارش تأییدشده به تراکنش فروش تبدیل می‌شود.");
+  lines.push("- مبلغ سفارش تأییدشده لزوماً به معنی وجه وصول‌شده نیست؛ سیستم فعلی وضعیت پرداخت/دریافت، بدهی مشتری و مانده حساب را ثبت نمی‌کند.");
+  lines.push("- مجموع فروش/هزینه ثبت‌شده را با سود خالص، جریان نقدی، طلب یا بدهی اشتباه نگیر.");
+  return (base + "\n" + lines.join("\n")).slice(0, 36000);
 }
 
 async function listRecords(db, ownerId, businessId, url, corsOrigin) {
