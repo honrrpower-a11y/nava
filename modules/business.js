@@ -382,7 +382,7 @@ export async function loadNaviBusinessContext(db, ownerId, businessId, options =
       "FROM business_customers_v1 c " +
       "LEFT JOIN (SELECT customer_id,SUM(amount_toman) AS sales_toman FROM business_transactions_v1 WHERE business_id=? AND owner_id=? AND transaction_type='sale' AND customer_id IS NOT NULL GROUP BY customer_id) s ON s.customer_id=c.id " +
       "LEFT JOIN (SELECT customer_id,SUM(amount_toman) AS received_toman FROM business_customer_payments_v1 WHERE business_id=? AND owner_id=? AND status='received' GROUP BY customer_id) p ON p.customer_id=c.id " +
-      "WHERE c.business_id=? AND c.owner_id=? AND c.status='active' ORDER BY c.name COLLATE NOCASE LIMIT 100"
+      "WHERE c.business_id=? AND c.owner_id=? ORDER BY CASE WHEN c.status='active' THEN 0 ELSE 1 END,c.name COLLATE NOCASE LIMIT 100"
     ).bind(businessId,ownerId,businessId,ownerId,businessId,ownerId).all();
     const accounts = accountRows.results || [];
     const totalSales = accounts.reduce((sum,row)=>sum+Number(row.sales_toman||0),0);
@@ -395,7 +395,7 @@ export async function loadNaviBusinessContext(db, ownerId, businessId, options =
       lines.push("جزئیات حساب مشتریان (حداکثر ۱۰۰ پرونده فعال):");
       for (const row of accounts) {
         const sales = Number(row.sales_toman||0), received = Number(row.received_toman||0);
-        lines.push("- " + safeNaviText(row.name||"",120) + " | فروش: " + sales.toLocaleString("en-US") +
+        lines.push("- " + safeNaviText(row.name||"",120) + (row.status === "archived" ? " (بایگانی‌شده)" : "") + " | فروش: " + sales.toLocaleString("en-US") +
           " تومان | دریافتی: " + received.toLocaleString("en-US") + " تومان | مانده: " +
           (sales-received).toLocaleString("en-US") + " تومان");
       }
