@@ -222,6 +222,14 @@ test("customer receipts validate customer, amount, date and payment method", asy
   assert.equal(result.value.customer_id, customerId);
   assert.equal(result.value.amount_toman, 250000);
   assert.equal(result.value.payment_method, "bank_transfer");
+  const cashAccountId = "cash-12345678-1234-1234-1234-123456789012";
+  const linkedReceipt = api.normalizeCustomerPaymentInput({
+    customerId, cashAccountId, amountToman: 250000, paymentDate: "2026-11-16", paymentMethod: "cash"
+  });
+  assert.equal(linkedReceipt.value.cash_account_id, cashAccountId);
+  assert.match(api.normalizeCustomerPaymentInput({
+    customerId, cashAccountId: "bad-id", amountToman: 100, paymentDate: "2026-11-16", paymentMethod: "cash"
+  }).error, /شناسه حساب مالی/);
   assert.match(api.normalizeCustomerPaymentInput({
     customerId, amountToman: 0, paymentDate: "2026-11-16", paymentMethod: "cash"
   }).error, /مبلغ/);
