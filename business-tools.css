@@ -417,3 +417,18 @@ body.light #bizPage .biz-tab.is-active{
 #bizPage .biz-profile-status[data-state="success"]{color:#65c69b}
 @media(max-width:760px){#bizPage .biz-crm-layout{grid-template-columns:1fr}#bizPage .biz-order-form-top{grid-template-columns:1fr}}
 @media(max-width:560px){#bizPage .biz-order-line{grid-template-columns:minmax(0,1fr) 72px minmax(0,.9fr) 32px}#bizPage .biz-order-catalog{grid-column:1/-1}#bizPage .biz-order-submit-row{align-items:stretch;flex-direction:column}#bizPage .biz-order-submit-row button{width:100%}}
+
+/* NAVA branded modal dialogs */
+.nava-dialog-overlay{position:fixed;inset:0;z-index:100000;display:grid;place-items:center;padding:18px;background:rgba(3,7,16,.72);backdrop-filter:blur(7px)}
+.nava-dialog{width:min(100%,420px);padding:22px;border:1px solid color-mix(in srgb,var(--gold,#d5b56a) 38%,var(--border,#344052));border-radius:19px;background:var(--panel,#111827);color:var(--text,#f5f5f5);box-shadow:0 24px 90px rgba(0,0,0,.42);direction:rtl}
+.nava-dialog-brand{display:flex;align-items:center;gap:9px;margin-bottom:16px;color:var(--gold,#d5b56a);font-size:12px;font-weight:800;letter-spacing:.08em}
+.nava-dialog-mark{display:grid;place-items:center;width:29px;height:29px;border:1px solid var(--gold,#d5b56a);border-radius:10px;font-family:Georgia,serif;font-size:17px}
+.nava-dialog h2{margin:0 0 9px;font-size:17px}
+.nava-dialog p{margin:0;color:var(--muted,#aab3c2);font-size:12px;line-height:2;white-space:pre-wrap}
+.nava-dialog-input{display:block;width:100%;min-height:43px;margin-top:14px;padding:10px 12px;border:1px solid var(--border,#344052);border-radius:10px;background:var(--panel2,#182235);color:var(--text,#f5f5f5);font:inherit;font-size:13px}
+.nava-dialog-input[hidden]{display:none}
+.nava-dialog-actions{display:flex;justify-content:flex-end;gap:9px;margin-top:20px}
+.nava-dialog-actions button{min-width:92px;min-height:39px;padding:8px 13px;border:1px solid var(--border,#344052);border-radius:10px;background:var(--panel2,#182235);color:var(--text,#f5f5f5);font:inherit;font-size:12px;cursor:pointer}
+.nava-dialog-actions .nava-dialog-confirm{border-color:var(--gold,#d5b56a);background:var(--gold,#d5b56a);color:#151515;font-weight:800}
+.nava-dialog-actions .nava-dialog-confirm.is-danger{border-color:#b85d58;background:#b85d58;color:#fff}
+.nava-dialog-actions button:focus-visible,.nava-dialog-input:focus-visible{outline:2px solid var(--gold,#d5b56a);outline-offset:2px}
