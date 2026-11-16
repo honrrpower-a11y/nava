@@ -211,6 +211,13 @@ export async function handleBusinessTransactionRoute({ request, env, url, corsOr
         if (Number(linked?.track_inventory || 0) === 1) return fail("فروش متصل به موجودی برای جلوگیری از مغایرت انبار قابل ویرایش نیست؛ برای اصلاح، از گردش موجودی جداگانه استفاده کن.", 409, corsOrigin);
       }
       const v = { ...current, ...normalized.value };
+      if (v.customer_id) {
+        if (v.transaction_type !== "sale") return fail("اتصال مشتری فقط برای فروش مجاز است.", 400, corsOrigin);
+        const customer = await env.NAVA_DB.prepare(
+          "SELECT id FROM business_customers_v1 WHERE id = ? AND business_id = ? AND owner_id = ? AND status = 'active' LIMIT 1"
+        ).bind(v.customer_id, businessId, ownerId).first();
+        if (!customer) return fail("مشتری انتخاب‌شده فعال نیست یا به این پرونده تعلق ندارد.", 404, corsOrigin);
+      }
       if (v.transaction_type === "expense" && (v.quantity || v.unit_price_toman || v.catalog_item_id)) return fail("برای ثبت هزینه، محصول، تعداد و قیمت واحد باید خالی باشد.", 400, corsOrigin);
       if (v.transaction_type === "sale" && v.quantity && v.unit_price_toman && v.amount_toman !== v.quantity * v.unit_price_toman) return fail("مبلغ کل فروش باید برابر تعداد ضربدر قیمت واحد باشد.", 400, corsOrigin);
       if (Object.hasOwn(normalized.value, "catalog_item_id") && v.catalog_item_id) {
