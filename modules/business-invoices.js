@@ -73,7 +73,16 @@ export async function handleBusinessInvoiceRoute({request,env,url,corsOrigin,bus
     db.prepare("INSERT INTO business_invoices_v1(id,business_id,owner_id,order_id,document_type,invoice_sequence,invoice_number,status,issue_date,due_date,seller_name,customer_id,customer_name,customer_phone,customer_address,subtotal_toman,discount_toman,tax_toman,shipping_toman,total_toman,notes,created_at,updated_at) SELECT ?,?,?,?, ?,COALESCE((SELECT MAX(invoice_sequence)+1 FROM business_invoices_v1 WHERE business_id=? AND owner_id=? AND document_type=?),1),?, 'issued',?,?,?,?,?,?,?,?,?,?,?,?,?,datetime('now'),datetime('now') WHERE EXISTS(SELECT 1 FROM business_orders_v1 WHERE id=? AND business_id=? AND owner_id=? AND status<>'cancelled') AND (?='proforma' OR EXISTS(SELECT 1 FROM business_orders_v1 WHERE id=? AND business_id=? AND owner_id=? AND status='confirmed')) AND NOT EXISTS(SELECT 1 FROM business_invoices_v1 WHERE order_id=? AND business_id=? AND owner_id=? AND document_type=?)").bind(id,businessId,ownerId,orderId,type,businessId,ownerId,type,prefix+"-PENDING",issueDate,dueDate,order.seller_name,order.customer_id,order.customer_name||"مشتری آزاد",order.customer_phone||"",order.customer_address||"",subtotal,discount,tax,shipping,total,clean(input.notes||order.notes,1200),orderId,businessId,ownerId,type,orderId,businessId,ownerId,orderId,businessId,ownerId,type),
     ...lines.results.map(x=>db.prepare("INSERT INTO business_invoice_items_v1(id,invoice_id,business_id,owner_id,catalog_item_id,item_name,unit,quantity,unit_price_toman,line_total_toman,created_at) SELECT ?,?,?,?,?,?,?,?,?,?,datetime('now') WHERE EXISTS(SELECT 1 FROM business_invoices_v1 WHERE id=? AND business_id=? AND owner_id=?)").bind("invoiceline-"+crypto.randomUUID(),id,businessId,ownerId,x.catalog_item_id,x.item_name,x.unit,Number(x.quantity),Number(x.unit_price_toman),Number(x.line_total_toman),id,businessId,ownerId))
    ];
-   const results=await db.batch(batch);
+   let results;
+   try{
+    results=await db.batch(batch);
+   }catch(batchError){
+    // A concurrent request may have created this order/type after the pre-check.
+    // Recover that idempotent race instead of returning a generic 500.
+    const raced=await db.prepare("SELECT id FROM business_invoices_v1 WHERE order_id=? AND business_id=? AND owner_id=? AND document_type=?").bind(orderId,businessId,ownerId,type).first();
+    if(raced)return reply({invoice:await invoiceOut(db,businessId,ownerId,raced.id),alreadyExists:true},200,corsOrigin);
+    throw batchError;
+   }
    if(Number(results?.[0]?.meta?.changes||0)!==1){
     const raced=await db.prepare("SELECT id FROM business_invoices_v1 WHERE order_id=? AND business_id=? AND owner_id=? AND document_type=?").bind(orderId,businessId,ownerId,type).first();
     if(raced)return reply({invoice:await invoiceOut(db,businessId,ownerId,raced.id),alreadyExists:true},200,corsOrigin);
