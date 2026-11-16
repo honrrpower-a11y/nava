@@ -451,9 +451,9 @@
       edit.type = "button";
       edit.textContent = "ویرایش";
       edit.addEventListener("click", async () => {
-        const title = window.prompt("عنوان تراکنش:", row.title);
+        const title = await window.navaPrompt("عنوان تراکنش را وارد کن:", row.title, { title: "ویرایش تراکنش", confirmText: "ادامه", placeholder: "عنوان تراکنش" });
         if (title === null) return;
-        const amountText = window.prompt("مبلغ به تومان:", String(row.amountToman));
+        const amountText = await window.navaPrompt("مبلغ تراکنش را به تومان وارد کن:", String(row.amountToman), { title: "ویرایش مبلغ", confirmText: "ذخیره مبلغ", placeholder: "مبلغ به تومان" });
         if (amountText === null) return;
         const amountValue = Number(amountText);
         if (title.trim().length < 2 || !Number.isSafeInteger(amountValue) || amountValue <= 0) {
@@ -473,7 +473,7 @@
       remove.type = "button";
       remove.textContent = "حذف";
       remove.addEventListener("click", async () => {
-        if (!window.confirm("این تراکنش برای همیشه حذف شود؟")) return;
+        if (!await window.navaConfirm("این تراکنش برای همیشه حذف شود؟", { title: "حذف تراکنش", confirmText: "حذف دائمی", danger: true })) return;
         remove.disabled = true;
         try {
           await api("/" + encodeURIComponent(businessId()) + "/transactions/" + encodeURIComponent(row.id), "DELETE");
