@@ -97,6 +97,6 @@ export async function handleBusinessPaymentsRoute({request,env,url,corsOrigin,bu
   return fail("مسیر یا روش دریافت وجه پشتیبانی نمی‌شود.",405,corsOrigin);
  }catch(error){
   console.error("[NAVA BUSINESS PAYMENTS]",error);
-  return fail("عملیات دریافت وجه انجام نشد؛ اجرای Migration شماره ۰۰۱۰ را بررسی کن.",500,corsOrigin);
+  return fail("عملیات دریافت وجه انجام نشد؛ اجرای Migration شماره ۰۰۱۲ را بررسی کن.",500,corsOrigin);
  }
 }
