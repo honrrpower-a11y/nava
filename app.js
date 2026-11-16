@@ -1366,9 +1366,11 @@ async function loadNaviHistory({ silent = false } = {}) {
   const requestVersion = naviSessionVersion;
 
   naviHistoryLoading = true;
-  naviHistoryRefresh.disabled = true;
-  naviHistoryRefresh.textContent = "در حال دریافت...";
-  naviHistoryCount.textContent = "در حال بارگذاری...";
+  if (!silent) {
+    naviHistoryRefresh.disabled = true;
+    naviHistoryRefresh.textContent = "در حال دریافت...";
+    naviHistoryCount.textContent = "در حال بارگذاری...";
+  }
 
   naviHistoryLoadPromise = (async () => {
     try {
@@ -1426,7 +1428,7 @@ async function loadNaviHistory({ silent = false } = {}) {
       console.error("NAVI history error:", error);
 
       renderNaviHistory(naviHistory);
-      naviHistoryCount.textContent = "حافظه آنلاین در دسترس نیست";
+      if (!silent) naviHistoryCount.textContent = "حافظه آنلاین در دسترس نیست";
 
       if (!silent && naviHistory.length === 0) {
         showEmptyHistory(
@@ -1447,8 +1449,10 @@ async function loadNaviHistory({ silent = false } = {}) {
       if (naviSessionVersion === requestVersion) {
         naviHistoryLoading = false;
         naviHistoryLoadPromise = null;
-        naviHistoryRefresh.disabled = false;
-        naviHistoryRefresh.textContent = "تازه‌سازی تاریخچه";
+        if (!silent) {
+          naviHistoryRefresh.disabled = false;
+          naviHistoryRefresh.textContent = "تازه‌سازی تاریخچه";
+        }
       }
     }
   })();
