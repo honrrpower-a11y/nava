@@ -678,7 +678,22 @@
                 <option value="opening">ثبت موجودی اولیه</option><option value="inbound">ورود کالا</option><option value="outbound">خروج کالا</option><option value="adjustment">اصلاح افزایشی موجودی</option>
               </select></label>
               <label class="biz-field"><span>تعداد</span><input id="bizInventoryQuantity" type="text" inputmode="numeric" autocomplete="off" placeholder="مثلاً ۲۰" required></label>
-              <label class="biz-field"><span>تاریخ</span><input id="bizInventoryDate" type="date" required></label>
+              <label class="biz-field biz-transaction-date-field"><span>تاریخ شمسی</span>
+                <div class="biz-persian-date-control">
+                  <input id="bizInventoryDateDisplay" type="text" placeholder="انتخاب تاریخ شمسی" readonly aria-label="تاریخ گردش انبار به شمسی">
+                  <button id="bizInventoryCalendarToggle" type="button" aria-label="باز کردن تقویم شمسی" aria-expanded="false">▦</button>
+                </div>
+                <input id="bizInventoryDate" type="hidden" required>
+                <div id="bizInventoryCalendar" class="biz-persian-calendar" hidden>
+                  <div class="biz-persian-calendar-head">
+                    <button id="bizInventoryCalendarPrev" type="button" aria-label="ماه قبل">‹</button>
+                    <strong id="bizInventoryCalendarMonth"></strong>
+                    <button id="bizInventoryCalendarNext" type="button" aria-label="ماه بعد">›</button>
+                  </div>
+                  <div class="biz-persian-calendar-weekdays" aria-hidden="true"><span>ش</span><span>ی</span><span>د</span><span>س</span><span>چ</span><span>پ</span><span>ج</span></div>
+                  <div id="bizInventoryCalendarDays" class="biz-persian-calendar-days"></div>
+                </div>
+              </label>
               <label class="biz-field"><span>توضیحات (اختیاری)</span><input id="bizInventoryNotes" type="text" maxlength="500" placeholder="مثلاً خرید از تأمین‌کننده"></label>
               <button class="btn-primary" id="bizInventorySubmit" type="submit">ثبت گردش موجودی</button>
               <p class="biz-profile-status" id="bizInventoryStatus" role="status" aria-live="polite">برای شروع، محصولی را در کاتالوگ با مدیریت موجودی فعال کن.</p>
@@ -1117,7 +1132,7 @@
   <script src="business-tools.js?v=business-suite-20261115-2" defer></script>
   <script src="business-workspace.js?v=business-transactions-toman-20261116-2" defer></script>
   <script src="business-catalog-ui.js?v=business-catalog-inventory-20261116-2" defer></script>
-  <script src="business-inventory-ui.js?v=business-inventory-20261116-1" defer></script>
+  <script src="business-inventory-ui.js?v=inventory-persian-calendar-20261116-2" defer></script>
   <script src="business-transactions-ui.js?v=sales-quantity-blank-default-one-20261116-3" defer></script>
   <script src="business-financial-export.js?v=financial-export-daynight-20261116-1" defer></script>
   <script src="business-tabs.js?v=business-five-tabs-20261116-1" defer></script>
