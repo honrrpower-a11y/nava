@@ -123,6 +123,13 @@ async function updateItem(db, businessId, ownerId, itemId, input, corsOrigin) {
   if (normalized.error) return fail(normalized.error, 400, corsOrigin);
   const value = normalized.value;
   if (value.track_inventory === 1 && (value.item_type || current.item_type) !== "product") return fail("مدیریت موجودی فقط برای محصولات فیزیکی فعال می‌شود.", 400, corsOrigin);
+  if (value.item_type === "service" && current.track_inventory === 1 && value.track_inventory !== 0) return fail("ابتدا مدیریت موجودی محصول را غیرفعال کن؛ سپس نوع آن را به خدمت تغییر بده.", 409, corsOrigin);
+  if (current.track_inventory === 1 && value.track_inventory === 0) {
+    const movement = await db.prepare(
+      "SELECT id FROM business_inventory_movements_v1 WHERE catalog_item_id = ? AND business_id = ? AND owner_id = ? LIMIT 1"
+    ).bind(itemId, businessId, ownerId).first();
+    if (movement) return fail("برای حفظ تاریخچه انبار، کنترل موجودی پس از ثبت اولین گردش قابل غیرفعال‌کردن نیست.", 409, corsOrigin);
+  }
   if (Object.hasOwn(value, "sku") && value.sku) {
     const duplicate = await db.prepare(
       "SELECT id FROM business_catalog_items_v1 WHERE business_id = ? AND owner_id = ? AND sku = ? COLLATE NOCASE AND id <> ? LIMIT 1"
