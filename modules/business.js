@@ -220,6 +220,8 @@ export async function loadNaviBusinessContext(db, ownerId, businessId, options =
     (wantsAllCustomerDetails || /نشانی|آدرس|یادداشت|توضیحات مشتری|جزئیات کامل/u.test(userMessage));
   const wantsOrders = pageTab === "orders" ||
     /سفارش|سفارش‌ها|سفارشات/u.test(userMessage);
+  const wantsCustomerAccounts = pageTab === "accounts" ||
+    /حساب مشتری|مانده حساب|بدهکار|بدهی مشتری|طلب مشتری|دریافت وجه|دریافتی مشتری|وصول مطالبات/u.test(userMessage);
   const wantsInventory = pageTab === "inventory" ||
     /موجودی|انبار|ورود کالا|خروج کالا|گردش انبار/u.test(userMessage);
   const wantsFullTransactionHistory =
@@ -374,6 +376,46 @@ export async function loadNaviBusinessContext(db, ownerId, businessId, options =
     lines.push("", "اطلاعات زنده سفارش‌ها فعلاً قابل خواندن نبود؛ درباره سفارش‌ها حدس نزن.");
   }
 
+  try {
+    const accountRows = await db.prepare(
+      "SELECT c.name,c.status,COALESCE(s.sales_toman,0) AS sales_toman,COALESCE(p.received_toman,0) AS received_toman " +
+      "FROM business_customers_v1 c " +
+      "LEFT JOIN (SELECT customer_id,SUM(amount_toman) AS sales_toman FROM business_transactions_v1 WHERE business_id=? AND owner_id=? AND transaction_type='sale' AND customer_id IS NOT NULL GROUP BY customer_id) s ON s.customer_id=c.id " +
+      "LEFT JOIN (SELECT customer_id,SUM(amount_toman) AS received_toman FROM business_customer_payments_v1 WHERE business_id=? AND owner_id=? AND status='received' GROUP BY customer_id) p ON p.customer_id=c.id " +
+      "WHERE c.business_id=? AND c.owner_id=? AND c.status='active' ORDER BY c.name COLLATE NOCASE LIMIT 100"
+    ).bind(businessId,ownerId,businessId,ownerId,businessId,ownerId).all();
+    const accounts = accountRows.results || [];
+    const totalSales = accounts.reduce((sum,row)=>sum+Number(row.sales_toman||0),0);
+    const totalReceived = accounts.reduce((sum,row)=>sum+Number(row.received_toman||0),0);
+    lines.push("", "خلاصه حساب مشتریان بر اساس فروش‌های متصل و دریافت‌های ثبت‌شده:");
+    lines.push("- فروش متصل به مشتریان: " + totalSales.toLocaleString("en-US") + " تومان");
+    lines.push("- وجه دریافت‌شده از مشتریان: " + totalReceived.toLocaleString("en-US") + " تومان");
+    lines.push("- مانده خالص حساب مشتریان: " + (totalSales-totalReceived).toLocaleString("en-US") + " تومان");
+    if (wantsCustomerAccounts) {
+      lines.push("جزئیات حساب مشتریان (حداکثر ۱۰۰ پرونده فعال):");
+      for (const row of accounts) {
+        const sales = Number(row.sales_toman||0), received = Number(row.received_toman||0);
+        lines.push("- " + safeNaviText(row.name||"",120) + " | فروش: " + sales.toLocaleString("en-US") +
+          " تومان | دریافتی: " + received.toLocaleString("en-US") + " تومان | مانده: " +
+          (sales-received).toLocaleString("en-US") + " تومان");
+      }
+      const payments = await db.prepare(
+        "SELECT p.amount_toman,p.payment_date,p.payment_method,p.reference,c.name AS customer_name FROM business_customer_payments_v1 p JOIN business_customers_v1 c ON c.id=p.customer_id AND c.business_id=p.business_id AND c.owner_id=p.owner_id WHERE p.business_id=? AND p.owner_id=? AND p.status='received' ORDER BY p.payment_date DESC,p.created_at DESC LIMIT 30"
+      ).bind(businessId,ownerId).all();
+      lines.push("آخرین دریافت‌های وجه (حداکثر ۳۰ مورد):");
+      for (const payment of payments.results || []) {
+        const method = ({cash:"نقدی",card:"کارت‌خوان",bank_transfer:"انتقال بانکی",other:"سایر"})[payment.payment_method] || "سایر";
+        lines.push("- " + safeNaviText(payment.customer_name||"",120) + " | " +
+          Number(payment.amount_toman||0).toLocaleString("en-US") + " تومان | تاریخ: " +
+          safeNaviText(payment.payment_date||"",20) + " | روش: " + method +
+          (payment.reference ? " | پیگیری: " + safeNaviText(payment.reference,80) : ""));
+      }
+    }
+  } catch (error) {
+    console.warn("[NAVA BUSINESS] Customer account context is not available.", error);
+    lines.push("", "اطلاعات حساب مشتریان فعلاً قابل خواندن نبود؛ مانده یا دریافتی را حدس نزن.");
+  }
+
   if (wantsInventory) {
     try {
       const movementRows = await db.prepare(
@@ -398,8 +440,8 @@ export async function loadNaviBusinessContext(db, ownerId, businessId, options =
   lines.push("- این داده‌ها از دیتابیس زنده و فقط از پرونده فعال همین مالک خوانده شده‌اند.");
   lines.push("- اگر اطلاعاتی در این زمینه وجود ندارد یا یک بخش بارگذاری نشده، صریح بگو در داده‌های فعلی موجود نیست؛ عدد، مشتری، سفارش یا رویدادی نساز.");
   lines.push("- پیش‌نویس سفارش فروش قطعی نیست و موجودی را کم نمی‌کند؛ فقط سفارش تأییدشده به تراکنش فروش تبدیل می‌شود.");
-  lines.push("- مبلغ سفارش تأییدشده لزوماً به معنی وجه وصول‌شده نیست؛ سیستم فعلی وضعیت پرداخت/دریافت، بدهی مشتری و مانده حساب را ثبت نمی‌کند.");
-  lines.push("- مجموع فروش/هزینه ثبت‌شده را با سود خالص، جریان نقدی، طلب یا بدهی اشتباه نگیر.");
+  lines.push("- فروش متصل به مشتری، فروش ثبت‌شده است؛ دریافت وجه فقط با ثبت جداگانه در حساب مشتری محاسبه می‌شود. پیش‌نویس سفارش فروش نیست.");
+  lines.push("- مجموع فروش/هزینه ثبت‌شده را با سود خالص یا مانده نقدی اشتباه نگیر؛ مانده حساب مشتری فقط از فروش‌های متصل به مشتری و دریافت‌های ثبت‌شده محاسبه می‌شود.");
   lines.push("- در پاسخ به درخواست تاریخچه کامل تراکنش‌ها، حداکثر ۱۰۰ رکورد اخیر در این زمینه بارگذاری می‌شود؛ اگر کاربر بازه‌ای قدیمی‌تر یا بیش از این تعداد خواست، محدودیت را شفاف بگو.");
   lines.push("- نشانی و یادداشت مشتریان فقط هنگام درخواست صریح برای این جزئیات در زمینه قرار می‌گیرد؛ اطلاعات تماس را بی‌دلیل در پاسخ بازگو نکن.");
   return (base + "\n" + lines.join("\n")).slice(0, 36000);
