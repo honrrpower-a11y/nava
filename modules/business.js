@@ -206,10 +206,15 @@ export async function loadNaviBusinessContext(db, ownerId, businessId, options =
   const userMessage = safeNaviText(options.message || "", 12000);
   const wantsCustomerDirectory = pageTab === "customers" ||
     /مشتری|مشتریان|مخاطب(?:ان)?/u.test(userMessage);
+  // A broad request for a customer's complete information explicitly includes
+  // contact fields and saved address/notes; do not require the user to list
+  // every field one by one.
+  const wantsAllCustomerDetails = wantsCustomerDirectory &&
+    /همه\s*(?:ی|ي)?\s*(?:اطلاعات|مشخصات)|تمام\s*(?:اطلاعات|مشخصات)|اطلاعات\s*کامل|مشخصات\s*کامل|پرونده\s*کامل/u.test(userMessage);
   const wantsCustomerContacts = wantsCustomerDirectory &&
-    /شماره|تلفن|موبایل|تماس|ایمیل|آدرس|نشانی/u.test(userMessage);
+    (wantsAllCustomerDetails || /شماره|تلفن|موبایل|تماس|ایمیل|آدرس|نشانی/u.test(userMessage));
   const wantsCustomerPrivateDetails = wantsCustomerDirectory &&
-    /نشانی|آدرس|یادداشت|توضیحات مشتری|جزئیات کامل/u.test(userMessage);
+    (wantsAllCustomerDetails || /نشانی|آدرس|یادداشت|توضیحات مشتری|جزئیات کامل/u.test(userMessage));
   const wantsOrders = pageTab === "orders" ||
     /سفارش|سفارش‌ها|سفارشات/u.test(userMessage);
   const wantsInventory = pageTab === "inventory" ||
