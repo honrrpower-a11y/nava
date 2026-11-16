@@ -173,7 +173,7 @@
         archive.dataset.action = "archive";
         archive.textContent = "بایگانی";
         archive.addEventListener("click", async () => {
-          if (!window.confirm("«" + item.name + "» بایگانی شود؟ اطلاعات آن حذف دائمی نمی‌شود.")) return;
+          if (!await window.navaConfirm("«" + item.name + "» بایگانی شود؟ اطلاعات آن حذف دائمی نمی‌شود.", { title: "بایگانی محصول یا خدمت", confirmText: "بایگانی" })) return;
           archive.disabled = true;
           try {
             await api("/" + encodeURIComponent(businessId()) + "/items/" + encodeURIComponent(item.id), "DELETE");
