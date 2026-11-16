@@ -3485,6 +3485,7 @@ async function sendMessageToNavi() {
         message: finalMessage,
         page: document.querySelector(".page.active")?.id || "homePage",
         pageTab: document.querySelector("#bizPage .biz-tab.is-active")?.dataset.bizTab || "",
+        businessId: document.querySelector("#bizProfileSelect")?.value || localStorage.getItem("nava_business_active_id") || "",
         threadId: naviActiveThreadId,
         saveToMemory: saveThisMessageToMemory,
         history: naviHistory.slice(-NAVI_CONTEXT_MESSAGES)
