@@ -61,6 +61,7 @@ export function normalizeBusinessTransactionInput(input, partial = false) {
       value.unit_price_toman = n;
     }
   } else if (!partial) value.unit_price_toman = null;
+  if (value.transaction_type === "expense" && value.customer_id) return { error: "اتصال مشتری فقط برای فروش مجاز است." };
   if (value.transaction_type === "expense" && (value.quantity || value.unit_price_toman || value.catalog_item_id)) return { error: "برای ثبت هزینه، محصول، تعداد و قیمت واحد را انتخاب نکن." };
   if (value.transaction_type === "sale" && value.quantity && value.unit_price_toman && value.amount_toman !== undefined && value.amount_toman !== value.quantity * value.unit_price_toman) {
     return { error: "مبلغ کل فروش باید برابر تعداد ضربدر قیمت واحد باشد." };
