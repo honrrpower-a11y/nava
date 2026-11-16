@@ -184,3 +184,44 @@ test("business transaction partial updates accept only supplied valid fields", a
   assert.equal(result.value.amount_toman, 125000);
   assert.equal(result.value.transaction_date, undefined);
 });
+
+
+async function loadCustomerPaymentApi() {
+  let source = await readFile(new URL("../modules/business-payments.js", import.meta.url), "utf8");
+  source = source
+    .replace(/^import\\s+.*?;\\s*$/gm, "")
+    .replace(/\\bexport\\s+(?=(?:async\\s+)?function)/g, "");
+  source += "\\nglobalThis.__customerPaymentApi = { normalizeCustomerPaymentInput };";
+  const sandbox = {
+    console, JSON, Object, String, Number, Date, Set, RegExp,
+    safeNaviText(value, maxLength = 3000) {
+      return String(value ?? "").replace(/\\u0000/g, "").replace(/[\\u0001-\\u0008\\u000B\\u000C\\u000E-\\u001F]/g, "").trim().slice(0, maxLength);
+    }
+  };
+  vm.runInNewContext(source, sandbox);
+  return sandbox.__customerPaymentApi;
+}
+
+test("customer receipts validate customer, amount, date and payment method", async () => {
+  const api = await loadCustomerPaymentApi();
+  const customerId = "customer-12345678-1234-1234-1234-123456789012";
+  const result = api.normalizeCustomerPaymentInput({
+    customerId, amountToman: 250000, paymentDate: "2026-11-16",
+    paymentMethod: "bank_transfer", reference: "TRACK-1", notes: "پرداخت بخشی"
+  });
+  assert.equal(result.value.customer_id, customerId);
+  assert.equal(result.value.amount_toman, 250000);
+  assert.equal(result.value.payment_method, "bank_transfer");
+  assert.match(api.normalizeCustomerPaymentInput({
+    customerId, amountToman: 0, paymentDate: "2026-11-16", paymentMethod: "cash"
+  }).error, /مبلغ/);
+  assert.match(api.normalizeCustomerPaymentInput({
+    customerId, amountToman: 100, paymentDate: "2026-02-30", paymentMethod: "cash"
+  }).error, /تاریخ/);
+  assert.match(api.normalizeCustomerPaymentInput({
+    customerId, amountToman: 100, paymentDate: "2026-11-16", paymentMethod: "crypto"
+  }).error, /روش دریافت/);
+  assert.match(api.normalizeCustomerPaymentInput({
+    customerId: "bad-id", amountToman: 100, paymentDate: "2026-11-16", paymentMethod: "cash"
+  }).error, /مشتری/);
+});
