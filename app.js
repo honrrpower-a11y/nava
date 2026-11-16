@@ -1541,7 +1541,7 @@ function formatNaviMemoryDate(value) {
   }
 
   try {
-    return new Intl.DateTimeFormat("fa-IR", {
+    return new Intl.DateTimeFormat("fa-IR-u-ca-persian", {
       year: "numeric",
       month: "short",
       day: "numeric",
@@ -1549,7 +1549,7 @@ function formatNaviMemoryDate(value) {
       minute: "2-digit"
     }).format(date);
   } catch (error) {
-    return date.toLocaleString();
+    return date.toLocaleString("fa-IR-u-ca-persian");
   }
 }
 
