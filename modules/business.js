@@ -392,7 +392,7 @@ export async function loadNaviBusinessContext(db, ownerId, businessId, options =
     lines.push("- وجه دریافت‌شده از مشتریان: " + totalReceived.toLocaleString("en-US") + " تومان");
     lines.push("- مانده خالص حساب مشتریان: " + (totalSales-totalReceived).toLocaleString("en-US") + " تومان");
     if (wantsCustomerAccounts) {
-      lines.push("جزئیات حساب مشتریان (حداکثر ۱۰۰ پرونده فعال):");
+      lines.push("جزئیات حساب مشتریان (حداکثر ۱۰۰ پرونده، شامل بایگانی‌شده‌ها):");
       for (const row of accounts) {
         const sales = Number(row.sales_toman||0), received = Number(row.received_toman||0);
         lines.push("- " + safeNaviText(row.name||"",120) + (row.status === "archived" ? " (بایگانی‌شده)" : "") + " | فروش: " + sales.toLocaleString("en-US") +
