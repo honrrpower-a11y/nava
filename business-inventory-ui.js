@@ -235,7 +235,8 @@
     const quantity = parseInteger($("bizInventoryQuantity").value);
     const movementType = $("bizInventoryMovementType").value;
     const movementDate = $("bizInventoryDate").value;
-    if (!id) { say("ابتدا از بخش «کسب‌وکارهای من» در بالای صفحه یک پرونده کسب‌وکار انتخاب کن.", "error"); return; }\n    if (!itemId) { say("حالا محصول دارای کنترل موجودی را از فهرست انتخاب کن.", "error"); return; }
+    if (!id) { say("ابتدا از بخش «کسب‌وکارهای من» در بالای صفحه یک پرونده کسب‌وکار انتخاب کن.", "error"); return; }
+    if (!itemId) { say("حالا محصول دارای کنترل موجودی را از فهرست انتخاب کن.", "error"); return; }
     if (quantity === null || quantity <= 0 || !movementDate) { say("تعداد و تاریخ را درست وارد کن.", "error"); return; }
     const submit = $("bizInventorySubmit");
     submit.disabled = true;
