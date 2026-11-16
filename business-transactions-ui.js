@@ -508,7 +508,7 @@
         notes: $("bizTransactionNotes").value.trim(),
         ...(transactionType === "sale" && catalogSelect?.value ? {
           catalogItemId: catalogSelect.value,
-          quantity: Number(normalizeDigits(quantityInput.value)),
+          quantity: normalizeDigits(quantityInput.value).trim() ? Number(normalizeDigits(quantityInput.value).trim()) : 1,
           unitPriceToman: Number(normalizeDigits(unitPriceInput.value))
         } : {})
       });
