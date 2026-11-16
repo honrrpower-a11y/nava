@@ -270,7 +270,7 @@ async function loadBusinessLedgerBootstrap() {
   source = source
     .replace(/^import\s+.*?;\s*$/gm, "")
     .replace(/\bexport\s+(?=(?:async\s+)?function)/g, "");
-  source += "\nglobalThis.__ledgerBootstrap = { ensureBusinessCashLedger };";
+  source += "\nglobalThis.__ledgerBootstrap = { ensureBusinessCashLedger, normalizeBusinessPurchaseInput };";
   const sandbox = {
     console, JSON, Object, String, Number, Date, Set, RegExp,
     crypto: { randomUUID: () => "12345678-1234-1234-1234-123456789012" },
@@ -282,6 +282,38 @@ async function loadBusinessLedgerBootstrap() {
   vm.runInNewContext(source, sandbox);
   return sandbox.__ledgerBootstrap;
 }
+
+test("integrated supplier purchases validate stock quantity, total and optional payment", async () => {
+  const api = await loadBusinessLedgerBootstrap();
+  const supplierId = "supplier-12345678-1234-1234-1234-123456789012";
+  const itemId = "item-12345678-1234-1234-1234-123456789012";
+  const cashAccountId = "cash-12345678-1234-1234-1234-123456789012";
+  const purchase = api.normalizeBusinessPurchaseInput({
+    supplierId, itemId, quantity: 12, unitPriceToman: 45000,
+    purchaseDate: "2026-11-16", paidAmountToman: 200000,
+    cashAccountId, paymentMethod: "bank_transfer"
+  });
+  assert.equal(purchase.value.total_toman, 540000);
+  assert.equal(purchase.value.paid_amount_toman, 200000);
+  assert.equal(purchase.value.cash_account_id, cashAccountId);
+  const unpaid = api.normalizeBusinessPurchaseInput({
+    supplierId, itemId, quantity: 2, unitPriceToman: 1000,
+    purchaseDate: "2026-11-16", paidAmountToman: 0
+  });
+  assert.equal(unpaid.value.balance_toman, undefined);
+  assert.equal(unpaid.value.cash_account_id, null);
+  assert.match(api.normalizeBusinessPurchaseInput({
+    supplierId, itemId, quantity: 0, unitPriceToman: 1000, purchaseDate: "2026-11-16"
+  }).error, /تعداد/);
+  assert.match(api.normalizeBusinessPurchaseInput({
+    supplierId, itemId, quantity: 2, unitPriceToman: 1000,
+    purchaseDate: "2026-11-16", paidAmountToman: 3000
+  }).error, /بین صفر و مبلغ کل/);
+  assert.match(api.normalizeBusinessPurchaseInput({
+    supplierId, itemId, quantity: 2, unitPriceToman: 1000,
+    purchaseDate: "2026-11-16", paidAmountToman: 100
+  }).error, /حساب مالی/);
+});
 
 test("cash ledger bootstrap idempotently seeds the primary account and imports old receipts", async () => {
   const api = await loadBusinessLedgerBootstrap();
