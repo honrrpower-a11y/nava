@@ -33,6 +33,12 @@ export function normalizeBusinessTransactionInput(input, partial = false) {
   }
   if (!partial || Object.hasOwn(input, "category")) value.category = clean(input.category || "", 80);
   if (!partial || Object.hasOwn(input, "notes")) value.notes = clean(input.notes || "", 1200);
+  if (Object.hasOwn(input, "customerId")) {
+    const customerId = String(input.customerId || "").trim();
+    if (!customerId) value.customer_id = null;
+    else if (!/^customer-[0-9a-f-]{36}$/i.test(customerId)) return { error: "شناسه مشتری معتبر نیست." };
+    else value.customer_id = customerId;
+  } else if (!partial) value.customer_id = null;
   if (Object.hasOwn(input, "catalogItemId")) {
     const itemId = String(input.catalogItemId || "").trim();
     if (!itemId) value.catalog_item_id = null;
@@ -65,7 +71,7 @@ export function normalizeBusinessTransactionInput(input, partial = false) {
 
 function publicTransaction(row) {
   return {
-    id: row.id, transactionType: row.transaction_type, title: row.title, catalogItemId: row.catalog_item_id || null,
+    id: row.id, transactionType: row.transaction_type, title: row.title, catalogItemId: row.catalog_item_id || null, customerId: row.customer_id || null,
     amountToman: Number(row.amount_toman), transactionDate: row.transaction_date,
     category: row.category || "", notes: row.notes || "",
     quantity: row.quantity == null ? null : Number(row.quantity),
@@ -105,7 +111,7 @@ export async function handleBusinessTransactionRoute({ request, env, url, corsOr
       const dateClause = (from ? " AND transaction_date >= ?" : "") + (to ? " AND transaction_date <= ?" : "");
       const dateParams = [businessId, ownerId, ...(from ? [from] : []), ...(to ? [to] : [])];
       const result = await env.NAVA_DB.prepare(
-        "SELECT id, transaction_type, title, amount_toman, transaction_date, category, notes, quantity, unit_price_toman, catalog_item_id, created_at, updated_at FROM business_transactions_v1 WHERE business_id = ? AND owner_id = ?" + dateClause + " ORDER BY transaction_date DESC, created_at DESC LIMIT ? OFFSET ?"
+        "SELECT id, transaction_type, title, amount_toman, transaction_date, category, notes, quantity, unit_price_toman, catalog_item_id, customer_id, created_at, updated_at FROM business_transactions_v1 WHERE business_id = ? AND owner_id = ?" + dateClause + " ORDER BY transaction_date DESC, created_at DESC LIMIT ? OFFSET ?"
       ).bind(...dateParams, limit, offset).all();
       const totals = await env.NAVA_DB.prepare(
         "SELECT COUNT(CASE WHEN transaction_type = 'sale' THEN 1 END) AS sales_count, COUNT(CASE WHEN transaction_type = 'expense' THEN 1 END) AS expenses_count, COALESCE(SUM(CASE WHEN transaction_type = 'sale' THEN amount_toman ELSE 0 END), 0) AS sales_toman, COALESCE(SUM(CASE WHEN transaction_type = 'expense' THEN amount_toman ELSE 0 END), 0) AS expenses_toman, COUNT(*) AS transaction_count FROM business_transactions_v1 WHERE business_id = ? AND owner_id = ?" + dateClause
@@ -145,6 +151,13 @@ export async function handleBusinessTransactionRoute({ request, env, url, corsOr
         if (!item) return fail("محصول یا خدمت انتخاب‌شده فعال نیست یا به این پرونده تعلق ندارد.", 404, corsOrigin);
         if (Number(item.track_inventory) === 1 && item.item_type !== "product") return fail("مدیریت موجودی فقط برای محصولات فیزیکی مجاز است.", 409, corsOrigin);
       }
+      if (v.customer_id) {
+        if (v.transaction_type !== "sale") return fail("اتصال مشتری فقط برای فروش مجاز است.", 400, corsOrigin);
+        const customer = await env.NAVA_DB.prepare(
+          "SELECT id FROM business_customers_v1 WHERE id = ? AND business_id = ? AND owner_id = ? AND status = 'active' LIMIT 1"
+        ).bind(v.customer_id, businessId, ownerId).first();
+        if (!customer) return fail("مشتری انتخاب‌شده فعال نیست یا به این پرونده تعلق ندارد.", 404, corsOrigin);
+      }
       const id = "txn-" + crypto.randomUUID();
       let inventoryTracked = false;
       if (v.catalog_item_id) {
@@ -162,10 +175,10 @@ export async function handleBusinessTransactionRoute({ request, env, url, corsOr
             "WHERE (SELECT COALESCE(SUM(quantity_delta), 0) FROM business_inventory_movements_v1 WHERE catalog_item_id = ? AND business_id = ? AND owner_id = ?) >= ?"
           ).bind(movementId, businessId, ownerId, v.catalog_item_id, -v.quantity, v.transaction_date, "خروج خودکار بابت فروش: " + v.title, id, v.catalog_item_id, businessId, ownerId, v.quantity),
           env.NAVA_DB.prepare(
-            "INSERT INTO business_transactions_v1 (id, business_id, owner_id, transaction_type, title, amount_toman, transaction_date, category, notes, quantity, unit_price_toman, catalog_item_id, created_at, updated_at) " +
-            "SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now') " +
+            "INSERT INTO business_transactions_v1 (id, business_id, owner_id, transaction_type, title, amount_toman, transaction_date, category, notes, quantity, unit_price_toman, catalog_item_id, customer_id, created_at, updated_at) " +
+            "SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now') " +
             "WHERE EXISTS (SELECT 1 FROM business_inventory_movements_v1 WHERE id = ? AND reference_transaction_id = ?)"
-          ).bind(id, businessId, ownerId, v.transaction_type, v.title, v.amount_toman, v.transaction_date, v.category, v.notes, v.quantity, v.unit_price_toman, v.catalog_item_id, movementId, id)
+          ).bind(id, businessId, ownerId, v.transaction_type, v.title, v.amount_toman, v.transaction_date, v.category, v.notes, v.quantity, v.unit_price_toman, v.catalog_item_id, v.customer_id, movementId, id)
         ]);
         if (Number(results?.[0]?.meta?.changes || 0) !== 1) {
           return fail("موجودی این محصول کافی نیست؛ فروش ثبت نشد و موجودی تغییری نکرد.", 409, corsOrigin);
@@ -173,12 +186,12 @@ export async function handleBusinessTransactionRoute({ request, env, url, corsOr
         if (Number(results?.[1]?.meta?.changes || 0) !== 1) throw new Error("Inventory-linked transaction insert not confirmed");
       } else {
         const result = await env.NAVA_DB.prepare(
-          "INSERT INTO business_transactions_v1 (id, business_id, owner_id, transaction_type, title, amount_toman, transaction_date, category, notes, quantity, unit_price_toman, catalog_item_id, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))"
-        ).bind(id, businessId, ownerId, v.transaction_type, v.title, v.amount_toman, v.transaction_date, v.category, v.notes, v.quantity, v.unit_price_toman, v.catalog_item_id).run();
+          "INSERT INTO business_transactions_v1 (id, business_id, owner_id, transaction_type, title, amount_toman, transaction_date, category, notes, quantity, unit_price_toman, catalog_item_id, customer_id, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))"
+        ).bind(id, businessId, ownerId, v.transaction_type, v.title, v.amount_toman, v.transaction_date, v.category, v.notes, v.quantity, v.unit_price_toman, v.catalog_item_id, v.customer_id).run();
         if (!result.success || Number(result.meta?.changes || 0) !== 1) throw new Error("Transaction insert not confirmed");
       }
       const row = await env.NAVA_DB.prepare(
-        "SELECT id, transaction_type, title, amount_toman, transaction_date, category, notes, quantity, unit_price_toman, catalog_item_id, created_at, updated_at FROM business_transactions_v1 WHERE id = ? AND owner_id = ?"
+        "SELECT id, transaction_type, title, amount_toman, transaction_date, category, notes, quantity, unit_price_toman, catalog_item_id, customer_id, created_at, updated_at FROM business_transactions_v1 WHERE id = ? AND owner_id = ?"
       ).bind(id, ownerId).first();
       return reply({ transaction: publicTransaction(row), saved: true }, 201, corsOrigin);
     }
@@ -188,7 +201,7 @@ export async function handleBusinessTransactionRoute({ request, env, url, corsOr
       const normalized = normalizeBusinessTransactionInput(input, true);
       if (normalized.error) return fail(normalized.error, 400, corsOrigin);
       const current = await env.NAVA_DB.prepare(
-        "SELECT transaction_type, title, amount_toman, transaction_date, category, notes, quantity, unit_price_toman, catalog_item_id FROM business_transactions_v1 WHERE id = ? AND business_id = ? AND owner_id = ?"
+        "SELECT transaction_type, title, amount_toman, transaction_date, category, notes, quantity, unit_price_toman, catalog_item_id, customer_id FROM business_transactions_v1 WHERE id = ? AND business_id = ? AND owner_id = ?"
       ).bind(transactionId, businessId, ownerId).first();
       if (!current) return fail("تراکنش پیدا نشد.", 404, corsOrigin);
       if (current.catalog_item_id) {
