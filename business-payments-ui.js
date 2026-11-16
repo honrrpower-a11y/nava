@@ -8,6 +8,7 @@
   const API = "https://nava-music-api.honrrpower.workers.dev/businesses";
   const numberFormat = new Intl.NumberFormat("fa-IR", { maximumFractionDigits: 0 });
   let invoiceCache = [];
+  let cashAccounts = [];
   const digits = value => String(value ?? "")
     .replace(/[۰-۹]/g, d => String("۰۱۲۳۴۵۶۷۸۹".indexOf(d)))
     .replace(/[٠-٩]/g, d => String("٠١٢٣٤٥٦٧٨٩".indexOf(d)))
@@ -120,6 +121,19 @@
       body.append(row);
     });
   }
+  function renderCashAccountOptions() {
+    const select = $("bizPaymentCashAccount");
+    if (!select) return;
+    const selected = select.value;
+    select.replaceChildren(el("option", "", "انتخاب حساب دریافت"));
+    select.options[0].value = "";
+    cashAccounts.filter(account => account.status === "active").forEach(account => {
+      const option = el("option", "", account.name + " · مانده " + money(account.balanceToman));
+      option.value = account.id;
+      select.append(option);
+    });
+    if (cashAccounts.some(account => account.id === selected && account.status === "active")) select.value = selected;
+  }
   function renderInvoiceOptions() {
     const select = $("bizPaymentInvoice");
     if (!select) return;
@@ -179,11 +193,13 @@
   async function load() {
     if (!businessId()) { say("ابتدا یک پرونده کسب‌وکار انتخاب کن.", true); return; }
     try {
-      const [accountData, paymentData, customerData, invoiceData] = await Promise.all([
-        api("/accounts"), api("/payments"), api("/customers?status=active"), api("/invoices")
+      const [accountData, paymentData, customerData, invoiceData, cashData] = await Promise.all([
+        api("/accounts"), api("/payments"), api("/customers?status=active"), api("/invoices"), api("/cash-accounts")
       ]);
       renderSummary(accountData.totals || {});
       renderAccounts(accountData.accounts || []);
+      cashAccounts = cashData.accounts || [];
+      renderCashAccountOptions();
       renderPayments(paymentData.payments || []);
       invoiceCache = invoiceData.invoices || [];
       const select = $("bizPaymentCustomer");
@@ -215,6 +231,7 @@
       await api("/payments", "POST", {
         customerId: $("bizPaymentCustomer").value,
         invoiceId: $("bizPaymentInvoice").value || null,
+        cashAccountId: $("bizPaymentCashAccount").value || null,
         amountToman: amount,
         paymentDate,
         paymentMethod: $("bizPaymentMethod").value,
