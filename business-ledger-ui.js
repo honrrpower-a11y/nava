@@ -147,6 +147,7 @@
         paymentMethod:$("bizPurchasePaymentMethod").value,reference:$("bizPurchaseReference").value.trim(),notes:$("bizPurchaseNotes").value.trim()
       });
       $("bizPurchaseForm").reset();$("bizPurchasePaidAmount").value="0";purchaseDatePicker.set(today());updatePurchaseTotal();
+      window.dispatchEvent(new CustomEvent("nava:business-purchase-updated"));
       await load();say("bizPurchaseStatus","خرید ثبت شد؛ موجودی انبار افزایش یافت و بدهی و پرداخت در دفتر مالی به‌روزرسانی شد.");
     }catch(error){say("bizPurchaseStatus",error.message,true);}finally{button.disabled=false;}
   });
@@ -154,7 +155,7 @@
   $("bizPurchasePaidAmount")?.addEventListener("input",event=>{event.target.value=digits(event.target.value);});
   $("bizSupplierForm")?.addEventListener("submit",async event=>{
     event.preventDefault();const button=$("bizSupplierSubmit");button.disabled=true;
-    try{await api("/suppliers","POST",{name:$("bizSupplierName").value.trim(),phone:$("bizSupplierPhone").value.trim()});$("bizSupplierForm").reset();await load();say("bizSupplierStatus","تأمین‌کننده ثبت شد.");}
+    try{await api("/suppliers","POST",{name:$("bizSupplierName").value.trim(),phone:$("bizSupplierPhone").value.trim()});$("bizSupplierForm").reset();window.dispatchEvent(new CustomEvent("nava:business-suppliers-updated"));await load();say("bizSupplierStatus","تأمین‌کننده ثبت شد.");}
     catch(error){say("bizSupplierStatus",error.message,true);}finally{button.disabled=false;}
   });
   $("bizCashAccountForm")?.addEventListener("submit",async event=>{
