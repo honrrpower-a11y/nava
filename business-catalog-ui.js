@@ -61,6 +61,8 @@
     $("bizCatalogItemId").value = "";
     $("bizCatalogItemType").value = "product";
     $("bizCatalogUnit").value = "عدد";
+    $("bizCatalogTrackInventory").checked = true;
+    $("bizCatalogTrackInventory").disabled = false;
     $("bizCatalogSalePrice").value = "";
     $("bizCatalogSubmit").textContent = "ثبت در کاتالوگ";
     $("bizCatalogFormStep").textContent = "ثبت مورد جدید";
@@ -70,6 +72,8 @@
   function editItem(item) {
     $("bizCatalogItemId").value = item.id;
     $("bizCatalogItemType").value = item.itemType;
+    $("bizCatalogTrackInventory").checked = Boolean(item.trackInventory);
+    $("bizCatalogTrackInventory").disabled = item.itemType !== "product";
     $("bizCatalogName").value = item.name;
     $("bizCatalogSku").value = item.sku;
     $("bizCatalogCategory").value = item.category;
@@ -122,7 +126,8 @@
         item.sku ? "کد: " + item.sku : "",
         item.category,
         "واحد: " + item.unit,
-        item.status === "archived" ? "بایگانی‌شده" : "فعال"
+        item.status === "archived" ? "بایگانی‌شده" : "فعال",
+        item.itemType === "product" && item.trackInventory ? "کنترل موجودی فعال" : ""
       ].filter(Boolean);
       for (const value of chips) {
         const chip = document.createElement("span");
@@ -224,6 +229,7 @@
     }
     const body = {
       itemType: $("bizCatalogItemType").value,
+      trackInventory: $("bizCatalogItemType").value === "product" && $("bizCatalogTrackInventory").checked,
       name,
       sku: $("bizCatalogSku").value.trim(),
       category: $("bizCatalogCategory").value.trim(),
@@ -259,6 +265,14 @@
   $("bizCatalogTypeFilter").addEventListener("change", render);
   $("bizCatalogStatusFilter").addEventListener("change", render);
   $("bizCatalogItemType").addEventListener("change", () => {
+    const tracking = $("bizCatalogTrackInventory");
+    if ($("bizCatalogItemType").value === "service") {
+      tracking.checked = false;
+      tracking.disabled = true;
+    } else {
+      tracking.disabled = false;
+      if (!tracking.checked) tracking.checked = true;
+    }
     const unit = $("bizCatalogUnit");
     if (!unit.value || unit.value === "عدد" || unit.value === "خدمت") {
       unit.value = $("bizCatalogItemType").value === "service" ? "خدمت" : "عدد";
