@@ -208,10 +208,17 @@ export async function loadNaviBusinessContext(db, ownerId, businessId, options =
     /مشتری|مشتریان|مخاطب(?:ان)?/u.test(userMessage);
   const wantsCustomerContacts = wantsCustomerDirectory &&
     /شماره|تلفن|موبایل|تماس|ایمیل|آدرس|نشانی/u.test(userMessage);
+  const wantsCustomerPrivateDetails = wantsCustomerDirectory &&
+    /نشانی|آدرس|یادداشت|توضیحات مشتری|جزئیات کامل/u.test(userMessage);
   const wantsOrders = pageTab === "orders" ||
     /سفارش|سفارش‌ها|سفارشات/u.test(userMessage);
   const wantsInventory = pageTab === "inventory" ||
     /موجودی|انبار|ورود کالا|خروج کالا|گردش انبار/u.test(userMessage);
+  const wantsFullTransactionHistory =
+    pageTab === "transactions" &&
+      /همه|تمام|تاریخچه|جزئیات|فهرست/u.test(userMessage) ||
+    /همه تراکنش|تمام تراکنش|تاریخچه تراکنش|ریز تراکنش|فهرست تراکنش/u.test(userMessage);
+  const transactionLimit = wantsFullTransactionHistory ? 100 : 30;
 
   const records = await db.prepare(
     "SELECT record_type, title, period_key, report_text, payload_json, created_at FROM business_financial_records_v1 WHERE business_id = ? AND owner_id = ? ORDER BY created_at DESC LIMIT 8"
@@ -221,8 +228,8 @@ export async function loadNaviBusinessContext(db, ownerId, businessId, options =
   let transactionTotals = null;
   try {
     transactions = await db.prepare(
-      "SELECT transaction_type, title, amount_toman, transaction_date, category, notes FROM business_transactions_v1 WHERE business_id = ? AND owner_id = ? ORDER BY transaction_date DESC, created_at DESC LIMIT 30"
-    ).bind(businessId, ownerId).all();
+      "SELECT transaction_type, title, amount_toman, transaction_date, category, notes FROM business_transactions_v1 WHERE business_id = ? AND owner_id = ? ORDER BY transaction_date DESC, created_at DESC LIMIT ?"
+    ).bind(businessId, ownerId, transactionLimit).all();
     transactionTotals = await db.prepare(
       "SELECT COUNT(*) AS transaction_count, " +
       "COALESCE(SUM(CASE WHEN transaction_type='sale' THEN amount_toman ELSE 0 END),0) AS all_time_sales, " +
@@ -249,7 +256,7 @@ export async function loadNaviBusinessContext(db, ownerId, businessId, options =
   let recentExpenses = 0;
   const lines = [
     "وضعیت زنده پرونده در زمان همین درخواست (واحد پول همه مبالغ: تومان):",
-    "تراکنش‌های واقعی ثبت‌شده؛ جدیدترین حداکثر ۳۰ مورد:"
+    "تراکنش‌های واقعی ثبت‌شده؛ جدیدترین حداکثر " + transactionLimit + " مورد:"
   ];
   for (const item of transactions.results || []) {
     const amount = Number(item.amount_toman || 0);
@@ -302,16 +309,18 @@ export async function loadNaviBusinessContext(db, ownerId, businessId, options =
     lines.push("- مشتریان بایگانی‌شده: " + Number(customerCounts?.archived || 0).toLocaleString("en-US"));
     if (wantsCustomerDirectory) {
       const customerRows = await db.prepare(
-        "SELECT name, phone, email, status, created_at FROM business_customers_v1 WHERE business_id=? AND owner_id=? ORDER BY CASE WHEN status='active' THEN 0 ELSE 1 END,name COLLATE NOCASE LIMIT 100"
+        "SELECT name, phone, email, address, notes, status, created_at FROM business_customers_v1 WHERE business_id=? AND owner_id=? ORDER BY CASE WHEN status='active' THEN 0 ELSE 1 END,name COLLATE NOCASE LIMIT 100"
       ).bind(businessId, ownerId).all();
       lines.push("فهرست مشتریان (حداکثر ۱۰۰ پرونده):");
       for (const customer of customerRows.results || []) {
         lines.push("- " + safeNaviText(customer.name || "", 120) +
           " | وضعیت: " + (customer.status === "active" ? "فعال" : "بایگانی‌شده") +
-          (wantsCustomerContacts ? " | تلفن: " + safeNaviText(customer.phone || "ثبت نشده", 40) + " | ایمیل: " + safeNaviText(customer.email || "ثبت نشده", 160) : ""));
+          (wantsCustomerContacts ? " | تلفن: " + safeNaviText(customer.phone || "ثبت نشده", 40) + " | ایمیل: " + safeNaviText(customer.email || "ثبت نشده", 160) : "") +
+          (wantsCustomerPrivateDetails ? " | نشانی: " + safeNaviText(customer.address || "ثبت نشده", 240) + " | یادداشت: " + safeNaviText(customer.notes || "ثبت نشده", 500) : ""));
       }
       if (!(customerRows.results || []).length) lines.push("هنوز مشتری‌ای در این پرونده ثبت نشده است.");
       if (!wantsCustomerContacts) lines.push("برای حفظ حداقل‌گرایی داده، جزئیات تماس مشتریان در این پاسخ بارگذاری نشده است.");
+      if (!wantsCustomerPrivateDetails) lines.push("نشانی و یادداشت خصوصی مشتریان فقط در صورت درخواست صریح کاربر بارگذاری می‌شود.");
     }
   } catch (error) {
     console.warn("[NAVA BUSINESS] CRM customer context is not available.", error);
@@ -383,6 +392,8 @@ export async function loadNaviBusinessContext(db, ownerId, businessId, options =
   lines.push("- پیش‌نویس سفارش فروش قطعی نیست و موجودی را کم نمی‌کند؛ فقط سفارش تأییدشده به تراکنش فروش تبدیل می‌شود.");
   lines.push("- مبلغ سفارش تأییدشده لزوماً به معنی وجه وصول‌شده نیست؛ سیستم فعلی وضعیت پرداخت/دریافت، بدهی مشتری و مانده حساب را ثبت نمی‌کند.");
   lines.push("- مجموع فروش/هزینه ثبت‌شده را با سود خالص، جریان نقدی، طلب یا بدهی اشتباه نگیر.");
+  lines.push("- در پاسخ به درخواست تاریخچه کامل تراکنش‌ها، حداکثر ۱۰۰ رکورد اخیر در این زمینه بارگذاری می‌شود؛ اگر کاربر بازه‌ای قدیمی‌تر یا بیش از این تعداد خواست، محدودیت را شفاف بگو.");
+  lines.push("- نشانی و یادداشت مشتریان فقط هنگام درخواست صریح برای این جزئیات در زمینه قرار می‌گیرد؛ اطلاعات تماس را بی‌دلیل در پاسخ بازگو نکن.");
   return (base + "\n" + lines.join("\n")).slice(0, 36000);
 }
 
