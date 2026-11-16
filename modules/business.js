@@ -206,11 +206,13 @@ export async function loadNaviBusinessContext(db, ownerId, businessId, options =
   const userMessage = safeNaviText(options.message || "", 12000);
   const wantsCustomerDirectory = pageTab === "customers" ||
     /مشتری|مشتریان|مخاطب(?:ان)?/u.test(userMessage);
-  // A broad request for a customer's complete information explicitly includes
-  // contact fields and saved address/notes; do not require the user to list
-  // every field one by one.
-  const wantsAllCustomerDetails = wantsCustomerDirectory &&
-    /همه\s*(?:ی|ي)?\s*(?:اطلاعات|مشخصات)|تمام\s*(?:اطلاعات|مشخصات)|اطلاعات\s*کامل|مشخصات\s*کامل|پرونده\s*کامل/u.test(userMessage);
+  // Customer profile requests are often phrased as "مشخصات مشتری X"
+  // rather than naming each field. Treat these as explicit requests for the
+  // complete saved profile, including contact details and address.
+  const wantsAllCustomerDetails = wantsCustomerDirectory && (
+    pageTab === "customers" ||
+    /همه\s*(?:ی|ي)?\s*(?:اطلاعات|مشخصات)|تمام\s*(?:اطلاعات|مشخصات)|اطلاعات\s*کامل|مشخصات\s*کامل|پرونده\s*کامل|(?:اطلاعات|مشخصات)\s*(?:کامل\s*)?مشتری|مشتری\s*(?:با\s*)?(?:اطلاعات|مشخصات)/u.test(userMessage)
+  );
   const wantsCustomerContacts = wantsCustomerDirectory &&
     (wantsAllCustomerDetails || /شماره|تلفن|موبایل|تماس|ایمیل|آدرس|نشانی/u.test(userMessage));
   const wantsCustomerPrivateDetails = wantsCustomerDirectory &&
