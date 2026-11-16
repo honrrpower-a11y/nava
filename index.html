@@ -646,13 +646,18 @@
               </form>
               <p class="biz-profile-status" id="bizPaymentStatus" role="status" aria-live="polite">برای ثبت دریافت وجه، پرونده و مشتری را انتخاب کن.</p>
             </section>
-            <section class="biz-account-card">
-              <h3>مانده حساب مشتریان</h3>
-              <div class="biz-account-table-wrap"><table class="biz-account-table"><thead><tr><th>مشتری</th><th>فروش</th><th>دریافتی</th><th>مانده</th></tr></thead><tbody id="bizAccountRows"><tr><td colspan="4">هنوز داده‌ای بارگذاری نشده است.</td></tr></tbody></table></div>
-              <p class="biz-form-note">مانده مثبت یعنی مشتری بدهکار است؛ مانده منفی یعنی اعتبار/بستانکاری مشتری. فروش‌های قدیمی بدون اتصال به مشتری در این محاسبه وارد نمی‌شوند.</p>
-            </section>
+            <details class="biz-account-card biz-account-disclosure">
+              <summary class="biz-account-disclosure-head"><span><strong>مانده حساب مشتریان</strong><small>برای دیدن فهرست مشتریان و مبلغ فروش، دریافتی و مانده هرکدام باز کن</small></span><span class="biz-disclosure-indicator" aria-hidden="true">⌄</span></summary>
+              <div class="biz-account-disclosure-body">
+                <div class="biz-account-table-wrap"><table class="biz-account-table"><thead><tr><th>مشتری</th><th>فروش</th><th>دریافتی</th><th>مانده</th></tr></thead><tbody id="bizAccountRows"><tr><td colspan="4">هنوز داده‌ای بارگذاری نشده است.</td></tr></tbody></table></div>
+                <p class="biz-form-note">مانده مثبت یعنی مشتری بدهکار است؛ مانده منفی یعنی اعتبار/بستانکاری مشتری. فروش‌های قدیمی بدون اتصال به مشتری در این محاسبه وارد نمی‌شوند.</p>
+              </div>
+            </details>
           </div>
-          <section class="biz-account-card biz-payment-history"><h3>سوابق دریافت وجه</h3><div id="bizPaymentHistory" aria-live="polite">سوابق دریافت وجه پس از انتخاب پرونده نمایش داده می‌شوند.</div></section>
+          <details class="biz-account-card biz-payment-history biz-account-disclosure">
+            <summary class="biz-account-disclosure-head"><span><strong>سوابق دریافت وجه</strong><small>برای دیدن فهرست دریافت‌های ثبت‌شده باز کن</small></span><span class="biz-disclosure-indicator" aria-hidden="true">⌄</span></summary>
+            <div class="biz-account-disclosure-body"><div id="bizPaymentHistory" aria-live="polite">سوابق دریافت وجه پس از انتخاب پرونده نمایش داده می‌شوند.</div></div>
+          </details>
         </section>
       </section>
 <section class="biz-tab-panel" id="bizPanelCatalog" data-biz-panel="catalog" role="tabpanel" aria-labelledby="bizTabCatalog" hidden>
