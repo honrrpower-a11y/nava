@@ -10,6 +10,9 @@ on:
       - "business-financial-export.js"
       - "business-tabs.js"
       - "modules/business-transactions.js"
+      - "business-inventory-ui.js"
+      - "modules/business-inventory.js"
+      - "migrations/navi-production-reconcile/0008_business_inventory.sql"
       - "modules/business.js"
       - "migrations/navi-production-reconcile/0004_nava_business_foundation.sql"
       - "migrations/navi-production-reconcile/0005_business_transactions_toman.sql"
@@ -50,6 +53,8 @@ jobs:
           node --check business-financial-export.js
           node --check business-tabs.js
           node --check modules/business-transactions.js
+          node --check modules/business-inventory.js
+          node --check business-inventory-ui.js
           node --check modules/business.js
       - name: Run business calculator and API validation tests
         run: node --test tests/business-tools.test.mjs tests/business-api.test.mjs
