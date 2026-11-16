@@ -21,7 +21,7 @@ export function normalizeCustomerPaymentInput(input){
  if(!validDate(paymentDate))return{error:"تاریخ دریافت وجه معتبر نیست."};
  const method=String(input.paymentMethod||"");
  if(!METHODS.has(method))return{error:"روش دریافت وجه معتبر نیست."};
- return{value:{customer_id:customerId,amount_toman:amount,payment_date:paymentDate,payment_method:method,reference:clean(input.reference,120),notes:clean(input.notes,800)}};
+ const cashAccountId=String(input.cashAccountId||"").trim();\n if(cashAccountId&&!validId(cashAccountId,"cash"))return{error:"شناسه حساب مالی معتبر نیست."};\n return{value:{customer_id:customerId,cash_account_id:cashAccountId||null,amount_toman:amount,payment_date:paymentDate,payment_method:method,reference:clean(input.reference,120),notes:clean(input.notes,800)}};
 }
 function paymentOut(r){return{id:r.id,customerId:r.customer_id,customerName:r.customer_name||"",amountToman:Number(r.amount_toman),paymentDate:r.payment_date,paymentMethod:r.payment_method,reference:r.reference||"",notes:r.notes||"",status:r.status,createdAt:r.created_at};}
 async function owns(db,b,o){
@@ -56,16 +56,29 @@ export async function handleBusinessPaymentsRoute({request,env,url,corsOrigin,bu
    const n=normalizeCustomerPaymentInput(input);if(n.error)return fail(n.error,400,corsOrigin);
    const customer=await db.prepare("SELECT id FROM business_customers_v1 WHERE id=? AND business_id=? AND owner_id=? AND status='active' LIMIT 1").bind(n.value.customer_id,businessId,ownerId).first();
    if(!customer)return fail("مشتری فعال این پرونده پیدا نشد.",404,corsOrigin);
-   const id="payment-"+crypto.randomUUID(),v=n.value;
-   const result=await db.prepare("INSERT INTO business_customer_payments_v1(id,business_id,owner_id,customer_id,amount_toman,payment_date,payment_method,reference,notes,status,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,'received',datetime('now'),datetime('now'))").bind(id,businessId,ownerId,v.customer_id,v.amount_toman,v.payment_date,v.payment_method,v.reference,v.notes).run();
-   if(Number(result.meta?.changes||0)!==1)throw new Error("Payment insert not confirmed.");
+   const v=n.value;
+   const cashAccount=v.cash_account_id
+    ? await db.prepare("SELECT id FROM business_cash_accounts_v1 WHERE id=? AND business_id=? AND owner_id=? AND status='active'").bind(v.cash_account_id,businessId,ownerId).first()
+    : await db.prepare("SELECT id FROM business_cash_accounts_v1 WHERE business_id=? AND owner_id=? AND status='active' ORDER BY created_at,id LIMIT 1").bind(businessId,ownerId).first();
+   if(!cashAccount)return fail("حساب مالی فعالی برای ثبت دریافت وجود ندارد؛ ابتدا یک حساب بساز.",409,corsOrigin);
+   const id="payment-"+crypto.randomUUID(),moveId="cashmove-"+crypto.randomUUID();
+   const result=await db.batch([
+    db.prepare("INSERT INTO business_customer_payments_v1(id,business_id,owner_id,customer_id,amount_toman,payment_date,payment_method,reference,notes,status,created_at,updated_at,cash_account_id) VALUES(?,?,?,?,?,?,?,?,?,'received',datetime('now'),datetime('now'),?)").bind(id,businessId,ownerId,v.customer_id,v.amount_toman,v.payment_date,v.payment_method,v.reference,v.notes,cashAccount.id),
+    db.prepare("INSERT INTO business_cash_movements_v1(id,business_id,owner_id,cash_account_id,direction,amount_toman,movement_date,source_type,source_id,title,method,reference,notes,status,created_at) SELECT ?,?,?,?,'in',?,?,'customer_receipt',?,'دریافت از مشتری',?,?,?,'active',datetime('now') WHERE EXISTS(SELECT 1 FROM business_customer_payments_v1 WHERE id=? AND business_id=? AND owner_id=? AND status='received')").bind(moveId,businessId,ownerId,cashAccount.id,v.amount_toman,v.payment_date,id,v.payment_method,v.reference,v.notes,id,businessId,ownerId)
+   ]);
+   if(Number(result?.[0]?.meta?.changes||0)!==1)throw new Error("Payment insert not confirmed.");
+   if(Number(result?.[1]?.meta?.changes||0)!==1)throw new Error("Customer receipt cash movement not confirmed.");
    const row=await db.prepare("SELECT p.*,c.name AS customer_name FROM business_customer_payments_v1 p JOIN business_customers_v1 c ON c.id=p.customer_id WHERE p.id=? AND p.business_id=? AND p.owner_id=?").bind(id,businessId,ownerId).first();
-   return reply({payment:paymentOut(row),saved:true},201,corsOrigin);
+   return reply({payment:paymentOut(row),cashMovementId:moveId,saved:true},201,corsOrigin);
   }
   if(resourceId&&action==="void"&&request.method==="POST"){
    if(!validId(resourceId,"payment"))return fail("شناسه دریافت وجه معتبر نیست.",400,corsOrigin);
-   const result=await db.prepare("UPDATE business_customer_payments_v1 SET status='voided',updated_at=datetime('now') WHERE id=? AND business_id=? AND owner_id=? AND status='received'").bind(resourceId,businessId,ownerId).run();
-   if(Number(result.meta?.changes||0)!==1)return fail("دریافت وجه پیدا نشد یا قبلاً باطل شده است.",404,corsOrigin);
+   const result=await db.batch([
+    db.prepare("UPDATE business_customer_payments_v1 SET status='voided',updated_at=datetime('now') WHERE id=? AND business_id=? AND owner_id=? AND status='received'").bind(resourceId,businessId,ownerId),
+    db.prepare("UPDATE business_cash_movements_v1 SET status='voided' WHERE source_type='customer_receipt' AND source_id=? AND business_id=? AND owner_id=? AND status='active' AND EXISTS(SELECT 1 FROM business_customer_payments_v1 WHERE id=? AND business_id=? AND owner_id=? AND status='voided')").bind(resourceId,businessId,ownerId,resourceId,businessId,ownerId)
+   ]);
+   if(Number(result?.[0]?.meta?.changes||0)!==1)return fail("دریافت وجه پیدا نشد یا قبلاً باطل شده است.",404,corsOrigin);
+   if(Number(result?.[1]?.meta?.changes||0)!==1)throw new Error("Customer receipt cash reversal not confirmed.");
    return reply({voided:true,paymentId:resourceId},200,corsOrigin);
   }
   return fail("مسیر یا روش دریافت وجه پشتیبانی نمی‌شود.",405,corsOrigin);
