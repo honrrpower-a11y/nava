@@ -624,7 +624,7 @@
         </form>
         <p id="bizTransactionStatus" class="biz-profile-status" role="status" aria-live="polite">برای ثبت تراکنش، یک پرونده فعال انتخاب کن.</p>
         <div id="bizTransactionSummary" class="biz-transaction-summary"></div>
-        <div id="bizTransactionList" class="biz-transaction-list" aria-live="polite">تراکنش‌های پرونده پس از انتخاب آن نمایش داده می‌شوند.</div>
+        <details class="biz-account-card biz-account-disclosure biz-list-disclosure"><summary class="biz-account-disclosure-head"><span><strong>سوابق فروش و هزینه</strong><small>برای مشاهده و ویرایش تراکنش‌های ثبت‌شده باز کن</small></span><span class="biz-disclosure-indicator" aria-hidden="true">⌄</span></summary><div class="biz-account-disclosure-body"><div id="bizTransactionList" class="biz-transaction-list" aria-live="polite">تراکنش‌های پرونده پس از انتخاب آن نمایش داده می‌شوند.</div></div></details>
       </section>
       </section>
       
@@ -738,14 +738,8 @@
               <p class="biz-profile-status" id="bizCatalogStatus" role="status" aria-live="polite">ثبت مورد جدید به‌صورت پیش‌فرض فعال است. برای غیرفعال‌کردن، بعداً آن را بایگانی کن.</p>
             </form>
             <section class="biz-catalog-list-panel" aria-label="فهرست محصولات و خدمات">
-              <div class="biz-catalog-list-head">
-                <h3>فهرست کاتالوگ</h3>
-                <div class="biz-catalog-filters">
-                  <label>نوع <select id="bizCatalogTypeFilter"><option value="all">همه</option><option value="product">محصولات</option><option value="service">خدمات</option></select></label>
-                  <label>وضعیت <select id="bizCatalogStatusFilter"><option value="active">فعال</option><option value="archived">بایگانی‌شده</option><option value="all">همه</option></select></label>
-                </div>
-              </div>
-              <div id="bizCatalogList" class="biz-catalog-list" aria-live="polite">پس از انتخاب پرونده، فهرست اینجا نمایش داده می‌شود.</div>
+              <div class="biz-catalog-list-head"><h3>مدیریت کاتالوگ</h3><div class="biz-catalog-filters"><label>نوع <select id="bizCatalogTypeFilter"><option value="all">همه</option><option value="product">محصولات</option><option value="service">خدمات</option></select></label><label>وضعیت <select id="bizCatalogStatusFilter"><option value="active">فعال</option><option value="archived">بایگانی‌شده</option><option value="all">همه</option></select></label></div></div>
+              <details class="biz-account-card biz-account-disclosure biz-list-disclosure"><summary class="biz-account-disclosure-head"><span><strong>فهرست محصولات و خدمات</strong><small>برای مشاهده، ویرایش یا بایگانی موارد باز کن</small></span><span class="biz-disclosure-indicator" aria-hidden="true">⌄</span></summary><div class="biz-account-disclosure-body"><div id="bizCatalogList" class="biz-catalog-list" aria-live="polite">پس از انتخاب پرونده، فهرست اینجا نمایش داده می‌شود.</div></div></details>
             </section>
           </div>
           <p class="biz-catalog-note">کاتالوگ محصولات و خدمات به دفتر فروش، مدیریت موجودی، مشتریان و سفارش‌ها متصل است.</p>
@@ -786,8 +780,8 @@
               <p class="biz-profile-status" id="bizInventoryStatus" role="status" aria-live="polite">برای شروع، محصولی را در کاتالوگ با مدیریت موجودی فعال کن.</p>
             </form>
             <div class="biz-inventory-overview">
-              <section class="biz-catalog-list-panel"><div class="biz-catalog-list-head"><h3>موجودی فعلی</h3></div><div id="bizInventoryBalances" class="biz-inventory-balances">پس از انتخاب پرونده نمایش داده می‌شود.</div></section>
-              <section class="biz-catalog-list-panel"><div class="biz-catalog-list-head"><h3>آخرین گردش‌ها</h3></div><div id="bizInventoryMovements" class="biz-inventory-movements">هنوز گردش موجودی ثبت نشده است.</div></section>
+              <section class="biz-catalog-list-panel"><details class="biz-account-card biz-account-disclosure biz-list-disclosure"><summary class="biz-account-disclosure-head"><span><strong>موجودی فعلی</strong><small>برای مشاهده موجودی هر محصول باز کن</small></span><span class="biz-disclosure-indicator" aria-hidden="true">⌄</span></summary><div class="biz-account-disclosure-body"><div id="bizInventoryBalances" class="biz-inventory-balances">پس از انتخاب پرونده نمایش داده می‌شود.</div></div></details></section>
+              <section class="biz-catalog-list-panel"><details class="biz-account-card biz-account-disclosure biz-list-disclosure"><summary class="biz-account-disclosure-head"><span><strong>سوابق گردش انبار</strong><small>برای مشاهده ورود، خروج و اصلاح موجودی باز کن</small></span><span class="biz-disclosure-indicator" aria-hidden="true">⌄</span></summary><div class="biz-account-disclosure-body"><div id="bizInventoryMovements" class="biz-inventory-movements">هنوز گردش موجودی ثبت نشده است.</div></div></details></section>
             </div>
           </div>
           <p class="biz-catalog-note">هزینه‌های عادی در دفتر مالی به‌تنهایی موجودی انبار را افزایش نمی‌دهند. برای ورود کالا باید گردش «ورود کالا» ثبت شود.</p>
@@ -808,7 +802,7 @@
               <div class="biz-catalog-form-actions"><button class="btn-primary" id="bizCustomerSubmit" type="submit">ثبت مشتری</button><button class="btn-secondary" id="bizCustomerCancel" type="button" hidden>لغو ویرایش</button></div>
               <p class="biz-profile-status" id="bizCustomerStatus" role="status" aria-live="polite">برای شروع، یک پرونده کسب‌وکار انتخاب کن.</p>
             </form>
-            <section class="biz-catalog-list-panel"><div class="biz-catalog-list-head"><h3>فهرست مشتریان</h3></div><div id="bizCustomerList" class="biz-crm-list">پس از انتخاب پرونده نمایش داده می‌شود.</div></section>
+            <section class="biz-catalog-list-panel"><details class="biz-account-card biz-account-disclosure biz-list-disclosure"><summary class="biz-account-disclosure-head"><span><strong>فهرست مشتریان</strong><small>برای مشاهده و مدیریت اطلاعات مشتریان باز کن</small></span><span class="biz-disclosure-indicator" aria-hidden="true">⌄</span></summary><div class="biz-account-disclosure-body"><div id="bizCustomerList" class="biz-crm-list">پس از انتخاب پرونده نمایش داده می‌شود.</div></div></details></section>
           </div>
         </section>
       </section>
@@ -841,7 +835,7 @@
             <div class="biz-order-submit-row"><strong>جمع کل: <span id="bizOrderTotal">۰ تومان</span></strong><button class="btn-primary" id="bizOrderSubmit" type="submit">ذخیره پیش‌نویس سفارش</button></div>
             <p class="biz-profile-status" id="bizOrderStatus" role="status" aria-live="polite">پیش‌نویس سفارش موجودی را تغییر نمی‌دهد.</p>
           </form>
-          <section class="biz-catalog-list-panel"><div class="biz-catalog-list-head"><h3>فهرست سفارش‌ها</h3></div><div id="bizOrderList" class="biz-crm-list">پس از انتخاب پرونده نمایش داده می‌شود.</div></section>
+          <section class="biz-catalog-list-panel"><details class="biz-account-card biz-account-disclosure biz-list-disclosure"><summary class="biz-account-disclosure-head"><span><strong>فهرست سفارش‌ها</strong><small>برای مشاهده وضعیت، تأیید یا لغو سفارش‌ها باز کن</small></span><span class="biz-disclosure-indicator" aria-hidden="true">⌄</span></summary><div class="biz-account-disclosure-body"><div id="bizOrderList" class="biz-crm-list">پس از انتخاب پرونده نمایش داده می‌شود.</div></div></details></section>
         </section>
       </section>
       <section class="biz-tab-panel" id="bizPanelTools" data-biz-panel="tools" role="tabpanel" aria-labelledby="bizTabTools" hidden>
@@ -940,7 +934,7 @@
     <p class="biz-roadmap-note">ابزارهای مالی پایه اکنون شامل قیمت‌گذاری، نقطه سربه‌سر و بودجه ماهانه هستند. مدیریت فروش، موجودی و ذخیره امن سوابق کسب‌وکار در مراحل بعدی توسعه می‌یابند.</p>
       </section>
       <section class="biz-tab-panel" id="bizPanelReports" data-biz-panel="reports" role="tabpanel" aria-labelledby="bizTabReports" hidden>
-        <div class="biz-profile-recent" id="bizProfileRecent" aria-live="polite">سوابق مالی ذخیره‌شده پس از انتخاب پرونده اینجا نمایش داده می‌شوند.</div>
+        <details class="biz-account-card biz-account-disclosure biz-list-disclosure"><summary class="biz-account-disclosure-head"><span><strong>گزارش‌ها و سوابق ذخیره‌شده</strong><small>برای مشاهده گزارش‌های مالی این پرونده باز کن</small></span><span class="biz-disclosure-indicator" aria-hidden="true">⌄</span></summary><div class="biz-account-disclosure-body"><div class="biz-profile-recent" id="bizProfileRecent" aria-live="polite">سوابق مالی ذخیره‌شده پس از انتخاب پرونده اینجا نمایش داده می‌شوند.</div></div></details>
         <section class="biz-financial-export" aria-labelledby="bizFinancialExportTitle">
           <div class="biz-financial-export-heading">
             <div><h4 id="bizFinancialExportTitle">خروجی گزارش مالی</h4><p>گزارش رسمی ماهانه یا سالانه پرونده را دریافت کن.</p></div>
