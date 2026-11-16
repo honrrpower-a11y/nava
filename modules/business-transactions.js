@@ -140,15 +140,43 @@ export async function handleBusinessTransactionRoute({ request, env, url, corsOr
           return fail("برای ثبت فروش از کاتالوگ، تعداد و قیمت واحد را کامل کن.", 400, corsOrigin);
         }
         const item = await env.NAVA_DB.prepare(
-          "SELECT id FROM business_catalog_items_v1 WHERE id = ? AND business_id = ? AND owner_id = ? AND status = 'active' LIMIT 1"
+          "SELECT id, item_type, track_inventory FROM business_catalog_items_v1 WHERE id = ? AND business_id = ? AND owner_id = ? AND status = 'active' LIMIT 1"
         ).bind(v.catalog_item_id, businessId, ownerId).first();
         if (!item) return fail("محصول یا خدمت انتخاب‌شده فعال نیست یا به این پرونده تعلق ندارد.", 404, corsOrigin);
+        if (Number(item.track_inventory) === 1 && item.item_type !== "product") return fail("مدیریت موجودی فقط برای محصولات فیزیکی مجاز است.", 409, corsOrigin);
       }
       const id = "txn-" + crypto.randomUUID();
-      const result = await env.NAVA_DB.prepare(
-        "INSERT INTO business_transactions_v1 (id, business_id, owner_id, transaction_type, title, amount_toman, transaction_date, category, notes, quantity, unit_price_toman, catalog_item_id, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))"
-      ).bind(id, businessId, ownerId, v.transaction_type, v.title, v.amount_toman, v.transaction_date, v.category, v.notes, v.quantity, v.unit_price_toman, v.catalog_item_id).run();
-      if (!result.success || Number(result.meta?.changes || 0) !== 1) throw new Error("Transaction insert not confirmed");
+      let inventoryTracked = false;
+      if (v.catalog_item_id) {
+        const item = await env.NAVA_DB.prepare(
+          "SELECT item_type, track_inventory FROM business_catalog_items_v1 WHERE id = ? AND business_id = ? AND owner_id = ? AND status = 'active' LIMIT 1"
+        ).bind(v.catalog_item_id, businessId, ownerId).first();
+        inventoryTracked = Boolean(item && item.item_type === "product" && Number(item.track_inventory) === 1);
+      }
+      if (inventoryTracked) {
+        const movementId = "mov-" + crypto.randomUUID();
+        const results = await env.NAVA_DB.batch([
+          env.NAVA_DB.prepare(
+            "INSERT INTO business_inventory_movements_v1 (id, business_id, owner_id, catalog_item_id, movement_type, quantity_delta, movement_date, notes, reference_transaction_id, created_at) " +
+            "SELECT ?, ?, ?, ?, 'sale', ?, ?, ?, ?, datetime('now') " +
+            "WHERE (SELECT COALESCE(SUM(quantity_delta), 0) FROM business_inventory_movements_v1 WHERE catalog_item_id = ? AND business_id = ? AND owner_id = ?) >= ?"
+          ).bind(movementId, businessId, ownerId, v.catalog_item_id, -v.quantity, v.transaction_date, "خروج خودکار بابت فروش: " + v.title, id, v.catalog_item_id, businessId, ownerId, v.quantity),
+          env.NAVA_DB.prepare(
+            "INSERT INTO business_transactions_v1 (id, business_id, owner_id, transaction_type, title, amount_toman, transaction_date, category, notes, quantity, unit_price_toman, catalog_item_id, created_at, updated_at) " +
+            "SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now') " +
+            "WHERE EXISTS (SELECT 1 FROM business_inventory_movements_v1 WHERE id = ? AND reference_transaction_id = ?)"
+          ).bind(id, businessId, ownerId, v.transaction_type, v.title, v.amount_toman, v.transaction_date, v.category, v.notes, v.quantity, v.unit_price_toman, v.catalog_item_id, movementId, id)
+        ]);
+        if (Number(results?.[0]?.meta?.changes || 0) !== 1) {
+          return fail("موجودی این محصول کافی نیست؛ فروش ثبت نشد و موجودی تغییری نکرد.", 409, corsOrigin);
+        }
+        if (Number(results?.[1]?.meta?.changes || 0) !== 1) throw new Error("Inventory-linked transaction insert not confirmed");
+      } else {
+        const result = await env.NAVA_DB.prepare(
+          "INSERT INTO business_transactions_v1 (id, business_id, owner_id, transaction_type, title, amount_toman, transaction_date, category, notes, quantity, unit_price_toman, catalog_item_id, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))"
+        ).bind(id, businessId, ownerId, v.transaction_type, v.title, v.amount_toman, v.transaction_date, v.category, v.notes, v.quantity, v.unit_price_toman, v.catalog_item_id).run();
+        if (!result.success || Number(result.meta?.changes || 0) !== 1) throw new Error("Transaction insert not confirmed");
+      }
       const row = await env.NAVA_DB.prepare(
         "SELECT id, transaction_type, title, amount_toman, transaction_date, category, notes, quantity, unit_price_toman, catalog_item_id, created_at, updated_at FROM business_transactions_v1 WHERE id = ? AND owner_id = ?"
       ).bind(id, ownerId).first();
@@ -163,6 +191,12 @@ export async function handleBusinessTransactionRoute({ request, env, url, corsOr
         "SELECT transaction_type, title, amount_toman, transaction_date, category, notes, quantity, unit_price_toman, catalog_item_id FROM business_transactions_v1 WHERE id = ? AND business_id = ? AND owner_id = ?"
       ).bind(transactionId, businessId, ownerId).first();
       if (!current) return fail("تراکنش پیدا نشد.", 404, corsOrigin);
+      if (current.catalog_item_id) {
+        const linked = await env.NAVA_DB.prepare(
+          "SELECT track_inventory FROM business_catalog_items_v1 WHERE id = ? AND business_id = ? AND owner_id = ?"
+        ).bind(current.catalog_item_id, businessId, ownerId).first();
+        if (Number(linked?.track_inventory || 0) === 1) return fail("فروش متصل به موجودی برای جلوگیری از مغایرت انبار قابل ویرایش نیست؛ برای اصلاح، از گردش موجودی جداگانه استفاده کن.", 409, corsOrigin);
+      }
       const v = { ...current, ...normalized.value };
       if (v.transaction_type === "expense" && (v.quantity || v.unit_price_toman || v.catalog_item_id)) return fail("برای ثبت هزینه، محصول، تعداد و قیمت واحد باید خالی باشد.", 400, corsOrigin);
       if (v.transaction_type === "sale" && v.quantity && v.unit_price_toman && v.amount_toman !== v.quantity * v.unit_price_toman) return fail("مبلغ کل فروش باید برابر تعداد ضربدر قیمت واحد باشد.", 400, corsOrigin);
@@ -184,6 +218,10 @@ export async function handleBusinessTransactionRoute({ request, env, url, corsOr
       return reply({ updated: true }, 200, corsOrigin);
     }
     if (transactionId && request.method === "DELETE") {
+      const linkedSale = await env.NAVA_DB.prepare(
+        "SELECT t.catalog_item_id, i.track_inventory FROM business_transactions_v1 t LEFT JOIN business_catalog_items_v1 i ON i.id = t.catalog_item_id WHERE t.id = ? AND t.business_id = ? AND t.owner_id = ? LIMIT 1"
+      ).bind(transactionId, businessId, ownerId).first();
+      if (Number(linkedSale?.track_inventory || 0) === 1) return fail("فروش متصل به موجودی قابل حذف نیست؛ برای برگشت کالا باید گردش مرجوعی ثبت شود.", 409, corsOrigin);
       const deleted = await env.NAVA_DB.prepare(
         "DELETE FROM business_transactions_v1 WHERE id = ? AND business_id = ? AND owner_id = ?"
       ).bind(transactionId, businessId, ownerId).run();
