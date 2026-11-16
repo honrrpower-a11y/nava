@@ -536,6 +536,7 @@
     <nav class="biz-tabs" role="tablist" aria-label="بخش‌های کسب‌وکار">
       <button class="biz-tab is-active" id="bizTabDashboard" type="button" role="tab" data-biz-tab="dashboard" aria-controls="bizPanelDashboard" aria-selected="true"><span aria-hidden="true">▦</span><span>داشبورد</span></button>
       <button class="biz-tab" id="bizTabTransactions" type="button" role="tab" data-biz-tab="transactions" aria-controls="bizPanelTransactions" aria-selected="false" tabindex="-1"><span aria-hidden="true">↕</span><span>فروش و هزینه</span></button>
+      <button class="biz-tab" id="bizTabAccounts" type="button" role="tab" data-biz-tab="accounts" aria-controls="bizPanelAccounts" aria-selected="false" tabindex="-1"><span aria-hidden="true">◉</span><span>حساب مشتریان</span></button>
       <button class="biz-tab" id="bizTabCatalog" type="button" role="tab" data-biz-tab="catalog" aria-controls="bizPanelCatalog" aria-selected="false" tabindex="-1"><span aria-hidden="true">▣</span><span>محصولات و خدمات</span></button>
       <button class="biz-tab" id="bizTabInventory" type="button" role="tab" data-biz-tab="inventory" aria-controls="bizPanelInventory" aria-selected="false" tabindex="-1"><span aria-hidden="true">▤</span><span>انبار و موجودی</span></button>
       <button class="biz-tab" id="bizTabCustomers" type="button" role="tab" data-biz-tab="customers" aria-controls="bizPanelCustomers" aria-selected="false" tabindex="-1"><span aria-hidden="true">♙</span><span>مشتریان</span></button>
@@ -591,6 +592,7 @@
           <label class="biz-field"><span>نوع تراکنش</span><select id="bizTransactionType"><option value="sale">فروش ثبت‌شده</option><option value="expense">هزینه ثبت‌شده</option></select></label>
           <label class="biz-field"><span>عنوان</span><input id="bizTransactionTitle" type="text" maxlength="160" placeholder="مثلاً فروش محصول یا خرید مواد اولیه" required></label>
           <div id="bizSaleCatalogDetails" class="biz-sale-catalog-details">
+            <label class="biz-field"><span>مشتری (اختیاری)</span><select id="bizTransactionCustomer"><option value="">بدون اتصال به مشتری</option></select></label>
             <label class="biz-field"><span>اتصال فروش به کاتالوگ (اختیاری)</span><select id="bizTransactionCatalogItem"><option value="">فروش دستی / بدون اتصال به کاتالوگ</option></select></label>
             <div class="biz-fields-grid">
               <label class="biz-field"><span>تعداد</span><input id="bizTransactionQuantity" type="text" inputmode="numeric" maxlength="10" autocomplete="off" placeholder="مثلاً ۲"></label>
@@ -624,7 +626,36 @@
         <div id="bizTransactionList" class="biz-transaction-list" aria-live="polite">تراکنش‌های پرونده پس از انتخاب آن نمایش داده می‌شوند.</div>
       </section>
       </section>
-      <section class="biz-tab-panel" id="bizPanelCatalog" data-biz-panel="catalog" role="tabpanel" aria-labelledby="bizTabCatalog" hidden>
+      
+      <section class="biz-tab-panel" id="bizPanelAccounts" data-biz-panel="accounts" role="tabpanel" aria-labelledby="bizTabAccounts" hidden>
+        <section class="biz-accounts-workspace" aria-labelledby="bizAccountsTitle">
+          <div class="biz-transactions-heading"><div><span class="biz-eyebrow">CUSTOMER ACCOUNTS</span><h2 id="bizAccountsTitle">دریافت وجه و مانده حساب مشتریان</h2>
+            <p>فروش‌های متصل به مشتری و دریافت‌های واقعی وجه در این بخش جمع می‌شوند. فروش ثبت‌شده با پول وصول‌شده یکی نیست.</p></div></div>
+          <div class="biz-account-summary" id="bizAccountSummary" aria-live="polite"><p>پس از انتخاب پرونده، مانده حساب‌ها نمایش داده می‌شود.</p></div>
+          <div class="biz-accounts-grid">
+            <section class="biz-account-card">
+              <h3>ثبت دریافت وجه</h3>
+              <form id="bizPaymentForm" class="biz-payment-form">
+                <label class="biz-field"><span>مشتری</span><select id="bizPaymentCustomer" required><option value="">ابتدا پرونده را انتخاب کن</option></select></label>
+                <label class="biz-field"><span>مبلغ دریافتی (تومان)</span><input id="bizPaymentAmount" type="text" inputmode="numeric" maxlength="13" placeholder="مثلاً ۵۰۰۰۰۰" required></label>
+                <label class="biz-field"><span>تاریخ دریافت (شمسی)</span><input id="bizPaymentDate" type="text" inputmode="numeric" placeholder="۱۴۰۵/۰۸/۲۵" required></label>
+                <label class="biz-field"><span>روش دریافت</span><select id="bizPaymentMethod"><option value="cash">نقدی</option><option value="card">کارت‌خوان</option><option value="bank_transfer">کارت‌به‌کارت / انتقال بانکی</option><option value="other">سایر</option></select></label>
+                <label class="biz-field"><span>شماره پیگیری (اختیاری)</span><input id="bizPaymentReference" type="text" maxlength="120" placeholder="کد پیگیری یا شناسه واریز"></label>
+                <label class="biz-field"><span>توضیحات (اختیاری)</span><input id="bizPaymentNotes" type="text" maxlength="800" placeholder="توضیح دریافت وجه"></label>
+                <button class="btn-primary" id="bizPaymentSubmit" type="submit">ثبت دریافت وجه</button>
+              </form>
+              <p class="biz-profile-status" id="bizPaymentStatus" role="status" aria-live="polite">برای ثبت دریافت وجه، پرونده و مشتری را انتخاب کن.</p>
+            </section>
+            <section class="biz-account-card">
+              <h3>مانده حساب مشتریان</h3>
+              <div class="biz-account-table-wrap"><table class="biz-account-table"><thead><tr><th>مشتری</th><th>فروش</th><th>دریافتی</th><th>مانده</th></tr></thead><tbody id="bizAccountRows"><tr><td colspan="4">هنوز داده‌ای بارگذاری نشده است.</td></tr></tbody></table></div>
+              <p class="biz-form-note">مانده مثبت یعنی مشتری بدهکار است؛ مانده منفی یعنی اعتبار/بستانکاری مشتری. فروش‌های قدیمی بدون اتصال به مشتری در این محاسبه وارد نمی‌شوند.</p>
+            </section>
+          </div>
+          <section class="biz-account-card biz-payment-history"><h3>سوابق دریافت وجه</h3><div id="bizPaymentHistory" aria-live="polite">سوابق دریافت وجه پس از انتخاب پرونده نمایش داده می‌شوند.</div></section>
+        </section>
+      </section>
+<section class="biz-tab-panel" id="bizPanelCatalog" data-biz-panel="catalog" role="tabpanel" aria-labelledby="bizTabCatalog" hidden>
         <section class="biz-catalog-workspace" aria-labelledby="bizCatalogTitle">
           <div class="biz-catalog-heading">
             <div><span class="biz-eyebrow">کاتالوگ کسب‌وکار</span><h2 id="bizCatalogTitle">مدیریت محصولات و خدمات</h2>
@@ -1188,9 +1219,10 @@
   <script src="business-catalog-ui.js?v=nava-branded-dialogs-20261116-2" defer></script>
   <script src="business-inventory-ui.js?v=inventory-persian-calendar-fix-20261116-3" defer></script>
   <script src="business-crm-ui.js?v=business-customers-orders-persian-dates-20261116-3" defer></script>
-  <script src="business-transactions-ui.js?v=nava-branded-dialogs-20261116-2" defer></script>
+  <script src="business-transactions-ui.js?v=customer-linked-sales-20261116-1" defer></script>
+  <script src="business-payments-ui.js?v=customer-accounts-20261116-1" defer></script>
   <script src="business-financial-export.js?v=financial-export-daynight-20261116-1" defer></script>
-  <script src="business-tabs.js?v=business-five-tabs-20261116-1" defer></script>
+  <script src="business-tabs.js?v=customer-accounts-20261116-1" defer></script>
   <script src="document-export.js?v=studio-response-select-20261115-1" defer></script>
   <link rel="stylesheet" href="office-file-tools.css?v=office-persian-ocr-20261115-1">
   <script src="office-structured-files.js?v=office-pptx-xlsx-20261115-1" defer></script>
