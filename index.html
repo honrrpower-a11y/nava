@@ -537,6 +537,7 @@
       <button class="biz-tab is-active" id="bizTabDashboard" type="button" role="tab" data-biz-tab="dashboard" aria-controls="bizPanelDashboard" aria-selected="true"><span aria-hidden="true">▦</span><span>داشبورد</span></button>
       <button class="biz-tab" id="bizTabTransactions" type="button" role="tab" data-biz-tab="transactions" aria-controls="bizPanelTransactions" aria-selected="false" tabindex="-1"><span aria-hidden="true">↕</span><span>فروش و هزینه</span></button>
       <button class="biz-tab" id="bizTabCatalog" type="button" role="tab" data-biz-tab="catalog" aria-controls="bizPanelCatalog" aria-selected="false" tabindex="-1"><span aria-hidden="true">▣</span><span>محصولات و خدمات</span></button>
+      <button class="biz-tab" id="bizTabInventory" type="button" role="tab" data-biz-tab="inventory" aria-controls="bizPanelInventory" aria-selected="false" tabindex="-1"><span aria-hidden="true">▤</span><span>انبار و موجودی</span></button>
       <button class="biz-tab" id="bizTabTools" type="button" role="tab" data-biz-tab="tools" aria-controls="bizPanelTools" aria-selected="false" tabindex="-1"><span aria-hidden="true">⌗</span><span>ابزارهای مالی</span></button>
       <button class="biz-tab" id="bizTabReports" type="button" role="tab" data-biz-tab="reports" aria-controls="bizPanelReports" aria-selected="false" tabindex="-1"><span aria-hidden="true">▤</span><span>گزارش‌ها</span></button>
       <button class="biz-tab" id="bizTabAdvisor" type="button" role="tab" data-biz-tab="advisor" aria-controls="bizPanelAdvisor" aria-selected="false" tabindex="-1"><span aria-hidden="true">✦</span><span>مشاور NAVI</span></button>
@@ -641,6 +642,7 @@
                 <label class="biz-field"><span>قیمت فروش (تومان)</span><input id="bizCatalogSalePrice" type="text" inputmode="numeric" dir="ltr" maxlength="13" placeholder="مثلاً 100000" autocomplete="off" required></label>
                 <label class="biz-field"><span>بهای تمام‌شده (تومان، اختیاری)</span><input id="bizCatalogCostPrice" type="text" inputmode="numeric" dir="ltr" maxlength="13" placeholder="اختیاری؛ مثلاً 60000" autocomplete="off"></label>
               </div>
+              <label class="biz-field biz-inventory-toggle"><input id="bizCatalogTrackInventory" type="checkbox" checked><span>مدیریت موجودی انبار برای این محصول فعال باشد</span></label>
               <label class="biz-field"><span>توضیحات (اختیاری)</span><textarea id="bizCatalogDescription" rows="3" maxlength="1200" placeholder="ویژگی‌ها، جزئیات یا شرایط ارائه"></textarea></label>
               <div class="biz-catalog-form-actions">
                 <button class="btn-primary" id="bizCatalogSubmit" type="submit">ثبت در کاتالوگ</button>
@@ -660,6 +662,33 @@
             </section>
           </div>
           <p class="biz-catalog-note">در این مرحله کاتالوگ مستقل محصولات و خدمات ساخته شده است. مدیریت موجودی، ثبت سفارش و اتصال فروش به کاتالوگ فعال است؛ کنترل موجودی و ثبت سفارش در مراحل بعدی اضافه می‌شود.</p>
+        </section>
+      </section>
+      <section class="biz-tab-panel" id="bizPanelInventory" data-biz-panel="inventory" role="tabpanel" aria-labelledby="bizTabInventory" hidden>
+        <section class="biz-inventory-workspace" aria-labelledby="bizInventoryTitle">
+          <div class="biz-catalog-heading">
+            <div><span class="biz-eyebrow">مدیریت انبار</span><h2 id="bizInventoryTitle">موجودی محصولات</h2>
+              <p>موجودی اولیه، ورود و خروج کالا را ثبت کن. فروش محصولات دارای کنترل موجودی به‌صورت خودکار از انبار کم می‌شود.</p></div>
+          </div>
+          <div class="biz-inventory-layout">
+            <form id="bizInventoryForm" class="biz-catalog-form" novalidate>
+              <div class="biz-catalog-form-head"><div><span class="studio-step">ثبت گردش کالا</span><h3>ورود یا خروج موجودی</h3></div></div>
+              <label class="biz-field"><span>محصول</span><select id="bizInventoryItem" required><option value="">انتخاب محصول دارای کنترل موجودی</option></select></label>
+              <label class="biz-field"><span>نوع عملیات</span><select id="bizInventoryMovementType" required>
+                <option value="opening">ثبت موجودی اولیه</option><option value="inbound">ورود کالا</option><option value="outbound">خروج کالا</option><option value="adjustment">اصلاح افزایشی موجودی</option>
+              </select></label>
+              <label class="biz-field"><span>تعداد</span><input id="bizInventoryQuantity" type="text" inputmode="numeric" autocomplete="off" placeholder="مثلاً ۲۰" required></label>
+              <label class="biz-field"><span>تاریخ</span><input id="bizInventoryDate" type="date" required></label>
+              <label class="biz-field"><span>توضیحات (اختیاری)</span><input id="bizInventoryNotes" type="text" maxlength="500" placeholder="مثلاً خرید از تأمین‌کننده"></label>
+              <button class="btn-primary" id="bizInventorySubmit" type="submit">ثبت گردش موجودی</button>
+              <p class="biz-profile-status" id="bizInventoryStatus" role="status" aria-live="polite">برای شروع، محصولی را در کاتالوگ با مدیریت موجودی فعال کن.</p>
+            </form>
+            <div class="biz-inventory-overview">
+              <section class="biz-catalog-list-panel"><div class="biz-catalog-list-head"><h3>موجودی فعلی</h3></div><div id="bizInventoryBalances" class="biz-inventory-balances">پس از انتخاب پرونده نمایش داده می‌شود.</div></section>
+              <section class="biz-catalog-list-panel"><div class="biz-catalog-list-head"><h3>آخرین گردش‌ها</h3></div><div id="bizInventoryMovements" class="biz-inventory-movements">هنوز گردش موجودی ثبت نشده است.</div></section>
+            </div>
+          </div>
+          <p class="biz-catalog-note">هزینه‌های عادی در دفتر مالی به‌تنهایی موجودی انبار را افزایش نمی‌دهند. برای ورود کالا باید گردش «ورود کالا» ثبت شود.</p>
         </section>
       </section>
       <section class="biz-tab-panel" id="bizPanelTools" data-biz-panel="tools" role="tabpanel" aria-labelledby="bizTabTools" hidden>
@@ -1087,7 +1116,8 @@
   <script src="brand-content-studios.js?v=business-form-routing-fix-20261116-2" defer></script>
   <script src="business-tools.js?v=business-suite-20261115-2" defer></script>
   <script src="business-workspace.js?v=business-transactions-toman-20261116-2" defer></script>
-  <script src="business-catalog-ui.js?v=business-catalog-20261116-1" defer></script>
+  <script src="business-catalog-ui.js?v=business-catalog-inventory-20261116-2" defer></script>
+  <script src="business-inventory-ui.js?v=business-inventory-20261116-1" defer></script>
   <script src="business-transactions-ui.js?v=sales-quantity-blank-default-one-20261116-3" defer></script>
   <script src="business-financial-export.js?v=financial-export-daynight-20261116-1" defer></script>
   <script src="business-tabs.js?v=business-five-tabs-20261116-1" defer></script>
