@@ -64,10 +64,24 @@
  $("bizInvoiceForm").addEventListener("submit",async e=>{
   e.preventDefault();if(busy)return;
   const orderId=$("bizInvoiceOrder").value;if(!orderId){say("ابتدا سفارش را انتخاب کن.",true);return}
-  const type=$("bizInvoiceType").value,order=orders.find(x=>x.id===orderId);
-  if(type==="invoice"&&order?.status!=="confirmed"){say("فاکتور نهایی فقط برای سفارش تأییدشده صادر می‌شود.",true);return}
+  const type=$("bizInvoiceType").value;
   const button=$("bizInvoiceSubmit");busy=true;button.disabled=true;
-  try{const result=await api("/invoices/from-order/"+encodeURIComponent(orderId),"POST",{documentType:type,discountToman:integer($("bizInvoiceDiscount").value),taxToman:integer($("bizInvoiceTax").value),shippingToman:integer($("bizInvoiceShipping").value),notes:$("bizInvoiceNotes").value.trim()});await load();say(result.alreadyExists?"این سند قبلاً صادر شده بود و همان نسخه نمایش داده شد.":"سند با شماره "+result.invoice.invoiceNumber+" صادر شد.");const created=invoices.find(x=>x.id===result.invoice.id);if(created)printInvoice(created);$("bizInvoiceForm").reset();syncDocumentType()}catch(err){say(err.message,true)}finally{busy=false;button.disabled=false}
+  try{
+   say("در حال بررسی آخرین وضعیت سفارش…");
+   const fresh=await api("/orders?status=all");
+   orders=fresh.orders||[];renderOrderOptions();
+   $("bizInvoiceOrder").value=orderId;
+   syncDocumentType();
+   const order=orders.find(x=>x.id===orderId);
+   if(!order){say("این سفارش در پرونده کسب‌وکار فعلی پیدا نشد. پرونده را بررسی و دوباره انتخاب کن.",true);return}
+   if(type==="invoice"&&order.status!=="confirmed"){
+    const state=order.status==="draft"?"پیش‌نویس":order.status==="cancelled"?"لغوشده":String(order.status||"نامشخص");
+    say("وضعیت ثبت‌شده این سفارش در سرور «"+state+"» است. فهرست سفارش‌ها تازه‌سازی شد؛ اگر سفارش دیگری تأیید شده، همان را انتخاب کن.",true);return;
+   }
+   const result=await api("/invoices/from-order/"+encodeURIComponent(orderId),"POST",{documentType:type,discountToman:integer($("bizInvoiceDiscount").value),taxToman:integer($("bizInvoiceTax").value),shippingToman:integer($("bizInvoiceShipping").value),notes:$("bizInvoiceNotes").value.trim()});
+   await load();say(result.alreadyExists?"این سند قبلاً صادر شده بود و همان نسخه نمایش داده شد.":"سند با شماره "+result.invoice.invoiceNumber+" صادر شد.");
+   const created=invoices.find(x=>x.id===result.invoice.id);if(created)printInvoice(created);$("bizInvoiceForm").reset();syncDocumentType();
+  }catch(err){say(err.message,true)}finally{busy=false;button.disabled=false}
  });
  $("bizProfileSelect")?.addEventListener("change",load);window.addEventListener("nava:business-selection-changed",load);window.addEventListener("nava:business-auth-changed",load);window.addEventListener("nava:business-order-updated",load);window.addEventListener("focus",load);
  load();
