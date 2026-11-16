@@ -256,6 +256,7 @@
   $("bizProfileSelect")?.addEventListener("change", load);
   window.addEventListener("nava:business-selection-changed", load);
   window.addEventListener("nava:business-auth-changed", load);
+  window.addEventListener("nava:business-order-updated", load);
   window.addEventListener("focus", load);
   load();
 })();
