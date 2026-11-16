@@ -6,6 +6,9 @@ on:
     paths:
       - "business-tools.js"
       - "business-workspace.js"
+      - "business-catalog-ui.js"
+      - "nava-dialogs.js"
+      - "app.js"
       - "business-transactions-ui.js"
       - "business-financial-export.js"
       - "business-tabs.js"
@@ -52,6 +55,9 @@ jobs:
       - name: Check business workspace and API JavaScript syntax
         run: |
           node --check business-workspace.js
+          node --check business-catalog-ui.js
+          node --check nava-dialogs.js
+          node --check app.js
           node --check business-transactions-ui.js
           node --check business-financial-export.js
           node --check business-tabs.js
