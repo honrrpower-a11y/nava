@@ -542,3 +542,40 @@ body.light #bizPage .biz-tab.is-active{
 #bizPage .biz-payment-history .biz-account-disclosure-body{gap:8px}
 @media(max-width:520px){#bizPage .biz-account-disclosure-head{padding:13px 14px}#bizPage .biz-account-disclosure-body{padding:12px}}
 
+
+
+/* Business result lists — compact, accessible disclosure cards across all tabs. */
+#bizPage .biz-list-disclosure{width:100%;min-width:0;margin:0}
+#bizPage .biz-list-disclosure>.biz-account-disclosure-head,
+#bizPage .biz-results-disclosure>summary{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  min-height:48px;padding:12px 14px;border:1px solid var(--border);
+  border-radius:11px;background:var(--panel2);color:var(--text);
+  cursor:pointer;list-style:none;font-size:12px;font-weight:750;
+}
+#bizPage .biz-list-disclosure>.biz-account-disclosure-head::-webkit-details-marker,
+#bizPage .biz-results-disclosure>summary::-webkit-details-marker{display:none}
+#bizPage .biz-list-disclosure>.biz-account-disclosure-head>span:first-child{display:grid;gap:4px;min-width:0}
+#bizPage .biz-list-disclosure>.biz-account-disclosure-head small{color:var(--muted);font-size:10px;font-weight:400;line-height:1.7}
+#bizPage .biz-list-disclosure[open]>.biz-account-disclosure-head,
+#bizPage .biz-results-disclosure[open]>summary{border-color:color-mix(in srgb,var(--gold) 45%,var(--border));border-radius:11px 11px 0 0}
+#bizPage .biz-list-disclosure>.biz-account-disclosure-body{padding-top:12px}
+#bizPage .biz-list-disclosure .biz-catalog-list,
+#bizPage .biz-list-disclosure .biz-crm-list,
+#bizPage .biz-list-disclosure .biz-inventory-balances,
+#bizPage .biz-list-disclosure .biz-inventory-movements,
+#bizPage .biz-list-disclosure .biz-transaction-list{min-width:0}
+#bizPage .biz-results-disclosure{margin-top:12px;border:1px solid var(--border);border-radius:12px;background:var(--panel2);overflow:hidden}
+#bizPage .biz-results-disclosure>summary{border:0;border-radius:0;background:transparent;padding:10px 12px;color:var(--muted);font-size:11px}
+#bizPage .biz-results-disclosure[open]>summary{border-bottom:1px solid var(--border);color:var(--gold)}
+#bizPage .biz-results-disclosure .biz-result-list,
+#bizPage .biz-results-disclosure .biz-secondary-results{margin:0;padding:4px 12px 10px;border:0;border-radius:0;background:transparent}
+#bizPage .biz-results-disclosure .biz-result-list>div,
+#bizPage .biz-results-disclosure .biz-secondary-results>div{padding:10px 0}
+#bizPage .biz-disclosure-indicator{display:inline-block;transition:transform .18s ease}
+#bizPage details[open]>.biz-account-disclosure-head .biz-disclosure-indicator,
+#bizPage details[open]>summary .biz-disclosure-indicator{transform:rotate(180deg)}
+@media(max-width:560px){
+  #bizPage .biz-list-disclosure>.biz-account-disclosure-head,
+  #bizPage .biz-results-disclosure>summary{padding:11px;font-size:11px}
+}
