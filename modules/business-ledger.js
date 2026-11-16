@@ -52,11 +52,22 @@ function supplierOut(r){return{id:r.id,name:r.name,phone:r.phone||"",email:r.ema
 function accountOut(r){return{id:r.id,name:r.name,accountType:r.account_type,openingBalanceToman:Number(r.opening_balance_toman||0),balanceToman:Number(r.balance_toman||0),status:r.status};}
 function cashMoveOut(r){return{id:r.id,cashAccountId:r.cash_account_id,direction:r.direction,amountToman:Number(r.amount_toman),movementDate:r.movement_date,sourceType:r.source_type,sourceId:r.source_id,title:r.title||"",method:r.method,reference:r.reference||"",notes:r.notes||"",status:r.status};}
 
+// Idempotent recovery for production databases where migration 0011 created the schema
+// but its final data-seeding statements were not applied. D1 batch is transactional.
+export async function ensureBusinessCashLedger(db,businessId,ownerId){
+ const accountId="cash-"+crypto.randomUUID();
+ await db.batch([
+  db.prepare("INSERT INTO business_cash_accounts_v1(id,business_id,owner_id,name,account_type,opening_balance_toman,status,created_at,updated_at) SELECT ?,?,?, 'صندوق اصلی','cash',0,'active',datetime('now'),datetime('now') WHERE NOT EXISTS(SELECT 1 FROM business_cash_accounts_v1 WHERE business_id=? AND owner_id=? AND status='active')").bind(accountId,businessId,ownerId,businessId,ownerId),
+  db.prepare("UPDATE business_customer_payments_v1 SET cash_account_id=(SELECT a.id FROM business_cash_accounts_v1 a WHERE a.business_id=business_customer_payments_v1.business_id AND a.owner_id=business_customer_payments_v1.owner_id AND a.status='active' ORDER BY a.created_at,a.id LIMIT 1) WHERE business_id=? AND owner_id=? AND status='received' AND cash_account_id IS NULL").bind(businessId,ownerId),
+  db.prepare("INSERT INTO business_cash_movements_v1(id,business_id,owner_id,cash_account_id,direction,amount_toman,movement_date,source_type,source_id,title,method,reference,notes,status,created_at) SELECT 'cashmove-'||lower(hex(randomblob(16))),p.business_id,p.owner_id,p.cash_account_id,'in',p.amount_toman,p.payment_date,'customer_receipt',p.id,'دریافت از مشتری',CASE WHEN p.payment_method IN ('cash','card','bank_transfer','other') THEN p.payment_method ELSE 'other' END,p.reference,p.notes,'active',p.created_at FROM business_customer_payments_v1 p WHERE p.business_id=? AND p.owner_id=? AND p.status='received' AND p.cash_account_id IS NOT NULL AND NOT EXISTS(SELECT 1 FROM business_cash_movements_v1 m WHERE m.source_type='customer_receipt' AND m.source_id=p.id)").bind(businessId,ownerId)
+ ]);
+}
+
 export async function handleBusinessLedgerRoute({request,env,url,corsOrigin,businessId,ownerId,resource,resourceId="",action=""}){
  try{
   const db=env.NAVA_DB;if(!db)return fail("دیتابیس کسب‌وکار در دسترس نیست.",503,corsOrigin);
   if(!idOk(businessId,"biz")||!await owns(db,businessId,ownerId))return fail("پرونده کسب‌وکار پیدا نشد.",404,corsOrigin);
-  await db.prepare("INSERT INTO business_cash_accounts_v1(id,business_id,owner_id,name,account_type,opening_balance_toman,status,created_at,updated_at) SELECT ?,?,?, 'صندوق اصلی','cash',0,'active',datetime('now'),datetime('now') WHERE NOT EXISTS(SELECT 1 FROM business_cash_accounts_v1 WHERE business_id=? AND owner_id=? AND status='active')").bind("cash-"+crypto.randomUUID(),businessId,ownerId,businessId,ownerId).run();
+  await ensureBusinessCashLedger(db,businessId,ownerId);
   if(resource==="suppliers"){
    if(resourceId&&!idOk(resourceId,"supplier"))return fail("شناسه تأمین‌کننده معتبر نیست.",400,corsOrigin);
    if(!resourceId&&request.method==="GET"){
