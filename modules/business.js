@@ -513,7 +513,7 @@ export async function handleBusinessRoute({ request, env, url, origin, corsOrigi
     if (parts[2] === "invoices") {
       return await handleBusinessInvoiceRoute({ request, env, url, corsOrigin, businessId, ownerId: user.id, resourceId: parts[3] || "", action: parts[4] || "" });
     }
-    if (["suppliers", "cash-accounts", "cash-movements", "expense-payments"].includes(parts[2])) {
+    if (["suppliers", "cash-accounts", "cash-movements", "expense-payments", "purchases"].includes(parts[2])) {
       return await handleBusinessLedgerRoute({ request, env, url, corsOrigin, businessId, ownerId: user.id, resource: parts[2], resourceId: parts[3] || "", action: parts[4] || "" });
     }
     if (parts[2] === "payments" || parts[2] === "accounts") {
