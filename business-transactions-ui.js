@@ -10,6 +10,7 @@
   const status = $("bizTransactionStatus");
   const submit = $("bizTransactionSubmit");
   const catalogSelect = $("bizTransactionCatalogItem");
+  const customerSelect = $("bizTransactionCustomer");
   const saleDetails = $("bizSaleCatalogDetails");
   const quantityInput = $("bizTransactionQuantity");
   const unitPriceInput = $("bizTransactionUnitPrice");
@@ -80,6 +81,25 @@
       catalogSelect.append(option);
     }
     if (items.some(item => item.id === selected)) catalogSelect.value = selected;
+  }
+
+  async function loadCustomerOptions(id) {
+    if (!customerSelect) return;
+    const selected = customerSelect.value;
+    customerSelect.replaceChildren();
+    const empty = document.createElement("option");
+    empty.value = "";
+    empty.textContent = "بدون اتصال به مشتری";
+    customerSelect.append(empty);
+    if (!id) return;
+    const data = await api("/" + encodeURIComponent(id) + "/customers?status=active");
+    for (const customer of data.customers || []) {
+      const option = document.createElement("option");
+      option.value = customer.id;
+      option.textContent = customer.name;
+      customerSelect.append(option);
+    }
+    if ([...customerSelect.options].some(option => option.value === selected)) customerSelect.value = selected;
   }
 
   async function loadCatalogItems(id) {
@@ -410,7 +430,7 @@
     const params = new URLSearchParams({ limit: "200" });
     if (range.from) params.set("from", range.from);
     if (range.to) params.set("to", range.to);
-    await loadCatalogItems(id);
+    await Promise.all([loadCatalogItems(id), loadCustomerOptions(id)]);
     syncTransactionType();
     const data = await api("/" + encodeURIComponent(id) + "/transactions?" + params.toString());
     const rows = data.transactions || [];
@@ -504,6 +524,7 @@
     try {
       await api("/" + encodeURIComponent(id) + "/transactions", "POST", {
         transactionType, title, amountToman, transactionDate,
+        ...(transactionType === "sale" && customerSelect?.value ? { customerId: customerSelect.value } : {}),
         category: $("bizTransactionCategory").value.trim(),
         notes: $("bizTransactionNotes").value.trim(),
         ...(transactionType === "sale" && catalogSelect?.value ? {
