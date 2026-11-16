@@ -60,7 +60,7 @@
     form.reset();
     $("bizCatalogItemId").value = "";
     $("bizCatalogItemType").value = "product";
-    $("bizCatalogUnit").value = "عدد";
+    $("bizCatalogUnit").value = "";
     $("bizCatalogTrackInventory").checked = true;
     $("bizCatalogTrackInventory").disabled = false;
     $("bizCatalogSalePrice").value = "";
@@ -273,10 +273,7 @@
       tracking.disabled = false;
       if (!tracking.checked) tracking.checked = true;
     }
-    const unit = $("bizCatalogUnit");
-    if (!unit.value || unit.value === "عدد" || unit.value === "خدمت") {
-      unit.value = $("bizCatalogItemType").value === "service" ? "خدمت" : "عدد";
-    }
+    // Keep the unit field editable and empty; submission applies a safe default if omitted.
   });
   $("bizProfileSelect")?.addEventListener("change", () => {
     resetForm();
