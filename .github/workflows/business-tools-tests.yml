@@ -10,6 +10,7 @@ on:
       - "nava-dialogs.js"
       - "app.js"
       - "business-transactions-ui.js"
+      - "business-payments-ui.js"
       - "business-financial-export.js"
       - "business-tabs.js"
       - "business-crm-ui.js"
@@ -62,6 +63,7 @@ jobs:
           node --check nava-dialogs.js
           node --check app.js
           node --check business-transactions-ui.js
+          node --check business-payments-ui.js
           node --check business-financial-export.js
           node --check business-tabs.js
           node --check business-crm-ui.js
