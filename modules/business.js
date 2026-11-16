@@ -8,6 +8,7 @@ import { handleBusinessTransactionRoute } from "./business-transactions.js";
 import { handleBusinessCatalogRoute } from "./business-catalog.js";
 import { handleBusinessInventoryRoute } from "./business-inventory.js";
 import { handleBusinessCrmRoute } from "./business-crm.js";
+import { handleBusinessPaymentsRoute } from "./business-payments.js";
 
 const BUSINESS_TYPES = new Set(["freelancer", "store", "home_business", "small_company", "idea", "other"]);
 const RECORD_TYPES = new Set(["cost_calculation", "break_even", "monthly_budget", "note"]);
@@ -464,6 +465,9 @@ export async function handleBusinessRoute({ request, env, url, origin, corsOrigi
       }
       if (request.method === "DELETE") return await archiveBusiness(env.NAVA_DB, user.id, businessId, corsOrigin);
       return fail("روش درخواست برای این پرونده مجاز نیست.", 405, corsOrigin);
+    }
+    if (parts[2] === "payments" || parts[2] === "accounts") {
+      return await handleBusinessPaymentsRoute({ request, env, url, corsOrigin, businessId, ownerId: user.id, resourceId: parts[3] || "", action: parts[4] || "" });
     }
     if (parts[2] === "transactions") {
       return await handleBusinessTransactionRoute({ request, env, url, corsOrigin, businessId, ownerId: user.id, transactionId: parts[3] || "" });
