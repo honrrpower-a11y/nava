@@ -8,6 +8,7 @@ on:
       - ".github/workflows/navi-production-schema-audit.yml"
       - "migrations/navi-production-reconcile/0007_business_sales_catalog_link.sql"
       - "migrations/navi-production-reconcile/0008_business_inventory.sql"
+      - "migrations/navi-production-reconcile/0009_business_customers_orders.sql"
   workflow_dispatch:
 
 permissions:
