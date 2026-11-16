@@ -607,6 +607,10 @@
             </div>
             <p class="biz-form-note">با انتخاب محصول یا خدمت، عنوان و قیمت آن از کاتالوگ وارد می‌شود. با تغییر تعداد یا قیمت واحد، مبلغ کل فروش خودکار محاسبه خواهد شد.</p>
           </div>
+          <div id="bizExpenseSupplierDetails" hidden>
+            <label class="biz-field"><span>تأمین‌کننده (اختیاری)</span><select id="bizTransactionSupplier"><option value="">بدون اتصال به تأمین‌کننده</option></select></label>
+            <p class="biz-form-note">با اتصال هزینه به تأمین‌کننده، بدهی پرداخت‌نشده او در دفتر مالی محاسبه می‌شود؛ پرداخت را بعداً از بخش «دفتر مالی» ثبت کن.</p>
+          </div>
           <label class="biz-field"><span>مبلغ کل (تومان)</span><input id="bizTransactionAmount" type="text" inputmode="numeric" dir="ltr" maxlength="13" autocomplete="off" placeholder="مثلاً ۲۰۰۰۰۰" required></label>
           <label class="biz-field biz-transaction-date-field"><span>تاریخ شمسی</span>
             <div class="biz-persian-date-control">
@@ -1293,7 +1297,7 @@
   <script src="business-catalog-ui.js?v=nava-branded-dialogs-20261116-2" defer></script>
   <script src="business-inventory-ui.js?v=inventory-persian-calendar-fix-20261116-3" defer></script>
   <script src="business-crm-ui.js?v=order-confirm-dialog-fix-20261116-1" defer></script>
-  <script src="business-transactions-ui.js?v=customer-linked-sales-20261116-1" defer></script>
+  <script src="business-transactions-ui.js?v=supplier-linked-expenses-20261116-1" defer></script>
   <script src="business-payments-ui.js?v=invoice-linked-receipts-20261116-1" defer></script>
   <script src="business-invoices-ui.js?v=invoice-order-refresh-fix-20261116-1" defer></script>
   <script src="business-ledger-ui.js?v=supplier-cash-persian-calendar-20261116-2" defer></script>
