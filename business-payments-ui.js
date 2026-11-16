@@ -95,8 +95,8 @@
   function renderAccounts(accounts) {
     const body = $("bizAccountRows");
     body.replaceChildren();
-    const active = accounts.filter(account => account.status === "active");
-    if (!active.length) {
+    const visible = accounts;
+    if (!visible.length) {
       const row = el("tr", "");
       const cell = el("td", "biz-account-empty", "هنوز مشتری فعالی در این پرونده ثبت نشده است.");
       cell.colSpan = 4;
@@ -104,14 +104,14 @@
       body.append(row);
       return;
     }
-    active.forEach(account => {
+    visible.forEach(account => {
       const row = el("tr", "");
       const balance = el("td", account.balanceToman > 0 ? "is-debt" : account.balanceToman < 0 ? "is-credit" : "");
       balance.textContent = account.balanceToman > 0
         ? "بدهکار: " + money(account.balanceToman)
         : account.balanceToman < 0 ? "بستانکار: " + money(Math.abs(account.balanceToman)) : "تسویه";
       row.append(
-        el("td", "", account.customerName + (account.phone ? " · " + account.phone : "")),
+        el("td", "", account.customerName + (account.phone ? " · " + account.phone : "") + (account.status === "archived" ? " · بایگانی‌شده" : "")),
         el("td", "", money(account.salesToman)),
         el("td", "", money(account.receivedToman)),
         balance
