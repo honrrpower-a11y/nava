@@ -11,6 +11,8 @@
   const submit = $("bizTransactionSubmit");
   const catalogSelect = $("bizTransactionCatalogItem");
   const customerSelect = $("bizTransactionCustomer");
+  const supplierSelect = $("bizTransactionSupplier");
+  const supplierDetails = $("bizExpenseSupplierDetails");
   const saleDetails = $("bizSaleCatalogDetails");
   const quantityInput = $("bizTransactionQuantity");
   const unitPriceInput = $("bizTransactionUnitPrice");
@@ -54,6 +56,7 @@
   const money = value => Number(value || 0).toLocaleString("fa-IR") + " تومان";
   const say = message => { if (status) status.textContent = message; };
   let catalogItems = [];
+  let suppliers = [];
 
   function updateSaleTotal() {
     if (!catalogSelect?.value) return;
@@ -102,6 +105,26 @@
     if ([...customerSelect.options].some(option => option.value === selected)) customerSelect.value = selected;
   }
 
+  async function loadSupplierOptions(id) {
+    if (!supplierSelect) return;
+    const selected = supplierSelect.value;
+    supplierSelect.replaceChildren();
+    const empty = document.createElement("option");
+    empty.value = "";
+    empty.textContent = "بدون اتصال به تأمین‌کننده";
+    supplierSelect.append(empty);
+    if (!id) { suppliers = []; return; }
+    const data = await api("/" + encodeURIComponent(id) + "/suppliers");
+    suppliers = Array.isArray(data.suppliers) ? data.suppliers.filter(item => item.status === "active") : [];
+    for (const supplier of suppliers) {
+      const option = document.createElement("option");
+      option.value = supplier.id;
+      option.textContent = supplier.name;
+      supplierSelect.append(option);
+    }
+    if (suppliers.some(item => item.id === selected)) supplierSelect.value = selected;
+  }
+
   async function loadCatalogItems(id) {
     if (!catalogSelect || !id) { catalogItems = []; renderCatalogOptions([]); return; }
     const data = await api("/" + encodeURIComponent(id) + "/items?status=active&type=all");
@@ -112,7 +135,9 @@
   function syncTransactionType() {
     const isSale = $("bizTransactionType")?.value === "sale";
     if (saleDetails) saleDetails.hidden = !isSale;
+    if (supplierDetails) supplierDetails.hidden = isSale;
     if (!isSale && catalogSelect) catalogSelect.value = "";
+    if (isSale && supplierSelect) supplierSelect.value = "";
   }
 
   catalogSelect?.addEventListener("change", () => {
@@ -430,7 +455,7 @@
     const params = new URLSearchParams({ limit: "200" });
     if (range.from) params.set("from", range.from);
     if (range.to) params.set("to", range.to);
-    await Promise.all([loadCatalogItems(id), loadCustomerOptions(id)]);
+    await Promise.all([loadCatalogItems(id), loadCustomerOptions(id), loadSupplierOptions(id)]);
     syncTransactionType();
     const data = await api("/" + encodeURIComponent(id) + "/transactions?" + params.toString());
     const rows = data.transactions || [];
@@ -525,6 +550,7 @@
       await api("/" + encodeURIComponent(id) + "/transactions", "POST", {
         transactionType, title, amountToman, transactionDate,
         ...(transactionType === "sale" && customerSelect?.value ? { customerId: customerSelect.value } : {}),
+        ...(transactionType === "expense" && supplierSelect?.value ? { supplierId: supplierSelect.value } : {}),
         category: $("bizTransactionCategory").value.trim(),
         notes: $("bizTransactionNotes").value.trim(),
         ...(transactionType === "sale" && catalogSelect?.value ? {
@@ -547,6 +573,7 @@
   $("bizProfileSelect")?.addEventListener("change", () => load().catch(error => say(error.message)));
   window.addEventListener("nava:business-selection-changed", () => load().catch(error => say(error.message)));
   window.addEventListener("nava:business-auth-changed", () => load().catch(error => say(error.message)));
+  window.addEventListener("nava:business-suppliers-updated", () => load().catch(error => say(error.message)));
   window.addEventListener("nava:business-order-updated", () => load().catch(error => say(error.message)));
   window.addEventListener("focus", () => load().catch(error => say(error.message)));
   load().catch(error => say(error.message));
