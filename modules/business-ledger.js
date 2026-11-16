@@ -35,6 +35,24 @@ export function normalizeCashMovementInput(x){
  if(!validDate(date))return{error:"تاریخ گردش مالی معتبر نیست."};
  return{value:{direction,amount_toman:amount,movement_date:date,title:clean(x.title,140),method:METHODS.has(x.method)?x.method:"other",reference:clean(x.reference,120),notes:clean(x.notes,800)}};
 }
+export function normalizeBusinessPurchaseInput(x){
+ if(!x||typeof x!=="object"||Array.isArray(x))return{error:"اطلاعات خرید معتبر نیست."};
+ const supplierId=String(x.supplierId||"").trim(),itemId=String(x.itemId||"").trim();
+ const quantity=Number(x.quantity),unitPrice=Number(x.unitPriceToman),date=String(x.purchaseDate||"");
+ const paid=Number(x.paidAmountToman||0),cashAccountId=String(x.cashAccountId||"").trim();
+ const method=String(x.paymentMethod||"");
+ if(!idOk(supplierId,"supplier"))return{error:"تأمین‌کننده خرید را انتخاب کن."};
+ if(!idOk(itemId,"item"))return{error:"محصول خرید را انتخاب کن."};
+ if(!Number.isSafeInteger(quantity)||quantity<1||quantity>1000000000)return{error:"تعداد خرید باید عدد صحیح مثبت باشد."};
+ if(!Number.isSafeInteger(unitPrice)||unitPrice<1||unitPrice>MAX)return{error:"قیمت واحد خرید باید عدد صحیح مثبت به تومان باشد."};
+ const total=quantity*unitPrice;
+ if(!Number.isSafeInteger(total)||total<1||total>MAX)return{error:"مبلغ کل خرید از سقف مجاز بیشتر است."};
+ if(!validDate(date))return{error:"تاریخ خرید معتبر نیست."};
+ if(!Number.isSafeInteger(paid)||paid<0||paid>total)return{error:"مبلغ پرداخت‌شده باید بین صفر و مبلغ کل خرید باشد."};
+ if(paid>0&&!idOk(cashAccountId,"cash"))return{error:"برای پرداخت بخشی از خرید، حساب مالی را انتخاب کن."};
+ if(paid>0&&!METHODS.has(method))return{error:"روش پرداخت خرید معتبر نیست."};
+ return{value:{supplier_id:supplierId,item_id:itemId,quantity,unit_price_toman:unitPrice,total_toman:total,purchase_date:date,paid_amount_toman:paid,cash_account_id:paid?cashAccountId:null,payment_method:paid?method:null,reference:clean(x.reference,120),notes:clean(x.notes,800)}};
+}
 export function normalizeExpensePaymentInput(x){
  if(!x||typeof x!=="object"||Array.isArray(x))return{error:"اطلاعات پرداخت هزینه معتبر نیست."};
  const transactionId=String(x.transactionId||""),cashAccountId=String(x.cashAccountId||"");
@@ -133,6 +151,45 @@ export async function handleBusinessLedgerRoute({request,env,url,corsOrigin,busi
    if(resourceId&&action==="void"&&request.method==="POST"){
     const r=await db.prepare("UPDATE business_cash_movements_v1 SET status='voided' WHERE id=? AND business_id=? AND owner_id=? AND source_type IN ('manual_inflow','manual_outflow') AND status='active'").bind(resourceId,businessId,ownerId).run();
     if(Number(r.meta?.changes||0)!==1)return fail("فقط گردش دستی فعال قابل ابطال است.",404,corsOrigin);return reply({voided:true},200,corsOrigin);
+   }
+  }
+  if(resource==="purchases"){
+   if(!resourceId&&request.method==="GET"){
+    const rows=await db.prepare("SELECT t.id,t.title,t.amount_toman,t.transaction_date,t.supplier_id,s.name AS supplier_name,m.catalog_item_id,i.name AS item_name,m.quantity_delta,COALESCE(p.paid_toman,0) AS paid_toman FROM business_transactions_v1 t JOIN business_inventory_movements_v1 m ON m.reference_transaction_id=t.id AND m.business_id=t.business_id AND m.owner_id=t.owner_id AND m.movement_type='inbound' JOIN business_catalog_items_v1 i ON i.id=m.catalog_item_id AND i.business_id=m.business_id AND i.owner_id=m.owner_id LEFT JOIN business_suppliers_v1 s ON s.id=t.supplier_id AND s.business_id=t.business_id AND s.owner_id=t.owner_id LEFT JOIN (SELECT transaction_id,SUM(amount_toman) AS paid_toman FROM business_expense_payments_v1 WHERE business_id=? AND owner_id=? AND status='paid' GROUP BY transaction_id) p ON p.transaction_id=t.id WHERE t.business_id=? AND t.owner_id=? AND t.transaction_type='expense' AND t.category='خرید کالا' ORDER BY t.transaction_date DESC,t.created_at DESC LIMIT 100").bind(businessId,ownerId,businessId,ownerId).all();
+    return reply({purchases:(rows.results||[]).map(r=>({id:r.id,title:r.title,itemId:r.catalog_item_id,itemName:r.item_name,supplierId:r.supplier_id,supplierName:r.supplier_name||"",quantity:Number(r.quantity_delta),totalToman:Number(r.amount_toman),paidToman:Number(r.paid_toman||0),balanceToman:Number(r.amount_toman)-Number(r.paid_toman||0),purchaseDate:r.transaction_date}))},200,corsOrigin);
+   }
+   if(!resourceId&&request.method==="POST"){
+    let x;try{x=await request.json();}catch{return fail("بدنه درخواست معتبر نیست.",400,corsOrigin);}
+    const n=normalizeBusinessPurchaseInput(x);if(n.error)return fail(n.error,400,corsOrigin);const v=n.value;
+    const supplier=await db.prepare("SELECT id,name FROM business_suppliers_v1 WHERE id=? AND business_id=? AND owner_id=? AND status='active' LIMIT 1").bind(v.supplier_id,businessId,ownerId).first();
+    if(!supplier)return fail("تأمین‌کننده فعال این پرونده پیدا نشد.",404,corsOrigin);
+    const item=await db.prepare("SELECT id,name,item_type,track_inventory FROM business_catalog_items_v1 WHERE id=? AND business_id=? AND owner_id=? AND status='active' LIMIT 1").bind(v.item_id,businessId,ownerId).first();
+    if(!item||item.item_type!=="product"||Number(item.track_inventory)!==1)return fail("برای خرید، یک محصول فعال با مدیریت موجودی روشن انتخاب کن.",409,corsOrigin);
+    if(v.paid_amount_toman>0){
+     const account=await db.prepare("SELECT id FROM business_cash_accounts_v1 WHERE id=? AND business_id=? AND owner_id=? AND status='active' LIMIT 1").bind(v.cash_account_id,businessId,ownerId).first();
+     if(!account)return fail("حساب مالی فعال برای پرداخت خرید پیدا نشد.",404,corsOrigin);
+     const balance=await db.prepare("SELECT a.opening_balance_toman+COALESCE(SUM(CASE WHEN m.status='active' AND m.direction='in' THEN m.amount_toman WHEN m.status='active' AND m.direction='out' THEN -m.amount_toman ELSE 0 END),0) AS balance FROM business_cash_accounts_v1 a LEFT JOIN business_cash_movements_v1 m ON m.cash_account_id=a.id AND m.business_id=a.business_id AND m.owner_id=a.owner_id WHERE a.id=? AND a.business_id=? AND a.owner_id=? AND a.status='active' GROUP BY a.id").bind(v.cash_account_id,businessId,ownerId).first();
+     if(!balance||Number(balance.balance)<v.paid_amount_toman)return fail("موجودی حساب برای پرداخت این مبلغ کافی نیست.",409,corsOrigin);
+    }
+    const transactionId="txn-"+crypto.randomUUID(),movementId="mov-"+crypto.randomUUID();
+    const paymentId=v.paid_amount_toman>0?"expensepay-"+crypto.randomUUID():null;
+    const cashMovementId=v.paid_amount_toman>0?"cashmove-"+crypto.randomUUID():null;
+    const statements=[
+     db.prepare("INSERT INTO business_transactions_v1(id,business_id,owner_id,transaction_type,title,amount_toman,transaction_date,category,notes,quantity,unit_price_toman,catalog_item_id,customer_id,supplier_id,created_at,updated_at) SELECT ?,?,?,'expense',?,?,?,'خرید کالا',?,NULL,NULL,NULL,NULL,?,datetime('now'),datetime('now') WHERE EXISTS(SELECT 1 FROM business_suppliers_v1 WHERE id=? AND business_id=? AND owner_id=? AND status='active') AND EXISTS(SELECT 1 FROM business_catalog_items_v1 WHERE id=? AND business_id=? AND owner_id=? AND status='active' AND item_type='product' AND track_inventory=1) AND (?=0 OR (SELECT a.opening_balance_toman+COALESCE(SUM(CASE WHEN m.status='active' AND m.direction='in' THEN m.amount_toman WHEN m.status='active' AND m.direction='out' THEN -m.amount_toman ELSE 0 END),0) FROM business_cash_accounts_v1 a LEFT JOIN business_cash_movements_v1 m ON m.cash_account_id=a.id AND m.business_id=a.business_id AND m.owner_id=a.owner_id WHERE a.id=? AND a.business_id=? AND a.owner_id=? AND a.status='active' GROUP BY a.id)>=?)").bind(transactionId,businessId,ownerId,"خرید "+item.name,v.total_toman,v.purchase_date,v.notes,supplier.id,supplier.id,businessId,ownerId,item.id,item.id,businessId,ownerId,v.paid_amount_toman,v.cash_account_id,businessId,ownerId,v.paid_amount_toman),
+     db.prepare("INSERT INTO business_inventory_movements_v1(id,business_id,owner_id,catalog_item_id,movement_type,quantity_delta,movement_date,notes,reference_transaction_id,created_at) SELECT ?,?,?,?,'inbound',?,?,?,?,datetime('now') WHERE EXISTS(SELECT 1 FROM business_transactions_v1 WHERE id=? AND business_id=? AND owner_id=?)").bind(movementId,businessId,ownerId,item.id,v.quantity,v.purchase_date,"خرید از "+supplier.name+(v.notes?" · "+v.notes:""),transactionId,transactionId,businessId,ownerId)
+    ];
+    if(v.paid_amount_toman>0){
+     statements.push(
+      db.prepare("INSERT INTO business_expense_payments_v1(id,business_id,owner_id,transaction_id,supplier_id,cash_account_id,amount_toman,payment_date,payment_method,reference,notes,status,created_at,updated_at) SELECT ?,?,?,?,?,?,?,?,?,?,?,'paid',datetime('now'),datetime('now') WHERE EXISTS(SELECT 1 FROM business_transactions_v1 WHERE id=? AND business_id=? AND owner_id=?) AND EXISTS(SELECT 1 FROM business_inventory_movements_v1 WHERE id=? AND business_id=? AND owner_id=?)").bind(paymentId,businessId,ownerId,transactionId,supplier.id,v.cash_account_id,v.paid_amount_toman,v.purchase_date,v.payment_method,v.reference,v.notes,transactionId,businessId,ownerId,movementId,businessId,ownerId),
+      db.prepare("INSERT INTO business_cash_movements_v1(id,business_id,owner_id,cash_account_id,direction,amount_toman,movement_date,source_type,source_id,title,method,reference,notes,status,created_at) SELECT ?,?,?,?,'out',?,?,'expense_payment',?,'پرداخت خرید "+item.name+"',?,?,?,'active',datetime('now') WHERE EXISTS(SELECT 1 FROM business_expense_payments_v1 WHERE id=? AND business_id=? AND owner_id=? AND status='paid')").bind(cashMovementId,businessId,ownerId,v.cash_account_id,v.paid_amount_toman,v.purchase_date,paymentId,v.payment_method,v.reference,v.notes,paymentId,businessId,ownerId)
+     );
+    }
+    const results=await db.batch(statements);
+    if(Number(results?.[0]?.meta?.changes||0)!==1)return fail("خرید ثبت نشد؛ موجودی حساب، تأمین‌کننده یا محصول را دوباره بررسی کن.",409,corsOrigin);
+    if(Number(results?.[1]?.meta?.changes||0)!==1)throw new Error("Purchase inventory movement was not confirmed.");
+    if(v.paid_amount_toman>0&&Number(results?.[2]?.meta?.changes||0)!==1)return fail("پرداخت خرید ثبت نشد؛ خرید و ورود موجودی نیز ذخیره نشدند.",409,corsOrigin);
+    if(v.paid_amount_toman>0&&Number(results?.[3]?.meta?.changes||0)!==1)throw new Error("Purchase cash movement was not confirmed.");
+    return reply({saved:true,purchase:{id:transactionId,itemId:item.id,itemName:item.name,supplierId:supplier.id,supplierName:supplier.name,quantity:v.quantity,totalToman:v.total_toman,paidToman:v.paid_amount_toman,balanceToman:v.total_toman-v.paid_amount_toman,purchaseDate:v.purchase_date},stockMovementId:movementId,paymentId,cashMovementId},201,corsOrigin);
    }
   }
   if(resource==="expense-payments"){
