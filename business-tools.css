@@ -460,3 +460,69 @@ body.light #bizPage .biz-tab.is-active{
 .biz-payment-row>.is-voided{color:var(--text-muted,#94a3b8);text-decoration:line-through}
 .biz-payment-void{border:1px solid rgba(220,90,90,.4);background:transparent;color:#d87979;border-radius:9px;padding:7px 10px;cursor:pointer}
 @media(max-width:760px){.biz-accounts-grid{grid-template-columns:1fr}.biz-account-summary{grid-template-columns:1fr}.biz-account-stat{padding:12px}.biz-payment-row{align-items:flex-start}}
+
+/* Customer accounts — shared NAVA day/night card system.
+   New business cards should reuse these theme tokens and .biz-account-card surface. */
+#bizPage .biz-accounts-workspace{display:grid;gap:16px;max-width:1180px}
+#bizPage .biz-account-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+#bizPage .biz-account-stat,
+#bizPage .biz-account-card{
+  min-width:0;padding:18px;border:1px solid var(--border);border-radius:16px;
+  background:var(--panel);color:var(--text);box-shadow:0 8px 22px color-mix(in srgb,var(--text) 5%,transparent);
+}
+#bizPage .biz-account-stat{display:grid;align-content:center;gap:8px;background:var(--panel2)}
+#bizPage .biz-account-stat small{color:var(--muted);font-size:11px;line-height:1.7}
+#bizPage .biz-account-stat strong{color:var(--text);font-size:clamp(15px,2vw,20px);line-height:1.7;overflow-wrap:anywhere;font-variant-numeric:tabular-nums}
+#bizPage .biz-account-stat:last-child strong{color:var(--gold)}
+#bizPage .biz-accounts-grid{display:grid;grid-template-columns:minmax(260px,.86fr) minmax(0,1.4fr);gap:16px;align-items:stretch}
+#bizPage .biz-account-card{display:flex;flex-direction:column;gap:13px}
+#bizPage .biz-account-card h3{margin:0;padding-bottom:11px;border-bottom:1px solid var(--border);font-size:16px;line-height:1.7;color:var(--text)}
+#bizPage .biz-payment-form{display:grid;grid-template-columns:1fr;gap:12px}
+#bizPage .biz-payment-form .biz-field{display:grid;gap:7px;min-width:0;color:var(--muted);font-size:12px}
+#bizPage .biz-payment-form input,
+#bizPage .biz-payment-form select{
+  width:100%;min-width:0;min-height:43px;padding:10px 12px;
+  border:1px solid var(--border);border-radius:10px;background:var(--panel2);
+  color:var(--text);font:inherit;font-size:13px;outline:none;
+}
+#bizPage .biz-payment-form input::placeholder{color:var(--muted);opacity:.78}
+#bizPage .biz-payment-form input:focus,
+#bizPage .biz-payment-form select:focus{border-color:var(--gold);box-shadow:0 0 0 3px color-mix(in srgb,var(--gold) 15%,transparent)}
+#bizPage #bizPaymentSubmit{width:100%;min-height:44px;margin-top:3px}
+#bizPage #bizPaymentStatus{margin:0;padding:10px 12px;border:1px solid var(--border);border-radius:10px;background:var(--panel2);color:var(--muted);font-size:11px;line-height:1.9}
+#bizPage #bizPaymentStatus[data-state="error"]{border-color:color-mix(in srgb,#d87979 55%,var(--border));color:#d87979}
+#bizPage #bizPaymentStatus[data-state="success"]{color:var(--muted)}
+#bizPage .biz-account-table-wrap{width:100%;overflow-x:auto;border:1px solid var(--border);border-radius:11px;background:var(--panel2)}
+#bizPage .biz-account-table{width:100%;min-width:540px;border-collapse:collapse}
+#bizPage .biz-account-table th,
+#bizPage .biz-account-table td{padding:12px 10px;border-bottom:1px solid var(--border);text-align:right;vertical-align:middle;font-size:11px;color:var(--text)}
+#bizPage .biz-account-table th{background:color-mix(in srgb,var(--panel2) 78%,var(--gold) 7%);color:var(--muted);font-weight:700;white-space:nowrap}
+#bizPage .biz-account-table tbody tr:last-child td{border-bottom:0}
+#bizPage .biz-account-table td.is-debt{color:var(--gold);font-weight:800}
+#bizPage .biz-account-table td.is-credit{color:#239b7a;font-weight:800}
+#bizPage .biz-account-empty{color:var(--muted)!important;text-align:center!important}
+#bizPage .biz-account-card .biz-form-note{margin:0;color:var(--muted);font-size:10px;line-height:1.9}
+#bizPage .biz-payment-history{display:grid;gap:12px}
+#bizPage .biz-payment-row{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;padding:12px;border:1px solid var(--border);border-radius:11px;background:var(--panel2)}
+#bizPage .biz-payment-main{display:grid;gap:5px;min-width:0;flex:1}
+#bizPage .biz-payment-main strong{color:var(--text);font-size:12px;overflow-wrap:anywhere}
+#bizPage .biz-payment-main small,
+#bizPage .biz-payment-main p{color:var(--muted);font-size:10px;line-height:1.8;overflow-wrap:anywhere}
+#bizPage .biz-payment-row>.is-voided{color:var(--muted);text-decoration:line-through}
+#bizPage .biz-payment-void{min-height:35px;padding:7px 11px;border:1px solid color-mix(in srgb,#d87979 55%,var(--border));border-radius:9px;background:transparent;color:#d87979;font:inherit;font-size:10px}
+#bizPage .biz-payment-void:hover{background:color-mix(in srgb,#d87979 10%,var(--panel))}
+#bizPage .biz-payment-void:disabled{opacity:.55;cursor:wait}
+@media(max-width:760px){
+  #bizPage .biz-accounts-grid{grid-template-columns:1fr}
+  #bizPage .biz-account-summary{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+  #bizPage .biz-account-stat{padding:12px}
+  #bizPage .biz-payment-row{align-items:flex-start}
+}
+@media(max-width:520px){
+  #bizPage .biz-account-summary{grid-template-columns:1fr}
+  #bizPage .biz-account-stat,#bizPage .biz-account-card{padding:14px}
+  #bizPage .biz-account-table{min-width:500px}
+  #bizPage .biz-payment-row{flex-direction:column}
+  #bizPage .biz-payment-void{width:100%}
+}
+
