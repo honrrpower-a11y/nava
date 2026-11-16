@@ -148,6 +148,6 @@
  window.addEventListener("nava:business-auth-changed",load);
  window.addEventListener("nava:business-order-updated",load);
  window.addEventListener("focus",load);
- $("bizOrderDate").value=todayIso();
+ setOrderDate(todayIso());
  addOrderRow();load();
 })();
