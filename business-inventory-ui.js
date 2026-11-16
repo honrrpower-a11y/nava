@@ -14,6 +14,24 @@
   };
   const businessId = () => $("bizProfileSelect")?.value || "";
   const moneyQty = value => Number(value || 0).toLocaleString("fa-IR");
+  const dateInput = $("bizInventoryDate");
+  const dateDisplay = $("bizInventoryDateDisplay");
+  const calendar = $("bizInventoryCalendar");
+  const calendarToggle = $("bizInventoryCalendarToggle");
+  const calendarMonthLabel = $("bizInventoryCalendarMonth");
+  const calendarDays = $("bizInventoryCalendarDays");
+  const persianPartsFormatter = new Intl.DateTimeFormat("en-US-u-ca-persian-nu-latn", {
+    year: "numeric", month: "numeric", day: "numeric", timeZone: "UTC"
+  });
+  const persianDateFormatter = new Intl.DateTimeFormat("fa-IR-u-ca-persian", {
+    year: "numeric", month: "long", day: "numeric", timeZone: "UTC"
+  });
+  const persianMonthFormatter = new Intl.DateTimeFormat("fa-IR-u-ca-persian", {
+    year: "numeric", month: "long", timeZone: "UTC"
+  });
+  let calendarYear = 0;
+  let calendarMonth = 0;
+
   const normalizeDigits = value => String(value || "")
     .replace(/[۰-۹]/g, digit => String("۰۱۲۳۴۵۶۷۸۹".indexOf(digit)))
     .replace(/[٠-٩]/g, digit => String("٠١٢٣٤٥٦٧٨٩".indexOf(digit)));
@@ -39,6 +57,104 @@
     if (!response.ok || !data.success) throw new Error(data.error || "عملیات موجودی انجام نشد.");
     return data;
   }
+
+  function localToday() {
+    return new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+  }
+  function utcDate(iso) {
+    const [year, month, day] = String(iso).split("-").map(Number);
+    return new Date(Date.UTC(year, month - 1, day));
+  }
+  function persianParts(iso) {
+    const values = {};
+    for (const part of persianPartsFormatter.formatToParts(utcDate(iso))) {
+      if (part.type !== "literal") values[part.type] = Number(part.value);
+    }
+    return { year: values.year, month: values.month, day: values.day };
+  }
+  function isoFromUtcDate(date) {
+    return date.getUTCFullYear() + "-" + String(date.getUTCMonth() + 1).padStart(2, "0") + "-" + String(date.getUTCDate()).padStart(2, "0");
+  }
+  function formatPersianDate(iso) {
+    return iso ? persianDateFormatter.format(utcDate(iso)) : "";
+  }
+  function findPersianMonthDates(year, month) {
+    const matches = [];
+    const start = Date.UTC(year + 621, 0, 1);
+    const end = Date.UTC(year + 623, 0, 1);
+    for (let time = start; time < end; time += 86400000) {
+      const date = new Date(time);
+      const iso = isoFromUtcDate(date);
+      const parts = persianParts(iso);
+      if (parts.year === year && parts.month === month) {
+        matches.push({ iso, day: parts.day, weekday: (date.getUTCDay() + 1) % 7 });
+      }
+    }
+    return matches;
+  }
+  function showCalendar(open) {
+    if (!calendar || !calendarToggle) return;
+    calendar.hidden = !open;
+    calendarToggle.setAttribute("aria-expanded", String(open));
+    if (open) renderCalendar();
+  }
+  function renderCalendar() {
+    if (!calendarDays || !calendarMonthLabel) return;
+    const dates = findPersianMonthDates(calendarYear, calendarMonth);
+    if (!dates.length) return;
+    calendarMonthLabel.textContent = persianMonthFormatter.format(utcDate(dates[0].iso));
+    calendarDays.replaceChildren();
+    for (let i = 0; i < dates[0].weekday; i++) {
+      const blank = document.createElement("span");
+      blank.className = "biz-calendar-empty";
+      calendarDays.append(blank);
+    }
+    for (const date of dates) {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.textContent = date.day.toLocaleString("fa-IR");
+      button.dataset.date = date.iso;
+      if (date.iso === dateInput.value) {
+        button.classList.add("is-selected");
+        button.setAttribute("aria-pressed", "true");
+      }
+      button.addEventListener("click", () => {
+        setDateValue(date.iso);
+        showCalendar(false);
+      });
+      calendarDays.append(button);
+    }
+  }
+  function setDateValue(iso) {
+    if (!dateInput || !dateDisplay) return;
+    dateInput.value = iso;
+    dateDisplay.value = formatPersianDate(iso);
+    const parts = persianParts(iso);
+    calendarYear = parts.year;
+    calendarMonth = parts.month;
+  }
+  function moveCalendarMonth(delta) {
+    calendarMonth += delta;
+    if (calendarMonth < 1) { calendarMonth = 12; calendarYear--; }
+    if (calendarMonth > 12) { calendarMonth = 1; calendarYear++; }
+    renderCalendar();
+  }
+  calendarToggle?.addEventListener("click", () => {
+    if (!dateInput.value) setDateValue(localToday());
+    if (calendar.hidden) {
+      const parts = persianParts(dateInput.value);
+      calendarYear = parts.year;
+      calendarMonth = parts.month;
+    }
+    showCalendar(calendar.hidden);
+  });
+  $("bizInventoryCalendarPrev")?.addEventListener("click", () => moveCalendarMonth(-1));
+  $("bizInventoryCalendarNext")?.addEventListener("click", () => moveCalendarMonth(1));
+  document.addEventListener("click", event => {
+    if (calendar && !calendar.hidden && !calendar.contains(event.target) &&
+        !calendarToggle?.contains(event.target) && !dateDisplay?.contains(event.target)) showCalendar(false);
+  });
+
   function renderBalances(items) {
     const root = $("bizInventoryBalances");
     root.replaceChildren();
@@ -97,9 +213,9 @@
   async function load() {
     const id = businessId();
     if (!id) {
-      $("bizInventoryBalances").textContent = "برای مشاهده موجودی، یک پرونده فعال انتخاب کن.";
+      $("bizInventoryBalances").textContent = "برای مشاهده موجودی، از بخش «کسب‌وکارهای من» در بالای صفحه یک پرونده کسب‌وکار انتخاب کن. اگر هنوز پرونده‌ای نداری، نام کسب‌وکارت را وارد کن و «ایجاد پرونده» را بزن.";
       $("bizInventoryMovements").textContent = "";
-      $("bizInventoryItem").replaceChildren(new Option("ابتدا پرونده را انتخاب کن", ""));
+      $("bizInventoryItem").replaceChildren(new Option("ابتدا پرونده کسب‌وکار را از بالای صفحه انتخاب کن", ""));
       return;
     }
     try {
@@ -119,7 +235,7 @@
     const quantity = parseInteger($("bizInventoryQuantity").value);
     const movementType = $("bizInventoryMovementType").value;
     const movementDate = $("bizInventoryDate").value;
-    if (!id || !itemId) { say("ابتدا پرونده و محصول را انتخاب کن.", "error"); return; }
+    if (!id) { say("ابتدا از بخش «کسب‌وکارهای من» در بالای صفحه یک پرونده کسب‌وکار انتخاب کن.", "error"); return; }\n    if (!itemId) { say("حالا محصول دارای کنترل موجودی را از فهرست انتخاب کن.", "error"); return; }
     if (quantity === null || quantity <= 0 || !movementDate) { say("تعداد و تاریخ را درست وارد کن.", "error"); return; }
     const submit = $("bizInventorySubmit");
     submit.disabled = true;
@@ -128,14 +244,14 @@
         itemId, movementType, quantity, movementDate, notes: $("bizInventoryNotes").value.trim()
       });
       form.reset();
-      $("bizInventoryDate").value = new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+      setDateValue(localToday());
       say("گردش موجودی ثبت شد.", "success");
       await load();
     } catch (error) {
       say(error.message, "error");
     } finally { submit.disabled = false; }
   });
-  $("bizInventoryDate").value = new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+  setDateValue(localToday());
   $("bizProfileSelect")?.addEventListener("change", load);
   window.addEventListener("nava:business-selection-changed", load);
   window.addEventListener("nava:business-auth-changed", load);
