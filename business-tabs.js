@@ -1,4 +1,4 @@
-/* NAVA BUSINESS — accessible five-tab workspace. */
+/* NAVA BUSINESS — accessible business workspace. */
 (() => {
   "use strict";
   const root = document.getElementById("bizPage");
