@@ -5,6 +5,7 @@ import { GEMINI_MODEL, ALLOWED_ORIGIN } from "./config.js";
 import { json, safeNaviText } from "./shared.js";
 import { handleGuestTrial } from "./guest-trial.js";
 import { loadNaviBusinessContext } from "./business.js";
+import { buildNaviPlatformKnowledge } from "./navi-knowledge.js";
 
 import {
   createNaviSession,
@@ -2160,14 +2161,26 @@ async function handleChat({
     );
   }
 
-  const page = safeNaviText(
-    input.page || "unknown",
-    100
-  );
-
-  // Never trust client-supplied page content as model context.
-  // The page path above is sufficient; private/admin DOM text is excluded.
-  const pageContext = "";
+  // The browser sends only the active page/tab identifiers. The actual
+  // platform map is maintained server-side and selected from a strict allowlist.
+  const requestedPage = safeNaviText(input.page || "homePage", 100);
+  const knownPages = new Set([
+    "homePage", "logoPage", "brandPage", "contentPage", "storyPage",
+    "articlePage", "officePage", "composePage", "avPage", "seoPage",
+    "adsPage", "bizPage", "musicPage"
+  ]);
+  const page = knownPages.has(requestedPage) ? requestedPage : "homePage";
+  const requestedBusinessTab = safeNaviText(input.pageTab || "", 40);
+  const knownBusinessTabs = new Set([
+    "dashboard", "transactions", "catalog", "inventory", "customers",
+    "orders", "tools", "reports", "advisor"
+  ]);
+  const pageTab = page === "bizPage" && knownBusinessTabs.has(requestedBusinessTab)
+    ? requestedBusinessTab
+    : "";
+  // Never trust client-supplied page text. Only server-authored knowledge is
+  // injected into the model context; client identifiers merely select entries.
+  const pageContext = buildNaviPlatformKnowledge(page, pageTab);
 
   let businessContext = "";
   if (input.businessId !== undefined && input.businessId !== null && input.businessId !== "") {
