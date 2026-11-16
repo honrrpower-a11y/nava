@@ -869,13 +869,13 @@
       <aside class="biz-results-card" aria-live="polite">
         <div class="biz-results-head"><div><span class="studio-step">نتیجه محاسبه</span><h3>گزارش مالی تولید</h3></div><span class="biz-live-indicator">محاسبه‌گر فعال</span></div>
         <div class="biz-primary-result"><span>قیمت فروش پیشنهادی هر واحد</span><strong id="bizSuggestedPrice">—</strong><small>بر اساس حاشیه سود هدف</small></div>
-        <div class="biz-result-list">
+        <details class="biz-results-disclosure"><summary>جزئیات محاسبه قیمت و سود <span class="biz-disclosure-indicator" aria-hidden="true">⌄</span></summary><div class="biz-result-list">
           <div><span>کل هزینه تولید</span><strong id="bizTotalCost">—</strong></div>
           <div><span>هزینه تمام‌شده هر واحد</span><strong id="bizUnitCost">—</strong></div>
           <div><span>سود هر واحد</span><strong id="bizUnitProfit">—</strong></div>
           <div><span>سود کل با فروش مورد انتظار</span><strong id="bizTotalProfit">—</strong></div>
           <div><span>درآمد کل فروش مورد انتظار</span><strong id="bizExpectedRevenue">—</strong></div>
-        </div>
+        </div></details>
         <div class="biz-result-footer"><p id="bizCalculationSummary">برای دیدن گزارش، هزینه‌ها و تعداد تولید را وارد کن.</p><div class="biz-result-actions"><button type="button" class="btn-secondary" id="bizCopyResult" disabled>کپی گزارش</button><button type="button" class="btn-primary" id="bizSaveFinancialRecord" disabled>ذخیره گزارش در پرونده</button></div></div>
       </aside>
     </div>
@@ -897,11 +897,11 @@
             <button class="btn-primary biz-secondary-submit" type="submit">محاسبه نقطه سربه‌سر</button>
             <p class="biz-validation" id="bizBreakEvenStatus" role="status" aria-live="polite">هزینه ثابت، هزینه متغیر و قیمت فروش را وارد کن.</p>
           </form>
-          <div class="biz-secondary-results" aria-live="polite">
+          <details class="biz-results-disclosure"><summary>جزئیات نتیجه نقطه سربه‌سر <span class="biz-disclosure-indicator" aria-hidden="true">⌄</span></summary><div class="biz-secondary-results" aria-live="polite">
             <div><span>حداقل فروش برای سربه‌سر</span><strong id="bizBreakEvenUnits">—</strong></div>
             <div><span>درآمد متناظر با نقطه سربه‌سر</span><strong id="bizBreakEvenRevenue">—</strong></div>
             <div><span>تعداد فروش برای رسیدن به سود هدف</span><strong id="bizTargetUnits">—</strong></div>
-          </div>
+          </div></details>
           <p class="biz-secondary-note">فرض محاسبه: قیمت و هزینه متغیر هر واحد ثابت است و هزینه ثابت مربوط به یک دوره مشخص است.</p>
         </section>
 
@@ -920,13 +920,13 @@
             <button class="btn-primary biz-secondary-submit" type="submit">محاسبه بودجه ماهانه</button>
             <p class="biz-validation" id="bizBudgetStatus" role="status" aria-live="polite">مبالغ ماهانه را وارد کن تا بودجه محاسبه شود.</p>
           </form>
-          <div class="biz-secondary-results" aria-live="polite">
+          <details class="biz-results-disclosure"><summary>جزئیات نتیجه بودجه ماهانه <span class="biz-disclosure-indicator" aria-hidden="true">⌄</span></summary><div class="biz-secondary-results" aria-live="polite">
             <div><span>مجموع هزینه‌های ماهانه</span><strong id="bizBudgetExpenses">—</strong></div>
             <div><span>مازاد / کسری عملیاتی</span><strong id="bizBudgetOperatingProfit">—</strong></div>
             <div><span>مبلغ ذخیره پیشنهادی</span><strong id="bizBudgetReserveAmount">—</strong></div>
             <div><span>مانده پس از ذخیره</span><strong id="bizBudgetNet">—</strong></div>
             <div><span>حاشیه عملیاتی</span><strong id="bizBudgetMargin">—</strong></div>
-          </div>
+          </div></details>
           <p class="biz-secondary-note">این برنامه‌ریز، بودجه پیش‌بینی‌شده است؛ مالیات، بهره و جریان نقد واقعی فقط در صورت ثبت جداگانه لحاظ می‌شوند.</p>
         </section>
       </div>
