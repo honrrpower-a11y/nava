@@ -1354,7 +1354,7 @@ async function saveNaviHistoryMessage(messageId, button) {
    HISTORY — LOAD FROM D1
 ========================================= */
 
-async function loadNaviHistory() {
+async function loadNaviHistory({ silent = false } = {})
   const token = getNaviToken();
 
   if (!token) return false;
@@ -1410,11 +1410,13 @@ async function loadNaviHistory() {
       naviHistory = normalizeNaviHistory(data);
       renderNaviHistory(naviHistory);
 
-      setNaviStatus(
-        naviHistory.length
-          ? "گفت‌وگوهای قبلی بازیابی شدند؛ می‌توانی ادامه بدهی."
-          : "ناوی آماده شروع اولین گفت‌وگوست."
-      );
+      if (!silent) {
+        setNaviStatus(
+          naviHistory.length
+            ? "گفت‌وگوهای قبلی بازیابی شدند؛ می‌توانی ادامه بدهی."
+            : "ناوی آماده شروع اولین گفت‌وگوست."
+        );
+      }
 
       return true;
 
@@ -1426,16 +1428,18 @@ async function loadNaviHistory() {
       renderNaviHistory(naviHistory);
       naviHistoryCount.textContent = "حافظه آنلاین در دسترس نیست";
 
-      if (naviHistory.length === 0) {
+      if (!silent && naviHistory.length === 0) {
         showEmptyHistory(
           "دریافت تاریخچه از سرور ممکن نشد.\nمی‌توانی دوباره تلاش کنی.",
           "خطا در دریافت"
         );
       }
 
-      setNaviStatus(
-        "اتصال به حافظه ناوی برقرار نشد. پاسخ‌گویی ناوی همچنان قابل استفاده است."
-      );
+      if (!silent) {
+        setNaviStatus(
+          "اتصال به حافظه ناوی برقرار نشد. پاسخ‌گویی ناوی همچنان قابل استفاده است."
+        );
+      }
 
       return false;
 
@@ -3554,124 +3558,61 @@ async function sendMessageToNavi() {
       }
     }
 
+    // Render the answer immediately. Secondary synchronization must not block chat.
     const threadBeforeNaming = naviThreads.find(item => item.thread_id === naviActiveThreadId);
-    if (threadBeforeNaming && Number(threadBeforeNaming.message_count || 0) === 0) {
-      try {
-        await nameNaviThreadFromFirstMessage(message);
-        await loadNaviThreads();
-      } catch (titleError) {
-        console.warn("NAVI conversation title update failed:", titleError);
-      }
-    }
-
+    const shouldNameThread = threadBeforeNaming && Number(threadBeforeNaming.message_count || 0) === 0;
     showNaviReply(reply);
     userRequest.value = "";
+    appendLocalNaviMessages(finalMessage, reply);
+    setNaviStatus("پاسخ ناوی دریافت شد.");
 
-    setNaviStatus(
-      "پاسخ ناوی دریافت شد؛ در حال به‌روزرسانی تاریخچه..."
-    );
-
-    const historyUpdated = await loadNaviHistory();
-
-    if (
-      getNaviToken() !== token ||
-      naviSessionVersion !== requestVersion
-    ) {
-      return;
+    const backgroundJobs = [];
+    if (shouldNameThread) {
+      backgroundJobs.push((async () => {
+        await nameNaviThreadFromFirstMessage(message);
+        await loadNaviThreads();
+      })());
     }
+    backgroundJobs.push(loadNaviHistory({ silent: true }));
 
-    if (historyUpdated) {
-      setNaviStatus("پاسخ دریافت شد و تاریخچه گفت‌وگو به‌روز است.");
-    } else if (getNaviToken()) {
-      appendLocalNaviMessages(finalMessage, reply);
-
-      setNaviStatus(
-        "پاسخ ناوی دریافت شد؛ اما اتصال به حافظه آنلاین برقرار نشد. پیام این نوبت فعلاً در همین صفحه حفظ شده است."
-      );
-    }
-
-    /* =====================================
-       AUTOMATIC MEMORY REFRESH + DIAGNOSTICS
-       Refresh after every successful reply,
-       even if the profile panel was not opened.
-    ===================================== */
-
-    const memoryResult = data.memory && typeof data.memory === "object"
-      ? data.memory
-      : null;
-
+    const memoryResult = data.memory && typeof data.memory === "object" ? data.memory : null;
     if (memoryResult?.manualSaved || memoryResult?.manualDuplicate || memoryResult?.manualSaveError) {
-      setNaviMemoryStatus(memoryResult.manualSaved ? "برداشت ناوی از پیام در حافظه تأییدشده ذخیره شد." : memoryResult.manualDuplicate ? "برداشت ناوی یا اطلاعات مشابه آن از قبل در حافظه تأییدشده وجود داشت." : memoryResult.manualSaveError);
+      setNaviMemoryStatus(memoryResult.manualSaved
+        ? "برداشت ناوی از پیام در حافظه تأییدشده ذخیره شد."
+        : memoryResult.manualDuplicate
+          ? "برداشت ناوی یا اطلاعات مشابه آن از قبل در حافظه تأییدشده وجود داشت."
+          : memoryResult.manualSaveError);
     }
 
     if (!naviMemoryBusy) {
-      const memoryRefreshed = await loadNaviMemories(true);
-
-      if (
-        memoryRefreshed &&
-        memoryResult &&
-        memoryResult.composerSaveRequested &&
-        !memoryResult.commandRecognized
-      ) {
-        if (
-          Number(memoryResult.proposalsMergedIntoPending) > 0 ||
-          Number(memoryResult.proposalsMergeCandidates) > 0
-        ) {
-          const mergeMessages = [];
-
-          if (Number(memoryResult.proposalsMergedIntoPending) > 0) {
-            mergeMessages.push(
-              "اطلاعات مکمل با پیشنهاد قبلی ادغام شد."
-            );
-          }
-
-          if (Number(memoryResult.proposalsMergeCandidates) > 0) {
-            mergeMessages.push(
-              "برای تکمیل یک حافظه تأییدشده، پیشنهاد تازه‌ای ساخته شد؛ پس از بررسی آن را تأیید کن."
-            );
-          }
-
-          setNaviMemoryStatus(
-            "ناوی: " + mergeMessages.join(" ")
-          );
+      backgroundJobs.push((async () => {
+        const refreshed = await loadNaviMemories(true);
+        if (!refreshed || !memoryResult || !memoryResult.composerSaveRequested || memoryResult.commandRecognized) return;
+        if (Number(memoryResult.proposalsMergedIntoPending) > 0 || Number(memoryResult.proposalsMergeCandidates) > 0) {
+          const notes = [];
+          if (Number(memoryResult.proposalsMergedIntoPending) > 0) notes.push("اطلاعات مکمل با پیشنهاد قبلی ادغام شد.");
+          if (Number(memoryResult.proposalsMergeCandidates) > 0) notes.push("برای تکمیل یک حافظه تأییدشده، پیشنهاد تازه‌ای ساخته شد؛ پس از بررسی آن را تأیید کن.");
+          setNaviMemoryStatus("ناوی: " + notes.join(" "));
         } else if (Number(memoryResult.proposalsCreated) > 0) {
-          setNaviMemoryStatus(
-            "ناوی " + memoryResult.proposalsCreated +
-            " پیشنهاد تازه ثبت کرد؛ برای بررسی به بخش پیشنهادها برو."
-          );
+          setNaviMemoryStatus("ناوی " + memoryResult.proposalsCreated + " پیشنهاد تازه ثبت کرد؛ برای بررسی به بخش پیشنهادها برو.");
         } else if (memoryResult.responseStructured === false) {
-          setNaviMemoryStatus(
-            "این پاسخ ناوی به قالب ساختاریافته حافظه نرسید؛ پیشنهادی ثبت نشد."
-          );
+          setNaviMemoryStatus("این پاسخ ناوی به قالب ساختاریافته حافظه نرسید؛ پیشنهادی ثبت نشد.");
         } else if (Number(memoryResult.proposalsReceived) === 0) {
-          setNaviMemoryStatus(
-            "این بار ناوی اطلاعات ماندگاری برای پیشنهاد تشخیص نداد."
-          );
+          setNaviMemoryStatus("این بار ناوی اطلاعات ماندگاری برای پیشنهاد تشخیص نداد.");
         } else if (Number(memoryResult.proposalsSkippedDuplicate) > 0) {
-          setNaviMemoryStatus(
-            "پیشنهاد دریافتی تکراری بود و چون قبلاً ثبت شده، مورد تازه‌ای ساخته نشد."
-          );
-        } else if (Number(memoryResult.proposalsSkippedInvalid) > 0 ||
-                   Number(memoryResult.proposalsSkippedSensitive) > 0) {
-          setNaviMemoryStatus(
-            "پیشنهاد ناوی به دلیل معتبر نبودن یا حساس بودن ذخیره نشد."
-          );
+          setNaviMemoryStatus("پیشنهاد دریافتی تکراری بود و چون قبلاً ثبت شده، مورد تازه‌ای ساخته نشد.");
+        } else if (Number(memoryResult.proposalsSkippedInvalid) > 0 || Number(memoryResult.proposalsSkippedSensitive) > 0) {
+          setNaviMemoryStatus("پیشنهاد ناوی به دلیل معتبر نبودن یا حساس بودن ذخیره نشد.");
         } else if (memoryResult.proposalProcessingFailed) {
-          setNaviMemoryStatus(
-            "ناوی پیشنهاد تولید کرد، اما ثبت آن در حافظه با خطا روبه‌رو شد."
-          );
+          setNaviMemoryStatus("ناوی پیشنهاد تولید کرد، اما ثبت آن در حافظه با خطا روبه‌رو شد.");
         }
-      } else if (
-        memoryRefreshed &&
-        memoryResult &&
-        memoryResult.commandRecognized &&
-        memoryResult.saved
-      ) {
-        setNaviMemoryStatus(
-          "اطلاعات در حافظه تأییدشده ذخیره شد؛ در بخش پیشنهادها قرار نمی‌گیرد."
-        );
-      }
+      })());
     }
+    Promise.allSettled(backgroundJobs).then(results => {
+      results.forEach(result => {
+        if (result.status === "rejected") console.warn("NAVI background synchronization failed:", result.reason);
+      });
+    });
 
   } catch (error) {
     if (naviSessionVersion !== requestVersion) return;
