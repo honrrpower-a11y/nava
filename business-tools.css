@@ -432,3 +432,31 @@ body.light #bizPage .biz-tab.is-active{
 .nava-dialog-actions .nava-dialog-confirm{border-color:var(--gold,#d5b56a);background:var(--gold,#d5b56a);color:#151515;font-weight:800}
 .nava-dialog-actions .nava-dialog-confirm.is-danger{border-color:#b85d58;background:#b85d58;color:#fff}
 .nava-dialog-actions button:focus-visible,.nava-dialog-input:focus-visible{outline:2px solid var(--gold,#d5b56a);outline-offset:2px}
+
+
+/* Customer accounts and actual receipt ledger */
+.biz-accounts-workspace{display:grid;gap:18px}
+.biz-account-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.biz-account-stat,.biz-account-card{border:1px solid var(--border-color,rgba(148,163,184,.22));border-radius:16px;background:var(--surface-card,rgba(255,255,255,.035));padding:16px;min-width:0}
+.biz-account-stat{display:grid;gap:8px}
+.biz-account-stat small{color:var(--text-muted,#94a3b8);font-size:.82rem}
+.biz-account-stat strong{font-size:1.15rem;overflow-wrap:anywhere}
+.biz-accounts-grid{display:grid;grid-template-columns:minmax(260px,.85fr) minmax(0,1.5fr);gap:16px;align-items:start}
+.biz-account-card h3{margin:0 0 14px;font-size:1.05rem}
+.biz-payment-form{display:grid;grid-template-columns:1fr;gap:12px}
+.biz-payment-form .biz-field{display:grid;gap:6px}
+.biz-account-table-wrap{width:100%;overflow-x:auto}
+.biz-account-table{width:100%;border-collapse:collapse;min-width:560px}
+.biz-account-table th,.biz-account-table td{padding:11px 9px;border-bottom:1px solid var(--border-color,rgba(148,163,184,.18));text-align:right;vertical-align:middle;font-size:.86rem}
+.biz-account-table th{color:var(--text-muted,#94a3b8);font-weight:600;white-space:nowrap}
+.biz-account-table td.is-debt{color:#e0a34a;font-weight:700}
+.biz-account-table td.is-credit{color:#42b99a;font-weight:700}
+.biz-account-empty{text-align:center!important;color:var(--text-muted,#94a3b8)}
+.biz-payment-history{display:grid;gap:10px}
+.biz-payment-row{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;padding:12px 0;border-bottom:1px solid var(--border-color,rgba(148,163,184,.18))}
+.biz-payment-main{display:grid;gap:5px;min-width:0;flex:1}
+.biz-payment-main small{color:var(--text-muted,#94a3b8);font-size:.8rem}
+.biz-payment-main p{margin:0;font-size:.85rem}
+.biz-payment-row>.is-voided{color:var(--text-muted,#94a3b8);text-decoration:line-through}
+.biz-payment-void{border:1px solid rgba(220,90,90,.4);background:transparent;color:#d87979;border-radius:9px;padding:7px 10px;cursor:pointer}
+@media(max-width:760px){.biz-accounts-grid{grid-template-columns:1fr}.biz-account-summary{grid-template-columns:1fr}.biz-account-stat{padding:12px}.biz-payment-row{align-items:flex-start}}
