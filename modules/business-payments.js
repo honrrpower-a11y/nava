@@ -22,11 +22,13 @@ export function normalizeCustomerPaymentInput(input){
  if(!validDate(paymentDate))return{error:"تاریخ دریافت وجه معتبر نیست."};
  const method=String(input.paymentMethod||"");
  if(!METHODS.has(method))return{error:"روش دریافت وجه معتبر نیست."};
+ const invoiceId=String(input.invoiceId||"").trim();
+ if(invoiceId&&!validId(invoiceId,"invoice"))return{error:"شناسه فاکتور معتبر نیست."};
  const cashAccountId=String(input.cashAccountId||"").trim();
  if(cashAccountId&&!validId(cashAccountId,"cash"))return{error:"شناسه حساب مالی معتبر نیست."};
- return{value:{customer_id:customerId,cash_account_id:cashAccountId||null,amount_toman:amount,payment_date:paymentDate,payment_method:method,reference:clean(input.reference,120),notes:clean(input.notes,800)}};
+ return{value:{customer_id:customerId,invoice_id:invoiceId||null,cash_account_id:cashAccountId||null,amount_toman:amount,payment_date:paymentDate,payment_method:method,reference:clean(input.reference,120),notes:clean(input.notes,800)}};
 }
-function paymentOut(r){return{id:r.id,customerId:r.customer_id,customerName:r.customer_name||"",amountToman:Number(r.amount_toman),paymentDate:r.payment_date,paymentMethod:r.payment_method,reference:r.reference||"",notes:r.notes||"",status:r.status,createdAt:r.created_at};}
+function paymentOut(r){return{id:r.id,customerId:r.customer_id,customerName:r.customer_name||"",invoiceId:r.invoice_id||null,invoiceNumber:r.invoice_number||"",amountToman:Number(r.amount_toman),paymentDate:r.payment_date,paymentMethod:r.payment_method,reference:r.reference||"",notes:r.notes||"",status:r.status,createdAt:r.created_at};}
 async function owns(db,b,o){
  return db.prepare("SELECT id FROM business_profiles_v1 WHERE id=? AND owner_id=? AND status='active' LIMIT 1").bind(b,o).first();
 }
@@ -51,7 +53,7 @@ export async function handleBusinessPaymentsRoute({request,env,url,corsOrigin,bu
   }
   if(!resourceId&&request.method==="GET"){
    const rows=await db.prepare(
-    "SELECT p.*,c.name AS customer_name FROM business_customer_payments_v1 p JOIN business_customers_v1 c ON c.id=p.customer_id AND c.business_id=p.business_id AND c.owner_id=p.owner_id WHERE p.business_id=? AND p.owner_id=? ORDER BY p.payment_date DESC,p.created_at DESC LIMIT 200"
+    "SELECT p.*,c.name AS customer_name,i.invoice_number FROM business_customer_payments_v1 p JOIN business_customers_v1 c ON c.id=p.customer_id AND c.business_id=p.business_id AND c.owner_id=p.owner_id LEFT JOIN business_invoices_v1 i ON i.id=p.invoice_id AND i.business_id=p.business_id AND i.owner_id=p.owner_id WHERE p.business_id=? AND p.owner_id=? ORDER BY p.payment_date DESC,p.created_at DESC LIMIT 200"
    ).bind(businessId,ownerId).all();
    return reply({payments:(rows.results||[]).map(paymentOut)},200,corsOrigin);
   }
@@ -65,14 +67,21 @@ export async function handleBusinessPaymentsRoute({request,env,url,corsOrigin,bu
     ? await db.prepare("SELECT id FROM business_cash_accounts_v1 WHERE id=? AND business_id=? AND owner_id=? AND status='active'").bind(v.cash_account_id,businessId,ownerId).first()
     : await db.prepare("SELECT id FROM business_cash_accounts_v1 WHERE business_id=? AND owner_id=? AND status='active' ORDER BY created_at,id LIMIT 1").bind(businessId,ownerId).first();
    if(!cashAccount)return fail("حساب مالی فعالی برای ثبت دریافت وجود ندارد؛ ابتدا یک حساب بساز.",409,corsOrigin);
+   if(v.invoice_id){
+    const invoice=await db.prepare("SELECT id,customer_id,total_toman,status,document_type FROM business_invoices_v1 WHERE id=? AND business_id=? AND owner_id=?").bind(v.invoice_id,businessId,ownerId).first();
+    if(!invoice||invoice.status!=="issued"||invoice.document_type!=="invoice")return fail("فاکتور فعال و قابل دریافت پیدا نشد.",404,corsOrigin);
+    if(invoice.customer_id!==v.customer_id)return fail("این فاکتور متعلق به مشتری انتخاب‌شده نیست.",409,corsOrigin);
+    const paid=await db.prepare("SELECT COALESCE(SUM(amount_toman),0) AS total FROM business_customer_payments_v1 WHERE invoice_id=? AND business_id=? AND owner_id=? AND status='received'").bind(v.invoice_id,businessId,ownerId).first();
+    if(v.amount_toman>Number(invoice.total_toman)-Number(paid?.total||0))return fail("مبلغ دریافت از مانده فاکتور بیشتر است.",409,corsOrigin);
+   }
    const id="payment-"+crypto.randomUUID(),moveId="cashmove-"+crypto.randomUUID();
    const result=await db.batch([
-    db.prepare("INSERT INTO business_customer_payments_v1(id,business_id,owner_id,customer_id,amount_toman,payment_date,payment_method,reference,notes,status,created_at,updated_at,cash_account_id) VALUES(?,?,?,?,?,?,?,?,?,'received',datetime('now'),datetime('now'),?)").bind(id,businessId,ownerId,v.customer_id,v.amount_toman,v.payment_date,v.payment_method,v.reference,v.notes,cashAccount.id),
+    db.prepare("INSERT INTO business_customer_payments_v1(id,business_id,owner_id,customer_id,amount_toman,payment_date,payment_method,reference,notes,status,created_at,updated_at,cash_account_id,invoice_id) VALUES(?,?,?,?,?,?,?,?,?,'received',datetime('now'),datetime('now'),?,?)").bind(id,businessId,ownerId,v.customer_id,v.amount_toman,v.payment_date,v.payment_method,v.reference,v.notes,cashAccount.id,v.invoice_id),
     db.prepare("INSERT INTO business_cash_movements_v1(id,business_id,owner_id,cash_account_id,direction,amount_toman,movement_date,source_type,source_id,title,method,reference,notes,status,created_at) SELECT ?,?,?,?,'in',?,?,'customer_receipt',?,'دریافت از مشتری',?,?,?,'active',datetime('now') WHERE EXISTS(SELECT 1 FROM business_customer_payments_v1 WHERE id=? AND business_id=? AND owner_id=? AND status='received')").bind(moveId,businessId,ownerId,cashAccount.id,v.amount_toman,v.payment_date,id,v.payment_method,v.reference,v.notes,id,businessId,ownerId)
    ]);
    if(Number(result?.[0]?.meta?.changes||0)!==1)throw new Error("Payment insert not confirmed.");
    if(Number(result?.[1]?.meta?.changes||0)!==1)throw new Error("Customer receipt cash movement not confirmed.");
-   const row=await db.prepare("SELECT p.*,c.name AS customer_name FROM business_customer_payments_v1 p JOIN business_customers_v1 c ON c.id=p.customer_id WHERE p.id=? AND p.business_id=? AND p.owner_id=?").bind(id,businessId,ownerId).first();
+   const row=await db.prepare("SELECT p.*,c.name AS customer_name,i.invoice_number FROM business_customer_payments_v1 p JOIN business_customers_v1 c ON c.id=p.customer_id LEFT JOIN business_invoices_v1 i ON i.id=p.invoice_id WHERE p.id=? AND p.business_id=? AND p.owner_id=?").bind(id,businessId,ownerId).first();
    return reply({payment:paymentOut(row),cashMovementId:moveId,saved:true},201,corsOrigin);
   }
   if(resourceId&&action==="void"&&request.method==="POST"){
