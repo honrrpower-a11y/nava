@@ -9,7 +9,9 @@ const navi = readFileSync(new URL("../modules/navi.js", import.meta.url), "utf8"
 test("NAVI never receives arbitrary visible page DOM as context", () => {
   assert.doesNotMatch(app, /document\.body\.innerText/);
   assert.doesNotMatch(app, /pageContext\s*:/);
-  assert.match(navi, /buildNaviPlatformKnowledge\(page, pageTab\)/);\n  assert.match(app, /businessId: document\.querySelector\("#bizProfileSelect"\)/);\n  assert.match(navi, /loadNaviBusinessContext\(env\.NAVA_DB, userId, businessId, \{ pageTab, message \}\)/);
+  assert.match(navi, /buildNaviPlatformKnowledge\(page, pageTab\)/);
+  assert.match(app, /businessId: document\.querySelector\("#bizProfileSelect"\)/);
+  assert.match(navi, /loadNaviBusinessContext\(env\.NAVA_DB, userId, businessId, \{ pageTab, message \}\)/);
 });
 
 test("NAVI history reads enforce thread ownership in the message query", () => {
