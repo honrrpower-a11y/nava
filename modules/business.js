@@ -6,6 +6,7 @@ import { ALLOWED_ORIGIN } from "./config.js";
 import { authorizeNaviRequest } from "./navi-auth.js";
 import { handleBusinessTransactionRoute } from "./business-transactions.js";
 import { handleBusinessCatalogRoute } from "./business-catalog.js";
+import { handleBusinessInventoryRoute } from "./business-inventory.js";
 
 const BUSINESS_TYPES = new Set(["freelancer", "store", "home_business", "small_company", "idea", "other"]);
 const RECORD_TYPES = new Set(["cost_calculation", "break_even", "monthly_budget", "note"]);
@@ -319,6 +320,9 @@ export async function handleBusinessRoute({ request, env, url, origin, corsOrigi
     }
     if (parts[2] === "items") {
       return await handleBusinessCatalogRoute({ request, env, url, corsOrigin, businessId, ownerId: user.id, itemId: parts[3] || "" });
+    }
+    if (parts[2] === "inventory" && parts.length === 3) {
+      return await handleBusinessInventoryRoute({ request, env, url, corsOrigin, businessId, ownerId: user.id });
     }
     if (parts[2] === "records") {
       if (parts.length === 3) {
