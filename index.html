@@ -649,6 +649,7 @@
               <form id="bizPaymentForm" class="biz-payment-form">
                 <label class="biz-field"><span>مشتری</span><select id="bizPaymentCustomer" required><option value="">ابتدا پرونده را انتخاب کن</option></select></label>
                 <label class="biz-field"><span>اتصال به فاکتور (اختیاری)</span><select id="bizPaymentInvoice"><option value="">دریافت عمومی از مشتری</option></select></label>
+                <label class="biz-field"><span>واریز به حساب مالی</span><select id="bizPaymentCashAccount" required><option value="">انتخاب حساب دریافت</option></select></label>
                 <label class="biz-field"><span>مبلغ دریافتی (تومان)</span><input id="bizPaymentAmount" type="text" inputmode="numeric" maxlength="13" placeholder="مثلاً ۵۰۰۰۰۰" required></label>
                 <label class="biz-field"><span>تاریخ دریافت (شمسی)</span><input id="bizPaymentDate" type="text" inputmode="numeric" placeholder="۱۴۰۵/۰۸/۲۵" required></label>
                 <label class="biz-field"><span>روش دریافت</span><select id="bizPaymentMethod"><option value="cash">نقدی</option><option value="card">کارت‌خوان</option><option value="bank_transfer">کارت‌به‌کارت / انتقال بانکی</option><option value="other">سایر</option></select></label>
@@ -1298,7 +1299,7 @@
   <script src="business-inventory-ui.js?v=inventory-persian-calendar-fix-20261116-3" defer></script>
   <script src="business-crm-ui.js?v=order-confirm-dialog-fix-20261116-1" defer></script>
   <script src="business-transactions-ui.js?v=supplier-linked-expenses-20261116-1" defer></script>
-  <script src="business-payments-ui.js?v=invoice-linked-receipts-20261116-1" defer></script>
+  <script src="business-payments-ui.js?v=receipt-cash-account-20261116-1" defer></script>
   <script src="business-invoices-ui.js?v=invoice-order-refresh-fix-20261116-1" defer></script>
   <script src="business-ledger-ui.js?v=supplier-cash-persian-calendar-20261116-2" defer></script>
   <script src="business-financial-export.js?v=financial-export-daynight-20261116-1" defer></script>
