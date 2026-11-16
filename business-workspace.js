@@ -128,7 +128,7 @@
       remove.className = "biz-record-delete";
       remove.textContent = "حذف گزارش";
       remove.addEventListener("click", async () => {
-        if (!window.confirm("این گزارش مالی برای همیشه حذف شود؟")) return;
+        if (!await window.navaConfirm("این گزارش مالی برای همیشه حذف شود؟", { title: "حذف گزارش مالی", confirmText: "حذف دائمی", danger: true })) return;
         remove.disabled = true;
         try {
           await api("/" + encodeURIComponent(business.id) + "/records/" + encodeURIComponent(record.id), { method:"DELETE" });
