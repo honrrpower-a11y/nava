@@ -579,3 +579,14 @@ body.light #bizPage .biz-tab.is-active{
   #bizPage .biz-list-disclosure>.biz-account-disclosure-head,
   #bizPage .biz-results-disclosure>summary{padding:11px;font-size:11px}
 }
+
+
+/* NAVA BUSINESS — invoice workspace */
+#bizPage .biz-invoice-form{max-width:760px;padding:16px;border:1px solid var(--border);border-radius:15px;background:var(--panel);box-shadow:0 8px 22px color-mix(in srgb,var(--text) 5%,transparent)}
+#bizPage .biz-invoice-form .biz-field{display:grid;gap:7px;color:var(--muted);font-size:12px}
+#bizPage .biz-invoice-form input,#bizPage .biz-invoice-form select{width:100%;min-width:0;min-height:43px;padding:10px 12px;border:1px solid var(--border);border-radius:10px;background:var(--panel2);color:var(--text);font:inherit;font-size:13px}
+#bizPage .biz-invoice-amount-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+#bizPage #bizInvoiceStatus{max-width:760px}
+#bizPage #bizInvoiceStatus[data-state="error"]{border-color:color-mix(in srgb,#d87979 55%,var(--border));color:#d87979}
+#bizPage #bizInvoiceStatus[data-state="success"]{color:var(--muted)}
+@media(max-width:560px){#bizPage .biz-invoice-amount-grid{grid-template-columns:1fr}}
