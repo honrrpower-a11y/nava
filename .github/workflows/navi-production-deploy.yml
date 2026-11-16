@@ -12,6 +12,7 @@ on:
       - "modules/config.js"
       - "modules/logo.js"
       - "modules/business.js"
+      - "modules/navi-knowledge.js"
       - "modules/business-transactions.js"
       - "modules/business-inventory.js"
       - "modules/business-crm.js"
@@ -92,6 +93,7 @@ jobs:
           const requiredFiles = [
             'index.js',
             'modules/navi.js',
+            'modules/navi-knowledge.js',
             'modules/navi-auth.js',
             'modules/navi-memory.js',
             'modules/shared.js',
