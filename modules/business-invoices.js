@@ -15,6 +15,15 @@ const amount=(v,label)=>{
  const n=Number(v??0);
  return Number.isSafeInteger(n)&&n>=0&&n<=MAX?{value:n}:{error:label+" باید عدد صحیح نامنفی به تومان باشد."};
 };
+export function normalizeInvoiceAdjustments(input,subtotal){
+ if(!Number.isSafeInteger(subtotal)||subtotal<1||subtotal>MAX)return{error:"جمع اقلام سفارش معتبر نیست."};
+ const discount=amount(input?.discountToman,"تخفیف"),tax=amount(input?.taxToman,"مالیات"),shipping=amount(input?.shippingToman,"هزینه حمل");
+ if(discount.error||tax.error||shipping.error)return{error:discount.error||tax.error||shipping.error};
+ if(discount.value>subtotal)return{error:"تخفیف نمی‌تواند از جمع اقلام بیشتر باشد."};
+ const total=subtotal-discount.value+tax.value+shipping.value;
+ if(!Number.isSafeInteger(total)||total<1||total>MAX)return{error:"مبلغ نهایی سند باید مثبت و حداکثر یک‌هزار میلیارد تومان باشد."};
+ return{value:{discount_toman:discount.value,tax_toman:tax.value,shipping_toman:shipping.value,total_toman:total}};
+}
 async function owns(db,b,o){
  return db.prepare("SELECT id,name FROM business_profiles_v1 WHERE id=? AND owner_id=? AND status='active' LIMIT 1").bind(b,o).first();
 }
@@ -52,19 +61,16 @@ export async function handleBusinessInvoiceRoute({request,env,url,corsOrigin,bus
    const lines=await db.prepare("SELECT oi.catalog_item_id,oi.item_name,oi.quantity,oi.unit_price_toman,oi.line_total_toman,COALESCE(ci.unit,'عدد') AS unit FROM business_order_items_v1 oi LEFT JOIN business_catalog_items_v1 ci ON ci.id=oi.catalog_item_id AND ci.business_id=oi.business_id AND ci.owner_id=oi.owner_id WHERE oi.order_id=? AND oi.business_id=? AND oi.owner_id=? ORDER BY oi.created_at,oi.id").bind(orderId,businessId,ownerId).all();
    if(!lines.results?.length)return fail("سفارش ردیف قابل صدور ندارد.",409,corsOrigin);
    const subtotal=lines.results.reduce((s,x)=>s+Number(x.line_total_toman),0);
-   if(!Number.isSafeInteger(subtotal)||subtotal<1||subtotal>MAX)return fail("جمع اقلام سفارش معتبر نیست.",409,corsOrigin);
-   const discount=amount(input.discountToman,"تخفیف"),tax=amount(input.taxToman,"مالیات"),shipping=amount(input.shippingToman,"هزینه حمل");
-   if(discount.error||tax.error||shipping.error)return fail(discount.error||tax.error||shipping.error,400,corsOrigin);
-   if(discount.value>subtotal)return fail("تخفیف نمی‌تواند از جمع اقلام بیشتر باشد.",400,corsOrigin);
-   const total=subtotal-discount.value+tax.value+shipping.value;
-   if(!Number.isSafeInteger(total)||total<1||total>MAX)return fail("مبلغ نهایی سند باید مثبت و حداکثر یک‌هزار میلیارد تومان باشد.",400,corsOrigin);
+   const adjustments=normalizeInvoiceAdjustments(input,subtotal);
+   if(adjustments.error)return fail(adjustments.error,400,corsOrigin);
+   const {discount_toman:discount,tax_toman:tax,shipping_toman:shipping,total_toman:total}=adjustments.value;
    const issueDate=String(input.issueDate||order.order_date);
    const dueDate=String(input.dueDate||"");
    if(!validDate(issueDate)||(dueDate&&!validDate(dueDate)))return fail("تاریخ صدور یا سررسید معتبر نیست.",400,corsOrigin);
    if(dueDate&&dueDate<issueDate)return fail("تاریخ سررسید نمی‌تواند قبل از تاریخ صدور باشد.",400,corsOrigin);
    const id="invoice-"+crypto.randomUUID(),prefix=type==="invoice"?"INV":"PRO";
    const batch=[
-    db.prepare("INSERT INTO business_invoices_v1(id,business_id,owner_id,order_id,document_type,invoice_sequence,invoice_number,status,issue_date,due_date,seller_name,customer_id,customer_name,customer_phone,customer_address,subtotal_toman,discount_toman,tax_toman,shipping_toman,total_toman,notes,created_at,updated_at) SELECT ?,?,?,?, ?,COALESCE((SELECT MAX(invoice_sequence)+1 FROM business_invoices_v1 WHERE business_id=? AND owner_id=? AND document_type=?),1),?, 'issued',?,?,?,?,?,?,?,?,?,?,?,?,?,datetime('now'),datetime('now') WHERE EXISTS(SELECT 1 FROM business_orders_v1 WHERE id=? AND business_id=? AND owner_id=? AND status<>'cancelled') AND (?='proforma' OR EXISTS(SELECT 1 FROM business_orders_v1 WHERE id=? AND business_id=? AND owner_id=? AND status='confirmed')) AND NOT EXISTS(SELECT 1 FROM business_invoices_v1 WHERE order_id=? AND business_id=? AND owner_id=? AND document_type=?)").bind(id,businessId,ownerId,orderId,type,businessId,ownerId,type,prefix+"-PENDING",issueDate,dueDate,order.seller_name,order.customer_id,order.customer_name||"مشتری آزاد",order.customer_phone||"",order.customer_address||"",subtotal,discount.value,tax.value,shipping.value,total,clean(input.notes||order.notes,1200),orderId,businessId,ownerId,type,orderId,businessId,ownerId,orderId,businessId,ownerId,type),
+    db.prepare("INSERT INTO business_invoices_v1(id,business_id,owner_id,order_id,document_type,invoice_sequence,invoice_number,status,issue_date,due_date,seller_name,customer_id,customer_name,customer_phone,customer_address,subtotal_toman,discount_toman,tax_toman,shipping_toman,total_toman,notes,created_at,updated_at) SELECT ?,?,?,?, ?,COALESCE((SELECT MAX(invoice_sequence)+1 FROM business_invoices_v1 WHERE business_id=? AND owner_id=? AND document_type=?),1),?, 'issued',?,?,?,?,?,?,?,?,?,?,?,?,?,datetime('now'),datetime('now') WHERE EXISTS(SELECT 1 FROM business_orders_v1 WHERE id=? AND business_id=? AND owner_id=? AND status<>'cancelled') AND (?='proforma' OR EXISTS(SELECT 1 FROM business_orders_v1 WHERE id=? AND business_id=? AND owner_id=? AND status='confirmed')) AND NOT EXISTS(SELECT 1 FROM business_invoices_v1 WHERE order_id=? AND business_id=? AND owner_id=? AND document_type=?)").bind(id,businessId,ownerId,orderId,type,businessId,ownerId,type,prefix+"-PENDING",issueDate,dueDate,order.seller_name,order.customer_id,order.customer_name||"مشتری آزاد",order.customer_phone||"",order.customer_address||"",subtotal,discount,tax,shipping,total,clean(input.notes||order.notes,1200),orderId,businessId,ownerId,type,orderId,businessId,ownerId,orderId,businessId,ownerId,type),
     ...lines.results.map(x=>db.prepare("INSERT INTO business_invoice_items_v1(id,invoice_id,business_id,owner_id,catalog_item_id,item_name,unit,quantity,unit_price_toman,line_total_toman,created_at) SELECT ?,?,?,?,?,?,?,?,?,?,datetime('now') WHERE EXISTS(SELECT 1 FROM business_invoices_v1 WHERE id=? AND business_id=? AND owner_id=?)").bind("invoiceline-"+crypto.randomUUID(),id,businessId,ownerId,x.catalog_item_id,x.item_name,x.unit,Number(x.quantity),Number(x.unit_price_toman),Number(x.line_total_toman),id,businessId,ownerId))
    ];
    const results=await db.batch(batch);
