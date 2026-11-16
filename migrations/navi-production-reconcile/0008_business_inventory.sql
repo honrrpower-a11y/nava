@@ -29,3 +29,7 @@ CREATE INDEX IF NOT EXISTS idx_business_inventory_owner
 CREATE UNIQUE INDEX IF NOT EXISTS uq_business_inventory_sale_transaction
   ON business_inventory_movements_v1 (reference_transaction_id)
   WHERE reference_transaction_id IS NOT NULL AND movement_type = 'sale';
+
+CREATE UNIQUE INDEX IF NOT EXISTS uq_business_inventory_opening_per_item
+  ON business_inventory_movements_v1 (business_id, owner_id, catalog_item_id)
+  WHERE movement_type = 'opening';
