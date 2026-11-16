@@ -189,13 +189,13 @@ test("business transaction partial updates accept only supplied valid fields", a
 async function loadCustomerPaymentApi() {
   let source = await readFile(new URL("../modules/business-payments.js", import.meta.url), "utf8");
   source = source
-    .replace(/^import\\s+.*?;\\s*$/gm, "")
-    .replace(/\\bexport\\s+(?=(?:async\\s+)?function)/g, "");
-  source += "\\nglobalThis.__customerPaymentApi = { normalizeCustomerPaymentInput };";
+    .replace(/^import\s+.*?;\s*$/gm, "")
+    .replace(/\bexport\s+(?=(?:async\s+)?function)/g, "");
+  source += "\nglobalThis.__customerPaymentApi = { normalizeCustomerPaymentInput };";
   const sandbox = {
     console, JSON, Object, String, Number, Date, Set, RegExp,
     safeNaviText(value, maxLength = 3000) {
-      return String(value ?? "").replace(/\\u0000/g, "").replace(/[\\u0001-\\u0008\\u000B\\u000C\\u000E-\\u001F]/g, "").trim().slice(0, maxLength);
+      return String(value ?? "").replace(/\u0000/g, "").replace(/[\u0001-\u0008\u000B\u000C\u000E-\u001F]/g, "").trim().slice(0, maxLength);
     }
   };
   vm.runInNewContext(source, sandbox);
