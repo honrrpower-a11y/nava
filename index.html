@@ -733,7 +733,22 @@
           <form id="bizOrderForm" class="biz-order-form" novalidate>
             <div class="biz-order-form-top">
               <label class="biz-field"><span>مشتری (اختیاری)</span><select id="bizOrderCustomer"><option value="">بدون اتصال به مشتری</option></select></label>
-              <label class="biz-field"><span>تاریخ سفارش</span><input id="bizOrderDate" type="date" required></label>
+              <label class="biz-field biz-transaction-date-field"><span>تاریخ شمسی سفارش</span>
+                <div class="biz-persian-date-control">
+                  <input id="bizOrderDateDisplay" type="text" placeholder="انتخاب تاریخ شمسی" readonly aria-label="تاریخ سفارش به شمسی">
+                  <button id="bizOrderCalendarToggle" type="button" aria-label="باز کردن تقویم شمسی سفارش" aria-expanded="false">▦</button>
+                </div>
+                <input id="bizOrderDate" type="hidden">
+                <div id="bizOrderCalendar" class="biz-persian-calendar" hidden>
+                  <div class="biz-persian-calendar-head">
+                    <button id="bizOrderCalendarPrev" type="button" aria-label="ماه قبل">‹</button>
+                    <strong id="bizOrderCalendarMonth"></strong>
+                    <button id="bizOrderCalendarNext" type="button" aria-label="ماه بعد">›</button>
+                  </div>
+                  <div class="biz-persian-calendar-weekdays" aria-hidden="true"><span>ش</span><span>ی</span><span>د</span><span>س</span><span>چ</span><span>پ</span><span>ج</span></div>
+                  <div id="bizOrderCalendarDays" class="biz-persian-calendar-days"></div>
+                </div>
+              </label>
               <label class="biz-field"><span>یادداشت سفارش</span><input id="bizOrderNotes" maxlength="1200" placeholder="توضیحات یا شرایط تحویل"></label>
             </div>
             <div class="biz-order-lines-head"><h3>اقلام سفارش</h3><button id="bizOrderAddLine" type="button" class="btn-secondary">＋ افزودن ردیف</button></div>
