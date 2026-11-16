@@ -65,24 +65,28 @@ export async function handleBusinessInventoryRoute({ request, env, url, corsOrig
       if (!item || item.item_type !== "product" || Number(item.track_inventory) !== 1) {
         return fail("این محصول فعال نیست یا مدیریت موجودی آن روشن نشده است.", 409, corsOrigin);
       }
-      if (movementType === "opening") {
-        const prior = await db.prepare(
-          "SELECT id FROM business_inventory_movements_v1 WHERE catalog_item_id = ? AND business_id = ? AND owner_id = ? LIMIT 1"
-        ).bind(itemId, businessId, ownerId).first();
-        if (prior) return fail("موجودی اولیه قبلاً ثبت شده است؛ برای تغییر موجودی از اصلاح موجودی استفاده کن.", 409, corsOrigin);
-      }
-      const delta = movementType === "outbound" ? -quantity : quantity;
       const balance = await db.prepare(
         "SELECT COALESCE(SUM(quantity_delta), 0) AS quantity FROM business_inventory_movements_v1 WHERE catalog_item_id = ? AND business_id = ? AND owner_id = ?"
       ).bind(itemId, businessId, ownerId).first();
       const current = Number(balance?.quantity || 0);
-      if (delta < 0 && current < quantity) return fail("موجودی کافی نیست؛ خروج کالا بیشتر از موجودی فعلی مجاز نیست.", 409, corsOrigin);
+      const delta = movementType === "outbound" ? -quantity : quantity;
+      if (movementType === "outbound" && current < quantity) return fail("موجودی کافی نیست؛ خروج کالا بیشتر از موجودی فعلی مجاز نیست.", 409, corsOrigin);
       if (movementType === "opening" && current !== 0) return fail("موجودی اولیه فقط برای کالای بدون گردش قبلی قابل ثبت است.", 409, corsOrigin);
       const id = "mov-" + crypto.randomUUID();
+      let guard = "";
+      let params = [id, businessId, ownerId, itemId, movementType, delta, movementDate, notes];
+      if (movementType === "outbound") {
+        guard = " WHERE (SELECT COALESCE(SUM(quantity_delta), 0) FROM business_inventory_movements_v1 WHERE catalog_item_id = ? AND business_id = ? AND owner_id = ?) >= ?";
+        params.push(itemId, businessId, ownerId, quantity);
+      } else if (movementType === "opening") {
+        guard = " WHERE NOT EXISTS (SELECT 1 FROM business_inventory_movements_v1 WHERE catalog_item_id = ? AND business_id = ? AND owner_id = ?)";
+        params.push(itemId, businessId, ownerId);
+      }
       const result = await db.prepare(
-        "INSERT INTO business_inventory_movements_v1 (id, business_id, owner_id, catalog_item_id, movement_type, quantity_delta, movement_date, notes, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))"
-      ).bind(id, businessId, ownerId, itemId, movementType, delta, movementDate, notes).run();
-      if (!result.success || Number(result.meta?.changes || 0) !== 1) throw new Error("Inventory movement insert not confirmed.");
+        "INSERT INTO business_inventory_movements_v1 (id, business_id, owner_id, catalog_item_id, movement_type, quantity_delta, movement_date, notes, created_at) SELECT ?, ?, ?, ?, ?, ?, ?, ?, datetime('now')" + guard
+      ).bind(...params).run();
+      if (!result.success) throw new Error("Inventory movement insert failed.");
+      if (Number(result.meta?.changes || 0) !== 1) return fail("موجودی در همین زمان تغییر کرده است یا موجودی اولیه قبلاً ثبت شده؛ صفحه را تازه‌سازی کن.", 409, corsOrigin);
       return reply({ saved: true, movement: { id, itemId, movementType, quantityDelta: delta, movementDate, notes }, stockQuantity: current + delta }, 201, corsOrigin);
     }
     return fail("روش درخواست برای موجودی پشتیبانی نمی‌شود.", 405, corsOrigin);
