@@ -2,6 +2,23 @@
 ALTER TABLE business_transactions_v1
   ADD COLUMN customer_id TEXT REFERENCES business_customers_v1(id) ON DELETE SET NULL;
 
+-- Preserve customer links for already-confirmed orders created before this migration.
+UPDATE business_transactions_v1
+SET customer_id = (
+  SELECT o.customer_id FROM business_orders_v1 o
+  WHERE o.converted_transaction_id = business_transactions_v1.id
+    AND o.business_id = business_transactions_v1.business_id
+    AND o.owner_id = business_transactions_v1.owner_id
+)
+WHERE transaction_type = 'sale' AND customer_id IS NULL
+  AND EXISTS (
+    SELECT 1 FROM business_orders_v1 o
+    WHERE o.converted_transaction_id = business_transactions_v1.id
+      AND o.customer_id IS NOT NULL
+      AND o.business_id = business_transactions_v1.business_id
+      AND o.owner_id = business_transactions_v1.owner_id
+  );
+
 CREATE INDEX IF NOT EXISTS idx_business_transactions_customer_account
   ON business_transactions_v1(owner_id,business_id,customer_id,transaction_type,transaction_date);
 
