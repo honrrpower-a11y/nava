@@ -685,6 +685,32 @@
             </form><p class="biz-profile-status" id="bizSupplierStatus" role="status" aria-live="polite"></p></section>
             <details class="biz-account-card biz-account-disclosure"><summary class="biz-account-disclosure-head"><span><strong>مانده حساب تأمین‌کنندگان</strong><small>جمع هزینه‌های متصل، پرداخت‌شده و بدهی باقی‌مانده</small></span><span class="biz-disclosure-indicator" aria-hidden="true">⌄</span></summary><div class="biz-account-disclosure-body"><div class="biz-account-table-wrap"><table class="biz-account-table"><thead><tr><th>تأمین‌کننده</th><th>هزینه</th><th>پرداختی</th><th>مانده</th></tr></thead><tbody id="bizSupplierRows"><tr><td colspan="4">در حال بارگذاری...</td></tr></tbody></table></div></div></details>
           </div>
+          <section class="biz-account-card biz-purchase-card">
+            <div class="biz-transactions-heading"><div><h3>ثبت خرید از تأمین‌کننده</h3><p>با یک ثبت، هزینه خرید، ورود کالا به انبار، بدهی تأمین‌کننده و پرداخت احتمالی از حساب مالی هماهنگ می‌شوند.</p></div></div>
+            <form id="bizPurchaseForm" class="biz-payment-form" novalidate>
+              <label class="biz-field"><span>تأمین‌کننده</span><select id="bizPurchaseSupplier" required><option value="">انتخاب تأمین‌کننده</option></select></label>
+              <label class="biz-field"><span>محصول دارای مدیریت موجودی</span><select id="bizPurchaseItem" required><option value="">انتخاب محصول</option></select></label>
+              <div class="biz-fields-grid">
+                <label class="biz-field"><span>تعداد خرید</span><input id="bizPurchaseQuantity" type="text" inputmode="numeric" autocomplete="off" required></label>
+                <label class="biz-field"><span>قیمت خرید هر واحد (تومان)</span><input id="bizPurchaseUnitPrice" type="text" inputmode="numeric" autocomplete="off" required></label>
+                <label class="biz-field"><span>تاریخ خرید (شمسی)</span><div class="biz-persian-date-control"><input id="bizPurchaseDateDisplay" type="text" placeholder="انتخاب تاریخ شمسی" readonly aria-label="تاریخ خرید به شمسی"><button id="bizPurchaseDateToggle" type="button" aria-label="باز کردن تقویم شمسی" aria-expanded="false">▦</button></div><input id="bizPurchaseDate" type="hidden" required><div id="bizPurchaseDateCalendar" class="biz-persian-calendar" hidden><div class="biz-persian-calendar-head"><button type="button" data-month="-1" aria-label="ماه قبل">‹</button><strong id="bizPurchaseDateMonth"></strong><button type="button" data-month="1" aria-label="ماه بعد">›</button></div><div class="biz-persian-calendar-weekdays" aria-hidden="true"><span>ش</span><span>ی</span><span>د</span><span>س</span><span>چ</span><span>پ</span><span>ج</span></div><div id="bizPurchaseDateDays" class="biz-persian-calendar-days"></div></div></label>
+              </div>
+              <p class="biz-form-note" id="bizPurchaseTotal">جمع خرید: ۰ تومان</p>
+              <div class="biz-form-divider"></div>
+              <h4>پرداخت در زمان خرید (اختیاری)</h4>
+              <p class="biz-form-note">اگر فعلاً پرداختی نداری، مبلغ پرداخت‌شده را صفر بگذار؛ مانده به‌عنوان بدهی تأمین‌کننده ثبت می‌شود.</p>
+              <div class="biz-fields-grid">
+                <label class="biz-field"><span>مبلغ پرداخت‌شده (تومان)</span><input id="bizPurchasePaidAmount" type="text" inputmode="numeric" value="0" autocomplete="off" required></label>
+                <label class="biz-field"><span>کسر از حساب مالی</span><select id="bizPurchaseCashAccount"><option value="">انتخاب حساب در صورت پرداخت</option></select></label>
+                <label class="biz-field"><span>روش پرداخت</span><select id="bizPurchasePaymentMethod"><option value="cash">نقدی</option><option value="card">کارت‌خوان</option><option value="bank_transfer">انتقال بانکی</option><option value="other">سایر</option></select></label>
+              </div>
+              <label class="biz-field"><span>شماره پیگیری (اختیاری)</span><input id="bizPurchaseReference" maxlength="120"></label>
+              <label class="biz-field"><span>توضیحات (اختیاری)</span><input id="bizPurchaseNotes" maxlength="800"></label>
+              <button class="btn-primary" id="bizPurchaseSubmit" type="submit">ثبت خرید و به‌روزرسانی انبار و دفتر مالی</button>
+            </form>
+            <p class="biz-profile-status" id="bizPurchaseStatus" role="status" aria-live="polite">پس از ثبت، تعداد کالا به انبار اضافه و بدهی و پرداخت در دفتر مالی ثبت می‌شود.</p>
+            <details class="biz-account-disclosure"><summary class="biz-account-disclosure-head"><span><strong>سوابق خرید ثبت‌شده</strong><small>مبلغ کل، پرداختی و مانده هر خرید</small></span><span class="biz-disclosure-indicator" aria-hidden="true">⌄</span></summary><div class="biz-account-disclosure-body"><div class="biz-account-table-wrap"><table class="biz-account-table"><thead><tr><th>تاریخ</th><th>محصول</th><th>تأمین‌کننده</th><th>تعداد</th><th>مبلغ خرید</th><th>پرداختی</th><th>مانده</th></tr></thead><tbody id="bizPurchaseRows"><tr><td colspan="7">هنوز خریدی ثبت نشده است.</td></tr></tbody></table></div></div></details>
+          </section>
           <div class="biz-accounts-grid">
             <section class="biz-account-card"><h3>ایجاد حساب مالی</h3><form id="bizCashAccountForm" class="biz-payment-form">
               <label class="biz-field"><span>نام حساب</span><input id="bizCashAccountName" maxlength="100" placeholder="مثلاً صندوق فروشگاه یا بانک ملت" required></label>
@@ -1301,7 +1327,7 @@
   <script src="business-transactions-ui.js?v=supplier-linked-expenses-20261116-1" defer></script>
   <script src="business-payments-ui.js?v=receipt-cash-account-20261116-1" defer></script>
   <script src="business-invoices-ui.js?v=invoice-order-refresh-fix-20261116-1" defer></script>
-  <script src="business-ledger-ui.js?v=supplier-cash-persian-calendar-20261116-2" defer></script>
+  <script src="business-ledger-ui.js?v=integrated-supplier-purchases-20261116-1" defer></script>
   <script src="business-financial-export.js?v=financial-export-daynight-20261116-1" defer></script>
   <script src="business-tabs.js?v=customer-accounts-20261116-1" defer></script>
   <script src="document-export.js?v=studio-response-select-20261115-1" defer></script>
