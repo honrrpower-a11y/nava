@@ -537,6 +537,7 @@
       <button class="biz-tab is-active" id="bizTabDashboard" type="button" role="tab" data-biz-tab="dashboard" aria-controls="bizPanelDashboard" aria-selected="true"><span aria-hidden="true">▦</span><span>داشبورد</span></button>
       <button class="biz-tab" id="bizTabTransactions" type="button" role="tab" data-biz-tab="transactions" aria-controls="bizPanelTransactions" aria-selected="false" tabindex="-1"><span aria-hidden="true">↕</span><span>فروش و هزینه</span></button>
       <button class="biz-tab" id="bizTabAccounts" type="button" role="tab" data-biz-tab="accounts" aria-controls="bizPanelAccounts" aria-selected="false" tabindex="-1"><span aria-hidden="true">◉</span><span>حساب مشتریان</span></button>
+      <button class="biz-tab" id="bizTabLedger" type="button" role="tab" data-biz-tab="ledger" aria-controls="bizPanelLedger" aria-selected="false" tabindex="-1"><span aria-hidden="true">▤</span><span>صندوق و تأمین‌کنندگان</span></button>
       <button class="biz-tab" id="bizTabCatalog" type="button" role="tab" data-biz-tab="catalog" aria-controls="bizPanelCatalog" aria-selected="false" tabindex="-1"><span aria-hidden="true">▣</span><span>محصولات و خدمات</span></button>
       <button class="biz-tab" id="bizTabInventory" type="button" role="tab" data-biz-tab="inventory" aria-controls="bizPanelInventory" aria-selected="false" tabindex="-1"><span aria-hidden="true">▤</span><span>انبار و موجودی</span></button>
       <button class="biz-tab" id="bizTabCustomers" type="button" role="tab" data-biz-tab="customers" aria-controls="bizPanelCustomers" aria-selected="false" tabindex="-1"><span aria-hidden="true">♙</span><span>مشتریان</span></button>
@@ -660,7 +661,55 @@
           </details>
         </section>
       </section>
-<section class="biz-tab-panel" id="bizPanelCatalog" data-biz-panel="catalog" role="tabpanel" aria-labelledby="bizTabCatalog" hidden>
+      <section class="biz-tab-panel" id="bizPanelLedger" data-biz-panel="ledger" role="tabpanel" aria-labelledby="bizTabLedger" hidden>
+        <section class="biz-accounts-workspace" id="bizLedgerWorkspace" aria-labelledby="bizLedgerTitle">
+          <div class="biz-transactions-heading"><div><span class="biz-eyebrow">CASH FLOW & SUPPLIERS</span><h2 id="bizLedgerTitle">دفتر مالی، صندوق و تأمین‌کنندگان</h2><p>ثبت پرداخت هزینه‌ها، مانده تأمین‌کنندگان، حساب‌های نقدی و بانکی و گردش واقعی ورود و خروج وجه.</p></div></div>
+          <div class="biz-account-summary" id="bizLedgerStatus" role="status" aria-live="polite">پس از انتخاب پرونده، اطلاعات دفتر مالی نمایش داده می‌شود.</div>
+          <div class="biz-accounts-grid">
+            <section class="biz-account-card"><h3>ثبت تأمین‌کننده</h3><form id="bizSupplierForm" class="biz-payment-form">
+              <label class="biz-field"><span>نام تأمین‌کننده</span><input id="bizSupplierName" maxlength="120" required></label>
+              <label class="biz-field"><span>شماره تماس (اختیاری)</span><input id="bizSupplierPhone" maxlength="40"></label>
+              <button class="btn-primary" id="bizSupplierSubmit" type="submit">ثبت تأمین‌کننده</button>
+            </form><p class="biz-profile-status" id="bizSupplierStatus" role="status" aria-live="polite"></p></section>
+            <details class="biz-account-card biz-account-disclosure"><summary class="biz-account-disclosure-head"><span><strong>مانده حساب تأمین‌کنندگان</strong><small>جمع هزینه‌های متصل، پرداخت‌شده و بدهی باقی‌مانده</small></span><span class="biz-disclosure-indicator" aria-hidden="true">⌄</span></summary><div class="biz-account-disclosure-body"><div class="biz-account-table-wrap"><table class="biz-account-table"><thead><tr><th>تأمین‌کننده</th><th>هزینه</th><th>پرداختی</th><th>مانده</th></tr></thead><tbody id="bizSupplierRows"><tr><td colspan="4">در حال بارگذاری...</td></tr></tbody></table></div></div></details>
+          </div>
+          <div class="biz-accounts-grid">
+            <section class="biz-account-card"><h3>ایجاد حساب مالی</h3><form id="bizCashAccountForm" class="biz-payment-form">
+              <label class="biz-field"><span>نام حساب</span><input id="bizCashAccountName" maxlength="100" placeholder="مثلاً صندوق فروشگاه یا بانک ملت" required></label>
+              <label class="biz-field"><span>نوع حساب</span><select id="bizCashAccountType"><option value="cash">صندوق نقدی</option><option value="bank">حساب بانکی</option><option value="card">کارت / کارت‌خوان</option><option value="other">سایر</option></select></label>
+              <label class="biz-field"><span>موجودی افتتاحیه (تومان)</span><input id="bizCashOpening" inputmode="numeric" value="0" required></label>
+              <button class="btn-primary" id="bizCashAccountSubmit" type="submit">ایجاد حساب</button>
+            </form><p class="biz-profile-status" id="bizCashAccountStatus" role="status" aria-live="polite"></p></section>
+            <details class="biz-account-card biz-account-disclosure"><summary class="biz-account-disclosure-head"><span><strong>حساب‌های مالی و مانده فعلی</strong><small>موجودی افتتاحیه به‌علاوه گردش‌های فعال</small></span><span class="biz-disclosure-indicator" aria-hidden="true">⌄</span></summary><div class="biz-account-disclosure-body"><div class="biz-account-table-wrap"><table class="biz-account-table"><thead><tr><th>حساب</th><th>نوع</th><th>مانده</th><th>وضعیت</th></tr></thead><tbody id="bizCashAccountRows"><tr><td colspan="4">در حال بارگذاری...</td></tr></tbody></table></div></div></details>
+          </div>
+          <div class="biz-accounts-grid">
+            <section class="biz-account-card"><h3>ثبت پرداخت هزینه</h3><form id="bizExpensePaymentForm" class="biz-payment-form">
+              <label class="biz-field"><span>هزینه ثبت‌شده</span><select id="bizExpensePaymentTransaction" required><option value="">انتخاب هزینه</option></select></label>
+              <label class="biz-field"><span>تأمین‌کننده (اختیاری)</span><select id="bizExpensePaymentSupplier"><option value="">بدون اتصال به تأمین‌کننده</option></select></label>
+              <label class="biz-field"><span>حساب پرداخت</span><select id="bizLedgerCashAccount" required><option value="">انتخاب حساب</option></select></label>
+              <label class="biz-field"><span>مبلغ پرداخت (تومان)</span><input id="bizExpensePaymentAmount" inputmode="numeric" required></label>
+              <label class="biz-field"><span>تاریخ پرداخت</span><input id="bizExpensePaymentDate" type="date" required></label>
+              <label class="biz-field"><span>روش پرداخت</span><select id="bizExpensePaymentMethod"><option value="cash">نقدی</option><option value="card">کارت‌خوان</option><option value="bank_transfer">انتقال بانکی</option><option value="other">سایر</option></select></label>
+              <label class="biz-field"><span>شماره پیگیری (اختیاری)</span><input id="bizExpensePaymentReference" maxlength="120"></label>
+              <label class="biz-field"><span>توضیحات (اختیاری)</span><input id="bizExpensePaymentNotes" maxlength="800"></label>
+              <button class="btn-primary" id="bizExpensePaymentSubmit" type="submit">ثبت پرداخت هزینه</button>
+            </form><p class="biz-profile-status" id="bizExpensePaymentStatus" role="status" aria-live="polite">پرداخت جزئی و چندمرحله‌ای تا سقف مبلغ همان هزینه مجاز است.</p></section>
+            <section class="biz-account-card"><h3>ثبت گردش دستی صندوق</h3><form id="bizCashMovementForm" class="biz-payment-form">
+              <label class="biz-field"><span>حساب مالی</span><select id="bizLedgerMovementAccount" required><option value="">انتخاب حساب</option></select></label>
+              <label class="biz-field"><span>نوع گردش</span><select id="bizCashMovementDirection"><option value="in">ورودی وجه</option><option value="out">خروجی وجه</option></select></label>
+              <label class="biz-field"><span>مبلغ (تومان)</span><input id="bizCashMovementAmount" inputmode="numeric" required></label>
+              <label class="biz-field"><span>تاریخ</span><input id="bizCashMovementDate" type="date" required></label>
+              <label class="biz-field"><span>عنوان</span><input id="bizCashMovementTitle" maxlength="140" placeholder="مثلاً سرمایه اولیه یا برداشت مالک" required></label>
+              <label class="biz-field"><span>روش</span><select id="bizCashMovementMethod"><option value="cash">نقدی</option><option value="card">کارت‌خوان</option><option value="bank_transfer">انتقال بانکی</option><option value="other">سایر</option></select></label>
+              <label class="biz-field"><span>شماره پیگیری (اختیاری)</span><input id="bizCashMovementReference" maxlength="120"></label>
+              <label class="biz-field"><span>توضیحات (اختیاری)</span><input id="bizCashMovementNotes" maxlength="800"></label>
+              <button class="btn-primary" id="bizCashMovementSubmit" type="submit">ثبت گردش دستی</button>
+            </form><p class="biz-profile-status" id="bizCashMovementStatus" role="status" aria-live="polite">گردش دستی در موجودی حساب ثبت می‌شود؛ فروش و هزینه عملیاتی را جداگانه ثبت کن.</p></section>
+          </div>
+          <details class="biz-account-card biz-account-disclosure"><summary class="biz-account-disclosure-head"><span><strong>گردش‌های نقدی و بانکی</strong><small>ورودی‌ها و خروجی‌های ثبت‌شده در حساب‌های مالی</small></span><span class="biz-disclosure-indicator" aria-hidden="true">⌄</span></summary><div class="biz-account-disclosure-body"><div class="biz-account-table-wrap"><table class="biz-account-table"><thead><tr><th>تاریخ</th><th>شرح</th><th>جهت</th><th>مبلغ</th><th>وضعیت</th></tr></thead><tbody id="bizCashMovementRows"><tr><td colspan="5">در حال بارگذاری...</td></tr></tbody></table></div></div></details>
+        </section>
+      </section>
+      <section class="biz-tab-panel" id="bizPanelCatalog" data-biz-panel="catalog" role="tabpanel" aria-labelledby="bizTabCatalog" hidden>
         <section class="biz-catalog-workspace" aria-labelledby="bizCatalogTitle">
           <div class="biz-catalog-heading">
             <div><span class="biz-eyebrow">کاتالوگ کسب‌وکار</span><h2 id="bizCatalogTitle">مدیریت محصولات و خدمات</h2>
@@ -1226,6 +1275,7 @@
   <script src="business-crm-ui.js?v=business-customers-orders-persian-dates-20261116-3" defer></script>
   <script src="business-transactions-ui.js?v=customer-linked-sales-20261116-1" defer></script>
   <script src="business-payments-ui.js?v=customer-accounts-20261116-1" defer></script>
+  <script src="business-ledger-ui.js?v=supplier-cash-ledger-20261116-1" defer></script>
   <script src="business-financial-export.js?v=financial-export-daynight-20261116-1" defer></script>
   <script src="business-tabs.js?v=customer-accounts-20261116-1" defer></script>
   <script src="document-export.js?v=studio-response-select-20261115-1" defer></script>
