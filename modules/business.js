@@ -214,7 +214,7 @@ export async function loadNaviBusinessContext(db, ownerId, businessId) {
   let catalog = { results: [] };
   try {
     catalog = await db.prepare(
-      "SELECT item_type, name, sku, category, unit, sale_price_toman, cost_price_toman FROM business_catalog_items_v1 WHERE business_id = ? AND owner_id = ? AND status = 'active' ORDER BY item_type, name COLLATE NOCASE LIMIT 100"
+      "SELECT c.item_type, c.name, c.sku, c.category, c.unit, c.sale_price_toman, c.cost_price_toman, c.track_inventory, CASE WHEN c.track_inventory = 1 THEN COALESCE((SELECT SUM(m.quantity_delta) FROM business_inventory_movements_v1 m WHERE m.catalog_item_id = c.id AND m.business_id = c.business_id AND m.owner_id = c.owner_id), 0) ELSE NULL END AS stock_quantity FROM business_catalog_items_v1 c WHERE c.business_id = ? AND c.owner_id = ? AND c.status = 'active' ORDER BY c.item_type, c.name COLLATE NOCASE LIMIT 100"
     ).bind(businessId, ownerId).all();
   } catch (error) {
     console.warn("[NAVA BUSINESS] Product/service catalogue is not available yet; apply migration 0006.", error);
@@ -247,10 +247,11 @@ export async function loadNaviBusinessContext(db, ownerId, businessId) {
       " | دسته: " + safeNaviText(item.category || "ثبت نشده", 80) +
       " | واحد: " + safeNaviText(item.unit || "", 32) +
       " | قیمت فروش: " + Number(item.sale_price_toman || 0).toLocaleString("en-US") + " تومان" +
-      " | بهای تمام‌شده: " + (item.cost_price_toman == null ? "ثبت نشده" : Number(item.cost_price_toman).toLocaleString("en-US") + " تومان"));
+      " | بهای تمام‌شده: " + (item.cost_price_toman == null ? "ثبت نشده" : Number(item.cost_price_toman).toLocaleString("en-US") + " تومان") +
+      (Number(item.track_inventory || 0) === 1 ? " | موجودی انبار: " + Number(item.stock_quantity || 0).toLocaleString("en-US") + " " + safeNaviText(item.unit || "عدد", 32) : " | کنترل موجودی: فعال نیست"));
   }
   if (!(catalog.results || []).length) lines.push("در کاتالوگ هنوز محصول یا خدمت فعالی ثبت نشده است.");
-  lines.push("فهرست بالا فقط کاتالوگ فعال است و به‌معنای موجودی انبار یا تعداد قابل فروش نیست.");
+  lines.push("موجودی محصولات دارای کنترل موجودی از گردش‌های ثبت‌شده محاسبه می‌شود؛ محصولات بدون کنترل موجودی تعداد انبار ثبت‌شده ندارند.");
   return (base + "\n" + lines.join("\n")).slice(0, 26000);
 }
 
