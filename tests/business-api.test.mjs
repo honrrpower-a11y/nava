@@ -141,6 +141,16 @@ test("business transaction accepts a linked catalogue item and rejects malformed
     transactionDate: "2026-11-16", catalogItemId: itemId, quantity: 2, unitPriceToman: 30000
   });
   assert.equal(linked.value.catalog_item_id, itemId);
+  const customerId = "customer-12345678-1234-1234-1234-123456789012";
+  const customerSale = api.normalizeBusinessTransactionInput({
+    transactionType: "sale", title: "فروش به مشتری", amountToman: 1000,
+    transactionDate: "2026-11-16", customerId
+  });
+  assert.equal(customerSale.value.customer_id, customerId);
+  assert.match(api.normalizeBusinessTransactionInput({
+    transactionType: "expense", title: "هزینه", amountToman: 1000,
+    transactionDate: "2026-11-16", customerId
+  }).error, /فقط برای فروش/);
   assert.match(api.normalizeBusinessTransactionInput({
     transactionType: "sale", title: "فروش", amountToman: 100,
     transactionDate: "2026-11-16", catalogItemId: "not-an-item"
