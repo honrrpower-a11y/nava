@@ -161,6 +161,26 @@ test("business transaction accepts a linked catalogue item and rejects malformed
   }).error, /برای ثبت هزینه/);
 });
 
+test("business expenses can be linked to a supplier while sales cannot", async () => {
+  const api = await loadBusinessTransactionApi();
+  const supplierId = "supplier-12345678-1234-1234-1234-123456789012";
+  const expense = api.normalizeBusinessTransactionInput({
+    transactionType: "expense", title: "خرید مواد اولیه", amountToman: 85000,
+    transactionDate: "2026-11-16", supplierId
+  });
+  assert.equal(expense.value.supplier_id, supplierId);
+  assert.match(api.normalizeBusinessTransactionInput({
+    transactionType: "expense", title: "خرید مواد اولیه", amountToman: 85000,
+    transactionDate: "2026-11-16", supplierId: "invalid"
+  }).error, /شناسه تأمین‌کننده/);
+  assert.match(api.normalizeBusinessTransactionInput({
+    transactionType: "sale", title: "فروش", amountToman: 1000,
+    transactionDate: "2026-11-16", supplierId
+  }).error, /فقط برای هزینه/);
+  const cleared = api.normalizeBusinessTransactionInput({ supplierId: "" }, true);
+  assert.equal(cleared.value.supplier_id, null);
+});
+
 test("business transactions accept Toman sales and expenses with valid dates", async () => {
   const api = await loadBusinessTransactionApi();
   const sale = api.normalizeBusinessTransactionInput({
