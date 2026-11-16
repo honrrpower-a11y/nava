@@ -15,7 +15,7 @@
   const digits = value => String(value || "").replace(/[۰-۹]/g, d => String("۰۱۲۳۴۵۶۷۸۹".indexOf(d))).replace(/[٠-٩]/g, d => String("٠١٢٣٤٥٦٧٨٩".indexOf(d)));
   const money = value => Number(value || 0).toLocaleString("fa-IR") + " تومان";
   const today = () => new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10);
-  let suppliers = [], accounts = [], expenses = [];
+  let suppliers = [], accounts = [], expenses = [], inventoryItems = [], purchases = [];
   const persianPartsFormatter = new Intl.DateTimeFormat("en-US-u-ca-persian-nu-latn",{year:"numeric",month:"numeric",day:"numeric",timeZone:"UTC"});
   const persianDateFormatter = new Intl.DateTimeFormat("fa-IR-u-ca-persian",{year:"numeric",month:"long",day:"numeric",timeZone:"UTC"});
   const persianMonthFormatter = new Intl.DateTimeFormat("fa-IR-u-ca-persian",{year:"numeric",month:"long",timeZone:"UTC"});
@@ -77,7 +77,7 @@
   }
   function renderAccounts() {
     const body=$("bizCashAccountRows"); if(body){body.replaceChildren();for(const a of accounts){const tr=document.createElement("tr");cell(tr,a.name);cell(tr,a.accountType==="cash"?"صندوق":a.accountType==="bank"?"بانک":a.accountType==="card"?"کارت":"سایر");cell(tr,money(a.balanceToman));cell(tr,a.status==="active"?"فعال":"بایگانی");body.append(tr);}} 
-    for (const id of ["bizLedgerCashAccount","bizLedgerMovementAccount"]) {
+    for (const id of ["bizLedgerCashAccount","bizLedgerMovementAccount","bizPurchaseCashAccount"]) {
       const select=$(id); if(!select)continue; const selected=select.value;select.replaceChildren();option(select,"","انتخاب حساب");accounts.filter(a=>a.status==="active").forEach(a=>option(select,a.id,a.name+" — "+money(a.balanceToman)));if(accounts.some(a=>a.id===selected))select.value=selected;
     }
   }
@@ -93,6 +93,22 @@
     suppliers.filter(s=>s.status==="active").forEach(s=>option(select,s.id,s.name));
     if(suppliers.some(s=>s.id===selected))select.value=selected;
   }
+  function renderPurchaseOptions() {
+    const supplierSelect=$("bizPurchaseSupplier"),itemSelect=$("bizPurchaseItem");
+    if(supplierSelect){const selected=supplierSelect.value;supplierSelect.replaceChildren();option(supplierSelect,"","انتخاب تأمین‌کننده");suppliers.filter(x=>x.status==="active").forEach(x=>option(supplierSelect,x.id,x.name));if(suppliers.some(x=>x.id===selected&&x.status==="active"))supplierSelect.value=selected;}
+    if(itemSelect){const selected=itemSelect.value;itemSelect.replaceChildren();option(itemSelect,"","انتخاب محصول دارای کنترل موجودی");inventoryItems.forEach(x=>option(itemSelect,x.id,x.name+" — واحد: "+x.unit));if(inventoryItems.some(x=>x.id===selected))itemSelect.value=selected;}
+  }
+  function renderPurchases() {
+    const body=$("bizPurchaseRows");if(!body)return;body.replaceChildren();
+    if(!purchases.length){const tr=document.createElement("tr");const td=cell(tr,"هنوز خریدی ثبت نشده است.");td.colSpan=7;body.append(tr);return;}
+    for(const p of purchases){const tr=document.createElement("tr");cell(tr,formatPersianDate(p.purchaseDate));cell(tr,p.itemName);cell(tr,p.supplierName);cell(tr,Number(p.quantity).toLocaleString("fa-IR"));cell(tr,money(p.totalToman));cell(tr,money(p.paidToman));cell(tr,money(p.balanceToman));body.append(tr);}
+  }
+  function updatePurchaseTotal() {
+    const quantity=Number(digits($("bizPurchaseQuantity")?.value||"").replace(/[٬,\s]/g,""));
+    const price=Number(digits($("bizPurchaseUnitPrice")?.value||"").replace(/[٬,\s]/g,""));
+    const total=quantity>0&&price>0&&Number.isSafeInteger(quantity*price)?quantity*price:0;
+    const node=$("bizPurchaseTotal");if(node)node.textContent="جمع خرید: "+money(total);
+  }
   function renderMovements(rows) {
     const body=$("bizCashMovementRows");if(!body)return;body.replaceChildren();
     if(!rows.length){const tr=document.createElement("tr");const td=cell(tr,"هنوز گردش مالی ثبت نشده است.");td.colSpan=5;body.append(tr);return;}
@@ -101,17 +117,41 @@
   async function load() {
     if (!businessId()) return;
     try {
-      const [s,a,t,m] = await Promise.all([
-        api("/suppliers"), api("/cash-accounts"), api("/transactions?limit=500"), api("/cash-movements?limit=150")
+      const [s,a,t,m,inventory,purchaseData] = await Promise.all([
+        api("/suppliers"), api("/cash-accounts"), api("/transactions?limit=500"), api("/cash-movements?limit=150"),
+        api("/inventory"), api("/purchases")
       ]);
-      suppliers=s.suppliers||[];accounts=a.accounts||[];
+      suppliers=s.suppliers||[];accounts=a.accounts||[];inventoryItems=inventory.items||[];purchases=purchaseData.purchases||[];
       expenses=(t.transactions||[]).filter(x=>x.transactionType==="expense");
-      renderSuppliers();renderAccounts();renderExpenses();renderSuppliersSelect();renderMovements(m.movements||[]);
+      renderSuppliers();renderAccounts();renderExpenses();renderSuppliersSelect();renderPurchaseOptions();renderPurchases();renderMovements(m.movements||[]);
       say("bizLedgerStatus","اطلاعات تأمین‌کنندگان، حساب‌ها و گردش مالی به‌روز شد.");
     } catch(error){say("bizLedgerStatus",error.message,true);}
   }
   const cashMovementDatePicker=setupPersianDatePicker("bizCashMovementDate");
   const expensePaymentDatePicker=setupPersianDatePicker("bizExpensePaymentDate");
+  const purchaseDatePicker=setupPersianDatePicker("bizPurchaseDate");
+  $("bizPurchaseForm")?.addEventListener("submit",async event=>{
+    event.preventDefault();const button=$("bizPurchaseSubmit");button.disabled=true;
+    try{
+      const quantity=Number(digits($("bizPurchaseQuantity").value).replace(/[٬,\s]/g,""));
+      const unitPriceToman=Number(digits($("bizPurchaseUnitPrice").value).replace(/[٬,\s]/g,""));
+      const paidAmountToman=Number(digits($("bizPurchasePaidAmount").value||"0").replace(/[٬,\s]/g,""));
+      if(!Number.isSafeInteger(quantity)||quantity<1||!Number.isSafeInteger(unitPriceToman)||unitPriceToman<1)throw new Error("تعداد و قیمت واحد خرید را به‌درستی وارد کن.");
+      if(!Number.isSafeInteger(paidAmountToman)||paidAmountToman<0)throw new Error("مبلغ پرداخت‌شده معتبر نیست.");
+      const total=quantity*unitPriceToman;if(!Number.isSafeInteger(total)||total>1000000000000)throw new Error("مبلغ کل خرید از سقف مجاز بیشتر است.");
+      if(paidAmountToman>total)throw new Error("پرداخت اولیه نمی‌تواند از مبلغ کل خرید بیشتر باشد.");
+      if(paidAmountToman>0&&!$("bizPurchaseCashAccount").value)throw new Error("برای ثبت پرداخت، حساب مالی را انتخاب کن.");
+      await api("/purchases","POST",{
+        supplierId:$("bizPurchaseSupplier").value,itemId:$("bizPurchaseItem").value,quantity,unitPriceToman,
+        purchaseDate:$("bizPurchaseDate").value,paidAmountToman,cashAccountId:$("bizPurchaseCashAccount").value||null,
+        paymentMethod:$("bizPurchasePaymentMethod").value,reference:$("bizPurchaseReference").value.trim(),notes:$("bizPurchaseNotes").value.trim()
+      });
+      $("bizPurchaseForm").reset();$("bizPurchasePaidAmount").value="0";purchaseDatePicker.set(today());updatePurchaseTotal();
+      await load();say("bizPurchaseStatus","خرید ثبت شد؛ موجودی انبار افزایش یافت و بدهی و پرداخت در دفتر مالی به‌روزرسانی شد.");
+    }catch(error){say("bizPurchaseStatus",error.message,true);}finally{button.disabled=false;}
+  });
+  for(const id of ["bizPurchaseQuantity","bizPurchaseUnitPrice"])$(id)?.addEventListener("input",event=>{event.target.value=digits(event.target.value);updatePurchaseTotal();});
+  $("bizPurchasePaidAmount")?.addEventListener("input",event=>{event.target.value=digits(event.target.value);});
   $("bizSupplierForm")?.addEventListener("submit",async event=>{
     event.preventDefault();const button=$("bizSupplierSubmit");button.disabled=true;
     try{await api("/suppliers","POST",{name:$("bizSupplierName").value.trim(),phone:$("bizSupplierPhone").value.trim()});$("bizSupplierForm").reset();await load();say("bizSupplierStatus","تأمین‌کننده ثبت شد.");}
@@ -136,6 +176,6 @@
   $("bizProfileSelect")?.addEventListener("change",load);
   window.addEventListener("nava:business-selection-changed",load);
   window.addEventListener("nava:business-auth-changed",load);
-  cashMovementDatePicker.set(today());expensePaymentDatePicker.set(today());$("bizCashOpening").value="0";
+  cashMovementDatePicker.set(today());expensePaymentDatePicker.set(today());purchaseDatePicker.set(today());$("bizCashOpening").value="0";$("bizPurchasePaidAmount").value="0";updatePurchaseTotal();
   load();
 })();
