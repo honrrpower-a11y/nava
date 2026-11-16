@@ -7,6 +7,7 @@
 
   const API = "https://nava-music-api.honrrpower.workers.dev/businesses";
   const numberFormat = new Intl.NumberFormat("fa-IR", { maximumFractionDigits: 0 });
+  let invoiceCache = [];
   const digits = value => String(value ?? "")
     .replace(/[۰-۹]/g, d => String("۰۱۲۳۴۵۶۷۸۹".indexOf(d)))
     .replace(/[٠-٩]/g, d => String("٠١٢٣٤٥٦٧٨٩".indexOf(d)))
@@ -119,6 +120,22 @@
       body.append(row);
     });
   }
+  function renderInvoiceOptions() {
+    const select = $("bizPaymentInvoice");
+    if (!select) return;
+    const customerId = $("bizPaymentCustomer").value;
+    const previous = select.value;
+    select.replaceChildren(el("option", "", "دریافت عمومی از مشتری"));
+    select.options[0].value = "";
+    invoiceCache.filter(invoice => invoice.documentType === "invoice" && invoice.status === "issued" &&
+      invoice.paymentStatus !== "paid" && invoice.customerId === customerId && invoice.dueToman > 0)
+      .forEach(invoice => {
+        const option = el("option", "", invoice.invoiceNumber + " · مانده " + money(invoice.dueToman));
+        option.value = invoice.id;
+        select.append(option);
+      });
+    if ([...select.options].some(option => option.value === previous)) select.value = previous;
+  }
   function renderPayments(payments) {
     const root = $("bizPaymentHistory");
     root.replaceChildren();
@@ -134,6 +151,7 @@
         el("strong", "", payment.customerName),
         el("small", "", toPersian(payment.paymentDate) + " · " +
           (methods[payment.paymentMethod] || "سایر") +
+          (payment.invoiceNumber ? " · فاکتور: " + payment.invoiceNumber : "") +
           (payment.reference ? " · پیگیری: " + payment.reference : ""))
       );
       if (payment.notes) main.append(el("p", "", payment.notes));
@@ -161,12 +179,13 @@
   async function load() {
     if (!businessId()) { say("ابتدا یک پرونده کسب‌وکار انتخاب کن.", true); return; }
     try {
-      const [accountData, paymentData, customerData] = await Promise.all([
-        api("/accounts"), api("/payments"), api("/customers?status=active")
+      const [accountData, paymentData, customerData, invoiceData] = await Promise.all([
+        api("/accounts"), api("/payments"), api("/customers?status=active"), api("/invoices")
       ]);
       renderSummary(accountData.totals || {});
       renderAccounts(accountData.accounts || []);
       renderPayments(paymentData.payments || []);
+      invoiceCache = invoiceData.invoices || [];
       const select = $("bizPaymentCustomer");
       const selected = select.value;
       select.replaceChildren(el("option", "", "انتخاب مشتری"));
@@ -177,9 +196,11 @@
         select.append(option);
       });
       if ([...select.options].some(option => option.value === selected)) select.value = selected;
+      renderInvoiceOptions();
       say("حساب مشتریان و سوابق دریافت وجه به‌روز شد.");
     } catch (error) { say(error.message, true); }
   }
+  $("bizPaymentCustomer").addEventListener("change", renderInvoiceOptions);
   form.addEventListener("submit", async event => {
     event.preventDefault();
     const amount = Number(digits($("bizPaymentAmount").value));
@@ -193,6 +214,7 @@
     try {
       await api("/payments", "POST", {
         customerId: $("bizPaymentCustomer").value,
+        invoiceId: $("bizPaymentInvoice").value || null,
         amountToman: amount,
         paymentDate,
         paymentMethod: $("bizPaymentMethod").value,

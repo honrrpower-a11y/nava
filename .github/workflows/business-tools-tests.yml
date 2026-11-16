@@ -19,6 +19,10 @@ on:
       - "business-crm-ui.js"
       - "modules/business-crm.js"
       - "modules/business-payments.js"
+      - "modules/business-invoices.js"
+      - "business-invoices-ui.js"
+      - "tests/business-invoices.test.mjs"
+      - "migrations/navi-production-reconcile/0012_business_invoices.sql"
       - "migrations/navi-production-reconcile/0009_business_customers_orders.sql"
       - "migrations/navi-production-reconcile/0010_business_customer_accounts.sql"
       - "modules/business-transactions.js"
@@ -74,10 +78,12 @@ jobs:
           node --check business-crm-ui.js
           node --check modules/business-crm.js
           node --check modules/business-payments.js
+          node --check modules/business-invoices.js
+          node --check business-invoices-ui.js
           node --check modules/business-transactions.js
           node --check modules/business-inventory.js
           node --check business-inventory-ui.js
           node --check modules/business.js
           node --check modules/navi.js
       - name: Run business calculator and API validation tests
-        run: node --test tests/business-tools.test.mjs tests/business-api.test.mjs tests/navi-context-security.test.mjs
+        run: node --test tests/business-tools.test.mjs tests/business-api.test.mjs tests/business-invoices.test.mjs tests/navi-context-security.test.mjs

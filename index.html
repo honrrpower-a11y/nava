@@ -542,6 +542,7 @@
       <button class="biz-tab" id="bizTabInventory" type="button" role="tab" data-biz-tab="inventory" aria-controls="bizPanelInventory" aria-selected="false" tabindex="-1"><span aria-hidden="true">▤</span><span>انبار و موجودی</span></button>
       <button class="biz-tab" id="bizTabCustomers" type="button" role="tab" data-biz-tab="customers" aria-controls="bizPanelCustomers" aria-selected="false" tabindex="-1"><span aria-hidden="true">♙</span><span>مشتریان</span></button>
       <button class="biz-tab" id="bizTabOrders" type="button" role="tab" data-biz-tab="orders" aria-controls="bizPanelOrders" aria-selected="false" tabindex="-1"><span aria-hidden="true">▣</span><span>سفارش‌ها</span></button>
+      <button class="biz-tab" id="bizTabInvoices" type="button" role="tab" data-biz-tab="invoices" aria-controls="bizPanelInvoices" aria-selected="false" tabindex="-1"><span aria-hidden="true">▤</span><span>فاکتورها</span></button>
       <button class="biz-tab" id="bizTabTools" type="button" role="tab" data-biz-tab="tools" aria-controls="bizPanelTools" aria-selected="false" tabindex="-1"><span aria-hidden="true">⌗</span><span>ابزارهای مالی</span></button>
       <button class="biz-tab" id="bizTabReports" type="button" role="tab" data-biz-tab="reports" aria-controls="bizPanelReports" aria-selected="false" tabindex="-1"><span aria-hidden="true">▤</span><span>گزارش‌ها</span></button>
       <button class="biz-tab" id="bizTabAdvisor" type="button" role="tab" data-biz-tab="advisor" aria-controls="bizPanelAdvisor" aria-selected="false" tabindex="-1"><span aria-hidden="true">✦</span><span>مشاور NAVI</span></button>
@@ -638,6 +639,7 @@
               <h3>ثبت دریافت وجه</h3>
               <form id="bizPaymentForm" class="biz-payment-form">
                 <label class="biz-field"><span>مشتری</span><select id="bizPaymentCustomer" required><option value="">ابتدا پرونده را انتخاب کن</option></select></label>
+                <label class="biz-field"><span>اتصال به فاکتور (اختیاری)</span><select id="bizPaymentInvoice"><option value="">دریافت عمومی از مشتری</option></select></label>
                 <label class="biz-field"><span>مبلغ دریافتی (تومان)</span><input id="bizPaymentAmount" type="text" inputmode="numeric" maxlength="13" placeholder="مثلاً ۵۰۰۰۰۰" required></label>
                 <label class="biz-field"><span>تاریخ دریافت (شمسی)</span><input id="bizPaymentDate" type="text" inputmode="numeric" placeholder="۱۴۰۵/۰۸/۲۵" required></label>
                 <label class="biz-field"><span>روش دریافت</span><select id="bizPaymentMethod"><option value="cash">نقدی</option><option value="card">کارت‌خوان</option><option value="bank_transfer">کارت‌به‌کارت / انتقال بانکی</option><option value="other">سایر</option></select></label>
@@ -836,6 +838,25 @@
             <p class="biz-profile-status" id="bizOrderStatus" role="status" aria-live="polite">پیش‌نویس سفارش موجودی را تغییر نمی‌دهد.</p>
           </form>
           <section class="biz-catalog-list-panel"><details class="biz-account-card biz-account-disclosure biz-list-disclosure"><summary class="biz-account-disclosure-head"><span><strong>فهرست سفارش‌ها</strong><small>برای مشاهده وضعیت، تأیید یا لغو سفارش‌ها باز کن</small></span><span class="biz-disclosure-indicator" aria-hidden="true">⌄</span></summary><div class="biz-account-disclosure-body"><div id="bizOrderList" class="biz-crm-list">پس از انتخاب پرونده نمایش داده می‌شود.</div></div></details></section>
+        </section>
+      </section>
+      <section class="biz-tab-panel" id="bizPanelInvoices" data-biz-panel="invoices" role="tabpanel" aria-labelledby="bizTabInvoices" hidden>
+        <section class="biz-crm-workspace biz-invoice-workspace">
+          <div class="biz-catalog-heading"><div><span class="biz-eyebrow">SALES DOCUMENTS</span><h2>پیش‌فاکتور و فاکتور فروش</h2><p>از سفارش ثبت‌شده پیش‌فاکتور بساز؛ فاکتور نهایی پس از تأیید سفارش صادر می‌شود. نسخه چاپی را می‌توانی به PDF ذخیره کنی.</p></div></div>
+          <form id="bizInvoiceForm" class="biz-payment-form biz-invoice-form">
+            <label class="biz-field"><span>سفارش مبنا</span><select id="bizInvoiceOrder" required><option value="">انتخاب سفارش</option></select></label>
+            <label class="biz-field"><span>نوع سند</span><select id="bizInvoiceType"><option value="proforma">پیش‌فاکتور</option><option value="invoice" disabled>فاکتور نهایی (پس از تأیید سفارش)</option></select></label>
+            <div class="biz-invoice-amount-grid">
+              <label class="biz-field"><span>تخفیف (تومان)</span><input id="bizInvoiceDiscount" type="text" inputmode="numeric" placeholder="۰"></label>
+              <label class="biz-field"><span>مالیات (تومان)</span><input id="bizInvoiceTax" type="text" inputmode="numeric" placeholder="۰"></label>
+              <label class="biz-field"><span>هزینه حمل (تومان)</span><input id="bizInvoiceShipping" type="text" inputmode="numeric" placeholder="۰"></label>
+            </div>
+            <label class="biz-field"><span>توضیحات سند (اختیاری)</span><input id="bizInvoiceNotes" type="text" maxlength="1200" placeholder="شرایط پرداخت، تحویل یا توضیحات تکمیلی"></label>
+            <p class="biz-form-note" id="bizInvoiceOrderHint">برای شروع یک سفارش انتخاب کن.</p>
+            <button class="btn-primary" id="bizInvoiceSubmit" type="submit">صدور سند و آماده‌سازی چاپ</button>
+          </form>
+          <p class="biz-profile-status" id="bizInvoiceStatus" role="status" aria-live="polite">پس از انتخاب پرونده، سفارش‌ها و اسناد فروش نمایش داده می‌شوند.</p>
+          <section class="biz-catalog-list-panel"><details class="biz-account-card biz-account-disclosure biz-list-disclosure" open><summary class="biz-account-disclosure-head"><span><strong>فهرست پیش‌فاکتورها و فاکتورها</strong><small>مشاهده وضعیت، مانده، چاپ مجدد و ابطال اسناد بدون حذف سوابق</small></span><span class="biz-disclosure-indicator" aria-hidden="true">⌄</span></summary><div class="biz-account-disclosure-body"><div id="bizInvoiceList" class="biz-crm-list">پس از انتخاب پرونده نمایش داده می‌شود.</div></div></details></section>
         </section>
       </section>
       <section class="biz-tab-panel" id="bizPanelTools" data-biz-panel="tools" role="tabpanel" aria-labelledby="bizTabTools" hidden>
@@ -1268,7 +1289,8 @@
   <script src="business-inventory-ui.js?v=inventory-persian-calendar-fix-20261116-3" defer></script>
   <script src="business-crm-ui.js?v=business-customers-orders-persian-dates-20261116-3" defer></script>
   <script src="business-transactions-ui.js?v=customer-linked-sales-20261116-1" defer></script>
-  <script src="business-payments-ui.js?v=customer-accounts-20261116-1" defer></script>
+  <script src="business-payments-ui.js?v=invoice-linked-receipts-20261116-1" defer></script>
+  <script src="business-invoices-ui.js?v=business-invoices-v1-20261116-1" defer></script>
   <script src="business-ledger-ui.js?v=supplier-cash-persian-calendar-20261116-2" defer></script>
   <script src="business-financial-export.js?v=financial-export-daynight-20261116-1" defer></script>
   <script src="business-tabs.js?v=customer-accounts-20261116-1" defer></script>
