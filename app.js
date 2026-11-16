@@ -3483,7 +3483,8 @@ async function sendMessageToNavi() {
       },
       body: JSON.stringify({
         message: finalMessage,
-        page: window.location.pathname,
+        page: document.querySelector(".page.active")?.id || "homePage",
+        pageTab: document.querySelector("#bizPage .biz-tab.is-active")?.dataset.bizTab || "",
         threadId: naviActiveThreadId,
         saveToMemory: saveThisMessageToMemory,
         history: naviHistory.slice(-NAVI_CONTEXT_MESSAGES)
