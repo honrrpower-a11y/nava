@@ -300,7 +300,7 @@ test("integrated supplier purchases validate stock quantity, total and optional 
     supplierId, itemId, quantity: 2, unitPriceToman: 1000,
     purchaseDate: "2026-11-16", paidAmountToman: 0
   });
-  assert.equal(unpaid.value.balance_toman, undefined);
+  assert.equal(unpaid.value.total_toman, 2000);
   assert.equal(unpaid.value.cash_account_id, null);
   assert.match(api.normalizeBusinessPurchaseInput({
     supplierId, itemId, quantity: 0, unitPriceToman: 1000, purchaseDate: "2026-11-16"
