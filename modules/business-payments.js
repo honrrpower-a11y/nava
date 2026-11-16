@@ -1,5 +1,6 @@
 // NAVA BUSINESS — customer receipts and account balances.
 import { json, safeNaviText } from "./shared.js";
+import { ensureBusinessCashLedger } from "./business-ledger.js";
 
 const clean=(v,n)=>safeNaviText(v??"",n);
 const reply=(data,status,origin)=>json({success:status<400,...data},status,origin);
@@ -34,7 +35,7 @@ export async function handleBusinessPaymentsRoute({request,env,url,corsOrigin,bu
   const db=env.NAVA_DB;
   if(!db)return fail("دیتابیس کسب‌وکار در دسترس نیست.",503,corsOrigin);
   if(!validId(businessId,"biz")||!await owns(db,businessId,ownerId))return fail("پرونده کسب‌وکار پیدا نشد.",404,corsOrigin);
-  await db.prepare("INSERT INTO business_cash_accounts_v1(id,business_id,owner_id,name,account_type,opening_balance_toman,status,created_at,updated_at) SELECT ?,?,?, 'صندوق اصلی','cash',0,'active',datetime('now'),datetime('now') WHERE NOT EXISTS(SELECT 1 FROM business_cash_accounts_v1 WHERE business_id=? AND owner_id=? AND status='active')").bind("cash-"+crypto.randomUUID(),businessId,ownerId,businessId,ownerId).run();
+  await ensureBusinessCashLedger(db,businessId,ownerId);
   if(!resourceId&&request.method==="GET"&&url.pathname.endsWith("/accounts")){
    const rows=await db.prepare(
     "SELECT c.id,c.name,c.phone,c.status,"+
