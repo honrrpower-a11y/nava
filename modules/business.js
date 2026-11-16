@@ -7,6 +7,7 @@ import { authorizeNaviRequest } from "./navi-auth.js";
 import { handleBusinessTransactionRoute } from "./business-transactions.js";
 import { handleBusinessCatalogRoute } from "./business-catalog.js";
 import { handleBusinessInventoryRoute } from "./business-inventory.js";
+import { handleBusinessCrmRoute } from "./business-crm.js";
 
 const BUSINESS_TYPES = new Set(["freelancer", "store", "home_business", "small_company", "idea", "other"]);
 const RECORD_TYPES = new Set(["cost_calculation", "break_even", "monthly_budget", "note"]);
@@ -294,7 +295,7 @@ export async function handleBusinessRoute({ request, env, url, origin, corsOrigi
     if (access.error) return access.error;
     const { user } = access;
     const parts = pathname.split("/").filter(Boolean);
-    if (parts.length < 1 || parts.length > 4 || parts[0] !== "businesses") return fail("مسیر درخواست معتبر نیست.", 404, corsOrigin);
+    if (parts.length < 1 || parts.length > 5 || parts[0] !== "businesses") return fail("مسیر درخواست معتبر نیست.", 404, corsOrigin);
     if (parts.length === 1) {
       if (request.method === "GET") return await listBusinesses(env.NAVA_DB, user.id, corsOrigin);
       if (request.method === "POST") {
@@ -324,6 +325,9 @@ export async function handleBusinessRoute({ request, env, url, origin, corsOrigi
     }
     if (parts[2] === "inventory" && parts.length === 3) {
       return await handleBusinessInventoryRoute({ request, env, url, corsOrigin, businessId, ownerId: user.id });
+    }
+    if (parts[2] === "customers" || parts[2] === "orders") {
+      return await handleBusinessCrmRoute({ request, env, url, corsOrigin, businessId, ownerId: user.id, resource: parts[2], resourceId: parts[3] || "", action: parts[4] || "" });
     }
     if (parts[2] === "records") {
       if (parts.length === 3) {
