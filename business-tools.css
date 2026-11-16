@@ -526,3 +526,19 @@ body.light #bizPage .biz-tab.is-active{
   #bizPage .biz-payment-void{width:100%}
 }
 
+/* Compact collapsible lists in customer accounts */
+#bizPage details.biz-account-disclosure{display:block;padding:0;overflow:hidden}
+#bizPage .biz-account-disclosure-head{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:16px 18px;cursor:pointer;list-style:none;color:var(--text);background:var(--panel2);border-radius:15px;min-height:68px}
+#bizPage .biz-account-disclosure-head::-webkit-details-marker{display:none}
+#bizPage .biz-account-disclosure-head>span:first-child{display:grid;gap:4px;min-width:0}
+#bizPage .biz-account-disclosure-head strong{font-size:13px;line-height:1.7}
+#bizPage .biz-account-disclosure-head small{font-size:10px;line-height:1.8;color:var(--muted)}
+#bizPage .biz-disclosure-indicator{display:grid;place-items:center;flex:0 0 30px;width:30px;height:30px;border:1px solid var(--border);border-radius:9px;color:var(--gold);font-size:19px;transition:transform .2s ease}
+#bizPage details[open]>.biz-account-disclosure-head{border-bottom:1px solid var(--border);border-radius:15px 15px 0 0}
+#bizPage details[open]>.biz-account-disclosure-head .biz-disclosure-indicator{transform:rotate(180deg)}
+#bizPage .biz-account-disclosure-head:focus-visible{outline:2px solid var(--gold);outline-offset:-3px}
+#bizPage .biz-account-disclosure-body{padding:16px 18px;display:grid;gap:12px}
+#bizPage .biz-account-disclosure-body .biz-account-table-wrap{margin:0}
+#bizPage .biz-payment-history .biz-account-disclosure-body{gap:8px}
+@media(max-width:520px){#bizPage .biz-account-disclosure-head{padding:13px 14px}#bizPage .biz-account-disclosure-body{padding:12px}}
+
