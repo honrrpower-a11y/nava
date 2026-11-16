@@ -37,6 +37,15 @@
   });
  }
  function resetCustomer(){ $("bizCustomerForm").reset();$("bizCustomerId").value="";$("bizCustomerSubmit").textContent="ثبت مشتری";$("bizCustomerCancel").hidden=true;}
+ function refreshOrderCatalogOptions(){
+  $("bizOrderLines").querySelectorAll(".biz-order-line").forEach(row=>{
+   const select=row.querySelector(".biz-order-catalog"),previous=select.value;
+   select.replaceChildren(el("option","","ورود دستی / انتخاب از کاتالوگ"));select.options[0].value="";
+   catalog.filter(x=>x.status==="active").forEach(x=>{const o=el("option","",x.name+" — "+money(x.salePriceToman));o.value=x.id;select.append(o)});
+   select.value=previous;
+  });
+ }
+ function todayIso(){const d=new Date();return[d.getFullYear(),String(d.getMonth()+1).padStart(2,"0"),String(d.getDate()).padStart(2,"0")].join("-")}
  function addOrderRow(itemId="",name="",qty="1",price=""){
   const row=el("div","biz-order-line");row.dataset.catalogId=itemId;
   const select=el("select","biz-order-catalog");select.append(el("option","","ورود دستی / انتخاب از کاتالوگ"));select.options[0].value="";
@@ -86,7 +95,7 @@
    const [c,i,o]=await Promise.all([api("/customers?status=all"),api("/items?status=active"),api("/orders?status=all")]);
    customers=c.customers||[];catalog=i.items||[];orders=o.orders||[];
    renderCustomers();renderOrders();
-   const select=$("bizOrderLines");if(!select.children.length)addOrderRow();
+   const orderLines=$("bizOrderLines");if(!orderLines.children.length)addOrderRow();else refreshOrderCatalogOptions();
    status("bizCustomerStatus","مشتریان پرونده بارگذاری شدند.");status("bizOrderStatus","سفارش‌ها و وضعیت آن‌ها بارگذاری شدند.");
   }catch(e){status("bizCustomerStatus",e.message,true);status("bizOrderStatus",e.message,true)}
  }
@@ -105,7 +114,7 @@
   const items=readOrder();if(items.some(x=>!x.itemName||!x.quantity||!x.unitPriceToman)){status("bizOrderStatus","نام، تعداد و قیمت همه ردیف‌ها را کامل کن.",true);return}
   const date=$("bizOrderDate").value;if(!date){status("bizOrderStatus","تاریخ سفارش را انتخاب کن.",true);return}
   busy=true;$("bizOrderSubmit").disabled=true;
-  try{await api("/orders","POST",{customerId:$("bizOrderCustomer").value||null,orderDate:date,notes:$("bizOrderNotes").value.trim(),items});$("bizOrderForm").reset();$("bizOrderLines").replaceChildren();addOrderRow();await load();status("bizOrderStatus","سفارش به‌صورت پیش‌نویس ذخیره شد؛ هنوز فروش یا کسر موجودی انجام نشده است.");}
+  try{await api("/orders","POST",{customerId:$("bizOrderCustomer").value||null,orderDate:date,notes:$("bizOrderNotes").value.trim(),items});$("bizOrderForm").reset();$("bizOrderDate").value=todayIso();$("bizOrderLines").replaceChildren();addOrderRow();await load();status("bizOrderStatus","سفارش به‌صورت پیش‌نویس ذخیره شد؛ هنوز فروش یا کسر موجودی انجام نشده است.");}
   catch(e){status("bizOrderStatus",e.message,true)}
   finally{busy=false;recalcOrder()}
  });
@@ -114,6 +123,6 @@
  window.addEventListener("nava:business-auth-changed",load);
  window.addEventListener("nava:business-order-updated",load);
  window.addEventListener("focus",load);
- const today=new Date();$("bizOrderDate").value=[today.getFullYear(),String(today.getMonth()+1).padStart(2,"0"),String(today.getDate()).padStart(2,"0")].join("-");
+ $("bizOrderDate").value=todayIso();
  addOrderRow();load();
 })();
