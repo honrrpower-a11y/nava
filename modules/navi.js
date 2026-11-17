@@ -325,6 +325,26 @@ export function isExplicitOfficeEditRequest(message) {
   return /(?:ویرایش(?:ش)?\s*(?:کن|کنید|بده|بدهید)|تغییر\s+(?:بده|بدید|کن)|جایگزین(?:ی)?\s*(?:کن|کنید|بده|بدهید|کردن|شود|بشه)|عوض\s*کن|قرار\s*بده|بنویس|حذف\s*کن|اصلاح\s*کن|به\s*روز\s*کن|edit(?:\s+the)?|replace(?:\s+the)?|update(?:\s+the)?|set\s+(?:cell|value))/iu.test(userText);
 }
 
+// Deterministic fallback for one narrowly defined, fully explicit Excel edit.
+// This is used only when the model omits its structured action. It parses the
+// user's current instruction, never assistant text or workbook contents.
+export function extractNaviExplicitExcelEditAction(message) {
+  const text = String(message || "");
+  const marker = text.lastIndexOf("پیام کاربر:");
+  const userText = (marker >= 0 ? text.slice(marker + "پیام کاربر:".length) : text).trim();
+  if (!isExplicitOfficeEditRequest(userText)) return null;
+
+  const match = userText.match(
+    /در\\s+شیت\\s*[«"]([^»"]{1,80})[»"]\\s*[,،]?\\s*مقدار\\s+سلول\\s+([A-Z]{1,3}[1-9][0-9]{0,6})\\s+را\\s+از\\s*[«"]([^»"]{1,500})[»"]\\s+به\\s*[«"]([^»"]{1,500})[»"]\\s+(?:تغییر\\s*بده(?:ید)?|عوض\\s*کن(?:ید)?)/iu
+  );
+  if (!match) return null;
+
+  return normalizeNaviOfficeAction({
+    kind: "edit_cells",
+    edits: [{ sheet: match[1].trim(), cell: match[2].toUpperCase(), value: match[4] }]
+  });
+}
+
 // ======================================
 // MEMORY PROPOSAL VALIDATION
 // ======================================
@@ -2436,9 +2456,15 @@ async function handleChat({
     );
   }
 
-  const officeAction = page === "officePage" && isExplicitOfficeEditRequest(message)
-    ? parsed.officeAction
-    : null;
+  const explicitOfficeEdit = page === "officePage" && isExplicitOfficeEditRequest(message);
+  let officeAction = explicitOfficeEdit ? parsed.officeAction : null;
+
+  // Do not depend on Gemini to repeat an action that is already fully and
+  // unambiguously specified by the user's current Excel edit instruction.
+  // The fallback is deliberately narrow and still passes the same allowlist.
+  if (explicitOfficeEdit && !officeAction) {
+    officeAction = extractNaviExplicitExcelEditAction(message);
+  }
 
   let reply = parsed.reply;
   if (input.saveToMemory === true) {
