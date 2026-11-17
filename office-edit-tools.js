@@ -117,5 +117,56 @@
    setStatus(count+" جایگزینی انجام شد؛ نسخه جدید دانلود شد و فایل اصلی دست‌نخورده ماند.");
   }catch(error){setStatus(error.message||"ویرایش فایل ناموفق بود.",true);}
  });
+ window.NavaOfficeTools = {
+  getActiveFileInfo() {
+   const selected=input.files&&input.files[0];
+   const ready=Boolean(sourceFile&&selected===sourceFile&&kind&&((kind==="xlsx"&&workbook)||(kind!=="xlsx"&&zip)));
+   return {ready,name:sourceFile?.name||selected?.name||"",kind};
+  },
+  async executeAction(action) {
+   const selected=input.files&&input.files[0];
+   if(!sourceFile||selected!==sourceFile)throw new Error("فایل فعال تغییر کرده است؛ فایل را دوباره در ابزار آفیس بارگذاری کن.");
+   if(action?.kind==="edit_cells"){
+    if(kind!=="xlsx"||!workbook||!Array.isArray(action.edits)||action.edits.length<1||action.edits.length>20)throw new Error("این فایل یا عملیات Excel معتبر نیست.");
+    const staged=[];
+    for(const item of action.edits){
+     if(!item||typeof item.sheet!=="string"||!workbook.SheetNames.includes(item.sheet)||typeof item.cell!=="string"||!/^[A-Z]{1,3}[1-9][0-9]{0,6}$/.test(item.cell))throw new Error("نام شیت یا نشانی سلول معتبر نیست.");
+     if(!(typeof item.value==="string"||typeof item.value==="number"||typeof item.value==="boolean")||(typeof item.value==="number"&&!Number.isFinite(item.value))||(typeof item.value==="string"&&(item.value.length>500||item.value.startsWith("="))))throw new Error("مقدار یکی از سلول‌ها مجاز نیست.");
+     staged.push({sheet:item.sheet,cell:item.cell,value:item.value});
+    }
+    for(const item of staged){
+     const sheet=workbook.Sheets[item.sheet],previous=sheet[item.cell]||{};
+     sheet[item.cell]={...previous,t:typeof item.value==="number"?"n":typeof item.value==="boolean"?"b":"s",v:item.value};
+     delete sheet[item.cell].f;delete sheet[item.cell].w;
+    }
+    workbook.Workbook=workbook.Workbook||{};workbook.Workbook.CalcPr={calcMode:"auto",fullCalcOnLoad:true,forceFullCalc:true};
+    const bytes=window.XLSX.write(workbook,{bookType:"xlsx",type:"array",cellStyles:true,compression:true});
+    download(new Blob([bytes],{type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"}),safeName(sourceFile.name)+"-edited.xlsx");
+    setStatus(staged.length+" سلول تغییر کرد؛ نسخه جدید دانلود شد و فایل اصلی دست‌نخورده ماند.");
+    return {message:staged.length+" سلول تغییر کرد؛ نسخه جدید دانلود شد و فایل اصلی دست‌نخورده ماند."};
+   }
+   if(action?.kind==="replace_text"){
+    if(!["docx","pptx"].includes(kind)||!zip||typeof action.find!=="string"||!action.find.trim()||action.find.length>500||typeof action.replace!=="string"||action.replace.length>500)throw new Error("این فایل یا عملیات جایگزینی معتبر نیست.");
+    const xmlEscape=value=>String(value).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+    const find=xmlEscape(action.find),replace=xmlEscape(action.replace);
+    let count=0;
+    const names=Object.keys(zip.files).filter(name=>kind==="pptx"?/^ppt\/slides\/slide\\d+\.xml$/.test(name):/^word\/(document|header\\d+|footer\\d+)\.xml$/.test(name));
+    for(const name of names){
+     const entry=zip.files[name];let xml=await entry.async("string");
+     xml=xml.replace(/<a:t(?:\\s[^>]*)?>([\\s\\S]*?)<\\/a:t>|<w:t(?:\\s[^>]*)?>([\\s\\S]*?)<\\/w:t>/g,(whole,a,b)=>{
+      const value=a??b??"",pieces=value.split(find);if(pieces.length<2)return whole;
+      count+=pieces.length-1;return whole.replace(value,pieces.join(replace));
+     });
+     zip.file(name,xml);
+    }
+    if(!count)throw new Error("عبارت دقیق در قطعه‌های متنی مستقل پیدا نشد؛ فایل تغییری نکرد.");
+    const blob=await zip.generateAsync({type:"blob",compression:"DEFLATE"});
+    download(blob,safeName(sourceFile.name)+"-edited."+kind);
+    setStatus(count+" جایگزینی انجام شد؛ نسخه جدید دانلود شد و فایل اصلی دست‌نخورده ماند.");
+    return {message:count+" جایگزینی انجام شد؛ نسخه جدید دانلود شد و فایل اصلی دست‌نخورده ماند."};
+   }
+   throw new Error("نوع عملیات NAVI پشتیبانی نمی‌شود.");
+  }
+ };
  $("officeEditClose")?.addEventListener("click",hide);
 })();
