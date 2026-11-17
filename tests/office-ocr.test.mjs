@@ -113,3 +113,14 @@ test("Office local editor supports XLSX cell edits and safe DOCX/PPTX text repla
   assert.match(editor, /نسخه جدید دانلود شد و فایل اصلی/);
   assert.match(editor, /حداکثر ۴۰ ردیف و ۱۲ ستون/);
 });
+
+
+test("Office editor preserves existing Excel cell metadata and avoids duplicate library loads", () => {
+  assert.match(editor, /const libraryLoads=Object\.create\(null\)/);
+  assert.match(editor, /if\(libraryLoads\[name\]\)return libraryLoads\[name\]/);
+  assert.match(editor, /const previous=sheet\[address\]\|\|\{\}/);
+  assert.match(editor, /\.\.\.previous,t:"n",f:value\.slice\(1\)/);
+  assert.match(editor, /\.\.\.previous,t:"n",v:Number\(n\)/);
+  assert.match(editor, /delete sheet\[address\]\.w/);
+  assert.doesNotThrow(() => new Function(editor));
+});
