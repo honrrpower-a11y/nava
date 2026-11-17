@@ -100,7 +100,7 @@ test("assistant-style proposal text is not treated as user authorization", () =>
 
 
 test("Office-context requests are sent to the Office route even from the global NAVI chat", () => {
-  assert.match(app, /const requestPage = naviAssistantContext\?\.service === "کارهای اداری و آفیس"\s*\? "officePage"/);
+  assert.match(app, /const officeRequestContext =\s*naviAssistantContext\?\.service === "کارهای اداری و آفیس"\s*\|\|\s*serviceSelect\?\.value === "کارهای اداری و آفیس"\s*\|\|\s*activePageId === "officePage"/);\n  assert.match(app, /const requestPage = officeRequestContext \? "officePage" : activePageId/);
   assert.match(app, /page: requestPage,/);
 });
 
