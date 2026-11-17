@@ -45,3 +45,27 @@ test("Office accepts PowerPoint and Excel files and loads the local structured p
   assert.match(structured, /readExcel/);
   assert.match(structured, /cell\.f/);
 });
+
+test("NAVI office replies expose Word and PDF export actions", () => {
+  assert.match(app, /NavaDocumentExport\?\.attach\(requestResponse,\s*service\)/);
+  assert.match(exporter, /typeof target\.value==="string"\?target\.value/);
+  assert.match(exporter, /دریافت فایل Word/);
+  assert.match(exporter, /دریافت PDF/);
+  assert.match(exporter, /Packer\.toBlob\(doc\)/);
+  assert.match(exporter, /window\.open\("","_blank"\)/);
+});
+
+test("Word and PDF exporters correctly recognize RTL, headings and ordered lists", () => {
+  assert.ok(exporter.includes("const rtlPattern=/[\\u0590-\\u08FF]/;"));
+  assert.ok(exporter.includes("x.match(/^(#{1,3})\\s+(.+)$/)"));
+  assert.ok(exporter.includes("x.match(/^(\\d+)[.)]\\s+(.+)$/)"));
+  assert.match(exporter, /alignment:rtl\?AlignmentType\.RIGHT:AlignmentType\.LEFT/);
+  assert.match(exporter, /dir="\+dir\+"/);
+});
+
+test("Office export actions are styled and loaded with a fresh cache key", () => {
+  assert.match(html, /document-export\.js\?v=office-export-rtl-fix-20261117-1/);
+  assert.match(app, /NavaDocumentExport/);
+  const css = readFileSync(new URL("../office-file-tools.css", import.meta.url), "utf8");
+  assert.match(css, /\.nava-export-actions/);
+});
