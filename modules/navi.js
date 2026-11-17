@@ -332,7 +332,10 @@ export function isExplicitOfficeEditRequest(message) {
 export function extractNaviDeterministicOfficeAction(message) {
   const text = String(message || "");
   const marker = text.lastIndexOf("پیام کاربر:");
-  const userText = (marker >= 0 ? text.slice(marker + "پیام کاربر:".length) : text).trim();
+  // The Worker request always marks the actual user message explicitly.
+  // Refuse unmarked text so extracted file/context content can never authorize edits.
+  if (marker < 0) return null;
+  const userText = text.slice(marker + "پیام کاربر:".length).trim();
   if (!isExplicitOfficeEditRequest(userText)) return null;
 
   const match = userText.match(
