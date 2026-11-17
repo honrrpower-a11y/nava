@@ -81,3 +81,14 @@ test("Office studio sends structured operation, output and detail preferences to
   assert.match(app, /detailLevel: selected\("studioDetail-office"\)/);
   assert.match(html, /متن استخراج‌شده برای تحلیل در درخواست NAVI ارسال خواهد شد/);
 });
+
+test("NAVI Office can generate real editable XLSX and PPTX files from structured replies", () => {
+  assert.match(exporter, /function workbookSheets\(text\)/);
+  assert.match(exporter, /XLSX\.utils\.aoa_to_sheet/);
+  assert.match(exporter, /XLSX\.writeFile\(book,name/);
+  assert.match(exporter, /function splitPresentation\(text\)/);
+  assert.match(exporter, /new PptxGenJS\(\)/);
+  assert.match(exporter, /pptx\.writeFile\(\{fileName:name\}\)/);
+  assert.match(exporter, /ساخت فایل Excel/);
+  assert.match(exporter, /ساخت PowerPoint/);
+});
