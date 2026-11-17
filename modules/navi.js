@@ -331,7 +331,10 @@ export function isExplicitOfficeEditRequest(message) {
 export function extractNaviExplicitExcelEditAction(message) {
   const text = String(message || "");
   const marker = text.lastIndexOf("پیام کاربر:");
-  const userText = (marker >= 0 ? text.slice(marker + "پیام کاربر:".length) : text).trim();
+  // Only the explicitly delimited current user message may authorize a proposal.
+  // Unmarked context or extracted workbook text must never become edit intent.
+  if (marker < 0) return null;
+  const userText = text.slice(marker + "پیام کاربر:".length).trim();
   if (!isExplicitOfficeEditRequest(userText)) return null;
 
   const match = userText.match(
