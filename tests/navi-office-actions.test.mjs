@@ -9,6 +9,7 @@ import {
 } from "../modules/navi.js";
 
 const app = readFileSync(new URL("../app.js", import.meta.url), "utf8");
+const html = readFileSync(new URL("../index.html", import.meta.url), "utf8");
 const editor = readFileSync(new URL("../office-edit-tools.js", import.meta.url), "utf8");
 
 test("NAVI accepts only bounded exact text replacement actions", () => {
