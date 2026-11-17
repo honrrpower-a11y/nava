@@ -25,7 +25,7 @@ test("Scanned PDF pages are rendered locally and OCR is limited", () => {
 
 test("Office upload accepts common image formats and keeps file processing client-side", () => {
   assert.match(html, /\.png,\.jpg,\.jpeg,\.webp/);
-  assert.match(html, /فایل اصلی فقط روی دستگاهت پردازش می‌شود/);
+  assert.match(html, /فایل اصلی آپلود نمی‌شود؛ اما متن استخراج‌شده برای تحلیل در درخواست NAVI ارسال خواهد شد/);
   assert.match(office, /متن استخراج‌شده از فایل/);
 });
 
