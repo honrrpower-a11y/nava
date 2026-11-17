@@ -68,20 +68,26 @@
   $("officeEditGridNote").textContent="نمایش حداکثر ۴۰ ردیف و ۱۲ ستون نخست؛ سایر سلول‌ها و شیت‌ها در فایل خروجی حفظ می‌شوند."+(limited?" محدوده بزرگ‌تر است.":"");
  }
  async function openFile(file){
-  sourceFile=file;const ext=file.name.split(".").pop().toLowerCase();
+  sourceFile=file;workbook=null;zip=null;kind="";
+  const ext=file.name.split(".").pop().toLowerCase();
   if(!["xlsx","pptx","docx"].includes(ext)){hide();return;}
   show();$("officeEditExcel").hidden=ext!=="xlsx";$("officeEditReplace").hidden=ext==="xlsx";
   $("officeEditReplaceLabel").textContent=ext==="pptx"?"جست‌وجو و جایگزینی متن در اسلایدها":"جست‌وجو و جایگزینی متن در سند Word";
   try{
    if(ext==="xlsx"){
-    kind="xlsx";await load("https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js","XLSX");
-    workbook=window.XLSX.read(await file.arrayBuffer(),{type:"array",cellFormula:true,cellStyles:true,bookVBA:false});
+    await load("https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js","XLSX");
+    const nextWorkbook=window.XLSX.read(await file.arrayBuffer(),{type:"array",cellFormula:true,cellStyles:true,bookVBA:false});
+    if(input.files?.[0]!==file)return;
+    kind="xlsx";workbook=nextWorkbook;
     renderExcel();setStatus("فایل Excel برای ویرایش محلی آماده است. مقدار سلول‌ها را تغییر بده و نسخه جدید را ذخیره کن.");
    }else{
-    kind=ext;await load("https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js","JSZip");
-    zip=await window.JSZip.loadAsync(file);setStatus("فایل برای جست‌وجو و جایگزینی متن آماده است. بسته و چیدمان کلی حفظ می‌شود؛ فقط متن‌های منطبق در قطعه‌های متنی مستقل تغییر می‌کنند.");
+    await load("https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js","JSZip");
+    const nextZip=await window.JSZip.loadAsync(file);
+    if(input.files?.[0]!==file)return;
+    kind=ext;zip=nextZip;
+    setStatus("فایل برای جست‌وجو و جایگزینی متن آماده است. بسته و چیدمان کلی حفظ می‌شود؛ فقط متن‌های منطبق در قطعه‌های متنی مستقل تغییر می‌کنند.");
    }
-  }catch(error){hide();setStatus(error.message||"آماده‌سازی ویرایشگر ناموفق بود.",true);}
+  }catch(error){if(input.files?.[0]===file){hide();setStatus(error.message||"آماده‌سازی ویرایشگر ناموفق بود.",true);}}
  }
  input.addEventListener("change",()=>{const file=input.files&&input.files[0];if(file)openFile(file);});
  $("officeEditSheet")?.addEventListener("change",event=>{currentSheet=event.target.value;drawGrid();});
