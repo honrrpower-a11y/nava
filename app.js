@@ -3562,6 +3562,10 @@ async function sendMessageToNavi() {
   const contextLines = naviAssistantContext
     ? Object.entries(naviAssistantContext.context || {}).map(([key, value]) => key + ": " + value)
     : [];
+  const requestPage = naviAssistantContext?.service === "کارهای اداری و آفیس"
+    ? "officePage"
+    : (document.querySelector(".page.active")?.id || "homePage");
+
   const finalMessage = [
     selectedService && selectedService !== "انتخاب نشده" ? "موضوع انتخاب‌شده: " + selectedService : "",
     naviAssistantContext ? "محیط فعال: استودیوی " + naviAssistantContext.service : "",
@@ -3590,7 +3594,7 @@ async function sendMessageToNavi() {
       },
       body: JSON.stringify({
         message: finalMessage,
-        page: document.querySelector(".page.active")?.id || "homePage",
+        page: requestPage,
         pageTab: document.querySelector("#bizPage .biz-tab.is-active")?.dataset.bizTab || "",
         businessId: document.querySelector("#bizProfileSelect")?.value || "",
         threadId: naviActiveThreadId,
@@ -3665,6 +3669,10 @@ async function sendMessageToNavi() {
     const threadBeforeNaming = naviThreads.find(item => item.thread_id === naviActiveThreadId);
     const shouldNameThread = threadBeforeNaming && Number(threadBeforeNaming.message_count || 0) === 0;
     showNaviReply(reply);
+    if (data.officeAction && requestPage === "officePage" &&
+        document.querySelector(".page.active")?.id !== "officePage") {
+      showPage("officePage");
+    }
     renderNaviOfficeAction(data.officeAction);
     userRequest.value = "";
     appendLocalNaviMessages(finalMessage, reply);
