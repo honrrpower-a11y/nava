@@ -3524,6 +3524,32 @@ function chooseService(service) {
 // The Office brief form submits the user instruction through the authenticated
 // NAVI flow. Extracted file text remains reference context, never edit consent.
 const officeBriefForm = document.getElementById("officeBriefForm");
+
+// Temporary, user-visible diagnostics. Request text and workbook contents are never displayed.
+function updateOfficeActionDiagnostic(stage, details = {}) {
+  if (!officeBriefForm) return;
+  let panel = document.getElementById("officeActionDiagnostic");
+  if (!panel) {
+    panel = document.createElement("details");
+    panel.id = "officeActionDiagnostic";
+    panel.style.cssText = "display:block;margin-top:12px;padding:12px;border:1px solid rgba(160,140,100,.45);border-radius:10px;white-space:pre-wrap;overflow-wrap:anywhere";
+    const summary = document.createElement("summary");
+    summary.textContent = "گزارش فنی مسیر تأیید ویرایش (عیب‌یابی)";
+    const body = document.createElement("pre");
+    body.id = "officeActionDiagnosticBody";
+    body.style.cssText = "white-space:pre-wrap;overflow-wrap:anywhere;font:inherit;margin:10px 0 0";
+    panel.append(summary, body);
+    officeBriefForm.appendChild(panel);
+  }
+  const body = document.getElementById("officeActionDiagnosticBody");
+  const previous = body?.textContent || "";
+  const line = "[" + new Date().toLocaleTimeString() + "] " + stage +
+    (Object.keys(details).length ? " — " + Object.entries(details).map(([key, value]) => key + ": " + String(value)).join(" | ") : "");
+  if (body) body.textContent = (previous ? previous + "\n" : "") + line;
+  panel.open = true;
+}
+
+
 officeBriefForm?.addEventListener("submit", event => {
   event.preventDefault();
 
@@ -3555,6 +3581,12 @@ officeBriefForm?.addEventListener("submit", event => {
     return;
   }
 
+  updateOfficeActionDiagnostic("فرم ارسال شد", {
+    instructionCharacters: userInstruction.length,
+    authenticated: Boolean(getNaviToken()),
+    sendButtonBusy: Boolean(sendRequest?.disabled)
+  });
+
   const officeContext = collectNaviStudioContext("officePage");
   // Reserve room under the Worker message limit for the actual user instruction
   // and the other Office fields added by sendMessageToNavi().
@@ -3574,7 +3606,12 @@ officeBriefForm?.addEventListener("submit", event => {
       pageOverride: "officePage",
       messageOverride: userInstruction,
       serviceOverride: "کارهای اداری و آفیس",
-      contextOverride: officeContext
+      contextOverride: officeContext,
+      officeDiagnostic: true
+    });
+  } else {
+    updateOfficeActionDiagnostic("ارسال انجام نشد", {
+      reason: !getNaviToken() ? "نشست معتبر نیست؛ ورود لازم است" : "دکمه ارسال NAVI مشغول است"
     });
   }
 });
@@ -3642,6 +3679,12 @@ async function sendMessageToNavi(options = {}) {
   const requestPage = options.pageOverride === "officePage"
     ? "officePage"
     : officeRequestContext ? "officePage" : activePageId;
+  if (options.officeDiagnostic) updateOfficeActionDiagnostic("درخواست آماده ارسال", {
+    page: requestPage,
+    service: selectedService,
+    messageCharacters: message.length,
+    contextPresent: Boolean(requestContext)
+  });
 
   const finalMessage = [
     selectedService && selectedService !== "انتخاب نشده" ? "موضوع انتخاب‌شده: " + selectedService : "",
@@ -3713,6 +3756,14 @@ async function sendMessageToNavi(options = {}) {
       );
     }
 
+    if (options.officeDiagnostic) updateOfficeActionDiagnostic("پاسخ سرور دریافت شد", {
+      httpStatus: response.status,
+      success: Boolean(data.success),
+      officeActionPresent: Boolean(data.officeAction),
+      officeActionKind: data.officeAction?.kind || "ندارد",
+      officeActionKeys: data.officeAction && typeof data.officeAction === "object" ? Object.keys(data.officeAction).join(",") : "—"
+    });
+
     let reply = String(data.reply || "").trim();
 
     if (!reply) {
@@ -3746,7 +3797,25 @@ async function sendMessageToNavi(options = {}) {
     const threadBeforeNaming = naviThreads.find(item => item.thread_id === naviActiveThreadId);
     const shouldNameThread = threadBeforeNaming && Number(threadBeforeNaming.message_count || 0) === 0;
     showNaviReply(reply);
-    renderNaviOfficeAction(data.officeAction);
+    try {
+      renderNaviOfficeAction(data.officeAction);
+      if (options.officeDiagnostic) {
+        const card = document.getElementById("naviOfficeActionCard");
+        const slot = document.getElementById("naviOfficeActionChatSlot");
+        updateOfficeActionDiagnostic("نتیجه رندر کارت", {
+          cardCreated: Boolean(card),
+          slotFound: Boolean(slot),
+          slotVisible: Boolean(slot && slot.getClientRects().length),
+          cardVisible: Boolean(card && card.getClientRects().length),
+          cardParent: card?.parentElement?.id || "—"
+        });
+      }
+    } catch (renderError) {
+      if (options.officeDiagnostic) updateOfficeActionDiagnostic("خطای رندر کارت", {
+        error: renderError?.message || "unknown"
+      });
+      throw renderError;
+    }
     userRequest.value = "";
     appendLocalNaviMessages(finalMessage, reply);
     setNaviStatus("پاسخ ناوی دریافت شد.");
@@ -3802,6 +3871,9 @@ async function sendMessageToNavi(options = {}) {
   } catch (error) {
     if (naviSessionVersion !== requestVersion) return;
 
+    if (options.officeDiagnostic) updateOfficeActionDiagnostic("خطای ارسال یا پردازش", {
+      error: error?.message || "unknown"
+    });
     console.error("NAVI connection error:", error);
 
     if (!getNaviToken()) {
