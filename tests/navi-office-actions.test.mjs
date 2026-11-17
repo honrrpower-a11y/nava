@@ -140,7 +140,7 @@ test("Office brief form submits the user instruction through NAVI and keeps extr
   assert.match(app, /context: officeContext/);
   assert.match(app, /contextBriefBudget = Math\.max\(0, 9000 - userInstruction\.length\)/);
   assert.match(app, /officeContext\.brief = String\(officeContext\.brief \|\| ""\)\.slice\(0, contextBriefBudget\)/);
-  assert.match(app, /if \(getNaviToken\(\) && !sendRequest\.disabled\)[\s\S]*?sendMessageToNavi\(\{ pageOverride: "officePage" \}\)/);
+  assert.match(app, /if \(getNaviToken\(\) && !sendRequest\.disabled\)[\s\S]*?sendMessageToNavi\(\{[\s\S]*?pageOverride: "officePage",[\s\S]*?messageOverride: userInstruction,[\s\S]*?serviceOverride: "کارهای اداری و آفیس",[\s\S]*?contextOverride: officeContext[\s\S]*?\}\)/);
   assert.match(app, /async function sendMessageToNavi\(options = \{\}\)/);
   assert.match(app, /options\.pageOverride === "officePage"[\s\S]*?\? "officePage"/);
   const html = readFileSync(new URL("../index.html", import.meta.url), "utf8");
