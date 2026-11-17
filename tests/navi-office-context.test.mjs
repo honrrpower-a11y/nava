@@ -30,14 +30,14 @@ test("NAVI context normalization preserves Office guide fields and long file bri
 test("Office context preview is shortened without truncating the context sent to NAVI", () => {
   assert.match(app, /value\.length\s*>\s*120\s*\?\s*value\.slice\(0,\s*120\)\s*\+\s*"…"/);
   assert.match(app, /summary\.slice\(0,\s*900\)/);
-  assert.match(app, /contextLines\s*=\s*naviAssistantContext[\s\S]{0,160}Object\.entries\(naviAssistantContext\.context/);
+  assert.match(app, /contextLines\s*=\s*requestContext[\s\S]{0,160}Object\.entries\(requestContext\.context/);
 });
 
 test("Office guided assistant passes its app, user level, operation and task into NAVI", () => {
   for (const key of ["application:app.value", "userLevel:level.value", 'operation:"guide"', "brief:task"]) {
     assert.ok(guide.includes(key), `Missing guided Office context: ${key}`);
   }
-  assert.match(app, /naviAssistantContext\?\.service\s*===\s*"کارهای اداری و آفیس"/);
+  assert.match(app, /requestContext\?\.service\s*===\s*"کارهای اداری و آفیس"/);
 });
 
 test("Office file extraction appends extracted text to the brief sent through the context path", () => {

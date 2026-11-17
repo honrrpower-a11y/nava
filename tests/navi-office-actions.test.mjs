@@ -101,7 +101,7 @@ test("assistant-style proposal text is not treated as user authorization", () =>
 
 
 test("Office-context requests are sent to the Office route even from the global NAVI chat", () => {
-  assert.match(app, /const officeRequestContext =\s*naviAssistantContext\?\.service === "کارهای اداری و آفیس"\s*\|\|\s*serviceSelect\?\.value === "کارهای اداری و آفیس"\s*\|\|\s*activePageId === "officePage"/);
+  assert.match(app, /const officeRequestContext =\s*requestContext\?\.service === "کارهای اداری و آفیس"\s*\|\|\s*selectedService === "کارهای اداری و آفیس"\s*\|\|\s*activePageId === "officePage"/);
   assert.match(app, /const requestPage = options\.pageOverride === "officePage"[\s\S]*?\? "officePage"[\s\S]*?: officeRequestContext \? "officePage" : activePageId/);
   assert.match(app, /page: requestPage,/);
 });
@@ -123,7 +123,7 @@ test("the Worker derives precise Excel actions from the current-user instruction
 
 
 test("Office service selection in the global NAVI chat routes the request to Office", () => {
-  assert.match(app, /const officeRequestContext =\s*naviAssistantContext\?\.service === "کارهای اداری و آفیس"\s*\|\|\s*serviceSelect\?\.value === "کارهای اداری و آفیس"\s*\|\|\s*activePageId === "officePage"/);
+  assert.match(app, /const officeRequestContext =\s*requestContext\?\.service === "کارهای اداری و آفیس"\s*\|\|\s*selectedService === "کارهای اداری و آفیس"\s*\|\|\s*activePageId === "officePage"/);
   assert.match(app, /const requestPage = options\.pageOverride === "officePage"[\s\S]*?\? "officePage"[\s\S]*?: officeRequestContext \? "officePage" : activePageId/);
   assert.match(app, /page: requestPage,/);
 });
@@ -140,9 +140,26 @@ test("Office brief form submits the user instruction through NAVI and keeps extr
   assert.match(app, /context: officeContext/);
   assert.match(app, /contextBriefBudget = Math\.max\(0, 9000 - userInstruction\.length\)/);
   assert.match(app, /officeContext\.brief = String\(officeContext\.brief \|\| ""\)\.slice\(0, contextBriefBudget\)/);
-  assert.match(app, /if \(getNaviToken\(\) && !sendRequest\.disabled\)[\s\S]*?sendMessageToNavi\(\{ pageOverride: "officePage" \}\)/);
+  assert.match(app, /if \(getNaviToken\(\) && !sendRequest\.disabled\)[\s\S]*?sendMessageToNavi\(\{[\s\S]*?pageOverride: "officePage",[\s\S]*?messageOverride: userInstruction,[\s\S]*?serviceOverride: "کارهای اداری و آفیس",[\s\S]*?contextOverride: officeContext[\s\S]*?\}\)/);
   assert.match(app, /async function sendMessageToNavi\(options = \{\}\)/);
   assert.match(app, /options\.pageOverride === "officePage"[\s\S]*?\? "officePage"/);
   const html = readFileSync(new URL("../index.html", import.meta.url), "utf8");
   assert.match(html, /<form class="studio-brief-card" id="officeBriefForm">/);
+});
+
+
+test("Office form passes its exact user instruction, service, and context directly into NAVI send", () => {
+  assert.ok(app.includes('const message = typeof options.messageOverride === "string"'));
+  assert.ok(app.includes("context: options.contextOverride"));
+  assert.ok(app.includes("messageOverride: userInstruction,"));
+  assert.ok(app.includes('serviceOverride: "کارهای اداری و آفیس"'));
+  assert.ok(app.includes("contextOverride: officeContext"));
+});
+
+test("Office approval card can render in NAVI chat without requiring the hidden Office host", () => {
+  const render = app.slice(app.indexOf("function renderNaviOfficeAction"), app.indexOf("// Select only NAVI response text"));
+  assert.ok(render.includes("const slot = chatSlot || officeSlot"));
+  assert.ok(render.includes("if (!slot)"));
+  assert.ok(!render.includes("if (!host || !slot)"));
+  assert.ok(render.includes("if (slot === officeSlot && host) host.hidden = false"));
 });
