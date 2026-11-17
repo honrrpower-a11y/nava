@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - "business-tools.js"
+      - "brand-content-studios.js"
       - "business-workspace.js"
       - "business-catalog-ui.js"
       - "nava-dialogs.js"
