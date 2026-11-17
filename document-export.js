@@ -109,24 +109,24 @@ function loadExternal(src,globalName){
  return window["__navaOfficeLib_"+globalName];
 }
 function splitMarkdownRow(line){
- const raw=line.trim().replace(/^\\|/,"").replace(/\\|$/,"");
+ const raw=line.trim().replace(/^\|/,"").replace(/\|$/,"");
  const cells=[];let value="",escaped=false;
  for(let i=0;i<raw.length;i++){
   const ch=raw[i];
-  if(ch==="\\\\"&&!escaped){escaped=true;continue;}
+  if(ch==="\\"&&!escaped){escaped=true;continue;}
   if(ch==="|"&&!escaped){cells.push(value.trim());value="";continue;}
   value+=ch;escaped=false;
  }
  cells.push(value.trim());return cells;
 }
-function isTableRule(row){return row.length>0&&row.every(cell=>/^:?-{3,}:?$/.test(cell.replace(/\\s/g,"")));}
+function isTableRule(row){return row.length>0&&row.every(cell=>/^:?-{3,}:?$/.test(cell.replace(/\s/g,"")));}
 function workbookSections(text){
  const report=[["بخش","محتوا"]],tables=[];
  let heading="گزارش",table=null;
  const flushTable=()=>{if(table&&table.rows.length)tables.push(table);table=null;};
  for(const raw of lines(text)){
   const x=raw.trim();if(!x)continue;
-  const h=x.match(/^#{1,3}\\s+(.+)$/);
+  const h=x.match(/^#{1,3}\s+(.+)$/);
   if(h){flushTable();heading=h[1].slice(0,80);report.push([heading,""]);continue;}
   if(x.startsWith("|")&&x.endsWith("|")){
    const cells=splitMarkdownRow(x);
@@ -135,47 +135,43 @@ function workbookSections(text){
    table.rows.push(cells);continue;
   }
   flushTable();
-  const value=x.replace(/^[-*•]\\s+/,"").replace(/^\\d+[.)]\\s+/,"");
+  const value=x.replace(/^[-*•]\s+/,"").replace(/^\d+[.)]\s+/,"");
   report.push([heading,value]);
  }
  flushTable();
  if(report.length===1&&!tables.length){
-  lines(text).map(x=>x.trim()).filter(Boolean).forEach((x,i)=>report.push([i+1,x.replace(/^#{1,3}\\s+|^[-*•]\\s+|^\\d+[.)]\\s+/,"")]));
+  lines(text).map(x=>x.trim()).filter(Boolean).forEach((x,i)=>report.push([i+1,x.replace(/^#{1,3}\s+|^[-*•]\s+|^\d+[.)]\s+/,"")]));
  }
  return {report,tables};
 }
 function excelCell(value){
  const original=String(value??"").trim();
  if(!original)return {t:"s",v:""};
- // Only permit simple, local Excel formulas; reject external links, commands and sheet references.
- if(/^=(?:SUM|AVERAGE|MIN|MAX|COUNT|COUNTA|ROUND|IF)\\([A-Z0-9_$:,. +*/()-]+\\)$/i.test(original)||
-    /^=[A-Z]{1,3}\\d+(?:\\s*[+*/-]\\s*(?:[A-Z]{1,3}\\d+|\\d+(?:\\.\\d+)?))+$/.test(original)){
+ // Accept only common local formulas; external references and arbitrary expressions remain text.
+ if(/^=(?:SUM|AVERAGE|MIN|MAX|COUNT|COUNTA|ROUND|IF)\([A-Z0-9_$:,. +*/()-]+\)$/i.test(original)||
+    /^=[A-Z]{1,3}\d+(?:\s*[+*/-]\s*(?:[A-Z]{1,3}\d+|\d+(?:\.\d+)?))+$/.test(original)){
   return {f:original.slice(1)};
  }
  const normalized=original.replace(/[۰-۹]/g,d=>"۰۱۲۳۴۵۶۷۸۹".indexOf(d)).replace(/[٠-٩]/g,d=>"٠١٢٣٤٥٦٧٨٩".indexOf(d)).replace(/[٬،]/g,",").replace(/٫/g,".");
  const numeric=normalized.replace(/,/g,"");
- if(/^-?(?:\\d+\\.?\\d*|\\.\\d+)%$/.test(numeric)){
-  return {t:"n",v:Number(numeric.slice(0,-1))/100,z:"0.00%"};
- }
- if(/^-?(?:\\d+\\.?\\d*|\\.\\d+)$/.test(numeric))return {t:"n",v:Number(numeric)};
+ if(/^-?(?:\d+\.?\d*|\.\d+)%$/.test(numeric))return {t:"n",v:Number(numeric.slice(0,-1))/100,z:"0.00%"};
+ if(/^-?(?:\d+\.?\d*|\.\d+)$/.test(numeric))return {t:"n",v:Number(numeric)};
  return {t:"s",v:original};
 }
 function sheetFromRows(XLSX,rows){
  const sheet={};
  rows.forEach((row,r)=>row.forEach((value,c)=>{
   const cell=excelCell(value);
-  if(cell.f)sheet[XLSX.utils.encode_cell({r,c})]={t:"n",f:cell.f};
-  else sheet[XLSX.utils.encode_cell({r,c})]=cell;
+  sheet[XLSX.utils.encode_cell({r,c})]=cell.f?{t:"n",f:cell.f}:cell;
  }));
- const width=Math.max(1,...rows.map(row=>row.length));
- const height=Math.max(1,rows.length);
+ const width=Math.max(1,...rows.map(row=>row.length)),height=Math.max(1,rows.length);
  sheet["!ref"]=XLSX.utils.encode_range({s:{r:0,c:0},e:{r:height-1,c:width-1}});
  sheet["!cols"]=Array.from({length:width},(_,col)=>({wch:Math.min(42,Math.max(12,...rows.map(row=>String(row[col]??"").length+2)))}));
  if(rows.length>1)sheet["!autofilter"]={ref:sheet["!ref"]};
  return sheet;
 }
 function appendSheet(XLSX,book,rows,requestedName,index){
- let name=String(requestedName||"Sheet "+(index+1)).replace(/[\\\\/?*\\[\\]:]/g," ").trim().slice(0,31)||"Sheet "+(index+1);
+ let name=String(requestedName||"Sheet "+(index+1)).replace(/[\\/?*\[\]:]/g," ").trim().slice(0,31)||"Sheet "+(index+1);
  const base=name;let suffix=2;
  while(book.SheetNames.includes(name))name=(base.slice(0,27)+" "+suffix++);
  XLSX.utils.book_append_sheet(book,sheetFromRows(XLSX,rows),name);
@@ -187,7 +183,6 @@ async function excel(text,name,button,status){
   const book=XLSX.utils.book_new(),parsed=workbookSections(text);
   appendSheet(XLSX,book,parsed.report,"گزارش",0);
   parsed.tables.slice(0,30).forEach((table,index)=>appendSheet(XLSX,book,table.rows,table.name+" "+(index+1),index+1));
-  if(!book.SheetNames.length)appendSheet(XLSX,book,[["محتوا"],[String(text||"")]],"محتوا",0);
   book.Workbook=book.Workbook||{};
   book.Workbook.CalcPr={calcMode:"auto",fullCalcOnLoad:true,forceFullCalc:true};
   XLSX.writeFile(book,name,{compression:true});
@@ -208,20 +203,18 @@ function splitLongText(value,max=210){
 function splitPresentation(text){
  const slides=[];let title="خلاصه",items=[],used=0;
  const push=()=>{if(items.length){slides.push({title,items});items=[];used=0;}};
- const add=(item)=>{
-  const pieces=splitLongText(item.text);
-  for(const piece of pieces){
-   const next={text:piece,bullet:item.bullet};
+ const add=item=>{
+  for(const piece of splitLongText(item.text)){
    const cost=Math.max(1,Math.ceil(piece.length/95));
    if(items.length>=5||used+cost>5)push();
-   items.push(next);used+=cost;
+   items.push({text:piece,bullet:item.bullet});used+=cost;
   }
  };
  for(const raw of lines(text)){
   const x=raw.trim();if(!x)continue;
-  const h=x.match(/^#{1,3}\\s+(.+)$/);
+  const h=x.match(/^#{1,3}\s+(.+)$/);
   if(h){push();title=h[1];continue;}
-  const bullet=x.match(/^[-*•]\\s+(.+)$/),number=x.match(/^\\d+[.)]\\s+(.+)$/);
+  const bullet=x.match(/^[-*•]\s+(.+)$/),number=x.match(/^\d+[.)]\s+(.+)$/);
   add({text:bullet?bullet[1]:number?number[1]:x,bullet:!!(bullet||number)});
  }
  push();
@@ -239,16 +232,14 @@ async function powerpoint(text,name,button,status){
   cover.addText("NAVA",{x:.8,y:1.25,w:11.5,h:.55,fontFace:"Arial",fontSize:20,bold:true,color:gold,charSpacing:3,margin:0});
   cover.addText("ارائه تهیه‌شده با NAVI",{x:.8,y:2.1,w:11.5,h:1.15,fontFace:"Arial",fontSize:30,bold:true,color:white,rtlMode:true,align:"right",margin:0});
   cover.addText("محتوای ساختاریافته و قابل ویرایش",{x:.8,y:3.45,w:11.5,h:.5,fontFace:"Arial",fontSize:16,color:muted,rtlMode:true,align:"right",margin:0});addFooter(cover,1);
-  const contentSlides=splitPresentation(text);
-  contentSlides.forEach((data,index)=>{
+  splitPresentation(text).forEach((data,index)=>{
    const slide=pptx.addSlide();slide.background={color:navy};
    slide.addShape(pptx.ShapeType.rect,{x:0,y:0,w:13.333,h:.12,fill:{color:gold},line:{color:gold}});
-   slide.addText(data.title,{x:.65,y:.48,w:12,h:.65,fontFace:"Arial",fontSize:24,bold:true,color:gold,rtlMode:true,align:"right",margin:0.03,breakLine:false,fit:"shrink"});
+   slide.addText(data.title,{x:.65,y:.48,w:12,h:.65,fontFace:"Arial",fontSize:24,bold:true,color:gold,rtlMode:true,align:"right",margin:0.03,fit:"shrink"});
    let y=1.45;
    data.items.forEach(item=>{
-    const content=item.text;
-    const height=Math.min(1.02,Math.max(.42,Math.ceil(content.length/78)*.27+.18));
-    slide.addText((item.bullet?"•  ":"")+content,{x:.85,y,w:11.7,h:height,fontFace:"Arial",fontSize:17,color:white,rtlMode:true,align:"right",valign:"mid",margin:.08,breakLine:false,fit:"shrink"});
+    const height=Math.min(1.02,Math.max(.42,Math.ceil(item.text.length/78)*.27+.18));
+    slide.addText((item.bullet?"•  ":"")+item.text,{x:.85,y,w:11.7,h:height,fontFace:"Arial",fontSize:17,color:white,rtlMode:true,align:"right",valign:"mid",margin:.08,fit:"shrink"});
     y+=height+.12;
    });
    addFooter(slide,index+2);
