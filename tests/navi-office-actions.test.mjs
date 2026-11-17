@@ -55,6 +55,7 @@ test("only explicit edit language in the current user message passes the intent 
   assert.equal(isExplicitOfficeEditRequest("پیام کاربر: عبارت قدیمی را با عبارت جدید عوض کن"), true);
   assert.equal(isExplicitOfficeEditRequest("پیام کاربر: این فایل را خلاصه کن"), false);
   assert.equal(isExplicitOfficeEditRequest("پیام کاربر: لطفاً درباره فرمول SUM توضیح بده"), false);
+  assert.equal(isExplicitOfficeEditRequest("پیام کاربر: ویرایش این سند چیست؟"), false);
 });
 
 test("browser never executes an action while rendering; execution is click-confirmed", () => {
