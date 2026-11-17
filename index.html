@@ -909,11 +909,11 @@
       <form class="biz-calculator-card" id="bizCostForm" data-business-tool-form novalidate>
         <div class="biz-card-heading"><div><span class="studio-step">مرحله ۱</span><h3>هزینه‌های تولید</h3></div><span class="biz-unit-hint">مبالغ به تومان</span></div>
         <div class="biz-fields-grid">
-          <label class="biz-field"><span>هزینه مواد اولیه</span><input id="bizMaterials" type="text" min="0" step="any" value="0" inputmode="decimal"></label>
-          <label class="biz-field"><span>هزینه بسته‌بندی</span><input id="bizPackaging" type="text" min="0" step="any" value="0" inputmode="decimal"></label>
-          <label class="biz-field"><span>دستمزد و نیروی کار</span><input id="bizLabor" type="text" min="0" step="any" value="0" inputmode="decimal"></label>
-          <label class="biz-field"><span>هزینه‌های سربار</span><input id="bizOverhead" type="text" min="0" step="any" value="0" inputmode="decimal"></label>
-          <label class="biz-field"><span>حمل‌ونقل و سایر هزینه‌ها</span><input id="bizShipping" type="text" min="0" step="any" value="0" inputmode="decimal"></label>
+          <label class="biz-field"><span>هزینه مواد اولیه</span><input id="bizMaterials" type="text" min="0" step="any" inputmode="decimal"></label>
+          <label class="biz-field"><span>هزینه بسته‌بندی</span><input id="bizPackaging" type="text" min="0" step="any" inputmode="decimal"></label>
+          <label class="biz-field"><span>دستمزد و نیروی کار</span><input id="bizLabor" type="text" min="0" step="any" inputmode="decimal"></label>
+          <label class="biz-field"><span>هزینه‌های سربار</span><input id="bizOverhead" type="text" min="0" step="any" inputmode="decimal"></label>
+          <label class="biz-field"><span>حمل‌ونقل و سایر هزینه‌ها</span><input id="bizShipping" type="text" min="0" step="any" inputmode="decimal"></label>
           <label class="biz-field"><span>تعداد محصول تولیدشده</span><input id="bizQuantity" type="text" min="1" step="1" value="100" inputmode="numeric" required></label>
         </div>
         <div class="biz-form-divider"></div>
@@ -950,10 +950,10 @@
           <div class="biz-secondary-head"><div><span class="studio-step">ابزار مالی ۰۲</span><h3 id="bizBreakEvenTitle">محاسبه نقطه سربه‌سر</h3><p>مشخص کن حداقل چند واحد باید بفروشی تا هزینه‌هایت پوشش داده شوند.</p></div><span class="biz-tool-mini-mark">◎</span></div>
           <form id="bizBreakEvenForm" data-business-tool-form novalidate>
             <div class="biz-fields-grid">
-              <label class="biz-field"><span>هزینه ثابت دوره (تومان)</span><input id="bizBreakEvenFixed" type="text" min="0" step="any" value="0" inputmode="decimal"></label>
-              <label class="biz-field"><span>هزینه متغیر هر واحد (تومان)</span><input id="bizBreakEvenVariable" type="text" min="0" step="any" value="0" inputmode="decimal"></label>
-              <label class="biz-field"><span>قیمت فروش هر واحد (تومان)</span><input id="bizBreakEvenPrice" type="text" min="0" step="any" value="0" inputmode="decimal"></label>
-              <label class="biz-field"><span>سود هدف در دوره (تومان)</span><input id="bizBreakEvenTarget" type="text" min="0" step="any" value="0" inputmode="decimal"></label>
+              <label class="biz-field"><span>هزینه ثابت دوره (تومان)</span><input id="bizBreakEvenFixed" type="text" min="0" step="any" inputmode="decimal"></label>
+              <label class="biz-field"><span>هزینه متغیر هر واحد (تومان)</span><input id="bizBreakEvenVariable" type="text" min="0" step="any" inputmode="decimal"></label>
+              <label class="biz-field"><span>قیمت فروش هر واحد (تومان)</span><input id="bizBreakEvenPrice" type="text" min="0" step="any" inputmode="decimal"></label>
+              <label class="biz-field"><span>سود هدف در دوره (تومان)</span><input id="bizBreakEvenTarget" type="text" min="0" step="any" inputmode="decimal"></label>
             </div>
             <button class="btn-primary biz-secondary-submit" type="submit">محاسبه نقطه سربه‌سر</button>
             <p class="biz-validation" id="bizBreakEvenStatus" role="status" aria-live="polite">هزینه ثابت، هزینه متغیر و قیمت فروش را وارد کن.</p>
@@ -970,12 +970,12 @@
           <div class="biz-secondary-head"><div><span class="studio-step">ابزار مالی ۰۳</span><h3 id="bizBudgetTitle">برنامه‌ریز بودجه ماهانه</h3><p>درآمد و هزینه‌های پیش‌بینی‌شده را کنار هم بگذار و مانده عملیاتی را ببین.</p></div><span class="biz-tool-mini-mark">▤</span></div>
           <form id="bizBudgetForm" data-business-tool-form novalidate>
             <div class="biz-fields-grid">
-              <label class="biz-field"><span>درآمد یا فروش پیش‌بینی‌شده</span><input id="bizBudgetRevenue" type="text" min="0" step="any" value="0" inputmode="decimal"></label>
-              <label class="biz-field"><span>هزینه مستقیم کالا/خدمات</span><input id="bizBudgetDirect" type="text" min="0" step="any" value="0" inputmode="decimal"></label>
-              <label class="biz-field"><span>هزینه‌های ثابت</span><input id="bizBudgetFixed" type="text" min="0" step="any" value="0" inputmode="decimal"></label>
-              <label class="biz-field"><span>حقوق و دستمزد</span><input id="bizBudgetPayroll" type="text" min="0" step="any" value="0" inputmode="decimal"></label>
-              <label class="biz-field"><span>بازاریابی و تبلیغات</span><input id="bizBudgetMarketing" type="text" min="0" step="any" value="0" inputmode="decimal"></label>
-              <label class="biz-field"><span>سایر هزینه‌ها</span><input id="bizBudgetOther" type="text" min="0" step="any" value="0" inputmode="decimal"></label>
+              <label class="biz-field"><span>درآمد یا فروش پیش‌بینی‌شده</span><input id="bizBudgetRevenue" type="text" min="0" step="any" inputmode="decimal"></label>
+              <label class="biz-field"><span>هزینه مستقیم کالا/خدمات</span><input id="bizBudgetDirect" type="text" min="0" step="any" inputmode="decimal"></label>
+              <label class="biz-field"><span>هزینه‌های ثابت</span><input id="bizBudgetFixed" type="text" min="0" step="any" inputmode="decimal"></label>
+              <label class="biz-field"><span>حقوق و دستمزد</span><input id="bizBudgetPayroll" type="text" min="0" step="any" inputmode="decimal"></label>
+              <label class="biz-field"><span>بازاریابی و تبلیغات</span><input id="bizBudgetMarketing" type="text" min="0" step="any" inputmode="decimal"></label>
+              <label class="biz-field"><span>سایر هزینه‌ها</span><input id="bizBudgetOther" type="text" min="0" step="any" inputmode="decimal"></label>
               <label class="biz-field"><span>درصد ذخیره از مازاد (٪)</span><input id="bizBudgetReserve" type="text" min="0" max="100" step="0.1" value="10" inputmode="decimal"></label>
             </div>
             <button class="btn-primary biz-secondary-submit" type="submit">محاسبه بودجه ماهانه</button>
