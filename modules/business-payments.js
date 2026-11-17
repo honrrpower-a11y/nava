@@ -87,10 +87,14 @@ export async function handleBusinessPaymentsRoute({request,env,url,corsOrigin,bu
   if(resourceId&&action==="void"&&request.method==="POST"){
    if(!validId(resourceId,"payment"))return fail("شناسه دریافت وجه معتبر نیست.",400,corsOrigin);
    const result=await db.batch([
-    db.prepare("UPDATE business_customer_payments_v1 SET status='voided',updated_at=datetime('now') WHERE id=? AND business_id=? AND owner_id=? AND status='received'").bind(resourceId,businessId,ownerId),
+    db.prepare("UPDATE business_customer_payments_v1 SET status='voided',updated_at=datetime('now') WHERE id=? AND business_id=? AND owner_id=? AND status='received' AND EXISTS(SELECT 1 FROM business_cash_movements_v1 cm JOIN business_cash_accounts_v1 a ON a.id=cm.cash_account_id AND a.business_id=cm.business_id AND a.owner_id=cm.owner_id WHERE cm.source_type='customer_receipt' AND cm.source_id=business_customer_payments_v1.id AND cm.business_id=business_customer_payments_v1.business_id AND cm.owner_id=business_customer_payments_v1.owner_id AND cm.status='active' AND a.opening_balance_toman+COALESCE((SELECT SUM(CASE WHEN m.direction='in' THEN m.amount_toman WHEN m.direction='out' THEN -m.amount_toman ELSE 0 END) FROM business_cash_movements_v1 m WHERE m.cash_account_id=cm.cash_account_id AND m.business_id=cm.business_id AND m.owner_id=cm.owner_id AND m.status='active' AND m.id<>cm.id),0)>=0)").bind(resourceId,businessId,ownerId),
     db.prepare("UPDATE business_cash_movements_v1 SET status='voided' WHERE source_type='customer_receipt' AND source_id=? AND business_id=? AND owner_id=? AND status='active' AND EXISTS(SELECT 1 FROM business_customer_payments_v1 WHERE id=? AND business_id=? AND owner_id=? AND status='voided')").bind(resourceId,businessId,ownerId,resourceId,businessId,ownerId)
    ]);
-   if(Number(result?.[0]?.meta?.changes||0)!==1)return fail("دریافت وجه پیدا نشد یا قبلاً باطل شده است.",404,corsOrigin);
+   if(Number(result?.[0]?.meta?.changes||0)!==1){
+    const payment=await db.prepare("SELECT status FROM business_customer_payments_v1 WHERE id=? AND business_id=? AND owner_id=?").bind(resourceId,businessId,ownerId).first();
+    if(payment?.status==="received")return fail("ابطال این دریافت، موجودی حساب را منفی می‌کند یا گردش نقدی متناظر آن موجود نیست؛ ابتدا خروجی‌های مرتبط را اصلاح کن.",409,corsOrigin);
+    return fail("دریافت وجه پیدا نشد یا قبلاً باطل شده است.",404,corsOrigin);
+   }
    if(Number(result?.[1]?.meta?.changes||0)!==1)throw new Error("Customer receipt cash reversal not confirmed.");
    return reply({voided:true,paymentId:resourceId},200,corsOrigin);
   }
