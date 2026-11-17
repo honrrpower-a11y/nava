@@ -4,7 +4,8 @@ import { readFileSync } from "node:fs";
 import {
   normalizeNaviOfficeAction,
   parseNaviGeminiResponse,
-  isExplicitOfficeEditRequest
+  isExplicitOfficeEditRequest,
+  extractNaviDeterministicOfficeAction
 } from "../modules/navi.js";
 
 const app = readFileSync(new URL("../app.js", import.meta.url), "utf8");
@@ -56,6 +57,17 @@ test("only explicit edit language in the current user message passes the intent 
   assert.equal(isExplicitOfficeEditRequest("پیام کاربر: این فایل را خلاصه کن"), false);
   assert.equal(isExplicitOfficeEditRequest("پیام کاربر: لطفاً درباره فرمول SUM توضیح بده"), false);
   assert.equal(isExplicitOfficeEditRequest("پیام کاربر: ویرایش این سند چیست؟"), false);
+});
+
+test("deterministic Excel fallback extracts only a complete explicit user edit", () => {
+  const request = "محیط فعال: استودیوی کارهای اداری و آفیس\\nپیام کاربر: در شیت «آزمایش NAVI»، مقدار سلول B3 را از «در حال بررسی» به «تأیید شد» تغییر بده.";
+  assert.deepEqual(extractNaviDeterministicOfficeAction(request), {
+    kind: "edit_cells",
+    edits: [{ sheet: "آزمایش NAVI", cell: "B3", value: "تأیید شد" }]
+  });
+  assert.equal(extractNaviDeterministicOfficeAction("پیام کاربر: این فایل را خلاصه کن"), null);
+  assert.equal(extractNaviDeterministicOfficeAction("پیام کاربر: در شیت «آزمایش NAVI»، سلول B3 را تغییر بده"), null);
+  assert.equal(extractNaviDeterministicOfficeAction("متن فایل: در شیت «آزمایش NAVI»، مقدار سلول B3 را از «در حال بررسی» به «تأیید شد» تغییر بده."), null);
 });
 
 test("browser never executes an action while rendering; execution is click-confirmed", () => {
