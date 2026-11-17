@@ -343,3 +343,14 @@ test("cash ledger bootstrap idempotently seeds the primary account and imports o
     "biz-12345678-1234-1234-1234-123456789012", "user-1"
   ]);
 });
+
+
+test("customer account sales use issued invoice totals without double-counting confirmed order sales", async () => {
+  const payments = await readFile(new URL("../modules/business-payments.js", import.meta.url), "utf8");
+  const navi = await readFile(new URL("../modules/business.js", import.meta.url), "utf8");
+  for (const source of [payments, navi]) {
+    assert.match(source, /SUM\\(COALESCE\\(i\\.total_toman,t\\.amount_toman\\)\\)/);
+    assert.match(source, /o\\.converted_transaction_id=t\\.id/);
+    assert.match(source, /i\\.document_type='invoice' AND i\\.status='issued'/);
+  }
+});
