@@ -25,7 +25,7 @@
   document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),30000);
  }
  function show(){panel.hidden=false;}
- function hide(){panel.hidden=true;sourceFile=null;workbook=null;zip=null;kind="";}
+ function hide(){panel.hidden=true;sourceFile=null;workbook=null;zip=null;kind="";input.value="";}
  function renderExcel(){
   const select=$("officeEditSheet");
   select.replaceChildren(...workbook.SheetNames.map(name=>{const o=document.createElement("option");o.value=name;o.textContent=name;return o;}));
@@ -51,7 +51,7 @@
      if(value.startsWith("=")&&/^=(?:SUM|AVERAGE|MIN|MAX|COUNT|COUNTA|ROUND|IF)\([A-Z0-9_$:,. +*/()-]+\)$/i.test(value)){
       sheet[address]={...previous,t:"n",f:value.slice(1)};delete sheet[address].v;delete sheet[address].w;
      }
-     else if(value.startsWith("=")){setStatus("این نسخه فقط فرمول‌های رایج و محدود را می‌پذیرد. مقدار سلول تغییر نکرد.",true);field.value=cell?(cell.f?"="+cell.f:String(cell.w??cell.v??"")):"";return;}
+     else if(value.startsWith("=")){const current=sheet[address];setStatus("این نسخه فقط فرمول‌های رایج و محدود را می‌پذیرد. مقدار سلول تغییر نکرد.",true);field.value=current?(current.f?"="+current.f:String(current.w??current.v??"")):"";return;}
      else{
       const n=value.replace(/[۰-۹]/g,d=>"۰۱۲۳۴۵۶۷۸۹".indexOf(d)).replace(/[٠-٩]/g,d=>"٠١٢٣٤٥٦٧٨٩".indexOf(d)).replace(/[٬،]/g,"").replace(/٫/g,".");
       sheet[address]=value!==""&&/^-?(?:\d+\.?\d*|\.\d+)$/.test(n)?{...previous,t:"n",v:Number(n)}:{...previous,t:"s",v:value};
