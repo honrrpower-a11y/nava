@@ -1,76 +1,1351 @@
-import test from "node:test";
-import assert from "node:assert/strict";
-import vm from "node:vm";
-import { readFile } from "node:fs/promises";
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#080d19">
+  <meta name="description" content="NAVA؛ استودیوی هوشمند برای ساخت، طراحی و رشد کسب‌وکارها">
+  <title>NAVA | One Vision. One Mission. One NAVA.</title>
+  <link rel="stylesheet" href="style.css?v=navi-response-button-20261115-1">
+  <link rel="stylesheet" href="logo-studio.css?v=navi-directed-logo-20261114-1">
+  <link rel="stylesheet" href="brand-content-studios.css?v=studio-output-inline-20261114-1">
+  <link rel="stylesheet" href="business-tools.css?v=business-navi-help-20261116-1">
+  <link rel="stylesheet" href="studio-workspaces.css?v=composition-staff-20261114-1">
+  <script src="app.js?v=navi-chat-silent-sync-20261116-2" defer></script>
+  <script src="logo-studio.js?v=navi-image-logo-engine-20261115-1" defer></script>
+</head>
+<body>
 
-async function loadCalculations() {
-  const form = { addEventListener() {} };
-  const sandbox = {
-    document: { getElementById(id) { return id === "bizCostForm" ? form : null; } },
-    window: {},
-    Intl,
-    Number,
-    Math,
-    Object,
-    String,
-    setTimeout
-  };
-  const source = await readFile(new URL("../business-tools.js", import.meta.url), "utf8");
-  vm.runInNewContext(source, sandbox);
-  return sandbox.window.NavaBusinessTools;
-}
+<header>
+  <div class="container">
+    <div class="header-inner">
+      <div class="logo-orb"></div>
+      <div class="brand">
+        <div>
+          <div class="brand-name">NAVA</div>
+          <div class="brand-sub">ONE VISION. ONE MISSION. ONE NAVA.</div>
+          <div class="brand-tagline">THE FUTURE HAS A NAME.</div>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button class="nava-header-account" id="navaHeaderAccount" type="button">ورود / ثبت‌نام</button>
+        <button class="theme-btn" id="themeToggle" aria-label="تغییر تم">☀️</button>
+      </div>
+    </div>
+    <div class="nava-header-tabs-row">
+      <nav class="nava-header-tabs-slot" id="navaHeaderTabsSlot" aria-label="بخش‌های حساب" hidden></nav>
+    </div>
+  </div>
+</header>
 
-test("cost calculator computes margin from selling price, not markup", async () => {
+<main class="container">
+
+  <section class="page active" id="homePage">
+    <section class="nava-account-workspace" id="navaAccountWorkspace" aria-labelledby="navaAccountWorkspaceTitle" hidden>
+      <div class="nava-account-workspace-heading">
+        <div>
+          <span class="nava-account-eyebrow">YOUR PRIVATE NAVA SPACE</span>
+          <h2 id="navaAccountWorkspaceTitle">فضای شخصی نوا</h2>
+          <p>پروژه‌ها و حافظه‌ات را از همین‌جا مدیریت کن؛ گفت‌وگو با NAVI همیشه جدا و در دسترس است.</p>
+        </div>
+        <span class="nava-account-session-mark" aria-hidden="true">✦</span>
+      </div>
+      <div class="nava-account-workspace-content">
+        <div class="nava-account-tabs-slot" id="navaAccountTabsSlot"></div>
+        <div class="nava-account-panels" id="navaAccountWorkspacePanels"></div>
+      </div>
+    </section>
+
+    <div class="nava-studio-home">
+      <div class="nava-home-intro">
+        <span class="nava-home-eyebrow">NAVA CREATIVE UNIVERSE</span>
+        <h1>یک جهان، <span>بی‌نهایت ایده</span></h1>
+        <p>به دنیای خلاق نوا خوش آمدی؛ مسیرت را انتخاب کن و ایده‌ات را به واقعیت نزدیک‌تر کن.</p>
+      </div>
+
+      <div class="nava-orbit-stage" aria-label="مسیرهای اصلی استودیوی نوا">
+        <div class="nava-orbit-track" aria-hidden="true"></div>
+
+      <section class="nava-access-panel" aria-labelledby="navaAccessTitle">
+        <div class="nava-access-copy">
+          <span class="nava-access-eyebrow">YOUR NAVA EXPERIENCE</span>
+          <h2 id="navaAccessTitle">از کجا شروع می‌کنی؟</h2>
+          <p>برای آشنایی، مسیرهای نوا را به‌عنوان مهمان ببین؛ برای دسترسی به همه امکانات، پروژه‌ها و گفت‌وگوی هوشمند NAVI وارد حساب خودت شو.</p>
+        </div>
+        <div class="nava-access-actions">
+          <button class="nava-access-login" id="navaHomeLogin" type="button">
+            <span class="nava-access-action-title">ورود / ساخت حساب</span>
+            <span class="nava-access-action-note">دسترسی کامل به امکانات نوا و NAVI</span>
+          </button>
+          <button class="nava-access-guest" id="navaGuestExplore" type="button">
+            <span class="nava-access-action-title">ادامه به‌عنوان مهمان</span>
+            <span class="nava-access-action-note">مشاهده استودیوها و امکانات قابل‌آزمایش</span>
+          </button>
+        </div>
+      </section>
+
+        <div class="nava-orbit-center">
+          <div class="orb-stage nava-orb-stage" aria-label="هسته هوشمند نوا">
+            <div class="orb-large">
+              <span class="orb-blue-ring"></span>
+              <div class="orb-dot"></div>
+              <span class="orb-particle p1"></span>
+              <span class="orb-particle p2"></span>
+              <span class="orb-particle p3"></span>
+              <span class="orb-particle p4"></span>
+            </div>
+            <div class="orb-caption">NAVA INTELLIGENCE</div>
+          </div>
+          <span class="nava-center-label">هسته مرکزی نوا</span>
+        </div>
+
+        <div class="nava-orbit-item nava-orbit-item--logo">
+          <button class="nava-orbit-button" type="button" onclick="showPage('logoPage')" aria-label="ورود به استودیوی طراحی لوگو"><span class="nava-orbit-icon" aria-hidden="true">✦</span><span class="nava-orbit-title">طراحی لوگو</span><span class="nava-orbit-caption">هویت بصری</span></button>
+        </div>
+        <div class="nava-orbit-item nava-orbit-item--brand">
+          <button class="nava-orbit-button" type="button" onclick="showPage('brandPage')" aria-label="ورود به استودیوی برندینگ"><span class="nava-orbit-icon" aria-hidden="true">◇</span><span class="nava-orbit-title">برندینگ</span><span class="nava-orbit-caption">شخصیت و هویت برند</span></button>
+        </div>
+        <div class="nava-orbit-item nava-orbit-item--content">
+          <button class="nava-orbit-button" type="button" onclick="showPage('contentPage')" aria-label="ورود به استودیوی تولید محتوا"><span class="nava-orbit-icon" aria-hidden="true">✧</span><span class="nava-orbit-title">تولید محتوا</span><span class="nava-orbit-caption">ایده تا انتشار</span></button>
+        </div>
+        <div class="nava-orbit-item nava-orbit-item--article">
+          <button class="nava-orbit-button" type="button" onclick="showPage('articlePage')" aria-label="ورود به استودیوی مقاله و وبلاگ"><span class="nava-orbit-icon" aria-hidden="true">▤</span><span class="nava-orbit-title">مقاله و وبلاگ</span><span class="nava-orbit-caption">نوشتار تخصصی</span></button>
+        </div>
+        <div class="nava-orbit-item nava-orbit-item--office">
+          <button class="nava-orbit-button" type="button" onclick="showPage('officePage')" aria-label="ورود به استودیوی کارهای اداری و آفیس"><span class="nava-orbit-icon" aria-hidden="true">▦</span><span class="nava-orbit-title">کارهای آفیس</span><span class="nava-orbit-caption">اسناد، جدول و ارائه</span></button>
+        </div>
+        <div class="nava-orbit-item nava-orbit-item--music">
+          <button class="nava-orbit-button" type="button" onclick="showPage('musicPage')" aria-label="ورود به استودیوی تولید موسیقی"><span class="nava-orbit-icon" aria-hidden="true">♫</span><span class="nava-orbit-title">تولید موسیقی</span><span class="nava-orbit-caption">خلق صدا و تنظیم</span></button>
+        </div>
+        <div class="nava-orbit-item nava-orbit-item--composition">
+          <button class="nava-orbit-button" type="button" onclick="showPage('composePage')" aria-label="ورود به استودیوی آهنگ‌سازی و نت‌نویسی"><span class="nava-orbit-icon" aria-hidden="true">𝄞</span><span class="nava-orbit-title">آهنگ‌سازی و نت‌نویسی</span><span class="nava-orbit-caption">ساخت ملودی و نت روی حامل</span></button>
+        </div>
+        <div class="nava-orbit-item nava-orbit-item--story">
+          <button class="nava-orbit-button" type="button" onclick="showPage('storyPage')" aria-label="ورود به استوری‌ساز"><span class="nava-orbit-icon" aria-hidden="true">▧</span><span class="nava-orbit-title">استوری‌ساز</span><span class="nava-orbit-caption">روایت تصویری</span></button>
+        </div>
+        <div class="nava-orbit-item nava-orbit-item--media">
+          <button class="nava-orbit-button" type="button" onclick="showPage('avPage')" aria-label="ورود به استودیوی ویدئو و صدا"><span class="nava-orbit-icon" aria-hidden="true">▶</span><span class="nava-orbit-title">ویدئو و صدا</span><span class="nava-orbit-caption">تدوین، زیرنویس و صوت</span></button>
+        </div>
+        <div class="nava-orbit-item nava-orbit-item--seo">
+          <button class="nava-orbit-button" type="button" onclick="showPage('seoPage')" aria-label="ورود به استودیوی سئو"><span class="nava-orbit-icon" aria-hidden="true">⌕</span><span class="nava-orbit-title">سئو</span><span class="nava-orbit-caption">رشد در جست‌وجو</span></button>
+        </div>
+        <div class="nava-orbit-item nava-orbit-item--campaign">
+          <button class="nava-orbit-button" type="button" onclick="showPage('adsPage')" aria-label="ورود به استودیوی تبلیغات"><span class="nava-orbit-icon" aria-hidden="true">◈</span><span class="nava-orbit-title">تبلیغات</span><span class="nava-orbit-caption">پیام و کمپین</span></button>
+        </div>
+        <div class="nava-orbit-item nava-orbit-item--business">
+          <button class="nava-orbit-button" type="button" onclick="showPage('bizPage')" aria-label="ورود به استودیوی ابزارهای کسب‌وکار"><span class="nava-orbit-icon" aria-hidden="true">⌂</span><span class="nava-orbit-title">کسب‌وکار</span><span class="nava-orbit-caption">فروش و مدیریت</span></button>
+        </div>
+      </div>
+
+      <p class="nava-home-footnote"><span aria-hidden="true">✦</span> هر مسیر، شروع یک تجربه تازه در نواست.</p>
+    </div>
+
+
+  </section>
+
+  <section class="page" id="logoPage">
+    <div class="logo-studio-page">
+      <div class="logo-studio-head">
+        <div><span class="logo-studio-eyebrow">NAVA CREATIVE STUDIO / 01</span><h1>استودیوی طراحی لوگو</h1></div>
+        <button class="btn-secondary logo-studio-back" type="button" onclick="showPage('homePage')">بازگشت به استودیوها</button>
+      </div>
+      <div class="logo-studio-intro">
+        <span class="logo-studio-eyebrow">FROM IDEA TO IDENTITY</span>
+        <h1>هویت برندت را <span>شکل بده</span></h1>
+        <p>اطلاعات برندت را وارد کن؛ NAVI آن‌ها را تحلیل می‌کند و سه طرح لوگوی متفاوت می‌سازد.</p>
+        <p class="logo-studio-disclaimer">تحلیل و تصمیم‌های طراحی در پشت‌صحنه انجام می‌شوند. فقط یک‌بار روی دکمه طراحی بزن؛ NAVI بریف را تحلیل می‌کند و موتور تصویر سه طرح واقعی و متفاوت می‌سازد.</p>
+      </div>
+      <div class="logo-studio-layout">
+        <form class="logo-studio-form" id="logoStudioForm">
+          <h2>شناخت برند</h2><p>هرچه بریف دقیق‌تر باشد، مسیر طراحی هدفمندتر می‌شود.</p>
+          <label class="logo-field" for="logoBrandName">نام برند *</label><input class="logo-control" id="logoBrandName" maxlength="48" required placeholder="مثلاً نوا">
+          <label class="logo-field" for="logoSlogan">شعار برند (اختیاری)</label><input class="logo-control" id="logoSlogan" maxlength="80" placeholder="یک جمله کوتاه درباره برند">
+          <label class="logo-field" for="logoIndustry">حوزه فعالیت</label><input class="logo-control" id="logoIndustry" maxlength="80" placeholder="مثلاً فناوری، پوشاک، کافه...">
+          <label class="logo-field" for="logoAudience">مخاطب اصلی</label><input class="logo-control" id="logoAudience" maxlength="100" placeholder="این برند برای چه کسانی است؟">
+          <label class="logo-field" for="logoSymbolIdea">ایده یا مفهوم نماد (اختیاری)</label><input class="logo-control" id="logoSymbolIdea" maxlength="120" placeholder="مثلاً موج، رشد، اعتماد، حرف اول نام برند...">
+          <label class="logo-field" for="logoTypography">جهت تایپوگرافی</label>
+          <select class="logo-control" id="logoTypography"><option value="persian">فارسی خوانا و اصیل</option><option value="geometric">هندسی و مدرن</option><option value="elegant">ظریف و لوکس</option><option value="bold">ضخیم و قدرتمند</option></select>
+          <label class="logo-field" for="logoPersonality">شخصیت برند</label>
+          <select class="logo-control" id="logoPersonality"><option value="minimal">مینیمال و ساده</option><option value="bold">جسور و قدرتمند</option><option value="elegant">ظریف و لوکس</option><option value="friendly">صمیمی و دوستانه</option><option value="tech">مدرن و فناورانه</option></select>
+          <label class="logo-field" for="logoFormat">ساختار لوگو</label>
+          <select class="logo-control" id="logoFormat"><option value="combination">نماد + نام برند</option><option value="wordmark">لوگوتایپ (نوشتاری)</option><option value="monogram">مونوگرام (حروف اختصاری)</option></select>
+          <label class="logo-field" for="logoPalette">پالت رنگی</label>
+          <select class="logo-control" id="logoPalette"><option value="gold" data-foreground="#D6A84F" data-background="#101B30">طلایی و سرمه‌ای</option><option value="blue" data-foreground="#3F70A8" data-background="#DCE4ED">آبی و نقره‌ای</option><option value="green" data-foreground="#356B55" data-background="#E9E1CE">سبز و کرم</option><option value="violet" data-foreground="#7656A6" data-background="#DCCEF0">بنفش و یاسی</option><option value="mono" data-foreground="#22252B" data-background="#FFFFFF">تک‌رنگ</option><option value="custom" data-foreground="#C99B48" data-background="#172238">رنگ دلخواه</option></select>
+          <div class="logo-custom-colors" id="logoCustomColors" hidden><label class="logo-field" for="logoPrimaryColor">رنگ اصلی</label><input class="logo-color-control" id="logoPrimaryColor" type="color" value="#c99b48"><label class="logo-field" for="logoDarkColor">رنگ مکمل تیره</label><input class="logo-color-control" id="logoDarkColor" type="color" value="#172238"></div>
+          <button class="btn-primary" type="submit">طراحی لوگو با NAVI</button>
+          <p class="logo-brief-hint">NAVI بریف را تحلیل می‌کند و موتور تصویر سه خروجی جداگانه می‌سازد. هر بار طراحی از سهمیه روزانه تصویر استفاده می‌کند.</p>
+          <div class="logo-studio-status" id="logoStudioStatus" role="status" aria-live="polite">برای شروع، نام برند را وارد کن.</div>
+        </form>
+        <section class="logo-studio-results" aria-labelledby="logoResultsTitle">
+          <h2 id="logoResultsTitle">سه طرح تصویری پیشنهادی NAVI</h2><p>سه تصویر متفاوت را مقایسه کن. نمادها با موتور تصویر ساخته می‌شوند و نام و شعار فارسی جداگانه با متن دقیق اضافه می‌شوند.</p>
+          <div class="logo-studio-empty" id="logoStudioEmpty"><div class="logo-studio-empty-mark" aria-hidden="true">✦</div><strong>هنوز طرحی ساخته نشده</strong><span>فرم شناخت برند را کامل کن و روی «طراحی لوگو با NAVI» بزن.</span></div>
+          <div class="logo-concept-results" id="logoConceptResults" aria-live="polite"></div>
+        </section>
+      </div>
+    </div>
+  </section>
+
+  <section class="page" id="brandPage">
+    <div class="nava-strategy-page">
+      <div class="nava-strategy-head">
+        <div><span class="nava-strategy-kicker">NAVA CREATIVE STUDIO / 02</span><h1>استودیوی استراتژی برند</h1></div>
+        <button class="btn-secondary" type="button" onclick="showPage('homePage')">بازگشت به استودیوها</button>
+      </div>
+      <div class="nava-strategy-intro">
+        <span class="nava-strategy-kicker">BUILD A BRAND WITH MEANING</span>
+        <h2>از یک نام تا <span>هویتی ماندگار</span></h2>
+        <p>بریف برندت را بساز؛ سپس با کمک ناوی جایگاه‌یابی، ارزش پیشنهادی، شخصیت، لحن و پیام‌های اصلی برند را تدوین کن. تصمیم‌های استراتژیک بدون اطلاعات و تأیید تو نهایی نمی‌شوند.</p>
+      </div>
+      <div class="nava-strategy-layout">
+        <form class="nava-strategy-form" id="brandStrategyForm">
+          <h3>شناخت و استراتژی اولیه برند</h3><p>فیلدهای ستاره‌دار برای شروع ضروری‌اند.</p>
+          <div class="nava-strategy-fields">
+            <div class="nava-strategy-field"><label for="brandName">نام برند *</label><input class="nava-strategy-control" id="brandName" maxlength="80" required placeholder="نام برند"></div>
+            <div class="nava-strategy-field"><label for="brandIndustry">حوزه فعالیت *</label><input class="nava-strategy-control" id="brandIndustry" maxlength="120" required placeholder="مثلاً فناوری، آموزش، پوشاک"></div>
+            <div class="nava-strategy-field full"><label for="brandAudience">مخاطب اصلی *</label><textarea class="nava-strategy-control" id="brandAudience" maxlength="600" required placeholder="مخاطب چه کسی است؟ چه نیاز یا مسئله‌ای دارد؟"></textarea></div>
+            <div class="nava-strategy-field"><label for="brandPersonality">شخصیت برند</label><select class="nava-strategy-control" id="brandPersonality"><option>حرفه‌ای و قابل اعتماد</option><option>نوآور و آینده‌نگر</option><option>صمیمی و انسانی</option><option>جسور و پیشرو</option><option>لوکس و مینیمال</option><option>آموزشی و الهام‌بخش</option></select></div>
+            <div class="nava-strategy-field"><label for="brandValues">ارزش‌های اصلی</label><input class="nava-strategy-control" id="brandValues" maxlength="240" placeholder="مثلاً کیفیت، سادگی، نوآوری"></div>
+            <div class="nava-strategy-field full"><label for="brandDifference">تفاوت واقعی با رقبا</label><textarea class="nava-strategy-control" id="brandDifference" maxlength="600" placeholder="چه چیزی را بهتر، متفاوت یا برای گروه خاصی ارائه می‌کنی؟"></textarea></div>
+            <div class="nava-strategy-field full"><label for="brandPromise">وعده برند</label><textarea class="nava-strategy-control" id="brandPromise" maxlength="400" placeholder="مخاطب با انتخاب این برند چه نتیجه‌ای باید بگیرد؟"></textarea></div>
+            <div class="nava-strategy-field full"><label for="brandCompetitors">رقبا یا نمونه‌های الهام‌بخش</label><input class="nava-strategy-control" id="brandCompetitors" maxlength="300" placeholder="نام برندها یا لینک/توضیح کوتاه"></div>
+          </div>
+          <div class="nava-strategy-actions"><button class="btn-primary" type="submit">ساخت بریف و ادامه با ناوی</button><button class="btn-secondary" id="brandStudioReset" type="button">پاک کردن فرم</button></div>
+          <div class="nava-strategy-status" id="brandStudioStatus" role="status" aria-live="polite">اطلاعات برند را وارد کن تا بریف استراتژیک آماده شود.</div>
+        </form>
+        <aside class="nava-strategy-guide"><h3>در این استودیو چه می‌سازیم؟</h3><ul>
+          <li><strong>جایگاه‌یابی:</strong> برند برای چه کسی و در چه جایگاهی معنا دارد؟</li>
+          <li><strong>ارزش پیشنهادی:</strong> چرا مخاطب باید این برند را انتخاب کند؟</li>
+          <li><strong>شخصیت و لحن:</strong> برند چگونه حرف می‌زند و رفتار می‌کند؟</li>
+          <li><strong>معماری پیام:</strong> پیام محوری و ستون‌های ارتباطی برند چیست؟</li>
+          <li><strong>شعار و جهت بصری:</strong> مسیرهای پیشنهادی برای ادامه طراحی.</li>
+        </ul><div class="nava-strategy-note">این نسخه بریف را در همین صفحه آماده می‌کند و برای تحلیل به NAVI می‌فرستد. هنوز سامانه مستقل تحقیقات بازار یا اعتبارسنجی خودکار رقبا نیست.</div></aside>
+      </div>
+    </div>
+  </section>
+
+
+  <section class="page" id="contentPage">
+    <div class="nava-strategy-page">
+      <div class="nava-strategy-head">
+        <div><span class="nava-strategy-kicker">NAVA CREATIVE STUDIO / 03</span><h1>استودیوی تولید محتوا</h1></div>
+        <button class="btn-secondary" type="button" onclick="showPage('homePage')">بازگشت به استودیوها</button>
+      </div>
+      <div class="nava-strategy-intro">
+        <span class="nava-strategy-kicker">FROM IDEA TO PUBLISHABLE CONTENT</span>
+        <h2>محتوایی با <span>هدف و مخاطب مشخص</span></h2>
+        <p>موضوع، پلتفرم و هدف را تعیین کن تا ناوی به‌جای متن‌های عمومی، محتوایی متناسب با کانال انتشار و نیاز مخاطب طراحی کند.</p>
+      </div>
+      <div class="nava-strategy-layout">
+        <form class="nava-strategy-form" id="contentStudioForm">
+          <h3>بریف تولید محتوا</h3><p>موضوع و مخاطب هدف برای شروع ضروری‌اند.</p>
+          <div class="nava-strategy-fields">
+            <div class="nava-strategy-field"><label for="contentPlatform">پلتفرم انتشار</label><select class="nava-strategy-control" id="contentPlatform"><option>اینستاگرام</option><option>یوتیوب</option><option>وب‌سایت</option><option>تلگرام</option><option>لینکدین</option><option>چند پلتفرم</option></select></div>
+            <div class="nava-strategy-field"><label for="contentFormat">قالب محتوا</label><select class="nava-strategy-control" id="contentFormat"><option>پست اسلایدی</option><option>ویدئوی کوتاه / ریلز</option><option>ویدئوی بلند</option><option>کپشن و متن شبکه اجتماعی</option><option>مقاله وبلاگ</option><option>سناریو ویدئو</option><option>تقویم محتوایی</option></select></div>
+            <div class="nava-strategy-field"><label for="contentObjective">هدف محتوا</label><select class="nava-strategy-control" id="contentObjective"><option>آگاهی از برند</option><option>آموزش و ارزش‌آفرینی</option><option>تعامل و مشارکت</option><option>جذب مخاطب جدید</option><option>معرفی محصول یا خدمت</option><option>فروش و تبدیل</option></select></div>
+            <div class="nava-strategy-field"><label for="contentTone">لحن محتوا</label><select class="nava-strategy-control" id="contentTone"><option>صمیمی و محاوره‌ای</option><option>حرفه‌ای و دقیق</option><option>آموزشی و ساده</option><option>الهام‌بخش</option><option>طنز کنترل‌شده</option><option>رسمی</option></select></div>
+            <div class="nava-strategy-field full"><label for="contentTopic">موضوع یا ایده اصلی *</label><textarea class="nava-strategy-control" id="contentTopic" maxlength="800" required placeholder="دقیقاً درباره چه چیزی محتوا می‌خواهی؟"></textarea></div>
+            <div class="nava-strategy-field full"><label for="contentAudience">مخاطب هدف *</label><textarea class="nava-strategy-control" id="contentAudience" maxlength="600" required placeholder="برای چه کسانی می‌نویسیم؟ سطح آشنایی و نیازشان چیست؟"></textarea></div>
+            <div class="nava-strategy-field full"><label for="contentKeyPoints">نکات یا اطلاعاتی که باید حتماً پوشش داده شوند</label><textarea class="nava-strategy-control" id="contentKeyPoints" maxlength="1000" placeholder="اطلاعات واقعی، محدودیت‌ها، منابع یا نکات کلیدی"></textarea></div>
+            <div class="nava-strategy-field"><label for="contentCTA">دعوت به اقدام</label><input class="nava-strategy-control" id="contentCTA" maxlength="180" placeholder="مثلاً ذخیره کن یا نظر بده"></div>
+            <div class="nava-strategy-field"><label for="contentKeywords">کلیدواژه‌ها</label><input class="nava-strategy-control" id="contentKeywords" maxlength="240" placeholder="کلمات مهم و مرتبط"></div>
+          </div>
+          <div class="nava-strategy-actions"><button class="btn-primary" type="submit">ساخت بریف و ادامه با ناوی</button><button class="btn-secondary" id="contentStudioReset" type="button">پاک کردن فرم</button></div>
+          <div class="nava-strategy-status" id="contentStudioStatus" role="status" aria-live="polite">بریف محتوا را تکمیل کن تا ناوی بر اساس آن خروجی بسازد.</div>
+        </form>
+        <aside class="nava-strategy-guide"><h3>خروجی متناسب با قالب</h3><ul>
+          <li><strong>شبکه اجتماعی:</strong> ایده، هوک، ساختار، کپشن و دعوت به تعامل.</li>
+          <li><strong>ویدئو:</strong> سناریو، ترتیب نماها، متن گوینده و پایان‌بندی.</li>
+          <li><strong>مقاله:</strong> تیتر، ساختار H2/H3، پاسخ به نیاز جست‌وجو و پیشنهاد سئو.</li>
+          <li><strong>تقویم محتوا:</strong> ستون‌های محتوایی و برنامه انتشار قابل اجرا.</li>
+        </ul><div class="nava-strategy-note">ناوی پیش‌نویس را تولید می‌کند؛ صحت اطلاعات، لحن نهایی و انتشار همچنان با تأیید تو انجام می‌شود.</div></aside>
+      </div>
+    </div>
+  </section>
+
+  <section class="page nava-studio-page" id="storyPage">
+    <div class="studio-workspace">
+      <div class="studio-workspace-head"><div><span class="studio-kicker">NAVA WORKSPACE / STUDIO</span><h1>استوری‌ساز نوا</h1><p>متن استوری را آماده کن، پیش‌نمایش بگیر و با کمک NAVI آن را بهبود بده.</p></div><button class="btn-secondary" type="button" onclick="showPage('homePage')">بازگشت به استودیوها</button></div>
+    </div>
+    <div class="tool-page">
+      <div class="tool-card">
+        <div class="tool-card-inner">
+          <h1>استوری‌ساز نوا</h1>
+          <p>
+            متن موردنظرت را وارد کن تا پیش‌نمایش ساده آن را برای استوری ببینی.
+            این نسخه فعلاً پیش‌نمایش متنی است.
+          </p>
+          <label class="field-label" for="storyInput">متن استوری</label>
+          <textarea class="story-input" id="storyInput"
+            placeholder="متن استوری خود را اینجا بنویس..."></textarea>
+          <label class="field-label">پیش‌نمایش استوری</label>
+          <div class="story-preview empty" id="previewText">
+            متن استوری تو اینجا نمایش داده می‌شود
+          </div>
+          <div class="story-actions">
+            <button class="btn-secondary" onclick="showPage('homePage')">بازگشت به استودیوها</button>
+            <button class="btn-secondary" id="clearStory">پاک کردن متن</button>
+            <button class="btn-secondary" id="improveStoryWithNavi" type="button">بهبود و طراحی با ناوی</button>
+            <button class="btn-primary" id="copyStory">کپی متن</button>
+          </div>
+          <div class="response-box" id="storyMessage" aria-live="polite"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+  <section class="page nava-studio-page" id="articlePage" data-studio-service="مقاله و وبلاگ">
+    <div class="studio-workspace">
+      <div class="studio-workspace-head">
+        <div><span class="studio-kicker">NAVA WORKSPACE / STUDIO</span><h1>استودیوی مقاله و وبلاگ</h1><p>ایده‌پردازی، ساختاردهی و آماده‌سازی مقاله‌های هدفمند برای وب‌سایت و وبلاگ.</p></div>
+        <button class="btn-secondary" type="button" onclick="showPage('homePage')">بازگشت به استودیوها</button>
+      </div>
+      <div class="studio-workspace-grid">
+        <form class="studio-brief-card" onsubmit="event.preventDefault(); chooseService('مقاله و وبلاگ');">
+          <span class="studio-step">شروع کار</span><h2>بریف پروژه</h2>
+          <p>اطلاعات اولیه را وارد کن تا NAVI بتواند درخواست را دقیق‌تر دنبال کند.</p>
+          <label for="studioTask-article">نوع مقاله یا خروجی</label>
+          <select id="studioTask-article" class="studio-control">
+            <option>پیشنهاد مناسب را NAVI انتخاب کند</option><option>ایده‌پردازی و برنامه‌ریزی</option><option>تولید پیش‌نویس</option><option>بازبینی و بهبود</option><option>راهنمای مرحله‌به‌مرحله</option>
+          </select>
+          <label for="studioAudience-article">مخاطب مقاله</label>
+          <input id="studioAudience-article" class="studio-control" type="text" maxlength="180" placeholder="مخاطب یا استفاده‌کننده را مشخص کن">
+          <label for="studioBrief-article">شرح درخواست و جزئیات</label>
+          <textarea id="studioBrief-article" class="studio-control studio-brief-input" maxlength="3000" placeholder="موضوع، کلیدواژه‌ها و اطلاعاتی که باید در مقاله پوشش داده شوند"></textarea>
+          <div class="studio-brief-actions"><button class="btn-primary" type="submit">ادامه با NAVI</button><button class="btn-secondary" type="reset">پاک کردن فرم</button></div>
+          <p class="studio-note">پس از دریافت پاسخ ناوی، می‌توانی متن نهایی را مستقیماً به‌صورت Word یا PDF روی دستگاهت دریافت کنی.</p>
+        </form>
+        <aside class="studio-output-card">
+          <span class="studio-step">فضای پروژه</span><h2>مراحل انجام کار</h2>
+          <ol><li>انتخاب نوع سند یا کار اداری</li><li>بررسی اطلاعات و تکمیل موارد ضروری با NAVI</li><li>تهیه پیش‌نویس و بازبینی متن</li><li>دریافت نسخه Word یا PDF از خروجی متنی</li></ol>
+          <div class="studio-output-placeholder"><span aria-hidden="true">✦</span><strong>فضای خروجی پروژه</strong><p>نتیجه‌ها و فایل‌های این استودیو پس از تکمیل ابزار تخصصی در این قسمت نمایش داده می‌شوند.</p></div>
+        </aside>
+      </div>
+    </div>
+  </section>
+  <section class="page nava-studio-page" id="officePage" data-studio-service="کارهای اداری و آفیس">
+    <div class="studio-workspace">
+      <div class="studio-workspace-head">
+        <div><span class="studio-kicker">NAVA WORKSPACE / STUDIO</span><h1>استودیوی کارهای اداری و آفیس</h1><p>برای تهیه و ویرایش اسناد کاری، نامه‌ها، گزارش‌ها، صورت‌جلسه‌ها و برنامه‌های اجرایی با کمک NAVI.</p></div>
+        <button class="btn-secondary" type="button" onclick="showPage('homePage')">بازگشت به استودیوها</button>
+      </div>
+      <div class="studio-workspace-grid">
+        <form class="studio-brief-card" onsubmit="event.preventDefault(); chooseService('کارهای اداری و آفیس');">
+          <span class="studio-step">شروع کار</span><h2>بریف پروژه</h2>
+          <p>اطلاعات اولیه را وارد کن تا NAVI بتواند درخواست را دقیق‌تر دنبال کند.</p>
+          <label for="studioTask-office">چه کاری می‌خواهی انجام بدهی؟</label>
+          <select id="studioTask-office" class="studio-control">
+            <option>پیشنهاد مناسب را NAVI انتخاب کند</option>
+            <option>تنظیم نامه رسمی و اداری</option>
+            <option>تهیه گزارش کاری یا مدیریتی</option>
+            <option>تنظیم صورت‌جلسه و ثبت مصوبات</option>
+            <option>ساخت یا بازنویسی رزومه</option>
+            <option>تهیه درخواست یا فرم اداری</option>
+            <option>طراحی برنامه اجرایی و زمان‌بندی</option>
+            <option>نوشتن دستورالعمل و روش اجرایی</option>
+            <option>بازبینی و ویرایش سند موجود</option>
+            <option>راهنمای انجام یک کار در Word یا Excel یا PowerPoint</option>
+          </select>
+          <label for="studioAudience-office">مخاطب یا دریافت‌کننده سند</label>
+          <input id="studioAudience-office" class="studio-control" type="text" maxlength="180" placeholder="مخاطب یا استفاده‌کننده را مشخص کن">
+          <label for="studioBrief-office">شرح درخواست و جزئیات</label>
+          <textarea id="studioBrief-office" class="studio-control studio-brief-input" maxlength="18000" placeholder="موضوع، نکات ضروری، داده‌ها و قالب مورد انتظار؛ یا پس از استخراج فایل، درخواستت را اینجا بنویس"></textarea>
+          <div class="office-file-panel" id="officeFilePanel">
+            <label for="officeSourceFile">افزودن فایل برای بررسی یا ویرایش</label>
+            <p class="office-file-help">فایل Word، PowerPoint، Excel، PDF، TXT یا تصویر اسناد را انتخاب کن. PDFهای اسکن‌شده و عکس‌ها با OCR فارسی خوانده می‌شوند؛ فایل اصلی فقط روی دستگاهت پردازش می‌شود و به سرور آپلود نمی‌شود. حداکثر ۱۵ مگابایت.</p>
+            <input id="officeSourceFile" class="studio-control office-file-input" type="file" aria-label="انتخاب فایل برای بررسی در Office" accept=".docx,.pdf,.pptx,.xlsx,.txt,.png,.jpg,.jpeg,.webp,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.openxmlformats-officedocument.presentationml.presentation,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/pdf,text/plain,image/png,image/jpeg,image/webp">
+            <div class="office-file-actions"><button class="btn-secondary" id="officeClearFile" type="button" disabled>حذف فایل از درخواست</button><span id="officeFileStatus" class="office-file-status" role="status" aria-live="polite">حداکثر حجم فایل ۱۵ مگابایت است.</span></div>
+          </div>
+          <div class="studio-brief-actions"><button class="btn-primary" type="submit">ادامه با NAVI</button><button class="btn-secondary" type="reset">پاک کردن فرم</button></div>
+          <p class="studio-note">پس از دریافت پاسخ ناوی، می‌توانی متن نهایی را مستقیماً به‌صورت Word یا PDF روی دستگاهت دریافت کنی.</p>
+        </form>
+        <aside class="studio-output-card">
+          <span class="studio-step">فضای پروژه</span><h2>مراحل انجام کار</h2>
+          <ol><li>ثبت بریف و هدف پروژه</li><li>بررسی نیازها با NAVI</li><li>تدوین پیش‌نویس و اصلاح آن</li><li>آماده‌سازی خروجی پس از فعال‌شدن ابزار تخصصی</li></ol>
+          <div class="studio-output-placeholder"><span aria-hidden="true">✦</span><strong>فضای خروجی پروژه</strong><p>نتیجه‌ها و فایل‌های این استودیو پس از تکمیل ابزار تخصصی در این قسمت نمایش داده می‌شوند.</p></div>
+        </aside>
+      </div>
+    </div>
+  </section>
+  <section class="page nava-studio-page" id="composePage" data-studio-service="آهنگ‌سازی و نت‌نویسی">
+    <div class="studio-workspace composition-workspace">
+      <div class="studio-workspace-head">
+        <div><span class="studio-kicker">NAVA COMPOSITION STUDIO</span><h1>استودیوی آهنگ‌سازی و نت‌نویسی</h1><p>ایده موسیقایی‌ات را با NAVI به ملودی، هارمونی و نت قابل‌خواندن روی خطوط حامل تبدیل کن.</p></div>
+        <button class="btn-secondary" type="button" onclick="showPage('homePage')">بازگشت به استودیوها</button>
+      </div>
+      <div class="composition-intro">
+        <strong>همکاری آهنگ‌ساز و NAVI</strong>
+        <p>از یک ایده کوتاه یا ملودی اولیه شروع کن. درباره گام، ریتم، آکوردها و سازبندی تصمیم بگیر و مرحله‌به‌مرحله قطعه را بساز و اصلاح کن.</p>
+      </div>
+      <div class="studio-workspace-grid">
+        <form class="studio-brief-card composition-brief-card" onsubmit="event.preventDefault(); chooseService('آهنگ‌سازی و نت‌نویسی');">
+          <span class="studio-step">پروژه آهنگ‌سازی</span><h2>مشخصات قطعه</h2>
+          <p>هرقدر جزئیات دقیق‌تری بدهی، NAVI بهتر می‌تواند در ساخت قطعه همراهت باشد.</p>
+          <label for="studioTask-compose">می‌خواهی روی چه چیزی کار کنیم؟</label>
+          <select id="studioTask-compose" class="studio-control">
+            <option>پیشنهاد مناسب را NAVI انتخاب کند</option>
+            <option>ساخت ملودی از صفر</option>
+            <option>توسعه و تکمیل یک ایده ملودیک</option>
+            <option>ساخت آکورد و هارمونی</option>
+            <option>تنظیم قطعه برای سازها</option>
+            <option>تبدیل ملودی به نت روی خطوط حامل</option>
+            <option>بازبینی و اصلاح نت‌ها</option>
+            <option>ساخت بخش‌های مختلف قطعه</option>
+          </select>
+          <label for="studioStyle-compose">سبک یا فضای موسیقی</label>
+          <input id="studioStyle-compose" class="studio-control" type="text" maxlength="180" placeholder="مثلاً ایرانی، کلاسیک، جَز، پاپ، محلی...">
+          <div class="composition-field-grid">
+            <div><label for="studioKey-compose">گام یا مُد (در صورت مشخص بودن)</label><input id="studioKey-compose" class="studio-control" type="text" maxlength="80" placeholder="مثلاً لا مینور یا شور"></div>
+            <div><label for="studioTempo-compose">تمپو (BPM)</label><input id="studioTempo-compose" class="studio-control" type="number" min="30" max="240" placeholder="مثلاً ۹۲"></div>
+            <div><label for="studioMeter-compose">میزان‌نما</label><input id="studioMeter-compose" class="studio-control" type="text" maxlength="20" placeholder="مثلاً ۴/۴"></div>
+            <div><label for="studioInstruments-compose">سازها یا ترکیب اجرایی</label><input id="studioInstruments-compose" class="studio-control" type="text" maxlength="220" placeholder="مثلاً پیانو و ویولن"></div>
+          </div>
+          <label for="studioBrief-compose">ایده و توضیحات آهنگ‌سازی</label>
+          <textarea id="studioBrief-compose" class="studio-control studio-brief-input" maxlength="4000" placeholder="ملودی را توصیف کن، نت‌های اولیه را بنویس، حس و ساختار قطعه را توضیح بده یا بگو چه چیزی باید ساخته شود..."></textarea>
+          <div class="studio-brief-actions"><button class="btn-primary" type="submit">شروع آهنگ‌سازی با NAVI</button><button class="btn-secondary" type="reset">پاک کردن فرم</button></div>
+          <p class="studio-note">NAVI در این بخش همکار آهنگ‌سازی و نت‌نویسی است؛ هدف، ساخت و اصلاح محتوای موسیقایی و نمایش نت روی حامل است، نه تولید فایل صوتی. ویرایشگر و خروجی واقعی پارتیتور در مرحله پیاده‌سازی ابزار تخصصی قرار دارد.</p>
+        </form>
+        <aside class="studio-output-card composition-score-card">
+          <span class="studio-step">میز کار نت‌نویسی</span><h2>پیش‌نمایش خطوط حامل</h2>
+          <p>نت‌های قطعه پس از ساخته‌شدن و تأیید تو در این بخش روی حامل نمایش داده می‌شوند.</p>
+          <div class="composition-staff-preview" role="img" aria-label="پنج خط حامل خالی برای پیش‌نمایش نت موسیقی">
+            <span class="composition-clef" aria-hidden="true">𝄞</span>
+            <div class="composition-staff-lines"><i></i><i></i><i></i><i></i><i></i></div>
+          </div>
+          <div class="composition-score-status"><span aria-hidden="true">♪</span><div><strong>هنوز نتی ثبت نشده است</strong><p>ابتدا ایده قطعه را با NAVI مطرح کن؛ حامل نت پس از آماده‌شدن ابزار نت‌نویسی با نت‌های موسیقی پر می‌شود.</p></div></div>
+          <div class="composition-next-steps"><strong>مسیر ساخت قطعه</strong><ol><li>تعریف ایده، سبک و ساختار</li><li>ساخت ملودی و ریتم</li><li>افزودن آکورد و هارمونی</li><li>نت‌نویسی روی حامل و بازبینی</li><li>آماده‌سازی پارتیتور و خروجی استاندارد</li></ol></div>
+        </aside>
+      </div>
+    </div>
+  </section>
+  <section class="page nava-studio-page" id="avPage" data-studio-service="ویدئو و صدا">
+    <div class="studio-workspace">
+      <div class="studio-workspace-head">
+        <div><span class="studio-kicker">NAVA WORKSPACE / STUDIO</span><h1>استودیوی ویدئو و صدا</h1><p>برای طراحی سناریو، تدوین طرح تولید، متن گویندگی و برنامه‌ریزی پروژه‌های صوتی‌تصویری.</p></div>
+        <button class="btn-secondary" type="button" onclick="showPage('homePage')">بازگشت به استودیوها</button>
+      </div>
+      <div class="studio-workspace-grid">
+        <form class="studio-brief-card" onsubmit="event.preventDefault(); chooseService('ویدئو و صدا');">
+          <span class="studio-step">شروع کار</span><h2>بریف پروژه</h2>
+          <p>اطلاعات اولیه را وارد کن تا NAVI بتواند درخواست را دقیق‌تر دنبال کند.</p>
+          <label for="studioTask-av">نوع پروژه صوتی یا تصویری</label>
+          <select id="studioTask-av" class="studio-control">
+            <option>پیشنهاد مناسب را NAVI انتخاب کند</option><option>ایده‌پردازی و برنامه‌ریزی</option><option>تولید پیش‌نویس</option><option>بازبینی و بهبود</option><option>راهنمای مرحله‌به‌مرحله</option>
+          </select>
+          <label for="studioAudience-av">مخاطب نهایی</label>
+          <input id="studioAudience-av" class="studio-control" type="text" maxlength="180" placeholder="مخاطب یا استفاده‌کننده را مشخص کن">
+          <label for="studioBrief-av">شرح درخواست و جزئیات</label>
+          <textarea id="studioBrief-av" class="studio-control studio-brief-input" maxlength="3000" placeholder="موضوع، مدت، پلتفرم، لحن و امکانات در دسترس"></textarea>
+          <div class="studio-brief-actions"><button class="btn-primary" type="submit">ادامه با NAVI</button><button class="btn-secondary" type="reset">پاک کردن فرم</button></div>
+          <p class="studio-note">این صفحه فعلاً قالب کاری و بریف پروژه است؛ تولید تخصصی فایل یا خروجی نهایی تا زمان اتصال ابزار مربوطه فعال محسوب نمی‌شود.</p>
+        </form>
+        <aside class="studio-output-card">
+          <span class="studio-step">فضای پروژه</span><h2>مراحل انجام کار</h2>
+          <ol><li>ثبت بریف و هدف پروژه</li><li>بررسی نیازها با NAVI</li><li>تدوین پیش‌نویس و اصلاح آن</li><li>آماده‌سازی خروجی پس از فعال‌شدن ابزار تخصصی</li></ol>
+          <div class="studio-output-placeholder"><span aria-hidden="true">✦</span><strong>فضای خروجی پروژه</strong><p>نتیجه‌ها و فایل‌های این استودیو پس از تکمیل ابزار تخصصی در این قسمت نمایش داده می‌شوند.</p></div>
+        </aside>
+      </div>
+    </div>
+  </section>
+  <section class="page nava-studio-page" id="seoPage" data-studio-service="سئو">
+    <div class="studio-workspace">
+      <div class="studio-workspace-head">
+        <div><span class="studio-kicker">NAVA WORKSPACE / STUDIO</span><h1>استودیوی سئو</h1><p>برای تدوین بریف سئو، تحقیق موضوعی، ساختار محتوا و برنامه بهبود دیده‌شدن وب‌سایت.</p></div>
+        <button class="btn-secondary" type="button" onclick="showPage('homePage')">بازگشت به استودیوها</button>
+      </div>
+      <div class="studio-workspace-grid">
+        <form class="studio-brief-card" onsubmit="event.preventDefault(); chooseService('سئو');">
+          <span class="studio-step">شروع کار</span><h2>بریف پروژه</h2>
+          <p>اطلاعات اولیه را وارد کن تا NAVI بتواند درخواست را دقیق‌تر دنبال کند.</p>
+          <label for="studioTask-seo">هدف یا خروجی سئو</label>
+          <select id="studioTask-seo" class="studio-control">
+            <option>پیشنهاد مناسب را NAVI انتخاب کند</option><option>ایده‌پردازی و برنامه‌ریزی</option><option>تولید پیش‌نویس</option><option>بازبینی و بهبود</option><option>راهنمای مرحله‌به‌مرحله</option>
+          </select>
+          <label for="studioAudience-seo">مخاطب و بازار هدف</label>
+          <input id="studioAudience-seo" class="studio-control" type="text" maxlength="180" placeholder="مخاطب یا استفاده‌کننده را مشخص کن">
+          <label for="studioBrief-seo">شرح درخواست و جزئیات</label>
+          <textarea id="studioBrief-seo" class="studio-control studio-brief-input" maxlength="3000" placeholder="نشانی یا معرفی سایت، موضوع فعالیت، کلیدواژه‌ها و رقبا"></textarea>
+          <div class="studio-brief-actions"><button class="btn-primary" type="submit">ادامه با NAVI</button><button class="btn-secondary" type="reset">پاک کردن فرم</button></div>
+          <p class="studio-note">این صفحه فعلاً قالب کاری و بریف پروژه است؛ تولید تخصصی فایل یا خروجی نهایی تا زمان اتصال ابزار مربوطه فعال محسوب نمی‌شود.</p>
+        </form>
+        <aside class="studio-output-card">
+          <span class="studio-step">فضای پروژه</span><h2>مراحل انجام کار</h2>
+          <ol><li>ثبت بریف و هدف پروژه</li><li>بررسی نیازها با NAVI</li><li>تدوین پیش‌نویس و اصلاح آن</li><li>آماده‌سازی خروجی پس از فعال‌شدن ابزار تخصصی</li></ol>
+          <div class="studio-output-placeholder"><span aria-hidden="true">✦</span><strong>فضای خروجی پروژه</strong><p>نتیجه‌ها و فایل‌های این استودیو پس از تکمیل ابزار تخصصی در این قسمت نمایش داده می‌شوند.</p></div>
+        </aside>
+      </div>
+    </div>
+  </section>
+  <section class="page nava-studio-page" id="adsPage" data-studio-service="تبلیغات">
+    <div class="studio-workspace">
+      <div class="studio-workspace-head">
+        <div><span class="studio-kicker">NAVA WORKSPACE / STUDIO</span><h1>استودیوی تبلیغات</h1><p>برای طراحی کمپین، پیام تبلیغاتی، پیشنهاد ارزش و مسیر اجرای تبلیغات.</p></div>
+        <button class="btn-secondary" type="button" onclick="showPage('homePage')">بازگشت به استودیوها</button>
+      </div>
+      <div class="studio-workspace-grid">
+        <form class="studio-brief-card" onsubmit="event.preventDefault(); chooseService('تبلیغات');">
+          <span class="studio-step">شروع کار</span><h2>بریف پروژه</h2>
+          <p>اطلاعات اولیه را وارد کن تا NAVI بتواند درخواست را دقیق‌تر دنبال کند.</p>
+          <label for="studioTask-ads">نوع کمپین یا تبلیغ</label>
+          <select id="studioTask-ads" class="studio-control">
+            <option>پیشنهاد مناسب را NAVI انتخاب کند</option><option>ایده‌پردازی و برنامه‌ریزی</option><option>تولید پیش‌نویس</option><option>بازبینی و بهبود</option><option>راهنمای مرحله‌به‌مرحله</option>
+          </select>
+          <label for="studioAudience-ads">مخاطب هدف</label>
+          <input id="studioAudience-ads" class="studio-control" type="text" maxlength="180" placeholder="مخاطب یا استفاده‌کننده را مشخص کن">
+          <label for="studioBrief-ads">شرح درخواست و جزئیات</label>
+          <textarea id="studioBrief-ads" class="studio-control studio-brief-input" maxlength="3000" placeholder="محصول، مزیت رقابتی، بودجه تقریبی، کانال و هدف کمپین"></textarea>
+          <div class="studio-brief-actions"><button class="btn-primary" type="submit">ادامه با NAVI</button><button class="btn-secondary" type="reset">پاک کردن فرم</button></div>
+          <p class="studio-note">این صفحه فعلاً قالب کاری و بریف پروژه است؛ تولید تخصصی فایل یا خروجی نهایی تا زمان اتصال ابزار مربوطه فعال محسوب نمی‌شود.</p>
+        </form>
+        <aside class="studio-output-card">
+          <span class="studio-step">فضای پروژه</span><h2>مراحل انجام کار</h2>
+          <ol><li>ثبت بریف و هدف پروژه</li><li>بررسی نیازها با NAVI</li><li>تدوین پیش‌نویس و اصلاح آن</li><li>آماده‌سازی خروجی پس از فعال‌شدن ابزار تخصصی</li></ol>
+          <div class="studio-output-placeholder"><span aria-hidden="true">✦</span><strong>فضای خروجی پروژه</strong><p>نتیجه‌ها و فایل‌های این استودیو پس از تکمیل ابزار تخصصی در این قسمت نمایش داده می‌شوند.</p></div>
+        </aside>
+      </div>
+    </div>
+  </section>
+  <section class="page nava-studio-page" id="bizPage" data-studio-service="ابزارهای کسب‌وکار">
+  <div class="studio-workspace biz-workspace">
+    <div class="studio-workspace-head">
+      <div><span class="studio-kicker">NAVA BUSINESS / TOOLS</span><h1>ابزارهای کسب‌وکار</h1><p>محاسبه، تحلیل و تصمیم‌گیری با ابزارهای کاربردی؛ محاسبات مالی به‌صورت مستقیم و شفاف انجام می‌شوند.</p></div>
+      <button class="btn-secondary" type="button" onclick="showPage('homePage')">بازگشت به استودیوها</button>
+    </div>
+
+    <aside class="biz-navi-help" aria-label="راهنمای استفاده از بخش کسب‌وکار">
+      <span class="biz-navi-help-mark" aria-hidden="true">✦</span>
+      <div><strong>ناوی راهنمای شماست</strong><p>برای هرگونه راهنمایی درباره این بخش، کافی است از ناوی بپرسید. ناوی قدم‌به‌قدم شما را راهنمایی می‌کند تا راحت‌تر از امکانات کسب‌وکار استفاده کنید.</p></div>
+    </aside>
+    <div class="biz-guide-entry" style="display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;margin:14px 0;padding:16px 18px;border:1px solid rgba(181,139,67,.35);border-radius:14px;background:rgba(181,139,67,.07)">
+      <div><strong style="display:block;margin-bottom:4px">راهنمای جامع بخش کسب‌وکار</strong><span style="font-size:13px;opacity:.82">آموزش ساده هر ۱۲ تب، همراه با مثال‌های عملی و نکات مهم مالی</span></div>
+      <a href="./business-guide.html" target="_blank" rel="noopener" class="btn-primary" style="display:inline-flex;align-items:center;justify-content:center;text-decoration:none;white-space:nowrap">مشاهده و دریافت راهنما</a>
+    </div>
+
+    <section class="biz-profile-panel" aria-labelledby="bizProfileTitle">
+      <div class="biz-profile-copy">
+        <span class="biz-eyebrow">پرونده اختصاصی</span>
+        <h2 id="bizProfileTitle">کسب‌وکارهای من</h2>
+        <p>اطلاعات و گزارش‌های مالی هر کسب‌وکار در پرونده مستقل خودش نگهداری می‌شود.</p>
+      </div>
+      <div class="biz-profile-controls">
+        <label class="biz-field" for="bizProfileSelect"><span>پرونده فعال</span><select id="bizProfileSelect" disabled><option value="">ابتدا وارد حساب نوا شو</option></select></label>
+        <form id="bizProfileCreateForm" class="biz-profile-create">
+          <label class="biz-field"><span>نام کسب‌وکار جدید</span><input id="bizProfileName" type="text" maxlength="120" placeholder="مثلاً فروشگاه آنلاین من" required></label>
+          <label class="biz-field"><span>نوع کسب‌وکار</span><select id="bizProfileType"><option value="freelancer">فریلنسر</option><option value="store">فروشگاه</option><option value="home_business">کسب‌وکار خانگی</option><option value="small_company">شرکت کوچک</option><option value="idea">ایده در مرحله راه‌اندازی</option><option value="other">سایر</option></select></label>
+          <button class="btn-primary" id="bizProfileCreateButton" type="submit">ایجاد پرونده</button>
+        </form>
+      </div>
+      <p class="biz-profile-status" id="bizProfileStatus" role="status" aria-live="polite">برای ساخت و ذخیره پرونده، ابتدا وارد حساب NAVI شو.</p>
+      <div class="biz-profile-record-actions">
+        <span id="bizProfileActiveName">هنوز پرونده‌ای انتخاب نشده است.</span>
+        <span class="biz-profile-save-hint">پس از محاسبه، گزارش را از کارت نتیجه ذخیره کن.</span>
+      </div>
+    </section>
+
+    <nav class="biz-tabs" role="tablist" aria-label="بخش‌های کسب‌وکار">
+      <button class="biz-tab is-active" id="bizTabDashboard" type="button" role="tab" data-biz-tab="dashboard" aria-controls="bizPanelDashboard" aria-selected="true"><span aria-hidden="true">▦</span><span>داشبورد</span></button>
+      <button class="biz-tab" id="bizTabTransactions" type="button" role="tab" data-biz-tab="transactions" aria-controls="bizPanelTransactions" aria-selected="false" tabindex="-1"><span aria-hidden="true">↕</span><span>فروش و هزینه</span></button>
+      <button class="biz-tab" id="bizTabAccounts" type="button" role="tab" data-biz-tab="accounts" aria-controls="bizPanelAccounts" aria-selected="false" tabindex="-1"><span aria-hidden="true">◉</span><span>حساب مشتریان</span></button>
+      <button class="biz-tab" id="bizTabLedger" type="button" role="tab" data-biz-tab="ledger" aria-controls="bizPanelLedger" aria-selected="false" tabindex="-1"><span aria-hidden="true">▤</span><span>صندوق و تأمین‌کنندگان</span></button>
+      <button class="biz-tab" id="bizTabCatalog" type="button" role="tab" data-biz-tab="catalog" aria-controls="bizPanelCatalog" aria-selected="false" tabindex="-1"><span aria-hidden="true">▣</span><span>محصولات و خدمات</span></button>
+      <button class="biz-tab" id="bizTabInventory" type="button" role="tab" data-biz-tab="inventory" aria-controls="bizPanelInventory" aria-selected="false" tabindex="-1"><span aria-hidden="true">▤</span><span>انبار و موجودی</span></button>
+      <button class="biz-tab" id="bizTabCustomers" type="button" role="tab" data-biz-tab="customers" aria-controls="bizPanelCustomers" aria-selected="false" tabindex="-1"><span aria-hidden="true">♙</span><span>مشتریان</span></button>
+      <button class="biz-tab" id="bizTabOrders" type="button" role="tab" data-biz-tab="orders" aria-controls="bizPanelOrders" aria-selected="false" tabindex="-1"><span aria-hidden="true">▣</span><span>سفارش‌ها</span></button>
+      <button class="biz-tab" id="bizTabInvoices" type="button" role="tab" data-biz-tab="invoices" aria-controls="bizPanelInvoices" aria-selected="false" tabindex="-1"><span aria-hidden="true">▤</span><span>فاکتورها</span></button>
+      <button class="biz-tab" id="bizTabTools" type="button" role="tab" data-biz-tab="tools" aria-controls="bizPanelTools" aria-selected="false" tabindex="-1"><span aria-hidden="true">⌗</span><span>ابزارهای مالی</span></button>
+      <button class="biz-tab" id="bizTabReports" type="button" role="tab" data-biz-tab="reports" aria-controls="bizPanelReports" aria-selected="false" tabindex="-1"><span aria-hidden="true">▤</span><span>گزارش‌ها</span></button>
+      <button class="biz-tab" id="bizTabAdvisor" type="button" role="tab" data-biz-tab="advisor" aria-controls="bizPanelAdvisor" aria-selected="false" tabindex="-1"><span aria-hidden="true">✦</span><span>مشاور NAVI</span></button>
+    </nav>
+    <div class="biz-tab-panels">
+      <section class="biz-tab-panel is-active" id="bizPanelDashboard" data-biz-panel="dashboard" role="tabpanel" aria-labelledby="bizTabDashboard">
+        <section class="biz-financial-dashboard" aria-labelledby="bizFinancialDashboardTitle">
+        <div class="biz-dashboard-heading">
+          <div><span class="biz-eyebrow">NAVA BUSINESS OVERVIEW</span><h3 id="bizFinancialDashboardTitle">داشبورد مالی</h3>
+            <p>نمای کلی بر اساس تمام فروش‌ها و هزینه‌هایی که در این پرونده ثبت کرده‌ای.</p></div>
+          <span class="biz-dashboard-period">کل سوابق ثبت‌شده</span>
+        </div>
+        <div class="biz-dashboard-filters" aria-label="فیلتر زمانی داشبورد">
+          <label class="biz-dashboard-filter-field">نوع نمایش
+            <select id="bizDashboardFilterMode">
+              <option value="all">همه سوابق</option>
+              <option value="month">یک ماه مشخص</option>
+              <option value="range">بازه دلخواه</option>
+            </select>
+          </label>
+          <div id="bizDashboardMonthFilter" class="biz-dashboard-filter-group" hidden>
+            <label class="biz-dashboard-filter-field">سال شمسی<select id="bizDashboardYear"></select></label>
+            <label class="biz-dashboard-filter-field">ماه<select id="bizDashboardMonth"></select></label>
+          </div>
+          <div id="bizDashboardRangeFilter" class="biz-dashboard-filter-group" hidden>
+            <label class="biz-dashboard-filter-field">از تاریخ شمسی<input id="bizDashboardFrom" type="text" inputmode="numeric" placeholder="۱۴۰۵/۰۸/۰۱" autocomplete="off"></label>
+            <label class="biz-dashboard-filter-field">تا تاریخ شمسی<input id="bizDashboardTo" type="text" inputmode="numeric" placeholder="۱۴۰۵/۰۸/۳۰" autocomplete="off"></label>
+          </div>
+          <div class="biz-dashboard-filter-actions">
+            <button id="bizDashboardApplyFilter" type="button">اعمال فیلتر</button>
+            <button id="bizDashboardResetFilter" type="button">نمایش همه</button>
+          </div>
+          <p id="bizDashboardFilterStatus" class="biz-dashboard-filter-status" role="status" aria-live="polite"></p>
+        </div>
+        
+        <div id="bizFinancialDashboard" class="biz-financial-dashboard-content" aria-live="polite">
+          <p class="biz-dashboard-empty">پس از انتخاب پرونده، خلاصه مالی اینجا نمایش داده می‌شود.</p>
+        </div>
+        <p class="biz-dashboard-disclaimer">توجه: تفاضل فروش و هزینه ثبت‌شده، سود قطعی یا موجودی نقدی نیست. برای محاسبه سود واقعی باید بهای تمام‌شده، مطالبات وصول‌شده و بدهی‌های پرداخت‌شده نیز مشخص باشند. محاسبات قیمت‌گذاری و سود احتمالی در بخش گزارش‌های تخمینی جداگانه نگهداری می‌شوند.</p>
+      </section>
+      </section>
+      <section class="biz-tab-panel" id="bizPanelTransactions" data-biz-panel="transactions" role="tabpanel" aria-labelledby="bizTabTransactions" hidden>
+        <section class="biz-transactions-panel" aria-labelledby="bizTransactionsTitle">
+        <div class="biz-transactions-heading">
+          <div><span class="biz-eyebrow">دفتر مالی واقعی</span><h3 id="bizTransactionsTitle">ثبت فروش و هزینه</h3>
+            <p>فروش‌ها و هزینه‌های انجام‌شده را ثبت کن؛ این دفتر به‌تنهایی وضعیت وصول مطالبات یا پرداخت بدهی را مشخص نمی‌کند. همه مبالغ به تومان هستند.</p></div>
+        </div>
+        <form id="bizTransactionForm" class="biz-transaction-form">
+          <label class="biz-field"><span>نوع تراکنش</span><select id="bizTransactionType"><option value="sale">فروش ثبت‌شده</option><option value="expense">هزینه ثبت‌شده</option></select></label>
+          <label class="biz-field"><span>عنوان</span><input id="bizTransactionTitle" type="text" maxlength="160" placeholder="مثلاً فروش محصول یا خرید مواد اولیه" required></label>
+          <div id="bizSaleCatalogDetails" class="biz-sale-catalog-details">
+            <label class="biz-field"><span>مشتری (اختیاری)</span><select id="bizTransactionCustomer"><option value="">بدون اتصال به مشتری</option></select></label>
+            <label class="biz-field"><span>اتصال فروش به کاتالوگ (اختیاری)</span><select id="bizTransactionCatalogItem"><option value="">فروش دستی / بدون اتصال به کاتالوگ</option></select></label>
+            <div class="biz-fields-grid">
+              <label class="biz-field"><span>تعداد</span><input id="bizTransactionQuantity" type="text" inputmode="numeric" maxlength="10" autocomplete="off" placeholder="مثلاً ۲"></label>
+              <label class="biz-field"><span>قیمت واحد (تومان)</span><input id="bizTransactionUnitPrice" type="text" inputmode="numeric" maxlength="13" placeholder="قیمت واحد"></label>
+            </div>
+            <p class="biz-form-note">با انتخاب محصول یا خدمت، عنوان و قیمت آن از کاتالوگ وارد می‌شود. با تغییر تعداد یا قیمت واحد، مبلغ کل فروش خودکار محاسبه خواهد شد.</p>
+          </div>
+          <div id="bizExpenseSupplierDetails" hidden>
+            <label class="biz-field"><span>تأمین‌کننده (اختیاری)</span><select id="bizTransactionSupplier"><option value="">بدون اتصال به تأمین‌کننده</option></select></label>
+            <p class="biz-form-note">با اتصال هزینه به تأمین‌کننده، بدهی پرداخت‌نشده او در دفتر مالی محاسبه می‌شود؛ پرداخت را بعداً از بخش «دفتر مالی» ثبت کن.</p>
+          </div>
+          <label class="biz-field"><span>مبلغ کل (تومان)</span><input id="bizTransactionAmount" type="text" inputmode="numeric" dir="ltr" maxlength="13" autocomplete="off" placeholder="مثلاً ۲۰۰۰۰۰" required></label>
+          <label class="biz-field biz-transaction-date-field"><span>تاریخ شمسی</span>
+            <div class="biz-persian-date-control">
+              <input id="bizTransactionDateDisplay" type="text" placeholder="انتخاب تاریخ شمسی" readonly aria-label="تاریخ تراکنش به شمسی">
+              <button id="bizTransactionCalendarToggle" type="button" aria-label="باز کردن تقویم شمسی" aria-expanded="false">▦</button>
+            </div>
+            <input id="bizTransactionDate" type="hidden">
+            <div id="bizTransactionCalendar" class="biz-persian-calendar" hidden>
+              <div class="biz-persian-calendar-head">
+                <button id="bizCalendarPrev" type="button" aria-label="ماه قبل">‹</button>
+                <strong id="bizCalendarMonth"></strong>
+                <button id="bizCalendarNext" type="button" aria-label="ماه بعد">›</button>
+              </div>
+              <div class="biz-persian-calendar-weekdays" aria-hidden="true"><span>ش</span><span>ی</span><span>د</span><span>س</span><span>چ</span><span>پ</span><span>ج</span></div>
+              <div id="bizPersianCalendarDays" class="biz-persian-calendar-days"></div>
+            </div>
+          </label>
+          <label class="biz-field"><span>دسته‌بندی</span><input id="bizTransactionCategory" type="text" maxlength="80" placeholder="مثلاً فروش محصول، مواد اولیه، حمل‌ونقل"></label>
+          <label class="biz-field biz-transaction-notes"><span>توضیحات (اختیاری)</span><input id="bizTransactionNotes" type="text" maxlength="1200" placeholder="جزئیات تکمیلی"></label>
+          <button class="btn-primary" id="bizTransactionSubmit" type="submit">ثبت تراکنش</button>
+        </form>
+        <p id="bizTransactionStatus" class="biz-profile-status" role="status" aria-live="polite">برای ثبت تراکنش، یک پرونده فعال انتخاب کن.</p>
+        <div id="bizTransactionSummary" class="biz-transaction-summary"></div>
+        <details class="biz-account-card biz-account-disclosure biz-list-disclosure"><summary class="biz-account-disclosure-head"><span><strong>سوابق فروش و هزینه</strong><small>برای مشاهده و ویرایش تراکنش‌های ثبت‌شده باز کن</small></span><span class="biz-disclosure-indicator" aria-hidden="true">⌄</span></summary><div class="biz-account-disclosure-body"><div id="bizTransactionList" class="biz-transaction-list" aria-live="polite">تراکنش‌های پرونده پس از انتخاب آن نمایش داده می‌شوند.</div></div></details>
+      </section>
+      </section>
+      
+      <section class="biz-tab-panel" id="bizPanelAccounts" data-biz-panel="accounts" role="tabpanel" aria-labelledby="bizTabAccounts" hidden>
+        <section class="biz-accounts-workspace" aria-labelledby="bizAccountsTitle">
+          <div class="biz-transactions-heading"><div><span class="biz-eyebrow">CUSTOMER ACCOUNTS</span><h2 id="bizAccountsTitle">دریافت وجه و مانده حساب مشتریان</h2>
+            <p>فروش‌های متصل به مشتری و دریافت‌های واقعی وجه در این بخش جمع می‌شوند. فروش ثبت‌شده با پول وصول‌شده یکی نیست.</p></div></div>
+          <div class="biz-account-summary" id="bizAccountSummary" aria-live="polite"><p>پس از انتخاب پرونده، مانده حساب‌ها نمایش داده می‌شود.</p></div>
+          <div class="biz-accounts-grid">
+            <section class="biz-account-card">
+              <h3>ثبت دریافت وجه</h3>
+              <form id="bizPaymentForm" class="biz-payment-form">
+                <label class="biz-field"><span>مشتری</span><select id="bizPaymentCustomer" required><option value="">ابتدا پرونده را انتخاب کن</option></select></label>
+                <label class="biz-field"><span>اتصال به فاکتور (اختیاری)</span><select id="bizPaymentInvoice"><option value="">دریافت عمومی از مشتری</option></select></label>
+                <label class="biz-field"><span>واریز به حساب مالی</span><select id="bizPaymentCashAccount" required><option value="">انتخاب حساب دریافت</option></select></label>
+                <label class="biz-field"><span>مبلغ دریافتی (تومان)</span><input id="bizPaymentAmount" type="text" inputmode="numeric" maxlength="13" placeholder="مثلاً ۵۰۰۰۰۰" required></label>
+                <label class="biz-field"><span>تاریخ دریافت (شمسی)</span><input id="bizPaymentDate" type="text" inputmode="numeric" placeholder="۱۴۰۵/۰۸/۲۵" required></label>
+                <label class="biz-field"><span>روش دریافت</span><select id="bizPaymentMethod"><option value="cash">نقدی</option><option value="card">کارت‌خوان</option><option value="bank_transfer">کارت‌به‌کارت / انتقال بانکی</option><option value="other">سایر</option></select></label>
+                <label class="biz-field"><span>شماره پیگیری (اختیاری)</span><input id="bizPaymentReference" type="text" maxlength="120" placeholder="کد پیگیری یا شناسه واریز"></label>
+                <label class="biz-field"><span>توضیحات (اختیاری)</span><input id="bizPaymentNotes" type="text" maxlength="800" placeholder="توضیح دریافت وجه"></label>
+                <button class="btn-primary" id="bizPaymentSubmit" type="submit">ثبت دریافت وجه</button>
+              </form>
+              <p class="biz-profile-status" id="bizPaymentStatus" role="status" aria-live="polite">برای ثبت دریافت وجه، پرونده و مشتری را انتخاب کن.</p>
+            </section>
+            <details class="biz-account-card biz-account-disclosure">
+              <summary class="biz-account-disclosure-head"><span><strong>مانده حساب مشتریان</strong><small>برای دیدن فهرست مشتریان و مبلغ فروش، دریافتی و مانده هرکدام باز کن</small></span><span class="biz-disclosure-indicator" aria-hidden="true">⌄</span></summary>
+              <div class="biz-account-disclosure-body">
+                <div class="biz-account-table-wrap"><table class="biz-account-table"><thead><tr><th>مشتری</th><th>فروش</th><th>دریافتی</th><th>مانده</th></tr></thead><tbody id="bizAccountRows"><tr><td colspan="4">هنوز داده‌ای بارگذاری نشده است.</td></tr></tbody></table></div>
+                <p class="biz-form-note">مانده مثبت یعنی مشتری بدهکار است؛ مانده منفی یعنی اعتبار/بستانکاری مشتری. فروش‌های قدیمی بدون اتصال به مشتری در این محاسبه وارد نمی‌شوند.</p>
+              </div>
+            </details>
+          </div>
+          <details class="biz-account-card biz-payment-history biz-account-disclosure">
+            <summary class="biz-account-disclosure-head"><span><strong>سوابق دریافت وجه</strong><small>برای دیدن فهرست دریافت‌های ثبت‌شده باز کن</small></span><span class="biz-disclosure-indicator" aria-hidden="true">⌄</span></summary>
+            <div class="biz-account-disclosure-body"><div id="bizPaymentHistory" aria-live="polite">سوابق دریافت وجه پس از انتخاب پرونده نمایش داده می‌شوند.</div></div>
+          </details>
+        </section>
+      </section>
+      <section class="biz-tab-panel" id="bizPanelLedger" data-biz-panel="ledger" role="tabpanel" aria-labelledby="bizTabLedger" hidden>
+        <section class="biz-accounts-workspace" id="bizLedgerWorkspace" aria-labelledby="bizLedgerTitle">
+          <div class="biz-transactions-heading"><div><span class="biz-eyebrow">CASH FLOW & SUPPLIERS</span><h2 id="bizLedgerTitle">دفتر مالی، صندوق و تأمین‌کنندگان</h2><p>ثبت پرداخت هزینه‌ها، مانده تأمین‌کنندگان، حساب‌های نقدی و بانکی و گردش واقعی ورود و خروج وجه.</p></div></div>
+          <div class="biz-account-summary" id="bizLedgerStatus" role="status" aria-live="polite">پس از انتخاب پرونده، اطلاعات دفتر مالی نمایش داده می‌شود.</div>
+          <div class="biz-accounts-grid">
+            <section class="biz-account-card"><h3>ثبت تأمین‌کننده</h3><form id="bizSupplierForm" class="biz-payment-form">
+              <label class="biz-field"><span>نام تأمین‌کننده</span><input id="bizSupplierName" maxlength="120" required></label>
+              <label class="biz-field"><span>شماره تماس (اختیاری)</span><input id="bizSupplierPhone" maxlength="40"></label>
+              <button class="btn-primary" id="bizSupplierSubmit" type="submit">ثبت تأمین‌کننده</button>
+            </form><p class="biz-profile-status" id="bizSupplierStatus" role="status" aria-live="polite"></p></section>
+            <details class="biz-account-card biz-account-disclosure"><summary class="biz-account-disclosure-head"><span><strong>مانده حساب تأمین‌کنندگان</strong><small>جمع هزینه‌های متصل، پرداخت‌شده و بدهی باقی‌مانده</small></span><span class="biz-disclosure-indicator" aria-hidden="true">⌄</span></summary><div class="biz-account-disclosure-body"><div class="biz-account-table-wrap"><table class="biz-account-table"><thead><tr><th>تأمین‌کننده</th><th>هزینه</th><th>پرداختی</th><th>مانده</th></tr></thead><tbody id="bizSupplierRows"><tr><td colspan="4">در حال بارگذاری...</td></tr></tbody></table></div></div></details>
+          </div>
+          <section class="biz-account-card biz-purchase-card">
+            <div class="biz-transactions-heading"><div><h3>ثبت خرید از تأمین‌کننده</h3><p>با یک ثبت، هزینه خرید، ورود کالا به انبار، بدهی تأمین‌کننده و پرداخت احتمالی از حساب مالی هماهنگ می‌شوند.</p></div></div>
+            <form id="bizPurchaseForm" class="biz-payment-form" novalidate>
+              <label class="biz-field"><span>تأمین‌کننده</span><select id="bizPurchaseSupplier" required><option value="">انتخاب تأمین‌کننده</option></select></label>
+              <label class="biz-field"><span>محصول دارای مدیریت موجودی</span><select id="bizPurchaseItem" required><option value="">انتخاب محصول</option></select></label>
+              <div class="biz-fields-grid">
+                <label class="biz-field"><span>تعداد خرید</span><input id="bizPurchaseQuantity" type="text" inputmode="numeric" autocomplete="off" required></label>
+                <label class="biz-field"><span>قیمت خرید هر واحد (تومان)</span><input id="bizPurchaseUnitPrice" type="text" inputmode="numeric" autocomplete="off" required></label>
+                <label class="biz-field"><span>تاریخ خرید (شمسی)</span><div class="biz-persian-date-control"><input id="bizPurchaseDateDisplay" type="text" placeholder="انتخاب تاریخ شمسی" readonly aria-label="تاریخ خرید به شمسی"><button id="bizPurchaseDateToggle" type="button" aria-label="باز کردن تقویم شمسی" aria-expanded="false">▦</button></div><input id="bizPurchaseDate" type="hidden" required><div id="bizPurchaseDateCalendar" class="biz-persian-calendar" hidden><div class="biz-persian-calendar-head"><button type="button" data-month="-1" aria-label="ماه قبل">‹</button><strong id="bizPurchaseDateMonth"></strong><button type="button" data-month="1" aria-label="ماه بعد">›</button></div><div class="biz-persian-calendar-weekdays" aria-hidden="true"><span>ش</span><span>ی</span><span>د</span><span>س</span><span>چ</span><span>پ</span><span>ج</span></div><div id="bizPurchaseDateDays" class="biz-persian-calendar-days"></div></div></label>
+              </div>
+              <p class="biz-form-note" id="bizPurchaseTotal">جمع خرید: ۰ تومان</p>
+              <div class="biz-form-divider"></div>
+              <h4>پرداخت در زمان خرید (اختیاری)</h4>
+              <p class="biz-form-note">اگر فعلاً پرداختی نداری، مبلغ پرداخت‌شده را صفر بگذار؛ مانده به‌عنوان بدهی تأمین‌کننده ثبت می‌شود.</p>
+              <div class="biz-fields-grid">
+                <label class="biz-field"><span>مبلغ پرداخت‌شده (تومان)</span><input id="bizPurchasePaidAmount" type="text" inputmode="numeric" value="0" autocomplete="off" required></label>
+                <label class="biz-field"><span>کسر از حساب مالی</span><select id="bizPurchaseCashAccount"><option value="">انتخاب حساب در صورت پرداخت</option></select></label>
+                <label class="biz-field"><span>روش پرداخت</span><select id="bizPurchasePaymentMethod"><option value="cash">نقدی</option><option value="card">کارت‌خوان</option><option value="bank_transfer">انتقال بانکی</option><option value="other">سایر</option></select></label>
+              </div>
+              <label class="biz-field"><span>شماره پیگیری (اختیاری)</span><input id="bizPurchaseReference" maxlength="120"></label>
+              <label class="biz-field"><span>توضیحات (اختیاری)</span><input id="bizPurchaseNotes" maxlength="800"></label>
+              <button class="btn-primary" id="bizPurchaseSubmit" type="submit">ثبت خرید و به‌روزرسانی انبار و دفتر مالی</button>
+            </form>
+            <p class="biz-profile-status" id="bizPurchaseStatus" role="status" aria-live="polite">پس از ثبت، تعداد کالا به انبار اضافه و بدهی و پرداخت در دفتر مالی ثبت می‌شود.</p>
+            <details class="biz-account-disclosure"><summary class="biz-account-disclosure-head"><span><strong>سوابق خرید ثبت‌شده</strong><small>مبلغ کل، پرداختی و مانده هر خرید</small></span><span class="biz-disclosure-indicator" aria-hidden="true">⌄</span></summary><div class="biz-account-disclosure-body"><div class="biz-account-table-wrap"><table class="biz-account-table"><thead><tr><th>تاریخ</th><th>محصول</th><th>تأمین‌کننده</th><th>تعداد</th><th>مبلغ خرید</th><th>پرداختی</th><th>مانده</th></tr></thead><tbody id="bizPurchaseRows"><tr><td colspan="7">هنوز خریدی ثبت نشده است.</td></tr></tbody></table></div></div></details>
+          </section>
+          <div class="biz-accounts-grid">
+            <section class="biz-account-card"><h3>ایجاد حساب مالی</h3><form id="bizCashAccountForm" class="biz-payment-form">
+              <label class="biz-field"><span>نام حساب</span><input id="bizCashAccountName" maxlength="100" placeholder="مثلاً صندوق فروشگاه یا بانک ملت" required></label>
+              <label class="biz-field"><span>نوع حساب</span><select id="bizCashAccountType"><option value="cash">صندوق نقدی</option><option value="bank">حساب بانکی</option><option value="card">کارت / کارت‌خوان</option><option value="other">سایر</option></select></label>
+              <label class="biz-field"><span>موجودی افتتاحیه (تومان)</span><input id="bizCashOpening" inputmode="numeric" value="0" required></label>
+              <button class="btn-primary" id="bizCashAccountSubmit" type="submit">ایجاد حساب</button>
+            </form><p class="biz-profile-status" id="bizCashAccountStatus" role="status" aria-live="polite"></p></section>
+            <details class="biz-account-card biz-account-disclosure"><summary class="biz-account-disclosure-head"><span><strong>حساب‌های مالی و مانده فعلی</strong><small>موجودی افتتاحیه به‌علاوه گردش‌های فعال</small></span><span class="biz-disclosure-indicator" aria-hidden="true">⌄</span></summary><div class="biz-account-disclosure-body"><div class="biz-account-table-wrap"><table class="biz-account-table"><thead><tr><th>حساب</th><th>نوع</th><th>مانده</th><th>وضعیت</th></tr></thead><tbody id="bizCashAccountRows"><tr><td colspan="4">در حال بارگذاری...</td></tr></tbody></table></div></div></details>
+          </div>
+          <div class="biz-accounts-grid">
+            <section class="biz-account-card"><h3>ثبت پرداخت هزینه</h3><form id="bizExpensePaymentForm" class="biz-payment-form">
+              <label class="biz-field"><span>هزینه ثبت‌شده</span><select id="bizExpensePaymentTransaction" required><option value="">انتخاب هزینه</option></select></label>
+              <label class="biz-field"><span>تأمین‌کننده (اختیاری)</span><select id="bizExpensePaymentSupplier"><option value="">بدون اتصال به تأمین‌کننده</option></select></label>
+              <label class="biz-field"><span>حساب پرداخت</span><select id="bizLedgerCashAccount" required><option value="">انتخاب حساب</option></select></label>
+              <label class="biz-field"><span>مبلغ پرداخت (تومان)</span><input id="bizExpensePaymentAmount" inputmode="numeric" required></label>
+              <label class="biz-field biz-transaction-date-field"><span>تاریخ پرداخت (شمسی)</span><div class="biz-persian-date-control"><input id="bizExpensePaymentDateDisplay" type="text" placeholder="انتخاب تاریخ شمسی" readonly aria-label="تاریخ پرداخت به شمسی"><button id="bizExpensePaymentDateToggle" type="button" aria-label="باز کردن تقویم شمسی" aria-expanded="false">▦</button></div><input id="bizExpensePaymentDate" type="hidden" required><div id="bizExpensePaymentDateCalendar" class="biz-persian-calendar" hidden><div class="biz-persian-calendar-head"><button type="button" data-month="-1" aria-label="ماه قبل">‹</button><strong id="bizExpensePaymentDateMonth"></strong><button type="button" data-month="1" aria-label="ماه بعد">›</button></div><div class="biz-persian-calendar-weekdays" aria-hidden="true"><span>ش</span><span>ی</span><span>د</span><span>س</span><span>چ</span><span>پ</span><span>ج</span></div><div id="bizExpensePaymentDateDays" class="biz-persian-calendar-days"></div></div></label>
+              <label class="biz-field"><span>روش پرداخت</span><select id="bizExpensePaymentMethod"><option value="cash">نقدی</option><option value="card">کارت‌خوان</option><option value="bank_transfer">انتقال بانکی</option><option value="other">سایر</option></select></label>
+              <label class="biz-field"><span>شماره پیگیری (اختیاری)</span><input id="bizExpensePaymentReference" maxlength="120"></label>
+              <label class="biz-field"><span>توضیحات (اختیاری)</span><input id="bizExpensePaymentNotes" maxlength="800"></label>
+              <button class="btn-primary" id="bizExpensePaymentSubmit" type="submit">ثبت پرداخت هزینه</button>
+            </form><p class="biz-profile-status" id="bizExpensePaymentStatus" role="status" aria-live="polite">پرداخت جزئی و چندمرحله‌ای تا سقف مبلغ همان هزینه مجاز است.</p></section>
+            <section class="biz-account-card"><h3>ثبت گردش دستی صندوق</h3><form id="bizCashMovementForm" class="biz-payment-form">
+              <label class="biz-field"><span>حساب مالی</span><select id="bizLedgerMovementAccount" required><option value="">انتخاب حساب</option></select></label>
+              <label class="biz-field"><span>نوع گردش</span><select id="bizCashMovementDirection"><option value="in">ورودی وجه</option><option value="out">خروجی وجه</option></select></label>
+              <label class="biz-field"><span>مبلغ (تومان)</span><input id="bizCashMovementAmount" inputmode="numeric" required></label>
+              <label class="biz-field biz-transaction-date-field"><span>تاریخ گردش (شمسی)</span><div class="biz-persian-date-control"><input id="bizCashMovementDateDisplay" type="text" placeholder="انتخاب تاریخ شمسی" readonly aria-label="تاریخ گردش به شمسی"><button id="bizCashMovementDateToggle" type="button" aria-label="باز کردن تقویم شمسی" aria-expanded="false">▦</button></div><input id="bizCashMovementDate" type="hidden" required><div id="bizCashMovementDateCalendar" class="biz-persian-calendar" hidden><div class="biz-persian-calendar-head"><button type="button" data-month="-1" aria-label="ماه قبل">‹</button><strong id="bizCashMovementDateMonth"></strong><button type="button" data-month="1" aria-label="ماه بعد">›</button></div><div class="biz-persian-calendar-weekdays" aria-hidden="true"><span>ش</span><span>ی</span><span>د</span><span>س</span><span>چ</span><span>پ</span><span>ج</span></div><div id="bizCashMovementDateDays" class="biz-persian-calendar-days"></div></div></label>
+              <label class="biz-field"><span>عنوان</span><input id="bizCashMovementTitle" maxlength="140" placeholder="مثلاً سرمایه اولیه یا برداشت مالک" required></label>
+              <label class="biz-field"><span>روش</span><select id="bizCashMovementMethod"><option value="cash">نقدی</option><option value="card">کارت‌خوان</option><option value="bank_transfer">انتقال بانکی</option><option value="other">سایر</option></select></label>
+              <label class="biz-field"><span>شماره پیگیری (اختیاری)</span><input id="bizCashMovementReference" maxlength="120"></label>
+              <label class="biz-field"><span>توضیحات (اختیاری)</span><input id="bizCashMovementNotes" maxlength="800"></label>
+              <button class="btn-primary" id="bizCashMovementSubmit" type="submit">ثبت گردش دستی</button>
+            </form><p class="biz-profile-status" id="bizCashMovementStatus" role="status" aria-live="polite">گردش دستی در موجودی حساب ثبت می‌شود؛ فروش و هزینه عملیاتی را جداگانه ثبت کن.</p></section>
+          </div>
+          <details class="biz-account-card biz-account-disclosure"><summary class="biz-account-disclosure-head"><span><strong>گردش‌های نقدی و بانکی</strong><small>ورودی‌ها و خروجی‌های ثبت‌شده در حساب‌های مالی</small></span><span class="biz-disclosure-indicator" aria-hidden="true">⌄</span></summary><div class="biz-account-disclosure-body"><div class="biz-account-table-wrap"><table class="biz-account-table"><thead><tr><th>تاریخ</th><th>شرح</th><th>جهت</th><th>مبلغ</th><th>وضعیت</th></tr></thead><tbody id="bizCashMovementRows"><tr><td colspan="5">در حال بارگذاری...</td></tr></tbody></table></div></div></details>
+        </section>
+      </section>
+      <section class="biz-tab-panel" id="bizPanelCatalog" data-biz-panel="catalog" role="tabpanel" aria-labelledby="bizTabCatalog" hidden>
+        <section class="biz-catalog-workspace" aria-labelledby="bizCatalogTitle">
+          <div class="biz-catalog-heading">
+            <div><span class="biz-eyebrow">کاتالوگ کسب‌وکار</span><h2 id="bizCatalogTitle">مدیریت محصولات و خدمات</h2>
+              <p>محصولات و خدمات هر پرونده را همراه با کد، دسته‌بندی، قیمت فروش و بهای تمام‌شده ثبت و مدیریت کن.</p></div>
+            <div class="biz-catalog-count" id="bizCatalogCount">۰ مورد فعال</div>
+          </div>
+          <div class="biz-catalog-layout">
+            <form id="bizCatalogForm" class="biz-catalog-form" novalidate>
+              <div class="biz-catalog-form-head"><div><span class="studio-step" id="bizCatalogFormStep">ثبت مورد جدید</span><h3 id="bizCatalogFormTitle">اطلاعات محصول یا خدمت</h3></div></div>
+              <input id="bizCatalogItemId" type="hidden">
+              <label class="biz-field"><span>نوع</span><select id="bizCatalogItemType"><option value="product">محصول</option><option value="service">خدمت</option></select></label>
+              <label class="biz-field"><span>نام محصول یا خدمت</span><input id="bizCatalogName" type="text" maxlength="140" placeholder="مثلاً طراحی لوگو یا بسته قهوه" required></label>
+              <div class="biz-catalog-fields">
+                <label class="biz-field"><span>کد کالا / شناسه (اختیاری)</span><input id="bizCatalogSku" type="text" maxlength="64" placeholder="مثلاً PR-001" dir="ltr"></label>
+                <label class="biz-field"><span>دسته‌بندی</span><input id="bizCatalogCategory" type="text" maxlength="80" placeholder="مثلاً دیجیتال، خوراکی"></label>
+                <label class="biz-field"><span>واحد</span><input id="bizCatalogUnit" type="text" maxlength="32" placeholder="مثلاً عدد، بسته، ساعت یا پروژه"></label>
+                <label class="biz-field"><span>قیمت فروش (تومان)</span><input id="bizCatalogSalePrice" type="text" inputmode="numeric" dir="ltr" maxlength="13" placeholder="مثلاً 100000" autocomplete="off" required></label>
+                <label class="biz-field"><span>بهای تمام‌شده (تومان، اختیاری)</span><input id="bizCatalogCostPrice" type="text" inputmode="numeric" dir="ltr" maxlength="13" placeholder="اختیاری؛ مثلاً 60000" autocomplete="off"></label>
+              </div>
+              <label class="biz-field biz-inventory-toggle"><input id="bizCatalogTrackInventory" type="checkbox" checked><span>مدیریت موجودی انبار برای این محصول فعال باشد</span></label>
+              <label class="biz-field"><span>توضیحات (اختیاری)</span><textarea id="bizCatalogDescription" rows="3" maxlength="1200" placeholder="ویژگی‌ها، جزئیات یا شرایط ارائه"></textarea></label>
+              <div class="biz-catalog-form-actions">
+                <button class="btn-primary" id="bizCatalogSubmit" type="submit">ثبت در کاتالوگ</button>
+                <button class="btn-secondary" id="bizCatalogCancelEdit" type="button" hidden>انصراف از ویرایش</button>
+              </div>
+              <p class="biz-profile-status" id="bizCatalogStatus" role="status" aria-live="polite">ثبت مورد جدید به‌صورت پیش‌فرض فعال است. برای غیرفعال‌کردن، بعداً آن را بایگانی کن.</p>
+            </form>
+            <section class="biz-catalog-list-panel" aria-label="فهرست محصولات و خدمات">
+              <div class="biz-catalog-list-head"><h3>مدیریت کاتالوگ</h3><div class="biz-catalog-filters"><label>نوع <select id="bizCatalogTypeFilter"><option value="all">همه</option><option value="product">محصولات</option><option value="service">خدمات</option></select></label><label>وضعیت <select id="bizCatalogStatusFilter"><option value="active">فعال</option><option value="archived">بایگانی‌شده</option><option value="all">همه</option></select></label></div></div>
+              <details class="biz-account-card biz-account-disclosure biz-list-disclosure"><summary class="biz-account-disclosure-head"><span><strong>فهرست محصولات و خدمات</strong><small>برای مشاهده، ویرایش یا بایگانی موارد باز کن</small></span><span class="biz-disclosure-indicator" aria-hidden="true">⌄</span></summary><div class="biz-account-disclosure-body"><div id="bizCatalogList" class="biz-catalog-list" aria-live="polite">پس از انتخاب پرونده، فهرست اینجا نمایش داده می‌شود.</div></div></details>
+            </section>
+          </div>
+          <p class="biz-catalog-note">کاتالوگ محصولات و خدمات به دفتر فروش، مدیریت موجودی، مشتریان و سفارش‌ها متصل است.</p>
+        </section>
+      </section>
+      <section class="biz-tab-panel" id="bizPanelInventory" data-biz-panel="inventory" role="tabpanel" aria-labelledby="bizTabInventory" hidden>
+        <section class="biz-inventory-workspace" aria-labelledby="bizInventoryTitle">
+          <div class="biz-catalog-heading">
+            <div><span class="biz-eyebrow">مدیریت انبار</span><h2 id="bizInventoryTitle">موجودی محصولات</h2>
+              <p>موجودی اولیه، ورود و خروج کالا را ثبت کن. فروش محصولات دارای کنترل موجودی به‌صورت خودکار از انبار کم می‌شود.</p></div>
+          </div>
+          <div class="biz-inventory-layout">
+            <form id="bizInventoryForm" class="biz-catalog-form" novalidate>
+              <div class="biz-catalog-form-head"><div><span class="studio-step">ثبت گردش کالا</span><h3>ورود یا خروج موجودی</h3></div></div>
+              <label class="biz-field"><span>محصول</span><select id="bizInventoryItem" required><option value="">انتخاب محصول دارای کنترل موجودی</option></select></label>
+              <label class="biz-field"><span>نوع عملیات</span><select id="bizInventoryMovementType" required>
+                <option value="opening">ثبت موجودی اولیه</option><option value="inbound">ورود کالا</option><option value="outbound">خروج کالا</option><option value="adjustment">اصلاح افزایشی موجودی</option>
+              </select></label>
+              <label class="biz-field"><span>تعداد</span><input id="bizInventoryQuantity" type="text" inputmode="numeric" autocomplete="off" placeholder="مثلاً ۲۰" required></label>
+              <label class="biz-field biz-transaction-date-field"><span>تاریخ شمسی</span>
+                <div class="biz-persian-date-control">
+                  <input id="bizInventoryDateDisplay" type="text" placeholder="انتخاب تاریخ شمسی" readonly aria-label="تاریخ گردش انبار به شمسی">
+                  <button id="bizInventoryCalendarToggle" type="button" aria-label="باز کردن تقویم شمسی" aria-expanded="false">▦</button>
+                </div>
+                <input id="bizInventoryDate" type="hidden" required>
+                <div id="bizInventoryCalendar" class="biz-persian-calendar" hidden>
+                  <div class="biz-persian-calendar-head">
+                    <button id="bizInventoryCalendarPrev" type="button" aria-label="ماه قبل">‹</button>
+                    <strong id="bizInventoryCalendarMonth"></strong>
+                    <button id="bizInventoryCalendarNext" type="button" aria-label="ماه بعد">›</button>
+                  </div>
+                  <div class="biz-persian-calendar-weekdays" aria-hidden="true"><span>ش</span><span>ی</span><span>د</span><span>س</span><span>چ</span><span>پ</span><span>ج</span></div>
+                  <div id="bizInventoryCalendarDays" class="biz-persian-calendar-days"></div>
+                </div>
+              </label>
+              <label class="biz-field"><span>توضیحات (اختیاری)</span><input id="bizInventoryNotes" type="text" maxlength="500" placeholder="مثلاً خرید از تأمین‌کننده"></label>
+              <button class="btn-primary" id="bizInventorySubmit" type="submit">ثبت گردش موجودی</button>
+              <p class="biz-profile-status" id="bizInventoryStatus" role="status" aria-live="polite">برای شروع، محصولی را در کاتالوگ با مدیریت موجودی فعال کن.</p>
+            </form>
+            <div class="biz-inventory-overview">
+              <section class="biz-catalog-list-panel"><details class="biz-account-card biz-account-disclosure biz-list-disclosure"><summary class="biz-account-disclosure-head"><span><strong>موجودی فعلی</strong><small>برای مشاهده موجودی هر محصول باز کن</small></span><span class="biz-disclosure-indicator" aria-hidden="true">⌄</span></summary><div class="biz-account-disclosure-body"><div id="bizInventoryBalances" class="biz-inventory-balances">پس از انتخاب پرونده نمایش داده می‌شود.</div></div></details></section>
+              <section class="biz-catalog-list-panel"><details class="biz-account-card biz-account-disclosure biz-list-disclosure"><summary class="biz-account-disclosure-head"><span><strong>سوابق گردش انبار</strong><small>برای مشاهده ورود، خروج و اصلاح موجودی باز کن</small></span><span class="biz-disclosure-indicator" aria-hidden="true">⌄</span></summary><div class="biz-account-disclosure-body"><div id="bizInventoryMovements" class="biz-inventory-movements">هنوز گردش موجودی ثبت نشده است.</div></div></details></section>
+            </div>
+          </div>
+          <p class="biz-catalog-note">هزینه‌های عادی در دفتر مالی به‌تنهایی موجودی انبار را افزایش نمی‌دهند. برای ورود کالا باید گردش «ورود کالا» ثبت شود.</p>
+        </section>
+      </section>
+      <section class="biz-tab-panel" id="bizPanelCustomers" data-biz-panel="customers" role="tabpanel" aria-labelledby="bizTabCustomers" hidden>
+        <section class="biz-crm-workspace">
+          <div class="biz-catalog-heading"><div><span class="biz-eyebrow">مدیریت ارتباط با مشتری</span><h2>دفتر مشتریان</h2><p>اطلاعات تماس و یادداشت مشتریان هر پرونده را یکجا نگهداری کن.</p></div></div>
+          <div class="biz-crm-layout">
+            <form id="bizCustomerForm" class="biz-catalog-form" novalidate>
+              <div class="biz-catalog-form-head"><div><span class="studio-step">ثبت مخاطب</span><h3>اطلاعات مشتری</h3></div></div>
+              <input id="bizCustomerId" type="hidden">
+              <label class="biz-field"><span>نام مشتری *</span><input id="bizCustomerName" maxlength="120" required placeholder="نام شخص یا مجموعه"></label>
+              <label class="biz-field"><span>شماره تماس</span><input id="bizCustomerPhone" maxlength="40" inputmode="tel" placeholder="شماره تلفن"></label>
+              <label class="biz-field"><span>ایمیل</span><input id="bizCustomerEmail" maxlength="160" type="email" placeholder="name@example.com"></label>
+              <label class="biz-field"><span>نشانی</span><input id="bizCustomerAddress" maxlength="500" placeholder="نشانی مشتری"></label>
+              <label class="biz-field"><span>یادداشت</span><textarea id="bizCustomerNotes" rows="3" maxlength="1000" placeholder="ترجیحات یا توضیحات مهم"></textarea></label>
+              <div class="biz-catalog-form-actions"><button class="btn-primary" id="bizCustomerSubmit" type="submit">ثبت مشتری</button><button class="btn-secondary" id="bizCustomerCancel" type="button" hidden>لغو ویرایش</button></div>
+              <p class="biz-profile-status" id="bizCustomerStatus" role="status" aria-live="polite">برای شروع، یک پرونده کسب‌وکار انتخاب کن.</p>
+            </form>
+            <section class="biz-catalog-list-panel"><details class="biz-account-card biz-account-disclosure biz-list-disclosure"><summary class="biz-account-disclosure-head"><span><strong>فهرست مشتریان</strong><small>برای مشاهده و مدیریت اطلاعات مشتریان باز کن</small></span><span class="biz-disclosure-indicator" aria-hidden="true">⌄</span></summary><div class="biz-account-disclosure-body"><div id="bizCustomerList" class="biz-crm-list">پس از انتخاب پرونده نمایش داده می‌شود.</div></div></details></section>
+          </div>
+        </section>
+      </section>
+      <section class="biz-tab-panel" id="bizPanelOrders" data-biz-panel="orders" role="tabpanel" aria-labelledby="bizTabOrders" hidden>
+        <section class="biz-crm-workspace">
+          <div class="biz-catalog-heading"><div><span class="biz-eyebrow">ثبت و پیگیری سفارش</span><h2>مدیریت سفارش‌ها</h2><p>ابتدا سفارش را به‌صورت پیش‌نویس بساز؛ با تأیید نهایی، فروش ثبت می‌شود و موجودی محصولات انباردار به‌صورت کنترل‌شده کسر خواهد شد.</p></div></div>
+          <form id="bizOrderForm" class="biz-order-form" novalidate>
+            <div class="biz-order-form-top">
+              <label class="biz-field"><span>مشتری (اختیاری)</span><select id="bizOrderCustomer"><option value="">بدون اتصال به مشتری</option></select></label>
+              <label class="biz-field biz-transaction-date-field"><span>تاریخ شمسی سفارش</span>
+                <div class="biz-persian-date-control">
+                  <input id="bizOrderDateDisplay" type="text" placeholder="انتخاب تاریخ شمسی" readonly aria-label="تاریخ سفارش به شمسی">
+                  <button id="bizOrderCalendarToggle" type="button" aria-label="باز کردن تقویم شمسی سفارش" aria-expanded="false">▦</button>
+                </div>
+                <input id="bizOrderDate" type="hidden">
+                <div id="bizOrderCalendar" class="biz-persian-calendar" hidden>
+                  <div class="biz-persian-calendar-head">
+                    <button id="bizOrderCalendarPrev" type="button" aria-label="ماه قبل">‹</button>
+                    <strong id="bizOrderCalendarMonth"></strong>
+                    <button id="bizOrderCalendarNext" type="button" aria-label="ماه بعد">›</button>
+                  </div>
+                  <div class="biz-persian-calendar-weekdays" aria-hidden="true"><span>ش</span><span>ی</span><span>د</span><span>س</span><span>چ</span><span>پ</span><span>ج</span></div>
+                  <div id="bizOrderCalendarDays" class="biz-persian-calendar-days"></div>
+                </div>
+              </label>
+              <label class="biz-field"><span>یادداشت سفارش</span><input id="bizOrderNotes" maxlength="1200" placeholder="توضیحات یا شرایط تحویل"></label>
+            </div>
+            <div class="biz-order-lines-head"><h3>اقلام سفارش</h3><button id="bizOrderAddLine" type="button" class="btn-secondary">＋ افزودن ردیف</button></div>
+            <div id="bizOrderLines" class="biz-order-lines"></div>
+            <div class="biz-order-submit-row"><strong>جمع کل: <span id="bizOrderTotal">۰ تومان</span></strong><button class="btn-primary" id="bizOrderSubmit" type="submit">ذخیره پیش‌نویس سفارش</button></div>
+            <p class="biz-profile-status" id="bizOrderStatus" role="status" aria-live="polite">پیش‌نویس سفارش موجودی را تغییر نمی‌دهد.</p>
+          </form>
+          <section class="biz-catalog-list-panel"><details class="biz-account-card biz-account-disclosure biz-list-disclosure"><summary class="biz-account-disclosure-head"><span><strong>فهرست سفارش‌ها</strong><small>برای مشاهده وضعیت، تأیید یا لغو سفارش‌ها باز کن</small></span><span class="biz-disclosure-indicator" aria-hidden="true">⌄</span></summary><div class="biz-account-disclosure-body"><div id="bizOrderList" class="biz-crm-list">پس از انتخاب پرونده نمایش داده می‌شود.</div></div></details></section>
+        </section>
+      </section>
+      <section class="biz-tab-panel" id="bizPanelInvoices" data-biz-panel="invoices" role="tabpanel" aria-labelledby="bizTabInvoices" hidden>
+        <section class="biz-crm-workspace biz-invoice-workspace">
+          <div class="biz-catalog-heading"><div><span class="biz-eyebrow">SALES DOCUMENTS</span><h2>پیش‌فاکتور و فاکتور فروش</h2><p>از سفارش ثبت‌شده پیش‌فاکتور بساز؛ فاکتور نهایی پس از تأیید سفارش صادر می‌شود. نسخه چاپی را می‌توانی به PDF ذخیره کنی.</p></div></div>
+          <form id="bizInvoiceForm" class="biz-payment-form biz-invoice-form">
+            <label class="biz-field"><span>سفارش مبنا</span><select id="bizInvoiceOrder" required><option value="">انتخاب سفارش</option></select></label>
+            <label class="biz-field"><span>نوع سند</span><select id="bizInvoiceType"><option value="proforma">پیش‌فاکتور</option><option value="invoice" disabled>فاکتور نهایی (پس از تأیید سفارش)</option></select></label>
+            <div class="biz-invoice-amount-grid">
+              <label class="biz-field"><span>تخفیف (تومان)</span><input id="bizInvoiceDiscount" type="text" inputmode="numeric" placeholder="۰"></label>
+              <label class="biz-field"><span>مالیات (تومان)</span><input id="bizInvoiceTax" type="text" inputmode="numeric" placeholder="۰"></label>
+              <label class="biz-field"><span>هزینه حمل (تومان)</span><input id="bizInvoiceShipping" type="text" inputmode="numeric" placeholder="۰"></label>
+            </div>
+            <label class="biz-field"><span>توضیحات سند (اختیاری)</span><input id="bizInvoiceNotes" type="text" maxlength="1200" placeholder="شرایط پرداخت، تحویل یا توضیحات تکمیلی"></label>
+            <p class="biz-form-note" id="bizInvoiceOrderHint">برای شروع یک سفارش انتخاب کن.</p>
+            <button class="btn-primary" id="bizInvoiceSubmit" type="submit">صدور سند و آماده‌سازی چاپ</button>
+          </form>
+          <p class="biz-profile-status" id="bizInvoiceStatus" role="status" aria-live="polite">پس از انتخاب پرونده، سفارش‌ها و اسناد فروش نمایش داده می‌شوند.</p>
+          <section class="biz-catalog-list-panel"><details class="biz-account-card biz-account-disclosure biz-list-disclosure" open><summary class="biz-account-disclosure-head"><span><strong>فهرست پیش‌فاکتورها و فاکتورها</strong><small>مشاهده وضعیت، مانده، چاپ مجدد و ابطال اسناد بدون حذف سوابق</small></span><span class="biz-disclosure-indicator" aria-hidden="true">⌄</span></summary><div class="biz-account-disclosure-body"><div id="bizInvoiceList" class="biz-crm-list">پس از انتخاب پرونده نمایش داده می‌شود.</div></div></details></section>
+        </section>
+      </section>
+      <section class="biz-tab-panel" id="bizPanelTools" data-biz-panel="tools" role="tabpanel" aria-labelledby="bizTabTools" hidden>
+        <div class="biz-tool-intro">
+      <div><span class="biz-eyebrow">ابزار فعال</span><h2>محاسبه‌گر قیمت تمام‌شده و سود</h2><p>هزینه‌های یک نوبت تولید را وارد کن تا هزینه هر واحد، قیمت فروش پیشنهادی و سود احتمالی محاسبه شود.</p></div>
+      <span class="biz-tool-mark" aria-hidden="true">٪</span>
+    </div>
+
+    <div class="biz-calculator-layout">
+      <form class="biz-calculator-card" id="bizCostForm" data-business-tool-form novalidate>
+        <div class="biz-card-heading"><div><span class="studio-step">مرحله ۱</span><h3>هزینه‌های تولید</h3></div><span class="biz-unit-hint">مبالغ به تومان</span></div>
+        <div class="biz-fields-grid">
+          <label class="biz-field"><span>هزینه مواد اولیه</span><input id="bizMaterials" type="number" min="0" step="any" value="0" inputmode="decimal"></label>
+          <label class="biz-field"><span>هزینه بسته‌بندی</span><input id="bizPackaging" type="number" min="0" step="any" value="0" inputmode="decimal"></label>
+          <label class="biz-field"><span>دستمزد و نیروی کار</span><input id="bizLabor" type="number" min="0" step="any" value="0" inputmode="decimal"></label>
+          <label class="biz-field"><span>هزینه‌های سربار</span><input id="bizOverhead" type="number" min="0" step="any" value="0" inputmode="decimal"></label>
+          <label class="biz-field"><span>حمل‌ونقل و سایر هزینه‌ها</span><input id="bizShipping" type="number" min="0" step="any" value="0" inputmode="decimal"></label>
+          <label class="biz-field"><span>تعداد محصول تولیدشده</span><input id="bizQuantity" type="number" min="1" step="1" value="100" inputmode="numeric" required></label>
+        </div>
+        <div class="biz-form-divider"></div>
+        <div class="biz-card-heading"><div><span class="studio-step">مرحله ۲</span><h3>هدف قیمت‌گذاری</h3></div></div>
+        <div class="biz-fields-grid biz-fields-compact">
+          <label class="biz-field"><span>حاشیه سود هدف (درصد)</span><input id="bizMargin" type="number" min="0" max="99.9" step="0.1" value="30" inputmode="decimal"></label>
+          <label class="biz-field"><span>تعداد واحدی که انتظار فروش داری</span><input id="bizSalesQuantity" type="number" min="0" step="1" value="100" inputmode="numeric"></label>
+        </div>
+        <p class="biz-form-note">حاشیه سود با درصدی از قیمت فروش محاسبه می‌شود، نه درصدی از هزینه تولید. مالیات، کارمزد فروش و تخفیف را فعلاً در هزینه‌ها وارد کن تا در محاسبه لحاظ شوند.</p>
+        <button class="btn-primary biz-calculate-button" type="submit">محاسبه قیمت و سود</button>
+        <p class="biz-validation" id="bizCostStatus" role="status" aria-live="polite"></p>
+      </form>
+
+      <aside class="biz-results-card" aria-live="polite">
+        <div class="biz-results-head"><div><span class="studio-step">نتیجه محاسبه</span><h3>گزارش مالی تولید</h3></div><span class="biz-live-indicator">محاسبه‌گر فعال</span></div>
+        <div class="biz-primary-result"><span>قیمت فروش پیشنهادی هر واحد</span><strong id="bizSuggestedPrice">—</strong><small>بر اساس حاشیه سود هدف</small></div>
+        <details class="biz-results-disclosure"><summary>جزئیات محاسبه قیمت و سود <span class="biz-disclosure-indicator" aria-hidden="true">⌄</span></summary><div class="biz-result-list">
+          <div><span>کل هزینه تولید</span><strong id="bizTotalCost">—</strong></div>
+          <div><span>هزینه تمام‌شده هر واحد</span><strong id="bizUnitCost">—</strong></div>
+          <div><span>سود هر واحد</span><strong id="bizUnitProfit">—</strong></div>
+          <div><span>سود کل با فروش مورد انتظار</span><strong id="bizTotalProfit">—</strong></div>
+          <div><span>درآمد کل فروش مورد انتظار</span><strong id="bizExpectedRevenue">—</strong></div>
+        </div></details>
+        <div class="biz-result-footer"><p id="bizCalculationSummary">برای دیدن گزارش، هزینه‌ها و تعداد تولید را وارد کن.</p><div class="biz-result-actions"><button type="button" class="btn-secondary" id="bizCopyResult" disabled>کپی گزارش</button><button type="button" class="btn-primary" id="bizSaveFinancialRecord" disabled>ذخیره گزارش در پرونده</button></div></div>
+      </aside>
+    </div>
+
+    <section class="biz-extra-tools" aria-labelledby="bizExtraToolsTitle">
+      <div class="biz-extra-heading">
+        <div><span class="biz-eyebrow">ابزارهای مالی تکمیلی</span><h2 id="bizExtraToolsTitle">تصویر دقیق‌تری از وضعیت مالی کسب‌وکارت</h2><p>دو ابزار مستقل برای تصمیم‌گیری درباره فروش، هزینه و جریان مالی ماهانه.</p></div>
+      </div>
+      <div class="biz-secondary-tool-grid">
+        <section class="biz-secondary-card" aria-labelledby="bizBreakEvenTitle">
+          <div class="biz-secondary-head"><div><span class="studio-step">ابزار مالی ۰۲</span><h3 id="bizBreakEvenTitle">محاسبه نقطه سربه‌سر</h3><p>مشخص کن حداقل چند واحد باید بفروشی تا هزینه‌هایت پوشش داده شوند.</p></div><span class="biz-tool-mini-mark">◎</span></div>
+          <form id="bizBreakEvenForm" data-business-tool-form novalidate>
+            <div class="biz-fields-grid">
+              <label class="biz-field"><span>هزینه ثابت دوره (تومان)</span><input id="bizBreakEvenFixed" type="number" min="0" step="any" value="0" inputmode="decimal"></label>
+              <label class="biz-field"><span>هزینه متغیر هر واحد (تومان)</span><input id="bizBreakEvenVariable" type="number" min="0" step="any" value="0" inputmode="decimal"></label>
+              <label class="biz-field"><span>قیمت فروش هر واحد (تومان)</span><input id="bizBreakEvenPrice" type="number" min="0" step="any" value="0" inputmode="decimal"></label>
+              <label class="biz-field"><span>سود هدف در دوره (تومان)</span><input id="bizBreakEvenTarget" type="number" min="0" step="any" value="0" inputmode="decimal"></label>
+            </div>
+            <button class="btn-primary biz-secondary-submit" type="submit">محاسبه نقطه سربه‌سر</button>
+            <p class="biz-validation" id="bizBreakEvenStatus" role="status" aria-live="polite">هزینه ثابت، هزینه متغیر و قیمت فروش را وارد کن.</p>
+          </form>
+          <details class="biz-results-disclosure"><summary>جزئیات نتیجه نقطه سربه‌سر <span class="biz-disclosure-indicator" aria-hidden="true">⌄</span></summary><div class="biz-secondary-results" aria-live="polite">
+            <div><span>حداقل فروش برای سربه‌سر</span><strong id="bizBreakEvenUnits">—</strong></div>
+            <div><span>درآمد متناظر با نقطه سربه‌سر</span><strong id="bizBreakEvenRevenue">—</strong></div>
+            <div><span>تعداد فروش برای رسیدن به سود هدف</span><strong id="bizTargetUnits">—</strong></div>
+          </div></details>
+          <p class="biz-secondary-note">فرض محاسبه: قیمت و هزینه متغیر هر واحد ثابت است و هزینه ثابت مربوط به یک دوره مشخص است.</p>
+        </section>
+
+        <section class="biz-secondary-card" aria-labelledby="bizBudgetTitle">
+          <div class="biz-secondary-head"><div><span class="studio-step">ابزار مالی ۰۳</span><h3 id="bizBudgetTitle">برنامه‌ریز بودجه ماهانه</h3><p>درآمد و هزینه‌های پیش‌بینی‌شده را کنار هم بگذار و مانده عملیاتی را ببین.</p></div><span class="biz-tool-mini-mark">▤</span></div>
+          <form id="bizBudgetForm" data-business-tool-form novalidate>
+            <div class="biz-fields-grid">
+              <label class="biz-field"><span>درآمد یا فروش پیش‌بینی‌شده</span><input id="bizBudgetRevenue" type="number" min="0" step="any" value="0" inputmode="decimal"></label>
+              <label class="biz-field"><span>هزینه مستقیم کالا/خدمات</span><input id="bizBudgetDirect" type="number" min="0" step="any" value="0" inputmode="decimal"></label>
+              <label class="biz-field"><span>هزینه‌های ثابت</span><input id="bizBudgetFixed" type="number" min="0" step="any" value="0" inputmode="decimal"></label>
+              <label class="biz-field"><span>حقوق و دستمزد</span><input id="bizBudgetPayroll" type="number" min="0" step="any" value="0" inputmode="decimal"></label>
+              <label class="biz-field"><span>بازاریابی و تبلیغات</span><input id="bizBudgetMarketing" type="number" min="0" step="any" value="0" inputmode="decimal"></label>
+              <label class="biz-field"><span>سایر هزینه‌ها</span><input id="bizBudgetOther" type="number" min="0" step="any" value="0" inputmode="decimal"></label>
+              <label class="biz-field"><span>درصد ذخیره از مازاد (٪)</span><input id="bizBudgetReserve" type="number" min="0" max="100" step="0.1" value="10" inputmode="decimal"></label>
+            </div>
+            <button class="btn-primary biz-secondary-submit" type="submit">محاسبه بودجه ماهانه</button>
+            <p class="biz-validation" id="bizBudgetStatus" role="status" aria-live="polite">مبالغ ماهانه را وارد کن تا بودجه محاسبه شود.</p>
+          </form>
+          <details class="biz-results-disclosure"><summary>جزئیات نتیجه بودجه ماهانه <span class="biz-disclosure-indicator" aria-hidden="true">⌄</span></summary><div class="biz-secondary-results" aria-live="polite">
+            <div><span>مجموع هزینه‌های ماهانه</span><strong id="bizBudgetExpenses">—</strong></div>
+            <div><span>مازاد / کسری عملیاتی</span><strong id="bizBudgetOperatingProfit">—</strong></div>
+            <div><span>مبلغ ذخیره پیشنهادی</span><strong id="bizBudgetReserveAmount">—</strong></div>
+            <div><span>مانده پس از ذخیره</span><strong id="bizBudgetNet">—</strong></div>
+            <div><span>حاشیه عملیاتی</span><strong id="bizBudgetMargin">—</strong></div>
+          </div></details>
+          <p class="biz-secondary-note">این برنامه‌ریز، بودجه پیش‌بینی‌شده است؛ مالیات، بهره و جریان نقد واقعی فقط در صورت ثبت جداگانه لحاظ می‌شوند.</p>
+        </section>
+      </div>
+    </section>
+    <p class="biz-roadmap-note">ابزارهای مالی پایه اکنون شامل قیمت‌گذاری، نقطه سربه‌سر و بودجه ماهانه هستند. مدیریت فروش، موجودی و ذخیره امن سوابق کسب‌وکار در مراحل بعدی توسعه می‌یابند.</p>
+      </section>
+      <section class="biz-tab-panel" id="bizPanelReports" data-biz-panel="reports" role="tabpanel" aria-labelledby="bizTabReports" hidden>
+        <details class="biz-account-card biz-account-disclosure biz-list-disclosure"><summary class="biz-account-disclosure-head"><span><strong>گزارش‌ها و سوابق ذخیره‌شده</strong><small>برای مشاهده گزارش‌های مالی این پرونده باز کن</small></span><span class="biz-disclosure-indicator" aria-hidden="true">⌄</span></summary><div class="biz-account-disclosure-body"><div class="biz-profile-recent" id="bizProfileRecent" aria-live="polite">سوابق مالی ذخیره‌شده پس از انتخاب پرونده اینجا نمایش داده می‌شوند.</div></div></details>
+        <section class="biz-financial-export" aria-labelledby="bizFinancialExportTitle">
+          <div class="biz-financial-export-heading">
+            <div><h4 id="bizFinancialExportTitle">خروجی گزارش مالی</h4><p>گزارش رسمی ماهانه یا سالانه پرونده را دریافت کن.</p></div>
+            <span aria-hidden="true">⇩</span>
+          </div>
+          <div class="biz-financial-export-period">
+            <label class="biz-dashboard-filter-field">سال گزارش<select id="bizExportYear"></select></label>
+            <label class="biz-dashboard-filter-field" id="bizExportMonthField">ماه گزارش<select id="bizExportMonth"></select></label>
+          </div>
+          <div class="biz-financial-export-actions">
+            <div class="biz-financial-export-group">
+              <strong>گزارش ماهانه</strong>
+              <button type="button" data-business-export="month" data-format="pdf">دریافت PDF ماهانه</button>
+              <button type="button" data-business-export="month" data-format="xlsx">دریافت Excel ماهانه</button>
+            </div>
+            <div class="biz-financial-export-group">
+              <strong>گزارش سالانه</strong>
+              <button type="button" data-business-export="year" data-format="pdf">دریافت PDF سالانه</button>
+              <button type="button" data-business-export="year" data-format="xlsx">دریافت Excel سالانه</button>
+            </div>
+          </div>
+          <p id="bizFinancialExportStatus" class="biz-dashboard-filter-status" role="status" aria-live="polite">گزارش‌ها بر اساس تراکنش‌های ثبت‌شده در پرونده فعال ساخته می‌شوند.</p>
+        </section>
+      </section>
+      <section class="biz-tab-panel" id="bizPanelAdvisor" data-biz-panel="advisor" role="tabpanel" aria-labelledby="bizTabAdvisor" hidden>
+        <section class="biz-navi-advisor" aria-labelledby="bizNaviAdvisorTitle">
+        <div>
+          <span class="biz-eyebrow">NAVI BUSINESS ADVISOR</span>
+          <h3 id="bizNaviAdvisorTitle">مشاور هوشمند کسب‌وکار</h3>
+          <p>ناوی می‌تواند با بررسی اطلاعات پرونده فعال و گزارش‌های مالی ذخیره‌شده، به پرسش‌هایت پاسخ بدهد.</p>
+        </div>
+        <label class="biz-field" for="bizNaviQuestion"><span>پرسش از ناوی</span>
+          <textarea id="bizNaviQuestion" rows="3" maxlength="3000" placeholder="مثلاً وضعیت مالی فروشگاهم را بر اساس گزارش‌های ثبت‌شده تحلیل کن و بگو چه چیزهایی نیاز به توجه دارد."></textarea>
+        </label>
+        <button class="btn-primary" id="bizNaviAskButton" type="button">تحلیل پرونده با NAVI</button>
+        <div class="biz-navi-advisor-output" id="bizNaviAdvisorOutput" role="status" aria-live="polite">پاسخ ناوی پس از ارسال پرسش در این قسمت نمایش داده می‌شود.</div>
+      </section>
+        <div class="biz-advisor-layout">
+      <div class="biz-advisor-copy"><span class="studio-step">مشاور هوشمند</span><h2>تحلیل کسب‌وکار با NAVI</h2><p>بعد از محاسبه، می‌توانی مسئله کسب‌وکارت را برای تحلیل، برنامه‌ریزی یا بررسی راهکارها به NAVI بسپاری.</p></div>
+      <form class="studio-brief-card biz-advisor-form">
+        <label for="studioTask-biz">نوع مسئله یا ابزار</label>
+        <select id="studioTask-biz" class="studio-control">
+          <option>تحلیل نتیجه محاسبه و قیمت‌گذاری</option><option>ایده‌پردازی و برنامه‌ریزی</option><option>بررسی امکان‌پذیری کسب‌وکار</option><option>برنامه فروش و توسعه</option><option>بازبینی و بهبود فرایند</option>
+        </select>
+        <label for="studioAudience-biz">نوع کسب‌وکار یا مخاطب</label>
+        <input id="studioAudience-biz" class="studio-control" type="text" maxlength="180" placeholder="مثلاً تولید خانگی، فروشگاه یا شرکت کوچک">
+        <label for="studioBrief-biz">شرح درخواست و جزئیات</label>
+        <textarea id="studioBrief-biz" class="studio-control studio-brief-input" maxlength="3000" placeholder="مسئله، هدف، محدودیت‌ها و نتیجه مورد انتظار را بنویس"></textarea>
+        <div class="studio-brief-actions"><button class="btn-primary" type="submit">بررسی با NAVI</button><button class="btn-secondary" type="reset">پاک کردن فرم</button></div>
+      </form>
+      <aside class="studio-output-card biz-advisor-output">
+        <span class="studio-step">فضای مشاوره</span><h3>پاسخ NAVI</h3>
+        <div class="studio-output-placeholder"><span aria-hidden="true">✦</span><strong>تحلیل و پیشنهادهای اجرایی</strong><p>پس از ارسال درخواست، پاسخ NAVI در این قسمت نمایش داده می‌شود.</p></div>
+      </aside>
+    </div>
+      </section>
+    </div>
+
+  </div>
+</section>
+<section class="page nava-studio-page" id="musicPage">
+    <div class="studio-workspace">
+      <div class="studio-workspace-head"><div><span class="studio-kicker">NAVA WORKSPACE / STUDIO</span><h1>استودیوی موسیقی نوا</h1><p>فضای پایه استودیوی موسیقی؛ ابزار تولید و پردازش تخصصی در مرحله توسعه قرار دارد.</p></div><button class="btn-secondary" type="button" onclick="showPage('homePage')">بازگشت به استودیوها</button></div>
+    </div>
+    <div class="coming-card">
+      <div class="coming-card-inner">
+        <div class="coming-icon">♫</div>
+        <h1>استودیوی موسیقی نوا</h1>
+        <p>
+          این بخش در حال توسعه است.<br>
+          به‌زودی مسیر تازه‌ای برای خلق موسیقی و تجربه‌های صوتی در نوا فعال خواهد شد.
+        </p>
+        <div class="coming-actions">
+          <button class="btn-secondary" onclick="showPage('homePage')">
+            بازگشت به صفحه اصلی
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+
+<div class="navi-assistant-widget" id="naviAssistantWidget">
+  <button class="navi-widget-toggle" id="naviWidgetToggle" type="button"
+    aria-expanded="false" aria-controls="naviWidgetPanel" aria-label="باز کردن گفت‌وگو با ناوی">
+    <span class="navi-widget-orb" aria-hidden="true"><span class="navi-widget-orb-core"></span></span>
+    <span class="navi-widget-toggle-copy"><strong>گفت‌وگو با ناوی</strong><small>همراه هوشمند نوا</small></span>
+    <span class="navi-widget-live-dot" aria-hidden="true"></span>
+  </button>
+  <div class="navi-welcome-bubble" id="naviWelcomeBubble" role="status" aria-live="polite" hidden>
+    <button class="navi-welcome-bubble-close" id="naviWelcomeBubbleClose" type="button" aria-label="بستن پیام خوش‌آمد">×</button>
+    <span class="navi-welcome-bubble-label">NAVI <span aria-hidden="true">✦</span></span>
+    <p id="naviWelcomeBubbleText"></p>
+  </div>
+
+  <section class="navi-widget-panel" id="naviWidgetPanel" aria-label="پنجره گفت‌وگو با ناوی" hidden>
+    <div class="navi-widget-panel-head">
+      <div class="navi-widget-identity">
+        <span><strong>NAVI</strong><small>همراه هوشمند نوا</small></span>
+      </div>
+      <button class="navi-widget-close" id="naviWidgetClose" type="button" aria-label="بستن پنجره ناوی">×</button>
+    </div>
+    <div class="navi-assistant-context" id="naviAssistantContext" hidden>
+      <div class="navi-assistant-context-copy"><span>زمینه فعال</span><strong id="naviAssistantContextTitle"></strong><p id="naviAssistantContextSummary"></p></div>
+      <button type="button" id="naviAssistantContextClear" aria-label="پاک کردن زمینه گفتگو">×</button>
+    </div>
+    <div class="request-panel" id="requestSection">
+      <div class="request-content">
+        <h2>با ناوی صحبت کن</h2>
+        <p>
+          من ناوی هستم؛ مسیریاب ایده‌های نوا.
+          موضوعت را انتخاب کن و درخواستت را بنویس تا با هم آن را بررسی کنیم.
+        </p>
+
+        <div class="navi-auth-panel" id="naviLoginPanel">
+          <div class="navi-auth-heading"><h3>حساب کاربری نوا</h3><button class="navi-login-panel-close" id="naviLoginPanelClose" type="button" aria-label="بستن پنجره ناوی">×</button></div>
+          <p>برای ورود به فضای شخصی نوا وارد حساب شو؛ اگر حساب نداری، از بخش عضویت درخواستت را ثبت کن.</p>
+          <div class="navi-auth-tabs" role="tablist" aria-label="ورود یا عضویت">
+            <button class="navi-auth-tab is-active" id="naviLoginTab" type="button" role="tab" aria-selected="true" aria-controls="naviLoginTabPanel">ورود</button>
+            <button class="navi-auth-tab" id="naviRegisterTab" type="button" role="tab" aria-selected="false" aria-controls="naviRegisterTabPanel">عضویت</button>
+          </div>
+          <section class="navi-auth-tab-panel" id="naviLoginTabPanel" role="tabpanel" aria-labelledby="naviLoginTab">
+            <form id="naviLoginForm">
+              <label class="field-label" for="naviUsername">نام کاربری</label>
+              <input class="navi-password" id="naviUsername" type="text" placeholder="نام کاربری حساب" autocomplete="username" autocapitalize="none">
+              <label class="field-label" for="naviPassword">رمز عبور</label>
+              <input class="navi-password" id="naviPassword" type="password" placeholder="رمز عبور" autocomplete="current-password" required>
+              <button class="btn-primary" id="naviLoginButton" type="submit">ورود به ناوی</button>
+            </form>
+            <div class="navi-auth-error" id="naviLoginError" role="alert"></div>
+          </section>
+          <section class="navi-auth-tab-panel" id="naviRegisterTabPanel" role="tabpanel" aria-labelledby="naviRegisterTab" hidden>
+            <p class="navi-memory-description">درخواست عضویت پس از ثبت بررسی می‌شود. زمان معمول رسیدگی تا حدود یک ساعت است و حساب پس از تأیید مالک فعال خواهد شد.</p>
+            <form id="naviRegistrationForm">
+              <label class="field-label" for="naviRegisterDisplayName">نام نمایشی</label>
+              <input class="navi-password" id="naviRegisterDisplayName" type="text" minlength="2" maxlength="80" autocomplete="name" required>
+              <label class="field-label" for="naviRegisterUsername">نام کاربری انگلیسی</label>
+              <input class="navi-password" id="naviRegisterUsername" type="text" minlength="3" maxlength="40" autocomplete="username" autocapitalize="none" required>
+              <label class="field-label" for="naviRegisterPassword">رمز عبور (حداقل ۱۲ نویسه)</label>
+              <input class="navi-password" id="naviRegisterPassword" type="password" minlength="12" maxlength="256" autocomplete="new-password" required>
+              <label class="field-label" for="naviRegisterPasswordConfirm">تکرار رمز عبور</label>
+              <input class="navi-password" id="naviRegisterPasswordConfirm" type="password" minlength="12" maxlength="256" autocomplete="new-password" required>
+              <button class="btn-primary" type="submit">ارسال درخواست عضویت</button>
+            </form>
+            <div class="navi-auth-error" id="naviRegistrationStatus" role="status" aria-live="polite"></div>
+          </section>
+        </div>
+
+        <div class="navi-chat-area" id="naviChatArea" hidden>
+          <section class="navi-account-dashboard" aria-label="نمای کلی فضای کاری">
+            <div class="navi-dashboard-topline"><span class="navi-dashboard-kicker">NAVA WORKSPACE</span><span class="navi-dashboard-secure"><span aria-hidden="true">●</span> فضای امن و شخصی</span></div>
+            <h2 id="naviDashboardGreeting">سلام، خوش آمدی</h2>
+            <p class="navi-dashboard-intro">پروژه‌ها و گفت‌وگوهایت را از همین‌جا مدیریت کن.</p>
+            <div class="navi-dashboard-project"><span class="navi-dashboard-project-icon" aria-hidden="true">✦</span><span class="navi-dashboard-project-copy"><small>پروژه فعال</small><strong id="naviDashboardProjectName">عمومی</strong></span><button id="naviDashboardOpenProjects" type="button">مدیریت پروژه‌ها <span aria-hidden="true">←</span></button></div>
+            <div class="navi-dashboard-stats" aria-label="خلاصه فضای کاری"><div><strong id="naviDashboardThreadCount">۰</strong><span>گفت‌وگو</span></div><div><strong id="naviDashboardProjectCount">۰</strong><span>پروژه</span></div><div><strong>فعال</strong><span>وضعیت حساب</span></div></div>
+            <div class="navi-dashboard-actions"><button class="navi-dashboard-primary" id="naviDashboardNewChat" type="button"><span aria-hidden="true">＋</span> شروع گفت‌وگوی تازه</button><span class="navi-dashboard-hint">برای شروع، ایده‌ات را با ناوی مطرح کن.</span></div>
+          </section>
+          <div class="navi-chat-toolbar">
+            <span class="navi-status" id="naviLoginStatus">نشست امن ناوی فعال است.</span><span class="navi-user-display" id="naviUserDisplay" aria-live="polite"></span>
+            <button class="navi-logout" id="naviLogout" type="button">خروج از ناوی</button>
+          </div>
+
+          <nav class="navi-workspace-tabs" id="naviWorkspaceTabs" role="tablist" aria-label="بخش‌های پنل ناوی">
+            <button class="navi-workspace-tab is-active" type="button" data-navi-tab="chat" role="tab" aria-controls="naviPanelChat" aria-selected="true">
+              <span aria-hidden="true">✦</span><span>گفت‌وگو</span>
+            </button>
+            <button class="navi-workspace-tab" type="button" data-navi-tab="projects" role="tab" aria-controls="naviPanelProjects" aria-selected="false">
+              <span aria-hidden="true">▦</span><span>پروژه‌ها</span>
+            </button>
+            <button class="navi-workspace-tab" type="button" data-navi-tab="memory" role="tab" aria-controls="naviPanelMemory" aria-selected="false">
+              <span aria-hidden="true">◈</span><span>حافظه</span>
+            </button>
+            <button class="navi-workspace-tab" id="naviOwnerTab" type="button" data-navi-tab="users" role="tab" aria-controls="naviPanelUsers" aria-selected="false" hidden>
+              <span aria-hidden="true">♙</span><span>مدیریت کاربران</span>
+            </button>
+          </nav>
+
+          <section id="naviPanelChat" class="navi-workspace-panel is-active" data-navi-panel="chat" role="tabpanel" aria-label="گفت‌وگو با ناوی">
+          <div class="navi-thread-toolbar">
+            <div class="navi-thread-toolbar-actions">
+              <button class="navi-new-thread" id="naviNewThread" type="button">＋ گفت‌وگوی جدید</button>
+              <button class="navi-delete-thread-current" id="naviDeleteThread" type="button" disabled>حذف گفت‌وگو</button>
+            </div>
+          </div>
+          <div class="navi-thread-list" id="naviThreadList" aria-label="فهرست گفت‌وگوها"></div>
+          <button class="navi-memory-toggle" id="naviHistoryToggle"
+            type="button" aria-expanded="false" aria-controls="naviHistoryContent">
+            <span>💬 گفت‌وگوهای قبلی با ناوی</span>
+            <span class="navi-memory-arrow" aria-hidden="true">⌄</span>
+          </button>
+          <div class="navi-memory-content" id="naviHistoryContent" hidden>
+            <div class="navi-history-count" id="naviHistoryCount">در حال بارگذاری...</div>
+            <div class="navi-history-list" id="naviHistoryList" aria-live="polite">
+              <div class="navi-history-empty">در حال دریافت تاریخچه گفت‌وگو...</div>
+            </div>
+            <div class="navi-history-actions">
+              <button class="navi-history-refresh" id="naviHistoryRefresh" type="button">تازه‌سازی تاریخچه</button>
+            </div>
+          </div>
+          <label class="field-label" for="serviceSelect">موضوع درخواست</label>
+          <select class="request-select" id="serviceSelect">
+            <option value="انتخاب نشده">انتخاب موضوع</option>
+            <option value="طراحی لوگو">طراحی لوگو</option>
+            <option value="برندینگ">برندینگ</option>
+            <option value="تولید محتوا">تولید محتوا</option>
+            <option value="مقاله و وبلاگ">مقاله و وبلاگ</option>
+            <option value="کارهای اداری و آفیس">کارهای اداری و آفیس</option>
+            <option value="تولید موسیقی">تولید موسیقی</option>
+            <option value="آهنگ‌سازی و نت‌نویسی">آهنگ‌سازی و نت‌نویسی</option>
+            <option value="ویدئو و صدا">ویدئو و صدا</option>
+            <option value="استوری‌ساز">استوری‌ساز</option>
+            <option value="سئو">سئو</option>
+            <option value="تبلیغات">تبلیغات</option>
+            <option value="ابزارهای کسب‌وکار">ابزارهای کسب‌وکار</option>
+            <option value="ایده‌پردازی">ایده‌پردازی</option>
+            <option value="سایر موارد">سایر موارد</option>
+          </select>
+
+          <label class="field-label" for="userRequest">پیامت برای ناوی</label>
+          <div class="navi-composer">
+            <textarea class="request-textarea" id="userRequest"
+              placeholder="سلام ناوی، می‌خواهم برای کسب‌وکارم یک ایده تازه پیدا کنم..."></textarea>
+            <label class="navi-composer-memory" for="naviSaveComposerMessage">
+              <input type="checkbox" id="naviSaveComposerMessage">
+              <span>ذخیره این پیام در پروفایل اطلاعاتی</span>
+            </label>
+          </div>
+          <div class="navi-send-toolbar">
+            <button class="btn-primary" id="sendRequest" type="button">ارسال پیام به ناوی</button>
+          </div>
+          <div class="navi-status" id="naviStatus">ناوی آماده گفت‌وگو با توست.</div>
+          <textarea class="response-box" id="requestResponse" aria-live="polite" aria-label="پاسخ ناوی" readonly rows="8" spellcheck="false"></textarea>
+          <div class="response-actions">
+            <button class="response-select-button" id="selectNaviResponse" type="button" aria-controls="requestResponse">انتخاب متن پاسخ</button>
+          </div>
+          </section>
+          <section id="naviPanelProjects" class="navi-workspace-panel" data-navi-panel="projects" role="tabpanel" aria-label="پروژه‌ها و تاریخچه" hidden>
+          <section class="navi-memory-panel" id="naviHistoryPanel">
+            <div class="navi-project-toolbar">
+              <label for="naviProjectSelect">پروژه فعال</label>
+              <select id="naviProjectSelect" aria-label="انتخاب پروژه"><option value="project-general">عمومی</option></select>
+              <div class="navi-project-create-row">
+                <input id="naviNewProjectName" type="text" maxlength="60" placeholder="نام پروژه جدید" aria-label="نام پروژه جدید">
+                <button id="naviCreateProject" type="button">＋ ساخت پروژه</button>
+              </div>
+              <div class="navi-project-delete-row">
+                <button id="naviDeleteProject" class="navi-delete-project" type="button" disabled>حذف پروژه انتخاب‌شده</button>
+              </div>
+              <div id="naviProjectStatus" class="navi-project-status" role="status" aria-live="polite"></div>
+            </div>
+          </section>
+          </section>
+          <section id="naviPanelMemory" class="navi-workspace-panel" data-navi-panel="memory" role="tabpanel" aria-label="حافظه ناوی" hidden>
+          <section class="navi-memory-panel" id="naviMemoryPanel">
+            <button class="navi-memory-toggle" id="naviMemoryToggle"
+              type="button" aria-expanded="false" aria-controls="naviMemoryContent">
+              <span>🧠 پروفایل اطلاعات من</span>
+              <span class="navi-memory-arrow" aria-hidden="true">⌄</span>
+            </button>
+
+            <div class="navi-memory-content" id="naviMemoryContent" hidden>
+              <p class="navi-memory-description">
+                اطلاعات، علایق و ترجیحاتی که ناوی از گفتگوهای ما یاد گرفته و برای شناخت بهتر شما و ارائه پاسخ‌های دقیق‌تر نگهداری می‌کند. در این بخش می‌توانید اطلاعات ذخیره‌شده را مشاهده، ویرایش یا حذف کنید.
+              </p>
+
+              <div class="navi-memory-toolbar">
+                <span class="navi-memory-status" id="naviMemoryStatus">
+                  برای دریافت اطلاعات پروفایل، دکمه تازه‌سازی را بزن.
+                </span>
+                <button class="navi-memory-refresh" id="naviMemoryRefresh" type="button">
+                  تازه‌سازی اطلاعات
+                </button>
+              </div>
+
+              <div class="navi-memory-error" id="naviMemoryError" role="alert"></div>
+
+              <section class="navi-memory-accordion">
+                <button class="navi-memory-accordion-toggle" type="button" aria-expanded="false" aria-controls="naviMemoryApprovedContent" data-navi-memory-section-toggle><span>اطلاعات تأییدشده پروفایل</span><span class="navi-memory-accordion-side"><span class="navi-memory-count" id="naviApprovedMemoryCount">۰</span><span class="navi-memory-arrow" aria-hidden="true">⌄</span></span></button>
+                <div class="navi-memory-accordion-content" id="naviMemoryApprovedContent" hidden><div class="navi-memory-list" id="naviMemoryList" aria-live="polite"><div class="navi-memory-empty">هنوز اطلاعاتی بارگذاری نشده است.</div></div></div>
+              </section>
+              <section class="navi-memory-accordion">
+                <button class="navi-memory-accordion-toggle" type="button" aria-expanded="false" aria-controls="naviMemoryArchivedContent" data-navi-memory-section-toggle><span>سوابق آرشیوشده</span><span class="navi-memory-accordion-side"><span class="navi-memory-count" id="naviArchivedMemoryCount">۰</span><span class="navi-memory-arrow" aria-hidden="true">⌄</span></span></button>
+                <div class="navi-memory-accordion-content" id="naviMemoryArchivedContent" hidden><p class="navi-memory-description">موارد ردشده یا جایگزین‌شده فقط برای بررسی سابقه نمایش داده می‌شوند و در پاسخ‌های ناوی به‌عنوان حافظه فعال استفاده نمی‌شوند.</p><div class="navi-memory-list" id="naviMemoryArchivedList" aria-live="polite"><div class="navi-memory-empty">سوابق آرشیوشده بارگذاری نشده‌اند.</div></div></div>
+              </section>
+            </div>
+          </section>
+          </section>
+          <section id="naviPanelUsers" class="navi-workspace-panel" data-navi-panel="users" role="tabpanel" aria-label="مدیریت کاربران" hidden>
+          <section class="navi-memory-panel" id="naviAccountAdmin" hidden>
+            <h3>مدیریت عضویت و حساب‌ها</h3>
+            <p class="navi-memory-description">درخواست‌های عضویت فقط با تأیید مالک فعال می‌شوند. ساخت حساب دعوتی مستقیم نیز در اختیار مالک باقی می‌ماند.</p>
+            <form id="naviCreateUserForm">
+              <label class="field-label" for="naviNewDisplayName">نام نمایشی</label>
+              <input class="navi-password" id="naviNewDisplayName" type="text" maxlength="80" required>
+              <label class="field-label" for="naviNewUsername">نام کاربری انگلیسی</label>
+              <input class="navi-password" id="naviNewUsername" type="text" minlength="3" maxlength="40" autocomplete="off" required>
+              <label class="field-label" for="naviNewPassword">رمز عبور اولیه (حداقل ۱۲ نویسه)</label>
+              <input class="navi-password" id="naviNewPassword" type="password" minlength="12" maxlength="256" autocomplete="new-password" required>
+              <button class="btn-primary" id="naviCreateUserButton" type="submit">ساخت حساب</button>
+            </form>
+            <div class="navi-auth-error" id="naviCreateUserStatus" role="status" aria-live="polite"></div>
+            <div class="navi-users-toolbar">
+              <strong>حساب‌های ثبت‌شده</strong>
+              <button class="navi-users-refresh" id="naviUsersRefresh" type="button">تازه‌سازی</button>
+            </div>
+            <div class="navi-users-status" id="naviUsersStatus" aria-live="polite">برای مشاهده فهرست، کمی صبر کن.</div>
+            <div class="navi-users-list" id="naviUsersList"></div>
+          </section>
+          </section>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<footer>
+  <div class="container">
+    <strong>NAVA</strong>
+    <p>استودیوی هوشمند خلاقیت و رشد</p>
+    <p>Create. Design. Grow.</p>
+    <p>One Vision. One Mission. One NAVA.</p>
+  </div>
+</footer>
+
+  <script src="nava-dialogs.js?v=nava-branded-dialogs-20261116-2" defer></script>
+  <script src="brand-content-studios.js?v=business-form-routing-fix-20261116-2" defer></script>
+  <script src="business-tools.js?v=business-suite-20261115-2" defer></script>
+  <script src="business-workspace.js?v=nava-branded-dialogs-20261116-2" defer></script>
+  <script src="business-catalog-ui.js?v=nava-branded-dialogs-20261116-2" defer></script>
+  <script src="business-inventory-ui.js?v=inventory-persian-calendar-fix-20261116-3" defer></script>
+  <script src="business-crm-ui.js?v=order-confirm-dialog-fix-20261116-1" defer></script>
+  <script src="business-transactions-ui.js?v=supplier-linked-expenses-20261116-1" defer></script>
+  <script src="business-payments-ui.js?v=receipt-cash-account-20261116-1" defer></script>
+  <script src="business-invoices-ui.js?v=invoice-order-refresh-fix-20261116-1" defer></script>
+  <script src="business-ledger-ui.js?v=integrated-supplier-purchases-20261116-1" defer></script>
+  <script src="business-financial-export.js?v=financial-export-daynight-20261116-1" defer></script>
+  <script src="business-tabs.js?v=customer-accounts-20261116-1" defer></script>
+  <script src="document-export.js?v=studio-response-select-20261115-1" defer></script>
+  <link rel="stylesheet" href="office-file-tools.css?v=office-persian-ocr-20261115-1">
+  <script src="office-structured-files.js?v=office-pptx-xlsx-20261115-1" defer></script>
+  <script src="office-file-tools.js?v=office-pptx-xlsx-20261115-1" defer></script>
+</body>
+</html>
+
+test("number parser accepts Persian and Arabic digits and localized separators", async () => {
   const api = await loadCalculations();
-  const result = api.calculateCost({
-    materials: 1000000, packaging: 200000, labor: 300000, overhead: 100000, shipping: 100000,
-    quantity: 100, margin: 30, salesQuantity: 100
-  });
-  assert.equal(result.totalCost, 1700000);
-  assert.equal(result.unitCost, 17000);
-  assert.ok(Math.abs(result.suggestedPrice - 24285.7142857) < 0.001);
-  assert.equal(result.sold, 100);
-  assert.ok(Math.abs(result.totalProfit - 728571.4285) < 0.01);
-});
-
-test("cost calculator caps calculated sales at produced quantity", async () => {
-  const api = await loadCalculations();
-  const result = api.calculateCost({
-    materials: 100, packaging: 0, labor: 0, overhead: 0, shipping: 0,
-    quantity: 2, margin: 20, salesQuantity: 5
-  });
-  assert.equal(result.sold, 2);
-  assert.equal(result.unsold, true);
-});
-
-test("break-even calculator returns units and revenue including target profit", async () => {
-  const api = await loadCalculations();
-  const result = api.calculateBreakEven({ fixed: 1000000, variable: 6000, price: 10000, targetProfit: 500000 });
-  assert.equal(result.contribution, 4000);
-  assert.equal(result.units, 250);
-  assert.equal(result.revenue, 2500000);
-  assert.equal(result.targetUnits, 375);
-});
-
-test("break-even rejects a contribution margin of zero or less", async () => {
-  const api = await loadCalculations();
-  assert.match(api.calculateBreakEven({ fixed: 1000, variable: 10000, price: 9000, targetProfit: 0 }).error, /بیشتر از هزینه متغیر/);
-});
-
-test("monthly budget computes surplus, reserve, and deficit safely", async () => {
-  const api = await loadCalculations();
-  const surplus = api.calculateBudget({ revenue: 10000000, direct: 3000000, fixed: 1000000, payroll: 2000000, marketing: 500000, other: 500000, reserve: 20 });
-  assert.equal(surplus.expenses, 7000000);
-  assert.equal(surplus.operatingProfit, 3000000);
-  assert.equal(surplus.reserveAmount, 600000);
-  assert.equal(surplus.netAfterReserve, 2400000);
-  const deficit = api.calculateBudget({ revenue: 100, direct: 200, fixed: 0, payroll: 0, marketing: 0, other: 0, reserve: 20 });
-  assert.equal(deficit.operatingProfit, -100);
-  assert.equal(deficit.reserveAmount, 0);
-  assert.equal(deficit.netAfterReserve, -100);
-});
-
-test("monthly budget rejects invalid reserve percentages", async () => {
-  const api = await loadCalculations();
-  assert.match(api.calculateBudget({ revenue: 1, direct: 0, fixed: 0, payroll: 0, marketing: 0, other: 0, reserve: 101 }).error, /بین صفر تا ۱۰۰/);
+  assert.equal(api.parseNumber("۱۲۳٬۴۵۶"), 123456);
+  assert.equal(api.parseNumber("۱۲۳,۴۵۶٫۷۵"), 123456.75);
+  assert.equal(api.parseNumber("١٢٣٬٤٥٦٫٧٥"), 123456.75);
+  assert.equal(api.parseNumber("  ۱۲۳۴۵۶  "), 123456);
+  assert.ok(Number.isNaN(api.parseNumber("۱۲۳abc")));
 });
