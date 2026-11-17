@@ -922,15 +922,25 @@ function showNaviReply(reply) {
 }
 
 function renderNaviOfficeAction(action) {
+  const host = document.getElementById("officeActionHost");
+  const slot = document.getElementById("officeActionCardSlot");
   document.getElementById("naviOfficeActionCard")?.remove();
+  if (slot) slot.replaceChildren();
+  if (host) host.hidden = true;
   if (!action || !["replace_text", "edit_cells"].includes(action.kind)) return;
+  if (!host || !slot) {
+    console.error("NAVI Office action host is missing from the Office studio.");
+    return;
+  }
+
   const tools = window.NavaOfficeTools;
   const file = tools?.getActiveFileInfo?.() || null;
   const card = document.createElement("section");
   card.id = "naviOfficeActionCard";
   card.className = "navi-office-action-card";
-  card.style.cssText = "margin:14px 0;padding:14px;border:1px solid rgba(190,150,70,.45);border-radius:12px;background:var(--card-bg,rgba(120,110,90,.08));display:grid;gap:9px";
+  card.style.cssText = "padding:14px;border:1px solid rgba(190,150,70,.45);border-radius:12px;background:var(--card-bg,rgba(120,110,90,.08));display:grid;gap:9px";
   card.setAttribute("aria-live", "polite");
+
   const title = document.createElement("strong");
   title.textContent = "پیشنهاد ویرایش فایل — نیازمند تأیید تو";
   const detail = document.createElement("p");
@@ -938,7 +948,9 @@ function renderNaviOfficeAction(action) {
     ? "جایگزینی دقیق «" + action.find + "» با «" + action.replace + "»"
     : "اعمال تغییرات Excel: " + action.edits.map(item => item.sheet + "!" + item.cell + " ← " + String(item.value)).join("؛ ");
   const fileLine = document.createElement("p");
-  fileLine.textContent = file?.ready ? "فایل فعال: " + file.name : "برای اجرای این پیشنهاد، ابتدا فایل DOCX، PPTX یا XLSX را در ابزار آفیس بارگذاری کن.";
+  fileLine.textContent = file?.ready
+    ? "فایل فعال در استودیوی آفیس: " + file.name
+    : "برای اجرای این پیشنهاد، ابتدا فایل DOCX، PPTX یا XLSX را در همین بخش آفیس بارگذاری کن.";
   const note = document.createElement("p");
   note.textContent = action.kind === "replace_text"
     ? "فقط متن‌های دقیقاً منطبق در قطعه‌های متنی مستقل تغییر می‌کنند؛ متن شکسته‌شده بین چند قطعه ممکن است پیدا نشود."
@@ -951,8 +963,11 @@ function renderNaviOfficeAction(action) {
   const cancel = document.createElement("button");
   cancel.type = "button";
   cancel.className = "btn-secondary";
-  cancel.textContent = "لغو";
-  cancel.addEventListener("click", () => card.remove());
+  cancel.textContent = "لغو پیشنهاد";
+  cancel.addEventListener("click", () => {
+    slot.replaceChildren();
+    host.hidden = true;
+  });
   confirm.addEventListener("click", async () => {
     confirm.disabled = true;
     confirm.textContent = "در حال ساخت نسخه...";
@@ -966,9 +981,15 @@ function renderNaviOfficeAction(action) {
       confirm.textContent = "تلاش دوباره";
     }
   });
+
   card.append(title, detail, fileLine, note, confirm, cancel);
-  const actions = document.querySelector(".response-actions");
-  if (actions?.parentNode) actions.parentNode.insertBefore(card, actions.nextSibling);
+  slot.appendChild(card);
+  host.hidden = false;
+
+  // The response remains in the chat, but approval lives only in the Office studio.
+  if (document.querySelector(".page.active")?.id === "officePage") {
+    setNaviStatus("پیشنهاد ویرایش در بخش آفیس آماده است؛ پنجره گفت‌وگو را ببند تا دکمه تأیید را ببینی.");
+  }
 }
 
 
