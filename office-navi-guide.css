@@ -9,5 +9,15 @@
 .office-guide-note{margin:0}
 .office-guide-status{min-height:18px;margin:0;color:var(--gold,#d6ad63);font-size:12px}
 @media(max-width:760px){.office-navi-guide{grid-template-columns:1fr;gap:14px;padding:17px}.office-navi-guide-copy p{margin-bottom:0}.office-guide-quick-actions button{flex:1 1 auto}}
-body.light-mode .office-navi-guide{background:linear-gradient(135deg,#fffaf0,#f3eee3);border-color:rgba(154,115,48,.3);box-shadow:0 12px 34px rgba(54,43,25,.08)}
-body.light-mode .office-navi-guide-copy p,body.light-mode .office-guide-note{color:#626b78}
+
+/* Day theme: warm ivory surfaces, readable navy text and the same restrained gold accents as NAVA. */
+body.light .office-navi-guide{background:linear-gradient(135deg,#fffdf8 0%,#f5eee2 58%,#edf3f8 100%);border-color:rgba(166,119,48,.28);box-shadow:0 12px 32px rgba(42,49,68,.09)}
+body.light .office-navi-guide-copy h2{color:#94601b}
+body.light .office-navi-guide-copy p,body.light .office-guide-note{color:#687487}
+body.light .office-navi-guide-controls>label{color:#263a56}
+body.light .office-navi-guide .studio-control{background:#fffefa;color:#17243b;border-color:rgba(193,127,37,.28);color-scheme:light}
+body.light .office-navi-guide .studio-control:focus{border-color:#2878bd;box-shadow:0 0 0 3px rgba(40,120,189,.10)}
+body.light .office-navi-guide .office-guide-status{color:#895c19}
+body.light .office-navi-guide .office-guide-note{color:#687487}
+body.light .office-navi-guide .office-guide-preset{background:linear-gradient(135deg,#fff8e9,#edf4fa);color:#344761;border-color:rgba(166,119,48,.28)}
+body.light .office-navi-guide .office-guide-preset:hover{background:linear-gradient(135deg,#ffefcf,#e5f0fa);border-color:rgba(166,119,48,.48)}
