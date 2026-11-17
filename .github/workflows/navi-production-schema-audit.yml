@@ -217,6 +217,34 @@ jobs:
           if missing_tables:
               raise SystemExit("STOP: production NAVI tables are missing: " + ", ".join(missing_tables))
 
+          required_business_tables = {
+              "business_profiles_v1", "business_financial_records_v1",
+              "business_transactions_v1", "business_catalog_items_v1",
+              "business_inventory_movements_v1", "business_customers_v1",
+              "business_orders_v1", "business_order_items_v1",
+              "business_customer_payments_v1", "business_suppliers_v1",
+              "business_cash_accounts_v1", "business_cash_movements_v1",
+              "business_expense_payments_v1", "business_invoices_v1",
+              "business_invoice_items_v1"
+          }
+          missing_business_tables = sorted(required_business_tables - actual_tables)
+          if missing_business_tables:
+              raise SystemExit("STOP: production business tables are missing: " + ", ".join(missing_business_tables))
+
+          business_required_columns = {
+              "business_transactions_v1": {"supplier_id", "customer_id", "catalog_item_id", "quantity", "unit_price_toman"},
+              "business_catalog_items_v1": {"track_inventory"},
+              "business_customer_payments_v1": {"cash_account_id", "invoice_id"},
+              "business_orders_v1": {"converted_transaction_id"},
+              "business_invoices_v1": {"invoice_number", "total_toman"},
+              "business_cash_movements_v1": {"source_type", "source_id"}
+          }
+          for table_name, required in business_required_columns.items():
+              actual = {row[1] for row in conn.execute(f'PRAGMA table_info("{table_name}")')}
+              missing = sorted(required - actual)
+              if missing:
+                  raise SystemExit("STOP: production business table " + table_name + " is missing columns: " + ", ".join(missing))
+
           required_indexes = {
               "idx_navi_chat_threads_owner_updated",
               "idx_navi_chat_messages_thread_id",
@@ -265,6 +293,7 @@ jobs:
               "NAVI production readiness audit",
               "D1 users account columns: PASS",
               "NAVI core tables: PASS",
+              "NAVA business tools schema: PASS",
               "Required NAVI and username indexes: PASS",
               "Owner account row: present",
               "Owner role: owner",
