@@ -56,3 +56,9 @@ CREATE TABLE IF NOT EXISTS business_invoice_items_v1 (
 );
 CREATE INDEX IF NOT EXISTS idx_business_invoice_items_invoice
   ON business_invoice_items_v1(owner_id,business_id,invoice_id,created_at);
+
+ALTER TABLE business_customer_payments_v1
+  ADD COLUMN invoice_id TEXT REFERENCES business_invoices_v1(id) ON DELETE SET NULL;
+
+CREATE INDEX IF NOT EXISTS idx_business_customer_payments_invoice
+  ON business_customer_payments_v1(owner_id,business_id,invoice_id,status);
