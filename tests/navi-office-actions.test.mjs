@@ -4,7 +4,8 @@ import { readFileSync } from "node:fs";
 import {
   normalizeNaviOfficeAction,
   parseNaviGeminiResponse,
-  isExplicitOfficeEditRequest
+  isExplicitOfficeEditRequest,
+  extractNaviExplicitExcelEditAction
 } from "../modules/navi.js";
 
 const app = readFileSync(new URL("../app.js", import.meta.url), "utf8");
@@ -79,4 +80,19 @@ test("NAVI prompt includes a positive structured Excel edit example", () => {
   assert.match(worker, /IMPORTANT POSITIVE EXAMPLE/);
   assert.match(worker, /"sheet": "آزمایش NAVI", "cell": "B3", "value": "تأیید شد"/);
   assert.match(worker, /Do not return officeAction:null merely because the workbook's/);
+});
+
+
+test("explicit Excel edit instruction gets a deterministic action when Gemini omits it", () => {
+  const message = "پیام کاربر: در شیت «آزمایش NAVI»، مقدار سلول B3 را از «در حال بررسی» به «تأیید شد» تغییر بده.";
+  assert.deepEqual(extractNaviExplicitExcelEditAction(message), {
+    kind: "edit_cells",
+    edits: [{ sheet: "آزمایش NAVI", cell: "B3", value: "تأیید شد" }]
+  });
+});
+
+test("assistant-style proposal text is not treated as user authorization", () => {
+  const proposal = "پیشنهاد تغییر مقدار سلول B3 در شیت «آزمایش NAVI» به «تأیید شد» آماده است. برای اعمال این تغییر روی فایل، آن را تأیید کن.";
+  assert.equal(extractNaviExplicitExcelEditAction(proposal), null);
+  assert.equal(extractNaviExplicitExcelEditAction("پیام کاربر: این فایل را خلاصه کن."), null);
 });
