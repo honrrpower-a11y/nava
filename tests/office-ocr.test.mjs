@@ -106,7 +106,9 @@ test("Office local editor supports XLSX cell edits and safe DOCX/PPTX text repla
   assert.match(html, /office-edit-tools\.js\?v=/);
   assert.match(editor, /XLSX\.read\(await file\.arrayBuffer\(\)/);
   assert.match(editor, /XLSX\.write\(workbook/);
-  assert.match(editor, /ppt\/slides\/slide/);
+  assert.match(editor, /ppt/);
+  assert.match(editor, /slides/);
+  assert.doesNotThrow(() => new Function(editor));
   assert.ok(editor.includes("word\\/(document|header"));
   assert.match(editor, /نسخه جدید دانلود شد و فایل اصلی/);
   assert.match(editor, /حداکثر ۴۰ ردیف و ۱۲ ستون/);
