@@ -922,10 +922,13 @@ function showNaviReply(reply) {
 }
 
 function renderNaviOfficeAction(action) {
+  const chatSlot = document.getElementById("naviOfficeActionChatSlot");
   const host = document.getElementById("officeActionHost");
-  const slot = document.getElementById("officeActionCardSlot");
+  const officeSlot = document.getElementById("officeActionCardSlot");
+  const slot = chatSlot || officeSlot;
   document.getElementById("naviOfficeActionCard")?.remove();
-  if (slot) slot.replaceChildren();
+  if (chatSlot) chatSlot.replaceChildren();
+  if (officeSlot) officeSlot.replaceChildren();
   if (host) host.hidden = true;
   if (!action || !["replace_text", "edit_cells"].includes(action.kind)) return;
   if (!host || !slot) {
@@ -984,12 +987,9 @@ function renderNaviOfficeAction(action) {
 
   card.append(title, detail, fileLine, note, confirm, cancel);
   slot.appendChild(card);
-  host.hidden = false;
-
-  // The response remains in the chat, but approval lives only in the Office studio.
-  if (document.querySelector(".page.active")?.id === "officePage") {
-    setNaviStatus("پیشنهاد ویرایش در بخش آفیس آماده است؛ پنجره گفت‌وگو را ببند تا دکمه تأیید را ببینی.");
-  }
+  // Keep the approval card beside NAVI's answer. The Office editor is still
+  // used for execution, but the user can review and confirm without leaving chat.
+  setNaviStatus("پیشنهاد ویرایش آماده است؛ برای ساخت نسخه جدید، کارت را در همین گفت‌وگو تأیید کن.");
 }
 
 
@@ -3727,10 +3727,6 @@ async function sendMessageToNavi() {
     const threadBeforeNaming = naviThreads.find(item => item.thread_id === naviActiveThreadId);
     const shouldNameThread = threadBeforeNaming && Number(threadBeforeNaming.message_count || 0) === 0;
     showNaviReply(reply);
-    if (data.officeAction && requestPage === "officePage" &&
-        document.querySelector(".page.active")?.id !== "officePage") {
-      showPage("officePage");
-    }
     renderNaviOfficeAction(data.officeAction);
     userRequest.value = "";
     appendLocalNaviMessages(finalMessage, reply);

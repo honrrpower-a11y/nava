@@ -2460,14 +2460,14 @@ async function handleChat({
   }
 
   const explicitOfficeEdit = page === "officePage" && isExplicitOfficeEditRequest(message);
-  let officeAction = explicitOfficeEdit ? parsed.officeAction : null;
-
-  // Do not depend on Gemini to repeat an action that is already fully and
-  // unambiguously specified by the user's current Excel edit instruction.
-  // The fallback is deliberately narrow and still passes the same allowlist.
-  if (explicitOfficeEdit && !officeAction) {
-    officeAction = extractNaviExplicitExcelEditAction(message);
-  }
+  // For a fully specified single-cell edit, derive the proposal from the exact
+  // current-user instruction before considering model output. This keeps form
+  // submissions and direct chat requests on the same deterministic path.
+  // Extracted workbook text and assistant replies are never authorization.
+  const deterministicOfficeAction = explicitOfficeEdit
+    ? extractNaviExplicitExcelEditAction(message)
+    : null;
+  let officeAction = deterministicOfficeAction || (explicitOfficeEdit ? parsed.officeAction : null);
 
   let reply = parsed.reply;
   if (input.saveToMemory === true) {
