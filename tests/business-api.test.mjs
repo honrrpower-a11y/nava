@@ -349,8 +349,8 @@ test("customer account sales use issued invoice totals without double-counting c
   const payments = await readFile(new URL("../modules/business-payments.js", import.meta.url), "utf8");
   const navi = await readFile(new URL("../modules/business.js", import.meta.url), "utf8");
   for (const source of [payments, navi]) {
-    assert.match(source, /SUM\\(COALESCE\\(i\\.total_toman,t\\.amount_toman\\)\\)/);
-    assert.match(source, /o\\.converted_transaction_id=t\\.id/);
-    assert.match(source, /i\\.document_type='invoice' AND i\\.status='issued'/);
+    assert.match(source, /SUM\(COALESCE\(i\.total_toman,t\.amount_toman\)\)/);
+    assert.match(source, /o\.converted_transaction_id=t\.id/);
+    assert.match(source, /i\.document_type='invoice' AND i\.status='issued'/);
   }
 });
