@@ -226,6 +226,10 @@ export async function handleBusinessTransactionRoute({ request, env, url, corsOr
         "SELECT transaction_type, title, amount_toman, transaction_date, category, notes, quantity, unit_price_toman, catalog_item_id, customer_id, supplier_id FROM business_transactions_v1 WHERE id = ? AND business_id = ? AND owner_id = ?"
       ).bind(transactionId, businessId, ownerId).first();
       if (!current) return fail("تراکنش پیدا نشد.", 404, corsOrigin);
+      const linkedOrder = await env.NAVA_DB.prepare(
+        "SELECT id FROM business_orders_v1 WHERE converted_transaction_id = ? AND business_id = ? AND owner_id = ? LIMIT 1"
+      ).bind(transactionId, businessId, ownerId).first();
+      if (linkedOrder) return fail("فروش حاصل از سفارش تأییدشده از این بخش قابل ویرایش نیست؛ سوابق سفارش و فاکتور باید هماهنگ بمانند.", 409, corsOrigin);
       if (current.catalog_item_id) {
         const linked = await env.NAVA_DB.prepare(
           "SELECT track_inventory FROM business_catalog_items_v1 WHERE id = ? AND business_id = ? AND owner_id = ?"
@@ -233,6 +237,13 @@ export async function handleBusinessTransactionRoute({ request, env, url, corsOr
         if (Number(linked?.track_inventory || 0) === 1) return fail("فروش متصل به موجودی برای جلوگیری از مغایرت انبار قابل ویرایش نیست؛ برای اصلاح، از گردش موجودی جداگانه استفاده کن.", 409, corsOrigin);
       }
       const v = { ...current, ...normalized.value };
+      if (v.supplier_id) {
+        if (v.transaction_type !== "expense") return fail("اتصال تأمین‌کننده فقط برای هزینه مجاز است.", 400, corsOrigin);
+        const supplier = await env.NAVA_DB.prepare(
+          "SELECT id FROM business_suppliers_v1 WHERE id = ? AND business_id = ? AND owner_id = ? AND status = 'active' LIMIT 1"
+        ).bind(v.supplier_id, businessId, ownerId).first();
+        if (!supplier) return fail("تأمین‌کننده انتخاب‌شده فعال نیست یا به این پرونده تعلق ندارد.", 404, corsOrigin);
+      }
       if (v.customer_id) {
         if (v.transaction_type !== "sale") return fail("اتصال مشتری فقط برای فروش مجاز است.", 400, corsOrigin);
         const customer = await env.NAVA_DB.prepare(
@@ -241,6 +252,19 @@ export async function handleBusinessTransactionRoute({ request, env, url, corsOr
         if (!customer) return fail("مشتری انتخاب‌شده فعال نیست یا به این پرونده تعلق ندارد.", 404, corsOrigin);
       }
       if (v.transaction_type === "expense" && (v.quantity || v.unit_price_toman || v.catalog_item_id)) return fail("برای ثبت هزینه، محصول، تعداد و قیمت واحد باید خالی باشد.", 400, corsOrigin);
+      if (v.transaction_type === "sale" && v.supplier_id) return fail("اتصال تأمین‌کننده فقط برای هزینه مجاز است.", 400, corsOrigin);
+      if (current.transaction_type === "expense") {
+        const paymentHistory = await env.NAVA_DB.prepare(
+          "SELECT COUNT(*) AS payment_count, COALESCE(SUM(CASE WHEN status = 'paid' THEN amount_toman ELSE 0 END), 0) AS paid_toman FROM business_expense_payments_v1 WHERE transaction_id = ? AND business_id = ? AND owner_id = ?"
+        ).bind(transactionId, businessId, ownerId).first();
+        const paid = Number(paymentHistory?.paid_toman || 0);
+        if (Number(paymentHistory?.payment_count || 0) > 0 && v.transaction_type !== "expense") {
+          return fail("هزینه‌ای که سابقه پرداخت دارد را نمی‌توان به فروش تبدیل کرد.", 409, corsOrigin);
+        }
+        if (v.transaction_type === "expense" && Number(v.amount_toman) < paid) {
+          return fail("مبلغ هزینه نمی‌تواند از مجموع پرداخت‌های ثبت‌شده کمتر باشد؛ ابتدا پرداخت مرتبط را باطل کن.", 409, corsOrigin);
+        }
+      }
       if (v.transaction_type === "sale" && v.quantity && v.unit_price_toman && v.amount_toman !== v.quantity * v.unit_price_toman) return fail("مبلغ کل فروش باید برابر تعداد ضربدر قیمت واحد باشد.", 400, corsOrigin);
       if (Object.hasOwn(normalized.value, "catalog_item_id") && v.catalog_item_id) {
         if (v.transaction_type !== "sale" || !v.quantity || !v.unit_price_toman) {
@@ -260,6 +284,16 @@ export async function handleBusinessTransactionRoute({ request, env, url, corsOr
       return reply({ updated: true }, 200, corsOrigin);
     }
     if (transactionId && request.method === "DELETE") {
+      const orderLink = await env.NAVA_DB.prepare(
+        "SELECT id FROM business_orders_v1 WHERE converted_transaction_id = ? AND business_id = ? AND owner_id = ? LIMIT 1"
+      ).bind(transactionId, businessId, ownerId).first();
+      if (orderLink) return fail("فروش حاصل از سفارش تأییدشده قابل حذف نیست؛ برای حفظ سوابق، سفارش و فاکتور را از مسیر مربوط مدیریت کن.", 409, corsOrigin);
+      const expensePaymentHistory = await env.NAVA_DB.prepare(
+        "SELECT COUNT(*) AS payment_count FROM business_expense_payments_v1 WHERE transaction_id = ? AND business_id = ? AND owner_id = ?"
+      ).bind(transactionId, businessId, ownerId).first();
+      if (Number(expensePaymentHistory?.payment_count || 0) > 0) {
+        return fail("هزینه‌ای که سابقه پرداخت دارد قابل حذف نیست؛ برای اصلاح، پرداخت‌ها را باطل و مبلغ هزینه را ویرایش کن.", 409, corsOrigin);
+      }
       const linkedSale = await env.NAVA_DB.prepare(
         "SELECT t.catalog_item_id, i.track_inventory FROM business_transactions_v1 t LEFT JOIN business_catalog_items_v1 i ON i.id = t.catalog_item_id WHERE t.id = ? AND t.business_id = ? AND t.owner_id = ? LIMIT 1"
       ).bind(transactionId, businessId, ownerId).first();
