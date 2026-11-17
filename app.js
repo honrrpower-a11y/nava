@@ -929,6 +929,7 @@ function renderNaviOfficeAction(action) {
   const card = document.createElement("section");
   card.id = "naviOfficeActionCard";
   card.className = "navi-office-action-card";
+  card.style.cssText = "margin:14px 0;padding:14px;border:1px solid rgba(190,150,70,.45);border-radius:12px;background:var(--card-bg,rgba(120,110,90,.08));display:grid;gap:9px";
   card.setAttribute("aria-live", "polite");
   const title = document.createElement("strong");
   title.textContent = "پیشنهاد ویرایش فایل — نیازمند تأیید تو";
@@ -3819,7 +3820,3 @@ copyStory.addEventListener("click", async () => {
     if (firstStudio) firstStudio.focus({ preventScroll: true });
   });
 })();
-
-
-/* NAVI Office action confirmation */
-.navi-office-action-card{margin:14px 0;padding:14px;border:1px solid var(--border-color,rgba(190,150,70,.45));border-radius:12px;background:var(--card-bg,rgba(120,110,90,.08));display:grid;gap:9px}.navi-office-action-card p{margin:0;line-height:1.7}.navi-office-action-card button{margin-inline-end:8px}
