@@ -7,5 +7,8 @@
 .office-file-status{flex:1;min-width:180px}
 .office-file-status[data-state="success"]{color:#65c99a}
 .office-file-status[data-state="error"]{color:#e28b82}
+.nava-export-actions{display:flex;align-items:center;flex-wrap:wrap;gap:10px;margin:12px 0 4px}
+.nava-export-actions .nava-export-status{flex-basis:100%;margin:0;color:var(--muted);font-size:12px;line-height:1.8}
+.nava-export-actions button:disabled{opacity:.65;cursor:wait}
 body.light .office-file-status[data-state="success"]{color:#287b58}
 body.light .office-file-status[data-state="error"]{color:#b0443d}
