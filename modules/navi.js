@@ -322,7 +322,7 @@ export function isExplicitOfficeEditRequest(message) {
   const text = String(message || "");
   const marker = text.lastIndexOf("پیام کاربر:");
   const userText = marker >= 0 ? text.slice(marker + "پیام کاربر:".length) : text;
-  return /(?:ویرایش|تغییر|جایگزین|جایگزینی|عوض\s*کن|قرار\s*بده|بنویس|حذف\s*کن|اصلاح\s*کن|به\s*روز\s*کن|edit|replace|update|set\s+(?:cell|value))/iu.test(userText);
+  return /(?:ویرایش(?:\s+(?:کن|کنید|بده|بدهید))?|تغییر\s+(?:بده|بدید|کن)|جایگزین(?:ی)?\s*(?:کن|کنید|بده|بدهید|کردن)|عوض\s*کن|قرار\s*بده|بنویس|حذف\s*کن|اصلاح\s*کن|به\s*روز\s*کن|edit|replace|update|set\s+(?:cell|value))/iu.test(userText);
 }
 
 // ======================================
