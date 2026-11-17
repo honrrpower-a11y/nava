@@ -3542,7 +3542,21 @@ officeBriefForm?.addEventListener("submit", event => {
 
   // Keep the complete brief (including extracted document text) in Office
   // context, but pass only the user-authored instruction as the current message.
+  if (userInstruction.length > 9000) {
+    if (briefField) {
+      briefField.setCustomValidity("شرح درخواست خیلی طولانی است؛ لطفاً دستور اصلی را کوتاه‌تر و دقیق‌تر کن.");
+      briefField.reportValidity();
+      briefField.addEventListener("input", () => briefField.setCustomValidity(""), { once: true });
+      briefField.focus();
+    }
+    return;
+  }
+
   const officeContext = collectNaviStudioContext("officePage");
+  // Reserve room under the Worker message limit for the actual user instruction
+  // and the other Office fields added by sendMessageToNavi().
+  const contextBriefBudget = Math.max(0, 9000 - userInstruction.length);
+  officeContext.brief = String(officeContext.brief || "").slice(0, contextBriefBudget);
   window.openNaviAssistant({
     service: "کارهای اداری و آفیس",
     context: officeContext,
