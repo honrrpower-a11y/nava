@@ -45,38 +45,106 @@ jobs:
           test -n "$CLOUDFLARE_ACCOUNT_ID"
           npx wrangler d1 export nava-memory --remote --output=/tmp/nava-memory-schema-audit.sql
           test -s /tmp/nava-memory-schema-audit.sql
-      - name: Preflight production schema and apply additive reconciliation migrations
+      - name: Preflight existing schema and apply additive reconciliation migrations
         shell: bash
         run: |
           set -euo pipefail
           python3 - <<'PY'
           import sqlite3
+
           source = "/tmp/nava-memory-schema-audit.sql"
           conn = sqlite3.connect(":memory:")
           with open(source, "r", encoding="utf-8") as f:
               conn.executescript(f.read())
+
           tables = {r[0] for r in conn.execute("SELECT name FROM sqlite_master WHERE type='table'")}
-          required_tables = {"users", "navi_chat_threads_v1", "navi_chat_messages_v1", "navi_memory_facts_v1"}
+          required_tables = {
+              "users", "navi_chat_threads_v1", "navi_chat_messages_v1",
+              "navi_memory_facts_v1", "business_transactions_v1",
+              "business_customer_payments_v1"
+          }
           missing = sorted(required_tables - tables)
           if missing:
               raise SystemExit("STOP: required production tables are missing: " + ", ".join(missing))
-          columns = {r[1] for r in conn.execute('PRAGMA table_info("users")')}
-          required_columns = {"username", "password_hash", "role", "status"}
-          missing = sorted(required_columns - columns)
+
+          user_columns = {r[1] for r in conn.execute('PRAGMA table_info("users")')}
+          required_user_columns = {"username", "password_hash", "role", "status"}
+          missing = sorted(required_user_columns - user_columns)
           if missing:
-              raise SystemExit("STOP: account columns are missing; do not run base migration: " + ", ".join(missing))
+              raise SystemExit("STOP: account columns are missing: " + ", ".join(missing))
+
           indexes = {r[0] for r in conn.execute("SELECT name FROM sqlite_master WHERE type='index'")}
           if "idx_users_username_unique" not in indexes:
-              raise SystemExit("STOP: unique username index is absent; do not apply migration 0001.")
-          duplicate = conn.execute("SELECT username FROM users WHERE username IS NOT NULL AND username <> '' GROUP BY username HAVING COUNT(*) > 1 LIMIT 1").fetchone()
+              raise SystemExit("STOP: unique username index is absent; do not apply base migrations.")
+          duplicate = conn.execute(
+              "SELECT username FROM users WHERE username IS NOT NULL AND username <> '' GROUP BY username HAVING COUNT(*) > 1 LIMIT 1"
+          ).fetchone()
           if duplicate:
               raise SystemExit("STOP: duplicate usernames found.")
           owner = conn.execute("SELECT username, role, status FROM users WHERE id='owner' LIMIT 1").fetchone()
           if not owner or owner != ("owner", "owner", "active"):
               raise SystemExit("STOP: owner account preconditions are not satisfied.")
-          print("Preflight PASS: existing tables, account columns, unique username index, and owner identity verified.")
+
+          # Some production columns were added before Wrangler migration tracking.
+          # Add only columns that are genuinely absent; never duplicate existing data.
+          column_additions = [
+              ("business_transactions_v1", "supplier_id", "TEXT"),
+              ("business_customer_payments_v1", "cash_account_id", "TEXT")
+          ]
+          statements = []
+          for table, column, definition in column_additions:
+              existing = {r[1] for r in conn.execute(f'PRAGMA table_info("{table}")')}
+              if column not in existing:
+                  statements.append(f'ALTER TABLE "{table}" ADD COLUMN "{column}" {definition};')
+
+          existing_table_columns = {
+              "business_suppliers_v1": {"id","business_id","owner_id","name","phone","email","address","notes","status","created_at","updated_at"},
+              "business_cash_accounts_v1": {"id","business_id","owner_id","name","account_type","opening_balance_toman","status","created_at","updated_at"},
+              "business_cash_movements_v1": {"id","business_id","owner_id","cash_account_id","direction","amount_toman","movement_date","source_type","source_id","title","method","reference","notes","status","created_at"},
+              "business_expense_payments_v1": {"id","business_id","owner_id","transaction_id","supplier_id","cash_account_id","amount_toman","payment_date","payment_method","reference","notes","status","created_at","updated_at"},
+              "business_invoices_v1": {"id","business_id","owner_id","order_id","document_type","invoice_sequence","invoice_number","status","issue_date","due_date","seller_name","customer_id","customer_name","customer_phone","customer_address","subtotal_toman","discount_toman","tax_toman","shipping_toman","total_toman","notes","created_at","updated_at"},
+              "business_invoice_items_v1": {"id","invoice_id","business_id","owner_id","catalog_item_id","item_name","unit","quantity","unit_price_toman","line_total_toman","created_at"}
+          }
+          for table, expected in existing_table_columns.items():
+              if table in tables:
+                  actual = {r[1] for r in conn.execute(f'PRAGMA table_info("{table}")')}
+                  missing = sorted(expected - actual)
+                  if missing:
+                      raise SystemExit("STOP: existing table " + table + " is incomplete; missing columns: " + ", ".join(missing))
+
+          with open("/tmp/nava-business-preflight.sql", "w", encoding="utf-8") as f:
+              f.write("\\n".join(statements) + ("\\n" if statements else ""))
+          print("Preflight PASS: NAVI owner and base business tables verified.")
+          print("Legacy business columns needing safe addition: " + (", ".join(x[1] for x in column_additions if any(x[1] in s for s in statements)) or "none"))
           PY
+          if [ -s /tmp/nava-business-preflight.sql ]; then
+            npx wrangler d1 execute nava-memory --remote --file=/tmp/nava-business-preflight.sql
+          fi
           npx wrangler d1 migrations apply nava-memory --remote --config=wrangler.navi-production-reconcile.jsonc
+
+      - name: Reconcile invoice link after invoice tables exist
+        shell: bash
+        run: |
+          set -euo pipefail
+          npx wrangler d1 export nava-memory --remote --output=/tmp/nava-memory-after-migrations.sql
+          python3 - <<'PY'
+          import sqlite3
+          conn = sqlite3.connect(":memory:")
+          with open("/tmp/nava-memory-after-migrations.sql", "r", encoding="utf-8") as f:
+              conn.executescript(f.read())
+          tables = {r[0] for r in conn.execute("SELECT name FROM sqlite_master WHERE type='table'")}
+          if "business_invoices_v1" not in tables or "business_customer_payments_v1" not in tables:
+              raise SystemExit("STOP: invoice tables were not created; refusing to add payment linkage.")
+          columns = {r[1] for r in conn.execute('PRAGMA table_info("business_customer_payments_v1")')}
+          statements = []
+          if "invoice_id" not in columns:
+              statements.append("ALTER TABLE business_customer_payments_v1 ADD COLUMN invoice_id TEXT REFERENCES business_invoices_v1(id) ON DELETE SET NULL;")
+          statements.append("CREATE INDEX IF NOT EXISTS idx_business_customer_payments_invoice ON business_customer_payments_v1(owner_id,business_id,invoice_id,status);")
+          with open("/tmp/nava-invoice-link.sql", "w", encoding="utf-8") as f:
+              f.write("\\n".join(statements) + "\\n")
+          print("Invoice payment linkage is present or safely prepared.")
+          PY
+          npx wrangler d1 execute nava-memory --remote --file=/tmp/nava-invoice-link.sql
 
       - name: List production D1 migration status (read-only)
         shell: bash
