@@ -100,7 +100,8 @@ test("assistant-style proposal text is not treated as user authorization", () =>
 
 
 test("Office-context requests are sent to the Office route even from the global NAVI chat", () => {
-  assert.match(app, /const requestPage = naviAssistantContext\?\.service === "کارهای اداری و آفیس"\s*\? "officePage"/);
+  assert.match(app, /const officeRequestContext =\s*naviAssistantContext\?\.service === "کارهای اداری و آفیس"\s*\|\|\s*serviceSelect\?\.value === "کارهای اداری و آفیس"\s*\|\|\s*activePageId === "officePage"/);
+  assert.match(app, /const requestPage = officeRequestContext \? "officePage" : activePageId/);
   assert.match(app, /page: requestPage,/);
 });
 
@@ -112,4 +113,15 @@ test("the Worker still requires a direct current-user edit request and retains t
   const worker = readFileSync(new URL("../modules/navi.js", import.meta.url), "utf8");
   assert.match(worker, /const explicitOfficeEdit = page === "officePage" && isExplicitOfficeEditRequest\(message\)/);
   assert.match(worker, /if \(explicitOfficeEdit && !officeAction\)\s*\{\s*officeAction = extractNaviExplicitExcelEditAction\(message\);/);
+});
+
+
+test("Office service selection in the global NAVI chat routes the request to Office", () => {
+  assert.match(app, /const officeRequestContext =\s*naviAssistantContext\?\.service === "کارهای اداری و آفیس"\s*\|\|\s*serviceSelect\?\.value === "کارهای اداری و آفیس"\s*\|\|\s*activePageId === "officePage"/);
+  assert.match(app, /const requestPage = officeRequestContext \? "officePage" : activePageId/);
+  assert.match(app, /page: requestPage,/);
+});
+
+test("Office route still opens the Office studio before rendering an approval card", () => {
+  assert.match(app, /if \(data\.officeAction && requestPage === "officePage"[\s\S]{0,220}showPage\("officePage"\);[\s\S]{0,100}renderNaviOfficeAction\(data\.officeAction\)/);
 });

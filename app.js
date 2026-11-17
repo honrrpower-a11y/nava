@@ -3562,9 +3562,15 @@ async function sendMessageToNavi() {
   const contextLines = naviAssistantContext
     ? Object.entries(naviAssistantContext.context || {}).map(([key, value]) => key + ": " + value)
     : [];
-  const requestPage = naviAssistantContext?.service === "کارهای اداری و آفیس"
-    ? "officePage"
-    : (document.querySelector(".page.active")?.id || "homePage");
+  const activePageId = document.querySelector(".page.active")?.id || "homePage";
+  // The global NAVI chat can be opened from the Office studio or explicitly
+  // scoped to Office through the service selector. Keep all three entry paths
+  // on the same server-side Office route so the approval action is not dropped.
+  const officeRequestContext =
+    naviAssistantContext?.service === "کارهای اداری و آفیس" ||
+    serviceSelect?.value === "کارهای اداری و آفیس" ||
+    activePageId === "officePage";
+  const requestPage = officeRequestContext ? "officePage" : activePageId;
 
   const finalMessage = [
     selectedService && selectedService !== "انتخاب نشده" ? "موضوع انتخاب‌شده: " + selectedService : "",

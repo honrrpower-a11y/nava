@@ -10,6 +10,7 @@ on:
       - "app.js"
       - "index.html"
       - "tests/navi-memory.test.mjs"
+      - "tests/navi-office-actions.test.mjs"
       - "tests/navi-context-security.test.mjs"
       - "modules/navi-knowledge.js"
       - ".github/workflows/navi-memory-tests.yml"
@@ -45,4 +46,4 @@ jobs:
           node --experimental-default-type=module --check modules/navi-memory.js
           node --experimental-default-type=module --check modules/navi-knowledge.js
       - name: Run NAVI memory regression tests
-        run: node --experimental-sqlite --experimental-default-type=module --test tests/navi-memory.test.mjs tests/navi-context-security.test.mjs
+        run: node --experimental-sqlite --experimental-default-type=module --test tests/navi-memory.test.mjs tests/navi-context-security.test.mjs tests/navi-office-actions.test.mjs
