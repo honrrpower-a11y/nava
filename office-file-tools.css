@@ -19,3 +19,19 @@ body.light .office-file-status[data-state="error"]{color:#b0443d}
 .office-workflow-grid label{display:block;margin:0 0 7px;color:var(--muted);font-size:13px;font-weight:700}
 .office-workflow-grid .studio-control{width:100%;min-width:0}
 @media(max-width:560px){.office-workflow-grid{grid-template-columns:1fr}.office-workflow-grid>div:last-child{grid-column:auto}}
+
+
+.office-edit-panel{margin-top:16px;padding:16px;border:1px solid var(--border);border-radius:16px;background:var(--panel);color:var(--text)}
+.office-edit-panel[hidden],.office-edit-panel [hidden]{display:none!important}
+.office-edit-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:14px}
+.office-edit-heading strong{font-size:1.05rem;color:var(--gold)}
+.office-edit-heading p,.office-edit-panel .office-file-help{margin:5px 0 12px;color:var(--muted);font-size:.88rem;line-height:1.8}
+.office-edit-grid-wrap{max-width:100%;overflow:auto;margin:12px 0;border:1px solid var(--border);border-radius:10px}
+.office-edit-table{border-collapse:separate;border-spacing:0;min-width:100%;font-size:.85rem}
+.office-edit-table th{position:sticky;top:0;background:var(--panel2);color:var(--gold);padding:6px;min-width:48px}
+.office-edit-table td{padding:3px;border:1px solid var(--border)}
+.office-edit-table td input{width:112px;min-height:36px;padding:6px;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text);font:inherit}
+.office-edit-replace-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:10px 0}
+.office-edit-panel button{margin-top:8px}
+.office-edit-panel .office-file-status{display:block;margin-top:10px;line-height:1.8}
+@media(max-width:640px){.office-edit-heading{flex-direction:column}.office-edit-replace-grid{grid-template-columns:1fr}.office-edit-table td input{width:94px}}
