@@ -895,6 +895,8 @@ function setNaviStatus(message) {
 function showNaviReply(reply) {
   requestResponse.value = String(reply || "");
   requestResponse.classList.add("show");
+  const service = naviAssistantContext?.service || serviceSelect?.value || "";
+  window.NavaDocumentExport?.attach(requestResponse, service);
 }
 
 // Select only NAVI response text; this avoids Android browsers applying
