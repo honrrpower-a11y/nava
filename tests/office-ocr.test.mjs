@@ -122,5 +122,7 @@ test("Office editor preserves existing Excel cell metadata and avoids duplicate 
   assert.match(editor, /\.\.\.previous,t:"n",f:value\.slice\(1\)/);
   assert.match(editor, /\.\.\.previous,t:"n",v:Number\(n\)/);
   assert.match(editor, /delete sheet\[address\]\.w/);
+  assert.match(editor, /input\.value=""/);
+  assert.match(editor, /const current=sheet\[address\]/);
   assert.doesNotThrow(() => new Function(editor));
 });
