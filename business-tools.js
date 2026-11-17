@@ -11,11 +11,21 @@
   let latestReport = "";
   let latestRecordType = "cost_calculation";
 
-  function readNumber(id) {
-    const raw = $(id)?.value;
-    if (raw === undefined || raw === null || String(raw).trim() === "") return NaN;
-    const value = Number(raw);
+  function parseNumber(raw) {
+    if (raw === undefined || raw === null) return NaN;
+    const normalized = String(raw)
+      .trim()
+      .replace(/[۰-۹]/g, digit => String(digit.charCodeAt(0) - 1776))
+      .replace(/[٠-٩]/g, digit => String(digit.charCodeAt(0) - 1632))
+      .replace(/[٬,]/g, "")
+      .replace(/٫/g, ".")
+      .replace(/[\\s\\u00a0]/g, "");
+    if (!normalized) return NaN;
+    const value = Number(normalized);
     return Number.isFinite(value) ? value : NaN;
+  }
+  function readNumber(id) {
+    return parseNumber($(id)?.value);
   }
   function setText(id,value) { const node=$(id); if(node) node.textContent=value; }
   function readValues(mapping) { return Object.fromEntries(Object.entries(mapping).map(([key,id])=>[key,readNumber(id)])); }
@@ -174,6 +184,7 @@
   window.NavaBusinessTools={
     getReport:()=>latestReport,
     getRecordType:()=>latestRecordType,
+    parseNumber,
     calculateCost,
     calculateBreakEven,
     calculateBudget
