@@ -3545,7 +3545,7 @@ function updateOfficeActionDiagnostic(stage, details = {}) {
   const previous = body?.textContent || "";
   const line = "[" + new Date().toLocaleTimeString() + "] " + stage +
     (Object.keys(details).length ? " — " + Object.entries(details).map(([key, value]) => key + ": " + String(value)).join(" | ") : "");
-  if (body) body.textContent = (previous ? previous + "\\n" : "") + line;
+  if (body) body.textContent = (previous ? previous + "\n" : "") + line;
   panel.open = true;
 }
 
