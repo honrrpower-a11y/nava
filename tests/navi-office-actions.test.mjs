@@ -73,3 +73,10 @@ test("local editor binds actions to the same active file and preserves the origi
   assert.match(editor, /فایل اصلی دست‌نخورده ماند/);
   assert.match(editor, /if\(!count\)throw new Error/);
 });
+
+test("NAVI prompt includes a positive structured Excel edit example", () => {
+  const worker = readFileSync(new URL("../modules/navi.js", import.meta.url), "utf8");
+  assert.match(worker, /IMPORTANT POSITIVE EXAMPLE/);
+  assert.match(worker, /"sheet": "آزمایش NAVI", "cell": "B3", "value": "تأیید شد"/);
+  assert.match(worker, /Do not return officeAction:null merely because the workbook's/);
+});
