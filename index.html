@@ -318,7 +318,7 @@
         <aside class="studio-output-card">
           <span class="studio-step">فضای پروژه</span><h2>مراحل انجام کار</h2>
           <ol><li>انتخاب نوع سند یا کار اداری</li><li>بررسی اطلاعات و تکمیل موارد ضروری با NAVI</li><li>تهیه پیش‌نویس و بازبینی متن</li><li>دریافت نسخه Word یا PDF از خروجی متنی</li></ol>
-          <div class="studio-output-placeholder"><span aria-hidden="true">✦</span><strong>فضای خروجی پروژه</strong><p>نتیجه‌ها و فایل‌های این استودیو پس از تکمیل ابزار تخصصی در این قسمت نمایش داده می‌شوند.</p></div>
+          <div class="studio-output-placeholder"><span aria-hidden="true">✦</span><strong>فضای خروجی پروژه</strong><p>خروجی متنی NAVI در پنل گفتگو نمایش داده می‌شود. خروجی Word و PDF از متن پاسخ قابل دریافت است؛ ساخت و ویرایش بومی Excel و PowerPoint هنوز در نقشه توسعه قرار دارد.</p></div>
         </aside>
       </div>
     </div>
@@ -346,13 +346,61 @@
             <option>بازبینی و ویرایش سند موجود</option>
             <option>راهنمای انجام یک کار در Word یا Excel یا PowerPoint</option>
           </select>
+          <div class="office-workflow-grid">
+            <div>
+              <label for="studioMode-office">نوع عملیات</label>
+              <select id="studioMode-office" class="studio-control">
+                <option value="create">ساخت سند جدید</option>
+                <option value="analyze">تحلیل و استخراج اطلاعات از فایل</option>
+                <option value="revise">ویرایش و بهبود سند موجود</option>
+                <option value="convert">تبدیل و بازآرایی محتوا</option>
+                <option value="guide">آموزش و راهنمای انجام کار</option>
+              </select>
+            </div>
+            <div>
+              <label for="studioOutput-office">خروجی مورد انتظار</label>
+              <select id="studioOutput-office" class="studio-control">
+                <option value="auto">با پیشنهاد NAVI</option>
+                <option value="docx">Word قابل ویرایش</option>
+                <option value="pdf">PDF آماده ارائه</option>
+                <option value="xlsx">Excel و جدول محاسباتی</option>
+                <option value="pptx">PowerPoint و اسلاید</option>
+                <option value="text">متن ساختاریافته در گفتگو</option>
+              </select>
+            </div>
+            <div>
+              <label for="studioDetail-office">سطح جزئیات</label>
+              <select id="studioDetail-office" class="studio-control">
+                <option value="professional">حرفه‌ای و کامل</option>
+                <option value="concise">مختصر و اجرایی</option>
+                <option value="executive">مدیریتی و تصمیم‌محور</option>
+                <option value="academic">رسمی و پژوهشی</option>
+              </select>
+            </div>
+          </div>
           <label for="studioAudience-office">مخاطب یا دریافت‌کننده سند</label>
           <input id="studioAudience-office" class="studio-control" type="text" maxlength="180" placeholder="مخاطب یا استفاده‌کننده را مشخص کن">
           <label for="studioBrief-office">شرح درخواست و جزئیات</label>
           <textarea id="studioBrief-office" class="studio-control studio-brief-input" maxlength="18000" placeholder="موضوع، نکات ضروری، داده‌ها و قالب مورد انتظار؛ یا پس از استخراج فایل، درخواستت را اینجا بنویس"></textarea>
+          <section class="office-edit-panel" id="officeEditPanel" hidden aria-labelledby="officeEditTitle">
+            <div class="office-edit-heading"><div><strong id="officeEditTitle">ویرایش مستقیم فایل</strong><p>تغییرات روی نسخه‌ای در مرورگر انجام می‌شوند؛ فایل اصلی جایگزین نمی‌شود.</p></div><button class="btn-secondary" id="officeEditClose" type="button">بستن ویرایشگر</button></div>
+            <div id="officeEditExcel" hidden>
+              <label for="officeEditSheet">انتخاب شیت Excel</label><select id="officeEditSheet" class="studio-control"></select>
+              <div class="office-edit-grid-wrap" id="officeEditGrid"></div><p id="officeEditGridNote" class="office-file-help"></p>
+              <button class="btn-primary" id="officeEditSave" type="button">ذخیره نسخه ویرایش‌شده Excel</button>
+              <p class="office-file-help">مقادیر سلول‌ها و فرمول‌های ساده قابل ویرایش‌اند؛ اما در این نسخه حفظ کامل قالب‌بندی پیچیده، نمودارها، ماکروها، پیوندهای خارجی و اشیای تعبیه‌شده تضمین نمی‌شود. قبل از استفاده رسمی، نسخه خروجی را بررسی کن.</p>
+            </div>
+            <div id="officeEditReplace" hidden>
+              <label id="officeEditReplaceLabel">جست‌وجو و جایگزینی متن</label>
+              <div class="office-edit-replace-grid"><input id="officeEditFind" class="studio-control" type="text" placeholder="عبارت فعلی"><input id="officeEditReplaceValue" class="studio-control" type="text" placeholder="عبارت جایگزین"></div>
+              <button class="btn-primary" id="officeEditReplaceRun" type="button">اعمال تغییر و دریافت نسخه جدید</button>
+              <p class="office-file-help">جایگزینی در متن‌های مستقل انجام می‌شود؛ متن‌هایی که در چند قطعه جدا ذخیره شده‌اند ممکن است پیدا نشوند. ساختار کلی اسلایدها و سند حفظ می‌شود.</p>
+            </div>
+            <p id="officeEditStatus" class="office-file-status" role="status" aria-live="polite">پس از انتخاب فایل قابل ویرایش، ابزار اینجا آماده می‌شود.</p>
+          </section>
           <div class="office-file-panel" id="officeFilePanel">
             <label for="officeSourceFile">افزودن فایل برای بررسی یا ویرایش</label>
-            <p class="office-file-help">فایل Word، PowerPoint، Excel، PDF، TXT یا تصویر اسناد را انتخاب کن. PDFهای اسکن‌شده و عکس‌ها با OCR فارسی خوانده می‌شوند؛ فایل اصلی فقط روی دستگاهت پردازش می‌شود و به سرور آپلود نمی‌شود. حداکثر ۱۵ مگابایت.</p>
+            <p class="office-file-help">فایل Word، PowerPoint، Excel، PDF، TXT یا تصویر سند را انتخاب کن. استخراج و OCR در مرورگر انجام می‌شود و فایل اصلی آپلود نمی‌شود؛ اما متن استخراج‌شده برای تحلیل در درخواست NAVI ارسال خواهد شد. حداکثر ۱۵ مگابایت.</p>
             <input id="officeSourceFile" class="studio-control office-file-input" type="file" aria-label="انتخاب فایل برای بررسی در Office" accept=".docx,.pdf,.pptx,.xlsx,.txt,.png,.jpg,.jpeg,.webp,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.openxmlformats-officedocument.presentationml.presentation,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/pdf,text/plain,image/png,image/jpeg,image/webp">
             <div class="office-file-actions"><button class="btn-secondary" id="officeClearFile" type="button" disabled>حذف فایل از درخواست</button><span id="officeFileStatus" class="office-file-status" role="status" aria-live="polite">حداکثر حجم فایل ۱۵ مگابایت است.</span></div>
           </div>
@@ -361,7 +409,7 @@
         </form>
         <aside class="studio-output-card">
           <span class="studio-step">فضای پروژه</span><h2>مراحل انجام کار</h2>
-          <ol><li>ثبت بریف و هدف پروژه</li><li>بررسی نیازها با NAVI</li><li>تدوین پیش‌نویس و اصلاح آن</li><li>آماده‌سازی خروجی پس از فعال‌شدن ابزار تخصصی</li></ol>
+          <ol><li>ثبت بریف و هدف پروژه</li><li>بررسی نیازها با NAVI</li><li>تدوین پیش‌نویس و اصلاح آن</li><li>تولید پیش‌نویس و بازبینی محتوا</li></ol>
           <div class="studio-output-placeholder"><span aria-hidden="true">✦</span><strong>فضای خروجی پروژه</strong><p>نتیجه‌ها و فایل‌های این استودیو پس از تکمیل ابزار تخصصی در این قسمت نمایش داده می‌شوند.</p></div>
         </aside>
       </div>
@@ -1334,9 +1382,10 @@
   <script src="business-ledger-ui.js?v=supplier-zero-inputs-fix-20261117-1" defer></script>
   <script src="business-financial-export.js?v=financial-export-daynight-20261116-1" defer></script>
   <script src="business-tabs.js?v=customer-accounts-20261116-1" defer></script>
-  <script src="document-export.js?v=office-export-rtl-fix-20261117-1" defer></script>
-  <link rel="stylesheet" href="office-file-tools.css?v=office-persian-ocr-20261115-1">
-  <script src="office-structured-files.js?v=office-pptx-xlsx-20261115-1" defer></script>
-  <script src="office-file-tools.js?v=office-pptx-xlsx-20261115-1" defer></script>
+  <script src="document-export.js?v=office-export-multiformat-20261117-1" defer></script>
+  <link rel="stylesheet" href="office-file-tools.css?v=office-professional-workflow-20261117-1">
+  <script src="office-structured-files.js?v=office-pptx-xlsx-20261115-2" defer></script>
+  <script src="office-file-tools.js?v=office-pptx-xlsx-20261115-2" defer></script>
+  <script src="office-edit-tools.js?v=office-local-edit-20261117-2" defer></script>
 </body>
 </html>

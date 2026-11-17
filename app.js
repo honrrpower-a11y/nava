@@ -258,6 +258,9 @@ function collectNaviStudioContext(pageId) {
     },
     officePage: {
       task: selected("studioTask-office"),
+      operation: value("studioMode-office"),
+      requestedOutput: selected("studioOutput-office"),
+      detailLevel: selected("studioDetail-office"),
       audience: value("studioAudience-office"),
       brief: value("studioBrief-office")
     },
