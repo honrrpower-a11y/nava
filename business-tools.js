@@ -19,7 +19,7 @@
       .replace(/[٠-٩]/g, digit => String(digit.charCodeAt(0) - 1632))
       .replace(/[٬,]/g, "")
       .replace(/٫/g, ".")
-      .replace(/[\\s\\u00a0]/g, "");
+      .replace(/[\s\u00a0]/g, "");
     if (!normalized) return NaN;
     const value = Number(normalized);
     return Number.isFinite(value) ? value : NaN;
