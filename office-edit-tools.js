@@ -48,13 +48,13 @@
     field.addEventListener("change",()=>{
      const value=field.value.trim();
      const previous=sheet[address]||{};
-     if(value.startsWith("=")&&/^=(?:SUM|AVERAGE|MIN|MAX|COUNT|COUNTA|ROUND|IF)\\([A-Z0-9_$:,. +*/()-]+\\)$/i.test(value)){
+     if(value.startsWith("=")&&/^=(?:SUM|AVERAGE|MIN|MAX|COUNT|COUNTA|ROUND|IF)\([A-Z0-9_$:,. +*/()-]+\)$/i.test(value)){
       sheet[address]={...previous,t:"n",f:value.slice(1)};delete sheet[address].v;delete sheet[address].w;
      }
      else if(value.startsWith("=")){setStatus("این نسخه فقط فرمول‌های رایج و محدود را می‌پذیرد. مقدار سلول تغییر نکرد.",true);field.value=cell?(cell.f?"="+cell.f:String(cell.w??cell.v??"")):"";return;}
      else{
       const n=value.replace(/[۰-۹]/g,d=>"۰۱۲۳۴۵۶۷۸۹".indexOf(d)).replace(/[٠-٩]/g,d=>"٠١٢٣٤٥٦٧٨٩".indexOf(d)).replace(/[٬،]/g,"").replace(/٫/g,".");
-      sheet[address]=value!==""&&/^-?(?:\\d+\\.?\\d*|\\.\\d+)$/.test(n)?{...previous,t:"n",v:Number(n)}:{...previous,t:"s",v:value};
+      sheet[address]=value!==""&&/^-?(?:\d+\.?\d*|\.\d+)$/.test(n)?{...previous,t:"n",v:Number(n)}:{...previous,t:"s",v:value};
       delete sheet[address].f;delete sheet[address].w;
      }
      setStatus("تغییر سلول "+address+" ثبت شد؛ برای دریافت نسخه جدید، «ذخیره نسخه ویرایش‌شده» را بزن.");
