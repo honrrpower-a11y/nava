@@ -82,13 +82,17 @@ test("Office studio sends structured operation, output and detail preferences to
   assert.match(html, /متن استخراج‌شده برای تحلیل در درخواست NAVI ارسال خواهد شد/);
 });
 
-test("NAVI Office can generate real editable XLSX and PPTX files from structured replies", () => {
-  assert.match(exporter, /function workbookSheets\(text\)/);
-  assert.match(exporter, /XLSX\.utils\.aoa_to_sheet/);
+test("NAVI Office exports typed Excel tables and preserves long PowerPoint content", () => {
+  assert.match(exporter, /function workbookSections\(text\)/);
+  assert.match(exporter, /function splitMarkdownRow\(line\)/);
+  assert.match(exporter, /function excelCell\(value\)/);
+  assert.match(exporter, /fullCalcOnLoad:true/);
   assert.match(exporter, /XLSX\.writeFile\(book,name/);
+  assert.match(exporter, /function splitLongText\(value,max=210\)/);
   assert.match(exporter, /function splitPresentation\(text\)/);
   assert.match(exporter, /new PptxGenJS\(\)/);
   assert.match(exporter, /pptx\.writeFile\(\{fileName:name\}\)/);
+  assert.doesNotMatch(exporter, /contentSlides\.slice\(0,40\)/);
   assert.match(exporter, /ساخت فایل Excel/);
   assert.match(exporter, /ساخت PowerPoint/);
 });
