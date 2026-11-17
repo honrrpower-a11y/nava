@@ -25,7 +25,8 @@
     return Number.isFinite(value) ? value : NaN;
   }
   function readNumber(id) {
-    return parseNumber($(id)?.value);
+    const raw = $(id)?.value;
+    return raw === undefined || raw === null || String(raw).trim() === "" ? 0 : parseNumber(raw);
   }
   function setText(id,value) { const node=$(id); if(node) node.textContent=value; }
   function readValues(mapping) { return Object.fromEntries(Object.entries(mapping).map(([key,id])=>[key,readNumber(id)])); }
