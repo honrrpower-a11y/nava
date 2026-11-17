@@ -325,6 +325,27 @@ export function isExplicitOfficeEditRequest(message) {
   return /(?:ویرایش(?:ش)?\s*(?:کن|کنید|بده|بدهید)|تغییر\s+(?:بده|بدید|کن)|جایگزین(?:ی)?\s*(?:کن|کنید|بده|بدهید|کردن|شود|بشه)|عوض\s*کن|قرار\s*بده|بنویس|حذف\s*کن|اصلاح\s*کن|به\s*روز\s*کن|edit(?:\s+the)?|replace(?:\s+the)?|update(?:\s+the)?|set\s+(?:cell|value))/iu.test(userText);
 }
 
+// Deterministic fallback for an unambiguous, fully specified Excel edit.
+// It only reads the user's current message (after the explicit marker), never
+// workbook text or prior assistant output, and still passes through the
+// same strict action validator before it can reach the browser.
+export function extractNaviDeterministicOfficeAction(message) {
+  const text = String(message || "");
+  const marker = text.lastIndexOf("پیام کاربر:");
+  const userText = (marker >= 0 ? text.slice(marker + "پیام کاربر:".length) : text).trim();
+  if (!isExplicitOfficeEditRequest(userText)) return null;
+
+  const match = userText.match(
+    /در\\s+شیت\\s*[«"“']([^»"”']{1,80})[»"”']\\s*[،,]?\\s*(?:مقدار\\s+)?سلول\\s+([A-Z]{1,3}[1-9][0-9]{0,6})\\s+را\\s+از\\s*[«"“']([^»"”']{1,500})[»"”']\\s+به\\s*[«"“']([^»"”']{1,500})[»"”']\\s+(?:تغییر\\s+بده(?:ید)?|عوض\\s+کن(?:ید)?|تغییر\\s+ده(?:ید)?)/iu
+  );
+  if (!match) return null;
+
+  return normalizeNaviOfficeAction({
+    kind: "edit_cells",
+    edits: [{ sheet: match[1].trim(), cell: match[2].toUpperCase(), value: match[4] }]
+  });
+}
+
 // ======================================
 // MEMORY PROPOSAL VALIDATION
 // ======================================
@@ -2436,11 +2457,20 @@ async function handleChat({
     );
   }
 
-  const officeAction = page === "officePage" && isExplicitOfficeEditRequest(message)
-    ? parsed.officeAction
+  const explicitOfficeEdit = page === "officePage" && isExplicitOfficeEditRequest(message);
+  const deterministicOfficeAction = explicitOfficeEdit
+    ? extractNaviDeterministicOfficeAction(message)
+    : null;
+  const officeAction = explicitOfficeEdit
+    ? (parsed.officeAction || deterministicOfficeAction)
     : null;
 
   let reply = parsed.reply;
+  if (officeAction && !parsed.officeAction) {
+    reply = "پیشنهاد تغییر سلول " + officeAction.edits[0].cell +
+      " در شیت «" + officeAction.edits[0].sheet +
+      "» آماده است. برای ساخت نسخه ویرایش‌شده، آن را در کارت زیر تأیید کن.";
+  }
   if (input.saveToMemory === true) {
     reply = removeNaviModelMemoryClaims(reply);
   }
