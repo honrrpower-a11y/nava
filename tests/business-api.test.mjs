@@ -354,3 +354,16 @@ test("customer account sales use issued invoice totals without double-counting c
     assert.match(source, /i\.document_type='invoice' AND i\.status='issued'/);
   }
 });
+
+
+test("sales ledger rows, summaries and monthly trends use issued invoice totals", async () => {
+  const transactions = await readFile(new URL("../modules/business-transactions.js", import.meta.url), "utf8");
+  const navi = await readFile(new URL("../modules/business.js", import.meta.url), "utf8");
+  for (const source of [transactions, navi]) {
+    assert.match(source, /COALESCE\(i\.total_toman,t\.amount_toman\)/);
+    assert.match(source, /o\.converted_transaction_id=t\.id/);
+    assert.match(source, /i\.document_type='invoice' AND i\.status='issued'/);
+  }
+  assert.ok((transactions.match(/COALESCE\(i\.total_toman,t\.amount_toman\)/g) || []).length >= 3);
+  assert.ok((navi.match(/COALESCE\(i\.total_toman,t\.amount_toman\)/g) || []).length >= 2);
+});
