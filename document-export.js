@@ -206,7 +206,7 @@ function splitPresentation(text){
  const add=item=>{
   for(const piece of splitLongText(item.text)){
    const cost=Math.max(1,Math.ceil(piece.length/95));
-   if(items.length>=5||used+cost>5)push();
+   if(items.length>=4||used+cost>4)push();
    items.push({text:piece,bullet:item.bullet});used+=cost;
   }
  };
@@ -238,7 +238,7 @@ async function powerpoint(text,name,button,status){
    slide.addText(data.title,{x:.65,y:.48,w:12,h:.65,fontFace:"Arial",fontSize:24,bold:true,color:gold,rtlMode:true,align:"right",margin:0.03,fit:"shrink"});
    let y=1.45;
    data.items.forEach(item=>{
-    const height=Math.min(1.02,Math.max(.42,Math.ceil(item.text.length/78)*.27+.18));
+    const height=Math.min(.9,Math.max(.42,Math.ceil(item.text.length/95)*.23+.15));
     slide.addText((item.bullet?"•  ":"")+item.text,{x:.85,y,w:11.7,h:height,fontFace:"Arial",fontSize:17,color:white,rtlMode:true,align:"right",valign:"mid",margin:.08,fit:"shrink"});
     y+=height+.12;
    });
