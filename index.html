@@ -407,6 +407,13 @@
           <input id="studioAudience-office" class="studio-control" type="text" maxlength="180" placeholder="مخاطب یا استفاده‌کننده را مشخص کن">
           <label for="studioBrief-office">شرح درخواست و جزئیات</label>
           <textarea id="studioBrief-office" class="studio-control studio-brief-input" maxlength="18000" placeholder="موضوع، نکات ضروری، داده‌ها و قالب مورد انتظار؛ یا پس از استخراج فایل، درخواستت را اینجا بنویس"></textarea>
+          <section class="office-action-host" id="officeActionHost" hidden aria-labelledby="officeActionHostTitle">
+            <div class="office-action-host-heading">
+              <strong id="officeActionHostTitle">پیشنهاد و تأیید ویرایش NAVI</strong>
+              <p>پیشنهادهای ویرایش فایل در همین استودیو نمایش داده می‌شوند. هیچ تغییری پیش از تأیید تو اعمال نمی‌شود.</p>
+            </div>
+            <div id="officeActionCardSlot"></div>
+          </section>
           <section class="office-edit-panel" id="officeEditPanel" hidden aria-labelledby="officeEditTitle">
             <div class="office-edit-heading"><div><strong id="officeEditTitle">ویرایش مستقیم فایل</strong><p>تغییرات روی نسخه‌ای در مرورگر انجام می‌شوند؛ فایل اصلی جایگزین نمی‌شود.</p></div><button class="btn-secondary" id="officeEditClose" type="button">بستن ویرایشگر</button></div>
             <div id="officeEditExcel" hidden>
