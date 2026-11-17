@@ -921,6 +921,56 @@ function showNaviReply(reply) {
   window.NavaDocumentExport?.attach(requestResponse, service);
 }
 
+function renderNaviOfficeAction(action) {
+  document.getElementById("naviOfficeActionCard")?.remove();
+  if (!action || !["replace_text", "edit_cells"].includes(action.kind)) return;
+  const tools = window.NavaOfficeTools;
+  const file = tools?.getActiveFileInfo?.() || null;
+  const card = document.createElement("section");
+  card.id = "naviOfficeActionCard";
+  card.className = "navi-office-action-card";
+  card.setAttribute("aria-live", "polite");
+  const title = document.createElement("strong");
+  title.textContent = "پیشنهاد ویرایش فایل — نیازمند تأیید تو";
+  const detail = document.createElement("p");
+  detail.textContent = action.kind === "replace_text"
+    ? "جایگزینی دقیق «" + action.find + "» با «" + action.replace + "»"
+    : "اعمال " + action.edits.length + " تغییر در سلول‌های Excel: " + action.edits.map(item => item.sheet + "!" + item.cell).join("، ");
+  const fileLine = document.createElement("p");
+  fileLine.textContent = file?.ready ? "فایل فعال: " + file.name : "برای اجرای این پیشنهاد، ابتدا فایل DOCX، PPTX یا XLSX را در ابزار آفیس بارگذاری کن.";
+  const note = document.createElement("p");
+  note.textContent = action.kind === "replace_text"
+    ? "فقط متن‌های دقیقاً منطبق در قطعه‌های متنی مستقل تغییر می‌کنند؛ متن شکسته‌شده بین چند قطعه ممکن است پیدا نشود."
+    : "فقط سلول‌های مشخص‌شده در شیت‌های موجود تغییر می‌کنند. فرمول‌نویسی از این مسیر مجاز نیست.";
+  const confirm = document.createElement("button");
+  confirm.type = "button";
+  confirm.className = "btn-primary";
+  confirm.textContent = "تأیید و ساخت نسخه ویرایش‌شده";
+  confirm.disabled = !file?.ready || (action.kind === "replace_text" ? !["docx", "pptx"].includes(file.kind) : file.kind !== "xlsx");
+  const cancel = document.createElement("button");
+  cancel.type = "button";
+  cancel.className = "btn-secondary";
+  cancel.textContent = "لغو";
+  cancel.addEventListener("click", () => card.remove());
+  confirm.addEventListener("click", async () => {
+    confirm.disabled = true;
+    confirm.textContent = "در حال ساخت نسخه...";
+    try {
+      const result = await window.NavaOfficeTools.executeAction(action);
+      note.textContent = result.message || "نسخه ویرایش‌شده ساخته شد؛ فایل اصلی دست‌نخورده ماند.";
+      confirm.textContent = "نسخه ساخته شد";
+    } catch (error) {
+      note.textContent = error?.message || "اجرای ویرایش ناموفق بود.";
+      confirm.disabled = false;
+      confirm.textContent = "تلاش دوباره";
+    }
+  });
+  card.append(title, detail, fileLine, note, confirm, cancel);
+  const actions = document.querySelector(".response-actions");
+  if (actions?.parentNode) actions.parentNode.insertBefore(card, actions.nextSibling);
+}
+
+
 // Select only NAVI response text; this avoids Android browsers applying
 // the generic "Select all" command to the whole document.
 const selectNaviResponseButton = document.getElementById("selectNaviResponse");
@@ -3593,6 +3643,7 @@ async function sendMessageToNavi() {
     const threadBeforeNaming = naviThreads.find(item => item.thread_id === naviActiveThreadId);
     const shouldNameThread = threadBeforeNaming && Number(threadBeforeNaming.message_count || 0) === 0;
     showNaviReply(reply);
+    renderNaviOfficeAction(data.officeAction);
     userRequest.value = "";
     appendLocalNaviMessages(finalMessage, reply);
     setNaviStatus("پاسخ ناوی دریافت شد.");
@@ -3768,3 +3819,7 @@ copyStory.addEventListener("click", async () => {
     if (firstStudio) firstStudio.focus({ preventScroll: true });
   });
 })();
+
+
+/* NAVI Office action confirmation */
+.navi-office-action-card{margin:14px 0;padding:14px;border:1px solid var(--border-color,rgba(190,150,70,.45));border-radius:12px;background:var(--card-bg,rgba(120,110,90,.08));display:grid;gap:9px}.navi-office-action-card p{margin:0;line-height:1.7}.navi-office-action-card button{margin-inline-end:8px}
