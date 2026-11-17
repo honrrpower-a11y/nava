@@ -8,6 +8,8 @@
  const setStatus=(message,error=false)=>{status.textContent=message;status.dataset.state=error?"error":"success";};
  const load=(src,name)=>new Promise((resolve,reject)=>{
   if(window[name])return resolve(window[name]);
+  const existing=Array.from(document.scripts).find(script=>script.src===src);
+  if(existing){existing.addEventListener("load",()=>window[name]?resolve(window[name]):reject(new Error("ابزار ویرایش بارگذاری نشد.")),{once:true});existing.addEventListener("error",()=>reject(new Error("دریافت ابزار ویرایش ناموفق بود.")),{once:true});return;}
   const script=document.createElement("script");script.src=src;script.async=true;
   script.onload=()=>window[name]?resolve(window[name]):reject(new Error("ابزار ویرایش بارگذاری نشد."));
   script.onerror=()=>reject(new Error("دریافت ابزار ویرایش ناموفق بود؛ اتصال اینترنت را بررسی کن."));
@@ -69,7 +71,7 @@
     renderExcel();setStatus("فایل Excel برای ویرایش محلی آماده است. مقدار سلول‌ها را تغییر بده و نسخه جدید را ذخیره کن.");
    }else{
     kind=ext;await load("https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js","JSZip");
-    zip=await window.JSZip.loadAsync(file);setStatus("فایل برای جست‌وجو و جایگزینی متن آماده است. ساختار بسته فایل حفظ می‌شود؛ فقط متن‌های منطبق در قطعه‌های متنی مستقل تغییر می‌کنند.");
+    zip=await window.JSZip.loadAsync(file);setStatus("فایل برای جست‌وجو و جایگزینی متن آماده است. بسته و چیدمان کلی حفظ می‌شود؛ فقط متن‌های منطبق در قطعه‌های متنی مستقل تغییر می‌کنند.");
    }
   }catch(error){hide();setStatus(error.message||"آماده‌سازی ویرایشگر ناموفق بود.",true);}
  }
@@ -86,7 +88,7 @@
  });
  $("officeEditReplaceRun")?.addEventListener("click",async()=>{
   if(!zip||!sourceFile||!["pptx","docx"].includes(kind))return;
-  const find=$("officeEditFind").value,replace=$("officeEditReplaceValue").value;
+  const find=$("officeEditFind").value,replace=$("officeEditReplaceValue").value.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
   if(!find){setStatus("عبارت موردنظر برای جست‌وجو را وارد کن.",true);return;}
   try{
    let count=0;
