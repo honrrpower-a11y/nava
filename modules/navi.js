@@ -289,9 +289,11 @@ export function parseNaviGeminiResponse(rawText) {
 export function normalizeNaviOfficeAction(value) {
   if (!isObject(value)) return null;
   if (value.kind === "replace_text") {
-    const find = typeof value.find === "string" ? safeNaviText(value.find, 500) : "";
-    const replace = typeof value.replace === "string" ? safeNaviText(value.replace, 500) : "";
-    if (!find.trim() || find.length > 500 || replace.length > 500) return null;
+    if (typeof value.find !== "string" || typeof value.replace !== "string" ||
+        value.find.length > 500 || value.replace.length > 500) return null;
+    const find = safeNaviText(value.find, 500);
+    const replace = safeNaviText(value.replace, 500);
+    if (!find.trim()) return null;
     return { kind: "replace_text", find, replace };
   }
   if (value.kind === "edit_cells") {
@@ -320,7 +322,7 @@ export function isExplicitOfficeEditRequest(message) {
   const text = String(message || "");
   const marker = text.lastIndexOf("پیام کاربر:");
   const userText = marker >= 0 ? text.slice(marker + "پیام کاربر:".length) : text;
-  return /(?:ویرایش|تغییر|جایگزین|جایگزینی|قرار\s*بده|بنویس|حذف\s*کن|اصلاح\s*کن|به\s*روز\s*کن|edit|replace|update|set\s+(?:cell|value))/iu.test(userText);
+  return /(?:ویرایش|تغییر|جایگزین|جایگزینی|عوض\s*کن|قرار\s*بده|بنویس|حذف\s*کن|اصلاح\s*کن|به\s*روز\s*کن|edit|replace|update|set\s+(?:cell|value))/iu.test(userText);
 }
 
 // ======================================
