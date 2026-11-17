@@ -108,71 +108,124 @@ function loadExternal(src,globalName){
  }).catch(error=>{delete window["__navaOfficeLib_"+globalName];throw error;});
  return window["__navaOfficeLib_"+globalName];
 }
-function markdownRows(text){
- const rows=[];let current=[];
- for(const raw of lines(text)){
-  const x=raw.trim();
-  if(!x.startsWith("|")||!x.endsWith("|")){if(current.length){rows.push(current);current=[];}continue;}
-  const cells=x.slice(1,-1).split("|").map(v=>v.trim());
-  if(cells.every(v=>/^:?-{3,}:?$/.test(v)))continue;
-  current.push(cells);
+function splitMarkdownRow(line){
+ const raw=line.trim().replace(/^\\|/,"").replace(/\\|$/,"");
+ const cells=[];let value="",escaped=false;
+ for(let i=0;i<raw.length;i++){
+  const ch=raw[i];
+  if(ch==="\\\\"&&!escaped){escaped=true;continue;}
+  if(ch==="|"&&!escaped){cells.push(value.trim());value="";continue;}
+  value+=ch;escaped=false;
  }
- if(current.length)rows.push(...current);
- return rows.filter(group=>group.some(row=>row.some(Boolean)));
+ cells.push(value.trim());return cells;
 }
-function workbookSheets(text){
- const groups=markdownRows(text),sections=[];
- let heading="داده‌ها",table=[];
+function isTableRule(row){return row.length>0&&row.every(cell=>/^:?-{3,}:?$/.test(cell.replace(/\\s/g,"")));}
+function workbookSections(text){
+ const report=[["بخش","محتوا"]],tables=[];
+ let heading="گزارش",table=null;
+ const flushTable=()=>{if(table&&table.rows.length)tables.push(table);table=null;};
  for(const raw of lines(text)){
-  const x=raw.trim(),h=x.match(/^#{1,3}\s+(.+)$/);
-  if(h){if(table.length)sections.push({name:heading,rows:table});heading=h[1];table=[];continue;}
+  const x=raw.trim();if(!x)continue;
+  const h=x.match(/^#{1,3}\\s+(.+)$/);
+  if(h){flushTable();heading=h[1].slice(0,80);report.push([heading,""]);continue;}
   if(x.startsWith("|")&&x.endsWith("|")){
-   const cells=x.slice(1,-1).split("|").map(v=>v.trim());
-   if(!cells.every(v=>/^:?-{3,}:?$/.test(v)))table.push(cells);
-  }else if(table.length){sections.push({name:heading,rows:table});table=[];}
+   const cells=splitMarkdownRow(x);
+   if(isTableRule(cells))continue;
+   if(!table)table={name:heading,rows:[]};
+   table.rows.push(cells);continue;
+  }
+  flushTable();
+  const value=x.replace(/^[-*•]\\s+/,"").replace(/^\\d+[.)]\\s+/,"");
+  report.push([heading,value]);
  }
- if(table.length)sections.push({name:heading,rows:table});
- if(!sections.length){
-  const rows=[["ردیف","محتوا"]];
-  lines(text).map(x=>x.trim()).filter(Boolean).forEach((x,i)=>rows.push([i+1,x.replace(/^#{1,3}\s+|^[-*•]\s+|^\d+[.)]\s+/,"")]));
-  sections.push({name:"محتوای سند",rows});
+ flushTable();
+ if(report.length===1&&!tables.length){
+  lines(text).map(x=>x.trim()).filter(Boolean).forEach((x,i)=>report.push([i+1,x.replace(/^#{1,3}\\s+|^[-*•]\\s+|^\\d+[.)]\\s+/,"")]));
  }
- return sections;
+ return {report,tables};
+}
+function excelCell(value){
+ const original=String(value??"").trim();
+ if(!original)return {t:"s",v:""};
+ // Only permit simple, local Excel formulas; reject external links, commands and sheet references.
+ if(/^=(?:SUM|AVERAGE|MIN|MAX|COUNT|COUNTA|ROUND|IF)\\([A-Z0-9_$:,. +*/()-]+\\)$/i.test(original)||
+    /^=[A-Z]{1,3}\\d+(?:\\s*[+*/-]\\s*(?:[A-Z]{1,3}\\d+|\\d+(?:\\.\\d+)?))+$/.test(original)){
+  return {f:original.slice(1)};
+ }
+ const normalized=original.replace(/[۰-۹]/g,d=>"۰۱۲۳۴۵۶۷۸۹".indexOf(d)).replace(/[٠-٩]/g,d=>"٠١٢٣٤٥٦٧٨٩".indexOf(d)).replace(/[٬،]/g,",").replace(/٫/g,".");
+ const numeric=normalized.replace(/,/g,"");
+ if(/^-?(?:\\d+\\.?\\d*|\\.\\d+)%$/.test(numeric)){
+  return {t:"n",v:Number(numeric.slice(0,-1))/100,z:"0.00%"};
+ }
+ if(/^-?(?:\\d+\\.?\\d*|\\.\\d+)$/.test(numeric))return {t:"n",v:Number(numeric)};
+ return {t:"s",v:original};
+}
+function sheetFromRows(XLSX,rows){
+ const sheet={};
+ rows.forEach((row,r)=>row.forEach((value,c)=>{
+  const cell=excelCell(value);
+  if(cell.f)sheet[XLSX.utils.encode_cell({r,c})]={t:"n",f:cell.f};
+  else sheet[XLSX.utils.encode_cell({r,c})]=cell;
+ }));
+ const width=Math.max(1,...rows.map(row=>row.length));
+ const height=Math.max(1,rows.length);
+ sheet["!ref"]=XLSX.utils.encode_range({s:{r:0,c:0},e:{r:height-1,c:width-1}});
+ sheet["!cols"]=Array.from({length:width},(_,col)=>({wch:Math.min(42,Math.max(12,...rows.map(row=>String(row[col]??"").length+2)))}));
+ if(rows.length>1)sheet["!autofilter"]={ref:sheet["!ref"]};
+ return sheet;
+}
+function appendSheet(XLSX,book,rows,requestedName,index){
+ let name=String(requestedName||"Sheet "+(index+1)).replace(/[\\\\/?*\\[\\]:]/g," ").trim().slice(0,31)||"Sheet "+(index+1);
+ const base=name;let suffix=2;
+ while(book.SheetNames.includes(name))name=(base.slice(0,27)+" "+suffix++);
+ XLSX.utils.book_append_sheet(book,sheetFromRows(XLSX,rows),name);
 }
 async function excel(text,name,button,status){
  button.disabled=true;const label=button.textContent;button.textContent="در حال ساخت Excel...";
  try{
   const XLSX=await loadExternal("https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js","XLSX");
-  const book=XLSX.utils.book_new(),sections=workbookSheets(text);
-  sections.slice(0,20).forEach((section,index)=>{
-   const rows=section.rows.map(row=>row.map(value=>String(value??"")));
-   const sheet=XLSX.utils.aoa_to_sheet(rows);
-   const width=Math.max(1,...rows.map(row=>row.length));
-   sheet["!cols"]=Array.from({length:width},(_,col)=>({wch:Math.min(42,Math.max(12,...rows.map(row=>String(row[col]??"").length+2)))}));
-   if(rows.length>1&&width>0)sheet["!autofilter"]={ref:XLSX.utils.encode_range({s:{r:0,c:0},e:{r:rows.length-1,c:width-1}})};
-   sheet["!freeze"]={xSplit:0,ySplit:1,topLeftCell:"A2",activePane:"bottomLeft",state:"frozen"};
-   let sheetName=String(section.name||"Sheet"+(index+1)).replace(/[\\/?*\[\]:]/g," ").slice(0,31)||"Sheet"+(index+1);
-   const base=sheetName;let suffix=2;while(book.SheetNames.includes(sheetName))sheetName=(base.slice(0,27)+" "+suffix++);
-   XLSX.utils.book_append_sheet(book,sheet,sheetName);
-  });
+  const book=XLSX.utils.book_new(),parsed=workbookSections(text);
+  appendSheet(XLSX,book,parsed.report,"گزارش",0);
+  parsed.tables.slice(0,30).forEach((table,index)=>appendSheet(XLSX,book,table.rows,table.name+" "+(index+1),index+1));
+  if(!book.SheetNames.length)appendSheet(XLSX,book,[["محتوا"],[String(text||"")]],"محتوا",0);
+  book.Workbook=book.Workbook||{};
+  book.Workbook.CalcPr={calcMode:"auto",fullCalcOnLoad:true,forceFullCalc:true};
   XLSX.writeFile(book,name,{compression:true});
-  status.textContent="فایل Excel ساخته شد. جدول‌های Markdown به شیت‌های جداگانه تبدیل شدند؛ اگر پاسخ جدول نداشت، متن در یک شیت مرتب شد.";
+  status.textContent="فایل Excel ساخته شد؛ جدول‌ها در شیت‌های جدا، متن توضیحی در شیت گزارش و مقادیر عددی به‌صورت عدد قابل محاسبه ذخیره شدند. فرمول‌های ساده و امن نیز هنگام بازشدن در Excel محاسبه می‌شوند.";
  }catch(error){status.textContent=error.message||"ساخت فایل Excel ناموفق بود.";}
  finally{button.disabled=false;button.textContent=label;}
 }
+function splitLongText(value,max=210){
+ const text=String(value||"").trim();if(text.length<=max)return [text];
+ const parts=[];let remaining=text;
+ while(remaining.length>max){
+  let cut=Math.max(remaining.lastIndexOf("。",max),remaining.lastIndexOf("؟",max),remaining.lastIndexOf(".",max),remaining.lastIndexOf("،",max),remaining.lastIndexOf(" ",max));
+  if(cut<Math.floor(max*.55))cut=max;
+  parts.push(remaining.slice(0,cut+1).trim());remaining=remaining.slice(cut+1).trim();
+ }
+ if(remaining)parts.push(remaining);return parts;
+}
 function splitPresentation(text){
- const slides=[];let title="خلاصه",items=[];
- const push=()=>{if(items.length){slides.push({title,items});items=[];}};
+ const slides=[];let title="خلاصه",items=[],used=0;
+ const push=()=>{if(items.length){slides.push({title,items});items=[];used=0;}};
+ const add=(item)=>{
+  const pieces=splitLongText(item.text);
+  for(const piece of pieces){
+   const next={text:piece,bullet:item.bullet};
+   const cost=Math.max(1,Math.ceil(piece.length/95));
+   if(items.length>=5||used+cost>5)push();
+   items.push(next);used+=cost;
+  }
+ };
  for(const raw of lines(text)){
   const x=raw.trim();if(!x)continue;
-  const h=x.match(/^#{1,3}\s+(.+)$/);
+  const h=x.match(/^#{1,3}\\s+(.+)$/);
   if(h){push();title=h[1];continue;}
-  const bullet=x.match(/^[-*•]\s+(.+)$/),number=x.match(/^\d+[.)]\s+(.+)$/);
-  items.push({text:bullet?bullet[1]:number?number[1]:x,bullet:!!(bullet||number)});
-  if(items.length>=6)push();
+  const bullet=x.match(/^[-*•]\\s+(.+)$/),number=x.match(/^\\d+[.)]\\s+(.+)$/);
+  add({text:bullet?bullet[1]:number?number[1]:x,bullet:!!(bullet||number)});
  }
  push();
- return slides.length?slides:[{title:"ارائه NAVI",items:[{text:String(text||"").slice(0,900),bullet:false}]}];
+ return slides.length?slides:[{title:"ارائه NAVI",items:[{text:"محتوایی برای ارائه ثبت نشده است.",bullet:false}]}];
 }
 async function powerpoint(text,name,button,status){
  button.disabled=true;const label=button.textContent;button.textContent="در حال ساخت PowerPoint...";
@@ -187,25 +240,25 @@ async function powerpoint(text,name,button,status){
   cover.addText("ارائه تهیه‌شده با NAVI",{x:.8,y:2.1,w:11.5,h:1.15,fontFace:"Arial",fontSize:30,bold:true,color:white,rtlMode:true,align:"right",margin:0});
   cover.addText("محتوای ساختاریافته و قابل ویرایش",{x:.8,y:3.45,w:11.5,h:.5,fontFace:"Arial",fontSize:16,color:muted,rtlMode:true,align:"right",margin:0});addFooter(cover,1);
   const contentSlides=splitPresentation(text);
-  contentSlides.slice(0,40).forEach((data,index)=>{
+  contentSlides.forEach((data,index)=>{
    const slide=pptx.addSlide();slide.background={color:navy};
    slide.addShape(pptx.ShapeType.rect,{x:0,y:0,w:13.333,h:.12,fill:{color:gold},line:{color:gold}});
-   slide.addText(data.title,{x:.65,y:.48,w:12,h:.65,fontFace:"Arial",fontSize:24,bold:true,color:gold,rtlMode:true,align:"right",margin:0.03,breakLine:false});
+   slide.addText(data.title,{x:.65,y:.48,w:12,h:.65,fontFace:"Arial",fontSize:24,bold:true,color:gold,rtlMode:true,align:"right",margin:0.03,breakLine:false,fit:"shrink"});
    let y=1.45;
    data.items.forEach(item=>{
-    const content=item.text.length>520?item.text.slice(0,517)+"...":item.text;
-    const isBullet=item.bullet;
-    const height=Math.min(1.2,Math.max(.42,Math.ceil(content.length/82)*.28+.18));
-    slide.addText((isBullet?"•  ":"")+content,{x:.85,y,w:11.7,h:height,fontFace:"Arial",fontSize:17,color:white,rtlMode:true,align:"right",valign:"mid",margin:.08,breakLine:false,fit:"shrink"});
-    y+=height+.13;if(y>6.65)return;
-   });addFooter(slide,index+2);
+    const content=item.text;
+    const height=Math.min(1.02,Math.max(.42,Math.ceil(content.length/78)*.27+.18));
+    slide.addText((item.bullet?"•  ":"")+content,{x:.85,y,w:11.7,h:height,fontFace:"Arial",fontSize:17,color:white,rtlMode:true,align:"right",valign:"mid",margin:.08,breakLine:false,fit:"shrink"});
+    y+=height+.12;
+   });
+   addFooter(slide,index+2);
   });
   await pptx.writeFile({fileName:name});
-  status.textContent="فایل PowerPoint ساخته شد. تیترها به اسلایدهای جدا و بندها به محتوای قابل ویرایش تبدیل شدند.";
+  status.textContent="فایل PowerPoint ساخته شد؛ متن‌های بلند به چند بخش تقسیم شدند تا محتوایی از اسلایدها حذف نشود.";
  }catch(error){status.textContent=error.message||"ساخت فایل PowerPoint ناموفق بود.";}
  finally{button.disabled=false;button.textContent=label;}
 }
-
+function attach(target,service){
 function attach(target,service){
  if(!target||!["مقاله و وبلاگ","کارهای اداری و آفیس"].includes(service))return;
  const parent=target.parentElement;if(!parent)return;
