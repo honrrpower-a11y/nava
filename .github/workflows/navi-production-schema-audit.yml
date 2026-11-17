@@ -113,7 +113,7 @@ jobs:
                       raise SystemExit("STOP: existing table " + table + " is incomplete; missing columns: " + ", ".join(missing))
 
           with open("/tmp/nava-business-preflight.sql", "w", encoding="utf-8") as f:
-              f.write("\\n".join(statements) + ("\\n" if statements else ""))
+              f.write("\n".join(statements) + ("\n" if statements else ""))
           print("Preflight PASS: NAVI owner and base business tables verified.")
           print("Legacy business columns needing safe addition: " + (", ".join(x[1] for x in column_additions if any(x[1] in s for s in statements)) or "none"))
           PY
@@ -141,7 +141,7 @@ jobs:
               statements.append("ALTER TABLE business_customer_payments_v1 ADD COLUMN invoice_id TEXT REFERENCES business_invoices_v1(id) ON DELETE SET NULL;")
           statements.append("CREATE INDEX IF NOT EXISTS idx_business_customer_payments_invoice ON business_customer_payments_v1(owner_id,business_id,invoice_id,status);")
           with open("/tmp/nava-invoice-link.sql", "w", encoding="utf-8") as f:
-              f.write("\\n".join(statements) + "\\n")
+              f.write("\n".join(statements) + "\n")
           print("Invoice payment linkage is present or safely prepared.")
           PY
           npx wrangler d1 execute nava-memory --remote --file=/tmp/nava-invoice-link.sql
