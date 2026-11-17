@@ -5,6 +5,8 @@ import { readFileSync } from "node:fs";
 const office = readFileSync(new URL("../office-file-tools.js", import.meta.url), "utf8");
 const html = readFileSync(new URL("../index.html", import.meta.url), "utf8");
 const structured = readFileSync(new URL("../office-structured-files.js", import.meta.url), "utf8");
+const exporter = readFileSync(new URL("../document-export.js", import.meta.url), "utf8");
+const app = readFileSync(new URL("../app.js", import.meta.url), "utf8");
 
 test("Office OCR supports Persian and English recognition in the browser", () => {
   assert.match(office, /tesseract\.js@5\.1\.1/);
