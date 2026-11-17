@@ -111,8 +111,41 @@
   }
   function renderMovements(rows) {
     const body=$("bizCashMovementRows");if(!body)return;body.replaceChildren();
-    if(!rows.length){const tr=document.createElement("tr");const td=cell(tr,"هنوز گردش مالی ثبت نشده است.");td.colSpan=5;body.append(tr);return;}
-    for(const m of rows){const tr=document.createElement("tr");cell(tr,formatPersianDate(m.movementDate));cell(tr,m.title|| (m.sourceType==="customer_receipt"?"دریافت مشتری":m.sourceType==="expense_payment"?"پرداخت هزینه":m.direction==="in"?"ورودی دستی":"خروجی دستی"));cell(tr,m.direction==="in"?"ورودی":"خروجی");cell(tr,money(m.amountToman));cell(tr,m.status==="active"?"فعال":"باطل‌شده");body.append(tr);}
+    if(!rows.length){const tr=document.createElement("tr");const td=cell(tr,"هنوز گردش مالی ثبت نشده است.");td.colSpan=6;body.append(tr);return;}
+    for(const m of rows){
+      const tr=document.createElement("tr");
+      cell(tr,formatPersianDate(m.movementDate));
+      cell(tr,m.title|| (m.sourceType==="customer_receipt"?"دریافت مشتری":m.sourceType==="expense_payment"?"پرداخت هزینه":m.direction==="in"?"ورودی دستی":"خروجی دستی"));
+      cell(tr,m.direction==="in"?"ورودی":"خروجی");
+      cell(tr,money(m.amountToman));
+      cell(tr,m.status==="active"?"فعال":"باطل‌شده");
+      const action=cell(tr,"");
+      const canVoid=m.status==="active"&&(m.sourceType==="expense_payment"||m.sourceType==="manual_inflow"||m.sourceType==="manual_outflow");
+      if(canVoid){
+        const button=document.createElement("button");
+        button.type="button";
+        button.className="biz-payment-void";
+        button.textContent=m.sourceType==="expense_payment"?"ابطال پرداخت":"ابطال گردش";
+        button.addEventListener("click",async()=>{
+          const isPayment=m.sourceType==="expense_payment";
+          const message=isPayment
+            ?"پرداخت هزینه باطل شود؟ مبلغ به حساب مالی برمی‌گردد و مانده بدهی دوباره محاسبه می‌شود."
+            :"این گردش دستی باطل شود؟ مانده حساب مالی به‌روزرسانی می‌شود.";
+          if(!await window.navaConfirm(message,{title:isPayment?"ابطال پرداخت هزینه":"ابطال گردش دستی",confirmText:"ابطال"}))return;
+          button.disabled=true;
+          try{
+            const endpoint=isPayment
+              ?"/expense-payments/"+encodeURIComponent(m.sourceId)+"/void"
+              :"/cash-movements/"+encodeURIComponent(m.id)+"/void";
+            await api(endpoint,"POST",{});
+            await load();
+            say("bizLedgerStatus",isPayment?"پرداخت باطل شد و مانده حساب اصلاح شد.":"گردش دستی باطل شد و مانده حساب اصلاح شد.");
+          }catch(error){say("bizLedgerStatus",error.message,true);button.disabled=false;}
+        });
+        action.append(button);
+      }else action.textContent="—";
+      body.append(tr);
+    }
   }
   async function load() {
     if (!businessId()) return;
