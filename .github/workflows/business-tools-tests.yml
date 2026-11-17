@@ -45,6 +45,7 @@ on:
   pull_request:
     branches: [main]
     paths:
+      - "brand-content-studios.js"
       - "business-tools.js"
       - "business-tools.css"
       - "index.html"
