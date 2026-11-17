@@ -71,3 +71,13 @@ test("Office export actions are styled and loaded with a fresh cache key", () =>
   const css = readFileSync(new URL("../office-file-tools.css", import.meta.url), "utf8");
   assert.match(css, /\.nava-export-actions/);
 });
+
+test("Office studio sends structured operation, output and detail preferences to NAVI", () => {
+  assert.match(html, /id="studioMode-office"/);
+  assert.match(html, /id="studioOutput-office"/);
+  assert.match(html, /id="studioDetail-office"/);
+  assert.match(app, /operation: value\("studioMode-office"\)/);
+  assert.match(app, /requestedOutput: selected\("studioOutput-office"\)/);
+  assert.match(app, /detailLevel: selected\("studioDetail-office"\)/);
+  assert.match(html, /متن استخراج‌شده برای تحلیل در درخواست NAVI ارسال خواهد شد/);
+});
