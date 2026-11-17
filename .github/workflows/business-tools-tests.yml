@@ -13,6 +13,7 @@ on:
       - "business-payments-ui.js"
       - "business-ledger-ui.js"
       - "modules/business-ledger.js"
+      - "modules/business-catalog.js"
       - "migrations/navi-production-reconcile/0011_business_cash_and_suppliers.sql"
       - "business-financial-export.js"
       - "business-tabs.js"
@@ -73,6 +74,7 @@ jobs:
           node --check business-payments-ui.js
           node --check business-ledger-ui.js
           node --check modules/business-ledger.js
+          node --check modules/business-catalog.js
           node --check business-financial-export.js
           node --check business-tabs.js
           node --check business-crm-ui.js
