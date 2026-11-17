@@ -172,7 +172,7 @@
           <label class="logo-field" for="logoPalette">پالت رنگی</label>
           <select class="logo-control" id="logoPalette"><option value="gold" data-foreground="#D6A84F" data-background="#101B30">طلایی و سرمه‌ای</option><option value="blue" data-foreground="#3F70A8" data-background="#DCE4ED">آبی و نقره‌ای</option><option value="green" data-foreground="#356B55" data-background="#E9E1CE">سبز و کرم</option><option value="violet" data-foreground="#7656A6" data-background="#DCCEF0">بنفش و یاسی</option><option value="mono" data-foreground="#22252B" data-background="#FFFFFF">تک‌رنگ</option><option value="custom" data-foreground="#C99B48" data-background="#172238">رنگ دلخواه</option></select>
           <div class="logo-custom-colors" id="logoCustomColors" hidden><label class="logo-field" for="logoPrimaryColor">رنگ اصلی</label><input class="logo-color-control" id="logoPrimaryColor" type="color" value="#c99b48"><label class="logo-field" for="logoDarkColor">رنگ مکمل تیره</label><input class="logo-color-control" id="logoDarkColor" type="color" value="#172238"></div>
-          <button class="btn-primary" type="submit">طراحی لوگو با NAVI</button>
+          <button class="btn-secondary" id="logoBriefToNavi" type="button">بررسی بریف با NAVI</button><button class="btn-primary" type="submit">طراحی لوگو با NAVI</button>
           <p class="logo-brief-hint">NAVI بریف را تحلیل می‌کند و موتور تصویر سه خروجی جداگانه می‌سازد. هر بار طراحی از سهمیه روزانه تصویر استفاده می‌کند.</p>
           <div class="logo-studio-status" id="logoStudioStatus" role="status" aria-live="polite">برای شروع، نام برند را وارد کن.</div>
         </form>
@@ -748,7 +748,7 @@
               <button class="btn-primary" id="bizCashMovementSubmit" type="submit">ثبت گردش دستی</button>
             </form><p class="biz-profile-status" id="bizCashMovementStatus" role="status" aria-live="polite">گردش دستی در موجودی حساب ثبت می‌شود؛ فروش و هزینه عملیاتی را جداگانه ثبت کن.</p></section>
           </div>
-          <details class="biz-account-card biz-account-disclosure"><summary class="biz-account-disclosure-head"><span><strong>گردش‌های نقدی و بانکی</strong><small>ورودی‌ها و خروجی‌های ثبت‌شده در حساب‌های مالی</small></span><span class="biz-disclosure-indicator" aria-hidden="true">⌄</span></summary><div class="biz-account-disclosure-body"><div class="biz-account-table-wrap"><table class="biz-account-table"><thead><tr><th>تاریخ</th><th>شرح</th><th>جهت</th><th>مبلغ</th><th>وضعیت</th></tr></thead><tbody id="bizCashMovementRows"><tr><td colspan="5">در حال بارگذاری...</td></tr></tbody></table></div></div></details>
+          <details class="biz-account-card biz-account-disclosure"><summary class="biz-account-disclosure-head"><span><strong>گردش‌های نقدی و بانکی</strong><small>ورودی‌ها و خروجی‌های ثبت‌شده در حساب‌های مالی</small></span><span class="biz-disclosure-indicator" aria-hidden="true">⌄</span></summary><div class="biz-account-disclosure-body"><div class="biz-account-table-wrap"><table class="biz-account-table"><thead><tr><th>تاریخ</th><th>شرح</th><th>جهت</th><th>مبلغ</th><th>وضعیت</th><th>عملیات</th></tr></thead><tbody id="bizCashMovementRows"><tr><td colspan="6">در حال بارگذاری...</td></tr></tbody></table></div></div></details>
         </section>
       </section>
       <section class="biz-tab-panel" id="bizPanelCatalog" data-biz-panel="catalog" role="tabpanel" aria-labelledby="bizTabCatalog" hidden>
@@ -1331,7 +1331,7 @@
   <script src="business-transactions-ui.js?v=supplier-linked-expenses-20261116-1" defer></script>
   <script src="business-payments-ui.js?v=receipt-cash-account-20261116-1" defer></script>
   <script src="business-invoices-ui.js?v=invoice-order-refresh-fix-20261116-1" defer></script>
-  <script src="business-ledger-ui.js?v=integrated-supplier-purchases-20261116-1" defer></script>
+  <script src="business-ledger-ui.js?v=cash-payment-void-controls-20261117-1" defer></script>
   <script src="business-financial-export.js?v=financial-export-daynight-20261116-1" defer></script>
   <script src="business-tabs.js?v=customer-accounts-20261116-1" defer></script>
   <script src="document-export.js?v=studio-response-select-20261115-1" defer></script>
