@@ -53,7 +53,7 @@ export async function handleBusinessInventoryRoute({ request, env, url, corsOrig
       const itemId = String(input.itemId || "");
       if (!/^item-[0-9a-f-]{36}$/i.test(itemId)) return fail("شناسه محصول معتبر نیست.", 400, corsOrigin);
       const movementType = String(input.movementType || "");
-      if (!["opening", "inbound", "outbound", "adjustment"].includes(movementType)) return fail("نوع گردش موجودی معتبر نیست.", 400, corsOrigin);
+      if (!["opening", "inbound", "outbound", "adjustment", "return"].includes(movementType)) return fail("نوع گردش موجودی معتبر نیست.", 400, corsOrigin);
       const quantity = Number(input.quantity);
       if (!Number.isSafeInteger(quantity) || quantity <= 0 || quantity > 1000000000) return fail("تعداد باید عدد صحیح مثبت باشد.", 400, corsOrigin);
       const movementDate = String(input.movementDate || "");
