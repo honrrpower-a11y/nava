@@ -6,15 +6,19 @@
  const $=id=>document.getElementById(id);
  let sourceFile=null,workbook=null,currentSheet="",zip=null,kind="";
  const setStatus=(message,error=false)=>{status.textContent=message;status.dataset.state=error?"error":"success";};
- const load=(src,name)=>new Promise((resolve,reject)=>{
-  if(window[name])return resolve(window[name]);
-  const existing=Array.from(document.scripts).find(script=>script.src===src);
-  if(existing){existing.addEventListener("load",()=>window[name]?resolve(window[name]):reject(new Error("ابزار ویرایش بارگذاری نشد.")),{once:true});existing.addEventListener("error",()=>reject(new Error("دریافت ابزار ویرایش ناموفق بود.")),{once:true});return;}
-  const script=document.createElement("script");script.src=src;script.async=true;
-  script.onload=()=>window[name]?resolve(window[name]):reject(new Error("ابزار ویرایش بارگذاری نشد."));
-  script.onerror=()=>reject(new Error("دریافت ابزار ویرایش ناموفق بود؛ اتصال اینترنت را بررسی کن."));
-  document.head.appendChild(script);
- });
+ const libraryLoads=Object.create(null);
+ const load=(src,name)=>{
+  if(window[name])return Promise.resolve(window[name]);
+  if(libraryLoads[name])return libraryLoads[name];
+  libraryLoads[name]=new Promise((resolve,reject)=>{
+   const existing=Array.from(document.scripts).find(script=>script.src===src);
+   const script=existing||document.createElement("script");
+   script.addEventListener("load",()=>window[name]?resolve(window[name]):reject(new Error("ابزار ویرایش بارگذاری نشد.")),{once:true});
+   script.addEventListener("error",()=>reject(new Error("دریافت ابزار ویرایش ناموفق بود.")),{once:true});
+   if(!existing){script.src=src;script.async=true;document.head.appendChild(script);}
+  }).catch(error=>{delete libraryLoads[name];throw error;});
+  return libraryLoads[name];
+ };
  const safeName=name=>String(name||"NAVA-edited").replace(/[\\/:*?"<>|]/g,"-").replace(/\.[^.]+$/,"").slice(0,65)||"NAVA-edited";
  function download(blob,name){
   const url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download=name;a.hidden=true;
@@ -43,11 +47,15 @@
     field.setAttribute("aria-label","ویرایش سلول "+address);
     field.addEventListener("change",()=>{
      const value=field.value.trim();
-     if(value.startsWith("=")&&/^=(?:SUM|AVERAGE|MIN|MAX|COUNT|COUNTA|ROUND|IF)\([A-Z0-9_$:,. +*/()-]+\)$/i.test(value))sheet[address]={t:"n",f:value.slice(1)};
+     const previous=sheet[address]||{};
+     if(value.startsWith("=")&&/^=(?:SUM|AVERAGE|MIN|MAX|COUNT|COUNTA|ROUND|IF)\\([A-Z0-9_$:,. +*/()-]+\\)$/i.test(value)){
+      sheet[address]={...previous,t:"n",f:value.slice(1)};delete sheet[address].v;delete sheet[address].w;
+     }
      else if(value.startsWith("=")){setStatus("این نسخه فقط فرمول‌های رایج و محدود را می‌پذیرد. مقدار سلول تغییر نکرد.",true);field.value=cell?(cell.f?"="+cell.f:String(cell.w??cell.v??"")):"";return;}
      else{
       const n=value.replace(/[۰-۹]/g,d=>"۰۱۲۳۴۵۶۷۸۹".indexOf(d)).replace(/[٠-٩]/g,d=>"٠١٢٣٤٥٦٧٨٩".indexOf(d)).replace(/[٬،]/g,"").replace(/٫/g,".");
-      sheet[address]=value!==""&&/^-?(?:\d+\.?\d*|\.\d+)$/.test(n)?{t:"n",v:Number(n)}:{t:"s",v:value};
+      sheet[address]=value!==""&&/^-?(?:\\d+\\.?\\d*|\\.\\d+)$/.test(n)?{...previous,t:"n",v:Number(n)}:{...previous,t:"s",v:value};
+      delete sheet[address].f;delete sheet[address].w;
      }
      setStatus("تغییر سلول "+address+" ثبت شد؛ برای دریافت نسخه جدید، «ذخیره نسخه ویرایش‌شده» را بزن.");
     });
