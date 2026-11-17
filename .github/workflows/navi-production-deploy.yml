@@ -12,6 +12,7 @@ on:
       - "modules/config.js"
       - "modules/logo.js"
       - "modules/business.js"
+      - "modules/**"
       - "modules/navi-knowledge.js"
       - "modules/business-transactions.js"
       - "modules/business-inventory.js"
@@ -101,6 +102,8 @@ jobs:
             'modules/shared.js',
             'modules/logo.js',
             'modules/business.js',
+            'modules/business-catalog.js',
+            'modules/business-invoices.js',
             'modules/business-transactions.js',
             'modules/business-inventory.js',
             'modules/business-crm.js',
