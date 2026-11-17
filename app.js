@@ -3518,6 +3518,58 @@ function chooseService(service) {
   window.openNaviAssistant({ service });
 }
 
+// The Office brief form submits the user instruction through the authenticated
+// NAVI flow. Extracted file text remains reference context, never edit consent.
+const officeBriefForm = document.getElementById("officeBriefForm");
+officeBriefForm?.addEventListener("submit", event => {
+  event.preventDefault();
+
+  const briefField = document.getElementById("studioBrief-office");
+  const completeBrief = String(briefField?.value || "").trim();
+  const userInstruction = completeBrief
+    .replace(/(?:^|\n)\s*--- متن استخراج‌شده از فایل:[\s\S]*?--- پایان متن فایل ---\s*/g, "\n")
+    .trim();
+
+  if (!userInstruction) {
+    if (briefField) {
+      briefField.setCustomValidity("ابتدا دستور یا درخواست خودت را در شرح درخواست بنویس.");
+      briefField.reportValidity();
+      briefField.addEventListener("input", () => briefField.setCustomValidity(""), { once: true });
+      briefField.focus();
+    }
+    return;
+  }
+
+  // Keep the complete brief (including extracted document text) in Office
+  // context, but pass only the user-authored instruction as the current message.
+  if (userInstruction.length > 9000) {
+    if (briefField) {
+      briefField.setCustomValidity("شرح درخواست خیلی طولانی است؛ لطفاً دستور اصلی را کوتاه‌تر و دقیق‌تر کن.");
+      briefField.reportValidity();
+      briefField.addEventListener("input", () => briefField.setCustomValidity(""), { once: true });
+      briefField.focus();
+    }
+    return;
+  }
+
+  const officeContext = collectNaviStudioContext("officePage");
+  // Reserve room under the Worker message limit for the actual user instruction
+  // and the other Office fields added by sendMessageToNavi().
+  const contextBriefBudget = Math.max(0, 9000 - userInstruction.length);
+  officeContext.brief = String(officeContext.brief || "").slice(0, contextBriefBudget);
+  window.openNaviAssistant({
+    service: "کارهای اداری و آفیس",
+    context: officeContext,
+    message: userInstruction
+  });
+
+  // Submit immediately when signed in; otherwise retain the prepared message
+  // in the NAVI composer so it can be sent after authentication.
+  if (getNaviToken() && !sendRequest.disabled) {
+    void sendMessageToNavi();
+  }
+});
+
 function scrollToRequest() {
   setNaviWidgetOpen(true, false);
 
