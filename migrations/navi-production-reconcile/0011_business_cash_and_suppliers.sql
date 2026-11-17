@@ -1,6 +1,12 @@
 -- NAVA BUSINESS: supplier payables, cash accounts and auditable cash movements.
 -- Additive only. Existing sales, expenses, customer receipts and stock movements are preserved.
 
+ALTER TABLE business_transactions_v1
+  ADD COLUMN supplier_id TEXT;
+
+ALTER TABLE business_customer_payments_v1
+  ADD COLUMN cash_account_id TEXT;
+
 CREATE TABLE IF NOT EXISTS business_suppliers_v1 (
   id TEXT PRIMARY KEY,
   business_id TEXT NOT NULL,
