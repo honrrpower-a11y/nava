@@ -96,6 +96,116 @@ function pdf(text,name,status){
  w.document.open();w.document.write(html);w.document.close();
  status.textContent="پنجره چاپ باز شد؛ در مقصد چاپ، گزینه «ذخیره به‌صورت PDF» را انتخاب کن.";
 }
+
+function loadExternal(src,globalName){
+ if(window[globalName])return Promise.resolve(window[globalName]);
+ if(window["__navaOfficeLib_"+globalName])return window["__navaOfficeLib_"+globalName];
+ window["__navaOfficeLib_"+globalName]=new Promise((resolve,reject)=>{
+  const script=document.createElement("script");script.src=src;script.async=true;
+  script.onload=()=>window[globalName]?resolve(window[globalName]):reject(new Error("کتابخانه ساخت فایل بارگذاری نشد."));
+  script.onerror=()=>reject(new Error("دریافت ابزار ساخت فایل ناموفق بود؛ اتصال اینترنت را بررسی کن."));
+  document.head.appendChild(script);
+ }).catch(error=>{delete window["__navaOfficeLib_"+globalName];throw error;});
+ return window["__navaOfficeLib_"+globalName];
+}
+function markdownRows(text){
+ const rows=[];let current=[];
+ for(const raw of lines(text)){
+  const x=raw.trim();
+  if(!x.startsWith("|")||!x.endsWith("|")){if(current.length){rows.push(current);current=[];}continue;}
+  const cells=x.slice(1,-1).split("|").map(v=>v.trim());
+  if(cells.every(v=>/^:?-{3,}:?$/.test(v)))continue;
+  current.push(cells);
+ }
+ if(current.length)rows.push(...current);
+ return rows.filter(group=>group.some(row=>row.some(Boolean)));
+}
+function workbookSheets(text){
+ const groups=markdownRows(text),sections=[];
+ let heading="داده‌ها",table=[];
+ for(const raw of lines(text)){
+  const x=raw.trim(),h=x.match(/^#{1,3}\s+(.+)$/);
+  if(h){if(table.length)sections.push({name:heading,rows:table});heading=h[1];table=[];continue;}
+  if(x.startsWith("|")&&x.endsWith("|")){
+   const cells=x.slice(1,-1).split("|").map(v=>v.trim());
+   if(!cells.every(v=>/^:?-{3,}:?$/.test(v)))table.push(cells);
+  }else if(table.length){sections.push({name:heading,rows:table});table=[];}
+ }
+ if(table.length)sections.push({name:heading,rows:table});
+ if(!sections.length){
+  const rows=[["ردیف","محتوا"]];
+  lines(text).map(x=>x.trim()).filter(Boolean).forEach((x,i)=>rows.push([i+1,x.replace(/^#{1,3}\s+|^[-*•]\s+|^\d+[.)]\s+/,"")]));
+  sections.push({name:"محتوای سند",rows});
+ }
+ return sections;
+}
+async function excel(text,name,button,status){
+ button.disabled=true;const label=button.textContent;button.textContent="در حال ساخت Excel...";
+ try{
+  const XLSX=await loadExternal("https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js","XLSX");
+  const book=XLSX.utils.book_new(),sections=workbookSheets(text);
+  sections.slice(0,20).forEach((section,index)=>{
+   const rows=section.rows.map(row=>row.map(value=>String(value??"")));
+   const sheet=XLSX.utils.aoa_to_sheet(rows);
+   const width=Math.max(1,...rows.map(row=>row.length));
+   sheet["!cols"]=Array.from({length:width},(_,col)=>({wch:Math.min(42,Math.max(12,...rows.map(row=>String(row[col]??"").length+2)))}));
+   if(rows.length>1&&width>0)sheet["!autofilter"]={ref:XLSX.utils.encode_range({s:{r:0,c:0},e:{r:rows.length-1,c:width-1}})};
+   sheet["!freeze"]={xSplit:0,ySplit:1,topLeftCell:"A2",activePane:"bottomLeft",state:"frozen"};
+   let sheetName=String(section.name||"Sheet"+(index+1)).replace(/[\\/?*\[\]:]/g," ").slice(0,31)||"Sheet"+(index+1);
+   const base=sheetName;let suffix=2;while(book.SheetNames.includes(sheetName))sheetName=(base.slice(0,27)+" "+suffix++);
+   XLSX.utils.book_append_sheet(book,sheet,sheetName);
+  });
+  XLSX.writeFile(book,name,{compression:true});
+  status.textContent="فایل Excel ساخته شد. جدول‌های Markdown به شیت‌های جداگانه تبدیل شدند؛ اگر پاسخ جدول نداشت، متن در یک شیت مرتب شد.";
+ }catch(error){status.textContent=error.message||"ساخت فایل Excel ناموفق بود.";}
+ finally{button.disabled=false;button.textContent=label;}
+}
+function splitPresentation(text){
+ const slides=[];let title="خلاصه",items=[];
+ const push=()=>{if(items.length){slides.push({title,items});items=[];}};
+ for(const raw of lines(text)){
+  const x=raw.trim();if(!x)continue;
+  const h=x.match(/^#{1,3}\s+(.+)$/);
+  if(h){push();title=h[1];continue;}
+  const bullet=x.match(/^[-*•]\s+(.+)$/),number=x.match(/^\d+[.)]\s+(.+)$/);
+  items.push({text:bullet?bullet[1]:number?number[1]:x,bullet:!!(bullet||number)});
+  if(items.length>=6)push();
+ }
+ push();
+ return slides.length?slides:[{title:"ارائه NAVI",items:[{text:String(text||"").slice(0,900),bullet:false}]}];
+}
+async function powerpoint(text,name,button,status){
+ button.disabled=true;const label=button.textContent;button.textContent="در حال ساخت PowerPoint...";
+ try{
+  const PptxGenJS=await loadExternal("https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js","pptxgen");
+  const pptx=new PptxGenJS();pptx.layout="LAYOUT_WIDE";pptx.author="NAVA";pptx.subject="ارائه ساخته‌شده با NAVI";pptx.title="NAVA Presentation";
+  pptx.theme={headFontFace:"Arial",bodyFontFace:"Arial",lang:"fa-IR"};
+  const navy="101B2B",gold="D5AD65",white="F7F8FA",muted="B8C1CE";
+  const addFooter=(slide,index)=>{slide.addShape(pptx.ShapeType.line,{x:.55,y:7.08,w:12.2,h:0,line:{color:"34445A",width:1}});slide.addText("NAVA  |  "+String(index).padStart(2,"0"),{x:.6,y:7.12,w:12,h:.2,fontFace:"Arial",fontSize:8,color:muted,align:"left",margin:0});};
+  const cover=pptx.addSlide();cover.background={color:navy};cover.addShape(pptx.ShapeType.rect,{x:0,y:0,w:.18,h:7.5,fill:{color:gold},line:{color:gold}});
+  cover.addText("NAVA",{x:.8,y:1.25,w:11.5,h:.55,fontFace:"Arial",fontSize:20,bold:true,color:gold,charSpacing:3,margin:0});
+  cover.addText("ارائه تهیه‌شده با NAVI",{x:.8,y:2.1,w:11.5,h:1.15,fontFace:"Arial",fontSize:30,bold:true,color:white,rtlMode:true,align:"right",margin:0});
+  cover.addText("محتوای ساختاریافته و قابل ویرایش",{x:.8,y:3.45,w:11.5,h:.5,fontFace:"Arial",fontSize:16,color:muted,rtlMode:true,align:"right",margin:0});addFooter(cover,1);
+  const contentSlides=splitPresentation(text);
+  contentSlides.slice(0,40).forEach((data,index)=>{
+   const slide=pptx.addSlide();slide.background={color:navy};
+   slide.addShape(pptx.ShapeType.rect,{x:0,y:0,w:13.333,h:.12,fill:{color:gold},line:{color:gold}});
+   slide.addText(data.title,{x:.65,y:.48,w:12,h:.65,fontFace:"Arial",fontSize:24,bold:true,color:gold,rtlMode:true,align:"right",margin:0.03,breakLine:false});
+   let y=1.45;
+   data.items.forEach(item=>{
+    const content=item.text.length>520?item.text.slice(0,517)+"...":item.text;
+    const isBullet=item.bullet;
+    const height=Math.min(1.2,Math.max(.42,Math.ceil(content.length/82)*.28+.18));
+    slide.addText((isBullet?"•  ":"")+content,{x:.85,y,w:11.7,h:height,fontFace:"Arial",fontSize:17,color:white,rtlMode:true,align:"right",valign:"mid",margin:.08,breakLine:false,fit:"shrink"});
+    y+=height+.13;if(y>6.65)return;
+   });addFooter(slide,index+2);
+  });
+  await pptx.writeFile({fileName:name});
+  status.textContent="فایل PowerPoint ساخته شد. تیترها به اسلایدهای جدا و بندها به محتوای قابل ویرایش تبدیل شدند.";
+ }catch(error){status.textContent=error.message||"ساخت فایل PowerPoint ناموفق بود.";}
+ finally{button.disabled=false;button.textContent=label;}
+}
+
 function attach(target,service){
  if(!target||!["مقاله و وبلاگ","کارهای اداری و آفیس"].includes(service))return;
  const parent=target.parentElement;if(!parent)return;
@@ -107,7 +217,14 @@ function attach(target,service){
  const getText=()=>typeof target.value==="string"?target.value:String(target.textContent||"");
  wb.addEventListener("click",()=>word(getText(),uniqueName(service==="مقاله و وبلاگ"?"NAVA-article":"NAVA-office-document","docx"),wb,note));
  pb.addEventListener("click",()=>pdf(getText(),uniqueName(service==="مقاله و وبلاگ"?"NAVA-article":"NAVA-office-document","pdf"),note));
- box.append(wb,pb,note);target.insertAdjacentElement("afterend",box);
+ if(service==="کارهای اداری و آفیس"){
+  const xb=document.createElement("button");xb.type="button";xb.className="btn-secondary";xb.textContent="ساخت فایل Excel";
+  const sb=document.createElement("button");sb.type="button";sb.className="btn-secondary";sb.textContent="ساخت PowerPoint";
+  xb.addEventListener("click",()=>excel(getText(),uniqueName("NAVA-office-data","xlsx"),xb,note));
+  sb.addEventListener("click",()=>powerpoint(getText(),uniqueName("NAVA-office-presentation","pptx"),sb,note));
+  box.append(wb,pb,xb,sb,note);
+ }else box.append(wb,pb,note);
+ target.insertAdjacentElement("afterend",box);
 }
 window.NavaDocumentExport=Object.freeze({attach});
 })();
