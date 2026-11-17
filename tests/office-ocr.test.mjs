@@ -6,6 +6,7 @@ const office = readFileSync(new URL("../office-file-tools.js", import.meta.url),
 const html = readFileSync(new URL("../index.html", import.meta.url), "utf8");
 const structured = readFileSync(new URL("../office-structured-files.js", import.meta.url), "utf8");
 const exporter = readFileSync(new URL("../document-export.js", import.meta.url), "utf8");
+const editor = readFileSync(new URL("../office-edit-tools.js", import.meta.url), "utf8");
 const app = readFileSync(new URL("../app.js", import.meta.url), "utf8");
 
 test("Office OCR supports Persian and English recognition in the browser", () => {
@@ -95,4 +96,18 @@ test("NAVI Office exports typed Excel tables and preserves long PowerPoint conte
   assert.doesNotMatch(exporter, /contentSlides\.slice\(0,40\)/);
   assert.match(exporter, /ساخت فایل Excel/);
   assert.match(exporter, /ساخت PowerPoint/);
+});
+
+
+test("Office local editor supports XLSX cell edits and safe DOCX/PPTX text replacement", () => {
+  assert.match(html, /id="officeEditPanel"/);
+  assert.match(html, /id="officeEditGrid"/);
+  assert.match(html, /id="officeEditReplaceRun"/);
+  assert.match(html, /office-edit-tools\.js\?v=/);
+  assert.match(editor, /XLSX\.read\(await file\.arrayBuffer\(\)/);
+  assert.match(editor, /XLSX\.write\(workbook/);
+  assert.match(editor, /ppt\/slides\/slide/);
+  assert.match(editor, /word\/(document\|header/);
+  assert.match(editor, /نسخه جدید دانلود شد و فایل اصلی/);
+  assert.match(editor, /حداکثر ۴۰ ردیف و ۱۲ ستون/);
 });
