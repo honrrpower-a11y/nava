@@ -367,3 +367,20 @@ test("sales ledger rows, summaries and monthly trends use issued invoice totals"
   assert.ok((transactions.match(/COALESCE\(i\.total_toman,t\.amount_toman\)/g) || []).length >= 3);
   assert.ok((navi.match(/COALESCE\(i\.total_toman,t\.amount_toman\)/g) || []).length >= 2);
 });
+
+test("cash outflows are guarded inside database writes against concurrent overdrafts", async () => {
+  const ledger = await readFile(new URL("../modules/business-ledger.js", import.meta.url), "utf8");
+  const paymentInsert = ledger.match(/INSERT INTO business_expense_payments_v1[\s\S]*?\.bind\(id,businessId,ownerId,v\.transaction_id[\s\S]*?\),/);
+  assert.ok(paymentInsert, "expense payment insert should exist");
+  assert.match(paymentInsert[0], /opening_balance_toman\+COALESCE\(SUM\(CASE WHEN m\.status='active' AND m\.direction='in'/);
+  assert.match(paymentInsert[0], /a\.status='active' GROUP BY a\.id\)>=\?/);
+});
+
+test("customer receipt reversal cannot make its cash account balance negative", async () => {
+  const payments = await readFile(new URL("../modules/business-payments.js", import.meta.url), "utf8");
+  const voidBlock = payments.slice(payments.indexOf('if(resourceId&&action==="void"'));
+  assert.match(voidBlock, /UPDATE business_customer_payments_v1[\s\S]*?EXISTS\(SELECT 1 FROM business_cash_movements_v1 cm/);
+  assert.match(voidBlock, /m\.id<>cm\.id/);
+  assert.match(voidBlock, /a\.opening_balance_toman\+COALESCE\(\(SELECT SUM\(CASE WHEN m\.direction='in'/);
+  assert.match(voidBlock, /ابطال این دریافت، موجودی حساب را منفی می‌کند/);
+});
