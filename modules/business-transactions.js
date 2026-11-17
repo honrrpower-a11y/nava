@@ -162,9 +162,12 @@ export async function handleBusinessTransactionRoute({ request, env, url, corsOr
       if (v.supplier_id) {
         if (v.transaction_type !== "expense") return fail("اتصال تأمین‌کننده فقط برای هزینه مجاز است.", 400, corsOrigin);
         const supplier = await env.NAVA_DB.prepare(
-          "SELECT id FROM business_suppliers_v1 WHERE id = ? AND business_id = ? AND owner_id = ? AND status = 'active' LIMIT 1"
+          "SELECT id, status FROM business_suppliers_v1 WHERE id = ? AND business_id = ? AND owner_id = ? LIMIT 1"
         ).bind(v.supplier_id, businessId, ownerId).first();
-        if (!supplier) return fail("تأمین‌کننده انتخاب‌شده فعال نیست یا به این پرونده تعلق ندارد.", 404, corsOrigin);
+        if (!supplier) return fail("تأمین‌کننده انتخاب‌شده به این پرونده تعلق ندارد.", 404, corsOrigin);
+        if (supplier.status !== "active" && v.supplier_id !== current.supplier_id) {
+          return fail("برای اتصال هزینه، تأمین‌کننده باید فعال باشد.", 409, corsOrigin);
+        }
       }
       if (v.customer_id) {
         if (v.transaction_type !== "sale") return fail("اتصال مشتری فقط برای فروش مجاز است.", 400, corsOrigin);
