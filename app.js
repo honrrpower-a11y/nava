@@ -936,7 +936,7 @@ function renderNaviOfficeAction(action) {
   const detail = document.createElement("p");
   detail.textContent = action.kind === "replace_text"
     ? "جایگزینی دقیق «" + action.find + "» با «" + action.replace + "»"
-    : "اعمال " + action.edits.length + " تغییر در سلول‌های Excel: " + action.edits.map(item => item.sheet + "!" + item.cell).join("، ");
+    : "اعمال تغییرات Excel: " + action.edits.map(item => item.sheet + "!" + item.cell + " ← " + String(item.value)).join("؛ ");
   const fileLine = document.createElement("p");
   fileLine.textContent = file?.ready ? "فایل فعال: " + file.name : "برای اجرای این پیشنهاد، ابتدا فایل DOCX، PPTX یا XLSX را در ابزار آفیس بارگذاری کن.";
   const note = document.createElement("p");
