@@ -105,14 +105,19 @@ test("Office-context requests are sent to the Office route even from the global 
   assert.match(app, /page: requestPage,/);
 });
 
-test("an Office action returned from the global chat opens the Office studio before rendering its approval card", () => {
-  assert.match(app, /if \(data\.officeAction && requestPage === "officePage"[\s\S]{0,220}showPage\("officePage"\);[\s\S]{0,100}renderNaviOfficeAction\(data\.officeAction\)/);
+test("Office approval cards render inside the NAVI conversation without redirecting the current page", () => {
+  assert.match(app, /const chatSlot = document\.getElementById\("naviOfficeActionChatSlot"\)/);
+  assert.match(app, /const slot = chatSlot \|\| officeSlot/);
+  assert.match(html, /id="naviOfficeActionChatSlot"/);
+  assert.match(app, /renderNaviOfficeAction\(data\.officeAction\)/);
+  assert.doesNotMatch(app, /if \(data\.officeAction && requestPage === "officePage"[\s\S]{0,220}showPage\("officePage"\)/);
 });
 
-test("the Worker still requires a direct current-user edit request and retains the Office page gate", () => {
+test("the Worker derives precise Excel actions from the current-user instruction and retains the Office page gate", () => {
   const worker = readFileSync(new URL("../modules/navi.js", import.meta.url), "utf8");
   assert.match(worker, /const explicitOfficeEdit = page === "officePage" && isExplicitOfficeEditRequest\(message\)/);
-  assert.match(worker, /if \(explicitOfficeEdit && !officeAction\)\s*\{\s*officeAction = extractNaviExplicitExcelEditAction\(message\);/);
+  assert.match(worker, /const deterministicOfficeAction = explicitOfficeEdit\s*\?\s*extractNaviExplicitExcelEditAction\(message\)/);
+  assert.match(worker, /let officeAction = deterministicOfficeAction \|\| \(explicitOfficeEdit \? parsed\.officeAction : null\)/);
 });
 
 
@@ -122,8 +127,9 @@ test("Office service selection in the global NAVI chat routes the request to Off
   assert.match(app, /page: requestPage,/);
 });
 
-test("Office route still opens the Office studio before rendering an approval card", () => {
-  assert.match(app, /if \(data\.officeAction && requestPage === "officePage"[\s\S]{0,220}showPage\("officePage"\);[\s\S]{0,100}renderNaviOfficeAction\(data\.officeAction\)/);
+test("Office route renders its approval card in the NAVI chat", () => {
+  assert.match(app, /const chatSlot = document\.getElementById\("naviOfficeActionChatSlot"\)/);
+  assert.match(app, /renderNaviOfficeAction\(data\.officeAction\)/);
 });
 
 test("Office brief form submits the user instruction through NAVI and keeps extracted file text as context only", () => {
