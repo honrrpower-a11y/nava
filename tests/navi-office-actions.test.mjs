@@ -102,7 +102,7 @@ test("assistant-style proposal text is not treated as user authorization", () =>
 
 test("Office-context requests are sent to the Office route even from the global NAVI chat", () => {
   assert.match(app, /const officeRequestContext =\s*naviAssistantContext\?\.service === "کارهای اداری و آفیس"\s*\|\|\s*serviceSelect\?\.value === "کارهای اداری و آفیس"\s*\|\|\s*activePageId === "officePage"/);
-  assert.match(app, /const requestPage = officeRequestContext \? "officePage" : activePageId/);
+  assert.match(app, /const requestPage = options\.pageOverride === "officePage"[\s\S]*?\? "officePage"[\s\S]*?: officeRequestContext \? "officePage" : activePageId/);
   assert.match(app, /page: requestPage,/);
 });
 
@@ -124,7 +124,7 @@ test("the Worker derives precise Excel actions from the current-user instruction
 
 test("Office service selection in the global NAVI chat routes the request to Office", () => {
   assert.match(app, /const officeRequestContext =\s*naviAssistantContext\?\.service === "کارهای اداری و آفیس"\s*\|\|\s*serviceSelect\?\.value === "کارهای اداری و آفیس"\s*\|\|\s*activePageId === "officePage"/);
-  assert.match(app, /const requestPage = officeRequestContext \? "officePage" : activePageId/);
+  assert.match(app, /const requestPage = options\.pageOverride === "officePage"[\s\S]*?\? "officePage"[\s\S]*?: officeRequestContext \? "officePage" : activePageId/);
   assert.match(app, /page: requestPage,/);
 });
 
@@ -140,7 +140,9 @@ test("Office brief form submits the user instruction through NAVI and keeps extr
   assert.match(app, /context: officeContext/);
   assert.match(app, /contextBriefBudget = Math\.max\(0, 9000 - userInstruction\.length\)/);
   assert.match(app, /officeContext\.brief = String\(officeContext\.brief \|\| ""\)\.slice\(0, contextBriefBudget\)/);
-  assert.match(app, /if \(getNaviToken\(\) && !sendRequest\.disabled\)[\s\S]*?sendMessageToNavi\(\)/);
+  assert.match(app, /if \(getNaviToken\(\) && !sendRequest\.disabled\)[\s\S]*?sendMessageToNavi\(\{ pageOverride: "officePage" \}\)/);
+  assert.match(app, /async function sendMessageToNavi\(options = \{\}\)/);
+  assert.match(app, /options\.pageOverride === "officePage"[\s\S]*?\? "officePage"/);
   const html = readFileSync(new URL("../index.html", import.meta.url), "utf8");
   assert.match(html, /<form class="studio-brief-card" id="officeBriefForm">/);
 });

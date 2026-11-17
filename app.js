@@ -3566,7 +3566,7 @@ officeBriefForm?.addEventListener("submit", event => {
   // Submit immediately when signed in; otherwise retain the prepared message
   // in the NAVI composer so it can be sent after authentication.
   if (getNaviToken() && !sendRequest.disabled) {
-    void sendMessageToNavi();
+    void sendMessageToNavi({ pageOverride: "officePage" });
   }
 });
 
@@ -3589,7 +3589,7 @@ function scrollToRequest() {
    NAVI CHAT — AUTHENTICATED REQUEST
 ========================================= */
 
-async function sendMessageToNavi() {
+async function sendMessageToNavi(options = {}) {
   const token = getNaviToken();
 
   if (!token) {
@@ -3622,7 +3622,9 @@ async function sendMessageToNavi() {
     naviAssistantContext?.service === "کارهای اداری و آفیس" ||
     serviceSelect?.value === "کارهای اداری و آفیس" ||
     activePageId === "officePage";
-  const requestPage = officeRequestContext ? "officePage" : activePageId;
+  const requestPage = options.pageOverride === "officePage"
+    ? "officePage"
+    : officeRequestContext ? "officePage" : activePageId;
 
   const finalMessage = [
     selectedService && selectedService !== "انتخاب نشده" ? "موضوع انتخاب‌شده: " + selectedService : "",
