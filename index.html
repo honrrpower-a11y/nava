@@ -382,6 +382,21 @@
           <input id="studioAudience-office" class="studio-control" type="text" maxlength="180" placeholder="مخاطب یا استفاده‌کننده را مشخص کن">
           <label for="studioBrief-office">شرح درخواست و جزئیات</label>
           <textarea id="studioBrief-office" class="studio-control studio-brief-input" maxlength="18000" placeholder="موضوع، نکات ضروری، داده‌ها و قالب مورد انتظار؛ یا پس از استخراج فایل، درخواستت را اینجا بنویس"></textarea>
+          <section class="office-edit-panel" id="officeEditPanel" hidden aria-labelledby="officeEditTitle">
+            <div class="office-edit-heading"><div><strong id="officeEditTitle">ویرایش مستقیم فایل</strong><p>تغییرات روی نسخه‌ای در مرورگر انجام می‌شوند؛ فایل اصلی جایگزین نمی‌شود.</p></div><button class="btn-secondary" id="officeEditClose" type="button">بستن ویرایشگر</button></div>
+            <div id="officeEditExcel" hidden>
+              <label for="officeEditSheet">انتخاب شیت Excel</label><select id="officeEditSheet" class="studio-control"></select>
+              <div class="office-edit-grid-wrap" id="officeEditGrid"></div><p id="officeEditGridNote" class="office-file-help"></p>
+              <button class="btn-primary" id="officeEditSave" type="button">ذخیره نسخه ویرایش‌شده Excel</button>
+            </div>
+            <div id="officeEditReplace" hidden>
+              <label id="officeEditReplaceLabel">جست‌وجو و جایگزینی متن</label>
+              <div class="office-edit-replace-grid"><input id="officeEditFind" class="studio-control" type="text" placeholder="عبارت فعلی"><input id="officeEditReplaceValue" class="studio-control" type="text" placeholder="عبارت جایگزین"></div>
+              <button class="btn-primary" id="officeEditReplaceRun" type="button">اعمال تغییر و دریافت نسخه جدید</button>
+              <p class="office-file-help">جایگزینی در متن‌های مستقل انجام می‌شود؛ متن‌هایی که در چند قطعه جدا ذخیره شده‌اند ممکن است پیدا نشوند. ساختار کلی اسلایدها و سند حفظ می‌شود.</p>
+            </div>
+            <p id="officeEditStatus" class="office-file-status" role="status" aria-live="polite">پس از انتخاب فایل قابل ویرایش، ابزار اینجا آماده می‌شود.</p>
+          </section>
           <div class="office-file-panel" id="officeFilePanel">
             <label for="officeSourceFile">افزودن فایل برای بررسی یا ویرایش</label>
             <p class="office-file-help">فایل Word، PowerPoint، Excel، PDF، TXT یا تصویر سند را انتخاب کن. استخراج و OCR در مرورگر انجام می‌شود و فایل اصلی آپلود نمی‌شود؛ اما متن استخراج‌شده برای تحلیل در درخواست NAVI ارسال خواهد شد. حداکثر ۱۵ مگابایت.</p>
@@ -1370,5 +1385,6 @@
   <link rel="stylesheet" href="office-file-tools.css?v=office-professional-workflow-20261117-1">
   <script src="office-structured-files.js?v=office-pptx-xlsx-20261115-2" defer></script>
   <script src="office-file-tools.js?v=office-pptx-xlsx-20261115-2" defer></script>
+  <script src="office-edit-tools.js?v=office-local-edit-20261117-1" defer></script>
 </body>
 </html>
