@@ -17,6 +17,7 @@ on:
       - "document-export.js"
       - "office-file-tools.js"
       - "office-structured-files.js"
+      - "office-edit-tools.js"
       - "index.html"
       - "tests/office-ocr.test.mjs"
       - ".github/workflows/office-file-tests.yml"
