@@ -702,9 +702,9 @@
               <p class="biz-form-note" id="bizPurchaseTotal">جمع خرید: ۰ تومان</p>
               <div class="biz-form-divider"></div>
               <h4>پرداخت در زمان خرید (اختیاری)</h4>
-              <p class="biz-form-note">اگر فعلاً پرداختی نداری، مبلغ پرداخت‌شده را صفر بگذار؛ مانده به‌عنوان بدهی تأمین‌کننده ثبت می‌شود.</p>
+              <p class="biz-form-note">اگر فعلاً پرداختی نداری، مبلغ پرداخت‌شده را خالی بگذار؛ مانده به‌عنوان بدهی تأمین‌کننده ثبت می‌شود.</p>
               <div class="biz-fields-grid">
-                <label class="biz-field"><span>مبلغ پرداخت‌شده (تومان)</span><input id="bizPurchasePaidAmount" type="text" inputmode="numeric" value="0" autocomplete="off" required></label>
+                <label class="biz-field"><span>مبلغ پرداخت‌شده (تومان)</span><input id="bizPurchasePaidAmount" type="text" inputmode="numeric" autocomplete="off"></label>
                 <label class="biz-field"><span>کسر از حساب مالی</span><select id="bizPurchaseCashAccount"><option value="">انتخاب حساب در صورت پرداخت</option></select></label>
                 <label class="biz-field"><span>روش پرداخت</span><select id="bizPurchasePaymentMethod"><option value="cash">نقدی</option><option value="card">کارت‌خوان</option><option value="bank_transfer">انتقال بانکی</option><option value="other">سایر</option></select></label>
               </div>
@@ -719,7 +719,7 @@
             <section class="biz-account-card"><h3>ایجاد حساب مالی</h3><form id="bizCashAccountForm" class="biz-payment-form">
               <label class="biz-field"><span>نام حساب</span><input id="bizCashAccountName" maxlength="100" placeholder="مثلاً صندوق فروشگاه یا بانک ملت" required></label>
               <label class="biz-field"><span>نوع حساب</span><select id="bizCashAccountType"><option value="cash">صندوق نقدی</option><option value="bank">حساب بانکی</option><option value="card">کارت / کارت‌خوان</option><option value="other">سایر</option></select></label>
-              <label class="biz-field"><span>موجودی افتتاحیه (تومان)</span><input id="bizCashOpening" inputmode="numeric" value="0" required></label>
+              <label class="biz-field"><span>موجودی افتتاحیه (تومان)</span><input id="bizCashOpening" inputmode="numeric" placeholder="مبلغ موجودی افتتاحیه" required></label>
               <button class="btn-primary" id="bizCashAccountSubmit" type="submit">ایجاد حساب</button>
             </form><p class="biz-profile-status" id="bizCashAccountStatus" role="status" aria-live="polite"></p></section>
             <details class="biz-account-card biz-account-disclosure"><summary class="biz-account-disclosure-head"><span><strong>حساب‌های مالی و مانده فعلی</strong><small>موجودی افتتاحیه به‌علاوه گردش‌های فعال</small></span><span class="biz-disclosure-indicator" aria-hidden="true">⌄</span></summary><div class="biz-account-disclosure-body"><div class="biz-account-table-wrap"><table class="biz-account-table"><thead><tr><th>حساب</th><th>نوع</th><th>مانده</th><th>وضعیت</th></tr></thead><tbody id="bizCashAccountRows"><tr><td colspan="4">در حال بارگذاری...</td></tr></tbody></table></div></div></details>
@@ -1331,7 +1331,7 @@
   <script src="business-transactions-ui.js?v=supplier-linked-expenses-20261116-1" defer></script>
   <script src="business-payments-ui.js?v=receipt-cash-account-20261116-1" defer></script>
   <script src="business-invoices-ui.js?v=invoice-order-refresh-fix-20261116-1" defer></script>
-  <script src="business-ledger-ui.js?v=cash-payment-void-controls-20261117-1" defer></script>
+  <script src="business-ledger-ui.js?v=supplier-zero-inputs-fix-20261117-1" defer></script>
   <script src="business-financial-export.js?v=financial-export-daynight-20261116-1" defer></script>
   <script src="business-tabs.js?v=customer-accounts-20261116-1" defer></script>
   <script src="document-export.js?v=studio-response-select-20261115-1" defer></script>
