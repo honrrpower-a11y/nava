@@ -240,16 +240,15 @@ export async function loadNaviBusinessContext(db, ownerId, businessId, options =
   let transactionTotals = null;
   try {
     transactions = await db.prepare(
-      "SELECT transaction_type, title, amount_toman, transaction_date, category, notes FROM business_transactions_v1 WHERE business_id = ? AND owner_id = ? ORDER BY transaction_date DESC, created_at DESC LIMIT ?"
+      "SELECT t.transaction_type, t.title, CASE WHEN t.transaction_type='sale' THEN COALESCE(i.total_toman,t.amount_toman) ELSE t.amount_toman END AS amount_toman, t.transaction_date, t.category, t.notes FROM business_transactions_v1 t LEFT JOIN business_orders_v1 o ON o.converted_transaction_id=t.id AND o.business_id=t.business_id AND o.owner_id=t.owner_id LEFT JOIN business_invoices_v1 i ON i.order_id=o.id AND i.business_id=t.business_id AND i.owner_id=t.owner_id AND i.document_type='invoice' AND i.status='issued' WHERE t.business_id = ? AND t.owner_id = ? ORDER BY t.transaction_date DESC, t.created_at DESC LIMIT ?"
     ).bind(businessId, ownerId, transactionLimit).all();
     transactionTotals = await db.prepare(
       "SELECT COUNT(*) AS transaction_count, " +
-      "COALESCE(SUM(CASE WHEN transaction_type='sale' THEN amount_toman ELSE 0 END),0) AS all_time_sales, " +
-      "COALESCE(SUM(CASE WHEN transaction_type='expense' THEN amount_toman ELSE 0 END),0) AS all_time_expenses, " +
-      "SUM(CASE WHEN transaction_type='sale' THEN 1 ELSE 0 END) AS sale_count, " +
-      "SUM(CASE WHEN transaction_type='expense' THEN 1 ELSE 0 END) AS expense_count " +
-      "FROM business_transactions_v1 WHERE business_id=? AND owner_id=?"
-    ).bind(businessId, ownerId).first();
+      "COALESCE(SUM(CASE WHEN t.transaction_type='sale' THEN COALESCE(i.total_toman,t.amount_toman) ELSE 0 END),0) AS all_time_sales, " +
+      "COALESCE(SUM(CASE WHEN t.transaction_type='expense' THEN t.amount_toman ELSE 0 END),0) AS all_time_expenses, " +
+      "SUM(CASE WHEN t.transaction_type='sale' THEN 1 ELSE 0 END) AS sale_count, " +
+      "SUM(CASE WHEN t.transaction_type='expense' THEN 1 ELSE 0 END) AS expense_count " +
+      "FROM business_transactions_v1 t LEFT JOIN business_orders_v1 o ON o.converted_transaction_id=t.id AND o.business_id=t.business_id AND o.owner_id=t.owner_id LEFT JOIN business_invoices_v1 i ON i.order_id=o.id AND i.business_id=t.business_id AND i.owner_id=t.owner_id AND i.document_type='invoice' AND i.status='issued' WHERE t.business_id=? AND t.owner_id=?").bind(businessId, ownerId).first();
   } catch (error) {
     console.warn("[NAVA BUSINESS] Transaction ledger is not available.", error);
   }
