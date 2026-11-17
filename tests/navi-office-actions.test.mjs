@@ -131,6 +131,8 @@ test("Office brief form submits the user instruction through NAVI and keeps extr
   assert.match(app, /completeBrief[\s\S]*?replace\([\s\S]*?متن استخراج‌شده از فایل/);
   assert.match(app, /message: userInstruction/);
   assert.match(app, /context: officeContext/);
+  assert.match(app, /contextBriefBudget = Math\.max\(0, 9000 - userInstruction\.length\)/);
+  assert.match(app, /officeContext\.brief = String\(officeContext\.brief \|\| ""\)\.slice\(0, contextBriefBudget\)/);
   assert.match(app, /if \(getNaviToken\(\) && !sendRequest\.disabled\)[\s\S]*?sendMessageToNavi\(\)/);
   const html = readFileSync(new URL("../index.html", import.meta.url), "utf8");
   assert.match(html, /<form class="studio-brief-card" id="officeBriefForm">/);
