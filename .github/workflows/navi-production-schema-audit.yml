@@ -10,6 +10,8 @@ on:
       - "migrations/navi-production-reconcile/0008_business_inventory.sql"
       - "migrations/navi-production-reconcile/0009_business_customers_orders.sql"
       - "migrations/navi-production-reconcile/0010_business_customer_accounts.sql"
+      - "migrations/navi-production-reconcile/0011_business_cash_and_suppliers.sql"
+      - "migrations/navi-production-reconcile/0012_business_invoices.sql"
   workflow_dispatch:
 
 permissions:
@@ -43,7 +45,7 @@ jobs:
           test -n "$CLOUDFLARE_ACCOUNT_ID"
           npx wrangler d1 export nava-memory --remote --output=/tmp/nava-memory-schema-audit.sql
           test -s /tmp/nava-memory-schema-audit.sql
-      - name: Preflight and apply only the additive NAVI base indexes
+      - name: Preflight production schema and apply additive reconciliation migrations
         shell: bash
         run: |
           set -euo pipefail
