@@ -43,7 +43,7 @@ export async function handleBusinessPaymentsRoute({request,env,url,corsOrigin,bu
     "SELECT c.id,c.name,c.phone,c.status,"+
     "COALESCE(s.sales_toman,0) AS sales_toman,COALESCE(p.received_toman,0) AS received_toman "+
     "FROM business_customers_v1 c "+
-    "LEFT JOIN (SELECT customer_id,SUM(amount_toman) AS sales_toman FROM business_transactions_v1 WHERE business_id=? AND owner_id=? AND transaction_type='sale' AND customer_id IS NOT NULL GROUP BY customer_id) s ON s.customer_id=c.id "+
+    "LEFT JOIN (SELECT t.customer_id,SUM(COALESCE(i.total_toman,t.amount_toman)) AS sales_toman FROM business_transactions_v1 t LEFT JOIN business_orders_v1 o ON o.converted_transaction_id=t.id AND o.business_id=t.business_id AND o.owner_id=t.owner_id LEFT JOIN business_invoices_v1 i ON i.order_id=o.id AND i.business_id=t.business_id AND i.owner_id=t.owner_id AND i.document_type='invoice' AND i.status='issued' WHERE t.business_id=? AND t.owner_id=? AND t.transaction_type='sale' AND t.customer_id IS NOT NULL GROUP BY t.customer_id) s ON s.customer_id=c.id "+
     "LEFT JOIN (SELECT customer_id,SUM(amount_toman) AS received_toman FROM business_customer_payments_v1 WHERE business_id=? AND owner_id=? AND status='received' GROUP BY customer_id) p ON p.customer_id=c.id "+
     "WHERE c.business_id=? AND c.owner_id=? ORDER BY CASE WHEN c.status='active' THEN 0 ELSE 1 END,c.name COLLATE NOCASE"
    ).bind(businessId,ownerId,businessId,ownerId,businessId,ownerId).all();
