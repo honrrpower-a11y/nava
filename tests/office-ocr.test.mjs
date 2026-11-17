@@ -62,7 +62,7 @@ test("Word and PDF exporters correctly recognize RTL, headings and ordered lists
   assert.ok(exporter.includes("x.match(/^(#{1,3})\\s+(.+)$/)"));
   assert.ok(exporter.includes("x.match(/^(\\d+)[.)]\\s+(.+)$/)"));
   assert.match(exporter, /alignment:rtl\?AlignmentType\.RIGHT:AlignmentType\.LEFT/);
-  assert.match(exporter, /dir="\+dir\+"/);
+  assert.match(exporter, /direction:'\+dir\+'/);
 });
 
 test("Office export actions are styled and loaded with a fresh cache key", () => {
