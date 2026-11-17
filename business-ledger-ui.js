@@ -106,8 +106,8 @@
   function updatePurchaseTotal() {
     const quantity=Number(digits($("bizPurchaseQuantity")?.value||"").replace(/[٬,\s]/g,""));
     const price=Number(digits($("bizPurchaseUnitPrice")?.value||"").replace(/[٬,\s]/g,""));
-    const total=quantity>0&&price>0&&Number.isSafeInteger(quantity*price)?quantity*price:0;
-    const node=$("bizPurchaseTotal");if(node)node.textContent="جمع خرید: "+money(total);
+    const valid=quantity>0&&price>0&&Number.isSafeInteger(quantity*price);
+    const node=$("bizPurchaseTotal");if(node)node.textContent="جمع خرید: "+(valid?money(quantity*price):"—");
   }
   function renderMovements(rows) {
     const body=$("bizCashMovementRows");if(!body)return;body.replaceChildren();
@@ -179,7 +179,7 @@
         purchaseDate:$("bizPurchaseDate").value,paidAmountToman,cashAccountId:$("bizPurchaseCashAccount").value||null,
         paymentMethod:$("bizPurchasePaymentMethod").value,reference:$("bizPurchaseReference").value.trim(),notes:$("bizPurchaseNotes").value.trim()
       });
-      $("bizPurchaseForm").reset();$("bizPurchasePaidAmount").value="0";purchaseDatePicker.set(today());updatePurchaseTotal();
+      $("bizPurchaseForm").reset();purchaseDatePicker.set(today());updatePurchaseTotal();
       window.dispatchEvent(new CustomEvent("nava:business-purchase-updated"));
       await load();say("bizPurchaseStatus","خرید ثبت شد؛ موجودی انبار افزایش یافت و بدهی و پرداخت در دفتر مالی به‌روزرسانی شد.");
     }catch(error){say("bizPurchaseStatus",error.message,true);}finally{button.disabled=false;}
@@ -193,7 +193,7 @@
   });
   $("bizCashAccountForm")?.addEventListener("submit",async event=>{
     event.preventDefault();const button=$("bizCashAccountSubmit");button.disabled=true;
-    try{const amount=Number(digits($("bizCashOpening").value)||0);if(!Number.isSafeInteger(amount)||amount<0)throw new Error("موجودی افتتاحیه معتبر نیست.");await api("/cash-accounts","POST",{name:$("bizCashAccountName").value.trim(),accountType:$("bizCashAccountType").value,openingBalanceToman:amount});$("bizCashAccountForm").reset();$("bizCashOpening").value="0";await load();say("bizCashAccountStatus","حساب مالی ثبت شد.");}
+    try{const amount=Number(digits($("bizCashOpening").value)||0);if(!Number.isSafeInteger(amount)||amount<0)throw new Error("موجودی افتتاحیه معتبر نیست.");await api("/cash-accounts","POST",{name:$("bizCashAccountName").value.trim(),accountType:$("bizCashAccountType").value,openingBalanceToman:amount});$("bizCashAccountForm").reset();await load();say("bizCashAccountStatus","حساب مالی ثبت شد.");}
     catch(error){say("bizCashAccountStatus",error.message,true);}finally{button.disabled=false;}
   });
   $("bizCashMovementForm")?.addEventListener("submit",async event=>{
@@ -210,6 +210,6 @@
   $("bizProfileSelect")?.addEventListener("change",load);
   window.addEventListener("nava:business-selection-changed",load);
   window.addEventListener("nava:business-auth-changed",load);
-  cashMovementDatePicker.set(today());expensePaymentDatePicker.set(today());purchaseDatePicker.set(today());$("bizCashOpening").value="0";$("bizPurchasePaidAmount").value="0";updatePurchaseTotal();
+  cashMovementDatePicker.set(today());expensePaymentDatePicker.set(today());purchaseDatePicker.set(today());updatePurchaseTotal();
   load();
 })();
