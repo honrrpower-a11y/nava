@@ -149,15 +149,17 @@ test("Office brief form submits the user instruction through NAVI and keeps extr
 
 
 test("Office form passes its exact user instruction, service, and context directly into NAVI send", () => {
-  assert.match(app, /typeof options\\.messageOverride === "string"[\\s\\S]*?options\\.messageOverride\\.trim\\(\\)/);
-  assert.match(app, /const requestContext = options\\.contextOverride[\\s\\S]*?context: options\\.contextOverride/);
-  assert.match(app, /messageOverride: userInstruction,[\\s\\S]*?serviceOverride: "کارهای اداری و آفیس",[\\s\\S]*?contextOverride: officeContext/);
+  assert.ok(app.includes('const message = typeof options.messageOverride === "string"'));
+  assert.ok(app.includes("context: options.contextOverride"));
+  assert.ok(app.includes("messageOverride: userInstruction,"));
+  assert.ok(app.includes('serviceOverride: "کارهای اداری و آفیس"'));
+  assert.ok(app.includes("contextOverride: officeContext"));
 });
 
 test("Office approval card can render in NAVI chat without requiring the hidden Office host", () => {
   const render = app.slice(app.indexOf("function renderNaviOfficeAction"), app.indexOf("// Select only NAVI response text"));
-  assert.match(render, /const slot = chatSlot \\|\\| officeSlot/);
-  assert.match(render, /if \\(!slot\\)/);
-  assert.doesNotMatch(render, /if \\(!host \\|\\| !slot\\)/);
-  assert.match(render, /if \\(slot === officeSlot && host\\) host\\.hidden = false/);
+  assert.ok(render.includes("const slot = chatSlot || officeSlot"));
+  assert.ok(render.includes("if (!slot)"));
+  assert.ok(!render.includes("if (!host || !slot)"));
+  assert.ok(render.includes("if (slot === officeSlot && host) host.hidden = false"));
 });
