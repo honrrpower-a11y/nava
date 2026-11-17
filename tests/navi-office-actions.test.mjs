@@ -125,3 +125,13 @@ test("Office service selection in the global NAVI chat routes the request to Off
 test("Office route still opens the Office studio before rendering an approval card", () => {
   assert.match(app, /if \(data\.officeAction && requestPage === "officePage"[\s\S]{0,220}showPage\("officePage"\);[\s\S]{0,100}renderNaviOfficeAction\(data\.officeAction\)/);
 });
+
+test("Office brief form submits the user instruction through NAVI and keeps extracted file text as context only", () => {
+  assert.match(app, /const officeBriefForm = document\.getElementById\("officeBriefForm"\)/);
+  assert.match(app, /completeBrief[\s\S]*?replace\([\s\S]*?متن استخراج‌شده از فایل/);
+  assert.match(app, /message: userInstruction/);
+  assert.match(app, /context: officeContext/);
+  assert.match(app, /if \(getNaviToken\(\) && !sendRequest\.disabled\)[\s\S]*?sendMessageToNavi\(\)/);
+  const html = readFileSync(new URL("../index.html", import.meta.url), "utf8");
+  assert.match(html, /<form class="studio-brief-card" id="officeBriefForm">/);
+});
