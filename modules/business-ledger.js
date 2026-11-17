@@ -143,14 +143,19 @@ export async function handleBusinessLedgerRoute({request,env,url,corsOrigin,busi
     const account=await db.prepare("SELECT id FROM business_cash_accounts_v1 WHERE id=? AND business_id=? AND owner_id=? AND status='active'").bind(accountId,businessId,ownerId).first();
     if(!account)return fail("حساب مالی فعال این پرونده پیدا نشد.",404,corsOrigin);
     const v=n.value,id="cashmove-"+crypto.randomUUID(),source=v.direction==="in"?"manual_inflow":"manual_outflow";
-    const r=await db.prepare("INSERT INTO business_cash_movements_v1(id,business_id,owner_id,cash_account_id,direction,amount_toman,movement_date,source_type,source_id,title,method,reference,notes,status,created_at) VALUES(?,?,?,?,?,?,?,?,'',?,?,?,?,'active',datetime('now'))").bind(id,businessId,ownerId,accountId,v.direction,v.amount_toman,v.movement_date,source,v.title,v.method,v.reference,v.notes).run();
-    if(Number(r.meta?.changes||0)!==1)throw new Error("Cash movement insert not confirmed.");
+    const r=await db.prepare("INSERT INTO business_cash_movements_v1(id,business_id,owner_id,cash_account_id,direction,amount_toman,movement_date,source_type,source_id,title,method,reference,notes,status,created_at) SELECT ?,?,?,?,?,?,?,?,'',?,?,?,?,'active',datetime('now') WHERE ?='in' OR (SELECT a.opening_balance_toman+COALESCE(SUM(CASE WHEN m.status='active' AND m.direction='in' THEN m.amount_toman WHEN m.status='active' AND m.direction='out' THEN -m.amount_toman ELSE 0 END),0) FROM business_cash_accounts_v1 a LEFT JOIN business_cash_movements_v1 m ON m.cash_account_id=a.id AND m.business_id=a.business_id AND m.owner_id=a.owner_id WHERE a.id=? AND a.business_id=? AND a.owner_id=? AND a.status='active' GROUP BY a.id)>=?").bind(id,businessId,ownerId,accountId,v.direction,v.amount_toman,v.movement_date,source,v.title,v.method,v.reference,v.notes,v.direction,accountId,businessId,ownerId,v.amount_toman).run();
+    if(Number(r.meta?.changes||0)!==1)return fail("موجودی حساب برای این خروج کافی نیست یا حساب دیگر فعال نیست؛ گردش ثبت نشد.",409,corsOrigin);
     const row=await db.prepare("SELECT * FROM business_cash_movements_v1 WHERE id=? AND business_id=? AND owner_id=?").bind(id,businessId,ownerId).first();
     return reply({movement:cashMoveOut(row),saved:true},201,corsOrigin);
    }
    if(resourceId&&action==="void"&&request.method==="POST"){
-    const r=await db.prepare("UPDATE business_cash_movements_v1 SET status='voided' WHERE id=? AND business_id=? AND owner_id=? AND source_type IN ('manual_inflow','manual_outflow') AND status='active'").bind(resourceId,businessId,ownerId).run();
-    if(Number(r.meta?.changes||0)!==1)return fail("فقط گردش دستی فعال قابل ابطال است.",404,corsOrigin);return reply({voided:true},200,corsOrigin);
+    const r=await db.prepare("UPDATE business_cash_movements_v1 SET status='voided' WHERE id=? AND business_id=? AND owner_id=? AND source_type IN ('manual_inflow','manual_outflow') AND status='active' AND (source_type<>'manual_inflow' OR (SELECT a.opening_balance_toman+COALESCE(SUM(CASE WHEN m.status='active' AND m.direction='in' THEN m.amount_toman WHEN m.status='active' AND m.direction='out' THEN -m.amount_toman ELSE 0 END),0) FROM business_cash_accounts_v1 a LEFT JOIN business_cash_movements_v1 m ON m.cash_account_id=a.id AND m.business_id=a.business_id AND m.owner_id=a.owner_id AND m.id<>business_cash_movements_v1.id WHERE a.id=business_cash_movements_v1.cash_account_id AND a.business_id=business_cash_movements_v1.business_id AND a.owner_id=business_cash_movements_v1.owner_id GROUP BY a.id)>=0)").bind(resourceId,businessId,ownerId).run();
+    if(Number(r.meta?.changes||0)!==1){
+     const movement=await db.prepare("SELECT source_type,status FROM business_cash_movements_v1 WHERE id=? AND business_id=? AND owner_id=?").bind(resourceId,businessId,ownerId).first();
+     if(movement?.status==="active"&&movement.source_type==="manual_inflow")return fail("این ورودی قبلاً خرج شده است؛ ابطال آن موجودی حساب را منفی می‌کند. ابتدا خروجی‌های مرتبط را اصلاح کن.",409,corsOrigin);
+     return fail("فقط گردش دستی فعال قابل ابطال است.",404,corsOrigin);
+    }
+    return reply({voided:true},200,corsOrigin);
    }
   }
   if(resource==="purchases"){
