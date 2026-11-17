@@ -250,7 +250,6 @@ async function powerpoint(text,name,button,status){
  finally{button.disabled=false;button.textContent=label;}
 }
 function attach(target,service){
-function attach(target,service){
  if(!target||!["مقاله و وبلاگ","کارهای اداری و آفیس"].includes(service))return;
  const parent=target.parentElement;if(!parent)return;
  parent.querySelector("[data-nava-export-actions]")?.remove();
