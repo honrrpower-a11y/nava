@@ -11,7 +11,9 @@
   <link rel="stylesheet" href="brand-content-studios.css?v=studio-output-inline-20261114-1">
   <link rel="stylesheet" href="business-tools.css?v=business-navi-help-20261116-1">
   <link rel="stylesheet" href="studio-workspaces.css?v=composition-staff-20261114-1">
+  <link rel="stylesheet" href="office-navi-guide.css?v=office-navi-guide-20261117-1">
   <script src="app.js?v=navi-chat-silent-sync-20261116-2" defer></script>
+  <script src="office-navi-guide.js?v=office-navi-guide-20261117-1" defer></script>
   <script src="logo-studio.js?v=navi-image-logo-engine-20261115-1" defer></script>
 </head>
 <body>
@@ -329,6 +331,29 @@
         <div><span class="studio-kicker">NAVA WORKSPACE / STUDIO</span><h1>استودیوی کارهای اداری و آفیس</h1><p>برای تهیه و ویرایش اسناد کاری، نامه‌ها، گزارش‌ها، صورت‌جلسه‌ها و برنامه‌های اجرایی با کمک NAVI.</p></div>
         <button class="btn-secondary" type="button" onclick="showPage('homePage')">بازگشت به استودیوها</button>
       </div>
+      <section class="office-navi-guide" aria-labelledby="officeNaviGuideTitle">
+        <div class="office-navi-guide-copy">
+          <span class="studio-step">NAVI OFFICE COMPANION</span>
+          <h2 id="officeNaviGuideTitle">راهنمای هوشمند آفیس با ناوی</h2>
+          <p>لازم نیست کار با Word، Excel یا PowerPoint را بلد باشی. بگو چه کاری می‌خواهی انجام بدهی؛ ناوی از سطح خودت شروع می‌کند، مرحله‌به‌مرحله توضیح می‌دهد و در صورت نیاز نمونه یا فایل پیشنهادی آماده می‌کند.</p>
+        </div>
+        <div class="office-navi-guide-controls">
+          <label for="officeGuideApp">در چه برنامه‌ای کمک می‌خواهی؟</label>
+          <select id="officeGuideApp" class="studio-control"><option value="عمومی">هنوز نمی‌دانم / راهنمایی عمومی</option><option value="Word">Word</option><option value="Excel">Excel</option><option value="PowerPoint">PowerPoint</option></select>
+          <label for="officeGuideLevel">سطح آشنایی من</label>
+          <select id="officeGuideLevel" class="studio-control"><option value="مبتدی؛ از پایه و بدون فرض دانش قبلی">تازه‌کارم؛ از صفر توضیح بده</option><option value="متوسط؛ اصول اولیه را می‌دانم">آشنایی متوسط دارم</option><option value="حرفه‌ای؛ راهکار دقیق و سریع می‌خواهم">حرفه‌ای هستم</option></select>
+          <label for="officeGuideQuestion">چه کاری می‌خواهی انجام بدهی؟</label>
+          <textarea id="officeGuideQuestion" class="studio-control" rows="3" maxlength="1600" placeholder="مثلاً می‌خواهم هزینه‌های ماهانه‌ام را در اکسل ثبت کنم و جمع هر ماه را ببینم..."></textarea>
+          <div class="office-guide-quick-actions" aria-label="نمونه درخواست‌های راهنمایی">
+            <button type="button" class="btn-secondary office-guide-preset" data-app="Word" data-question="می‌خواهم یک نامه رسمی و مرتب در Word بنویسم. از انتخاب صفحه تا قالب‌بندی و ذخیره فایل راهنمایی‌ام کن.">نامه در Word</button>
+            <button type="button" class="btn-secondary office-guide-preset" data-app="Excel" data-question="می‌خواهم یک جدول ساده برای ثبت درآمد و هزینه بسازم و جمع‌ها را خودکار محاسبه کنم. از صفر و مرحله‌به‌مرحله راهنمایی‌ام کن.">جدول درآمد و هزینه</button>
+            <button type="button" class="btn-secondary office-guide-preset" data-app="PowerPoint" data-question="می‌خواهم یک ارائه حرفه‌ای بسازم. برای ساخت اسلایدها، چیدمان و ترتیب مطالب راهنمایی‌ام کن.">ساخت ارائه</button>
+          </div>
+          <button type="button" class="btn-primary office-guide-submit" id="officeGuideAskNavi">شروع راهنمایی با ناوی</button>
+          <p class="office-guide-note">ناوی ابتدا مسیر انجام کار را توضیح می‌دهد؛ اگر ساخت یا ویرایش فایل لازم باشد، می‌توانی همان‌جا درخواستش را مطرح کنی. راهنمایی به‌تنهایی فایل دستگاهت را تغییر نمی‌دهد.</p>
+          <p class="office-guide-status" id="officeGuideStatus" role="status" aria-live="polite"></p>
+        </div>
+      </section>
       <div class="studio-workspace-grid">
         <form class="studio-brief-card" onsubmit="event.preventDefault(); chooseService('کارهای اداری و آفیس');">
           <span class="studio-step">شروع کار</span><h2>بریف پروژه</h2>
