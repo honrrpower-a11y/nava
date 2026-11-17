@@ -150,10 +150,10 @@
     const xmlEscape=value=>String(value).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
     const find=xmlEscape(action.find),replace=xmlEscape(action.replace);
     let count=0;
-    const names=Object.keys(zip.files).filter(name=>kind==="pptx"?/^ppt\/slides\/slide\\d+\.xml$/.test(name):/^word\/(document|header\\d+|footer\\d+)\.xml$/.test(name));
+    const names=Object.keys(zip.files).filter(name=>kind==="pptx"?/^ppt\/slides\/slide\d+\.xml$/.test(name):/^word\/(document|header\d+|footer\d+)\.xml$/.test(name));
     for(const name of names){
      const entry=zip.files[name];let xml=await entry.async("string");
-     xml=xml.replace(/<a:t(?:\\s[^>]*)?>([\\s\\S]*?)<\\/a:t>|<w:t(?:\\s[^>]*)?>([\\s\\S]*?)<\\/w:t>/g,(whole,a,b)=>{
+     xml=xml.replace(/<a:t(?:\s[^>]*)?>([\s\S]*?)<\/a:t>|<w:t(?:\s[^>]*)?>([\s\S]*?)<\/w:t>/g,(whole,a,b)=>{
       const value=a??b??"",pieces=value.split(find);if(pieces.length<2)return whole;
       count+=pieces.length-1;return whole.replace(value,pieces.join(replace));
      });
