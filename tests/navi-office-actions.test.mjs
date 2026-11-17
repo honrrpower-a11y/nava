@@ -102,7 +102,7 @@ test("assistant-style proposal text is not treated as user authorization", () =>
 
 test("Office-context requests are sent to the Office route even from the global NAVI chat", () => {
   assert.match(app, /const officeRequestContext =\s*naviAssistantContext\?\.service === "کارهای اداری و آفیس"\s*\|\|\s*serviceSelect\?\.value === "کارهای اداری و آفیس"\s*\|\|\s*activePageId === "officePage"/);
-  assert.match(app, /const requestPage = officeRequestContext \? "officePage" : activePageId/);
+  assert.match(app, /const requestPage = options\.pageOverride === "officePage"[\s\S]*?\? "officePage"[\s\S]*?: officeRequestContext \? "officePage" : activePageId/);
   assert.match(app, /page: requestPage,/);
 });
 
@@ -124,7 +124,7 @@ test("the Worker derives precise Excel actions from the current-user instruction
 
 test("Office service selection in the global NAVI chat routes the request to Office", () => {
   assert.match(app, /const officeRequestContext =\s*naviAssistantContext\?\.service === "کارهای اداری و آفیس"\s*\|\|\s*serviceSelect\?\.value === "کارهای اداری و آفیس"\s*\|\|\s*activePageId === "officePage"/);
-  assert.match(app, /const requestPage = officeRequestContext \? "officePage" : activePageId/);
+  assert.match(app, /const requestPage = options\.pageOverride === "officePage"[\s\S]*?\? "officePage"[\s\S]*?: officeRequestContext \? "officePage" : activePageId/);
   assert.match(app, /page: requestPage,/);
 });
 
