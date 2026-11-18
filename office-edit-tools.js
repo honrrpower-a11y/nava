@@ -160,10 +160,20 @@
      if(!(typeof item.value==="string"||typeof item.value==="number"||typeof item.value==="boolean")||(typeof item.value==="number"&&!Number.isFinite(item.value))||(typeof item.value==="string"&&(item.value.length>500||item.value.startsWith("="))))throw new Error("مقدار یکی از سلول‌ها مجاز نیست.");
      staged.push({sheet:item.sheet,cell:item.cell,value:item.value});
     }
+    const XLSX=window.XLSX;
     for(const item of staged){
      const sheet=workbook.Sheets[item.sheet],previous=sheet[item.cell]||{};
      sheet[item.cell]={...previous,t:typeof item.value==="number"?"n":typeof item.value==="boolean"?"b":"s",v:item.value};
      delete sheet[item.cell].f;delete sheet[item.cell].w;
+     // SheetJS uses !ref as the worksheet's visible/exported range. Expand it
+     // when NAVI writes to a previously empty cell outside the current range.
+     const range=XLSX.utils.decode_range(sheet["!ref"]||item.cell);
+     const target=XLSX.utils.decode_cell(item.cell);
+     range.s.r=Math.min(range.s.r,target.r);
+     range.s.c=Math.min(range.s.c,target.c);
+     range.e.r=Math.max(range.e.r,target.r);
+     range.e.c=Math.max(range.e.c,target.c);
+     sheet["!ref"]=XLSX.utils.encode_range(range);
     }
     workbook.Workbook=workbook.Workbook||{};workbook.Workbook.CalcPr={calcMode:"auto",fullCalcOnLoad:true,forceFullCalc:true};
     const bytes=window.XLSX.write(workbook,{bookType:"xlsx",type:"array",cellStyles:true,compression:true});
