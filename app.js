@@ -706,7 +706,9 @@ naviLoginPanelClose?.addEventListener("click", event => {
 
 document.addEventListener("keydown", event => {
   if (event.key === "Escape" && naviWidgetPanel && !naviWidgetPanel.hidden) {
+    const inlineOffice = naviWidgetPanel.classList.contains("is-inline");
     closeNaviWidgetRespectingAccessChoice();
+    (inlineOffice ? document.getElementById("officeNaviReopen") : naviWidgetToggle)?.focus();
   }
 });
 
@@ -811,13 +813,6 @@ window.sendOfficeNaviRequest = function({ message, context } = {}) {
     officeTarget: false
   });
 };
-document.addEventListener("keydown", event => {
-  if (event.key === "Escape" && naviWidgetPanel && !naviWidgetPanel.hidden) {
-    const inlineOffice = naviWidgetPanel.classList.contains("is-inline");
-    setNaviWidgetOpen(false);
-    (inlineOffice ? document.getElementById("officeNaviReopen") : naviWidgetToggle)?.focus();
-  }
-});
 
 /* NAVA ACCOUNT UI — theme-aware dropdowns and registration spacing */
 (function initNavaAccountUiStyles() {
