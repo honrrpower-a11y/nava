@@ -354,27 +354,37 @@ function syncNaviWidgetPlacement(pageId) {
   if (!naviWidgetPanel) return;
   const mount = document.getElementById("officeNaviInlineMount");
   const homeSlot = document.getElementById("naviWidgetHomeSlot");
+  const reopen = document.getElementById("officeNaviReopen");
   const isOffice = pageId === "officePage" && mount;
+
   if (isOffice) {
-    if (naviWidgetPanel.parentElement !== mount) mount.appendChild(naviWidgetPanel);
+    const enteringOffice = naviWidgetPanel.parentElement !== mount;
+    if (enteringOffice) mount.appendChild(naviWidgetPanel);
     naviWidgetPanel.classList.add("is-inline");
-    naviWidgetPanel.hidden = false;
-    naviWidgetPanel.classList.add("is-open");
     if (naviWidgetToggle) {
       naviWidgetToggle.hidden = true;
-      naviWidgetToggle.setAttribute("aria-expanded", "true");
+      naviWidgetToggle.setAttribute("aria-expanded", String(!naviWidgetPanel.hidden));
     }
-    if (naviWidgetClose) naviWidgetClose.hidden = true;
+    if (naviWidgetClose) naviWidgetClose.hidden = false;
     if (naviWelcomeBubble) naviWelcomeBubble.hidden = true;
     document.body.classList.remove("navi-widget-open");
+    if (enteringOffice) setNaviWidgetOpen(true, false);
+    else if (reopen) reopen.hidden = !naviWidgetPanel.hidden;
     return;
   }
-  if (homeSlot?.parentNode && naviWidgetPanel.parentElement !== homeSlot.parentElement) {
-    homeSlot.parentNode.insertBefore(naviWidgetPanel, homeSlot.nextSibling);
+
+  if (naviWidgetPanel.parentElement === mount || naviWidgetPanel.classList.contains("is-inline")) {
+    setNaviWidgetOpen(false);
+    naviWidgetPanel.classList.remove("is-inline");
+    if (homeSlot?.parentNode) homeSlot.parentNode.insertBefore(naviWidgetPanel, homeSlot.nextSibling);
+    if (naviWidgetToggle) {
+      naviWidgetToggle.hidden = false;
+      naviWidgetToggle.setAttribute("aria-expanded", "false");
+    }
+    if (naviWidgetClose) naviWidgetClose.hidden = false;
+    if (reopen) reopen.hidden = true;
+    document.body.classList.remove("navi-widget-open");
   }
-  naviWidgetPanel.classList.remove("is-inline");
-  if (naviWidgetClose) naviWidgetClose.hidden = false;
-  if (naviWidgetToggle) naviWidgetToggle.hidden = !naviWidgetPanel.hidden;
 }
 
 function showPage(pageId) {
@@ -627,15 +637,17 @@ function setNaviWidgetOpen(isOpen, focusComposer = false) {
   syncNaviWidgetMode();
 
   if (isOpen && !getNaviToken()) captureNavaReturnContext();
-  if (isOpen) positionNaviWidgetOnOrbit();
-
   const inlineOffice = naviWidgetPanel.classList.contains("is-inline");
-  naviWidgetPanel.hidden = inlineOffice ? false : !isOpen;
+  if (isOpen && !inlineOffice) positionNaviWidgetOnOrbit();
+
+  naviWidgetPanel.hidden = !isOpen;
   naviWidgetToggle.hidden = inlineOffice || isOpen;
-  naviWidgetPanel.classList.toggle("is-open", inlineOffice || isOpen);
-  naviWidgetPanel.classList.toggle("is-auth-entry", (inlineOffice || isOpen) && !getNaviToken());
+  naviWidgetPanel.classList.toggle("is-open", isOpen);
+  naviWidgetPanel.classList.toggle("is-auth-entry", isOpen && !getNaviToken());
   document.body.classList.toggle("navi-widget-open", isOpen && !inlineOffice);
-  naviWidgetToggle.setAttribute("aria-expanded", (isOpen || inlineOffice) ? "true" : "false");
+  naviWidgetToggle.setAttribute("aria-expanded", isOpen ? "true" : "false");
+  const officeReopen = document.getElementById("officeNaviReopen");
+  if (officeReopen) officeReopen.hidden = !inlineOffice || isOpen;
   const studioMode = document.body.classList.contains("navi-studio-context");
   naviWidgetToggle.setAttribute("aria-label",
     isOpen ? "بستن همراه ناوی" :
@@ -661,11 +673,12 @@ if (naviWidgetToggle) {
 }
 function closeNaviWidgetRespectingAccessChoice() {
   const hasSession = Boolean(getNaviToken());
+  const inlineOffice = Boolean(naviWidgetPanel?.classList.contains("is-inline"));
   setNaviWidgetOpen(false);
 
-  // An unauthenticated visitor who closes NAVI must return to the access
-  // choice (sign in / continue as guest), not silently land on the homepage.
-  if (!hasSession) {
+  // In Office, closing the assistant only collapses its panel; it must never
+  // cover the file workspace with the global access-choice dialog.
+  if (!hasSession && !inlineOffice) {
     document.querySelector(".nava-access-panel")?.classList.remove("is-dismissed");
     setNavaAccessGate(true);
   }
@@ -679,6 +692,10 @@ if (naviWidgetClose) {
   });
 }
 
+document.getElementById("officeNaviReopen")?.addEventListener("click", () => {
+  setNaviWidgetOpen(true, true);
+});
+
 // Keep the login view dismissible even while the mobile keyboard is open.
 const naviLoginPanelClose = document.getElementById("naviLoginPanelClose");
 naviLoginPanelClose?.addEventListener("click", event => {
@@ -689,7 +706,9 @@ naviLoginPanelClose?.addEventListener("click", event => {
 
 document.addEventListener("keydown", event => {
   if (event.key === "Escape" && naviWidgetPanel && !naviWidgetPanel.hidden) {
+    const inlineOffice = naviWidgetPanel.classList.contains("is-inline");
     closeNaviWidgetRespectingAccessChoice();
+    (inlineOffice ? document.getElementById("officeNaviReopen") : naviWidgetToggle)?.focus();
   }
 });
 
@@ -749,9 +768,6 @@ naviAssistantContextClear?.addEventListener("click", () => {
 
 window.openNaviAssistant = function(options = {}) {
   const service = String(options.service || "گفت‌وگوی عمومی");
-  if (document.querySelector(".page.active")?.id === "officePage") {
-    document.getElementById("officeOperationsTab")?.click();
-  }
   const available = Array.from(serviceSelect.options).some(option => option.value === service);
   if (available) serviceSelect.value = service;
 
@@ -779,7 +795,6 @@ window.sendOfficeNaviRequest = function({ message, context } = {}) {
   if (!cleanMessage) return false;
   const service = "کارهای اداری و آفیس";
   const officeContext = context && typeof context === "object" ? context : {};
-  document.getElementById("officeOperationsTab")?.click();
   if (!getNaviToken()) {
     window.openNaviAssistant({ service, context: officeContext, message: cleanMessage });
     return false;
@@ -788,7 +803,7 @@ window.sendOfficeNaviRequest = function({ message, context } = {}) {
     serviceSelect.value = service;
   }
   updateNaviAssistantContext(service, officeContext);
-  // NAVI is mounted inside the Office operations tab; keep its existing session and renderer.
+  // NAVI lives in the shared Office assistant rail; preserve the existing session and renderer.
   setNaviWidgetOpen(true, false);
   return sendMessageToNavi({
     pageOverride: "officePage",
@@ -798,12 +813,6 @@ window.sendOfficeNaviRequest = function({ message, context } = {}) {
     officeTarget: false
   });
 };
-document.addEventListener("keydown", event => {
-  if (event.key === "Escape" && naviWidgetPanel && !naviWidgetPanel.hidden) {
-    setNaviWidgetOpen(false);
-    naviWidgetToggle?.focus();
-  }
-});
 
 /* NAVA ACCOUNT UI — theme-aware dropdowns and registration spacing */
 (function initNavaAccountUiStyles() {
