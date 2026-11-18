@@ -52,3 +52,9 @@ test("Office file extraction appends extracted text to the brief sent through th
   assert.match(fileTools, /متن استخراج‌شده از فایل/);
   assert.match(app, /brief:\s*18000/);
 });
+
+
+test("guided Office requests keep approval cards in the NAVI conversation", () => {
+  assert.match(app, /window\.sendOfficeNaviRequest\s*=\s*function[\s\S]*?officeTarget:\s*false/);
+  assert.match(guide, /کارت تأیید ویرایش در پنجره گفت‌وگوی ناوی نمایش داده می‌شود/);
+});
