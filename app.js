@@ -153,6 +153,38 @@ const naviChatArea = document.getElementById("naviChatArea");
 const naviLogout = document.getElementById("naviLogout");
 const naviWidgetPanel = document.getElementById("naviWidgetPanel");
 const naviWidgetToggle = document.getElementById("naviWidgetToggle");
+const officeNaviInlineHost = document.getElementById("officeNaviInlineHost");
+const naviAssistantWidget = document.getElementById("naviAssistantWidget");
+let naviWidgetOriginalPlaceholder = null;
+
+function mountNaviWidgetInOffice() {
+  if (!naviWidgetPanel || !officeNaviInlineHost) return false;
+  if (!naviWidgetOriginalPlaceholder && naviWidgetPanel.parentNode) {
+    naviWidgetOriginalPlaceholder = document.createComment("NAVI floating panel original position");
+    naviWidgetPanel.parentNode.insertBefore(naviWidgetOriginalPlaceholder, naviWidgetPanel);
+  }
+  if (naviWidgetPanel.parentNode !== officeNaviInlineHost) {
+    officeNaviInlineHost.appendChild(naviWidgetPanel);
+  }
+  naviWidgetPanel.classList.add("is-office-embedded");
+  document.body.classList.add("navi-office-chat-embedded");
+  if (naviWidgetToggle) naviWidgetToggle.hidden = true;
+  return true;
+}
+
+function restoreNaviWidgetFromOffice() {
+  if (!naviWidgetPanel) return;
+  if (naviWidgetOriginalPlaceholder?.parentNode) {
+    naviWidgetOriginalPlaceholder.parentNode.insertBefore(naviWidgetPanel, naviWidgetOriginalPlaceholder);
+    naviWidgetOriginalPlaceholder.remove();
+  } else if (naviAssistantWidget && naviWidgetPanel.parentNode !== naviAssistantWidget) {
+    naviAssistantWidget.appendChild(naviWidgetPanel);
+  }
+  naviWidgetOriginalPlaceholder = null;
+  naviWidgetPanel.classList.remove("is-office-embedded");
+  document.body.classList.remove("navi-office-chat-embedded");
+  if (naviWidgetToggle) naviWidgetToggle.hidden = naviWidgetPanel.hidden === false;
+}
 const naviWidgetClose = document.getElementById("naviWidgetClose");
 const naviAssistantContextPanel = document.getElementById("naviAssistantContext");
 const naviAssistantContextTitle = document.getElementById("naviAssistantContextTitle");
@@ -352,7 +384,10 @@ function setNavaAccessGate(active) {
 
 function showPage(pageId) {
   if (navaAccessGateActive && pageId !== "homePage") return;
-  if (naviWidgetPanel && !naviWidgetPanel.hidden) setNaviWidgetOpen(false);
+  if (pageId !== "officePage") {
+    if (naviWidgetPanel && !naviWidgetPanel.hidden) setNaviWidgetOpen(false);
+    restoreNaviWidgetFromOffice();
+  }
   pages.forEach(page => page.classList.toggle("active", page.id === pageId));
   navButtons.forEach(button => button.classList.toggle("active", button.dataset.page === pageId));
 
@@ -602,7 +637,7 @@ function setNaviWidgetOpen(isOpen, focusComposer = false) {
   if (isOpen) positionNaviWidgetOnOrbit();
 
   naviWidgetPanel.hidden = !isOpen;
-  naviWidgetToggle.hidden = isOpen;
+  naviWidgetToggle.hidden = isOpen || document.body.classList.contains("navi-office-chat-embedded");
   naviWidgetPanel.classList.toggle("is-open", isOpen);
   naviWidgetPanel.classList.toggle("is-auth-entry", isOpen && !getNaviToken());
   document.body.classList.toggle("navi-widget-open", isOpen);
@@ -659,7 +694,8 @@ naviLoginPanelClose?.addEventListener("click", event => {
 });
 
 document.addEventListener("keydown", event => {
-  if (event.key === "Escape" && naviWidgetPanel && !naviWidgetPanel.hidden) {
+  if (event.key === "Escape" && naviWidgetPanel && !naviWidgetPanel.hidden &&
+      !document.body.classList.contains("navi-office-chat-embedded")) {
     closeNaviWidgetRespectingAccessChoice();
   }
 });
@@ -747,6 +783,8 @@ window.sendOfficeNaviRequest = function({ message, context } = {}) {
   if (!cleanMessage) return false;
   const service = "کارهای اداری و آفیس";
   const officeContext = context && typeof context === "object" ? context : {};
+  document.getElementById("officeOperationsTab")?.click();
+  mountNaviWidgetInOffice();
   if (!getNaviToken()) {
     window.openNaviAssistant({ service, context: officeContext, message: cleanMessage });
     return false;
@@ -755,8 +793,8 @@ window.sendOfficeNaviRequest = function({ message, context } = {}) {
     serviceSelect.value = service;
   }
   updateNaviAssistantContext(service, officeContext);
-  // Open the existing animated NAVI chat over the Office studio before sending.
-  // The reply and any final-approval card are both rendered inside that chat.
+  // The existing NAVI conversation is embedded in the Office operations tab.
+  // Replies and approval cards stay beside the file workflow on this page.
   setNaviWidgetOpen(true, false);
   return sendMessageToNavi({
     pageOverride: "officePage",
@@ -3612,7 +3650,16 @@ const officeBriefForm = document.getElementById("officeBriefForm");
     });
   };
   tabs.forEach((tab, index) => {
-    tab.addEventListener("click", () => activateOfficeTab(tab.dataset.officeTab));
+    tab.addEventListener("click", () => {
+      activateOfficeTab(tab.dataset.officeTab);
+      if (tab.dataset.officeTab === "operations") {
+        mountNaviWidgetInOffice();
+        setNaviWidgetOpen(true, false);
+      } else {
+        if (naviWidgetPanel && !naviWidgetPanel.hidden) setNaviWidgetOpen(false);
+        restoreNaviWidgetFromOffice();
+      }
+    });
     tab.addEventListener("keydown", event => {
       if (event.key !== "ArrowLeft" && event.key !== "ArrowRight" && event.key !== "Home" && event.key !== "End") return;
       event.preventDefault();
@@ -3656,17 +3703,7 @@ function updateOfficeActionDiagnostic(stage, details = {}) {
 }
 
 
-// Independent Office entry point: open an empty NAVI conversation.
-// No Office form submit, extracted file text, or automatic command dispatch is involved.
-const officeOpenBlankNaviButton = document.getElementById("officeOpenBlankNavi");
-officeOpenBlankNaviButton?.addEventListener("click", () => {
-  if (typeof window.openNaviAssistant !== "function") {
-    setOfficeSubmitStatus("باز کردن NAVI ممکن نشد؛ لطفاً صفحه را تازه‌سازی کن.");
-    return;
-  }
-  window.openNaviAssistant({ service: "گفت‌وگوی عمومی", blank: true });
-  setOfficeSubmitStatus("گفت‌وگوی خالی NAVI باز شد؛ دستورها را مستقیم در کادر گفت‌وگو بنویس.");
-});
+// NAVI is mounted directly inside the Office operations tab; no separate launch button is needed.
 
 function scrollToRequest() {
   setNaviWidgetOpen(true, false);
