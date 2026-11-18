@@ -223,3 +223,12 @@ test("Excel parser checks the marked current turn before parsing its extracted u
   const worker = readFileSync(new URL("../modules/navi.js", import.meta.url), "utf8");
   assert.match(worker, /if \(!isExplicitOfficeEditRequest\(text\)\) return null/);
 });
+
+
+test("Office form waits for both extraction and local editor before submitting", () => {
+  assert.match(office, /waitForReady\(\)/);
+  assert.match(editor, /waitUntilReady\(\)/);
+  assert.match(app, /NavaOfficeFile\?\.waitForReady/);
+  assert.match(app, /NavaOfficeTools\?\.waitUntilReady/);
+  assert.match(office, /NavaOfficeTools\?\.reset\?\.\(\)/);
+});
