@@ -144,7 +144,7 @@ test("Office-context requests are sent to the Office route even from the global 
 
 test("Office form submissions render approval cards in the Office form while direct chat keeps its chat slot", () => {
   assert.match(app, /const chatSlot = document\.getElementById\("naviOfficeActionChatSlot"\)/);
-  assert.match(app, /const slot = options\.target === "office" \? officeSlot : \(chatSlot \|\| officeSlot\)/);
+  assert.match(app, /const slot = options\.target === "office"[\s\S]*?\? \(officeSlot \|\| chatSlot\)/);
   assert.match(html, /id="naviOfficeActionChatSlot"/);
   assert.match(app, /renderNaviOfficeAction\(data\.officeAction, \{ target: options\.officeDiagnostic \? "office" : "chat" \}\)/);
   assert.doesNotMatch(app, /if \(data\.officeAction && requestPage === "officePage"[\s\S]{0,220}showPage\("officePage"\)/);
@@ -152,9 +152,11 @@ test("Office form submissions render approval cards in the Office form while dir
 
 test("the Worker derives precise Excel actions from the current-user instruction and retains the Office page gate", () => {
   const worker = readFileSync(new URL("../modules/navi.js", import.meta.url), "utf8");
-  assert.match(worker, /const explicitOfficeEdit = page === "officePage" && isExplicitOfficeEditRequest\(message\)/);
-  assert.match(worker, /const deterministicOfficeAction = explicitOfficeEdit\s*\?\s*extractNaviExplicitExcelEditAction\(message\)/);
-  assert.match(worker, /let officeAction = deterministicOfficeAction \|\| \(explicitOfficeEdit \? parsed\.officeAction : null\)/);
+  assert.ok(worker.includes('const currentUserTurn = "پیام کاربر: " + message;'));
+  assert.ok(worker.includes("isExplicitOfficeEditRequest(currentUserTurn)"));
+  assert.ok(worker.includes("extractNaviExplicitExcelEditAction(currentUserTurn)"));
+  assert.ok(worker.includes('let officeAction = deterministicOfficeAction ||'));
+  assert.ok(worker.includes('parsed.officeAction?.kind === "replace_text"'));
 });
 
 
@@ -166,7 +168,7 @@ test("Office service selection in the global NAVI chat routes the request to Off
 
 test("Office route renders its approval card in the NAVI chat", () => {
   assert.match(app, /const chatSlot = document\.getElementById\("naviOfficeActionChatSlot"\)/);
-  assert.match(app, /renderNaviOfficeAction\(data\.officeAction\)/);
+  assert.match(app, /renderNaviOfficeAction\(data\.officeAction, \{ target: options\.officeDiagnostic \? "office" : "chat" \}\)/);
 });
 
 test("Office brief form submits the user instruction through NAVI and keeps extracted file text as context only", () => {
@@ -194,8 +196,21 @@ test("Office form passes its exact user instruction, service, and context direct
 
 test("Office approval card can render in NAVI chat without requiring the hidden Office host", () => {
   const render = app.slice(app.indexOf("function renderNaviOfficeAction"), app.indexOf("// Select only NAVI response text"));
-  assert.ok(render.includes("const slot = chatSlot || officeSlot"));
+  assert.ok(render.includes("? (officeSlot || chatSlot)"));
   assert.ok(render.includes("if (!slot)"));
   assert.ok(!render.includes("if (!host || !slot)"));
   assert.ok(render.includes("if (slot === officeSlot && host) host.hidden = false"));
+});
+
+
+test("the Worker adds the current-user delimiter before authorizing an Office edit", () => {
+  const worker = readFileSync(new URL("../modules/navi.js", import.meta.url), "utf8");
+  assert.match(worker, /const currentUserTurn = "پیام کاربر: " \+ message/);
+  assert.match(worker, /isExplicitOfficeEditRequest\(currentUserTurn\)/);
+  assert.match(worker, /extractNaviExplicitExcelEditAction\(currentUserTurn\)/);
+});
+
+test("Excel parser checks the marked current turn before parsing its extracted user text", () => {
+  const worker = readFileSync(new URL("../modules/navi.js", import.meta.url), "utf8");
+  assert.match(worker, /if \(!isExplicitOfficeEditRequest\(text\)\) return null/);
 });
