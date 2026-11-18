@@ -144,7 +144,6 @@
    return {ready,name:sourceFile?.name||selected?.name||"",kind};
   },
   async executeAction(action) {
- async executeAction(action) {
    const selected=input.files&&input.files[0];
    if(!sourceFile||selected!==sourceFile)throw new Error("فایل فعال تغییر کرده است؛ فایل را دوباره در ابزار آفیس بارگذاری کن.");
    if(action?.kind==="edit_cells"){
