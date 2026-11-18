@@ -1056,7 +1056,7 @@ function renderNaviOfficeAction(action, options = {}) {
   const confirm = document.createElement("button");
   confirm.type = "button";
   confirm.className = "btn-primary";
-  confirm.textContent = "تأیید و ساخت نسخه ویرایش‌شده";
+  confirm.textContent = "تأیید و اعمال تغییرات";
   confirm.dataset.naviOfficeApprovalButton = "confirm";
   confirm.disabled = !file?.ready || (action.kind === "replace_text" ? !["docx", "pptx"].includes(file.kind) : file.kind !== "xlsx");
 
@@ -1078,7 +1078,7 @@ function renderNaviOfficeAction(action, options = {}) {
     try {
       const result = await window.NavaOfficeTools.executeAction(action);
       note.textContent = result.message || "نسخه ویرایش‌شده ساخته شد؛ فایل اصلی دست‌نخورده ماند.";
-      confirm.textContent = "نسخه ساخته شد";
+      confirm.textContent = "تغییرات اعمال شد";
       cancel.remove();
     } catch (error) {
       note.textContent = error?.message || "اجرای ویرایش ناموفق بود.";
