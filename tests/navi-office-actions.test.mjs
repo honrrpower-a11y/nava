@@ -33,6 +33,15 @@ test("NAVI accepts only bounded plain Excel cell edits", () => {
   assert.equal(normalizeNaviOfficeAction({kind:"edit_cells",edits:[{sheet:"S",cell:"A1",value:"x".repeat(501)}]}), null);
 });
 
+test("NAVI accepts only bounded plain append-row actions", () => {
+  const action = {kind:"append_row",sheet:"آزمایش NAVI",values:["مسئول پروژه","مدیر آزمایش"]};
+  assert.deepEqual(normalizeNaviOfficeAction(action), action);
+  assert.equal(normalizeNaviOfficeAction({kind:"append_row",sheet:"",values:["x"]}), null);
+  assert.equal(normalizeNaviOfficeAction({kind:"append_row",sheet:"S",values:[]}), null);
+  assert.equal(normalizeNaviOfficeAction({kind:"append_row",sheet:"S",values:["=SUM(A1:A2)"]}), null);
+  assert.equal(normalizeNaviOfficeAction({kind:"append_row",sheet:"S",values:Array(21).fill("x")}), null);
+});
+
 test("unknown action kinds and executable payloads are rejected", () => {
   assert.equal(normalizeNaviOfficeAction({kind:"run_javascript",code:"alert(1)"}), null);
   assert.equal(normalizeNaviOfficeAction({kind:"delete_file",path:"/"}), null);
@@ -59,6 +68,15 @@ test("only explicit edit language in the current user message passes the intent 
   assert.equal(isExplicitOfficeEditRequest("پیام کاربر: این فایل را خلاصه کن"), false);
   assert.equal(isExplicitOfficeEditRequest("پیام کاربر: لطفاً درباره فرمول SUM توضیح بده"), false);
   assert.equal(isExplicitOfficeEditRequest("پیام کاربر: ویرایش این سند چیست؟"), false);
+});
+
+test("append-row approvals are rendered and only execute after confirmation", () => {
+  const render = app.slice(app.indexOf("function renderNaviOfficeAction"), app.indexOf("// Select only NAVI response text"));
+  assert.match(render, /"append_row"/);
+  assert.match(render, /action\.values\.map/);
+  assert.match(editor, /action\?\.kind==="append_row"/);
+  assert.match(editor, /sheet\["!ref"\]=XLSX\.utils\.encode_range/);
+  assert.match(editor, /download\(new Blob\(\[bytes\]/);
 });
 
 test("browser never executes an action while rendering; execution is click-confirmed", () => {
@@ -146,6 +164,24 @@ test("concise Persian Excel edits accept explicit numeric values and common word
     extractNaviExplicitExcelEditAction("پیام کاربر: در شیت «فروش» سلول B2 رو متن جدید کن"),
     null
   );
+});
+
+test("an explicit Persian append-row request creates a bounded approval action for the unique workbook sheet", () => {
+  const message = [
+    "شیت‌های فایل فعال (از فایل بارگذاری‌شده): [\"آزمایش NAVI\"]",
+    "پیام کاربر: افزودن ردیف «مسئول پروژه» / «مدیر آزمایش» به انتهای جدول"
+  ].join("\n");
+  assert.equal(isExplicitOfficeEditRequest(message), true);
+  assert.deepEqual(extractNaviExplicitExcelEditAction(message), {
+    kind: "append_row",
+    sheet: "آزمایش NAVI",
+    values: ["مسئول پروژه", "مدیر آزمایش"]
+  });
+  const ambiguous = [
+    "شیت‌های فایل فعال (از فایل بارگذاری‌شده): [\"اول\",\"دوم\"]",
+    "پیام کاربر: افزودن ردیف «مسئول پروژه» / «مدیر آزمایش» به انتهای جدول"
+  ].join("\n");
+  assert.equal(extractNaviExplicitExcelEditAction(ambiguous), null);
 });
 
 test("the exact Persian B3 edit instruction creates the expected Office approval action", () => {

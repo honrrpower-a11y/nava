@@ -171,6 +171,29 @@
     setStatus(staged.length+" سلول تغییر کرد؛ نسخه جدید دانلود شد و فایل اصلی دست‌نخورده ماند.");
     return {message:staged.length+" سلول تغییر کرد؛ نسخه جدید دانلود شد و فایل اصلی دست‌نخورده ماند."};
    }
+   if(action?.kind==="append_row"){
+    if(kind!=="xlsx"||!workbook||typeof action.sheet!=="string"||!workbook.SheetNames.includes(action.sheet)||!Array.isArray(action.values)||action.values.length<1||action.values.length>20)throw new Error("این فایل یا عملیات افزودن ردیف معتبر نیست.");
+    const values=action.values;
+    if(values.some(value=>!(typeof value==="string"||typeof value==="number"||typeof value==="boolean")||(typeof value==="number"&&!Number.isFinite(value))||(typeof value==="string"&&(value.length>500||value.startsWith("=")))))throw new Error("یکی از مقادیر ردیف مجاز نیست.");
+    const sheet=workbook.Sheets[action.sheet];
+    const XLSX=window.XLSX;
+    const range=XLSX.utils.decode_range(sheet["!ref"]||"A1:A1");
+    const width=range.e.c-range.s.c+1;
+    if(values.length!==width)throw new Error("تعداد مقادیر پیشنهادی ("+values.length+") با تعداد ستون‌های جدول ("+width+") برابر نیست. مقادیر ردیف را کامل و دوباره ارسال کن.");
+    if(range.e.r>=1048575)throw new Error("امکان افزودن ردیف بیشتر به این شیت وجود ندارد.");
+    const newRow=range.e.r+1;
+    values.forEach((value,index)=>{
+     const address=XLSX.utils.encode_cell({r:newRow,c:range.s.c+index});
+     const previous=sheet[XLSX.utils.encode_cell({r:range.e.r,c:range.s.c+index})]||{};
+     sheet[address]={...(previous.s?{s:previous.s}:{}),t:typeof value==="number"?"n":typeof value==="boolean"?"b":"s",v:value};
+    });
+    sheet["!ref"]=XLSX.utils.encode_range({s:{r:range.s.r,c:range.s.c},e:{r:newRow,c:range.e.c}});
+    workbook.Workbook=workbook.Workbook||{};workbook.Workbook.CalcPr={calcMode:"auto",fullCalcOnLoad:true,forceFullCalc:true};
+    const bytes=XLSX.write(workbook,{bookType:"xlsx",type:"array",cellStyles:true,compression:true});
+    download(new Blob([bytes],{type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"}),safeName(sourceFile.name)+"-edited.xlsx");
+    setStatus("یک ردیف به انتهای شیت «"+action.sheet+"» اضافه شد؛ نسخه جدید دانلود شد و فایل اصلی دست‌نخورده ماند.");
+    return {message:"یک ردیف به انتهای شیت «"+action.sheet+"» اضافه شد؛ نسخه جدید دانلود شد و فایل اصلی دست‌نخورده ماند."};
+   }
    if(action?.kind==="replace_text"){
     if(!["docx","pptx"].includes(kind)||!zip||typeof action.find!=="string"||!action.find.trim()||action.find.length>500||typeof action.replace!=="string"||action.replace.length>500)throw new Error("این فایل یا عملیات جایگزینی معتبر نیست.");
     const xmlEscape=value=>String(value).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
