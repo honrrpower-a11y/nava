@@ -79,3 +79,20 @@ test("Office Operations removes the placeholder project-output area and provides
   assert.match(guide, /operationsNaviButton\?\.addEventListener\("click", scrollToNaviAnswers\)/);
   assert.match(guide, /const scrollToNaviAnswers = \(\) =>/);
 });
+
+
+test("Office Operations sends the existing form brief and all workflow settings directly to NAVI", () => {
+  assert.match(guide, /operationsNaviButton\?\.addEventListener\("click", async \(\) =>/);
+  for (const [key, pattern] of [
+    ["task", /task:\s*selected\("studioTask-office"\)/],
+    ["operation", /operation:\s*value\("studioMode-office"\)/],
+    ["requestedOutput", /requestedOutput:\s*selected\("studioOutput-office"\)/],
+    ["detailLevel", /detailLevel:\s*selected\("studioDetail-office"\)/],
+    ["audience", /audience:\s*value\("studioAudience-office"\)/],
+    ["brief", /brief\s*\}/]
+  ]) assert.match(guide, pattern, `Missing Office Operations context field: ${key}`);
+  assert.match(guide, /window\.sendOfficeNaviRequest\(\{ message, context \}\)/);
+  assert.match(guide, /شرح درخواست و اطلاعات فایل/);
+  assert.match(guide, /ابتدا شرح درخواستت را در فرم بالا بنویس/);
+  assert.match(guide, /نیازی به نوشتن دوباره نیست/);
+});
