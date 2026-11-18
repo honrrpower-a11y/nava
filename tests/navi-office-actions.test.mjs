@@ -76,11 +76,20 @@ test("local editor binds actions to the same active file and preserves the origi
   assert.match(editor, /if\(!count\)throw new Error/);
 });
 
-test("NAVI prompt includes a positive structured Excel edit example", () => {
+test("NAVI does not seed a fabricated B3 edit example in its Office prompt", () => {
   const worker = readFileSync(new URL("../modules/navi.js", import.meta.url), "utf8");
-  assert.match(worker, /IMPORTANT POSITIVE EXAMPLE/);
-  assert.match(worker, /"sheet": "آزمایش NAVI", "cell": "B3", "value": "تأیید شد"/);
-  assert.match(worker, /Do not return officeAction:null merely because the workbook's/);
+  assert.doesNotMatch(worker, /IMPORTANT POSITIVE EXAMPLE/);
+  assert.doesNotMatch(worker, /"sheet": "آزمایش NAVI", "cell": "B3", "value": "تأیید شد"/);
+});
+
+test("NAVI suppresses model-written edit confirmations without current-user authorization", async () => {
+  const { guardNaviOfficeReply } = await import("../modules/navi.js");
+  const fabricated = "درخواست ویرایش سلول B3 در شیت «آزمایش NAVI» به «تست موفق» آماده است. برای اعمال تغییرات در فایل اکسل، لطفاً کارت تأیید را بررسی کنید.";
+  const guarded = guardNaviOfficeReply(fabricated, false);
+  assert.match(guarded, /درخواست مشخصی برای تغییر سلول وجود ندارد/);
+  assert.doesNotMatch(guarded, /B3|تست موفق|کارت تأیید/);
+  assert.equal(guardNaviOfficeReply("سلام، چطور می‌توانم کمک کنم؟", false), "سلام، چطور می‌توانم کمک کنم؟");
+  assert.equal(guardNaviOfficeReply(fabricated, true), fabricated);
 });
 
 

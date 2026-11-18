@@ -318,6 +318,22 @@ export function normalizeNaviOfficeAction(value) {
   return null;
 }
 
+// Model prose must never claim that a file edit is ready unless the current
+// user turn explicitly authorized an edit. This closes the gap where the model
+// could hallucinate a proposal in its natural-language reply while officeAction
+// was correctly null.
+export function guardNaviOfficeReply(reply, explicitOfficeEdit) {
+  const text = String(reply || "");
+  if (explicitOfficeEdit) return text;
+  const claimsPendingEdit =
+    /درخواست\s+ویرایش\s+سلول/iu.test(text) ||
+    /(?:ویرایش|تغییر)\s+(?:مقدار\s+)?سلول[\s\S]{0,180}(?:آماده\s+است|برای\s+تأیید)/iu.test(text) ||
+    /برای\s+اعمال[\s\S]{0,140}(?:کارت\s+)?تأیید/iu.test(text) ||
+    /کارت\s+تأیید[\s\S]{0,120}(?:اکسل|سلول|شیت)/iu.test(text);
+  if (!claimsPendingEdit) return text;
+  return "برای ویرایش فایل، ابتدا فایل را بارگذاری کن و تغییر موردنظرت را صریح بنویس. در پیام فعلی درخواست مشخصی برای تغییر سلول وجود ندارد؛ بنابراین هیچ ویرایشی آماده یا ثبت نشده است.";
+}
+
 export function isExplicitOfficeEditRequest(message) {
   const text = String(message || "");
   const marker = text.lastIndexOf("پیام کاربر:");
@@ -410,7 +426,7 @@ export function extractNaviDeterministicMemoryProposal(message) {
   const projectCodeColors = "(?:آبی|قرمز|سبز|زرد|نارنجی|بنفش|سفید|سیاه|مشکی|طلایی|نقره(?:ای|‌ای)|یشمی|فیروزه(?:ای|‌ای))";
   const shortProjectCodeMatch = value.match(
     new RegExp(
-      "^(?:((" + projectCodeColors + ")\\s+NAVI\\s*-\\s*([\\p{N}]{2,}))|(?:NAVI\\s*-\\s*([\\p{N}]{2,})\\s*-\\s*(" + projectCodeColors + ")))$",
+      "^(?:((" + projectCodeColors + ")\s+NAVI\s*-\s*([\\p{N}]{2,}))|(?:NAVI\s*-\s*([\\p{N}]{2,})\s*-\s*(" + projectCodeColors + ")))$",
       "iu"
     )
   );
@@ -2483,7 +2499,7 @@ async function handleChat({
       ? parsed.officeAction
       : null);
 
-  let reply = parsed.reply;
+  let reply = guardNaviOfficeReply(parsed.reply, explicitOfficeEdit);
   if (input.saveToMemory === true) {
     reply = removeNaviModelMemoryClaims(reply);
   }
