@@ -971,7 +971,7 @@ function renderNaviOfficeAction(action, options = {}) {
   if (chatSlot) chatSlot.replaceChildren();
   if (officeSlot) officeSlot.replaceChildren();
   if (host) host.hidden = true;
-  if (!action || !["replace_text", "edit_cells"].includes(action.kind)) return;
+  if (!action || !["replace_text", "edit_cells", "append_row"].includes(action.kind)) return;
 
   const slot = options.target === "office"
     ? (officeSlot || chatSlot)
@@ -998,7 +998,9 @@ function renderNaviOfficeAction(action, options = {}) {
   const detail = document.createElement("p");
   detail.textContent = action.kind === "replace_text"
     ? "جایگزینی دقیق «" + action.find + "» با «" + action.replace + "»"
-    : "اعمال تغییرات Excel: " + action.edits.map(item => item.sheet + "!" + item.cell + " ← " + String(item.value)).join("؛ ");
+    : action.kind === "append_row"
+      ? "افزودن یک ردیف به انتهای شیت «" + action.sheet + "»: " + action.values.map(value => String(value)).join(" | ")
+      : "اعمال تغییرات Excel: " + action.edits.map(item => item.sheet + "!" + item.cell + " ← " + String(item.value)).join("؛ ");
   const fileLine = document.createElement("p");
   fileLine.textContent = file?.ready
     ? "فایل فعال در استودیوی آفیس: " + file.name
@@ -1006,7 +1008,9 @@ function renderNaviOfficeAction(action, options = {}) {
   const note = document.createElement("p");
   note.textContent = action.kind === "replace_text"
     ? "فقط متن‌های دقیقاً منطبق در قطعه‌های متنی مستقل تغییر می‌کنند؛ متن شکسته‌شده بین چند قطعه ممکن است پیدا نشود."
-    : "فقط سلول‌های مشخص‌شده در شیت‌های موجود تغییر می‌کنند. فرمول‌نویسی از این مسیر مجاز نیست.";
+    : action.kind === "append_row"
+      ? "ردیف جدید در نخستین ردیف خالی پس از محدوده فعلی جدول درج می‌شود. تعداد مقادیر باید با ستون‌های جدول برابر باشد."
+      : "فقط سلول‌های مشخص‌شده در شیت‌های موجود تغییر می‌کنند. فرمول‌نویسی از این مسیر مجاز نیست.";
 
   const confirm = document.createElement("button");
   confirm.type = "button";
