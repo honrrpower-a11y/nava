@@ -3556,8 +3556,25 @@ function updateOfficeActionDiagnostic(stage, details = {}) {
 }
 
 
-officeBriefForm?.addEventListener("submit", event => {
+officeBriefForm?.addEventListener("submit", async event => {
   event.preventDefault();
+
+  const submitButton = officeBriefForm.querySelector('button[type="submit"]');
+  if (submitButton?.disabled) return;
+  if (submitButton) submitButton.disabled = true;
+  try {
+    const fileState = await window.NavaOfficeFile?.waitForReady?.();
+    if (fileState?.selected && !fileState.ready) throw new Error("فایل هنوز آماده ارسال نیست.");
+    const editorState = await window.NavaOfficeTools?.waitUntilReady?.();
+    if (editorState?.selected && !editorState.ready) throw new Error("ویرایشگر فایل هنوز آماده نیست.");
+  } catch (fileError) {
+    updateOfficeActionDiagnostic("ارسال متوقف شد؛ فایل آماده نیست", { error: fileError?.message || "خطای خواندن فایل" });
+    const fileStatus = document.getElementById("officeFileStatus");
+    if (fileStatus) fileStatus.textContent = fileError?.message || "ابتدا صبر کن تا خواندن فایل کامل شود.";
+    if (submitButton) submitButton.disabled = false;
+    return;
+  }
+  if (submitButton) submitButton.disabled = false;
 
   const briefField = document.getElementById("studioBrief-office");
   const completeBrief = String(briefField?.value || "").trim();

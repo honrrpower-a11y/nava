@@ -11,6 +11,10 @@
   const MAX_BYTES=15*1024*1024,MAX_CHARS=12000,MAX_PDF_PAGES=40,MAX_OCR_PAGES=15;
   const OCR_SCRIPT="https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js";
   let originalBrief="";
+  let extractionPromise=Promise.resolve();
+  let extractionState="idle";
+  let extractionFile=null;
+  let extractionError="";
   const setStatus=(message,state="")=>{status.textContent=message;status.dataset.state=state;};
   const loadScript=(src,globalName)=>new Promise((resolve,reject)=>{
     if(window[globalName])return resolve(window[globalName]);
@@ -98,39 +102,73 @@
 
   function clearFile(){
     brief.value=originalBrief;input.value="";originalBrief="";
+    extractionFile=null;extractionState="idle";extractionError="";extractionPromise=Promise.resolve();
+    window.NavaOfficeTools?.reset?.();
     clear.disabled=true;setStatus("فایل از درخواست حذف شد.");
   }
   clear.addEventListener("click",clearFile);
 
-  input.addEventListener("change",async()=>{
-    const file=input.files&&input.files[0];if(!file)return;
-    if(file.size>MAX_BYTES){input.value="";setStatus("حجم فایل بیشتر از ۱۵ مگابایت است.","error");return;}
-    const ext=(file.name.split(".").pop()||"").toLowerCase();
-    const supported=["docx","pdf","txt","png","jpg","jpeg","webp","pptx","xlsx"];
-    if(!supported.includes(ext)){input.value="";setStatus("فرمت پشتیبانی‌شده: DOCX، PDF، PPTX، XLSX، TXT و تصاویر PNG، JPG و WEBP.","error");return;}
-    clear.disabled=true;setStatus("در حال خواندن فایل روی دستگاه شما...");
-    try{
-      originalBrief=brief.value.trim();
-      let extracted="",ocrPages=0;
-      if(ext==="pptx"||ext==="xlsx")extracted=await window.NavaOfficeStructured.read(file);
-      else if(ext==="docx")extracted=await readDocx(file);
-      else if(ext==="pdf"){
-        const result=await readPdf(file);extracted=result.text;ocrPages=result.ocrPages;
-      }else if(ext==="txt")extracted=await file.text();
-      else extracted=await recognizeImage(file);
-      extracted=String(extracted||"").replace(/\u0000/g,"").trim();
-      if(!extracted)throw new Error("متن قابل استفاده‌ای در فایل پیدا نشد. ممکن است تصویر تار یا کم‌کیفیت باشد.");
-      const wasTruncated=extracted.length>MAX_CHARS;
-      extracted=extracted.slice(0,MAX_CHARS);
-      const attachment="\n\n--- متن استخراج‌شده از فایل: "+file.name+" ---\n"+extracted+(wasTruncated?"\n\n[ادامه متن به دلیل محدودیت حجم در این مرحله ارسال نشد.]":"")+"\n--- پایان متن فایل ---";
-      brief.value=(originalBrief?originalBrief+"\n\n":"")+attachment;
-      brief.dispatchEvent(new Event("input",{bubbles:true}));
-      clear.disabled=false;
-      const ocrNote=ocrPages?" با OCR فارسی از "+ocrPages+" صفحه اسکن‌شده.":(["png","jpg","jpeg","webp"].includes(ext)?" با OCR فارسی.":ext==="pptx"?"؛ اسلایدها و یادداشت‌های متنی استخراج شدند.":ext==="xlsx"?"؛ شیت‌ها، داده‌های سلولی و فرمول‌های موجود استخراج شدند.":"");
-      setStatus("متن فایل «"+file.name+"» استخراج شد"+ocrNote+" و به درخواست NAVI اضافه شد."+(wasTruncated?" فقط ۱۲ هزار نویسه اول خوانده شد.":""),"success");
-    }catch(error){
-      input.value="";originalBrief="";
-      setStatus(error.message||"خواندن فایل ناموفق بود.","error");
-    }
+  // Expose a real readiness barrier so Office requests cannot race file extraction.
+  window.NavaOfficeFile = Object.freeze({
+    async waitForReady(){
+      await extractionPromise;
+      const selected=input.files&&input.files[0];
+      if(!selected)return {selected:false,ready:false};
+      if(selected!==extractionFile||extractionState!=="ready"){
+        throw new Error(extractionError||"خواندن فایل هنوز کامل نشده است. وضعیت فایل را بررسی کن و دوباره تلاش کن.");
+      }
+      const textInBrief=brief.value||"";
+      if(!textInBrief.includes("--- متن استخراج‌شده از فایل: "+selected.name+" ---")){
+        throw new Error("متن فایل به درخواست آفیس متصل نشده است. فایل را دوباره انتخاب کن.");
+      }
+      return {selected:true,ready:true,name:selected.name};
+    },
+    getState(){return {state:extractionState,name:extractionFile?.name||"",error:extractionError};}
   });
+
+  input.addEventListener("change",()=>{
+    const file=input.files&&input.files[0];
+    if(!file){extractionFile=null;extractionState="idle";extractionError="";return;}
+    extractionFile=file;extractionState="processing";extractionError="";
+    const taskFile=file;
+    extractionPromise=(async()=>{
+      if(taskFile.size>MAX_BYTES){input.value="";extractionState="error";extractionError="حجم فایل بیشتر از ۱۵ مگابایت است.";setStatus(extractionError,"error");return;}
+      const ext=(taskFile.name.split(".").pop()||"").toLowerCase();
+      const supported=["docx","pdf","txt","png","jpg","jpeg","webp","pptx","xlsx"];
+      if(!supported.includes(ext)){input.value="";extractionState="error";extractionError="فرمت پشتیبانی‌شده: DOCX، PDF، PPTX، XLSX، TXT و تصاویر PNG، JPG و WEBP.";setStatus(extractionError,"error");return;}
+      clear.disabled=true;setStatus("در حال خواندن فایل روی دستگاه شما؛ تا پایان پردازش درخواست را ارسال نکن...");
+      try{
+        originalBrief=brief.value.trim();
+        let extracted="",ocrPages=0;
+        if(ext==="pptx"||ext==="xlsx")extracted=await window.NavaOfficeStructured.read(file);
+        else if(ext==="docx")extracted=await readDocx(taskFile);
+        else if(ext==="pdf"){const result=await readPdf(taskFile);extracted=result.text;ocrPages=result.ocrPages;}
+        else if(ext==="txt")extracted=await taskFile.text();
+        else extracted=await recognizeImage(taskFile);
+        if(input.files?.[0]!==taskFile)return;
+        extracted=String(extracted||"").replace(/\u0000/g,"").trim();
+        if(!extracted)throw new Error("متن قابل استفاده‌ای در فایل پیدا نشد. ممکن است تصویر تار یا کم‌کیفیت باشد.");
+        const wasTruncated=extracted.length>MAX_CHARS;
+        extracted=extracted.slice(0,MAX_CHARS);
+        const attachment="\n\n--- متن استخراج‌شده از فایل: "+taskFile.name+" ---\n"+extracted+(wasTruncated?"\n\n[ادامه متن به دلیل محدودیت حجم در این مرحله ارسال نشد.]":"")+"\n--- پایان متن فایل ---";
+        // Preserve any instruction the user typed while the file was being parsed.
+        const currentBrief=String(brief.value||"").replace(/\n\n--- متن استخراج‌شده از فایل:[\s\S]*?--- پایان متن فایل ---\s*/g,"").trim();
+        brief.value=(currentBrief?currentBrief+"\n\n":"")+attachment;
+        brief.dispatchEvent(new Event("input",{bubbles:true}));
+        clear.disabled=false;
+        extractionState="ready";
+        const ocrNote=ocrPages?" با OCR فارسی از "+ocrPages+" صفحه اسکن‌شده.":(["png","jpg","jpeg","webp"].includes(ext)?" با OCR فارسی.":ext==="pptx"?"؛ اسلایدها و یادداشت‌های متنی استخراج شدند.":ext==="xlsx"?"؛ شیت‌ها، داده‌های سلولی و فرمول‌های موجود استخراج شدند.":"");
+        setStatus("متن فایل «"+taskFile.name+"» استخراج شد"+ocrNote+" و آماده ارسال به NAVI است."+(wasTruncated?" فقط ۱۲ هزار نویسه اول خوانده شد.":""),"success");
+      }catch(error){
+        if(input.files?.[0]!==taskFile)return;
+        input.value="";originalBrief="";
+        extractionState="error";extractionError=error.message||"خواندن فایل ناموفق بود.";
+        setStatus(extractionError,"error");
+        throw error;
+      }
+    })();
+    // Avoid an unhandled rejection; waitForReady reports the same error to the form.
+    extractionPromise=extractionPromise.catch(error=>{throw error;});
+    extractionPromise.catch(()=>{});
+  });;
 })();
