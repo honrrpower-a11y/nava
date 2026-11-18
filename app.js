@@ -921,11 +921,13 @@ function showNaviReply(reply) {
   window.NavaDocumentExport?.attach(requestResponse, service);
 }
 
-function renderNaviOfficeAction(action) {
+function renderNaviOfficeAction(action, options = {}) {
   const chatSlot = document.getElementById("naviOfficeActionChatSlot");
   const host = document.getElementById("officeActionHost");
   const officeSlot = document.getElementById("officeActionCardSlot");
-  const slot = chatSlot || officeSlot;
+  // Office brief submissions must show the approval card in the Office form
+  // itself. Direct NAVI chat requests continue to use the conversation slot.
+  const slot = options.target === "office" ? officeSlot : (chatSlot || officeSlot);
   document.getElementById("naviOfficeActionCard")?.remove();
   if (chatSlot) chatSlot.replaceChildren();
   if (officeSlot) officeSlot.replaceChildren();
@@ -3798,7 +3800,7 @@ async function sendMessageToNavi(options = {}) {
     const shouldNameThread = threadBeforeNaming && Number(threadBeforeNaming.message_count || 0) === 0;
     showNaviReply(reply);
     try {
-      renderNaviOfficeAction(data.officeAction);
+      renderNaviOfficeAction(data.officeAction, { target: options.officeDiagnostic ? "office" : "chat" });
       if (options.officeDiagnostic) {
         const card = document.getElementById("naviOfficeActionCard");
         const slot = document.getElementById("naviOfficeActionChatSlot");

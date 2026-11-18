@@ -106,11 +106,11 @@ test("Office-context requests are sent to the Office route even from the global 
   assert.match(app, /page: requestPage,/);
 });
 
-test("Office approval cards render inside the NAVI conversation without redirecting the current page", () => {
+test("Office form submissions render approval cards in the Office form while direct chat keeps its chat slot", () => {
   assert.match(app, /const chatSlot = document\.getElementById\("naviOfficeActionChatSlot"\)/);
-  assert.match(app, /const slot = chatSlot \|\| officeSlot/);
+  assert.match(app, /const slot = options\.target === "office" \? officeSlot : \(chatSlot \|\| officeSlot\)/);
   assert.match(html, /id="naviOfficeActionChatSlot"/);
-  assert.match(app, /renderNaviOfficeAction\(data\.officeAction\)/);
+  assert.match(app, /renderNaviOfficeAction\(data\.officeAction, \{ target: options\.officeDiagnostic \? "office" : "chat" \}\)/);
   assert.doesNotMatch(app, /if \(data\.officeAction && requestPage === "officePage"[\s\S]{0,220}showPage\("officePage"\)/);
 });
 
