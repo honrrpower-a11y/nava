@@ -70,7 +70,7 @@
  async function openFile(file){
   sourceFile=file;workbook=null;zip=null;kind="";
   const ext=file.name.split(".").pop().toLowerCase();
-  if(!["xlsx","pptx","docx"].includes(ext)){hide();return;}
+  if(!["xlsx","pptx","docx"].includes(ext)){sourceFile=null;workbook=null;zip=null;kind="";panel.hidden=true;return;}
   show();$("officeEditExcel").hidden=ext!=="xlsx";$("officeEditReplace").hidden=ext==="xlsx";
   $("officeEditReplaceLabel").textContent=ext==="pptx"?"جست‌وجو و جایگزینی متن در اسلایدها":"جست‌وجو و جایگزینی متن در سند Word";
   try{
@@ -127,9 +127,10 @@
    await editorReadyPromise;
    const selected=input.files&&input.files[0];
    if(!selected)return {selected:false,ready:false};
-   const info=this.getActiveFileInfo();
    const ext=selected.name.split(".").pop().toLowerCase();
-   if(["xlsx","pptx","docx"].includes(ext)&&(!info.ready||sourceFile!==selected)){
+   if(!["xlsx","pptx","docx"].includes(ext))return {selected:true,ready:true,name:selected.name,kind:ext,editorRequired:false};
+   const info=this.getActiveFileInfo();
+   if(!info.ready||sourceFile!==selected){
     throw new Error("ویرایشگر فایل هنوز آماده نیست. چند لحظه صبر کن و دوباره تلاش کن.");
    }
    return {selected:true,ready:info.ready,name:info.name,kind:info.kind};
