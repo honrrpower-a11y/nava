@@ -277,3 +277,13 @@ test("Office opens a clean blank NAVI session from its dedicated button", () => 
   assert.doesNotMatch(app, /officeBriefForm\?\.addEventListener\("submit"/);
   assert.match(html, /app\.js\?v=navi-blank-office-button-20261118-1/);
 });
+
+test("Office has one independent blank NAVI button and no legacy form submit route", () => {
+  assert.match(html, /id="officeOpenBlankNavi"[^>]*type="button"[^>]*>باز کردن NAVI خالی<\/button>/);
+  assert.doesNotMatch(html, /id="officeBriefSubmit"/);
+  assert.doesNotMatch(app, /officeBriefForm\?\.addEventListener\("submit"/);
+  assert.match(app, /officeOpenBlankNaviButton\?\.addEventListener\("click"/);
+  assert.match(app, /window\.openNaviAssistant\(\{ service: "گفت‌وگوی عمومی", blank: true \}\)/);
+  assert.match(app, /if \(options\.blank === true\)/);
+  assert.match(app, /if \(userRequest\) userRequest\.value = ""/);
+});
