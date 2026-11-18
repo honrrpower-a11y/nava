@@ -749,6 +749,9 @@ naviAssistantContextClear?.addEventListener("click", () => {
 
 window.openNaviAssistant = function(options = {}) {
   const service = String(options.service || "گفت‌وگوی عمومی");
+  if (document.querySelector(".page.active")?.id === "officePage") {
+    document.getElementById("officeOperationsTab")?.click();
+  }
   const available = Array.from(serviceSelect.options).some(option => option.value === service);
   if (available) serviceSelect.value = service;
 
@@ -776,6 +779,7 @@ window.sendOfficeNaviRequest = function({ message, context } = {}) {
   if (!cleanMessage) return false;
   const service = "کارهای اداری و آفیس";
   const officeContext = context && typeof context === "object" ? context : {};
+  document.getElementById("officeOperationsTab")?.click();
   if (!getNaviToken()) {
     window.openNaviAssistant({ service, context: officeContext, message: cleanMessage });
     return false;
