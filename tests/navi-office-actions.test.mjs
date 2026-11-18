@@ -307,7 +307,10 @@ test("active Office file metadata exposes only real workbook sheet names", () =>
 
 test("Office operations contains the real NAVI chat inline and removes the separate blank-chat button", () => {
   assert.match(html, /class="office-assistant-column"[\s\S]*?id="officeNaviInlineMount"/);
-  assert.doesNotMatch(html, /id="officeOperationsPane"[\s\S]*?id="officeNaviInlineMount"/);
+  const operationsStart = html.indexOf('id="officeOperationsPane"');
+  const assistantStart = html.indexOf('<aside class="office-assistant-column"');
+  assert.ok(assistantStart > operationsStart);
+  assert.match(html.slice(operationsStart, assistantStart), /<\/div>\s*<\/div>\s*<\/div>\s*$/);
   assert.match(html, /id="officeNaviInlineMount"[^>]*aria-live="polite"/);
   assert.doesNotMatch(html, /id="officeOpenBlankNavi"/);
   assert.match(html, /id="naviWidgetHomeSlot"/);
@@ -344,7 +347,10 @@ test("Office is split into separate accessible guidance and operations tabs", ()
   assert.match(html, /id="officeGuidePane"[\s\S]*?id="officeNaviGuideTitle"/);
   assert.match(html, /id="officeOperationsPane"[\s\S]*?id="officeBriefForm"/);
   assert.match(html, /class="office-assistant-column"[\s\S]*?id="officeNaviInlineMount"/);
-  assert.doesNotMatch(html, /id="officeOperationsPane"[\s\S]*?id="officeNaviInlineMount"/);
+  const operationsStart = html.indexOf('id="officeOperationsPane"');
+  const assistantStart = html.indexOf('<aside class="office-assistant-column"');
+  assert.ok(assistantStart > operationsStart);
+  assert.match(html.slice(operationsStart, assistantStart), /<\/div>\s*<\/div>\s*<\/div>\s*$/);
   assert.doesNotMatch(html, /id="officeOpenBlankNavi"/);
   assert.match(app, /const activateOfficeTab = \(name, focus = false\)/);
   assert.match(app, /activateOfficeTab\("guide"\)/);
