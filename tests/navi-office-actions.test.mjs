@@ -275,7 +275,7 @@ test("Office opens a clean blank NAVI session from its dedicated button", () => 
   assert.match(app, /naviAssistantContext = null;/);
   assert.match(app, /if \(userRequest\) userRequest\.value = "";/);
   assert.doesNotMatch(app, /officeBriefForm\?\.addEventListener\("submit"/);
-  assert.match(html, /app\.js\?v=navi-blank-office-button-20261118-1/);
+  assert.match(html, /app\.js\?v=office-two-tabs-20261118-1/);
 });
 
 test("Office has one independent blank NAVI button and no legacy form submit route", () => {
@@ -286,4 +286,19 @@ test("Office has one independent blank NAVI button and no legacy form submit rou
   assert.match(app, /window\.openNaviAssistant\(\{ service: "گفت‌وگوی عمومی", blank: true \}\)/);
   assert.match(app, /if \(options\.blank === true\)/);
   assert.match(app, /if \(userRequest\) userRequest\.value = ""/);
+});
+
+
+test("Office is split into separate accessible guidance and operations tabs", () => {
+  assert.match(html, /role="tablist"[^>]*aria-label="بخش‌های استودیوی آفیس"/);
+  assert.match(html, /id="officeGuideTab"[^>]*aria-selected="true"[^>]*aria-controls="officeGuidePane"/);
+  assert.match(html, /id="officeOperationsTab"[^>]*aria-selected="false"[^>]*aria-controls="officeOperationsPane"/);
+  assert.match(html, /id="officeGuidePane" role="tabpanel"[^>]*aria-labelledby="officeGuideTab"/);
+  assert.match(html, /id="officeOperationsPane" role="tabpanel"[^>]*hidden/);
+  assert.match(html, /id="officeGuidePane"[\\s\\S]*?id="officeNaviGuideTitle"/);
+  assert.match(html, /id="officeOperationsPane"[\\s\\S]*?id="officeBriefForm"/);
+  assert.match(html, /id="officeOperationsPane"[\\s\\S]*?id="officeOpenBlankNavi"/);
+  assert.match(app, /const activateOfficeTab = \(name, focus = false\)/);
+  assert.match(app, /activateOfficeTab\("guide"\)/);
+  assert.match(app, /event\.key !== "ArrowLeft" && event\.key !== "ArrowRight"/);
 });
