@@ -188,5 +188,6 @@
    throw new Error("نوع عملیات NAVI پشتیبانی نمی‌شود.");
   }
  };
+ input.addEventListener("change",()=>{const file=input.files&&input.files[0];if(file){editorReadyPromise=openFile(file);}else{editorReadyPromise=Promise.resolve();}});
  $("officeEditClose")?.addEventListener("click",hide);
 })();
