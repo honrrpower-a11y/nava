@@ -458,7 +458,9 @@ export function extractNaviDeterministicMemoryProposal(message) {
   );
   if (shortProjectCodeMatch) {
     const color = shortProjectCodeMatch[1] || shortProjectCodeMatch[4];
-    const digits = shortProjectCodeMatch[2] || shortProjectCodeMatch[3];// Version: 1.0
+    const digits = shortProjectCodeMatch[2] || shortProjectCodeMatch[3];
+
+// Version: 1.0
 
 import { GEMINI_MODEL, ALLOWED_ORIGIN } from "./config.js";
 import { json, safeNaviText } from "./shared.js";
