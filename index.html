@@ -12,7 +12,8 @@
   <link rel="stylesheet" href="business-tools.css?v=business-navi-help-20261116-1">
   <link rel="stylesheet" href="studio-workspaces.css?v=composition-staff-20261114-1">
   <link rel="stylesheet" href="office-navi-guide.css?v=office-navi-guide-20261117-1">
-  <script src="app.js?v=office-submit-button-fix-20261118-1" defer></script>
+  <script src="app.js?v=office-button-rebuild-20261118-1" defer></script>
+  <script src="office-submit.js?v=office-button-rebuild-20261118-1" defer></script>
   <script src="office-navi-guide.js?v=office-guide-office-card-20261118-1" defer></script>
   <script src="logo-studio.js?v=navi-image-logo-engine-20261115-1" defer></script>
 </head>
@@ -436,7 +437,7 @@
             <input id="officeSourceFile" class="studio-control office-file-input" type="file" aria-label="انتخاب فایل برای بررسی در Office" accept=".docx,.pdf,.pptx,.xlsx,.txt,.png,.jpg,.jpeg,.webp,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.openxmlformats-officedocument.presentationml.presentation,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/pdf,text/plain,image/png,image/jpeg,image/webp">
             <div class="office-file-actions"><button class="btn-secondary" id="officeClearFile" type="button" disabled>حذف فایل از درخواست</button><span id="officeFileStatus" class="office-file-status" role="status" aria-live="polite">حداکثر حجم فایل ۱۵ مگابایت است.</span></div>
           </div>
-          <div class="studio-brief-actions"><button class="btn-primary" id="officeBriefSubmit" type="submit">ادامه با NAVI</button><button class="btn-secondary" type="reset">پاک کردن فرم</button></div>
+          <div class="studio-brief-actions"><button class="btn-primary" id="officeBriefSubmit" type="button">ادامه با NAVI</button><button class="btn-secondary" type="reset">پاک کردن فرم</button></div>
           <p class="studio-note" id="officeSubmitStatus" role="status" aria-live="polite">پس از دریافت پاسخ ناوی، می‌توانی متن نهایی را مستقیماً به‌صورت Word یا PDF روی دستگاهت دریافت کنی.</p>
         </form>
         <aside class="studio-output-card">
