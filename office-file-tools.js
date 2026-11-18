@@ -103,6 +103,7 @@
   function clearFile(){
     brief.value=originalBrief;input.value="";originalBrief="";
     extractionFile=null;extractionState="idle";extractionError="";extractionPromise=Promise.resolve();
+    window.NavaOfficeTools?.reset?.();
     clear.disabled=true;setStatus("فایل از درخواست حذف شد.");
   }
   clear.addEventListener("click",clearFile);
