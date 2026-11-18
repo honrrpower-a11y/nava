@@ -13,10 +13,7 @@
     const assistantColumn = document.querySelector(".office-assistant-column");
     if (!assistantColumn) return;
     const reducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
-    assistantColumn.scrollIntoView({
-      behavior: reducedMotion ? "auto" : "smooth",
-      block: "start"
-    });
+    assistantColumn.scrollIntoView({ behavior: reducedMotion ? "auto" : "smooth", block: "start" });
   };
 
   operationsNaviButton?.addEventListener("click", scrollToNaviAnswers);
