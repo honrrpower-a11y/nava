@@ -148,6 +148,15 @@ test("concise Persian Excel edits accept explicit numeric values and common word
   );
 });
 
+test("the exact Persian B3 edit instruction creates the expected Office approval action", () => {
+  const message = "پیام کاربر: در شیت «آزمایش NAVI»، مقدار سلول B3 را به «تست موفق» تغییر بده.";
+  assert.equal(isExplicitOfficeEditRequest(message), true);
+  assert.deepEqual(extractNaviExplicitExcelEditAction(message), {
+    kind: "edit_cells",
+    edits: [{ sheet: "آزمایش NAVI", cell: "B3", value: "تست موفق" }]
+  });
+});
+
 test("assistant-style proposal text is not treated as user authorization", () => {
   const proposal = "پیشنهاد تغییر مقدار سلول B3 در شیت «آزمایش NAVI» به «تأیید شد» آماده است. برای اعمال این تغییر روی فایل، آن را تأیید کن.";
   assert.equal(extractNaviExplicitExcelEditAction(proposal), null);
@@ -180,8 +189,10 @@ test("the Worker derives precise Excel actions from the current-user instruction
 });
 
 
-test("Office service selection in the global NAVI chat routes the request to Office", () => {
-  assert.match(app, /const officeRequestContext =\s*requestContext\?\.service === "کارهای اداری و آفیس"\s*\|\|\s*selectedService === "کارهای اداری و آفیس"\s*\|\|\s*activePageId === "officePage"/);
+test("Office context in the global NAVI chat consistently selects the Office route and prompt", () => {
+  assert.match(app, /const officeRequestContext =\s*requestContext\?\.service === officeService\s*\|\|\s*naviAssistantContext\?\.service === officeService\s*\|\|\s*selectedService === officeService\s*\|\|\s*activePageId === "officePage"/);
+  assert.match(app, /const promptService = officeRequestContext \? officeService : selectedService/);
+  assert.match(app, /officeRequestContext\s*\? "راهنمای اجرای Office:/);
   assert.match(app, /const requestPage = options\.pageOverride === "officePage"[\s\S]*?\? "officePage"[\s\S]*?: officeRequestContext \? "officePage" : activePageId/);
   assert.match(app, /page: requestPage,/);
 });
