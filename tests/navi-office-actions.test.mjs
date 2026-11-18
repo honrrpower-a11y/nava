@@ -157,6 +157,15 @@ test("the exact Persian B3 edit instruction creates the expected Office approval
   });
 });
 
+test("Excel edits with the cell and value before the sheet create an approval action in NAVI chat", () => {
+  const expected = { kind: "edit_cells", edits: [{ sheet: "آزمایش NAVI", cell: "B3", value: "تست موفق" }] };
+  const variants = [
+    "پیام کاربر: مقدار سلول B3 را به «تست موفق» در شیت «آزمایش NAVI» تغییر بده.",
+    "پیام کاربر: سلول B3 را به «تست موفق» در شیت «آزمایش NAVI» تغییر بده.",
+  ];
+  for (const message of variants) assert.deepEqual(extractNaviExplicitExcelEditAction(message), expected);
+});
+
 test("assistant-style proposal text is not treated as user authorization", () => {
   const proposal = "پیشنهاد تغییر مقدار سلول B3 در شیت «آزمایش NAVI» به «تأیید شد» آماده است. برای اعمال این تغییر روی فایل، آن را تأیید کن.";
   assert.equal(extractNaviExplicitExcelEditAction(proposal), null);
