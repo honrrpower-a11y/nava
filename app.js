@@ -3589,7 +3589,39 @@ function chooseService(service) {
 
 // The Office brief form submits the user instruction through the authenticated
 // NAVI flow. Extracted file text remains reference context, never edit consent.
+
 const officeBriefForm = document.getElementById("officeBriefForm");
+
+// Accessible Office tabs: guidance is the default; operations stay isolated.
+(() => {
+  const tabs = Array.from(document.querySelectorAll("[data-office-tab]"));
+  if (!tabs.length) return;
+  const activateOfficeTab = (name, focus = false) => {
+    tabs.forEach(tab => {
+      const active = tab.dataset.officeTab === name;
+      tab.classList.toggle("is-active", active);
+      tab.setAttribute("aria-selected", active ? "true" : "false");
+      tab.tabIndex = active ? 0 : -1;
+      const panel = document.getElementById(tab.getAttribute("aria-controls"));
+      if (panel) panel.hidden = !active;
+      if (active && focus) tab.focus();
+    });
+  };
+  tabs.forEach((tab, index) => {
+    tab.addEventListener("click", () => activateOfficeTab(tab.dataset.officeTab));
+    tab.addEventListener("keydown", event => {
+      if (event.key !== "ArrowLeft" && event.key !== "ArrowRight" && event.key !== "Home" && event.key !== "End") return;
+      event.preventDefault();
+      let next = index;
+      if (event.key === "Home") next = 0;
+      else if (event.key === "End") next = tabs.length - 1;
+      else next = (index + (event.key === "ArrowLeft" ? 1 : -1) + tabs.length) % tabs.length;
+      activateOfficeTab(tabs[next].dataset.officeTab, true);
+    });
+  });
+  activateOfficeTab("guide");
+})();
+
 const officeSubmitStatus = document.getElementById("officeSubmitStatus");
 function setOfficeSubmitStatus(message) {
   if (officeSubmitStatus) officeSubmitStatus.textContent = message;
