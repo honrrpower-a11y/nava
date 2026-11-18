@@ -11,6 +11,7 @@ import {
 const app = readFileSync(new URL("../app.js", import.meta.url), "utf8");
 const html = readFileSync(new URL("../index.html", import.meta.url), "utf8");
 const editor = readFileSync(new URL("../office-edit-tools.js", import.meta.url), "utf8");
+const fileReader = readFileSync(new URL("../office-file-tools.js", import.meta.url), "utf8");
 
 test("NAVI accepts only bounded exact text replacement actions", () => {
   assert.deepEqual(normalizeNaviOfficeAction({
@@ -226,9 +227,9 @@ test("Excel parser checks the marked current turn before parsing its extracted u
 
 
 test("Office form waits for both extraction and local editor before submitting", () => {
-  assert.match(office, /waitForReady\(\)/);
+  assert.match(fileReader, /waitForReady\(\)/);
   assert.match(editor, /waitUntilReady\(\)/);
   assert.match(app, /NavaOfficeFile\?\.waitForReady/);
   assert.match(app, /NavaOfficeTools\?\.waitUntilReady/);
-  assert.match(office, /NavaOfficeTools\?\.reset\?\.\(\)/);
+  assert.match(fileReader, /NavaOfficeTools\?\.reset\?\.\(\)/);
 });
