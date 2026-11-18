@@ -180,11 +180,11 @@ test("Office-context requests are sent to the Office route even from the global 
   assert.match(app, /page: requestPage,/);
 });
 
-test("Office form submissions render approval cards in the Office form while direct chat keeps its chat slot", () => {
+test("Office form submissions route approval cards to NAVI chat while direct chat keeps its chat slot", () => {
   assert.match(app, /const chatSlot = document\.getElementById\("naviOfficeActionChatSlot"\)/);
   assert.match(app, /const slot = options\.target === "office"[\s\S]*?\? \(officeSlot \|\| chatSlot\)/);
   assert.match(html, /id="naviOfficeActionChatSlot"/);
-  assert.match(app, /renderNaviOfficeAction\(data\.officeAction,\s*\{\s*target:\s*\(options\.officeTarget\s*\|\|\s*options\.officeDiagnostic\)\s*\?\s*"office"\s*:\s*"chat"\s*\}\)/);
+  assert.match(app, /renderNaviOfficeAction\(data\.officeAction,\s*\{\s*target:\s*options\.officeTarget\s*\?\s*"office"\s*:\s*"chat"\s*\}\)/);
   assert.doesNotMatch(app, /if \(data\.officeAction && requestPage === "officePage"[\s\S]{0,220}showPage\("officePage"\)/);
 });
 
@@ -207,14 +207,14 @@ test("Office context in the global NAVI chat consistently selects the Office rou
   assert.match(app, /page: requestPage,/);
 });
 
-test("Office brief submissions keep the page open and render approval in the Office studio", () => {
+test("Office brief submissions open NAVI chat and render approval there", () => {
   const formStart = app.indexOf('officeBriefForm?.addEventListener("submit"');
   const formEnd = app.indexOf("function scrollToRequest", formStart);
   const formHandler = app.slice(formStart, formEnd);
   assert.ok(formHandler.includes('updateNaviAssistantContext(officeService, officeContext)'));
   assert.ok(!formHandler.includes('window.openNaviAssistant('));
-  assert.match(app, /renderNaviOfficeAction\(data\.officeAction,\s*\{\s*target:\s*\(options\.officeTarget\s*\|\|\s*options\.officeDiagnostic\)\s*\?\s*"office"\s*:\s*"chat"\s*\}\)/);
-  assert.match(app, /if \(slot === officeSlot && host\) host\.hidden = false/);
+  assert.match(app, /renderNaviOfficeAction\(data\.officeAction,\s*\{\s*target:\s*options\.officeTarget\s*\?\s*"office"\s*:\s*"chat"\s*\}\)/);
+  assert.match(app, /if \(!officeResultTarget && !slot\)/);
 });
 
 test("Office brief form submits the user instruction through NAVI and keeps extracted file text as context only", () => {
@@ -247,9 +247,9 @@ test("Office form passes its exact user instruction, service, and context direct
 test("Office approval card can render in NAVI chat without requiring the hidden Office host", () => {
   const render = app.slice(app.indexOf("function renderNaviOfficeAction"), app.indexOf("// Select only NAVI response text"));
   assert.ok(render.includes("? (officeSlot || chatSlot)"));
-  assert.ok(render.includes("if (!slot)"));
-  assert.ok(!render.includes("if (!host || !slot)"));
-  assert.ok(render.includes("if (slot === officeSlot && host) host.hidden = false"));
+  assert.ok(render.includes("if (!officeResultTarget && !slot)"));
+  assert.ok(!render.includes("if (!officeResultTarget && (!host || !slot))"));
+  assert.ok(render.includes("if (!officeResultTarget && !slot)"));
 });
 
 
@@ -282,7 +282,7 @@ test("guided Office requests submit directly and keep approval cards in the NAVI
   assert.match(app, /window\.sendOfficeNaviRequest = function/);
   assert.match(app, /pageOverride: "officePage"/);
   assert.match(app, /officeTarget: false/);
-  assert.match(app, /target: \(options\.officeTarget \|\| options\.officeDiagnostic\) \? "office" : "chat"/);
+  assert.match(app, /target:\s*options\.officeTarget\s*\?\s*"office"\s*:\s*"chat"/);
   assert.match(app, /if \(!getNaviToken\(\)\)[\s\S]*?window\.openNaviAssistant\(\{ service, context: officeContext, message: cleanMessage \}\)/);
 });
 
