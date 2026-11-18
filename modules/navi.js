@@ -327,9 +327,9 @@ export function guardNaviOfficeReply(reply, explicitOfficeEdit) {
   if (explicitOfficeEdit) return text;
   const claimsPendingEdit =
     /درخواست\s+ویرایش\s+سلول/iu.test(text) ||
-    /(?:ویرایش|تغییر)\s+(?:مقدار\s+)?سلول[\s\\S]{0,180}(?:آماده\s+است|برای\s+تأیید)/iu.test(text) ||
-    /برای\s+اعمال[\s\\S]{0,140}(?:کارت\s+)?تأیید/iu.test(text) ||
-    /کارت\s+تأیید[\s\\S]{0,120}(?:اکسل|سلول|شیت)/iu.test(text);
+    /(?:ویرایش|تغییر)\s+(?:مقدار\s+)?سلول[\s\S]{0,180}(?:آماده\s+است|برای\s+تأیید)/iu.test(text) ||
+    /برای\s+اعمال[\s\S]{0,140}(?:کارت\s+)?تأیید/iu.test(text) ||
+    /کارت\s+تأیید[\s\S]{0,120}(?:اکسل|سلول|شیت)/iu.test(text);
   if (!claimsPendingEdit) return text;
   return "برای ویرایش فایل، ابتدا فایل را بارگذاری کن و تغییر موردنظرت را صریح بنویس. در پیام فعلی درخواست مشخصی برای تغییر سلول وجود ندارد؛ بنابراین هیچ ویرایشی آماده یا ثبت نشده است.";
 }
