@@ -15,6 +15,7 @@
   let extractionState="idle";
   let extractionFile=null;
   let extractionError="";
+  let contextSynced=false;
   const setStatus=(message,state="")=>{status.textContent=message;status.dataset.state=state;};
   const loadScript=(src,globalName)=>new Promise((resolve,reject)=>{
     if(window[globalName])return resolve(window[globalName]);
@@ -102,7 +103,7 @@
 
   function clearFile(){
     brief.value=originalBrief;input.value="";originalBrief="";
-    extractionFile=null;extractionState="idle";extractionError="";extractionPromise=Promise.resolve();
+    extractionFile=null;extractionState="idle";extractionError="";contextSynced=false;extractionPromise=Promise.resolve();
     window.NavaOfficeTools?.reset?.();
     clear.disabled=true;setStatus("فایل از درخواست حذف شد.");
   }
@@ -123,12 +124,32 @@
       }
       return {selected:true,ready:true,name:selected.name};
     },
-    getState(){return {state:extractionState,name:extractionFile?.name||"",error:extractionError};},
+    getState(){return {state:extractionState,name:extractionFile?.name||"",error:extractionError,contextSynced};},
+    markContextOutOfSync(){contextSynced=false;},
+    updateExtractedContent(content){
+      const selected=input.files&&input.files[0];
+      if(!selected||selected!==extractionFile||extractionState!=="ready")return false;
+      contextSynced=false;
+      const extracted=String(content||"").replace(/\u0000/g,"").trim();
+      if(!extracted)return false;
+      const pattern=/(?:^|\n\n)--- متن استخراج‌شده از فایل: ([^\n]+) ---\n[\s\S]*?\n--- پایان متن فایل ---\s*$/;
+      const current=String(brief.value||"");
+      const match=pattern.exec(current);
+      if(!match||match[1]!==selected.name)return false;
+      const prefix=current.slice(0,match.index).trim();
+      const wasTruncated=extracted.length>MAX_CHARS;
+      const attachment="--- متن استخراج‌شده از فایل: "+selected.name+" ---\n"+extracted.slice(0,MAX_CHARS)+(wasTruncated?"\n\n[ادامه متن به دلیل محدودیت حجم در این مرحله ارسال نشد.]":"")+"\n--- پایان متن فایل ---";
+      brief.value=(prefix?prefix+"\n\n":"")+attachment;
+      brief.dispatchEvent(new Event("input",{bubbles:true}));
+      contextSynced=true;
+      setStatus("محتوای مرجع فایل «"+selected.name+"» از آخرین نسخه ویرایش‌شده به‌روز شد."+(wasTruncated?" فقط ۱۲ هزار نویسه اول در درخواست بعدی ارسال می‌شود.":""),"success");
+      return true;
+    },
     setEditStatus(details){
       const selected=input.files&&input.files[0];
       const summary=String(details||"").trim();
       if(!selected||selected!==extractionFile||extractionState!=="ready"||!summary)return false;
-      setStatus("فایل «"+selected.name+"» — وضعیت: ویرایش‌شده. "+summary,"success");
+      setStatus("فایل «"+selected.name+"» — وضعیت: ویرایش‌شده. "+summary+" محتوای مرجع درخواست بعدی NAVI نیز به‌روز شد.","success");
       return true;
     }
   });
@@ -136,7 +157,7 @@
   input.addEventListener("change",()=>{
     const file=input.files&&input.files[0];
     if(!file){extractionFile=null;extractionState="idle";extractionError="";return;}
-    extractionFile=file;extractionState="processing";extractionError="";
+    extractionFile=file;extractionState="processing";extractionError="";contextSynced=false;
     const taskFile=file;
     extractionPromise=(async()=>{
       if(taskFile.size>MAX_BYTES){input.value="";extractionState="error";extractionError="حجم فایل بیشتر از ۱۵ مگابایت است.";setStatus(extractionError,"error");return;}
@@ -163,13 +184,13 @@
         brief.value=(currentBrief?currentBrief+"\n\n":"")+attachment;
         brief.dispatchEvent(new Event("input",{bubbles:true}));
         clear.disabled=false;
-        extractionState="ready";
+        extractionState="ready";contextSynced=true;
         const ocrNote=ocrPages?" با OCR فارسی از "+ocrPages+" صفحه اسکن‌شده.":(["png","jpg","jpeg","webp"].includes(ext)?" با OCR فارسی.":ext==="pptx"?"؛ اسلایدها و یادداشت‌های متنی استخراج شدند.":ext==="xlsx"?"؛ شیت‌ها، داده‌های سلولی و فرمول‌های موجود استخراج شدند.":"");
         setStatus("متن فایل «"+taskFile.name+"» استخراج شد"+ocrNote+" و آماده ارسال به NAVI است."+(wasTruncated?" فقط ۱۲ هزار نویسه اول خوانده شد.":""),"success");
       }catch(error){
         if(input.files?.[0]!==taskFile)return;
         input.value="";originalBrief="";
-        extractionState="error";extractionError=error.message||"خواندن فایل ناموفق بود.";
+        extractionState="error";contextSynced=false;extractionError=error.message||"خواندن فایل ناموفق بود.";
         setStatus(extractionError,"error");
         throw error;
       }
