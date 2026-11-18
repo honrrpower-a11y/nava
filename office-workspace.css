@@ -26,3 +26,5 @@ body.light .office-assistant-column{background:linear-gradient(150deg,#fffdf8,#f
 .office-operations-navi-cta button{flex:0 0 auto;min-height:44px}
 body.light .office-operations-navi-cta{background:linear-gradient(120deg,#fffdf8,#f1f5f8);border-color:rgba(166,119,48,.22)}
 @media(max-width:600px){.office-operations-navi-cta{align-items:stretch;flex-direction:column;gap:9px;padding:12px}.office-operations-navi-cta button{width:100%}}
+
+.office-operations-grid{grid-template-columns:minmax(0,1fr)}
