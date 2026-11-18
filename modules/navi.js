@@ -326,10 +326,10 @@ export function guardNaviOfficeReply(reply, explicitOfficeEdit) {
   const text = String(reply || "");
   if (explicitOfficeEdit) return text;
   const claimsPendingEdit =
-    /درخواست\\s+ویرایش\\s+سلول/iu.test(text) ||
-    /(?:ویرایش|تغییر)\\s+(?:مقدار\\s+)?سلول[\\s\\S]{0,180}(?:آماده\\s+است|برای\\s+تأیید)/iu.test(text) ||
-    /برای\\s+اعمال[\\s\\S]{0,140}(?:کارت\\s+)?تأیید/iu.test(text) ||
-    /کارت\\s+تأیید[\\s\\S]{0,120}(?:اکسل|سلول|شیت)/iu.test(text);
+    /درخواست\s+ویرایش\s+سلول/iu.test(text) ||
+    /(?:ویرایش|تغییر)\s+(?:مقدار\s+)?سلول[\s\\S]{0,180}(?:آماده\s+است|برای\s+تأیید)/iu.test(text) ||
+    /برای\s+اعمال[\s\\S]{0,140}(?:کارت\s+)?تأیید/iu.test(text) ||
+    /کارت\s+تأیید[\s\\S]{0,120}(?:اکسل|سلول|شیت)/iu.test(text);
   if (!claimsPendingEdit) return text;
   return "برای ویرایش فایل، ابتدا فایل را بارگذاری کن و تغییر موردنظرت را صریح بنویس. در پیام فعلی درخواست مشخصی برای تغییر سلول وجود ندارد؛ بنابراین هیچ ویرایشی آماده یا ثبت نشده است.";
 }
@@ -426,7 +426,7 @@ export function extractNaviDeterministicMemoryProposal(message) {
   const projectCodeColors = "(?:آبی|قرمز|سبز|زرد|نارنجی|بنفش|سفید|سیاه|مشکی|طلایی|نقره(?:ای|‌ای)|یشمی|فیروزه(?:ای|‌ای))";
   const shortProjectCodeMatch = value.match(
     new RegExp(
-      "^(?:((" + projectCodeColors + ")\\s+NAVI\\s*-\\s*([\\p{N}]{2,}))|(?:NAVI\\s*-\\s*([\\p{N}]{2,})\\s*-\\s*(" + projectCodeColors + ")))$",
+      "^(?:((" + projectCodeColors + ")\s+NAVI\s*-\s*([\\p{N}]{2,}))|(?:NAVI\s*-\s*([\\p{N}]{2,})\s*-\s*(" + projectCodeColors + ")))$",
       "iu"
     )
   );
