@@ -83,7 +83,7 @@
     const nextWorkbook=window.XLSX.read(await file.arrayBuffer(),{type:"array",cellFormula:true,cellStyles:true,bookVBA:false});
     if(input.files?.[0]!==file)return;
     kind="xlsx";workbook=nextWorkbook;setDownloadReady(false);
-    renderExcel();setStatus("فایل Excel برای ویرایش محلی آماده است. مقدار سلول‌ها را تغییر بده و نسخه جدید را ذخیره کن.");
+    renderExcel();setStatus("فایل Excel برای ویرایش محلی آماده است. پس از اعمال یا ویرایش تغییرات، آن‌ها را در جدول بررسی کن و سپس دکمه دانلود را بزن.");
    }else{
     await load("https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js","JSZip");
     const nextZip=await window.JSZip.loadAsync(file);
