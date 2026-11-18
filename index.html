@@ -425,11 +425,10 @@
             <div id="officeActionCardSlot"></div>
           </section>
           <section class="office-edit-panel" id="officeEditPanel" hidden aria-labelledby="officeEditTitle">
-            <div class="office-edit-heading"><div><strong id="officeEditTitle">ویرایش مستقیم فایل</strong><p>تغییرات روی نسخه‌ای در مرورگر انجام می‌شوند؛ فایل اصلی جایگزین نمی‌شود.</p></div><button class="btn-secondary" id="officeEditClose" type="button">بستن ویرایشگر</button></div>
+            <div class="office-edit-heading"><div><strong id="officeEditTitle">ویرایش مستقیم فایل</strong><p>تغییرات ابتدا در همین ویرایشگر نمایش داده می‌شوند؛ پس از بررسی، خودت فایل ویرایش‌شده را دانلود می‌کنی. فایل اصلی جایگزین نمی‌شود.</p></div><button class="btn-secondary" id="officeEditClose" type="button">بستن ویرایشگر</button></div>
             <div id="officeEditExcel" hidden>
               <label for="officeEditSheet">انتخاب شیت Excel</label><select id="officeEditSheet" class="studio-control"></select>
               <div class="office-edit-grid-wrap" id="officeEditGrid"></div><p id="officeEditGridNote" class="office-file-help"></p>
-              <button class="btn-primary" id="officeEditSave" type="button">ذخیره نسخه ویرایش‌شده Excel</button>
               <p class="office-file-help">مقادیر سلول‌ها و فرمول‌های ساده قابل ویرایش‌اند؛ اما در این نسخه حفظ کامل قالب‌بندی پیچیده، نمودارها، ماکروها، پیوندهای خارجی و اشیای تعبیه‌شده تضمین نمی‌شود. قبل از استفاده رسمی، نسخه خروجی را بررسی کن.</p>
             </div>
             <div id="officeEditReplace" hidden>
@@ -438,6 +437,7 @@
               <button class="btn-primary" id="officeEditReplaceRun" type="button">اعمال تغییر و دریافت نسخه جدید</button>
               <p class="office-file-help">جایگزینی در متن‌های مستقل انجام می‌شود؛ متن‌هایی که در چند قطعه جدا ذخیره شده‌اند ممکن است پیدا نشوند. ساختار کلی اسلایدها و سند حفظ می‌شود.</p>
             </div>
+            <button class="btn-primary" id="officeEditSave" type="button" disabled>دانلود فایل ویرایش‌شده</button>
             <p id="officeEditStatus" class="office-file-status" role="status" aria-live="polite">پس از انتخاب فایل قابل ویرایش، ابزار اینجا آماده می‌شود.</p>
           </section>
           <div class="office-file-panel" id="officeFilePanel">
