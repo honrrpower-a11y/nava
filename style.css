@@ -2680,3 +2680,45 @@ body:has(> .nava-access-panel.is-gate-active){overflow:hidden}
     overflow: visible !important;
   }
 }
+
+
+/* NAVI chat embedded directly in the Office operations tab. */
+.office-inline-navi{
+  grid-column:1/-1;
+  min-width:0;
+  margin:0 0 22px;
+  padding:clamp(14px,2.4vw,24px);
+  border:1px solid rgba(229,184,94,.28);
+  border-radius:22px;
+  background:linear-gradient(145deg,color-mix(in srgb,var(--panel) 94%,#12334b),var(--panel));
+  box-shadow:var(--shadow);
+}
+.office-inline-navi-heading{margin-bottom:14px}
+.office-inline-navi-heading h2{margin:6px 0;color:var(--gold);font-size:clamp(18px,2.4vw,23px)}
+.office-inline-navi-heading p{margin:0;color:var(--muted);font-size:12px;line-height:1.9}
+.office-navi-inline-mount{min-width:0}
+.navi-widget-panel.is-inline{
+  display:block!important;
+  position:relative;
+  inset:auto;
+  width:100%;
+  max-width:none;
+  max-height:none;
+  overflow:visible;
+  border-radius:17px;
+  box-shadow:none;
+  transform:none;
+  animation:none;
+}
+.navi-widget-panel.is-inline .navi-widget-panel-head{position:relative}
+.navi-widget-panel.is-inline .navi-widget-close{display:none}
+.navi-widget-panel.is-inline .navi-chat-area{min-width:0}
+.navi-widget-panel.is-inline .navi-thread-list{max-height:150px}
+.navi-widget-panel.is-inline .response-box{max-height:420px}
+.navi-widget-panel.is-inline .navi-widget-panel-head{border-radius:16px 16px 0 0}
+@media(max-width:760px){
+  .office-inline-navi{padding:12px;border-radius:17px}
+  .navi-widget-panel.is-inline .request-content{padding:9px}
+  .navi-widget-panel.is-inline .navi-workspace-tabs{gap:4px;overflow-x:auto}
+  .navi-widget-panel.is-inline .navi-workspace-tab{white-space:nowrap}
+}
