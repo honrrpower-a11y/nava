@@ -285,3 +285,28 @@ test("guided Office requests submit directly and keep approval cards in the NAVI
   assert.match(app, /target: \(options\.officeTarget \|\| options\.officeDiagnostic\) \? "office" : "chat"/);
   assert.match(app, /if \(!getNaviToken\(\)\)[\s\S]*?window\.openNaviAssistant\(\{ service, context: officeContext, message: cleanMessage \}\)/);
 });
+
+
+test("single-sheet workbook metadata resolves the user's exact sheetless Persian B3 request", () => {
+  const message = 'شیت‌های فایل فعال (از فایل بارگذاری‌شده): ["آزمایش NAVI"]\n\nپیام کاربر: در فایل آزمایشی NAVI مقدار سلول B3 را به تایید شد تغییر بده';
+  assert.deepEqual(extractNaviExplicitExcelEditAction(message), {
+    kind: "edit_cells",
+    edits: [{ sheet: "آزمایش NAVI", cell: "B3", value: "تایید شد" }]
+  });
+});
+
+test("sheetless Excel requests stay unapproved when workbook sheet metadata is missing or ambiguous", () => {
+  const request = "پیام کاربر: در فایل آزمایشی NAVI مقدار سلول B3 را به تایید شد تغییر بده";
+  assert.equal(extractNaviExplicitExcelEditAction(request), null);
+  assert.equal(
+    extractNaviExplicitExcelEditAction('شیت‌های فایل فعال (از فایل بارگذاری‌شده): ["آزمایش NAVI","گزارش"]\n\n' + request),
+    null
+  );
+});
+
+test("active Office file metadata exposes only real workbook sheet names", () => {
+  assert.match(readFileSync(new URL("../office-edit-tools.js", import.meta.url), "utf8"),
+    /sheetNames:ready&&kind==="xlsx"&&Array\.isArray\(workbook\?\.SheetNames\)\?\[\.\.\.workbook\.SheetNames\]:\[\]/);
+  assert.match(app, /activeOfficeFileInfo\.sheetNames/);
+  assert.match(app, /شیت‌های فایل فعال \(از فایل بارگذاری‌شده\):/);
+});
