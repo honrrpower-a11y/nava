@@ -355,7 +355,9 @@ export function extractNaviExplicitExcelEditAction(message) {
   // Unmarked context or extracted workbook text must never become edit intent.
   if (marker < 0) return null;
   const userText = text.slice(marker + "پیام کاربر:".length).trim();
-  if (!isExplicitOfficeEditRequest(userText)) return null;
+  // The complete text still contains the trusted current-user marker.
+  // Checking only userText here would discard that marker and reject every edit.
+  if (!isExplicitOfficeEditRequest(text)) return null;
 
   // Accept the original precise wording plus common natural Persian variants.
   // A proposal is created only when the user explicitly names the sheet, cell,
@@ -2481,13 +2483,16 @@ async function handleChat({
     );
   }
 
-  const explicitOfficeEdit = page === "officePage" && isExplicitOfficeEditRequest(message);
+  // message is the authenticated current user's raw request. Add the delimiter
+  // here, at the trust boundary, before calling helpers that require it.
+  const currentUserTurn = "پیام کاربر: " + message;
+  const explicitOfficeEdit = page === "officePage" && isExplicitOfficeEditRequest(currentUserTurn);
   // For a fully specified single-cell edit, derive the proposal from the exact
   // current-user instruction before considering model output. This keeps form
   // submissions and direct chat requests on the same deterministic path.
   // Extracted workbook text and assistant replies are never authorization.
   const deterministicOfficeAction = explicitOfficeEdit
-    ? extractNaviExplicitExcelEditAction(message)
+    ? extractNaviExplicitExcelEditAction(currentUserTurn)
     : null;
   // Excel actions are authorized only by the deterministic parser reading
   // the exact current user message. Never trust an LLM-generated cell/sheet/value:
