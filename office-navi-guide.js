@@ -7,6 +7,19 @@
   const question = document.getElementById("officeGuideQuestion");
   const ask = document.getElementById("officeGuideAskNavi");
   const status = document.getElementById("officeGuideStatus");
+  const operationsNaviButton = document.getElementById("officeOperationsGoToNavi");
+
+  const scrollToNaviAnswers = () => {
+    const assistantColumn = document.querySelector(".office-assistant-column");
+    if (!assistantColumn) return;
+    const reducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
+    assistantColumn.scrollIntoView({
+      behavior: reducedMotion ? "auto" : "smooth",
+      block: "start"
+    });
+  };
+
+  operationsNaviButton?.addEventListener("click", scrollToNaviAnswers);
   if (!app || !level || !question || !ask) return;
 
   document.querySelectorAll(".office-guide-preset").forEach(button => {
@@ -55,11 +68,7 @@
       // Start the request first so the inline assistant is opened, then bring
       // its answer area into view (especially important on narrow/mobile screens).
       const sendPromise = window.sendOfficeNaviRequest({ message, context });
-      const assistantColumn = document.querySelector(".office-assistant-column");
-      if (assistantColumn) {
-        const reducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
-        assistantColumn.scrollIntoView({ behavior: reducedMotion ? "auto" : "smooth", block: "start" });
-      }
+      scrollToNaviAnswers();
       const sent = await sendPromise;
       status.textContent = sent === false
         ? "برای ارسال درخواست، ابتدا در NAVI وارد حساب شو؛ دستیار در همین فضای آفیس باز می‌ماند."
