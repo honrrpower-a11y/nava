@@ -34,8 +34,13 @@ test("Office context preview is shortened without truncating the context sent to
 });
 
 test("Office guided assistant passes its app, user level, operation and task into NAVI", () => {
-  for (const key of ["application:app.value", "userLevel:level.value", 'operation:"guide"', "brief:task"]) {
-    assert.ok(guide.includes(key), `Missing guided Office context: ${key}`);
+  for (const [key, pattern] of [
+    ["application", /application:\s*app\.value/],
+    ["userLevel", /userLevel:\s*level\.value/],
+    ["operation", /operation:\s*"guide"/],
+    ["brief", /brief:\s*task/]
+  ]) {
+    assert.match(guide, pattern, `Missing guided Office context: ${key}`);
   }
   assert.match(app, /requestContext\?\.service\s*===\s*officeService/);
 });

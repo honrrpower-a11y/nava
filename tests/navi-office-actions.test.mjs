@@ -184,7 +184,7 @@ test("Office form submissions render approval cards in the Office form while dir
   assert.match(app, /const chatSlot = document\.getElementById\("naviOfficeActionChatSlot"\)/);
   assert.match(app, /const slot = options\.target === "office"[\s\S]*?\? \(officeSlot \|\| chatSlot\)/);
   assert.match(html, /id="naviOfficeActionChatSlot"/);
-  assert.match(app, /renderNaviOfficeAction\(data\.officeAction, \{ target: options\.officeDiagnostic \? "office" : "chat" \}\)/);
+  assert.match(app, /renderNaviOfficeAction\(data\.officeAction,\s*\{\s*target:\s*\(options\.officeTarget\s*\|\|\s*options\.officeDiagnostic\)\s*\?\s*"office"\s*:\s*"chat"\s*\}\)/);
   assert.doesNotMatch(app, /if \(data\.officeAction && requestPage === "officePage"[\s\S]{0,220}showPage\("officePage"\)/);
 });
 
@@ -213,7 +213,7 @@ test("Office brief submissions keep the page open and render approval in the Off
   const formHandler = app.slice(formStart, formEnd);
   assert.ok(formHandler.includes('updateNaviAssistantContext(officeService, officeContext)'));
   assert.ok(!formHandler.includes('window.openNaviAssistant('));
-  assert.match(app, /renderNaviOfficeAction\(data\.officeAction, \{ target: options\.officeDiagnostic \? "office" : "chat" \}\)/);
+  assert.match(app, /renderNaviOfficeAction\(data\.officeAction,\s*\{\s*target:\s*\(options\.officeTarget\s*\|\|\s*options\.officeDiagnostic\)\s*\?\s*"office"\s*:\s*"chat"\s*\}\)/);
   assert.match(app, /if \(slot === officeSlot && host\) host\.hidden = false/);
 });
 
@@ -272,4 +272,16 @@ test("Office form waits for both extraction and local editor before submitting",
   assert.match(app, /NavaOfficeFile\?\.waitForReady/);
   assert.match(app, /NavaOfficeTools\?\.waitUntilReady/);
   assert.match(fileReader, /NavaOfficeTools\?\.reset\?\.\(\)/);
+});
+
+
+test("guided Office requests submit directly and route approval cards to the Office page", () => {
+  const guide = readFileSync(new URL("../office-navi-guide.js", import.meta.url), "utf8");
+  assert.match(guide, /window\.sendOfficeNaviRequest\(\{ message, context \}\)/);
+  assert.doesNotMatch(guide, /window\.openNaviAssistant\(/);
+  assert.match(app, /window\.sendOfficeNaviRequest = function/);
+  assert.match(app, /pageOverride: "officePage"/);
+  assert.match(app, /officeTarget: true/);
+  assert.match(app, /target: \(options\.officeTarget \|\| options\.officeDiagnostic\) \? "office" : "chat"/);
+  assert.match(app, /if \(!getNaviToken\(\)\)[\s\S]*?window\.openNaviAssistant\(\{ service, context: officeContext, message: cleanMessage \}\)/);
 });

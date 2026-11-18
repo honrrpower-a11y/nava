@@ -729,6 +729,30 @@ window.openNaviAssistant = function(options = {}) {
   if (typeof options.message === "string" && options.message.trim()) userRequest.value = options.message.trim();
   setNaviWidgetOpen(true, true);
 };
+
+// Submit guided Office requests from the Office page itself. If the user is
+// not authenticated, preserve the existing sign-in/chat flow and prefill it.
+window.sendOfficeNaviRequest = function({ message, context } = {}) {
+  const cleanMessage = String(message || "").trim();
+  if (!cleanMessage) return false;
+  const service = "کارهای اداری و آفیس";
+  const officeContext = context && typeof context === "object" ? context : {};
+  if (!getNaviToken()) {
+    window.openNaviAssistant({ service, context: officeContext, message: cleanMessage });
+    return false;
+  }
+  if (Array.from(serviceSelect.options).some(option => option.value === service)) {
+    serviceSelect.value = service;
+  }
+  updateNaviAssistantContext(service, officeContext);
+  return sendMessageToNavi({
+    pageOverride: "officePage",
+    messageOverride: cleanMessage,
+    serviceOverride: service,
+    contextOverride: officeContext,
+    officeTarget: true
+  });
+};
 document.addEventListener("keydown", event => {
   if (event.key === "Escape" && naviWidgetPanel && !naviWidgetPanel.hidden) {
     setNaviWidgetOpen(false);
@@ -3829,7 +3853,7 @@ async function sendMessageToNavi(options = {}) {
     const shouldNameThread = threadBeforeNaming && Number(threadBeforeNaming.message_count || 0) === 0;
     showNaviReply(reply);
     try {
-      renderNaviOfficeAction(data.officeAction, { target: options.officeDiagnostic ? "office" : "chat" });
+      renderNaviOfficeAction(data.officeAction, { target: (options.officeTarget || options.officeDiagnostic) ? "office" : "chat" });
       if (options.officeDiagnostic) {
         const card = document.getElementById("naviOfficeActionCard");
         const slot = document.getElementById("officeActionCardSlot");
