@@ -166,9 +166,14 @@ test("Office service selection in the global NAVI chat routes the request to Off
   assert.match(app, /page: requestPage,/);
 });
 
-test("Office route renders its approval card in the NAVI chat", () => {
-  assert.match(app, /const chatSlot = document\.getElementById\("naviOfficeActionChatSlot"\)/);
+test("Office brief submissions keep the page open and render approval in the Office studio", () => {
+  const formStart = app.indexOf('officeBriefForm?.addEventListener("submit"');
+  const formEnd = app.indexOf("\\nfunction scrollToRequest", formStart);
+  const formHandler = app.slice(formStart, formEnd);
+  assert.ok(formHandler.includes('updateNaviAssistantContext(officeService, officeContext)'));
+  assert.ok(!formHandler.includes('window.openNaviAssistant('));
   assert.match(app, /renderNaviOfficeAction\(data\.officeAction, \{ target: options\.officeDiagnostic \? "office" : "chat" \}\)/);
+  assert.match(app, /if \(slot === officeSlot && host\) host\.hidden = false/);
 });
 
 test("Office brief form submits the user instruction through NAVI and keeps extracted file text as context only", () => {
