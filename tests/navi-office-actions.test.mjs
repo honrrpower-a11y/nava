@@ -328,7 +328,7 @@ test("Office operations contains the real NAVI chat inline and removes the separ
   assert.match(app, /homeSlot\.parentNode\.insertBefore\(naviWidgetPanel, homeSlot\.nextSibling\)/);
   assert.match(app, /naviWidgetPanel\.classList\.contains\("is-inline"\)/);
   assert.match(html, /app\.js\?v=office-shared-workspace-20261118-1/);
-  assert.match(html, /office-workspace\.css\?v=office-shared-workspace-20261118-1/);
+  assert.match(html, /office-workspace\.css\?v=office-operations-navi-link-20261118-2/);
   assert.match(officeCss, /\.office-workspace-layout/);
   assert.match(officeCss, /body\.navi-studio-context \.office-assistant-column \.navi-widget-panel\.is-inline/);
   assert.match(officeCss, /@media\(max-width:600px\)/);
