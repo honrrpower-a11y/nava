@@ -166,16 +166,22 @@ test("Office service selection in the global NAVI chat routes the request to Off
   assert.match(app, /page: requestPage,/);
 });
 
-test("Office route renders its approval card in the NAVI chat", () => {
-  assert.match(app, /const chatSlot = document\.getElementById\("naviOfficeActionChatSlot"\)/);
+test("Office brief submissions keep the page open and render approval in the Office studio", () => {
+  const formStart = app.indexOf('officeBriefForm?.addEventListener("submit"');
+  const formEnd = app.indexOf("function scrollToRequest", formStart);
+  const formHandler = app.slice(formStart, formEnd);
+  assert.ok(formHandler.includes('updateNaviAssistantContext(officeService, officeContext)'));
+  assert.ok(!formHandler.includes('window.openNaviAssistant('));
   assert.match(app, /renderNaviOfficeAction\(data\.officeAction, \{ target: options\.officeDiagnostic \? "office" : "chat" \}\)/);
+  assert.match(app, /if \(slot === officeSlot && host\) host\.hidden = false/);
 });
 
 test("Office brief form submits the user instruction through NAVI and keeps extracted file text as context only", () => {
   assert.match(app, /const officeBriefForm = document\.getElementById\("officeBriefForm"\)/);
   assert.match(app, /completeBrief[\s\S]*?replace\([\s\S]*?متن استخراج‌شده از فایل/);
-  assert.match(app, /message: userInstruction/);
-  assert.match(app, /context: officeContext/);
+  assert.match(app, /messageOverride: userInstruction/);
+  assert.match(app, /contextOverride: officeContext/);
+  assert.match(app, /updateNaviAssistantContext\(officeService, officeContext\)/);
   assert.match(app, /contextBriefBudget = Math\.max\(0, 9000 - userInstruction\.length\)/);
   assert.match(app, /officeContext\.brief = String\(officeContext\.brief \|\| ""\)\.slice\(0, contextBriefBudget\)/);
   assert.match(app, /if \(getNaviToken\(\) && !sendRequest\.disabled\)[\s\S]*?sendMessageToNavi\(\{[\s\S]*?pageOverride: "officePage",[\s\S]*?messageOverride: userInstruction,[\s\S]*?serviceOverride: "کارهای اداری و آفیس",[\s\S]*?contextOverride: officeContext[\s\S]*?\}\)/);
@@ -192,6 +198,9 @@ test("Office form passes its exact user instruction, service, and context direct
   assert.ok(app.includes("messageOverride: userInstruction,"));
   assert.ok(app.includes('serviceOverride: "کارهای اداری و آفیس"'));
   assert.ok(app.includes("contextOverride: officeContext"));
+  const formStart = app.indexOf('officeBriefForm?.addEventListener("submit"');
+  const formEnd = app.indexOf("function scrollToRequest", formStart);
+  assert.ok(!app.slice(formStart, formEnd).includes("window.openNaviAssistant("));
 });
 
 test("Office approval card can render in NAVI chat without requiring the hidden Office host", () => {
