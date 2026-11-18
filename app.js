@@ -3709,7 +3709,7 @@ officeBriefForm?.addEventListener("submit", async event => {
   void sendMessageToNavi({
     pageOverride: "officePage",
     messageOverride: userInstruction,
-    serviceOverride: officeService,
+    serviceOverride: "کارهای اداری و آفیس",
     contextOverride: officeContext,
     officeDiagnostic: true,
     officeTarget: false
