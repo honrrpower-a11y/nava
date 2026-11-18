@@ -3803,7 +3803,7 @@ async function sendMessageToNavi(options = {}) {
       renderNaviOfficeAction(data.officeAction, { target: options.officeDiagnostic ? "office" : "chat" });
       if (options.officeDiagnostic) {
         const card = document.getElementById("naviOfficeActionCard");
-        const slot = document.getElementById("naviOfficeActionChatSlot");
+        const slot = document.getElementById("officeActionCardSlot");
         updateOfficeActionDiagnostic("نتیجه رندر کارت", {
           cardCreated: Boolean(card),
           slotFound: Boolean(slot),
