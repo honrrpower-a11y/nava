@@ -41,7 +41,9 @@ test("Office guided assistant passes its app, user level, operation and task int
 });
 
 test("Office file extraction appends extracted text to the brief sent through the context path", () => {
-  assert.match(fileTools, /brief\.value=\(originalBrief\?originalBrief\+"\\n\\n":""\)\+attachment/);
+  assert.match(fileTools, /const currentBrief=String\\(brief\\.value\\|\\|""\\)\\.replace\\(/);
+  assert.match(fileTools, /brief\\.value=\\(currentBrief\\?currentBrief\\+"\\\\n\\\\n":""\\)\\+attachment/);
+  assert.match(fileTools, /brief\\.dispatchEvent\\(new Event\\("input",\\{bubbles:true\\}\\)\\)/);
   assert.match(fileTools, /متن استخراج‌شده از فایل/);
   assert.match(app, /brief:\s*18000/);
 });
