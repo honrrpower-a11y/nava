@@ -56,10 +56,10 @@ test("Office file extraction appends extracted text to the brief sent through th
 
 test("guided Office requests keep approval cards in the NAVI conversation", () => {
   assert.match(app, /window\.sendOfficeNaviRequest\s*=\s*function[\s\S]*?officeTarget:\s*false/);
-  assert.match(guide, /کارت تأیید، در ستون دستیار همین صفحه نمایش داده می‌شوند/);
+  assert.match(guide, /کارت تأیید، در ستون دستیار نمایش داده می‌شود/);
 });
 
-test("guided Office requests scroll the page to NAVI's answer area after sending", () => {
+test("guided Office requests scroll the page to NAVI's answer area after sending", async () => {
   assert.match(guide, /const sendPromise = window\.sendOfficeNaviRequest\(\{ message, context \}\)/);
   assert.match(guide, /document\.querySelector\("\.office-assistant-column"\)/);
   assert.match(guide, /assistantColumn\.scrollIntoView\(\{ behavior: reducedMotion \? "auto" : "smooth", block: "start" \}\)/);
