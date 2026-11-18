@@ -82,13 +82,13 @@
     await load("https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js","XLSX");
     const nextWorkbook=window.XLSX.read(await file.arrayBuffer(),{type:"array",cellFormula:true,cellStyles:true,bookVBA:false});
     if(input.files?.[0]!==file)return;
-    kind="xlsx";workbook=nextWorkbook;
+    kind="xlsx";workbook=nextWorkbook;setDownloadReady(false);
     renderExcel();setStatus("فایل Excel برای ویرایش محلی آماده است. مقدار سلول‌ها را تغییر بده و نسخه جدید را ذخیره کن.");
    }else{
     await load("https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js","JSZip");
     const nextZip=await window.JSZip.loadAsync(file);
     if(input.files?.[0]!==file)return;
-    kind=ext;zip=nextZip;
+    kind=ext;zip=nextZip;setDownloadReady(false);
     setStatus("فایل برای جست‌وجو و جایگزینی متن آماده است. بسته و چیدمان کلی حفظ می‌شود؛ فقط متن‌های منطبق در قطعه‌های متنی مستقل تغییر می‌کنند.");
    }
   }catch(error){if(input.files?.[0]===file){hide();setStatus(error.message||"آماده‌سازی ویرایشگر ناموفق بود.",true);}throw error;}
