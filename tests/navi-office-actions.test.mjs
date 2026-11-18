@@ -152,10 +152,10 @@ test("Office form submissions render approval cards in the Office form while dir
 
 test("the Worker derives precise Excel actions from the current-user instruction and retains the Office page gate", () => {
   const worker = readFileSync(new URL("../modules/navi.js", import.meta.url), "utf8");
-  assert.match(worker, /const currentUserTurn = "پیام کاربر: " \+ message/);
-  assert.match(worker, /const explicitOfficeEdit = page === "officePage" && isExplicitOfficeEditRequest\(currentUserTurn\)/);
-  assert.match(worker, /const deterministicOfficeAction = explicitOfficeEdit\s*\?\s*extractNaviExplicitExcelEditAction\(message\)/);
-  assert.match(worker, /let officeAction = deterministicOfficeAction \|\|\s*\(explicitOfficeEdit && parsed\.officeAction\?\.kind === "replace_text"/);
+  assert.match(worker, /const currentUserTurn = "پیام کاربر: " \\+ message/);
+  assert.match(worker, /const explicitOfficeEdit = page === "officePage" && isExplicitOfficeEditRequest\\(currentUserTurn\\)/);
+  assert.match(worker, /const deterministicOfficeAction = explicitOfficeEdit\\s*\\? extractNaviExplicitExcelEditAction\\(currentUserTurn\\)/);
+  assert.match(worker, /let officeAction = deterministicOfficeAction \\|\\|\\s*\\(explicitOfficeEdit && parsed\\.officeAction\\?\\.kind === "replace_text"/);
 });
 
 
