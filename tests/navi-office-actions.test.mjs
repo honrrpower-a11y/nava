@@ -179,13 +179,14 @@ test("Office form submissions render approval cards in the Office form while dir
   assert.doesNotMatch(app, /if \(data\.officeAction && requestPage === "officePage"[\s\S]{0,220}showPage\("officePage"\)/);
 });
 
-test("the Worker derives precise Excel actions from the current-user instruction and retains the Office page gate", () => {
+test("deterministic Excel proposals are derived on every NAVI chat page while model text replacement stays Office-only", () => {
   const worker = readFileSync(new URL("../modules/navi.js", import.meta.url), "utf8");
   assert.ok(worker.includes('const currentUserTurn = "پیام کاربر: " + message;'));
-  assert.ok(worker.includes("isExplicitOfficeEditRequest(currentUserTurn)"));
-  assert.ok(worker.includes("extractNaviExplicitExcelEditAction(currentUserTurn)"));
+  assert.match(worker, /const deterministicOfficeAction = extractNaviExplicitExcelEditAction\(currentUserTurn\);/);
+  assert.match(worker, /const explicitOfficeEdit = page === "officePage" && isExplicitOfficeEditRequest\(currentUserTurn\);/);
   assert.ok(worker.includes('let officeAction = deterministicOfficeAction ||'));
   assert.ok(worker.includes('parsed.officeAction?.kind === "replace_text"'));
+  assert.match(worker, /guardNaviOfficeReply\(\s*parsed\.reply,\s*explicitOfficeEdit \|\| Boolean\(deterministicOfficeAction\)\s*\)/);
 });
 
 
