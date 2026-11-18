@@ -101,3 +101,16 @@ test("Office Operations sends an explicit user instruction with fully extracted 
   assert.match(guide, /ابتدا شرح درخواستت را در فرم بالا بنویس/);
   assert.match(guide, /نیازی به نوشتن دوباره نیست/);
 });
+
+
+test("Office page provides a fixed return-to-top control only while the Office page is active and scrolled", () => {
+  const html = readFileSync(new URL("../index.html", import.meta.url), "utf8");
+  const css = readFileSync(new URL("../office-workspace.css", import.meta.url), "utf8");
+  assert.match(html, /id="officeBackToTop"[^>]*hidden/);
+  assert.match(html, /office-workspace\.css\?v=office-back-to-top-20261118-1/);
+  assert.match(guide, /officePage\.classList\.contains\("active"\) && window\.scrollY > 280/);
+  assert.match(guide, /window\.scrollTo\(\{ top: 0, behavior: reducedMotion \? "auto" : "smooth" \}\)/);
+  assert.match(guide, /window\.addEventListener\("scroll", updateOfficeBackToTop, \{ passive: true \}\)/);
+  assert.match(css, /\.office-back-to-top\{position:fixed;/);
+  assert.match(css, /\.office-back-to-top\[hidden\]\{display:none!important\}/);
+});
