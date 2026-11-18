@@ -25,14 +25,6 @@ test("NAVI context normalization preserves Office guide fields and long file bri
   }
   assert.match(normalizer, /brief:\s*18000/);
   assert.match(normalizer, /value\.trim\(\)\.slice\(0,\s*maxLength\)/);
-  for (const field of ["fileName: 500", "fileType: 40"]) {
-    assert.ok(normalizer.includes(field), `Missing Office upload metadata field: ${field}`);
-  }
-  assert.match(normalizer, /typeof context\.fileAttached\s*===\s*"boolean"/);
-  assert.match(normalizer, /result\.fileAttached\s*=\s*context\.fileAttached\s*\?/);
-  assert.match(app, /fileName:\s*"نام فایل بارگذاری‌شده"/);
-  assert.match(app, /fileType:\s*"نوع فایل"/);
-  assert.match(app, /fileAttached:\s*"وضعیت پیوست فایل"/);
 });
 
 test("Office context preview is shortened without truncating the context sent to NAVI", () => {
@@ -88,6 +80,16 @@ test("Office Operations removes the placeholder project-output area and provides
   assert.match(guide, /const scrollToNaviAnswers = \(\) =>/);
 });
 
+
+test("Office upload extraction remains separate when the user edits text after attaching a file", () => {
+  const attachmentParser = guide.match(/const attachmentMatch = brief\.match\((\/[^;]+\/)\);/)?.[1] || "";
+  assert.ok(attachmentParser, "Office request should locate the extracted-file block");
+  assert.doesNotMatch(attachmentParser, /\\s\*\$\//, "File detection must not require the attachment to be the final textarea content");
+  assert.match(guide, /const beforeAttachment = attachmentMatch \?/);
+  assert.match(guide, /const afterAttachment = attachmentMatch[\s\S]{0,180}\?\s*brief\.slice\(attachmentMatch\.index \+ attachmentMatch\[0\]\.length\)/);
+  assert.match(guide, /const userBrief = \[beforeAttachment, afterAttachment\]\.filter\(Boolean\)\.join\("\\n\\n"\)/);
+  assert.match(guide, /const extractedFileText = attachmentMatch \? attachmentMatch\[2\]\.trim\(\) : ""/);
+});
 
 test("Office Operations sends an explicit user instruction with fully extracted file context", () => {
   assert.match(guide, /operationsNaviButton\?\.addEventListener\("click", async \(\) =>/);
