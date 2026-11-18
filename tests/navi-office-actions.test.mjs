@@ -302,26 +302,26 @@ test("active Office file metadata exposes only real workbook sheet names", () =>
 });
 
 
-test("Office opens a clean blank NAVI session from its dedicated button", () => {
-  assert.match(html, /id="officeOpenBlankNavi" type="button">باز کردن NAVI خالی/);
-  assert.doesNotMatch(html, /id="officeBriefSubmit"/);
-  assert.match(app, /const officeOpenBlankNaviButton = document\.getElementById\("officeOpenBlankNavi"\)/);
-  assert.match(app, /window\.openNaviAssistant\(\{ service: "گفت‌وگوی عمومی", blank: true \}\)/);
-  assert.match(app, /if \(options\.blank === true\)/);
-  assert.match(app, /naviAssistantContext = null;/);
-  assert.match(app, /if \(userRequest\) userRequest\.value = "";/);
-  assert.doesNotMatch(app, /officeBriefForm\?\.addEventListener\("submit"/);
-  assert.match(html, /app\.js\?v=office-two-tabs-20261118-1/);
+test("Office embeds the existing NAVI conversation directly in its operations tab", () => {
+  assert.match(html, /id="officeNaviInlineHost"/);
+  assert.doesNotMatch(html, /id="officeOpenBlankNavi"/);
+  assert.match(app, /function mountNaviWidgetInOffice\(\)/);
+  assert.match(app, /officeNaviInlineHost\.appendChild\(naviWidgetPanel\)/);
+  assert.match(app, /function restoreNaviWidgetFromOffice\(\)/);
+  assert.match(app, /naviWidgetOriginalPlaceholder/);
+  assert.match(app, /tab\.dataset\.officeTab === "operations"[\s\S]*?mountNaviWidgetInOffice\(\)/);
+  assert.match(app, /tab\.dataset\.officeTab === "guide"[\s\S]*?restoreNaviWidgetFromOffice\(\)/);
+  assert.match(css, /\.navi-widget-panel\.is-office-embedded/);
+  assert.match(html, /app\.js\?v=office-inline-navi-chat-20261118-1/);
+  assert.match(app, /officeTarget: false/);
+  assert.doesNotMatch(app, /officeOpenBlankNaviButton/);
 });
 
-test("Office has one independent blank NAVI button and no legacy form submit route", () => {
-  assert.match(html, /id="officeOpenBlankNavi"[^>]*type="button"[^>]*>باز کردن NAVI خالی<\/button>/);
-  assert.doesNotMatch(html, /id="officeBriefSubmit"/);
+test("Office guided requests open the operations tab and send through the same embedded NAVI chat", () => {
+  assert.match(app, /window\.sendOfficeNaviRequest = function[\s\S]*?officeOperationsTab[\s\S]*?mountNaviWidgetInOffice\(\)[\s\S]*?sendMessageToNavi/);
+  assert.match(guide, /window\.sendOfficeNaviRequest\(\{ message, context \}\)/);
+  assert.match(guide, /در تب عملیات آفیس، همین‌جا نمایش داده می‌شود/);
   assert.doesNotMatch(app, /officeBriefForm\?\.addEventListener\("submit"/);
-  assert.match(app, /officeOpenBlankNaviButton\?\.addEventListener\("click"/);
-  assert.match(app, /window\.openNaviAssistant\(\{ service: "گفت‌وگوی عمومی", blank: true \}\)/);
-  assert.match(app, /if \(options\.blank === true\)/);
-  assert.match(app, /if \(userRequest\) userRequest\.value = ""/);
 });
 
 
