@@ -452,13 +452,13 @@ export function extractNaviDeterministicMemoryProposal(message) {
   const projectCodeColors = "(?:آبی|قرمز|سبز|زرد|نارنجی|بنفش|سفید|سیاه|مشکی|طلایی|نقره(?:ای|‌ای)|یشمی|فیروزه(?:ای|‌ای))";
   const shortProjectCodeMatch = value.match(
     new RegExp(
-      "^(?:((" + projectCodeColors + ")\s+NAVI\s*-\s*([\\p{N}]{2,}))|(?:NAVI\s*-\s*([\\p{N}]{2,})\s*-\s*(" + projectCodeColors + ")))$",
+      "^(?:(" + projectCodeColors + ")\\s+NAVI\\s*-\\s*([\\p{N}]{2,})|NAVI\\s*-\\s*([\\p{N}]{2,})\\s*-\\s*(" + projectCodeColors + "))$",
       "iu"
     )
   );
   if (shortProjectCodeMatch) {
-    const color = shortProjectCodeMatch[2] || shortProjectCodeMatch[5];
-    const digits = shortProjectCodeMatch[3] || shortProjectCodeMatch[4];
+    const color = shortProjectCodeMatch[1] || shortProjectCodeMatch[4];
+    const digits = shortProjectCodeMatch[2] || shortProjectCodeMatch[3];
     return [{
       title: "نام رمز آزمایش حافظه پروژه NAVI",
       value: `نام رمز آزمایش حافظه پروژه NAVI برابر با ${color}-${digits} است`
