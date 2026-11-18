@@ -39,7 +39,7 @@
     // File text is appended to the same textarea as the user's instruction.
     // Separate the two so extracted workbook contents can never become the
     // current-user authorization checked by the Office edit safety gate.
-    const attachmentMatch = brief.match(/(?:^|\\n\\n)--- متن استخراج‌شده از فایل: ([^\\n]+) ---\\n([\\s\\S]*?)\\n--- پایان متن فایل ---\\s*$/);
+    const attachmentMatch = brief.match(/(?:^|\n\n)--- متن استخراج‌شده از فایل: ([^\n]+) ---\n([\\s\\S]*?)\n--- پایان متن فایل ---\\s*$/);
     const userBrief = attachmentMatch ? brief.slice(0, attachmentMatch.index).trim() : brief;
     const extractedFileText = attachmentMatch ? attachmentMatch[2].trim() : "";
 
@@ -97,7 +97,7 @@
       // This final marker deliberately contains only the user's own instruction.
       // The Worker uses the last marker to decide whether an edit was explicitly requested.
       lines.push("پیام کاربر: " + userBrief);
-      const message = lines.join("\\n");
+      const message = lines.join("\n");
 
       operationsNaviButton.textContent = "در حال ارسال به NAVI...";
       if (submitStatus) submitStatus.textContent = "درخواست و اطلاعات فایل آماده شد؛ در حال ارسال مستقیم به NAVI...";
