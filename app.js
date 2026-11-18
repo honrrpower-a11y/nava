@@ -951,32 +951,35 @@ function renderNaviOfficeAction(action, options = {}) {
   const chatSlot = document.getElementById("naviOfficeActionChatSlot");
   const host = document.getElementById("officeActionHost");
   const officeSlot = document.getElementById("officeActionCardSlot");
-  // Office brief submissions must show the approval card in the Office form
-  // itself. Direct NAVI chat requests continue to use the conversation slot.
-  // Prefer the Office brief slot for form submissions, but never lose a valid
-  // approval action if that slot is unavailable in a partial/older page build.
-  const slot = options.target === "office"
-    ? (officeSlot || chatSlot)
-    : (chatSlot || officeSlot);
+  const exportActions = document.querySelector("[data-nava-export-actions]");
+  const officeResultTarget = options.target === "office" && exportActions;
+  // Remove any previous proposal from both the original card host and the
+  // result action row before rendering the next response.
   document.getElementById("naviOfficeActionCard")?.remove();
+  document.querySelectorAll("[data-navi-office-approval-button]").forEach(button => button.remove());
   if (chatSlot) chatSlot.replaceChildren();
   if (officeSlot) officeSlot.replaceChildren();
   if (host) host.hidden = true;
   if (!action || !["replace_text", "edit_cells"].includes(action.kind)) return;
-  if (!slot) {
+
+  const slot = options.target === "office"
+    ? (officeSlot || chatSlot)
+    : (chatSlot || officeSlot);
+  if (!officeResultTarget && !slot) {
     console.error("NAVI Office action chat and fallback slots are missing.");
     return;
   }
-  // The preferred chat slot is independent of the Office page's hidden host.
-  // Reveal the host only when rendering into its fallback slot.
-  if (slot === officeSlot && host) host.hidden = false;
+  // The Office form host is only needed when the result action row is absent.
+  if (!officeResultTarget && slot === officeSlot && host) host.hidden = false;
 
   const tools = window.NavaOfficeTools;
   const file = tools?.getActiveFileInfo?.() || null;
   const card = document.createElement("section");
   card.id = "naviOfficeActionCard";
   card.className = "navi-office-action-card";
-  card.style.cssText = "padding:14px;border:1px solid rgba(190,150,70,.45);border-radius:12px;background:var(--card-bg,rgba(120,110,90,.08));display:grid;gap:9px";
+  card.style.cssText = officeResultTarget
+    ? "display:grid;gap:6px;flex:1 0 100%;order:-1;padding:10px 12px;margin-bottom:4px;border:1px solid rgba(190,150,70,.45);border-radius:10px;background:var(--card-bg,rgba(120,110,90,.08))"
+    : "padding:14px;border:1px solid rgba(190,150,70,.45);border-radius:12px;background:var(--card-bg,rgba(120,110,90,.08));display:grid;gap:9px";
   card.setAttribute("aria-live", "polite");
 
   const title = document.createElement("strong");
@@ -993,19 +996,26 @@ function renderNaviOfficeAction(action, options = {}) {
   note.textContent = action.kind === "replace_text"
     ? "فقط متن‌های دقیقاً منطبق در قطعه‌های متنی مستقل تغییر می‌کنند؛ متن شکسته‌شده بین چند قطعه ممکن است پیدا نشود."
     : "فقط سلول‌های مشخص‌شده در شیت‌های موجود تغییر می‌کنند. فرمول‌نویسی از این مسیر مجاز نیست.";
+
   const confirm = document.createElement("button");
   confirm.type = "button";
   confirm.className = "btn-primary";
   confirm.textContent = "تأیید و ساخت نسخه ویرایش‌شده";
+  confirm.dataset.naviOfficeApprovalButton = "confirm";
   confirm.disabled = !file?.ready || (action.kind === "replace_text" ? !["docx", "pptx"].includes(file.kind) : file.kind !== "xlsx");
+
   const cancel = document.createElement("button");
   cancel.type = "button";
   cancel.className = "btn-secondary";
   cancel.textContent = "لغو پیشنهاد";
+  cancel.dataset.naviOfficeApprovalButton = "cancel";
   cancel.addEventListener("click", () => {
-    slot.replaceChildren();
-    host.hidden = true;
+    card.remove();
+    confirm.remove();
+    cancel.remove();
+    if (host) host.hidden = true;
   });
+
   confirm.addEventListener("click", async () => {
     confirm.disabled = true;
     confirm.textContent = "در حال ساخت نسخه...";
@@ -1013,6 +1023,7 @@ function renderNaviOfficeAction(action, options = {}) {
       const result = await window.NavaOfficeTools.executeAction(action);
       note.textContent = result.message || "نسخه ویرایش‌شده ساخته شد؛ فایل اصلی دست‌نخورده ماند.";
       confirm.textContent = "نسخه ساخته شد";
+      cancel.remove();
     } catch (error) {
       note.textContent = error?.message || "اجرای ویرایش ناموفق بود.";
       confirm.disabled = false;
@@ -1020,13 +1031,25 @@ function renderNaviOfficeAction(action, options = {}) {
     }
   });
 
-  card.append(title, detail, fileLine, note, confirm, cancel);
-  slot.appendChild(card);
-  setNaviStatus(slot === officeSlot
-    ? "پیشنهاد ویرایش در استودیوی آفیس آمادهٔ بررسی و تأیید است."
-    : "پیشنهاد ویرایش در گفت‌وگوی NAVI آمادهٔ بررسی و تأیید است.");
-}
+  if (officeResultTarget) {
+    card.append(title, detail, fileLine, note);
+    exportActions.prepend(card);
+    exportActions.append(confirm, cancel);
+    exportActions.style.display = "flex";
+    exportActions.style.flexWrap = "wrap";
+    exportActions.style.alignItems = "center";
+    exportActions.style.gap = "8px";
+  } else {
+    card.append(title, detail, fileLine, note, confirm, cancel);
+    slot.appendChild(card);
+  }
 
+  setNaviStatus(officeResultTarget
+    ? "پیشنهاد ویرایش کنار دکمه‌های خروجی پاسخ آمادهٔ بررسی و تأیید است."
+    : slot === officeSlot
+      ? "پیشنهاد ویرایش در استودیوی آفیس آمادهٔ بررسی و تأیید است."
+      : "پیشنهاد ویرایش در گفت‌وگوی NAVI آمادهٔ بررسی و تأیید است.");
+}
 
 // Select only NAVI response text; this avoids Android browsers applying
 // the generic "Select all" command to the whole document.
