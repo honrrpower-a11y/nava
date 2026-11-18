@@ -428,7 +428,7 @@ export function isExplicitOfficeEditRequest(message) {
     /(?:افزودن|اضافه\s*کردن|اضافه\s*کن(?:ید)?|درج)[\s\S]{0,100}(?:ردیف|سطر)|(?:ردیف|سطر)[\s\S]{0,180}(?:اضافه\s*کن|افزودن|درج)/iu.test(userText);
 
   const legacyPreciseIntent =
-    /(?:سلول\s*[A-Z]{1,3}[1-9][0-9]{0,6}[\s\S]{0,80}(?:کن(?:ید)?|بذار(?:ید)?|بگذار(?:ید)?))|(?:فارسی|تبدیل)\s*(?:کن|کنید|بده|بدهید)|به\s+فارسی\s+برگردان|edit(?:\s+the)?|replace(?:\s+the)?|update(?:\s+the)?|set\s+(?:cell|value)/iu.test(userText);
+    /(?:قرار\s*بده(?:ید)?|بنویس(?:ید)?|سلول\s*[A-Z]{1,3}[1-9][0-9]{0,6}[\s\S]{0,80}(?:کن(?:ید)?|بذار(?:ید)?|بگذار(?:ید)?))|(?:فارسی|تبدیل)\s*(?:کن|کنید|بده|بدهید)|به\s+فارسی\s+برگردان|edit(?:\s+the)?|replace(?:\s+the)?|update(?:\s+the)?|set\s+(?:cell|value)/iu.test(userText);
 
   return editIntent || appendRowIntent || legacyPreciseIntent;
 }
