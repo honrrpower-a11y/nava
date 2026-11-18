@@ -5,6 +5,9 @@
  if(!input||!panel||!status)return;
  const $=id=>document.getElementById(id);
  let sourceFile=null,workbook=null,currentSheet="",zip=null,kind="",editorReadyPromise=Promise.resolve();
+ let pendingDownloadBlob=null;
+ const downloadButton=$("officeEditSave");
+ function setDownloadReady(ready){if(downloadButton){downloadButton.disabled=!ready;downloadButton.textContent=kind==="xlsx"?"دانلود فایل ویرایش‌شده Excel":"دانلود فایل ویرایش‌شده";}}
  const setStatus=(message,error=false)=>{status.textContent=message;status.dataset.state=error?"error":"success";};
  const libraryLoads=Object.create(null);
  const load=(src,name)=>{
@@ -25,7 +28,7 @@
   document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),30000);
  }
  function show(){panel.hidden=false;}
- function hide(){panel.hidden=true;sourceFile=null;workbook=null;zip=null;kind="";input.value="";}
+ function hide(){panel.hidden=true;sourceFile=null;workbook=null;zip=null;kind="";pendingDownloadBlob=null;setDownloadReady(false);input.value="";}
  function renderExcel(){
   const select=$("officeEditSheet");
   select.replaceChildren(...workbook.SheetNames.map(name=>{const o=document.createElement("option");o.value=name;o.textContent=name;return o;}));
@@ -57,7 +60,8 @@
       sheet[address]=value!==""&&/^-?(?:\d+\.?\d*|\.\d+)$/.test(n)?{...previous,t:"n",v:Number(n)}:{...previous,t:"s",v:value};
       delete sheet[address].f;delete sheet[address].w;
      }
-     setStatus("تغییر سلول "+address+" ثبت شد؛ برای دریافت نسخه جدید، «ذخیره نسخه ویرایش‌شده» را بزن.");
+     pendingDownloadBlob=null;setDownloadReady(true);
+     setStatus("تغییر سلول "+address+" در ویرایشگر ثبت شد. برای دریافت فایل، دکمه دانلود را بزن.");
     });
     td.append(field);tr.append(td);
    }
@@ -68,7 +72,7 @@
   $("officeEditGridNote").textContent="نمایش حداکثر ۴۰ ردیف و ۱۲ ستون نخست؛ سایر سلول‌ها و شیت‌ها در فایل خروجی حفظ می‌شوند."+(limited?" محدوده بزرگ‌تر است.":"");
  }
  async function openFile(file){
-  sourceFile=file;workbook=null;zip=null;kind="";
+  sourceFile=file;workbook=null;zip=null;kind="";pendingDownloadBlob=null;setDownloadReady(false);
   const ext=file.name.split(".").pop().toLowerCase();
   if(!["xlsx","pptx","docx"].includes(ext)){sourceFile=null;workbook=null;zip=null;kind="";panel.hidden=true;return;}
   show();$("officeEditExcel").hidden=ext!=="xlsx";$("officeEditReplace").hidden=ext==="xlsx";
@@ -90,13 +94,18 @@
   }catch(error){if(input.files?.[0]===file){hide();setStatus(error.message||"آماده‌سازی ویرایشگر ناموفق بود.",true);}throw error;}
  }
  $("officeEditSave")?.addEventListener("click",()=>{
-  if(kind!=="xlsx"||!workbook)return;
+  if(!sourceFile||!kind)return;
   try{
-   workbook.Workbook=workbook.Workbook||{};workbook.Workbook.CalcPr={calcMode:"auto",fullCalcOnLoad:true,forceFullCalc:true};
-   const bytes=window.XLSX.write(workbook,{bookType:"xlsx",type:"array",cellStyles:true,compression:true});
-   download(new Blob([bytes],{type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"}),safeName(sourceFile.name)+"-edited.xlsx");
-   setStatus("نسخه ویرایش‌شده Excel دانلود شد. فایل اصلی تغییر نکرد.");
-  }catch(error){setStatus(error.message||"ذخیره فایل Excel ناموفق بود.",true);}
+   let blob=pendingDownloadBlob;
+   if(kind==="xlsx"&&workbook){
+    workbook.Workbook=workbook.Workbook||{};workbook.Workbook.CalcPr={calcMode:"auto",fullCalcOnLoad:true,forceFullCalc:true};
+    const bytes=window.XLSX.write(workbook,{bookType:"xlsx",type:"array",cellStyles:true,compression:true});
+    blob=new Blob([bytes],{type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"});
+   }
+   if(!blob)throw new Error("هنوز تغییری برای دانلود آماده نشده است.");
+   download(blob,safeName(sourceFile.name)+"-edited."+kind);
+   setStatus("فایل ویرایش‌شده دانلود شد. نسخه اصلی بدون تغییر باقی ماند.");
+  }catch(error){setStatus(error.message||"ساخت فایل خروجی ناموفق بود.",true);}
  });
  $("officeEditReplaceRun")?.addEventListener("click",async()=>{
   if(!zip||!sourceFile||!["pptx","docx"].includes(kind))return;
@@ -116,9 +125,9 @@
     zip.file(name,xml);
    }
    if(!count){setStatus("عبارت دقیق در قطعه‌های متنی مستقل پیدا نشد. اگر متن بین چند بخش شکسته شده باشد، این نسخه آن را تشخیص نمی‌دهد.",true);return;}
-   const blob=await zip.generateAsync({type:"blob",compression:"DEFLATE"});
-   download(blob,safeName(sourceFile.name)+"-edited."+kind);
-   setStatus(count+" جایگزینی انجام شد؛ نسخه جدید دانلود شد و فایل اصلی دست‌نخورده ماند.");
+   pendingDownloadBlob=await zip.generateAsync({type:"blob",compression:"DEFLATE"});
+   setDownloadReady(true);
+   setStatus(count+" جایگزینی آماده شد. برای دریافت نسخه ویرایش‌شده، دکمه دانلود را بزن.");
   }catch(error){setStatus(error.message||"ویرایش فایل ناموفق بود.",true);}
  });
 
@@ -136,7 +145,7 @@
    return {selected:true,ready:info.ready,name:info.name,kind:info.kind};
   },
   reset(){
-   sourceFile=null;workbook=null;zip=null;kind="";editorReadyPromise=Promise.resolve();
+   sourceFile=null;workbook=null;zip=null;kind="";pendingDownloadBlob=null;setDownloadReady(false);editorReadyPromise=Promise.resolve();
    hide();
   },
   getActiveFileInfo(){
@@ -176,10 +185,10 @@
      sheet["!ref"]=XLSX.utils.encode_range(range);
     }
     workbook.Workbook=workbook.Workbook||{};workbook.Workbook.CalcPr={calcMode:"auto",fullCalcOnLoad:true,forceFullCalc:true};
-    const bytes=window.XLSX.write(workbook,{bookType:"xlsx",type:"array",cellStyles:true,compression:true});
-    download(new Blob([bytes],{type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"}),safeName(sourceFile.name)+"-edited.xlsx");
-    setStatus(staged.length+" سلول تغییر کرد؛ نسخه جدید دانلود شد و فایل اصلی دست‌نخورده ماند.");
-    return {message:staged.length+" سلول تغییر کرد؛ نسخه جدید دانلود شد و فایل اصلی دست‌نخورده ماند."};
+    pendingDownloadBlob=null;setDownloadReady(true);drawGrid();
+    setStatus(staged.length+" سلول تغییرات NAVI در ویرایش مستقیم اعمال و نمایش داده شد. مقادیر را بررسی کن؛ سپس با دکمه دانلود فایل خروجی را دریافت کن.");
+    panel.scrollIntoView({behavior:"smooth",block:"nearest"});
+    return {message:staged.length+" سلول در بخش ویرایش مستقیم اعمال شد و قابل بررسی است. پس از بررسی، دکمه «دانلود فایل ویرایش‌شده Excel» را بزن. فایل اصلی تغییر نکرده است."};
    }
    if(action?.kind==="append_row"){
     if(kind!=="xlsx"||!workbook||typeof action.sheet!=="string"||!workbook.SheetNames.includes(action.sheet)||!Array.isArray(action.values)||action.values.length<1||action.values.length>20)throw new Error("این فایل یا عملیات افزودن ردیف معتبر نیست.");
@@ -199,10 +208,10 @@
     });
     sheet["!ref"]=XLSX.utils.encode_range({s:{r:range.s.r,c:range.s.c},e:{r:newRow,c:range.e.c}});
     workbook.Workbook=workbook.Workbook||{};workbook.Workbook.CalcPr={calcMode:"auto",fullCalcOnLoad:true,forceFullCalc:true};
-    const bytes=XLSX.write(workbook,{bookType:"xlsx",type:"array",cellStyles:true,compression:true});
-    download(new Blob([bytes],{type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"}),safeName(sourceFile.name)+"-edited.xlsx");
-    setStatus("یک ردیف به انتهای شیت «"+action.sheet+"» اضافه شد؛ نسخه جدید دانلود شد و فایل اصلی دست‌نخورده ماند.");
-    return {message:"یک ردیف به انتهای شیت «"+action.sheet+"» اضافه شد؛ نسخه جدید دانلود شد و فایل اصلی دست‌نخورده ماند."};
+    pendingDownloadBlob=null;setDownloadReady(true);drawGrid();
+    setStatus("ردیف جدید در ویرایش مستقیم نمایش داده شد. اطلاعات را بررسی کن و سپس فایل را دانلود کن.");
+    panel.scrollIntoView({behavior:"smooth",block:"nearest"});
+    return {message:"یک ردیف به شیت «"+action.sheet+"» اضافه و در بخش ویرایش مستقیم نمایش داده شد. پس از بررسی، دکمه دانلود فایل ویرایش‌شده را بزن. فایل اصلی تغییر نکرده است."};
    }
    if(action?.kind==="replace_text"){
     if(!["docx","pptx"].includes(kind)||!zip||typeof action.find!=="string"||!action.find.trim()||action.find.length>500||typeof action.replace!=="string"||action.replace.length>500)throw new Error("این فایل یا عملیات جایگزینی معتبر نیست.");
@@ -219,10 +228,10 @@
      zip.file(name,xml);
     }
     if(!count)throw new Error("عبارت دقیق در قطعه‌های متنی مستقل پیدا نشد؛ فایل تغییری نکرد.");
-    const blob=await zip.generateAsync({type:"blob",compression:"DEFLATE"});
-    download(blob,safeName(sourceFile.name)+"-edited."+kind);
-    setStatus(count+" جایگزینی انجام شد؛ نسخه جدید دانلود شد و فایل اصلی دست‌نخورده ماند.");
-    return {message:count+" جایگزینی انجام شد؛ نسخه جدید دانلود شد و فایل اصلی دست‌نخورده ماند."};
+    pendingDownloadBlob=await zip.generateAsync({type:"blob",compression:"DEFLATE"});
+    setDownloadReady(true);
+    setStatus(count+" جایگزینی در فایل اعمال شد. برای دریافت نسخه ویرایش‌شده، دکمه دانلود را بزن.");
+    return {message:count+" جایگزینی در فایل اعمال شد. برای دریافت نسخه ویرایش‌شده، دکمه دانلود را بزن. فایل اصلی تغییر نکرده است."};
    }
    throw new Error("نوع عملیات NAVI پشتیبانی نمی‌شود.");
   }
