@@ -347,14 +347,60 @@ export function guardNaviOfficeReply(reply, explicitOfficeEdit) {
   return "برای ویرایش فایل، ابتدا فایل را بارگذاری کن و تغییر موردنظرت را صریح بنویس. در پیام فعلی درخواست مشخصی برای تغییر سلول وجود ندارد؛ بنابراین هیچ ویرایشی آماده یا ثبت نشده است.";
 }
 
+// Parse explicit cell/value instructions in common Persian chat phrasing.
+// A cell reference, a supplied target value, and an imperative edit verb are all
+// required. Generic requests to inspect or explain a cell do not qualify.
+function parseNaviCellEditInstructions(userText) {
+  const text = String(userText || "").trim();
+  if (!text) return [];
+
+  const references = Array.from(
+    text.matchAll(/(?:^|[^\p{L}\p{N}_])(?:سلول\s*)?([A-Z]{1,3}[1-9][0-9]{0,6})\b/giu),
+    match => match[1].toUpperCase()
+  );
+  if (!references.length || references.length > 20) return [];
+
+  const operationPattern = /(?:^|[^\p{L}\p{N}_])(?:سلول\s*)?([A-Z]{1,3}[1-9][0-9]{0,6})\s*(را|رو)?\s*(?:(به|روی)\s*)?([\s\S]{1,500}?)\s*(تغییر\s*بده(?:ید)?|عوض\s*کن(?:ید)?|قرار\s*بده(?:ید)?|تنظیم\s*کن(?:ید)?|بنویس(?:ید)?|ثبت\s*کن(?:ید)?|کن(?:ید)?|بذار(?:ید)?|بگذار(?:ید)?)(?=\s*(?:[،,;؛\r\n]|و\s*(?=(?:سلول\s*)?[A-Z]{1,3}[1-9][0-9]{0,6}\b)|$))/giu;
+
+  const edits = [];
+  const seen = new Set();
+  for (const match of text.matchAll(operationPattern)) {
+    const cell = match[1].toUpperCase();
+    let value = String(match[4] || "").trim();
+    const particle = match[2] || "";
+    const preposition = match[3] || "";
+    const action = match[5] || "";
+
+    value = value.replace(/^[«“"]|[»”"]$/gu, "").trim();
+    value = value.replace(/^هم\s+/u, "").trim();
+
+    // "B2 رو بررسی کن" is a question/request about a cell, not an edit.
+    if (/^(?:بررسی|چک|بازبینی|مطالعه|بخوان|بخون|ببین|مشاهده|نمایش|توضیح|تحلیل|مقایسه|پیدا|جستجو|جست‌وجو|بگو|شرح)(?:\s|$)/iu.test(value)) continue;
+    // Bare "کن" needs an explicit object marker ("را/رو" or "به/روی").
+    if (/^کن(?:ید)?$/u.test(action) && !particle && !preposition) continue;
+    // Preserve the existing precise "از مقدار قبلی به مقدار جدید تغییر بده" parser.
+    if (/^از\s/u.test(value)) continue;
+    if (!value || value.length > 500 || value.startsWith("=")) continue;
+    if (seen.has(cell)) return [];
+    seen.add(cell);
+    edits.push({ cell, value });
+  }
+
+  // Fail closed if the message mentions additional cells that were not parsed
+  // as complete edit instructions.
+  if (!edits.length || edits.length !== references.length) return [];
+  return edits;
+}
+
 export function isExplicitOfficeEditRequest(message) {
   const text = String(message || "");
   const marker = text.lastIndexOf("پیام کاربر:");
   // Authorization must come from the explicitly delimited current user turn.
-  // Unmarked prompts, studio context, and conversation history are never intent.
+  // Unmarked context, studio context, and conversation history are never intent.
   if (marker < 0) return false;
   const userText = text.slice(marker + "پیام کاربر:".length).trim();
   if (!userText) return false;
+  if (parseNaviCellEditInstructions(userText).length) return true;
   return /(?:ویرایش(?:ش)?\s*(?:کن|کنید|بده|بدهید)|تغییر\s+(?:بده|بدید|کن)|جایگزین(?:ی)?\s*(?:کن|کنید|بده|بدهید|کردن|شود|بشه)|عوض\s*کن|قرار\s*بده|تنظیم\s*کن|بنویس|حذف\s*کن|اصلاح\s*کن|به\s*روز\s*کن|(?:سلول\s*[A-Z]{1,3}[1-9][0-9]{0,6}[\s\S]{0,80}(?:کن(?:ید)?|بذار(?:ید)?|بگذار(?:ید)?))|(?:افزودن|اضافه\s*کردن|اضافه\s*کن(?:ید)?|درج)[\s\S]{0,100}(?:ردیف|سطر)|(?:ردیف|سطر)[\s\S]{0,180}(?:اضافه\s*کن|افزودن|درج)|edit(?:\s+the)?|replace(?:\s+the)?|update(?:\s+the)?|set\s+(?:cell|value))/iu.test(userText);
 }
 
@@ -406,6 +452,21 @@ export function extractNaviExplicitExcelEditAction(message) {
     const sheet = extractNaviActiveWorkbookSheetName(text);
     if (!sheet || values.length < 1 || values.length > 20 || residue) return null;
     return normalizeNaviOfficeAction({ kind: "append_row", sheet, values });
+  }
+
+  // Natural chat requests may specify several cells in one sentence or on
+  // separate lines. Resolve the sheet only from trusted active-workbook metadata.
+  const activeSheetForCellEdits = extractNaviActiveWorkbookSheetName(text);
+  const conciseCellEdits = parseNaviCellEditInstructions(userText);
+  if (activeSheetForCellEdits && conciseCellEdits.length) {
+    return normalizeNaviOfficeAction({
+      kind: "edit_cells",
+      edits: conciseCellEdits.map(edit => ({
+        sheet: activeSheetForCellEdits,
+        cell: edit.cell,
+        value: edit.value
+      }))
+    });
   }
 
   // Accept the original precise wording plus common natural Persian variants.
