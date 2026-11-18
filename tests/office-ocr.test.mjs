@@ -123,11 +123,14 @@ test("Office local editor supports XLSX cell edits and safe DOCX/PPTX text repla
 test("PowerPoint supports complete-paragraph translation and rewriting across split text runs", () => {
   assert.match(editor, /action\?\.kind==="edit_slide_text"/);
   assert.match(editor, /<a:p/);
-  assert.match(editor, /paragraphText!==item\.find\.trim\(\)/);
+  assert.match(editor, /const normalizeSlideText=value/);
+  assert.match(editor, /paragraphMatches=Array\.from\(xml\.matchAll/);
+  assert.match(editor, /if\(combined===wanted\)candidates\.push/);
+  assert.match(editor, /replacementParagraphs\.length!==targetCount/);
   assert.match(editor, /syncActiveFileContext/);
   assert.match(app, /edit_slide_text/);
   assert.match(app, /قالب نویسه‌ای اولین بخش متن را به ارث می‌برد/);
-  assert.match(html, /office-pptx-paragraph-edit-20261119-1/);
+  assert.match(html, /office-pptx-paragraph-edit-20261119-2/);
   assert.doesNotThrow(() => new Function(editor));
 });
 
