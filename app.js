@@ -927,7 +927,11 @@ function renderNaviOfficeAction(action, options = {}) {
   const officeSlot = document.getElementById("officeActionCardSlot");
   // Office brief submissions must show the approval card in the Office form
   // itself. Direct NAVI chat requests continue to use the conversation slot.
-  const slot = options.target === "office" ? officeSlot : (chatSlot || officeSlot);
+  // Prefer the Office brief slot for form submissions, but never lose a valid
+  // approval action if that slot is unavailable in a partial/older page build.
+  const slot = options.target === "office"
+    ? (officeSlot || chatSlot)
+    : (chatSlot || officeSlot);
   document.getElementById("naviOfficeActionCard")?.remove();
   if (chatSlot) chatSlot.replaceChildren();
   if (officeSlot) officeSlot.replaceChildren();
