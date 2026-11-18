@@ -11,6 +11,7 @@ import {
 const app = readFileSync(new URL("../app.js", import.meta.url), "utf8");
 const html = readFileSync(new URL("../index.html", import.meta.url), "utf8");
 const editor = readFileSync(new URL("../office-edit-tools.js", import.meta.url), "utf8");
+const css = readFileSync(new URL("../style.css", import.meta.url), "utf8");
 const fileReader = readFileSync(new URL("../office-file-tools.js", import.meta.url), "utf8");
 
 test("NAVI accepts only bounded exact text replacement actions", () => {
@@ -302,26 +303,26 @@ test("active Office file metadata exposes only real workbook sheet names", () =>
 });
 
 
-test("Office opens a clean blank NAVI session from its dedicated button", () => {
-  assert.match(html, /id="officeOpenBlankNavi" type="button">باز کردن NAVI خالی/);
-  assert.doesNotMatch(html, /id="officeBriefSubmit"/);
-  assert.match(app, /const officeOpenBlankNaviButton = document\.getElementById\("officeOpenBlankNavi"\)/);
-  assert.match(app, /window\.openNaviAssistant\(\{ service: "گفت‌وگوی عمومی", blank: true \}\)/);
-  assert.match(app, /if \(options\.blank === true\)/);
-  assert.match(app, /naviAssistantContext = null;/);
-  assert.match(app, /if \(userRequest\) userRequest\.value = "";/);
-  assert.doesNotMatch(app, /officeBriefForm\?\.addEventListener\("submit"/);
-  assert.match(html, /app\.js\?v=office-two-tabs-20261118-1/);
+test("Office operations contains the real NAVI chat inline and removes the separate blank-chat button", () => {
+  assert.match(html, /id="officeOperationsPane"[\s\S]*?id="officeNaviInlineMount"/);
+  assert.match(html, /id="officeNaviInlineMount"[^>]*aria-live="polite"/);
+  assert.doesNotMatch(html, /id="officeOpenBlankNavi"/);
+  assert.match(html, /id="naviWidgetHomeSlot"/);
+  assert.match(app, /function syncNaviWidgetPlacement\(pageId\)/);
+  assert.match(app, /mount\.appendChild\(naviWidgetPanel\)/);
+  assert.match(app, /homeSlot\.parentNode\.insertBefore\(naviWidgetPanel, homeSlot\.nextSibling\)/);
+  assert.match(app, /naviWidgetPanel\.classList\.contains\("is-inline"\)/);
+  assert.match(html, /app\.js\?v=office-inline-navi-chat-20261118-1/);
+  assert.match(css, /\.navi-widget-panel\.is-inline/);
 });
 
-test("Office has one independent blank NAVI button and no legacy form submit route", () => {
-  assert.match(html, /id="officeOpenBlankNavi"[^>]*type="button"[^>]*>باز کردن NAVI خالی<\/button>/);
-  assert.doesNotMatch(html, /id="officeBriefSubmit"/);
+test("Office chat preserves NAVI authentication, chat route, and approval card rendering", () => {
+  assert.match(app, /window\.sendOfficeNaviRequest = function/);
+  assert.match(app, /pageOverride: "officePage"/);
+  assert.match(app, /officeTarget: false/);
+  assert.match(app, /naviWidgetPanel\.hidden = inlineOffice \? false : !isOpen/);
+  assert.match(app, /document\.body\.classList\.toggle\("navi-widget-open", isOpen && !inlineOffice\)/);
   assert.doesNotMatch(app, /officeBriefForm\?\.addEventListener\("submit"/);
-  assert.match(app, /officeOpenBlankNaviButton\?\.addEventListener\("click"/);
-  assert.match(app, /window\.openNaviAssistant\(\{ service: "گفت‌وگوی عمومی", blank: true \}\)/);
-  assert.match(app, /if \(options\.blank === true\)/);
-  assert.match(app, /if \(userRequest\) userRequest\.value = ""/);
 });
 
 
