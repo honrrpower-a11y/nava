@@ -93,7 +93,7 @@ test("local editor binds actions to the same active file and preserves the origi
   assert.match(editor, /selected!==sourceFile/);
   assert.match(editor, /window\.NavaOfficeTools\s*=\s*\{/);
   assert.match(editor, /download\(blob,/);
-  assert.match(editor, /فایل اصلی بدون تغییر باقی ماند/);
+  assert.match(editor, /نسخه اصلی بدون تغییر باقی ماند/);
   assert.match(editor, /if\(!count\)\{/);
 });
 
@@ -328,7 +328,7 @@ test("Office operations contains the real NAVI chat inline and removes the separ
   assert.match(app, /homeSlot\.parentNode\.insertBefore\(naviWidgetPanel, homeSlot\.nextSibling\)/);
   assert.match(app, /naviWidgetPanel\.classList\.contains\("is-inline"\)/);
   assert.match(html, /app\.js\?v=office-pptx-paragraph-edit-20261119-1/);
-  assert.match(html, /office-workspace\.css\?v=office-operations-navi-link-20261118-2/);
+  assert.match(html, /office-workspace\.css\?v=office-back-to-top-20261118-1/);
   assert.match(officeCss, /\.office-workspace-layout/);
   assert.match(officeCss, /body\.navi-studio-context \.office-assistant-column \.navi-widget-panel\.is-inline/);
   assert.match(officeCss, /@media\(max-width:600px\)/);
