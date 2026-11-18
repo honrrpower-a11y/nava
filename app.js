@@ -750,9 +750,9 @@ window.sendOfficeNaviRequest = function({ message, context } = {}) {
     messageOverride: cleanMessage,
     serviceOverride: service,
     contextOverride: officeContext,
-    // Guided help belongs to the NAVI conversation, matching the original
-    // user flow. Reserve the Office card host for explicit Office-form actions.
-    officeTarget: false
+    // Office-originated guided requests must show approval cards in the Office
+    // workspace, while the NAVI conversation continues to display the reply.
+    officeTarget: true
   });
 };
 document.addEventListener("keydown", event => {
