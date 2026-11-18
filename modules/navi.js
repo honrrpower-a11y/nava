@@ -337,15 +337,24 @@ export function extractNaviExplicitExcelEditAction(message) {
   const userText = text.slice(marker + "پیام کاربر:".length).trim();
   if (!isExplicitOfficeEditRequest(userText)) return null;
 
-  const match = userText.match(
-    /در\s+شیت\s*[«"]([^»"]{1,80})[»"]\s*[,،]?\s*مقدار\s+سلول\s+([A-Z]{1,3}[1-9][0-9]{0,6})\s+را\s+از\s*[«"]([^»"]{1,500})[»"]\s+به\s*[«"]([^»"]{1,500})[»"]\s+(?:تغییر\s*بده(?:ید)?|عوض\s*کن(?:ید)?)/iu
-  );
-  if (!match) return null;
-
-  return normalizeNaviOfficeAction({
-    kind: "edit_cells",
-    edits: [{ sheet: match[1].trim(), cell: match[2].toUpperCase(), value: match[4] }]
-  });
+  // Accept the original precise wording plus common natural Persian variants.
+  // A proposal is created only when the user explicitly names the sheet, cell,
+  // and a quoted final value. The previous cell value is optional.
+  const patterns = [
+    /در\s+شیت\s*[«“"]([^»”"]{1,80})[»”"]\s*[,،]?\s*(?:مقدار\s+)?سلول\s+([A-Z]{1,3}[1-9][0-9]{0,6})\s+را\s+از\s*[«“"]([^»”"]{1,500})[»”"]\s+به\s*[«“"]([^»”"]{1,500})[»”"]\s+(?:تغییر\s*بده(?:ید)?|عوض\s*کن(?:ید)?)/iu,
+    /در\s+شیت\s*[«“"]([^»”"]{1,80})[»”"]\s*[,،]?\s*(?:مقدار\s+)?سلول\s+([A-Z]{1,3}[1-9][0-9]{0,6})\s+را\s+(?:از\s*[«“"][^»”"]{1,500}[»”"]\s*)?(?:به\s*)?[«“"]([^»”"]{1,500})[»”"]\s+(?:تغییر\s*بده(?:ید)?|عوض\s*کن(?:ید)?|قرار\s*بده(?:ید)?|بنویس(?:ید)?|ثبت\s*کن(?:ید)?)/iu,
+    /در\s+شیت\s*[«“"]([^»”"]{1,80})[»”"]\s*[,،]?\s*(?:مقدار\s+)?سلول\s+([A-Z]{1,3}[1-9][0-9]{0,6})\s+(?:را\s+)?(?:روی|به)\s*[«“"]([^»”"]{1,500})[»”"]\s+(?:قرار\s*بده(?:ید)?|تنظیم\s*کن(?:ید)?)/iu
+  ];
+  for (let index = 0; index < patterns.length; index += 1) {
+    const match = userText.match(patterns[index]);
+    if (!match) continue;
+    const value = index === 0 ? match[4] : match[3];
+    return normalizeNaviOfficeAction({
+      kind: "edit_cells",
+      edits: [{ sheet: match[1].trim(), cell: match[2].toUpperCase(), value }]
+    });
+  }
+  return null;
 }
 
 // ======================================
