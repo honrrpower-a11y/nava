@@ -4,7 +4,7 @@
  const input=document.getElementById("officeSourceFile"),panel=document.getElementById("officeEditPanel"),status=document.getElementById("officeEditStatus");
  if(!input||!panel||!status)return;
  const $=id=>document.getElementById(id);
- let sourceFile=null,workbook=null,currentSheet="",zip=null,kind="";
+ let sourceFile=null,workbook=null,currentSheet="",zip=null,kind="",editorReadyPromise=Promise.resolve();
  const setStatus=(message,error=false)=>{status.textContent=message;status.dataset.state=error?"error":"success";};
  const libraryLoads=Object.create(null);
  const load=(src,name)=>{
@@ -87,9 +87,29 @@
     kind=ext;zip=nextZip;
     setStatus("فایل برای جست‌وجو و جایگزینی متن آماده است. بسته و چیدمان کلی حفظ می‌شود؛ فقط متن‌های منطبق در قطعه‌های متنی مستقل تغییر می‌کنند.");
    }
-  }catch(error){if(input.files?.[0]===file){hide();setStatus(error.message||"آماده‌سازی ویرایشگر ناموفق بود.",true);}}
+  }catch(error){if(input.files?.[0]===file){hide();setStatus(error.message||"آماده‌سازی ویرایشگر ناموفق بود.",true);}throw error;}
  }
- input.addEventListener("change",()=>{const file=input.files&&input.files[0];if(file)openFile(file);});
+ window.NavaOfficeTools = {
+  async waitUntilReady(){
+   await editorReadyPromise;
+   const selected=input.files&&input.files[0];
+   if(!selected)return {selected:false,ready:false};
+   const info=this.getActiveFileInfo();
+   const ext=selected.name.split(".").pop().toLowerCase();
+   if(["xlsx","pptx","docx"].includes(ext)&&(!info.ready||sourceFile!==selected)){
+    throw new Error("ویرایشگر فایل هنوز آماده نیست. چند لحظه صبر کن و دوباره تلاش کن.");
+   }
+   return {selected:true,ready:info.ready,name:info.name,kind:info.kind};
+  },
+  reset(){
+   sourceFile=null;workbook=null;zip=null;kind="";editorReadyPromise=Promise.resolve();
+   hide();
+  },
+  getActiveFileInfo(){
+   const selected=input.files&&input.files[0];
+   const ready=Boolean(sourceFile&&selected===sourceFile&&kind&&((kind==="xlsx"&&workbook)||(kind!=="xlsx"&&zip)));
+   return {ready,name:sourceFile?.name||selected?.name||"",kind};
+  },
  $("officeEditSheet")?.addEventListener("change",event=>{currentSheet=event.target.value;drawGrid();});
  $("officeEditSave")?.addEventListener("click",()=>{
   if(kind!=="xlsx"||!workbook)return;
@@ -123,13 +143,7 @@
    setStatus(count+" جایگزینی انجام شد؛ نسخه جدید دانلود شد و فایل اصلی دست‌نخورده ماند.");
   }catch(error){setStatus(error.message||"ویرایش فایل ناموفق بود.",true);}
  });
- window.NavaOfficeTools = {
-  getActiveFileInfo() {
-   const selected=input.files&&input.files[0];
-   const ready=Boolean(sourceFile&&selected===sourceFile&&kind&&((kind==="xlsx"&&workbook)||(kind!=="xlsx"&&zip)));
-   return {ready,name:sourceFile?.name||selected?.name||"",kind};
-  },
-  async executeAction(action) {
+ async executeAction(action) {
    const selected=input.files&&input.files[0];
    if(!sourceFile||selected!==sourceFile)throw new Error("فایل فعال تغییر کرده است؛ فایل را دوباره در ابزار آفیس بارگذاری کن.");
    if(action?.kind==="edit_cells"){
