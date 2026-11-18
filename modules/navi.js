@@ -2510,25 +2510,24 @@ async function handleChat({
   // message is the authenticated current user's raw request. Add the delimiter
   // here, at the trust boundary, before calling helpers that require it.
   const currentUserTurn = "پیام کاربر: " + message;
+  // A precise Excel edit is authorized by the authenticated current user turn,
+  // regardless of which NAVI chat surface sent it. The parser itself requires
+  // the trusted current-user delimiter plus an explicit sheet, cell and value.
+  const deterministicOfficeAction = extractNaviExplicitExcelEditAction(currentUserTurn);
+  // Keep model-proposed text replacement limited to the dedicated Office page.
+  // Never accept model-generated Excel cell coordinates or values.
   const explicitOfficeEdit = page === "officePage" && isExplicitOfficeEditRequest(currentUserTurn);
-  // For a fully specified single-cell edit, derive the proposal from the exact
-  // current-user instruction before considering model output. This keeps form
-  // submissions and direct chat requests on the same deterministic path.
-  // Extracted workbook text and assistant replies are never authorization.
-  const deterministicOfficeAction = explicitOfficeEdit
-    ? extractNaviExplicitExcelEditAction(currentUserTurn)
-    : null;
-  // Excel actions are authorized only by the deterministic parser reading
-  // the exact current user message. Never trust an LLM-generated cell/sheet/value:
-  // prompt examples or conversation context must not create workbook edits.
-  // Keep the existing structured path for explicitly requested Word/PPT text
-  // replacement, which has a different operation shape.
   let officeAction = deterministicOfficeAction ||
     (explicitOfficeEdit && parsed.officeAction?.kind === "replace_text"
       ? parsed.officeAction
       : null);
 
-  let reply = guardNaviOfficeReply(parsed.reply, explicitOfficeEdit);
+  // A deterministic Excel proposal is also valid authorization for the reply
+  // guard; otherwise the guard would strip the model's confirmation text.
+  let reply = guardNaviOfficeReply(
+    parsed.reply,
+    explicitOfficeEdit || Boolean(deterministicOfficeAction)
+  );
   if (input.saveToMemory === true) {
     reply = removeNaviModelMemoryClaims(reply);
   }
