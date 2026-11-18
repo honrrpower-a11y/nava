@@ -74,7 +74,8 @@ test("Office Operations removes the placeholder project-output area and provides
   const operationsPane = html.slice(paneStart, assistantStart);
   assert.ok(paneStart >= 0 && assistantStart > paneStart, "Office Operations pane should exist");
   assert.doesNotMatch(operationsPane, /فضای خروجی پروژه|studio-output-card/);
-  assert.match(operationsPane, /id="officeOperationsGoToNavi"/);
+  assert.match(operationsPane, /<div class="studio-brief-actions"><button class="btn-secondary" type="reset">پاک کردن فرم<\/button><button class="btn-primary" id="officeOperationsGoToNavi" type="button">اجرای درخواست با NAVI<\/button><\/div>/);
+  assert.doesNotMatch(operationsPane, /office-operations-navi-cta/);
   assert.match(guide, /operationsNaviButton\?\.addEventListener\("click", scrollToNaviAnswers\)/);
   assert.match(guide, /const scrollToNaviAnswers = \(\) =>/);
 });
