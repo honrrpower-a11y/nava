@@ -12,9 +12,9 @@
   <link rel="stylesheet" href="business-tools.css?v=business-navi-help-20261116-1">
   <link rel="stylesheet" href="studio-workspaces.css?v=composition-staff-20261114-1">
   <link rel="stylesheet" href="office-navi-guide.css?v=office-two-tabs-20261118-1">
-  <link rel="stylesheet" href="office-workspace.css?v=office-shared-workspace-20261118-1">
+  <link rel="stylesheet" href="office-workspace.css?v=office-operations-navi-link-20261118-1">
   <script src="app.js?v=office-shared-workspace-20261118-1" defer></script>
-  <script src="office-navi-guide.js?v=office-guide-shared-assistant-20261118-1" defer></script>
+  <script src="office-navi-guide.js?v=office-operations-navi-link-20261118-1" defer></script>
   <script src="logo-studio.js?v=navi-image-logo-engine-20261115-1" defer></script>
 </head>
 <body>
@@ -364,7 +364,11 @@
       </section>
       </div>
       <div class="office-tab-panel" id="officeOperationsPane" role="tabpanel" aria-labelledby="officeOperationsTab" hidden>
-      <div class="studio-workspace-grid">
+      <div class="office-operations-navi-cta">
+        <p>پاسخ درخواست‌ها، راهنمایی‌ها و تأیید تغییرات را در گفت‌وگوی NAVI ببین.</p>
+        <button class="btn-primary" id="officeOperationsGoToNavi" type="button">رفتن به بخش پاسخ‌گویی NAVI</button>
+      </div>
+      <div class="studio-workspace-grid office-operations-grid">
         <form class="studio-brief-card" id="officeBriefForm">
           <span class="studio-step">شروع کار</span><h2>بریف پروژه</h2>
           <p>اطلاعات اولیه را وارد کن تا NAVI بتواند درخواست را دقیق‌تر دنبال کند.</p>
@@ -449,11 +453,6 @@
           <div class="studio-brief-actions"><button class="btn-secondary" type="reset">پاک کردن فرم</button></div>
           <p class="studio-note" id="officeSubmitStatus" role="status" aria-live="polite">پس از دریافت پاسخ ناوی، می‌توانی متن نهایی را مستقیماً به‌صورت Word یا PDF روی دستگاهت دریافت کنی.</p>
         </form>
-        <aside class="studio-output-card">
-          <span class="studio-step">فضای پروژه</span><h2>مراحل انجام کار</h2>
-          <ol><li>ثبت بریف و هدف پروژه</li><li>بررسی نیازها با NAVI</li><li>تدوین پیش‌نویس و اصلاح آن</li><li>تولید پیش‌نویس و بازبینی محتوا</li></ol>
-          <div class="studio-output-placeholder"><span aria-hidden="true">✦</span><strong>فضای خروجی پروژه</strong><p>نتیجه‌ها و فایل‌های این استودیو پس از تکمیل ابزار تخصصی در این قسمت نمایش داده می‌شوند.</p></div>
-        </aside>
       </div>
       </div>
         </div>

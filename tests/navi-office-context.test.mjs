@@ -58,3 +58,23 @@ test("guided Office requests keep approval cards in the NAVI conversation", () =
   assert.match(app, /window\.sendOfficeNaviRequest\s*=\s*function[\s\S]*?officeTarget:\s*false/);
   assert.match(guide, /کارت تأیید، در ستون دستیار همین صفحه نمایش داده می‌شوند/);
 });
+
+test("guided Office requests scroll the page to NAVI's answer area after sending", () => {
+  assert.match(guide, /const sendPromise = window\.sendOfficeNaviRequest\(\{ message, context \}\)/);
+  assert.match(guide, /document\.querySelector\("\.office-assistant-column"\)/);
+  assert.match(guide, /assistantColumn\.scrollIntoView\(\{ behavior: reducedMotion \? "auto" : "smooth", block: "start" \}\)/);
+  assert.match(await readFileSync(new URL("../office-workspace.css", import.meta.url), "utf8"), /\.office-assistant-column\{scroll-margin-top:18px;/);
+});
+
+
+test("Office Operations removes the placeholder project-output area and provides a NAVI answer shortcut", () => {
+  const html = readFileSync(new URL("../index.html", import.meta.url), "utf8");
+  const paneStart = html.indexOf('id="officeOperationsPane"');
+  const assistantStart = html.indexOf('<aside class="office-assistant-column"', paneStart);
+  const operationsPane = html.slice(paneStart, assistantStart);
+  assert.ok(paneStart >= 0 && assistantStart > paneStart, "Office Operations pane should exist");
+  assert.doesNotMatch(operationsPane, /فضای خروجی پروژه|studio-output-card/);
+  assert.match(operationsPane, /id="officeOperationsGoToNavi"/);
+  assert.match(guide, /operationsNaviButton\?\.addEventListener\("click", scrollToNaviAnswers\)/);
+  assert.match(guide, /const scrollToNaviAnswers = \(\) =>/);
+});
