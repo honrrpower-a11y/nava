@@ -119,6 +119,25 @@ function tokenize(value) {
 function containsSensitiveInformation(value) {
   const text = String(value || "");
 
+  // Also accept the natural Persian order used in chat: cell/value first,
+  // then the sheet name (for example: "سلول B3 را به «تست موفق» در شیت «آزمایش NAVI» تغییر بده").
+  const reverseOrderPatterns = [
+    /(?:مقدار\\s+)?سلول\\s+([A-Z]{1,3}[1-9][0-9]{0,6})\\s+(?:را\\s+)?(?:از\\s*[«“"]([^»”"]{1,500})[»”"]\\s*)?به\\s*[«“"]([^»”"]{1,500})[»”"][\\s\\S]{0,100}?در\\s+شیت\\s*[«“"]([^»”"]{1,80})[»”"][\\s\\S]{0,40}?(?:تغییر\\s*بده(?:ید)?|عوض\\s*کن(?:ید)?|قرار\\s*بده(?:ید)?)/iu,
+    /در\\s+سلول\\s+([A-Z]{1,3}[1-9][0-9]{0,6})[\\s\\S]{0,100}?به\\s*[«“"]([^»”"]{1,500})[»”"][\\s\\S]{0,100}?در\\s+شیت\\s*[«“"]([^»”"]{1,80})[»”"][\\s\\S]{0,40}?(?:تغییر\\s*بده(?:ید)?|عوض\\s*کن(?:ید)?)/iu
+  ];
+  for (const regex of reverseOrderPatterns) {
+    const match = userText.match(regex);
+    if (!match) continue;
+    const cell = match[1].toUpperCase();
+    const value = match[3] !== undefined ? match[3] : match[2];
+    const sheet = match[4] !== undefined ? match[4] : match[3];
+    const action = normalizeNaviOfficeAction({
+      kind: "edit_cells",
+      edits: [{ sheet: sheet.trim(), cell, value }]
+    });
+    if (action) return action;
+  }
+
   const patterns = [
     /\bpassword\b/i,
     /\bpasswd\b/i,
@@ -2524,9 +2543,11 @@ async function handleChat({
 
   // A deterministic Excel proposal is also valid authorization for the reply
   // guard; otherwise the guard would strip the model's confirmation text.
+  // Only an actual validated action may authorize "ready for approval" wording.
+  // Merely detecting edit intent is not enough to claim a card exists.
   let reply = guardNaviOfficeReply(
     parsed.reply,
-    explicitOfficeEdit || Boolean(deterministicOfficeAction)
+    Boolean(officeAction)
   );
   if (input.saveToMemory === true) {
     reply = removeNaviModelMemoryClaims(reply);
