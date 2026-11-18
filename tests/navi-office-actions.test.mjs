@@ -70,6 +70,11 @@ test("only explicit edit language in the current user message passes the intent 
   assert.equal(isExplicitOfficeEditRequest("پیام کاربر: این فایل را خلاصه کن"), false);
   assert.equal(isExplicitOfficeEditRequest("پیام کاربر: لطفاً درباره فرمول SUM توضیح بده"), false);
   assert.equal(isExplicitOfficeEditRequest("پیام کاربر: ویرایش این سند چیست؟"), false);
+  assert.equal(isExplicitOfficeEditRequest("پیام کاربر: متن اسلاید دوم رو بازنویسیش کن"), true);
+  assert.equal(isExplicitOfficeEditRequest("پیام کاربر: لطفاً متن این فایل رو با عبارت جدید جایگزین کن"), true);
+  assert.equal(isExplicitOfficeEditRequest("پیام کاربر: این پاراگراف رو یه مقدار اصلاح کن"), true);
+  assert.equal(isExplicitOfficeEditRequest("پیام کاربر: کلمه جایگزین در این متن یعنی چه؟"), false);
+  assert.equal(isExplicitOfficeEditRequest("پیام کاربر: تغییرات فایل را برایم توضیح بده"), false);
 });
 
 test("append-row approvals are rendered and only execute after confirmation", () => {
