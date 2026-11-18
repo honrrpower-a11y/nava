@@ -1,0 +1,22 @@
+/* NAVA Office workspace — one stable assistant rail shared by both tabs. */
+.office-workspace-layout{display:grid;grid-template-columns:minmax(0,1.18fr) minmax(320px,.82fr);align-items:start;gap:20px;margin-top:18px}
+.office-tab-content{min-width:0}
+.office-assistant-column{position:sticky;top:16px;min-width:0;padding:16px;border:1px solid rgba(215,181,109,.28);border-radius:20px;background:linear-gradient(150deg,color-mix(in srgb,var(--panel) 96%,#17344c),var(--panel));box-shadow:var(--shadow)}
+.office-assistant-heading{margin:0 0 12px}
+.office-assistant-heading h2{margin:5px 0;color:var(--gold);font-size:19px}
+.office-assistant-heading p{margin:0;color:var(--muted);font-size:11px;line-height:1.9}
+.office-navi-inline-mount{min-width:0}
+.office-navi-reopen{width:100%;min-height:44px;margin:0 0 10px}
+.office-assistant-column .navi-widget-panel.is-inline,body.navi-studio-context .office-assistant-column .navi-widget-panel.is-inline,body.navi-studio-context .office-assistant-column .navi-widget-panel.is-inline.is-open{display:flex!important;position:relative!important;inset:auto!important;top:auto!important;right:auto!important;bottom:auto!important;left:auto!important;width:100%!important;max-width:none!important;height:min(690px,calc(100dvh - 190px))!important;min-height:440px!important;max-height:calc(100dvh - 150px)!important;margin:0!important;overflow:hidden!important;flex-direction:column!important;transform:none!important;transform-origin:center!important;border:1px solid rgba(37,202,255,.22)!important;border-radius:16px!important;box-shadow:none!important;animation:none!important}
+.office-assistant-column .navi-widget-panel.is-inline[hidden]{display:none!important}
+.office-assistant-column .navi-widget-panel.is-inline .navi-widget-panel-head{position:relative!important;flex:0 0 50px;min-height:50px}
+.office-assistant-column .navi-widget-panel.is-inline .navi-widget-close{display:grid!important}
+.office-assistant-column .navi-widget-panel.is-inline .request-panel{flex:1 1 auto;min-height:0;overflow-x:hidden;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+.office-assistant-column .navi-widget-panel.is-inline .request-content{min-height:0}
+.office-assistant-column .navi-widget-panel.is-inline .navi-chat-area,.office-assistant-column .navi-widget-panel.is-inline .navi-workspace-panel{min-width:0}
+.office-assistant-column .navi-widget-panel.is-inline .response-box{max-height:38vh}
+.office-assistant-column .navi-widget-panel.is-inline .navi-send-toolbar{position:sticky;bottom:0;z-index:4;padding:8px 0 4px;background:var(--panel)}
+body.light .office-assistant-column{background:linear-gradient(150deg,#fffdf8,#f1f5f8);border-color:rgba(166,119,48,.24)}
+@media(max-width:980px){.office-workspace-layout{grid-template-columns:minmax(0,1fr);gap:16px}.office-assistant-column{position:relative;top:auto;grid-row:2}.office-assistant-column .navi-widget-panel.is-inline,body.navi-studio-context .office-assistant-column .navi-widget-panel.is-inline,body.navi-studio-context .office-assistant-column .navi-widget-panel.is-inline.is-open{height:min(620px,72dvh)!important;min-height:390px!important;max-height:760px!important}}
+@media(max-width:600px){.office-workspace-layout{gap:13px;margin-top:12px}.office-assistant-column{padding:11px;border-radius:16px}.office-assistant-heading h2{font-size:17px}.office-assistant-column .navi-widget-panel.is-inline,body.navi-studio-context .office-assistant-column .navi-widget-panel.is-inline,body.navi-studio-context .office-assistant-column .navi-widget-panel.is-inline.is-open{height:min(590px,70dvh)!important;min-height:350px!important;max-height:700px!important}}
+@media(prefers-reduced-motion:reduce){.office-assistant-column .navi-widget-panel.is-inline{animation:none!important}}
