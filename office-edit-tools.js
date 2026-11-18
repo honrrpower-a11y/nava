@@ -271,23 +271,49 @@ async function syncActiveFileContext(){
      const path="ppt/slides/slide"+item.slide+".xml";
      if(!zip.files[path])throw new Error("اسلاید "+item.slide+" در فایل پیدا نشد؛ هیچ تغییری اعمال نشد.");
      let xml=staged.has(path)?staged.get(path):await zip.files[path].async("string");
-     let matches=0;
-     xml=xml.replace(/<a:p(?:\s[^>]*)?>([\s\S]*?)<\/a:p>/g,(paragraph,body)=>{
-      const runs=Array.from(body.matchAll(/<a:t(?:\s[^>]*)?>([\s\S]*?)<\/a:t>/g));
-      if(!runs.length)return paragraph;
-      const paragraphText=runs.map(run=>decodeXmlText(run[1])).join("").trim();
-      if(paragraphText!==item.find.trim())return paragraph;
-      matches++;
-      let first=true;
+     const normalizeSlideText=value=>String(value||"").normalize("NFKC").replace(/[\u00a0\u200b-\u200d\ufeff]/g," ").replace(/\s+/g," ").trim();
+     const paragraphMatches=Array.from(xml.matchAll(/<a:p(?:\s[^>]*)?>([\s\S]*?)<\/a:p>/g));
+     const paragraphs=paragraphMatches.map((match,index)=>{
+      const runs=Array.from(match[1].matchAll(/<a:t(?:\s[^>]*)?>([\s\S]*?)<\/a:t>/g));
+      return {index,text:runs.map(run=>decodeXmlText(run[1])).join("")};
+     }).filter(item=>item.text.trim());
+     const wanted=normalizeSlideText(item.find);
+     const candidates=[];
+     for(let start=0;start<paragraphs.length;start++){
+      let combined="";
+      for(let end=start;end<paragraphs.length;end++){
+       combined=normalizeSlideText(combined+" "+paragraphs[end].text);
+       if(combined===wanted)candidates.push({start,end});
+       if(combined!==wanted&&!wanted.startsWith(combined+" "))break;
+      }
+     }
+     if(candidates.length!==1)throw new Error(candidates.length===0
+      ?"متن انتخاب‌شده در اسلاید "+item.slide+" پیدا نشد یا مرز پاراگراف‌ها با متن مرجع تطبیق نداشت؛ فایل تغییری نکرد."
+      :"متن انتخاب‌شده بیش از یک‌بار در اسلاید "+item.slide+" وجود دارد؛ برای جلوگیری از تغییر اشتباه، فایل تغییری نکرد.");
+     const target=candidates[0];
+     const replacementParagraphs=String(item.replace).split(/\r\n|\n|\r/);
+     const targetCount=target.end-target.start+1;
+     if(replacementParagraphs.length!==targetCount)throw new Error(
+      "متن جایگزین اسلاید "+item.slide+" باید دقیقاً "+targetCount+" پاراگراف جداشده با خط جدید داشته باشد؛ فایل تغییری نکرد."
+     );
+     const updates=[];
+     for(let offset=0;offset<targetCount;offset++){
+      const source=paragraphs[target.start+offset];
+      const original=paragraphMatches[source.index];
+      const body=original[1];
+      let first=true,hasRun=false;
       const updatedBody=body.replace(/<a:t(?:\s[^>]*)?>([\s\S]*?)<\/a:t>/g,(whole,value)=>{
-       if(first){first=false;return whole.replace(value,escapeXmlText(item.replace));}
+       hasRun=true;
+       if(first){first=false;return whole.replace(value,escapeXmlText(replacementParagraphs[offset]));}
        return whole.replace(value,"");
       });
-      return paragraph.replace(body,updatedBody);
+      if(!hasRun)throw new Error("ساختار متنی پاراگراف اسلاید "+item.slide+" قابل ویرایش نیست؛ فایل تغییری نکرد.");
+      updates.push({index:source.index,value:original[0].replace(body,updatedBody)});
+     }
+     updates.sort((a,b)=>b.index-a.index).forEach(update=>{
+      const original=paragraphMatches[update.index];
+      xml=xml.slice(0,original.index)+update.value+xml.slice(original.index+original[0].length);
      });
-     if(matches!==1)throw new Error(matches===0
-      ?"متن کامل انتخاب‌شده در اسلاید "+item.slide+" پیدا نشد؛ فایل تغییری نکرد."
-      :"متن کامل انتخاب‌شده بیش از یک‌بار در اسلاید "+item.slide+" وجود دارد؛ برای جلوگیری از تغییر اشتباه، فایل تغییری نکرد.");
      staged.set(path,xml);
     }
     for(const [path,xml] of staged)zip.file(path,xml);
