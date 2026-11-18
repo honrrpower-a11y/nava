@@ -996,9 +996,9 @@ function renderNaviOfficeAction(action, options = {}) {
 
   card.append(title, detail, fileLine, note, confirm, cancel);
   slot.appendChild(card);
-  // Keep the approval card beside NAVI's answer. The Office editor is still
-  // used for execution, but the user can review and confirm without leaving chat.
-  setNaviStatus("پیشنهاد ویرایش آماده است؛ برای ساخت نسخه جدید، کارت را در همین گفت‌وگو تأیید کن.");
+  setNaviStatus(slot === officeSlot
+    ? "پیشنهاد ویرایش در استودیوی آفیس آمادهٔ بررسی و تأیید است."
+    : "پیشنهاد ویرایش در گفت‌وگوی NAVI آمادهٔ بررسی و تأیید است.");
 }
 
 
@@ -3598,11 +3598,13 @@ officeBriefForm?.addEventListener("submit", event => {
   // and the other Office fields added by sendMessageToNavi().
   const contextBriefBudget = Math.max(0, 9000 - userInstruction.length);
   officeContext.brief = String(officeContext.brief || "").slice(0, contextBriefBudget);
-  window.openNaviAssistant({
-    service: "کارهای اداری و آفیس",
-    context: officeContext,
-    message: userInstruction
-  });
+  // A brief submitted from the Office studio must stay on the Office page.
+  // Opening the floating NAVI chat here covered the Office approval card and
+  // made the form workflow look as if it had no confirmation button.
+  const officeService = "کارهای اداری و آفیس";
+  const officeServiceOption = Array.from(serviceSelect.options).find(option => option.value === officeService);
+  if (officeServiceOption) serviceSelect.value = officeService;
+  updateNaviAssistantContext(officeService, officeContext);
 
   // Pass the Office request explicitly instead of relying on composer/context
   // state having been updated as a side effect of opening the NAVI widget.
