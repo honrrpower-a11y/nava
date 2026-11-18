@@ -363,7 +363,7 @@ function syncNaviWidgetPlacement(pageId) {
     naviWidgetPanel.classList.add("is-inline");
     if (naviWidgetToggle) {
       naviWidgetToggle.hidden = true;
-      naviWidgetToggle.setAttribute("aria-expanded", "true");
+      naviWidgetToggle.setAttribute("aria-expanded", String(!naviWidgetPanel.hidden));
     }
     if (naviWidgetClose) naviWidgetClose.hidden = false;
     if (naviWelcomeBubble) naviWelcomeBubble.hidden = true;
