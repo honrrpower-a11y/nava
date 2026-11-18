@@ -56,10 +56,10 @@ test("Office file extraction appends extracted text to the brief sent through th
 
 test("guided Office requests keep approval cards in the NAVI conversation", () => {
   assert.match(app, /window\.sendOfficeNaviRequest\s*=\s*function[\s\S]*?officeTarget:\s*false/);
-  assert.match(guide, /کارت تأیید، در ستون دستیار همین صفحه نمایش داده می‌شوند/);
+  assert.match(guide, /کارت تأیید، در ستون دستیار نمایش داده می‌شود/);
 });
 
-test("guided Office requests scroll the page to NAVI's answer area after sending", () => {
+test("guided Office requests scroll the page to NAVI's answer area after sending", async () => {
   assert.match(guide, /const sendPromise = window\.sendOfficeNaviRequest\(\{ message, context \}\)/);
   assert.match(guide, /document\.querySelector\("\.office-assistant-column"\)/);
   assert.match(guide, /assistantColumn\.scrollIntoView\(\{ behavior: reducedMotion \? "auto" : "smooth", block: "start" \}\)/);
@@ -76,6 +76,23 @@ test("Office Operations removes the placeholder project-output area and provides
   assert.doesNotMatch(operationsPane, /فضای خروجی پروژه|studio-output-card/);
   assert.match(operationsPane, /<div class="studio-brief-actions"><button class="btn-secondary" type="reset">پاک کردن فرم<\/button><button class="btn-primary" id="officeOperationsGoToNavi" type="button">اجرای درخواست با NAVI<\/button><\/div>/);
   assert.doesNotMatch(operationsPane, /office-operations-navi-cta/);
-  assert.match(guide, /operationsNaviButton\?\.addEventListener\("click", scrollToNaviAnswers\)/);
+  assert.match(guide, /operationsNaviButton\?\.addEventListener\("click", async \(\) =>/);
   assert.match(guide, /const scrollToNaviAnswers = \(\) =>/);
+});
+
+
+test("Office Operations sends the existing form brief and all workflow settings directly to NAVI", () => {
+  assert.match(guide, /operationsNaviButton\?\.addEventListener\("click", async \(\) =>/);
+  for (const [key, pattern] of [
+    ["task", /task:\s*selected\("studioTask-office"\)/],
+    ["operation", /operation:\s*value\("studioMode-office"\)/],
+    ["requestedOutput", /requestedOutput:\s*selected\("studioOutput-office"\)/],
+    ["detailLevel", /detailLevel:\s*selected\("studioDetail-office"\)/],
+    ["audience", /audience:\s*value\("studioAudience-office"\)/],
+    ["brief", /brief\s*\}/]
+  ]) assert.match(guide, pattern, `Missing Office Operations context field: ${key}`);
+  assert.match(guide, /window\.sendOfficeNaviRequest\(\{ message, context \}\)/);
+  assert.match(guide, /شرح درخواست و اطلاعات فایل/);
+  assert.match(guide, /ابتدا شرح درخواستت را در فرم بالا بنویس/);
+  assert.match(guide, /نیازی به نوشتن دوباره نیست/);
 });
