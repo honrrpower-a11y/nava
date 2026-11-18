@@ -39,7 +39,7 @@
     // File text is appended to the same textarea as the user's instruction.
     // Separate the two so extracted workbook contents can never become the
     // current-user authorization checked by the Office edit safety gate.
-    const attachmentMatch = brief.match(/(?:^|\n\n)--- متن استخراج‌شده از فایل: ([^\n]+) ---\n([\s\\S]*?)\n--- پایان متن فایل ---\s*$/);
+    const attachmentMatch = brief.match(/(?:^|\n\n)--- متن استخراج‌شده از فایل: ([^\n]+) ---\n([\s\S]*?)\n--- پایان متن فایل ---\s*$/);
     const userBrief = attachmentMatch ? brief.slice(0, attachmentMatch.index).trim() : brief;
     const extractedFileText = attachmentMatch ? attachmentMatch[2].trim() : "";
 
