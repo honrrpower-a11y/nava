@@ -142,7 +142,12 @@
   getActiveFileInfo(){
    const selected=input.files&&input.files[0];
    const ready=Boolean(sourceFile&&selected===sourceFile&&kind&&((kind==="xlsx"&&workbook)||(kind!=="xlsx"&&zip)));
-   return {ready,name:sourceFile?.name||selected?.name||"",kind};
+   return {
+    ready,
+    name:sourceFile?.name||selected?.name||"",
+    kind,
+    sheetNames:ready&&kind==="xlsx"&&Array.isArray(workbook?.SheetNames)?[...workbook.SheetNames]:[]
+   };
   },
   async executeAction(action) {
    const selected=input.files&&input.files[0];
