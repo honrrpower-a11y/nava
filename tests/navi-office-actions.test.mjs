@@ -337,7 +337,8 @@ test("Office is split into separate accessible guidance and operations tabs", ()
   assert.match(html, /id="officeOperationsPane" role="tabpanel"[^>]*hidden/);
   assert.match(html, /id="officeGuidePane"[\s\S]*?id="officeNaviGuideTitle"/);
   assert.match(html, /id="officeOperationsPane"[\s\S]*?id="officeBriefForm"/);
-  assert.match(html, /id="officeOperationsPane"[\s\S]*?id="officeNaviInlineMount"/);
+  assert.match(html, /class="office-assistant-column"[\s\S]*?id="officeNaviInlineMount"/);
+  assert.doesNotMatch(html, /id="officeOperationsPane"[\s\S]*?id="officeNaviInlineMount"/);
   assert.doesNotMatch(html, /id="officeOpenBlankNavi"/);
   assert.match(app, /const activateOfficeTab = \(name, focus = false\)/);
   assert.match(app, /activateOfficeTab\("guide"\)/);
