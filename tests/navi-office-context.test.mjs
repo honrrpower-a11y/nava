@@ -58,3 +58,10 @@ test("guided Office requests keep approval cards in the NAVI conversation", () =
   assert.match(app, /window\.sendOfficeNaviRequest\s*=\s*function[\s\S]*?officeTarget:\s*false/);
   assert.match(guide, /کارت تأیید، در ستون دستیار همین صفحه نمایش داده می‌شوند/);
 });
+
+test("guided Office requests scroll the page to NAVI's answer area after sending", () => {
+  assert.match(guide, /const sendPromise = window\.sendOfficeNaviRequest\(\{ message, context \}\)/);
+  assert.match(guide, /document\.querySelector\("\.office-assistant-column"\)/);
+  assert.match(guide, /assistantColumn\.scrollIntoView\(\{ behavior: reducedMotion \? "auto" : "smooth", block: "start" \}\)/);
+  assert.match(await readFileSync(new URL("../office-workspace.css", import.meta.url), "utf8"), /\.office-assistant-column\{scroll-margin-top:18px;/);
+});
