@@ -187,6 +187,7 @@
     workbook.Workbook=workbook.Workbook||{};workbook.Workbook.CalcPr={calcMode:"auto",fullCalcOnLoad:true,forceFullCalc:true};
     pendingDownloadBlob=null;setDownloadReady(true);drawGrid();
     setStatus(staged.length+" سلول تغییرات NAVI در ویرایش مستقیم اعمال و نمایش داده شد. مقادیر را بررسی کن؛ سپس با دکمه دانلود فایل خروجی را دریافت کن.");
+    window.NavaOfficeFile?.setEditStatus?.("تغییرات ثبت‌شده: "+staged.map(item=>item.sheet+"!"+item.cell).join("، ")+". فایل اصلی بدون تغییر است.");
     panel.scrollIntoView({behavior:"smooth",block:"nearest"});
     return {message:staged.length+" سلول در بخش ویرایش مستقیم اعمال شد و قابل بررسی است. پس از بررسی، دکمه «دانلود فایل ویرایش‌شده Excel» را بزن. فایل اصلی تغییر نکرده است."};
    }
@@ -210,6 +211,7 @@
     workbook.Workbook=workbook.Workbook||{};workbook.Workbook.CalcPr={calcMode:"auto",fullCalcOnLoad:true,forceFullCalc:true};
     pendingDownloadBlob=null;setDownloadReady(true);drawGrid();
     setStatus("ردیف جدید در ویرایش مستقیم نمایش داده شد. اطلاعات را بررسی کن و سپس فایل را دانلود کن.");
+    window.NavaOfficeFile?.setEditStatus?.("یک ردیف جدید در شیت «"+action.sheet+"» اضافه شد. فایل اصلی بدون تغییر است.");
     panel.scrollIntoView({behavior:"smooth",block:"nearest"});
     return {message:"یک ردیف به شیت «"+action.sheet+"» اضافه و در بخش ویرایش مستقیم نمایش داده شد. پس از بررسی، دکمه دانلود فایل ویرایش‌شده را بزن. فایل اصلی تغییر نکرده است."};
    }
@@ -231,6 +233,7 @@
     pendingDownloadBlob=await zip.generateAsync({type:"blob",compression:"DEFLATE"});
     setDownloadReady(true);
     setStatus(count+" جایگزینی در فایل اعمال شد. برای دریافت نسخه ویرایش‌شده، دکمه دانلود را بزن.");
+    window.NavaOfficeFile?.setEditStatus?.(count+" مورد جایگزینی متن انجام شد. فایل اصلی بدون تغییر است.");
     return {message:count+" جایگزینی در فایل اعمال شد. برای دریافت نسخه ویرایش‌شده، دکمه دانلود را بزن. فایل اصلی تغییر نکرده است."};
    }
    throw new Error("نوع عملیات NAVI پشتیبانی نمی‌شود.");
