@@ -721,7 +721,8 @@ function normalizeNaviStudioContext(context) {
     platform: 500, objective: 500, topic: 500, tone: 500,
     keyPoints: 500, callToAction: 500, keywords: 500,
     task: 500, application: 120, userLevel: 180, operation: 120,
-    requestedOutput: 240, detailLevel: 160, brief: 18000
+    requestedOutput: 240, detailLevel: 160, brief: 18000,
+    fileName: 500, fileType: 40
   };
   const result = {};
   for (const [key, maxLength] of Object.entries(limits)) {
@@ -729,6 +730,11 @@ function normalizeNaviStudioContext(context) {
     if (typeof value === "string" && value.trim()) {
       result[key] = value.trim().slice(0, maxLength);
     }
+  }
+  // Keep the upload state as explicit context instead of silently dropping
+  // this boolean while normalizing the Office form's context.
+  if (typeof context.fileAttached === "boolean") {
+    result.fileAttached = context.fileAttached ? "پیوست شده" : "فایلی پیوست نشده";
   }
   return result;
 }
@@ -746,7 +752,10 @@ function updateNaviAssistantContext(service, context = {}) {
       keyPoints: "نکات کلیدی", callToAction: "دعوت به اقدام", keywords: "کلیدواژه‌ها",
       task: "نوع کار", application: "برنامه", userLevel: "سطح کاربر",
       operation: "عملیات", requestedOutput: "خروجی", detailLevel: "سطح جزئیات",
-      brief: "شرح و محتوای فایل"
+      brief: "شرح و محتوای فایل",
+      fileName: "نام فایل بارگذاری‌شده",
+      fileType: "نوع فایل",
+      fileAttached: "وضعیت پیوست فایل"
     };
     const lines = Object.entries(normalized).map(([key, value]) => {
       const preview = value.length > 120 ? value.slice(0, 120) + "…" : value;
