@@ -97,6 +97,15 @@ test("local editor binds actions to the same active file and preserves the origi
   assert.match(editor, /if\(!count\)throw new Error/);
 });
 
+test("NAVI Excel cell edits expand the worksheet range when writing outside the existing used cells", () => {
+  const editBlock = editor.slice(editor.indexOf('if(action?.kind==="edit_cells")'), editor.indexOf('if(action?.kind==="append_row")'));
+  assert.match(editBlock, /XLSX\.utils\.decode_range\(sheet\["!ref"\]\|\|item\.cell\)/);
+  assert.match(editBlock, /XLSX\.utils\.decode_cell\(item\.cell\)/);
+  assert.match(editBlock, /range\.e\.r=Math\.max\(range\.e\.r,target\.r\)/);
+  assert.match(editBlock, /range\.e\.c=Math\.max\(range\.e\.c,target\.c\)/);
+  assert.match(editBlock, /sheet\["!ref"\]=XLSX\.utils\.encode_range\(range\)/);
+});
+
 test("NAVI does not seed a fabricated B3 edit example in its Office prompt", () => {
   const worker = readFileSync(new URL("../modules/navi.js", import.meta.url), "utf8");
   assert.doesNotMatch(worker, /IMPORTANT POSITIVE EXAMPLE/);
