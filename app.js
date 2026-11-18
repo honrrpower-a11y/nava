@@ -350,10 +350,38 @@ function setNavaAccessGate(active) {
   accessPanel.setAttribute("role", navaAccessGateActive ? "dialog" : "region");
 }
 
+function syncNaviWidgetPlacement(pageId) {
+  if (!naviWidgetPanel) return;
+  const mount = document.getElementById("officeNaviInlineMount");
+  const homeSlot = document.getElementById("naviWidgetHomeSlot");
+  const isOffice = pageId === "officePage" && mount;
+  if (isOffice) {
+    if (naviWidgetPanel.parentElement !== mount) mount.appendChild(naviWidgetPanel);
+    naviWidgetPanel.classList.add("is-inline");
+    naviWidgetPanel.hidden = false;
+    naviWidgetPanel.classList.add("is-open");
+    if (naviWidgetToggle) {
+      naviWidgetToggle.hidden = true;
+      naviWidgetToggle.setAttribute("aria-expanded", "true");
+    }
+    if (naviWidgetClose) naviWidgetClose.hidden = true;
+    if (naviWelcomeBubble) naviWelcomeBubble.hidden = true;
+    document.body.classList.remove("navi-widget-open");
+    return;
+  }
+  if (homeSlot?.parentNode && naviWidgetPanel.parentElement !== homeSlot.parentElement) {
+    homeSlot.parentNode.insertBefore(naviWidgetPanel, homeSlot.nextSibling);
+  }
+  naviWidgetPanel.classList.remove("is-inline");
+  if (naviWidgetClose) naviWidgetClose.hidden = false;
+  if (naviWidgetToggle) naviWidgetToggle.hidden = !naviWidgetPanel.hidden;
+}
+
 function showPage(pageId) {
   if (navaAccessGateActive && pageId !== "homePage") return;
-  if (naviWidgetPanel && !naviWidgetPanel.hidden) setNaviWidgetOpen(false);
+  if (naviWidgetPanel && !naviWidgetPanel.hidden && document.querySelector(".page.active")?.id !== "officePage") setNaviWidgetOpen(false);
   pages.forEach(page => page.classList.toggle("active", page.id === pageId));
+  syncNaviWidgetPlacement(pageId);
   navButtons.forEach(button => button.classList.toggle("active", button.dataset.page === pageId));
 
   const studioByPage = {
@@ -601,12 +629,13 @@ function setNaviWidgetOpen(isOpen, focusComposer = false) {
   if (isOpen && !getNaviToken()) captureNavaReturnContext();
   if (isOpen) positionNaviWidgetOnOrbit();
 
-  naviWidgetPanel.hidden = !isOpen;
-  naviWidgetToggle.hidden = isOpen;
-  naviWidgetPanel.classList.toggle("is-open", isOpen);
-  naviWidgetPanel.classList.toggle("is-auth-entry", isOpen && !getNaviToken());
-  document.body.classList.toggle("navi-widget-open", isOpen);
-  naviWidgetToggle.setAttribute("aria-expanded", isOpen ? "true" : "false");
+  const inlineOffice = naviWidgetPanel.classList.contains("is-inline");
+  naviWidgetPanel.hidden = inlineOffice ? false : !isOpen;
+  naviWidgetToggle.hidden = inlineOffice || isOpen;
+  naviWidgetPanel.classList.toggle("is-open", inlineOffice || isOpen);
+  naviWidgetPanel.classList.toggle("is-auth-entry", (inlineOffice || isOpen) && !getNaviToken());
+  document.body.classList.toggle("navi-widget-open", isOpen && !inlineOffice);
+  naviWidgetToggle.setAttribute("aria-expanded", (isOpen || inlineOffice) ? "true" : "false");
   const studioMode = document.body.classList.contains("navi-studio-context");
   naviWidgetToggle.setAttribute("aria-label",
     isOpen ? "بستن همراه ناوی" :
@@ -755,8 +784,7 @@ window.sendOfficeNaviRequest = function({ message, context } = {}) {
     serviceSelect.value = service;
   }
   updateNaviAssistantContext(service, officeContext);
-  // Open the existing animated NAVI chat over the Office studio before sending.
-  // The reply and any final-approval card are both rendered inside that chat.
+  // NAVI is mounted inside the Office operations tab; keep its existing session and renderer.
   setNaviWidgetOpen(true, false);
   return sendMessageToNavi({
     pageOverride: "officePage",
@@ -3655,18 +3683,6 @@ function updateOfficeActionDiagnostic(stage, details = {}) {
   panel.open = true;
 }
 
-
-// Independent Office entry point: open an empty NAVI conversation.
-// No Office form submit, extracted file text, or automatic command dispatch is involved.
-const officeOpenBlankNaviButton = document.getElementById("officeOpenBlankNavi");
-officeOpenBlankNaviButton?.addEventListener("click", () => {
-  if (typeof window.openNaviAssistant !== "function") {
-    setOfficeSubmitStatus("باز کردن NAVI ممکن نشد؛ لطفاً صفحه را تازه‌سازی کن.");
-    return;
-  }
-  window.openNaviAssistant({ service: "گفت‌وگوی عمومی", blank: true });
-  setOfficeSubmitStatus("گفت‌وگوی خالی NAVI باز شد؛ دستورها را مستقیم در کادر گفت‌وگو بنویس.");
-});
 
 function scrollToRequest() {
   setNaviWidgetOpen(true, false);
