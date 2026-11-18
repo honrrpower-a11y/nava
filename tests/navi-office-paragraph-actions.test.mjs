@@ -43,6 +43,7 @@ test("PowerPoint paragraph rewrite rejects invalid slides, empty targets and ove
 test("PowerPoint translation and rewriting requests require the current user-turn marker", () => {
   assert.equal(isExplicitOfficeEditRequest("پیام کاربر: متن اسلاید ۲ را به فارسی ترجمه کن"), true);
   assert.equal(isExplicitOfficeEditRequest("پیام کاربر: این پاراگراف را بازنویسی کن"), true);
+  assert.equal(isExplicitOfficeEditRequest("پیام کاربر: متن این بخش را فارسی کن"), true);
   assert.equal(isExplicitOfficeEditRequest("متن اسلاید ۲ را به فارسی ترجمه کن"), false);
   assert.equal(isExplicitOfficeEditRequest("پیام کاربر: اسلاید ۲ را فقط بررسی کن"), false);
 });
