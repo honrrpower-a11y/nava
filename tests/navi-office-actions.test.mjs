@@ -184,7 +184,7 @@ test("Office form submissions route approval cards to NAVI chat while direct cha
   assert.match(app, /const chatSlot = document\.getElementById\("naviOfficeActionChatSlot"\)/);
   assert.match(app, /const slot = options\.target === "office"[\s\S]*?\? \(officeSlot \|\| chatSlot\)/);
   assert.match(html, /id="naviOfficeActionChatSlot"/);
-  assert.match(app, /renderNaviOfficeAction\(data\.officeAction,\s*\{\s*target:\s*\(options\.officeTarget\s*\|\|\s*options\.officeDiagnostic\)\s*\?\s*"office"\s*:\s*"chat"\s*\}\)/);
+  assert.match(app, /renderNaviOfficeAction\(data\.officeAction,\s*\{\s*target:\s*options\.officeTarget\s*\?\s*"office"\s*:\s*"chat"\s*\}\)/);
   assert.doesNotMatch(app, /if \(data\.officeAction && requestPage === "officePage"[\s\S]{0,220}showPage\("officePage"\)/);
 });
 
@@ -213,7 +213,7 @@ test("Office brief submissions open NAVI chat and render approval there", () => 
   const formHandler = app.slice(formStart, formEnd);
   assert.ok(formHandler.includes('updateNaviAssistantContext(officeService, officeContext)'));
   assert.ok(!formHandler.includes('window.openNaviAssistant('));
-  assert.match(app, /renderNaviOfficeAction\(data\.officeAction,\s*\{\s*target:\s*\(options\.officeTarget\s*\|\|\s*options\.officeDiagnostic\)\s*\?\s*"office"\s*:\s*"chat"\s*\}\)/);
+  assert.match(app, /renderNaviOfficeAction\(data\.officeAction,\s*\{\s*target:\s*options\.officeTarget\s*\?\s*"office"\s*:\s*"chat"\s*\}\)/);
   assert.match(app, /if \(slot === officeSlot && host\) host\.hidden = false/);
 });
 
