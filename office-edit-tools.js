@@ -57,7 +57,7 @@ async function syncActiveFileContext(){
   return true;
  }
  function queueContextSync(){
-  contextSyncPromise=syncActiveFileContext();
+  contextSyncPromise=contextSyncPromise.catch(()=>{}).then(()=>syncActiveFileContext());
   contextSyncPromise.catch(error=>setStatus("تغییر در ویرایشگر ثبت شد، اما همگام‌سازی محتوای مرجع ناموفق بود: "+(error.message||"خطای نامشخص")+". تا رفع مشکل درخواست بعدی اجرا نمی‌شود.",true));
   return contextSyncPromise;
  }
