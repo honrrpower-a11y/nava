@@ -295,9 +295,9 @@ test("Office is split into separate accessible guidance and operations tabs", ()
   assert.match(html, /id="officeOperationsTab"[^>]*aria-selected="false"[^>]*aria-controls="officeOperationsPane"/);
   assert.match(html, /id="officeGuidePane" role="tabpanel"[^>]*aria-labelledby="officeGuideTab"/);
   assert.match(html, /id="officeOperationsPane" role="tabpanel"[^>]*hidden/);
-  assert.match(html, /id="officeGuidePane"[\\s\\S]*?id="officeNaviGuideTitle"/);
-  assert.match(html, /id="officeOperationsPane"[\\s\\S]*?id="officeBriefForm"/);
-  assert.match(html, /id="officeOperationsPane"[\\s\\S]*?id="officeOpenBlankNavi"/);
+  assert.match(html, /id="officeGuidePane"[\s\S]*?id="officeNaviGuideTitle"/);
+  assert.match(html, /id="officeOperationsPane"[\s\S]*?id="officeBriefForm"/);
+  assert.match(html, /id="officeOperationsPane"[\s\S]*?id="officeOpenBlankNavi"/);
   assert.match(app, /const activateOfficeTab = \(name, focus = false\)/);
   assert.match(app, /activateOfficeTab\("guide"\)/);
   assert.match(app, /event\.key !== "ArrowLeft" && event\.key !== "ArrowRight"/);
