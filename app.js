@@ -673,11 +673,12 @@ if (naviWidgetToggle) {
 }
 function closeNaviWidgetRespectingAccessChoice() {
   const hasSession = Boolean(getNaviToken());
+  const inlineOffice = Boolean(naviWidgetPanel?.classList.contains("is-inline"));
   setNaviWidgetOpen(false);
 
-  // An unauthenticated visitor who closes NAVI must return to the access
-  // choice (sign in / continue as guest), not silently land on the homepage.
-  if (!hasSession) {
+  // In Office, closing the assistant only collapses its panel; it must never
+  // cover the file workspace with the global access-choice dialog.
+  if (!hasSession && !inlineOffice) {
     document.querySelector(".nava-access-panel")?.classList.remove("is-dismissed");
     setNavaAccessGate(true);
   }
