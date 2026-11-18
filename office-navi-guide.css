@@ -21,3 +21,19 @@ body.light .office-navi-guide .office-guide-status{color:#895c19}
 body.light .office-navi-guide .office-guide-note{color:#687487}
 body.light .office-navi-guide .office-guide-preset{background:linear-gradient(135deg,#fff8e9,#edf4fa);color:#344761;border-color:rgba(166,119,48,.28)}
 body.light .office-navi-guide .office-guide-preset:hover{background:linear-gradient(135deg,#ffefcf,#e5f0fa);border-color:rgba(166,119,48,.48)}
+
+
+/* Office studio: clear separation between learning and file operations. */
+.office-tabs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:22px 0 18px;padding:6px;border:1px solid rgba(190,151,82,.28);border-radius:15px;background:rgba(9,16,28,.72)}
+.office-tab{min-height:48px;padding:11px 16px;border:1px solid transparent;border-radius:11px;background:transparent;color:var(--muted,#aeb8c8);font:inherit;font-size:14px;font-weight:800;cursor:pointer;transition:background .18s ease,border-color .18s ease,color .18s ease}
+.office-tab:hover{border-color:rgba(214,173,99,.35);color:var(--gold,#d6ad63)}
+.office-tab.is-active{background:linear-gradient(135deg,rgba(214,173,99,.2),rgba(38,58,86,.55));border-color:rgba(214,173,99,.52);color:var(--gold,#e2bd78);box-shadow:0 5px 18px rgba(0,0,0,.12)}
+.office-tab:focus-visible{outline:2px solid var(--gold,#d6ad63);outline-offset:3px}
+.office-tab-panel[hidden]{display:none!important}
+.office-tab-panel{min-width:0}
+.office-tab-panel>.studio-workspace-grid{margin-top:0}
+#officeOperationsPane .studio-workspace-grid{align-items:start}
+body.light .office-tabs{background:#f4efe5;border-color:rgba(166,119,48,.25)}
+body.light .office-tab{color:#58677b}
+body.light .office-tab.is-active{background:linear-gradient(135deg,#fff0d2,#e9f0f7);border-color:rgba(166,119,48,.42);color:#805416;box-shadow:0 4px 14px rgba(42,49,68,.07)}
+@media(max-width:520px){.office-tabs{gap:6px;padding:4px}.office-tab{min-height:46px;padding:9px 7px;font-size:12px;line-height:1.6}}
