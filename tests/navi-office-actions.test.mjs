@@ -78,7 +78,7 @@ test("append-row approvals are rendered and only execute after confirmation", ()
   assert.match(render, /action\.values\.map/);
   assert.match(editor, /action\?\.kind==="append_row"/);
   assert.match(editor, /sheet\["!ref"\]=XLSX\.utils\.encode_range/);
-  assert.match(editor, /download\(new Blob\(\[bytes\]/);
+  assert.match(editor, /download\(blob,/);
 });
 
 test("browser never executes an action while rendering; execution is click-confirmed", () => {
@@ -93,8 +93,8 @@ test("local editor binds actions to the same active file and preserves the origi
   assert.match(editor, /selected!==sourceFile/);
   assert.match(editor, /window\.NavaOfficeTools\s*=\s*\{/);
   assert.match(editor, /download\(new Blob\(\[bytes\]/);
-  assert.match(editor, /فایل اصلی دست‌نخورده ماند/);
-  assert.match(editor, /if\(!count\)throw new Error/);
+  assert.match(editor, /فایل اصلی بدون تغییر باقی ماند/);
+  assert.match(editor, /if\(!count\)\{/);
 });
 
 test("NAVI Excel cell edits expand the worksheet range when writing outside the existing used cells", () => {
@@ -241,7 +241,7 @@ test("deterministic Excel proposals are derived on every NAVI chat page while mo
   assert.match(worker, /const deterministicOfficeAction = extractNaviExplicitExcelEditAction\(currentUserTurn\);/);
   assert.match(worker, /const explicitOfficeEdit = page === "officePage" && isExplicitOfficeEditRequest\(currentUserTurn\);/);
   assert.ok(worker.includes('let officeAction = deterministicOfficeAction ||'));
-  assert.ok(worker.includes('parsed.officeAction?.kind === "replace_text"'));
+  assert.match(worker, /\["replace_text", "edit_slide_text"\]\.includes\(parsed\.officeAction\?\.kind\)/);
   assert.match(worker, /guardNaviOfficeReply\(\s*parsed\.reply,\s*Boolean\(officeAction\)\s*\)/);
 });
 
