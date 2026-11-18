@@ -51,8 +51,8 @@
       "سطح جزئیات: " + (context.detailLevel || "حرفه‌ای و کامل")
     ];
     if (context.audience) lines.push("مخاطب یا دریافت‌کننده: " + context.audience);
-    lines.push("شرح درخواست و اطلاعات فایل:\\n" + brief);
-    const message = lines.join("\\n");
+    lines.push("شرح درخواست و اطلاعات فایل:\n" + brief);
+    const message = lines.join("\n");
 
     operationsNaviButton.disabled = true;
     const originalLabel = operationsNaviButton.textContent;
