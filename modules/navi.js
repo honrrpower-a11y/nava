@@ -122,18 +122,25 @@ function containsSensitiveInformation(value) {
   // Also accept the natural Persian order used in chat: cell/value first,
   // then the sheet name (for example: "سلول B3 را به «تست موفق» در شیت «آزمایش NAVI» تغییر بده").
   const reverseOrderPatterns = [
-    /(?:مقدار\\s+)?سلول\\s+([A-Z]{1,3}[1-9][0-9]{0,6})\\s+(?:را\\s+)?(?:از\\s*[«“"]([^»”"]{1,500})[»”"]\\s*)?به\\s*[«“"]([^»”"]{1,500})[»”"][\\s\\S]{0,100}?در\\s+شیت\\s*[«“"]([^»”"]{1,80})[»”"][\\s\\S]{0,40}?(?:تغییر\\s*بده(?:ید)?|عوض\\s*کن(?:ید)?|قرار\\s*بده(?:ید)?)/iu,
-    /در\\s+سلول\\s+([A-Z]{1,3}[1-9][0-9]{0,6})[\\s\\S]{0,100}?به\\s*[«“"]([^»”"]{1,500})[»”"][\\s\\S]{0,100}?در\\s+شیت\\s*[«“"]([^»”"]{1,80})[»”"][\\s\\S]{0,40}?(?:تغییر\\s*بده(?:ید)?|عوض\\s*کن(?:ید)?)/iu
+    {
+      regex: /(?:مقدار\\s+)?سلول\\s+([A-Z]{1,3}[1-9][0-9]{0,6})\\s+(?:را\\s+)?(?:از\\s*[«“"]([^»”"]{1,500})[»”"]\\s*)?به\\s*[«“"]([^»”"]{1,500})[»”"][\\s\\S]{0,100}?در\\s+شیت\\s*[«“"]([^»”"]{1,80})[»”"][\\s\\S]{0,40}?(?:تغییر\\s*بده(?:ید)?|عوض\\s*کن(?:ید)?)/iu,
+      cellGroup: 1, valueGroup: 3, sheetGroup: 4
+    },
+    {
+      regex: /در\\s+سلول\\s+([A-Z]{1,3}[1-9][0-9]{0,6})[\\s\\S]{0,100}?به\\s*[«“"]([^»”"]{1,500})[»”"][\\s\\S]{0,100}?در\\s+شیت\\s*[«“"]([^»”"]{1,80})[»”"][\\s\\S]{0,40}?(?:تغییر\\s*بده(?:ید)?|عوض\\s*کن(?:ید)?)/iu,
+      cellGroup: 1, valueGroup: 2, sheetGroup: 3
+    }
   ];
-  for (const regex of reverseOrderPatterns) {
-    const match = userText.match(regex);
+  for (const pattern of reverseOrderPatterns) {
+    const match = userText.match(pattern.regex);
     if (!match) continue;
-    const cell = match[1].toUpperCase();
-    const value = match[3] !== undefined ? match[3] : match[2];
-    const sheet = match[4] !== undefined ? match[4] : match[3];
     const action = normalizeNaviOfficeAction({
       kind: "edit_cells",
-      edits: [{ sheet: sheet.trim(), cell, value }]
+      edits: [{
+        sheet: match[pattern.sheetGroup].trim(),
+        cell: match[pattern.cellGroup].toUpperCase(),
+        value: match[pattern.valueGroup]
+      }]
     });
     if (action) return action;
   }
