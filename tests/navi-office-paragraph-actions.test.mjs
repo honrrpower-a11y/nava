@@ -46,4 +46,8 @@ test("PowerPoint translation and rewriting requests require the current user-tur
   assert.equal(isExplicitOfficeEditRequest("پیام کاربر: متن این بخش را فارسی کن"), true);
   assert.equal(isExplicitOfficeEditRequest("متن اسلاید ۲ را به فارسی ترجمه کن"), false);
   assert.equal(isExplicitOfficeEditRequest("پیام کاربر: اسلاید ۲ را فقط بررسی کن"), false);
+  assert.equal(isExplicitOfficeEditRequest("پیام کاربر: متن اسلاید دوم رو جایگزین کن"), true);
+  assert.equal(isExplicitOfficeEditRequest("پیام کاربر: اسلاید دوم رو با متن جدید عوض کن"), true);
+  assert.equal(isExplicitOfficeEditRequest("پیام کاربر: لطفاً جایگزینی متن اسلاید دوم رو انجام بده"), true);
+  assert.equal(isExplicitOfficeEditRequest("پیام کاربر: جایگزینی متن اسلاید دوم یعنی چه؟"), false);
 });

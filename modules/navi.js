@@ -424,13 +424,19 @@ export function isExplicitOfficeEditRequest(message) {
     /(?:کن|بکن|بده|بذار|بگذار)(?:ش|شون)\s*(?:به|با|در|روی|داخل)?/iu.test(userText) &&
     /(?:متن|فایل|سند|اسلاید|پاراگراف|شیت|سلول|اکسل|پاورپوینت|ورد|عبارت|عنوان|بخش)/iu.test(userText);
 
+  // Common Persian syntax puts the target first and the edit verb at the end:
+  // "متن اسلاید دوم رو جایگزین کن". Accept this as an edit intent too.
+  const powerpointEditIntent =
+    /(?:(?:متن|محتوا(?:ی)?|عبارت)[\s\S]{0,100}(?:اسلاید|پاورپوینت)[\s\S]{0,100}(?:جایگزین(?:ی)?|عوض|ویرایش|بازنویسی|اصلاح|ترجمه|تغییر)\s*(?:کن(?:م|یم|ید|ین)?|بکن(?:م|یم|ید|ین)?|بده(?:م|یم|ید)?|شود|بشه)|(?:اسلاید|پاورپوینت)[\s\S]{0,100}(?:جایگزین(?:ی)?|عوض|ویرایش|بازنویسی|اصلاح|ترجمه|تغییر)\s*(?:کن(?:م|یم|ید|ین)?|بکن(?:م|یم|ید|ین)?|بده(?:م|یم|ید)?|شود|بشه)|(?:می‌خواهم|میخوام|می خواهم|لطفاً|لطفا|درخواست(?:\s+دارم)?)[\s\S]{0,80}(?:جایگزینی|ویرایش|بازنویسی|اصلاح|ترجمه|تغییر)[\s\S]{0,80}(?:اسلاید|پاورپوینت|متن))/iu.test(userText) &&
+    !/(?:چیست|یعنی\s*چه|چطور|چگونه|چرا|توضیح\s+بده)/iu.test(userText);
+
   const appendRowIntent =
     /(?:افزودن|اضافه\s*کردن|اضافه\s*کن(?:ید)?|درج)[\s\S]{0,100}(?:ردیف|سطر)|(?:ردیف|سطر)[\s\S]{0,180}(?:اضافه\s*کن|افزودن|درج)/iu.test(userText);
 
   const legacyPreciseIntent =
     /(?:قرار\s*بده(?:ید)?|بنویس(?:ید)?|سلول\s*[A-Z]{1,3}[1-9][0-9]{0,6}[\s\S]{0,80}(?:کن(?:ید)?|بذار(?:ید)?|بگذار(?:ید)?))|(?:فارسی|تبدیل)\s*(?:کن|کنید|بده|بدهید)|به\s+فارسی\s+برگردان|edit(?:\s+the)?|replace(?:\s+the)?|update(?:\s+the)?|set\s+(?:cell|value)/iu.test(userText);
 
-  return editIntent || appendRowIntent || legacyPreciseIntent;
+  return editIntent || powerpointEditIntent || appendRowIntent || legacyPreciseIntent;
 }
 
 function extractNaviActiveWorkbookSheetName(message) {
