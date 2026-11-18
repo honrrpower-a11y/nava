@@ -110,7 +110,7 @@
    const ready=Boolean(sourceFile&&selected===sourceFile&&kind&&((kind==="xlsx"&&workbook)||(kind!=="xlsx"&&zip)));
    return {ready,name:sourceFile?.name||selected?.name||"",kind};
   },
-  async executeAction(action) {?.addEventListener("change",event=>{currentSheet=event.target.value;drawGrid();});
+  async executeAction(action) {
  $("officeEditSave")?.addEventListener("click",()=>{
   if(kind!=="xlsx"||!workbook)return;
   try{
@@ -189,5 +189,6 @@
   }
  };
  input.addEventListener("change",()=>{const file=input.files&&input.files[0];if(file){editorReadyPromise=openFile(file);}else{editorReadyPromise=Promise.resolve();}});
+ $("officeEditSheet")?.addEventListener("change",event=>{currentSheet=event.target.value;drawGrid();});
  $("officeEditClose")?.addEventListener("click",hide);
 })();
