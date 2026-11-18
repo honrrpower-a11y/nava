@@ -734,19 +734,24 @@ window.openNaviAssistant = function(options = {}) {
 // not authenticated, preserve the existing sign-in/chat flow and prefill it.
 window.sendOfficeNaviRequest = function({ message, context } = {}) {
   const cleanMessage = String(message || "").trim();
-  if (!cleanMessage) return false;
+  if (!cleanMessage) return { sent: false, reason: "empty" };
   const service = "کارهای اداری و آفیس";
-  const officeContext = context && typeof context === "object" ? context : {};
+  const officeContext = context && typeof context === "object" && Object.keys(context).length
+    ? context
+    : collectNaviStudioContext("officePage");
+  officeContext.brief = String(officeContext.brief || "").slice(0, Math.max(0, 9000 - cleanMessage.length));
   if (!getNaviToken()) {
     window.openNaviAssistant({ service, context: officeContext, message: cleanMessage });
-    return false;
+    return { sent: false, reason: "login" };
+  }
+  if (sendRequest?.disabled) {
+    setNaviWidgetOpen(true, false);
+    return { sent: false, reason: "busy" };
   }
   if (Array.from(serviceSelect.options).some(option => option.value === service)) {
     serviceSelect.value = service;
   }
   updateNaviAssistantContext(service, officeContext);
-  // Open the existing animated NAVI chat over the Office studio before sending.
-  // The reply and any final-approval card are both rendered inside that chat.
   setNaviWidgetOpen(true, false);
   return sendMessageToNavi({
     pageOverride: "officePage",
@@ -3577,144 +3582,7 @@ function chooseService(service) {
   window.openNaviAssistant({ service });
 }
 
-// The Office brief form submits the user instruction through the authenticated
-// NAVI flow. Extracted file text remains reference context, never edit consent.
-const officeBriefForm = document.getElementById("officeBriefForm");
-const officeSubmitStatus = document.getElementById("officeSubmitStatus");
-function setOfficeSubmitStatus(message) {
-  if (officeSubmitStatus) officeSubmitStatus.textContent = message;
-}
-
-// Temporary, user-visible diagnostics. Request text and workbook contents are never displayed.
-function updateOfficeActionDiagnostic(stage, details = {}) {
-  if (!officeBriefForm) return;
-  let panel = document.getElementById("officeActionDiagnostic");
-  if (!panel) {
-    panel = document.createElement("details");
-    panel.id = "officeActionDiagnostic";
-    panel.style.cssText = "display:block;margin-top:12px;padding:12px;border:1px solid rgba(160,140,100,.45);border-radius:10px;white-space:pre-wrap;overflow-wrap:anywhere";
-    const summary = document.createElement("summary");
-    summary.textContent = "گزارش فنی مسیر تأیید ویرایش (عیب‌یابی)";
-    const body = document.createElement("pre");
-    body.id = "officeActionDiagnosticBody";
-    body.style.cssText = "white-space:pre-wrap;overflow-wrap:anywhere;font:inherit;margin:10px 0 0";
-    panel.append(summary, body);
-    officeBriefForm.appendChild(panel);
-  }
-  const body = document.getElementById("officeActionDiagnosticBody");
-  const previous = body?.textContent || "";
-  const line = "[" + new Date().toLocaleTimeString() + "] " + stage +
-    (Object.keys(details).length ? " — " + Object.entries(details).map(([key, value]) => key + ": " + String(value)).join(" | ") : "");
-  if (body) body.textContent = (previous ? previous + "\n" : "") + line;
-  panel.open = true;
-}
-
-
-officeBriefForm?.addEventListener("submit", async event => {
-  event.preventDefault();
-  setOfficeSubmitStatus("کلیک دریافت شد؛ درخواست در حال بررسی است...");
-  updateOfficeActionDiagnostic("کلیک روی ادامه با NAVI دریافت شد");
-
-  const submitButton = officeBriefForm.querySelector('button[type="submit"]');
-  if (submitButton?.disabled) return;
-  if (submitButton) submitButton.disabled = true;
-  try {
-    const fileState = await window.NavaOfficeFile?.waitForReady?.();
-    if (fileState?.selected && !fileState.ready) throw new Error("فایل هنوز آماده ارسال نیست.");
-    const editorState = await window.NavaOfficeTools?.waitUntilReady?.();
-    if (editorState?.selected && !editorState.ready) throw new Error("ویرایشگر فایل هنوز آماده نیست.");
-  } catch (fileError) {
-    updateOfficeActionDiagnostic("ارسال متوقف شد؛ فایل آماده نیست", { error: fileError?.message || "خطای خواندن فایل" });
-    setOfficeSubmitStatus(fileError?.message || "فایل هنوز آماده نیست؛ کمی صبر کن و دوباره بزن.");
-    const fileStatus = document.getElementById("officeFileStatus");
-    if (fileStatus) fileStatus.textContent = fileError?.message || "ابتدا صبر کن تا خواندن فایل کامل شود.";
-    if (submitButton) submitButton.disabled = false;
-    return;
-  }
-  if (submitButton) submitButton.disabled = false;
-
-  const briefField = document.getElementById("studioBrief-office");
-  const completeBrief = String(briefField?.value || "").trim();
-  const userInstruction = completeBrief
-    .replace(/(?:^|\n)\s*--- متن استخراج‌شده از فایل:[\s\S]*?--- پایان متن فایل ---\s*/g, "\n")
-    .trim();
-
-  if (!userInstruction) {
-    setOfficeSubmitStatus("شرح درخواست خالی است؛ ابتدا درخواستت را در کادر شرح درخواست بنویس.");
-    if (briefField) {
-      briefField.setCustomValidity("ابتدا دستور یا درخواست خودت را در شرح درخواست بنویس.");
-      briefField.reportValidity();
-      briefField.addEventListener("input", () => briefField.setCustomValidity(""), { once: true });
-      briefField.focus();
-    }
-    return;
-  }
-
-  // Keep the complete brief (including extracted document text) in Office
-  // context, but pass only the user-authored instruction as the current message.
-  if (userInstruction.length > 9000) {
-    setOfficeSubmitStatus("شرح درخواست بیش از حد طولانی است؛ آن را کوتاه‌تر کن.");
-    if (briefField) {
-      briefField.setCustomValidity("شرح درخواست خیلی طولانی است؛ لطفاً دستور اصلی را کوتاه‌تر و دقیق‌تر کن.");
-      briefField.reportValidity();
-      briefField.addEventListener("input", () => briefField.setCustomValidity(""), { once: true });
-      briefField.focus();
-    }
-    return;
-  }
-
-  updateOfficeActionDiagnostic("فرم ارسال شد", {
-    instructionCharacters: userInstruction.length,
-    authenticated: Boolean(getNaviToken()),
-    sendButtonBusy: Boolean(sendRequest?.disabled)
-  });
-
-  const officeContext = collectNaviStudioContext("officePage");
-  // Reserve room under the Worker message limit for the actual user instruction
-  // and the other Office fields added by sendMessageToNavi().
-  const contextBriefBudget = Math.max(0, 9000 - userInstruction.length);
-  officeContext.brief = String(officeContext.brief || "").slice(0, contextBriefBudget);
-  // Continue the Office workflow in NAVI's existing animated chat overlay.
-  // This keeps the Office file context but gives the reply and approval card
-  // one reliable, visible destination.
-  const officeService = "کارهای اداری و آفیس";
-  const officeServiceOption = Array.from(serviceSelect.options).find(option => option.value === officeService);
-  if (officeServiceOption) serviceSelect.value = officeService;
-  updateNaviAssistantContext(officeService, officeContext);
-
-  // Pass the Office request explicitly instead of relying on composer/context
-  // state having been updated as a side effect of opening the NAVI widget.
-  // This keeps the form route identical even if the widget state changes.
-  if (!getNaviToken()) {
-    setOfficeSubmitStatus("برای ارسال درخواست، پنجره ورود NAVI باز شد؛ وارد حساب شو و دوباره درخواست را بفرست.");
-    window.openNaviAssistant({
-      service: officeService,
-      context: officeContext,
-      message: userInstruction
-    });
-    updateOfficeActionDiagnostic("ارسال متوقف شد؛ ورود لازم است");
-    return;
-  }
-
-  if (sendRequest.disabled) {
-    setOfficeSubmitStatus("NAVI در حال پردازش درخواست قبلی است؛ پس از پایان پاسخ دوباره تلاش کن.");
-    updateOfficeActionDiagnostic("ارسال انجام نشد؛ دکمه ارسال NAVI مشغول است");
-    setNaviWidgetOpen(true, false);
-    return;
-  }
-
-  setNaviWidgetOpen(true, false);
-  setOfficeSubmitStatus("درخواست به پنجره NAVI فرستاده شد؛ پاسخ را همان‌جا ببین.");
-  updateOfficeActionDiagnostic("درخواست به مسیر گفت‌وگوی NAVI تحویل شد");
-  void sendMessageToNavi({
-    pageOverride: "officePage",
-    messageOverride: userInstruction,
-    serviceOverride: "کارهای اداری و آفیس",
-    contextOverride: officeContext,
-    officeDiagnostic: true,
-    officeTarget: false
-  });
-});
+// The dedicated Office button is wired in office-submit.js.
 
 function scrollToRequest() {
   setNaviWidgetOpen(true, false);
