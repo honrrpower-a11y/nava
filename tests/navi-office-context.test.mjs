@@ -37,7 +37,7 @@ test("Office guided assistant passes its app, user level, operation and task int
   for (const key of ["application:app.value", "userLevel:level.value", 'operation:"guide"', "brief:task"]) {
     assert.ok(guide.includes(key), `Missing guided Office context: ${key}`);
   }
-  assert.match(app, /requestContext\?\.service\s*===\s*"کارهای اداری و آفیس"/);
+  assert.match(app, /requestContext\?\.service\s*===\s*officeService/);
 });
 
 test("Office file extraction appends extracted text to the brief sent through the context path", () => {

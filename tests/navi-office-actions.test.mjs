@@ -175,7 +175,7 @@ test("assistant-style proposal text is not treated as user authorization", () =>
 
 
 test("Office-context requests are sent to the Office route even from the global NAVI chat", () => {
-  assert.match(app, /const officeRequestContext =\s*requestContext\?\.service === "کارهای اداری و آفیس"\s*\|\|\s*selectedService === "کارهای اداری و آفیس"\s*\|\|\s*activePageId === "officePage"/);
+  assert.match(app, /const officeRequestContext =\s*requestContext\?\.service === officeService\s*\|\|\s*naviAssistantContext\?\.service === officeService\s*\|\|\s*selectedService === officeService\s*\|\|\s*activePageId === "officePage"/);
   assert.match(app, /const requestPage = options\.pageOverride === "officePage"[\s\S]*?\? "officePage"[\s\S]*?: officeRequestContext \? "officePage" : activePageId/);
   assert.match(app, /page: requestPage,/);
 });
@@ -195,7 +195,7 @@ test("deterministic Excel proposals are derived on every NAVI chat page while mo
   assert.match(worker, /const explicitOfficeEdit = page === "officePage" && isExplicitOfficeEditRequest\(currentUserTurn\);/);
   assert.ok(worker.includes('let officeAction = deterministicOfficeAction ||'));
   assert.ok(worker.includes('parsed.officeAction?.kind === "replace_text"'));
-  assert.match(worker, /guardNaviOfficeReply\(\s*parsed\.reply,\s*explicitOfficeEdit \|\| Boolean\(deterministicOfficeAction\)\s*\)/);
+  assert.match(worker, /guardNaviOfficeReply\(\s*parsed\.reply,\s*Boolean\(officeAction\)\s*\)/);
 });
 
 
