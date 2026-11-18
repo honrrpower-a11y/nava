@@ -12,6 +12,8 @@ const app = readFileSync(new URL("../app.js", import.meta.url), "utf8");
 const html = readFileSync(new URL("../index.html", import.meta.url), "utf8");
 const editor = readFileSync(new URL("../office-edit-tools.js", import.meta.url), "utf8");
 const fileReader = readFileSync(new URL("../office-file-tools.js", import.meta.url), "utf8");
+const css = readFileSync(new URL("../office-navi-guide.css", import.meta.url), "utf8");
+const guide = readFileSync(new URL("../office-navi-guide.js", import.meta.url), "utf8");
 
 test("NAVI accepts only bounded exact text replacement actions", () => {
   assert.deepEqual(normalizeNaviOfficeAction({
