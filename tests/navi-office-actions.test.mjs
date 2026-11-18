@@ -92,7 +92,7 @@ test("browser never executes an action while rendering; execution is click-confi
 test("local editor binds actions to the same active file and preserves the original", () => {
   assert.match(editor, /selected!==sourceFile/);
   assert.match(editor, /window\.NavaOfficeTools\s*=\s*\{/);
-  assert.match(editor, /download\(new Blob\(\[bytes\]/);
+  assert.match(editor, /download\\(blob,/);
   assert.match(editor, /فایل اصلی بدون تغییر باقی ماند/);
   assert.match(editor, /if\(!count\)\{/);
 });
