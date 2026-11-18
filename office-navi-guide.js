@@ -16,7 +16,62 @@
     assistantColumn.scrollIntoView({ behavior: reducedMotion ? "auto" : "smooth", block: "start" });
   };
 
-  operationsNaviButton?.addEventListener("click", scrollToNaviAnswers);
+  operationsNaviButton?.addEventListener("click", async () => {
+    const value = id => document.getElementById(id)?.value?.trim() || "";
+    const selected = id => {
+      const field = document.getElementById(id);
+      return field?.selectedOptions?.[0]?.textContent?.trim() || "";
+    };
+    const brief = value("studioBrief-office");
+    const submitStatus = document.getElementById("officeSubmitStatus");
+
+    if (!brief) {
+      if (submitStatus) submitStatus.textContent = "ابتدا شرح درخواستت را در فرم بالا بنویس؛ سپس آن را مستقیماً برای NAVI بفرست.";
+      document.getElementById("studioBrief-office")?.focus();
+      return;
+    }
+    if (typeof window.sendOfficeNaviRequest !== "function") {
+      if (submitStatus) submitStatus.textContent = "ارتباط با NAVI هنوز آماده نیست؛ صفحه را تازه‌سازی کن و دوباره تلاش کن.";
+      return;
+    }
+
+    const context = {
+      task: selected("studioTask-office"),
+      operation: value("studioMode-office"),
+      requestedOutput: selected("studioOutput-office"),
+      detailLevel: selected("studioDetail-office"),
+      audience: value("studioAudience-office"),
+      brief
+    };
+    const lines = [
+      "درخواست اجرای عملیات در استودیوی آفیس نوا:",
+      "نوع کار: " + (context.task || "با تشخیص NAVI"),
+      "نوع عملیات: " + (selected("studioMode-office") || "با تشخیص NAVI"),
+      "خروجی مورد انتظار: " + (context.requestedOutput || "با پیشنهاد NAVI"),
+      "سطح جزئیات: " + (context.detailLevel || "حرفه‌ای و کامل")
+    ];
+    if (context.audience) lines.push("مخاطب یا دریافت‌کننده: " + context.audience);
+    lines.push("شرح درخواست و اطلاعات فایل:\\n" + brief);
+    const message = lines.join("\\n");
+
+    operationsNaviButton.disabled = true;
+    const originalLabel = operationsNaviButton.textContent;
+    operationsNaviButton.textContent = "در حال ارسال به NAVI...";
+    if (submitStatus) submitStatus.textContent = "درخواست فرم در حال ارسال مستقیم به NAVI است...";
+    try {
+      const sendPromise = window.sendOfficeNaviRequest({ message, context });
+      scrollToNaviAnswers();
+      const sent = await sendPromise;
+      if (submitStatus) submitStatus.textContent = sent === false
+        ? "برای اجرای درخواست، ابتدا در NAVI وارد حساب شو؛ متن فرم در گفت‌وگو آماده است و نیازی به نوشتن دوباره نیست."
+        : "درخواست همین فرم برای NAVI ارسال شد. پاسخ و در صورت نیاز کارت تأیید، در ستون دستیار نمایش داده می‌شود.";
+    } catch (error) {
+      if (submitStatus) submitStatus.textContent = error?.message || "ارسال درخواست با مشکل مواجه شد؛ دوباره تلاش کن.";
+    } finally {
+      operationsNaviButton.disabled = false;
+      operationsNaviButton.textContent = originalLabel;
+    }
+  });
   if (!app || !level || !question || !ask) return;
 
   document.querySelectorAll(".office-guide-preset").forEach(button => {
