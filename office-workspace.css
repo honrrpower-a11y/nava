@@ -22,3 +22,14 @@ body.light .office-assistant-column{background:linear-gradient(150deg,#fffdf8,#f
 @media(prefers-reduced-motion:reduce){.office-assistant-column .navi-widget-panel.is-inline{animation:none!important}}
 
 .office-operations-grid{grid-template-columns:minmax(0,1fr)}
+
+
+/* A small, thumb-friendly return-to-top control for the Office workspace. */
+.office-back-to-top{position:fixed;left:max(16px,env(safe-area-inset-left));bottom:calc(18px + env(safe-area-inset-bottom));z-index:1200;display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:46px;padding:0 15px;border:1px solid rgba(215,181,109,.48);border-radius:999px;background:rgba(12,22,39,.94);color:#f4d28d;font:inherit;font-size:13px;font-weight:700;box-shadow:0 8px 26px rgba(0,0,0,.28);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);cursor:pointer;opacity:1;transition:opacity .18s ease,transform .18s ease}
+.office-back-to-top span:first-child{font-size:20px;line-height:1}
+.office-back-to-top:hover{transform:translateY(-2px);background:#172a45}
+.office-back-to-top:focus-visible{outline:3px solid #e8bd68;outline-offset:3px}
+.office-back-to-top[hidden]{display:none!important}
+body.light .office-back-to-top{background:rgba(255,253,248,.96);color:#76531b;border-color:rgba(166,119,48,.38);box-shadow:0 8px 24px rgba(38,35,28,.16)}
+@media(max-width:600px){.office-back-to-top{left:max(12px,env(safe-area-inset-left));bottom:calc(12px + env(safe-area-inset-bottom));min-height:44px;padding:0 13px;font-size:12px}}
+@media(prefers-reduced-motion:reduce){.office-back-to-top{transition:none}}
