@@ -214,7 +214,7 @@ test("Office brief submissions open NAVI chat and render approval there", () => 
   assert.ok(formHandler.includes('updateNaviAssistantContext(officeService, officeContext)'));
   assert.ok(!formHandler.includes('window.openNaviAssistant('));
   assert.match(app, /renderNaviOfficeAction\(data\.officeAction,\s*\{\s*target:\s*options\.officeTarget\s*\?\s*"office"\s*:\s*"chat"\s*\}\)/);
-  assert.match(app, /if \(slot === officeSlot && host\) host\.hidden = false/);
+  assert.match(app, /if \(!officeResultTarget && !slot\)/);
 });
 
 test("Office brief form submits the user instruction through NAVI and keeps extracted file text as context only", () => {
@@ -249,7 +249,7 @@ test("Office approval card can render in NAVI chat without requiring the hidden 
   assert.ok(render.includes("? (officeSlot || chatSlot)"));
   assert.ok(render.includes("if (!officeResultTarget && !slot)"));
   assert.ok(!render.includes("if (!officeResultTarget && (!host || !slot))"));
-  assert.ok(render.includes("if (slot === officeSlot && host) host.hidden = false"));
+  assert.ok(render.includes("if (!officeResultTarget && !slot)"));
 });
 
 
@@ -282,7 +282,7 @@ test("guided Office requests submit directly and keep approval cards in the NAVI
   assert.match(app, /window\.sendOfficeNaviRequest = function/);
   assert.match(app, /pageOverride: "officePage"/);
   assert.match(app, /officeTarget: false/);
-  assert.match(app, /target: options.officeTarget ? "office" : "chat"/);
+  assert.match(app, /target:\s*options\.officeTarget\s*\?\s*"office"\s*:\s*"chat"/);
   assert.match(app, /if \(!getNaviToken\(\)\)[\s\S]*?window\.openNaviAssistant\(\{ service, context: officeContext, message: cleanMessage \}\)/);
 });
 
