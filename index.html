@@ -12,8 +12,9 @@
   <link rel="stylesheet" href="business-tools.css?v=business-navi-help-20261116-1">
   <link rel="stylesheet" href="studio-workspaces.css?v=composition-staff-20261114-1">
   <link rel="stylesheet" href="office-navi-guide.css?v=office-two-tabs-20261118-1">
+  <link rel="stylesheet" href="office-workspace.css?v=office-shared-workspace-20261118-1">
   <script src="app.js?v=office-inline-navi-chat-20261118-1" defer></script>
-  <script src="office-navi-guide.js?v=office-guide-office-card-20261118-1" defer></script>
+  <script src="office-navi-guide.js?v=office-guide-shared-assistant-20261118-1" defer></script>
   <script src="logo-studio.js?v=navi-image-logo-engine-20261115-1" defer></script>
 </head>
 <body>
@@ -335,6 +336,8 @@
         <button class="office-tab is-active" id="officeGuideTab" type="button" role="tab" aria-selected="true" aria-controls="officeGuidePane" data-office-tab="guide">آموزش و راهنمایی آفیس</button>
         <button class="office-tab" id="officeOperationsTab" type="button" role="tab" aria-selected="false" aria-controls="officeOperationsPane" data-office-tab="operations" tabindex="-1">عملیات آفیس</button>
       </div>
+      <div class="office-workspace-layout">
+        <div class="office-tab-content">
       <div class="office-tab-panel" id="officeGuidePane" role="tabpanel" aria-labelledby="officeGuideTab">
       <section class="office-navi-guide" aria-labelledby="officeNaviGuideTitle">
         <div class="office-navi-guide-copy">
@@ -362,14 +365,6 @@
       </div>
       <div class="office-tab-panel" id="officeOperationsPane" role="tabpanel" aria-labelledby="officeOperationsTab" hidden>
       <div class="studio-workspace-grid">
-        <section class="office-inline-navi" aria-labelledby="officeInlineNaviTitle">
-          <div class="office-inline-navi-heading">
-            <span class="studio-step">NAVI OFFICE ASSISTANT</span>
-            <h2 id="officeInlineNaviTitle">گفت‌وگو با NAVI در همین صفحه</h2>
-            <p>درخواستت را بنویس، پاسخ را همین‌جا ببین و پیش از هر ویرایش فایل، جزئیات عملیات را تأیید کن.</p>
-          </div>
-          <div id="officeNaviInlineMount" class="office-navi-inline-mount" aria-live="polite"></div>
-        </section>
         <form class="studio-brief-card" id="officeBriefForm">
           <span class="studio-step">شروع کار</span><h2>بریف پروژه</h2>
           <p>اطلاعات اولیه را وارد کن تا NAVI بتواند درخواست را دقیق‌تر دنبال کند.</p>
@@ -460,6 +455,16 @@
           <div class="studio-output-placeholder"><span aria-hidden="true">✦</span><strong>فضای خروجی پروژه</strong><p>نتیجه‌ها و فایل‌های این استودیو پس از تکمیل ابزار تخصصی در این قسمت نمایش داده می‌شوند.</p></div>
         </aside>
       </div>
+        </div>
+        <aside class="office-assistant-column" aria-label="دستیار هوشمند آفیس">
+          <div class="office-assistant-heading">
+            <span class="studio-step">NAVI OFFICE ASSISTANT</span>
+            <h2>دستیار هوشمند آفیس</h2>
+            <p>راهنمایی، پاسخ‌ها و تأیید عملیات در همین فضای ثابت نمایش داده می‌شوند.</p>
+          </div>
+          <button class="btn-secondary office-navi-reopen" id="officeNaviReopen" type="button" hidden>نمایش دوباره دستیار NAVI</button>
+          <div id="officeNaviInlineMount" class="office-navi-inline-mount" aria-live="polite"></div>
+        </aside>
       </div>
 
     </div>
