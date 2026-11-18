@@ -275,13 +275,13 @@ test("Office form waits for both extraction and local editor before submitting",
 });
 
 
-test("guided Office requests submit directly and route approval cards to the Office page", () => {
+test("guided Office requests submit directly and keep approval cards in the NAVI conversation", () => {
   const guide = readFileSync(new URL("../office-navi-guide.js", import.meta.url), "utf8");
   assert.match(guide, /window\.sendOfficeNaviRequest\(\{ message, context \}\)/);
   assert.doesNotMatch(guide, /window\.openNaviAssistant\(/);
   assert.match(app, /window\.sendOfficeNaviRequest = function/);
   assert.match(app, /pageOverride: "officePage"/);
-  assert.match(app, /officeTarget: true/);
+  assert.match(app, /officeTarget: false/);
   assert.match(app, /target: \(options\.officeTarget \|\| options\.officeDiagnostic\) \? "office" : "chat"/);
   assert.match(app, /if \(!getNaviToken\(\)\)[\s\S]*?window\.openNaviAssistant\(\{ service, context: officeContext, message: cleanMessage \}\)/);
 });
