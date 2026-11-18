@@ -92,6 +92,33 @@ test("explicit Excel edit instruction gets a deterministic action when Gemini om
   });
 });
 
+test("natural Persian Excel edit variants create a proposal only with an explicit sheet, cell and quoted value", () => {
+  const expected = (value) => ({
+    kind: "edit_cells",
+    edits: [{ sheet: "آزمایش NAVI", cell: "B3", value }]
+  });
+  assert.deepEqual(
+    extractNaviExplicitExcelEditAction("پیام کاربر: در شیت «آزمایش NAVI»، سلول B3 را به «تأیید شد» تغییر بده."),
+    expected("تأیید شد")
+  );
+  assert.deepEqual(
+    extractNaviExplicitExcelEditAction("پیام کاربر: در شیت «آزمایش NAVI» مقدار سلول B3 را «تأیید شد» قرار بده."),
+    expected("تأیید شد")
+  );
+  assert.deepEqual(
+    extractNaviExplicitExcelEditAction("پیام کاربر: در شیت «آزمایش NAVI»، سلول B3 را روی «تأیید شد» تنظیم کن."),
+    expected("تأیید شد")
+  );
+  assert.equal(
+    extractNaviExplicitExcelEditAction("پیام کاربر: در شیت «آزمایش NAVI»، سلول B3 را به تأیید شد تغییر بده."),
+    null
+  );
+  assert.equal(
+    extractNaviExplicitExcelEditAction("پیام کاربر: سلول B3 را به «تأیید شد» تغییر بده."),
+    null
+  );
+});
+
 test("assistant-style proposal text is not treated as user authorization", () => {
   const proposal = "پیشنهاد تغییر مقدار سلول B3 در شیت «آزمایش NAVI» به «تأیید شد» آماده است. برای اعمال این تغییر روی فایل، آن را تأیید کن.";
   assert.equal(extractNaviExplicitExcelEditAction(proposal), null);
