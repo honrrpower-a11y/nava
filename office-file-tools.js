@@ -123,7 +123,7 @@
       }
       return {selected:true,ready:true,name:selected.name};
     },
-    getState(){return {state:extractionState,name:extractionFile?.name||"",error:extractionError};}
+    getState(){return {state:extractionState,name:extractionFile?.name||"",error:extractionError};},
     setEditStatus(details){
       const selected=input.files&&input.files[0];
       const summary=String(details||"").trim();
