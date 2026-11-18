@@ -805,7 +805,8 @@ window.sendOfficeNaviRequest = function({ message, context } = {}) {
   });
 };
 document.addEventListener("keydown", event => {
-  if (event.key === "Escape" && naviWidgetPanel && !naviWidgetPanel.hidden) {
+  if (event.key === "Escape" && naviWidgetPanel && !naviWidgetPanel.hidden &&
+      !document.body.classList.contains("navi-office-chat-embedded")) {
     setNaviWidgetOpen(false);
     naviWidgetToggle?.focus();
   }
