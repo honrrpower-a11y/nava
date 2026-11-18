@@ -9,6 +9,7 @@ import {
 } from "../modules/navi.js";
 
 const app = readFileSync(new URL("../app.js", import.meta.url), "utf8");
+const officeSubmit = readFileSync(new URL("../office-submit.js", import.meta.url), "utf8");
 const html = readFileSync(new URL("../index.html", import.meta.url), "utf8");
 const editor = readFileSync(new URL("../office-edit-tools.js", import.meta.url), "utf8");
 const fileReader = readFileSync(new URL("../office-file-tools.js", import.meta.url), "utf8");
@@ -207,45 +208,35 @@ test("Office context in the global NAVI chat consistently selects the Office rou
   assert.match(app, /page: requestPage,/);
 });
 
-test("Office brief submissions open NAVI chat and render approval there", () => {
-  const formStart = app.indexOf('officeBriefForm?.addEventListener("submit"');
-  const formEnd = app.indexOf("function scrollToRequest", formStart);
-  const formHandler = app.slice(formStart, formEnd);
-  assert.ok(formHandler.includes('updateNaviAssistantContext(officeService, officeContext)'));
-  assert.ok(formHandler.includes('window.openNaviAssistant('));
-  assert.match(app, /renderNaviOfficeAction\(data\.officeAction,\s*\{\s*target:\s*options\.officeTarget\s*\?\s*"office"\s*:\s*"chat"\s*\}\)/);
-  assert.match(app, /if \(!officeResultTarget && !slot\)/);
-});
-
-test("Office brief form submits the user instruction through NAVI and keeps extracted file text as context only", () => {
-  assert.match(app, /const officeBriefForm = document\.getElementById\("officeBriefForm"\)/);
-  assert.match(app, /completeBrief[\s\S]*?replace\([\s\S]*?متن استخراج‌شده از فایل/);
-  assert.match(app, /messageOverride: userInstruction/);
-  assert.match(app, /contextOverride: officeContext/);
-  assert.match(app, /updateNaviAssistantContext\(officeService, officeContext\)/);
-  assert.match(app, /contextBriefBudget = Math\.max\(0, 9000 - userInstruction\.length\)/);
-  assert.match(app, /officeContext\.brief = String\(officeContext\.brief \|\| ""\)\.slice\(0, contextBriefBudget\)/);
-  assert.match(app, /if \(!getNaviToken\(\)\)[\s\S]*?window\.openNaviAssistant\(\{[\s\S]*?message: userInstruction/);
-  assert.match(app, /if \(sendRequest\.disabled\)[\s\S]*?setNaviWidgetOpen\(true, false\)/);
-  assert.match(app, /sendMessageToNavi\(\{[\s\S]*?pageOverride: "officePage",[\s\S]*?messageOverride: userInstruction,[\s\S]*?serviceOverride: "کارهای اداری و آفیس",[\s\S]*?contextOverride: officeContext[\s\S]*?\}\)/);
-  assert.match(app, /async function sendMessageToNavi\(options = \{\}\)/);
-  assert.match(app, /options\.pageOverride === "officePage"[\s\S]*?\? "officePage"/);
-  const html = readFileSync(new URL("../index.html", import.meta.url), "utf8");
+test("the exact Office brief button is wired in an isolated click handler", () => {
   assert.match(html, /<form class="studio-brief-card" id="officeBriefForm">/);
-  assert.match(html, /<button class="btn-primary" id="officeBriefSubmit" type="submit">ادامه با NAVI<\/button>/);
-  assert.match(html, /id="officeSubmitStatus" role="status" aria-live="polite"/);
+  assert.match(html, /<button class="btn-primary" id="officeBriefSubmit" type="button">ادامه با NAVI<\/button>/);
+  assert.match(html, /office-submit\.js\?v=office-button-rebuild-20261118-1/);
+  assert.match(officeSubmit, /getElementById\("officeBriefSubmit"\)/);
+  assert.match(officeSubmit, /button\.addEventListener\("click"/);
+  assert.match(officeSubmit, /window\.sendOfficeNaviRequest\(\{ message: userInstruction \}\)/);
+  assert.match(app, /renderNaviOfficeAction\(data\.officeAction,\s*\{\s*target: options\.officeTarget\s*\?\s*"office"\s*:\s*"chat"\s*\}\)/);
 });
 
+test("the rebuilt Office button reads the Office brief and reports errors visibly", () => {
+  assert.match(officeSubmit, /getElementById\("studioBrief-office"\)/);
+  assert.match(officeSubmit, /متن استخراج‌شده از فایل/);
+  assert.match(officeSubmit, /waitForReady/);
+  assert.match(officeSubmit, /waitUntilReady/);
+  assert.match(officeSubmit, /setStatus\(/);
+  assert.match(app, /window\.sendOfficeNaviRequest = function/);
+  assert.match(app, /collectNaviStudioContext\("officePage"\)/);
+  assert.match(app, /messageOverride: cleanMessage/);
+  assert.match(app, /contextOverride: officeContext/);
+  assert.match(app, /pageOverride: "officePage"/);
+});
 
-test("Office form passes its exact user instruction, service, and context directly into NAVI send", () => {
-  assert.ok(app.includes('const message = typeof options.messageOverride === "string"'));
-  assert.ok(app.includes("context: options.contextOverride"));
-  assert.ok(app.includes("messageOverride: userInstruction,"));
-  assert.ok(app.includes('serviceOverride: "کارهای اداری و آفیس"'));
-  assert.ok(app.includes("contextOverride: officeContext"));
-  const formStart = app.indexOf('officeBriefForm?.addEventListener("submit"');
-  const formEnd = app.indexOf("function scrollToRequest", formStart);
-  assert.ok(app.slice(formStart, formEnd).includes("window.openNaviAssistant("));
+test("Office handoff targets only the Office page and service", () => {
+  assert.ok(app.includes('serviceOverride: service'));
+  assert.ok(app.includes('pageOverride: "officePage"'));
+  assert.ok(app.includes('officeTarget: false'));
+  assert.match(app, /window\.sendOfficeNaviRequest = function/);
+  assert.match(officeSubmit, /window\.sendOfficeNaviRequest\(\{ message: userInstruction \}\)/);
 });
 
 test("Office approval card can render in NAVI chat without requiring the hidden Office host", () => {
@@ -273,8 +264,8 @@ test("Excel parser checks the marked current turn before parsing its extracted u
 test("Office form waits for both extraction and local editor before submitting", () => {
   assert.match(fileReader, /waitForReady\(\)/);
   assert.match(editor, /waitUntilReady\(\)/);
-  assert.match(app, /NavaOfficeFile\?\.waitForReady/);
-  assert.match(app, /NavaOfficeTools\?\.waitUntilReady/);
+  assert.match(officeSubmit, /NavaOfficeFile\?\.waitForReady/);
+  assert.match(officeSubmit, /NavaOfficeTools\?\.waitUntilReady/);
   assert.match(fileReader, /NavaOfficeTools\?\.reset\?\.\(\)/);
 });
 
