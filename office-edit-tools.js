@@ -89,28 +89,6 @@
    }
   }catch(error){if(input.files?.[0]===file){hide();setStatus(error.message||"آماده‌سازی ویرایشگر ناموفق بود.",true);}throw error;}
  }
- window.NavaOfficeTools = {
-  async waitUntilReady(){
-   await editorReadyPromise;
-   const selected=input.files&&input.files[0];
-   if(!selected)return {selected:false,ready:false};
-   const info=this.getActiveFileInfo();
-   const ext=selected.name.split(".").pop().toLowerCase();
-   if(["xlsx","pptx","docx"].includes(ext)&&(!info.ready||sourceFile!==selected)){
-    throw new Error("ویرایشگر فایل هنوز آماده نیست. چند لحظه صبر کن و دوباره تلاش کن.");
-   }
-   return {selected:true,ready:info.ready,name:info.name,kind:info.kind};
-  },
-  reset(){
-   sourceFile=null;workbook=null;zip=null;kind="";editorReadyPromise=Promise.resolve();
-   hide();
-  },
-  getActiveFileInfo(){
-   const selected=input.files&&input.files[0];
-   const ready=Boolean(sourceFile&&selected===sourceFile&&kind&&((kind==="xlsx"&&workbook)||(kind!=="xlsx"&&zip)));
-   return {ready,name:sourceFile?.name||selected?.name||"",kind};
-  },
-  async executeAction(action) {
  $("officeEditSave")?.addEventListener("click",()=>{
   if(kind!=="xlsx"||!workbook)return;
   try{
@@ -143,6 +121,29 @@
    setStatus(count+" جایگزینی انجام شد؛ نسخه جدید دانلود شد و فایل اصلی دست‌نخورده ماند.");
   }catch(error){setStatus(error.message||"ویرایش فایل ناموفق بود.",true);}
  });
+
+ window.NavaOfficeTools = {
+  async waitUntilReady(){
+   await editorReadyPromise;
+   const selected=input.files&&input.files[0];
+   if(!selected)return {selected:false,ready:false};
+   const info=this.getActiveFileInfo();
+   const ext=selected.name.split(".").pop().toLowerCase();
+   if(["xlsx","pptx","docx"].includes(ext)&&(!info.ready||sourceFile!==selected)){
+    throw new Error("ویرایشگر فایل هنوز آماده نیست. چند لحظه صبر کن و دوباره تلاش کن.");
+   }
+   return {selected:true,ready:info.ready,name:info.name,kind:info.kind};
+  },
+  reset(){
+   sourceFile=null;workbook=null;zip=null;kind="";editorReadyPromise=Promise.resolve();
+   hide();
+  },
+  getActiveFileInfo(){
+   const selected=input.files&&input.files[0];
+   const ready=Boolean(sourceFile&&selected===sourceFile&&kind&&((kind==="xlsx"&&workbook)||(kind!=="xlsx"&&zip)));
+   return {ready,name:sourceFile?.name||selected?.name||"",kind};
+  },
+  async executeAction(action) {
  async executeAction(action) {
    const selected=input.files&&input.files[0];
    if(!sourceFile||selected!==sourceFile)throw new Error("فایل فعال تغییر کرده است؛ فایل را دوباره در ابزار آفیس بارگذاری کن.");
