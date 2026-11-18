@@ -342,7 +342,7 @@ export function isExplicitOfficeEditRequest(message) {
   if (marker < 0) return false;
   const userText = text.slice(marker + "پیام کاربر:".length).trim();
   if (!userText) return false;
-  return /(?:ویرایش(?:ش)?\s*(?:کن|کنید|بده|بدهید)|تغییر\s+(?:بده|بدید|کن)|جایگزین(?:ی)?\s*(?:کن|کنید|بده|بدهید|کردن|شود|بشه)|عوض\s*کن|قرار\s*بده|تنظیم\s*کن|بنویس|حذف\s*کن|اصلاح\s*کن|به\s*روز\s*کن|edit(?:\s+the)?|replace(?:\s+the)?|update(?:\s+the)?|set\s+(?:cell|value))/iu.test(userText);
+  return /(?:ویرایش(?:ش)?\s*(?:کن|کنید|بده|بدهید)|تغییر\s+(?:بده|بدید|کن)|جایگزین(?:ی)?\s*(?:کن|کنید|بده|بدهید|کردن|شود|بشه)|عوض\s*کن|قرار\s*بده|تنظیم\s*کن|بنویس|حذف\s*کن|اصلاح\s*کن|به\s*روز\s*کن|(?:سلول\s*[A-Z]{1,3}[1-9][0-9]{0,6}[\s\S]{0,80}(?:کن(?:ید)?|بذار(?:ید)?|بگذار(?:ید)?))|edit(?:\s+the)?|replace(?:\s+the)?|update(?:\s+the)?|set\s+(?:cell|value))/iu.test(userText);
 }
 
 // Deterministic fallback for one narrowly defined, fully explicit Excel edit.
@@ -363,14 +363,38 @@ export function extractNaviExplicitExcelEditAction(message) {
   // A proposal is created only when the user explicitly names the sheet, cell,
   // and a quoted final value. The previous cell value is optional.
   const patterns = [
-    /در\s+شیت\s*[«“"]([^»”"]{1,80})[»”"]\s*[,،]?\s*(?:مقدار\s+)?سلول\s+([A-Z]{1,3}[1-9][0-9]{0,6})\s+را\s+از\s*[«“"]([^»”"]{1,500})[»”"]\s+به\s*[«“"]([^»”"]{1,500})[»”"]\s+(?:تغییر\s*بده(?:ید)?|عوض\s*کن(?:ید)?)/iu,
-    /در\s+شیت\s*[«“"]([^»”"]{1,80})[»”"]\s*[,،]?\s*(?:مقدار\s+)?سلول\s+([A-Z]{1,3}[1-9][0-9]{0,6})\s+را\s+(?:از\s*[«“"][^»”"]{1,500}[»”"]\s*)?(?:به\s*)?[«“"]([^»”"]{1,500})[»”"]\s+(?:تغییر\s*بده(?:ید)?|عوض\s*کن(?:ید)?|قرار\s*بده(?:ید)?|بنویس(?:ید)?|ثبت\s*کن(?:ید)?)/iu,
-    /در\s+شیت\s*[«“"]([^»”"]{1,80})[»”"]\s*[,،]?\s*(?:مقدار\s+)?سلول\s+([A-Z]{1,3}[1-9][0-9]{0,6})\s+(?:را\s+)?(?:روی|به)\s*[«“"]([^»”"]{1,500})[»”"]\s+(?:قرار\s*بده(?:ید)?|تنظیم\s*کن(?:ید)?)/iu
+    {
+      regex: /در\s+شیت\s*[«“"]([^»”"]{1,80})[»”"]\s*[,،]?\s*(?:مقدار\s+)?سلول\s+([A-Z]{1,3}[1-9][0-9]{0,6})\s+را\s+از\s*[«“"]([^»”"]{1,500})[»”"]\s+به\s*[«“"]([^»”"]{1,500})[»”"]\s+(?:تغییر\s*بده(?:ید)?|عوض\s*کن(?:ید)?)/iu,
+      valueGroup: 4
+    },
+    {
+      regex: /در\s+شیت\s*[«“"]([^»”"]{1,80})[»”"]\s*[,،]?\s*(?:مقدار\s+)?سلول\s+([A-Z]{1,3}[1-9][0-9]{0,6})\s+را\s+(?:از\s*[«“"][^»”"]{1,500}[»”"]\s*)?(?:به\s*)?[«“"]([^»”"]{1,500})[»”"]\s+(?:تغییر\s*بده(?:ید)?|عوض\s*کن(?:ید)?|قرار\s*بده(?:ید)?|بنویس(?:ید)?|ثبت\s*کن(?:ید)?)/iu,
+      valueGroup: 3
+    },
+    {
+      regex: /در\s+شیت\s*[«“"]([^»”"]{1,80})[»”"]\s*[,،]?\s*(?:مقدار\s+)?سلول\s+([A-Z]{1,3}[1-9][0-9]{0,6})\s+(?:را\s+)?(?:روی|به)\s*[«“"]([^»”"]{1,500})[»”"]\s+(?:قرار\s*بده(?:ید)?|تنظیم\s*کن(?:ید)?)/iu,
+      valueGroup: 3
+    },
+    {
+      // Common concise wording: "در شیت X سلول B2 رو 250 کن".
+      // Unquoted values are accepted only when they are unambiguous numbers.
+      regex: /در\s+شیت\s*[«“"]([^»”"]{1,80})[»”"]\s*[,،]?\s*(?:مقدار\s+)?سلول\s+([A-Z]{1,3}[1-9][0-9]{0,6})\s*(?:را|رو)?\s*(?:(?:به|روی)\s*)?([+-]?[0-9۰-۹٠-٩]+(?:[.,٫][0-9۰-۹٠-٩]+)?)\s*(?:تغییر\s*بده(?:ید)?|عوض\s*کن(?:ید)?|قرار\s*بده(?:ید)?|تنظیم\s*کن(?:ید)?|کن(?:ید)?|بذار(?:ید)?|بگذار(?:ید)?)\s*[.!؟،]*$/iu,
+      valueGroup: 3,
+      numeric: true
+    }
   ];
-  for (let index = 0; index < patterns.length; index += 1) {
-    const match = userText.match(patterns[index]);
+  for (const pattern of patterns) {
+    const match = userText.match(pattern.regex);
     if (!match) continue;
-    const value = index === 0 ? match[4] : match[3];
+    let value = match[pattern.valueGroup];
+    if (pattern.numeric) {
+      const normalized = String(value)
+        .replace(/[۰-۹]/g, digit => "۰۱۲۳۴۵۶۷۸۹".indexOf(digit))
+        .replace(/[٠-٩]/g, digit => "٠١٢٣٤٥٦٧٨٩".indexOf(digit))
+        .replace(/[٫،]/g, ".");
+      value = Number(normalized);
+      if (!Number.isFinite(value)) continue;
+    }
     return normalizeNaviOfficeAction({
       kind: "edit_cells",
       edits: [{ sheet: match[1].trim(), cell: match[2].toUpperCase(), value }]

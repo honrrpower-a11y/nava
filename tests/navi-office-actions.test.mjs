@@ -129,6 +129,25 @@ test("natural Persian Excel edit variants create a proposal only with an explici
   );
 });
 
+test("concise Persian Excel edits accept explicit numeric values and common wording", () => {
+  const expected = {
+    kind: "edit_cells",
+    edits: [{ sheet: "فروش", cell: "B2", value: 250 }]
+  };
+  const message = "پیام کاربر: در شیت «فروش» سلول B2 رو ۲۵۰ کن";
+  assert.equal(isExplicitOfficeEditRequest(message), true);
+  assert.deepEqual(extractNaviExplicitExcelEditAction(message), expected);
+
+  assert.deepEqual(
+    extractNaviExplicitExcelEditAction("پیام کاربر: در شیت «فروش» مقدار سلول C3 را به 125.5 تغییر بده"),
+    { kind: "edit_cells", edits: [{ sheet: "فروش", cell: "C3", value: 125.5 }] }
+  );
+  assert.equal(
+    extractNaviExplicitExcelEditAction("پیام کاربر: در شیت «فروش» سلول B2 رو متن جدید کن"),
+    null
+  );
+});
+
 test("assistant-style proposal text is not treated as user authorization", () => {
   const proposal = "پیشنهاد تغییر مقدار سلول B3 در شیت «آزمایش NAVI» به «تأیید شد» آماده است. برای اعمال این تغییر روی فایل، آن را تأیید کن.";
   assert.equal(extractNaviExplicitExcelEditAction(proposal), null);
