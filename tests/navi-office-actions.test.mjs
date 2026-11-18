@@ -195,7 +195,7 @@ test("deterministic Excel proposals are derived on every NAVI chat page while mo
   assert.match(worker, /const explicitOfficeEdit = page === "officePage" && isExplicitOfficeEditRequest\(currentUserTurn\);/);
   assert.ok(worker.includes('let officeAction = deterministicOfficeAction ||'));
   assert.ok(worker.includes('parsed.officeAction?.kind === "replace_text"'));
-  assert.match(worker, /guardNaviOfficeReply\(\s*parsed\.reply,\s*explicitOfficeEdit \|\| Boolean\(deterministicOfficeAction\)\s*\)/);
+  assert.match(worker, /guardNaviOfficeReply\(\s*parsed\.reply,\s*Boolean\(officeAction\)\s*\)/);
 });
 
 
