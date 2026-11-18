@@ -157,6 +157,7 @@ const officeNaviInlineHost = document.getElementById("officeNaviInlineHost");
 const naviAssistantWidget = document.getElementById("naviAssistantWidget");
 let naviWidgetOriginalPlaceholder = null;
 
+// Reparent the real NAVI widget instead of creating a second chat or duplicating IDs.
 function mountNaviWidgetInOffice() {
   if (!naviWidgetPanel || !officeNaviInlineHost) return false;
   if (!naviWidgetOriginalPlaceholder && naviWidgetPanel.parentNode) {
