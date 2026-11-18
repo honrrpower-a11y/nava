@@ -312,7 +312,7 @@ test("Office embeds the existing NAVI conversation directly in its operations ta
   assert.match(app, /function restoreNaviWidgetFromOffice\(\)/);
   assert.match(app, /naviWidgetOriginalPlaceholder/);
   assert.match(app, /tab\.dataset\.officeTab === "operations"[\s\S]*?mountNaviWidgetInOffice\(\)/);
-  assert.match(app, /tab\.dataset\.officeTab === "guide"[\s\S]*?restoreNaviWidgetFromOffice\(\)/);
+  assert.match(app, /tab\.dataset\.officeTab === "operations"[\s\S]*?else\s*\{[\s\S]*?restoreNaviWidgetFromOffice\(\)/);
   assert.match(css, /\.navi-widget-panel\.is-office-embedded/);
   assert.match(html, /app\.js\?v=office-inline-navi-chat-20261118-1/);
   assert.match(app, /officeTarget: false/);
@@ -335,7 +335,7 @@ test("Office is split into separate accessible guidance and operations tabs", ()
   assert.match(html, /id="officeOperationsPane" role="tabpanel"[^>]*hidden/);
   assert.match(html, /id="officeGuidePane"[\s\S]*?id="officeNaviGuideTitle"/);
   assert.match(html, /id="officeOperationsPane"[\s\S]*?id="officeBriefForm"/);
-  assert.match(html, /id="officeOperationsPane"[\s\S]*?id="officeOpenBlankNavi"/);
+  assert.match(html, /id="officeOperationsPane"[\s\S]*?id="officeNaviInlineHost"/);
   assert.match(app, /const activateOfficeTab = \(name, focus = false\)/);
   assert.match(app, /activateOfficeTab\("guide"\)/);
   assert.match(app, /event\.key !== "ArrowLeft" && event\.key !== "ArrowRight"/);
