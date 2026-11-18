@@ -314,3 +314,16 @@ test("active Office file metadata exposes only real workbook sheet names", () =>
   assert.match(app, /activeOfficeFileInfo\.sheetNames/);
   assert.match(app, /شیت‌های فایل فعال \(از فایل بارگذاری‌شده\):/);
 });
+
+
+test("Office opens a clean blank NAVI session from its dedicated button", () => {
+  assert.match(html, /id="officeOpenBlankNavi" type="button">باز کردن NAVI خالی/);
+  assert.doesNotMatch(html, /id="officeBriefSubmit"/);
+  assert.match(app, /const officeOpenBlankNaviButton = document\.getElementById\("officeOpenBlankNavi"\)/);
+  assert.match(app, /window\.openNaviAssistant\(\{ service: "گفت‌وگوی عمومی", blank: true \}\)/);
+  assert.match(app, /if \(options\.blank === true\)/);
+  assert.match(app, /naviAssistantContext = null;/);
+  assert.match(app, /if \(userRequest\) userRequest\.value = "";/);
+  assert.doesNotMatch(app, /officeBriefForm\?\.addEventListener\("submit"/);
+  assert.match(html, /app\.js\?v=navi-blank-office-button-20261118-1/);
+});
