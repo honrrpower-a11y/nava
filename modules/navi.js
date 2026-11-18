@@ -342,7 +342,7 @@ export function isExplicitOfficeEditRequest(message) {
   if (marker < 0) return false;
   const userText = text.slice(marker + "پیام کاربر:".length).trim();
   if (!userText) return false;
-  return /(?:ویرایش(?:ش)?\s*(?:کن|کنید|بده|بدهید)|تغییر\s+(?:بده|بدید|کن)|جایگزین(?:ی)?\s*(?:کن|کنید|بده|بدهید|کردن|شود|بشه)|عوض\s*کن|قرار\s*بده|بنویس|حذف\s*کن|اصلاح\s*کن|به\s*روز\s*کن|edit(?:\s+the)?|replace(?:\s+the)?|update(?:\s+the)?|set\s+(?:cell|value))/iu.test(userText);
+  return /(?:ویرایش(?:ش)?\s*(?:کن|کنید|بده|بدهید)|تغییر\s+(?:بده|بدید|کن)|جایگزین(?:ی)?\s*(?:کن|کنید|بده|بدهید|کردن|شود|بشه)|عوض\s*کن|قرار\s*بده|تنظیم\s*کن|بنویس|حذف\s*کن|اصلاح\s*کن|به\s*روز\s*کن|edit(?:\s+the)?|replace(?:\s+the)?|update(?:\s+the)?|set\s+(?:cell|value))/iu.test(userText);
 }
 
 // Deterministic fallback for one narrowly defined, fully explicit Excel edit.
