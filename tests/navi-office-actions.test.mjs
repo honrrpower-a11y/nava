@@ -271,6 +271,7 @@ test("guided Office requests submit directly and keep approval cards in the NAVI
   assert.match(guide, /window\.sendOfficeNaviRequest\(\{ message, context \}\)/);
   assert.doesNotMatch(guide, /window\.openNaviAssistant\(/);
   assert.match(app, /window\.sendOfficeNaviRequest = function/);
+  assert.match(app, /document\.getElementById\("officeOperationsTab"\)\?\.click\(\)/);
   assert.match(app, /pageOverride: "officePage"/);
   assert.match(app, /officeTarget: false/);
   assert.match(app, /target:\s*options\.officeTarget\s*\?\s*"office"\s*:\s*"chat"/);
