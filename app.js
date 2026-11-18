@@ -384,10 +384,10 @@ function setNavaAccessGate(active) {
 
 function showPage(pageId) {
   if (navaAccessGateActive && pageId !== "homePage") return;
-  if (pageId !== "officePage") {
+  if (pageId !== "officePage" || !document.body.classList.contains("navi-office-chat-embedded")) {
     if (naviWidgetPanel && !naviWidgetPanel.hidden) setNaviWidgetOpen(false);
-    restoreNaviWidgetFromOffice();
   }
+  if (pageId !== "officePage") restoreNaviWidgetFromOffice();
   pages.forEach(page => page.classList.toggle("active", page.id === pageId));
   navButtons.forEach(button => button.classList.toggle("active", button.dataset.page === pageId));
 
