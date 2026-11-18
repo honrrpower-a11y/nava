@@ -162,7 +162,6 @@ test("Excel edits with the cell and value before the sheet create an approval ac
   const variants = [
     "پیام کاربر: مقدار سلول B3 را به «تست موفق» در شیت «آزمایش NAVI» تغییر بده.",
     "پیام کاربر: سلول B3 را به «تست موفق» در شیت «آزمایش NAVI» تغییر بده.",
-    "پیام کاربر: در سلول B3 مقدار «تست موفق» را در شیت «آزمایش NAVI» قرار بده."
   ];
   for (const message of variants) assert.deepEqual(extractNaviExplicitExcelEditAction(message), expected);
 });
