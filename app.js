@@ -3565,6 +3565,8 @@ officeBriefForm?.addEventListener("submit", async event => {
   try {
     const fileState = await window.NavaOfficeFile?.waitForReady?.();
     if (fileState?.selected && !fileState.ready) throw new Error("فایل هنوز آماده ارسال نیست.");
+    const editorState = await window.NavaOfficeTools?.waitUntilReady?.();
+    if (editorState?.selected && !editorState.ready) throw new Error("ویرایشگر فایل هنوز آماده نیست.");
   } catch (fileError) {
     updateOfficeActionDiagnostic("ارسال متوقف شد؛ فایل آماده نیست", { error: fileError?.message || "خطای خواندن فایل" });
     const fileStatus = document.getElementById("officeFileStatus");
