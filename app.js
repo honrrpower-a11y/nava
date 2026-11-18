@@ -800,7 +800,7 @@ window.sendOfficeNaviRequest = function({ message, context } = {}) {
     serviceSelect.value = service;
   }
   updateNaviAssistantContext(service, officeContext);
-  // NAVI is mounted inside the Office operations tab; keep its existing session and renderer.
+  // NAVI lives in the shared Office assistant rail; preserve the existing session and renderer.
   setNaviWidgetOpen(true, false);
   return sendMessageToNavi({
     pageOverride: "officePage",
@@ -812,8 +812,9 @@ window.sendOfficeNaviRequest = function({ message, context } = {}) {
 };
 document.addEventListener("keydown", event => {
   if (event.key === "Escape" && naviWidgetPanel && !naviWidgetPanel.hidden) {
+    const inlineOffice = naviWidgetPanel.classList.contains("is-inline");
     setNaviWidgetOpen(false);
-    naviWidgetToggle?.focus();
+    (inlineOffice ? document.getElementById("officeNaviReopen") : naviWidgetToggle)?.focus();
   }
 });
 
