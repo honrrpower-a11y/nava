@@ -212,7 +212,7 @@ test("Office brief submissions open NAVI chat and render approval there", () => 
   const formEnd = app.indexOf("function scrollToRequest", formStart);
   const formHandler = app.slice(formStart, formEnd);
   assert.ok(formHandler.includes('updateNaviAssistantContext(officeService, officeContext)'));
-  assert.ok(!formHandler.includes('window.openNaviAssistant('));
+  assert.ok(formHandler.includes('window.openNaviAssistant('));
   assert.match(app, /renderNaviOfficeAction\(data\.officeAction,\s*\{\s*target:\s*options\.officeTarget\s*\?\s*"office"\s*:\s*"chat"\s*\}\)/);
   assert.match(app, /if \(!officeResultTarget && !slot\)/);
 });
@@ -225,11 +225,15 @@ test("Office brief form submits the user instruction through NAVI and keeps extr
   assert.match(app, /updateNaviAssistantContext\(officeService, officeContext\)/);
   assert.match(app, /contextBriefBudget = Math\.max\(0, 9000 - userInstruction\.length\)/);
   assert.match(app, /officeContext\.brief = String\(officeContext\.brief \|\| ""\)\.slice\(0, contextBriefBudget\)/);
-  assert.match(app, /if \(getNaviToken\(\) && !sendRequest\.disabled\)[\s\S]*?sendMessageToNavi\(\{[\s\S]*?pageOverride: "officePage",[\s\S]*?messageOverride: userInstruction,[\s\S]*?serviceOverride: "کارهای اداری و آفیس",[\s\S]*?contextOverride: officeContext[\s\S]*?\}\)/);
+  assert.match(app, /if \(!getNaviToken\(\)\)[\s\S]*?window\.openNaviAssistant\(\{[\s\S]*?message: userInstruction/);
+  assert.match(app, /if \(sendRequest\.disabled\)[\s\S]*?setNaviWidgetOpen\(true, false\)/);
+  assert.match(app, /sendMessageToNavi\(\{[\s\S]*?pageOverride: "officePage",[\s\S]*?messageOverride: userInstruction,[\s\S]*?serviceOverride: "کارهای اداری و آفیس",[\s\S]*?contextOverride: officeContext[\s\S]*?\}\)/);
   assert.match(app, /async function sendMessageToNavi\(options = \{\}\)/);
   assert.match(app, /options\.pageOverride === "officePage"[\s\S]*?\? "officePage"/);
   const html = readFileSync(new URL("../index.html", import.meta.url), "utf8");
   assert.match(html, /<form class="studio-brief-card" id="officeBriefForm">/);
+  assert.match(html, /<button class="btn-primary" id="officeBriefSubmit" type="submit">ادامه با NAVI<\/button>/);
+  assert.match(html, /id="officeSubmitStatus" role="status" aria-live="polite"/);
 });
 
 
@@ -241,7 +245,7 @@ test("Office form passes its exact user instruction, service, and context direct
   assert.ok(app.includes("contextOverride: officeContext"));
   const formStart = app.indexOf('officeBriefForm?.addEventListener("submit"');
   const formEnd = app.indexOf("function scrollToRequest", formStart);
-  assert.ok(!app.slice(formStart, formEnd).includes("window.openNaviAssistant("));
+  assert.ok(app.slice(formStart, formEnd).includes("window.openNaviAssistant("));
 });
 
 test("Office approval card can render in NAVI chat without requiring the hidden Office host", () => {
