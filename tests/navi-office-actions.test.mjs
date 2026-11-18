@@ -207,47 +207,6 @@ test("Office context in the global NAVI chat consistently selects the Office rou
   assert.match(app, /page: requestPage,/);
 });
 
-test("Office brief submissions open NAVI chat and render approval there", () => {
-  const formStart = app.indexOf('officeBriefForm?.addEventListener("submit"');
-  const formEnd = app.indexOf("function scrollToRequest", formStart);
-  const formHandler = app.slice(formStart, formEnd);
-  assert.ok(formHandler.includes('updateNaviAssistantContext(officeService, officeContext)'));
-  assert.ok(formHandler.includes('window.openNaviAssistant('));
-  assert.match(app, /renderNaviOfficeAction\(data\.officeAction,\s*\{\s*target:\s*options\.officeTarget\s*\?\s*"office"\s*:\s*"chat"\s*\}\)/);
-  assert.match(app, /if \(!officeResultTarget && !slot\)/);
-});
-
-test("Office brief form submits the user instruction through NAVI and keeps extracted file text as context only", () => {
-  assert.match(app, /const officeBriefForm = document\.getElementById\("officeBriefForm"\)/);
-  assert.match(app, /completeBrief[\s\S]*?replace\([\s\S]*?متن استخراج‌شده از فایل/);
-  assert.match(app, /messageOverride: userInstruction/);
-  assert.match(app, /contextOverride: officeContext/);
-  assert.match(app, /updateNaviAssistantContext\(officeService, officeContext\)/);
-  assert.match(app, /contextBriefBudget = Math\.max\(0, 9000 - userInstruction\.length\)/);
-  assert.match(app, /officeContext\.brief = String\(officeContext\.brief \|\| ""\)\.slice\(0, contextBriefBudget\)/);
-  assert.match(app, /if \(!getNaviToken\(\)\)[\s\S]*?window\.openNaviAssistant\(\{[\s\S]*?message: userInstruction/);
-  assert.match(app, /if \(sendRequest\.disabled\)[\s\S]*?setNaviWidgetOpen\(true, false\)/);
-  assert.match(app, /sendMessageToNavi\(\{[\s\S]*?pageOverride: "officePage",[\s\S]*?messageOverride: userInstruction,[\s\S]*?serviceOverride: "کارهای اداری و آفیس",[\s\S]*?contextOverride: officeContext[\s\S]*?\}\)/);
-  assert.match(app, /async function sendMessageToNavi\(options = \{\}\)/);
-  assert.match(app, /options\.pageOverride === "officePage"[\s\S]*?\? "officePage"/);
-  const html = readFileSync(new URL("../index.html", import.meta.url), "utf8");
-  assert.match(html, /<form class="studio-brief-card" id="officeBriefForm">/);
-  assert.match(html, /<button class="btn-primary" id="officeBriefSubmit" type="submit">ادامه با NAVI<\/button>/);
-  assert.match(html, /id="officeSubmitStatus" role="status" aria-live="polite"/);
-});
-
-
-test("Office form passes its exact user instruction, service, and context directly into NAVI send", () => {
-  assert.ok(app.includes('const message = typeof options.messageOverride === "string"'));
-  assert.ok(app.includes("context: options.contextOverride"));
-  assert.ok(app.includes("messageOverride: userInstruction,"));
-  assert.ok(app.includes('serviceOverride: "کارهای اداری و آفیس"'));
-  assert.ok(app.includes("contextOverride: officeContext"));
-  const formStart = app.indexOf('officeBriefForm?.addEventListener("submit"');
-  const formEnd = app.indexOf("function scrollToRequest", formStart);
-  assert.ok(app.slice(formStart, formEnd).includes("window.openNaviAssistant("));
-});
-
 test("Office approval card can render in NAVI chat without requiring the hidden Office host", () => {
   const render = app.slice(app.indexOf("function renderNaviOfficeAction"), app.indexOf("// Select only NAVI response text"));
   assert.ok(render.includes("? (officeSlot || chatSlot)"));
@@ -267,15 +226,6 @@ test("the Worker adds the current-user delimiter before authorizing an Office ed
 test("Excel parser checks the marked current turn before parsing its extracted user text", () => {
   const worker = readFileSync(new URL("../modules/navi.js", import.meta.url), "utf8");
   assert.match(worker, /if \(!isExplicitOfficeEditRequest\(text\)\) return null/);
-});
-
-
-test("Office form waits for both extraction and local editor before submitting", () => {
-  assert.match(fileReader, /waitForReady\(\)/);
-  assert.match(editor, /waitUntilReady\(\)/);
-  assert.match(app, /NavaOfficeFile\?\.waitForReady/);
-  assert.match(app, /NavaOfficeTools\?\.waitUntilReady/);
-  assert.match(fileReader, /NavaOfficeTools\?\.reset\?\.\(\)/);
 });
 
 
@@ -313,4 +263,27 @@ test("active Office file metadata exposes only real workbook sheet names", () =>
     /sheetNames:ready&&kind==="xlsx"&&Array\.isArray\(workbook\?\.SheetNames\)\?\[\.\.\.workbook\.SheetNames\]:\[\]/);
   assert.match(app, /activeOfficeFileInfo\.sheetNames/);
   assert.match(app, /شیت‌های فایل فعال \(از فایل بارگذاری‌شده\):/);
+});
+
+
+test("Office opens a clean blank NAVI session from its dedicated button", () => {
+  assert.match(html, /id="officeOpenBlankNavi" type="button">باز کردن NAVI خالی/);
+  assert.doesNotMatch(html, /id="officeBriefSubmit"/);
+  assert.match(app, /const officeOpenBlankNaviButton = document\.getElementById\("officeOpenBlankNavi"\)/);
+  assert.match(app, /window\.openNaviAssistant\(\{ service: "گفت‌وگوی عمومی", blank: true \}\)/);
+  assert.match(app, /if \(options\.blank === true\)/);
+  assert.match(app, /naviAssistantContext = null;/);
+  assert.match(app, /if \(userRequest\) userRequest\.value = "";/);
+  assert.doesNotMatch(app, /officeBriefForm\?\.addEventListener\("submit"/);
+  assert.match(html, /app\.js\?v=navi-blank-office-button-20261118-1/);
+});
+
+test("Office has one independent blank NAVI button and no legacy form submit route", () => {
+  assert.match(html, /id="officeOpenBlankNavi"[^>]*type="button"[^>]*>باز کردن NAVI خالی<\/button>/);
+  assert.doesNotMatch(html, /id="officeBriefSubmit"/);
+  assert.doesNotMatch(app, /officeBriefForm\?\.addEventListener\("submit"/);
+  assert.match(app, /officeOpenBlankNaviButton\?\.addEventListener\("click"/);
+  assert.match(app, /window\.openNaviAssistant\(\{ service: "گفت‌وگوی عمومی", blank: true \}\)/);
+  assert.match(app, /if \(options\.blank === true\)/);
+  assert.match(app, /if \(userRequest\) userRequest\.value = ""/);
 });
