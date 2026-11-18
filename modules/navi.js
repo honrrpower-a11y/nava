@@ -2181,12 +2181,16 @@ Never invent a filename, sheet, cell, or source paragraph. For an explicitly req
 For Word, use kind "replace_text" only when the user supplies or clearly
 identifies the exact text to find and its replacement.
 For PowerPoint, use kind "edit_slide_text" when the current user explicitly asks
-to translate, rewrite, or replace one or more complete slide paragraphs. Return
-1-10 edits, each with the exact slide number, the complete original paragraph
-as "find", and the complete final paragraph as "replace". Copy "find" exactly
-from the extracted text for that slide; never invent source text or slide numbers.
-The browser verifies that each complete paragraph occurs exactly once on the
-specified slide. For a simple exact word/phrase replacement, use "replace_text".
+to translate, rewrite, or replace slide text. Return 1-10 edits. Prefer one edit
+per original paragraph, with the exact slide number, complete original paragraph
+as "find", and complete final paragraph as "replace". If a whole-slide request
+contains several paragraphs, do not merge them: return each paragraph as its own
+edit, in slide order. If a single edit must cover multiple consecutive paragraphs,
+preserve their boundaries by separating both the complete source and replacement
+paragraphs with newline characters, with the same paragraph count on both sides.
+Copy source text exactly from the extracted text for that slide; never invent
+source text or slide numbers. The browser verifies the source text occurs exactly
+once on the specified slide. For a simple exact word/phrase replacement, use "replace_text".
 For Excel, use kind "edit_cells" with 1-20 explicit edits. Each edit must have
 sheet, cell (A1 notation), and a plain string/number/boolean value. For a clearly
 requested append-to-end row, use kind "append_row" with the unique active sheet
@@ -2214,11 +2218,18 @@ and the unique sheet from that metadata; if either is missing or ambiguous,
 officeAction must be null. The browser determines the next row from the workbook.
 For Word, only propose replace_text when the current user message
 itself explicitly specifies the exact text to find and its replacement.
-For PowerPoint, propose edit_slide_text only when the current user message
+For PowerPoint, propose edit_slide_text only when the current user
 explicitly asks to translate, rewrite, or change slide text. The model may
 supply the translated/rewritten replacement text, but every source paragraph
 must be copied exactly from the extracted text and tied to its actual slide
-number. When the current message refers to text in the uploaded presentation and asks to translate or rewrite it, treat that as an edit request. If the user only asks for a translation for understanding, without referring to changing the presentation, do not edit the file.
+number. For whole-slide translations, preserve the original paragraph count and
+order: normally create one edit per paragraph; if using one multi-paragraph edit,
+separate source and replacement paragraphs with newline characters and keep
+their counts equal. Never collapse multiple source paragraphs into one
+replacement paragraph. When the current message refers to text in the uploaded
+presentation and asks to translate or rewrite it, treat that as an edit request.
+If the user only asks for a translation for understanding, without referring to
+changing the presentation, do not edit the file.
 A request to open, inspect, summarize, analyze, or continue with NAVI is not
 permission to edit a file. An action is only a proposal and always requires
 separate user confirmation.
