@@ -271,7 +271,7 @@ test("guided Office requests submit directly and keep approval cards in the NAVI
   assert.match(guide, /window\.sendOfficeNaviRequest\(\{ message, context \}\)/);
   assert.doesNotMatch(guide, /window\.openNaviAssistant\(/);
   assert.match(app, /window\.sendOfficeNaviRequest = function/);
-  assert.match(app, /document\.getElementById\("officeOperationsTab"\)\?\.click\(\)/);
+  assert.doesNotMatch(app, /document\.getElementById\("officeOperationsTab"\)\?\.click\(\)/);
   assert.match(app, /pageOverride: "officePage"/);
   assert.match(app, /officeTarget: false/);
   assert.match(app, /target:\s*options\.officeTarget\s*\?\s*"office"\s*:\s*"chat"/);
@@ -305,7 +305,8 @@ test("active Office file metadata exposes only real workbook sheet names", () =>
 
 
 test("Office operations contains the real NAVI chat inline and removes the separate blank-chat button", () => {
-  assert.match(html, /id="officeOperationsPane"[\s\S]*?id="officeNaviInlineMount"/);
+  assert.match(html, /class="office-assistant-column"[\s\S]*?id="officeNaviInlineMount"/);
+  assert.doesNotMatch(html, /id="officeOperationsPane"[\s\S]*?id="officeNaviInlineMount"/);
   assert.match(html, /id="officeNaviInlineMount"[^>]*aria-live="polite"/);
   assert.doesNotMatch(html, /id="officeOpenBlankNavi"/);
   assert.match(html, /id="naviWidgetHomeSlot"/);
@@ -321,7 +322,8 @@ test("Office chat preserves NAVI authentication, chat route, and approval card r
   assert.match(app, /window\.sendOfficeNaviRequest = function/);
   assert.match(app, /pageOverride: "officePage"/);
   assert.match(app, /officeTarget: false/);
-  assert.match(app, /naviWidgetPanel\.hidden = inlineOffice \? false : !isOpen/);
+  assert.match(app, /naviWidgetPanel\.hidden = !isOpen/);
+  assert.match(app, /officeReopen\.hidden = !inlineOffice \|\| isOpen/);
   assert.match(app, /document\.body\.classList\.toggle\("navi-widget-open", isOpen && !inlineOffice\)/);
   assert.doesNotMatch(app, /officeBriefForm\?\.addEventListener\("submit"/);
 });
