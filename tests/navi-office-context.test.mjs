@@ -25,6 +25,14 @@ test("NAVI context normalization preserves Office guide fields and long file bri
   }
   assert.match(normalizer, /brief:\s*18000/);
   assert.match(normalizer, /value\.trim\(\)\.slice\(0,\s*maxLength\)/);
+  for (const field of ["fileName: 500", "fileType: 40"]) {
+    assert.ok(normalizer.includes(field), `Missing Office upload metadata field: ${field}`);
+  }
+  assert.match(normalizer, /typeof context\.fileAttached\s*===\s*"boolean"/);
+  assert.match(normalizer, /result\.fileAttached\s*=\s*context\.fileAttached\s*\?/);
+  assert.match(app, /fileName:\s*"نام فایل بارگذاری‌شده"/);
+  assert.match(app, /fileType:\s*"نوع فایل"/);
+  assert.match(app, /fileAttached:\s*"وضعیت پیوست فایل"/);
 });
 
 test("Office context preview is shortened without truncating the context sent to NAVI", () => {
