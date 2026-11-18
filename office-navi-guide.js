@@ -9,6 +9,22 @@
   const status = document.getElementById("officeGuideStatus");
   const operationsNaviButton = document.getElementById("officeOperationsGoToNavi");
 
+  const officeBackToTop = document.getElementById("officeBackToTop");
+  const officePage = document.getElementById("officePage");
+
+  const updateOfficeBackToTop = () => {
+    if (!officeBackToTop || !officePage) return;
+    officeBackToTop.hidden = !(officePage.classList.contains("active") && window.scrollY > 280);
+  };
+
+  officeBackToTop?.addEventListener("click", () => {
+    const reducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
+    window.scrollTo({ top: 0, behavior: reducedMotion ? "auto" : "smooth" });
+  });
+  window.addEventListener("scroll", updateOfficeBackToTop, { passive: true });
+  window.addEventListener("pageshow", updateOfficeBackToTop);
+  updateOfficeBackToTop();
+
   const scrollToNaviAnswers = () => {
     const assistantColumn = document.querySelector(".office-assistant-column");
     if (!assistantColumn) return;
