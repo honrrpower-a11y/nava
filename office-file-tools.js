@@ -124,6 +124,13 @@
       return {selected:true,ready:true,name:selected.name};
     },
     getState(){return {state:extractionState,name:extractionFile?.name||"",error:extractionError};}
+    setEditStatus(details){
+      const selected=input.files&&input.files[0];
+      const summary=String(details||"").trim();
+      if(!selected||selected!==extractionFile||extractionState!=="ready"||!summary)return false;
+      setStatus("فایل «"+selected.name+"» — وضعیت: ویرایش‌شده. "+summary,"success");
+      return true;
+    }
   });
 
   input.addEventListener("change",()=>{
