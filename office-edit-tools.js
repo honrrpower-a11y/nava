@@ -23,6 +23,8 @@
   return libraryLoads[name];
  };
  const safeName=name=>String(name||"NAVA-edited").replace(/[\\/:*?"<>|]/g,"-").replace(/\.[^.]+$/,"").slice(0,65)||"NAVA-edited";
+ const decodeXmlText=value=>String(value||"").replace(/&lt;/g,"<").replace(/&gt;/g,">").replace(/&quot;/g,'"').replace(/&apos;/g,"'").replace(/&amp;/g,"&").replace(/&#(\d+);/g,(_,n)=>String.fromCodePoint(Number(n))).replace(/&#x([0-9a-f]+);/gi,(_,n)=>String.fromCodePoint(parseInt(n,16)));
+ const escapeXmlText=value=>String(value??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
 async function syncActiveFileContext(){
   if(!sourceFile||!kind)throw new Error("فایل فعال برای همگام‌سازی پیدا نشد.");
   const fileApi=window.NavaOfficeFile;
@@ -260,6 +262,41 @@ async function syncActiveFileContext(){
     window.NavaOfficeFile?.setEditStatus?.("یک ردیف جدید در شیت «"+action.sheet+"» اضافه شد. فایل اصلی بدون تغییر است.");
     panel.scrollIntoView({behavior:"smooth",block:"nearest"});
     return {message:"یک ردیف به شیت «"+action.sheet+"» اضافه و در بخش ویرایش مستقیم نمایش داده شد. پس از بررسی، دکمه دانلود فایل ویرایش‌شده را بزن. فایل اصلی تغییر نکرده است."};
+   }
+   if(action?.kind==="edit_slide_text"){
+    if(kind!=="pptx"||!zip||!Array.isArray(action.edits)||action.edits.length<1||action.edits.length>10)throw new Error("این فایل یا عملیات ویرایش متن اسلاید معتبر نیست.");
+    const staged=new Map();
+    for(const item of action.edits){
+     if(!item||!Number.isSafeInteger(item.slide)||item.slide<1||item.slide>500||typeof item.find!=="string"||!item.find.trim()||item.find.length>3000||typeof item.replace!=="string"||item.replace.length>3000)throw new Error("شماره اسلاید یا متن یکی از تغییرات معتبر نیست.");
+     const path="ppt/slides/slide"+item.slide+".xml";
+     if(!zip.files[path])throw new Error("اسلاید "+item.slide+" در فایل پیدا نشد؛ هیچ تغییری اعمال نشد.");
+     let xml=staged.has(path)?staged.get(path):await zip.files[path].async("string");
+     let matches=0;
+     xml=xml.replace(/<a:p(?:\s[^>]*)?>([\s\S]*?)<\/a:p>/g,(paragraph,body)=>{
+      const runs=Array.from(body.matchAll(/<a:t(?:\s[^>]*)?>([\s\S]*?)<\/a:t>/g));
+      if(!runs.length)return paragraph;
+      const paragraphText=runs.map(run=>decodeXmlText(run[1])).join("").trim();
+      if(paragraphText!==item.find.trim())return paragraph;
+      matches++;
+      let first=true;
+      const updatedBody=body.replace(/<a:t(?:\s[^>]*)?>([\s\S]*?)<\/a:t>/g,(whole,value)=>{
+       if(first){first=false;return whole.replace(value,escapeXmlText(item.replace));}
+       return whole.replace(value,"");
+      });
+      return paragraph.replace(body,updatedBody);
+     });
+     if(matches!==1)throw new Error(matches===0
+      ?"متن کامل انتخاب‌شده در اسلاید "+item.slide+" پیدا نشد؛ فایل تغییری نکرد."
+      :"متن کامل انتخاب‌شده بیش از یک‌بار در اسلاید "+item.slide+" وجود دارد؛ برای جلوگیری از تغییر اشتباه، فایل تغییری نکرد.");
+     staged.set(path,xml);
+    }
+    for(const [path,xml] of staged)zip.file(path,xml);
+    pendingDownloadBlob=await zip.generateAsync({type:"blob",compression:"DEFLATE"});
+    setDownloadReady(true);
+    await syncActiveFileContext();
+    setStatus(action.edits.length+" پاراگراف در اسلایدهای پاورپوینت بازنویسی شد. محتوای مرجع درخواست بعدی نیز به‌روز شد. برای دریافت نسخه ویرایش‌شده، دکمه دانلود را بزن.");
+    window.NavaOfficeFile?.setEditStatus?.(action.edits.length+" پاراگراف پاورپوینت بازنویسی شد. فایل اصلی بدون تغییر است.");
+    return {message:action.edits.length+" پاراگراف در اسلایدهای مشخص‌شده بازنویسی شد. چیدمان و ساختار اسلایدها حفظ شده است؛ پس از بررسی، فایل ویرایش‌شده را دانلود کن. فایل اصلی تغییر نکرده است."};
    }
    if(action?.kind==="replace_text"){
     if(!["docx","pptx"].includes(kind)||!zip||typeof action.find!=="string"||!action.find.trim()||action.find.length>500||typeof action.replace!=="string"||action.replace.length>500)throw new Error("این فایل یا عملیات جایگزینی معتبر نیست.");
