@@ -745,14 +745,15 @@ window.sendOfficeNaviRequest = function({ message, context } = {}) {
     serviceSelect.value = service;
   }
   updateNaviAssistantContext(service, officeContext);
+  // Open the existing animated NAVI chat over the Office studio before sending.
+  // The reply and any final-approval card are both rendered inside that chat.
+  setNaviWidgetOpen(true, false);
   return sendMessageToNavi({
     pageOverride: "officePage",
     messageOverride: cleanMessage,
     serviceOverride: service,
     contextOverride: officeContext,
-    // Office-originated guided requests must show approval cards in the Office
-    // workspace, while the NAVI conversation continues to display the reply.
-    officeTarget: true
+    officeTarget: false
   });
 };
 document.addEventListener("keydown", event => {
@@ -3664,9 +3665,9 @@ officeBriefForm?.addEventListener("submit", async event => {
   // and the other Office fields added by sendMessageToNavi().
   const contextBriefBudget = Math.max(0, 9000 - userInstruction.length);
   officeContext.brief = String(officeContext.brief || "").slice(0, contextBriefBudget);
-  // A brief submitted from the Office studio must stay on the Office page.
-  // Opening the floating NAVI chat here covered the Office approval card and
-  // made the form workflow look as if it had no confirmation button.
+  // Continue the Office workflow in NAVI's existing animated chat overlay.
+  // This keeps the Office file context but gives the reply and approval card
+  // one reliable, visible destination.
   const officeService = "کارهای اداری و آفیس";
   const officeServiceOption = Array.from(serviceSelect.options).find(option => option.value === officeService);
   if (officeServiceOption) serviceSelect.value = officeService;
@@ -3676,12 +3677,14 @@ officeBriefForm?.addEventListener("submit", async event => {
   // state having been updated as a side effect of opening the NAVI widget.
   // This keeps the form route identical even if the widget state changes.
   if (getNaviToken() && !sendRequest.disabled) {
+    setNaviWidgetOpen(true, false);
     void sendMessageToNavi({
       pageOverride: "officePage",
       messageOverride: userInstruction,
       serviceOverride: "کارهای اداری و آفیس",
       contextOverride: officeContext,
-      officeDiagnostic: true
+      officeDiagnostic: true,
+      officeTarget: false
     });
   } else {
     updateOfficeActionDiagnostic("ارسال انجام نشد", {
@@ -3888,10 +3891,10 @@ async function sendMessageToNavi(options = {}) {
     const shouldNameThread = threadBeforeNaming && Number(threadBeforeNaming.message_count || 0) === 0;
     showNaviReply(reply);
     try {
-      renderNaviOfficeAction(data.officeAction, { target: (options.officeTarget || options.officeDiagnostic) ? "office" : "chat" });
+      renderNaviOfficeAction(data.officeAction, { target: options.officeTarget ? "office" : "chat" });
       if (options.officeDiagnostic) {
         const card = document.getElementById("naviOfficeActionCard");
-        const slot = document.getElementById("officeActionCardSlot");
+        const slot = document.getElementById(options.officeTarget ? "officeActionCardSlot" : "naviOfficeActionChatSlot");
         updateOfficeActionDiagnostic("نتیجه رندر کارت", {
           cardCreated: Boolean(card),
           slotFound: Boolean(slot),
