@@ -110,9 +110,7 @@
    const ready=Boolean(sourceFile&&selected===sourceFile&&kind&&((kind==="xlsx"&&workbook)||(kind!=="xlsx"&&zip)));
    return {ready,name:sourceFile?.name||selected?.name||"",kind};
   },
- };
- input.addEventListener("change",()=>{const file=input.files&&input.files[0];if(file){editorReadyPromise=openFile(file);}else{editorReadyPromise=Promise.resolve();}});
- window.NavaOfficeTools.executeAction = async function(action) {?.addEventListener("change",event=>{currentSheet=event.target.value;drawGrid();});
+  async executeAction(action) {?.addEventListener("change",event=>{currentSheet=event.target.value;drawGrid();});
  $("officeEditSave")?.addEventListener("click",()=>{
   if(kind!=="xlsx"||!workbook)return;
   try{
