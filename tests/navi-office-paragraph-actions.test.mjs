@@ -77,3 +77,15 @@ test("PowerPoint editor preserves original paragraph boundaries for flattened ap
   assert.match(editor, /replacementParagraphs\[lastIndex\][\s\S]*?appendedText/);
   assert.match(editor, /replacementParagraphs\.length===1&&targetCount>1/);
 });
+
+
+test("PowerPoint post-edit sync reads the already-open JSZip archive without FileReader re-parsing", () => {
+  const editor = readFileSync(new URL("../office-edit-tools.js", import.meta.url), "utf8");
+  const structured = readFileSync(new URL("../office-structured-files.js", import.meta.url), "utf8");
+  const html = readFileSync(new URL("../index.html", import.meta.url), "utf8");
+  assert.match(structured, /async function readPowerPointArchive\(zip\)/);
+  assert.match(structured, /Object\.freeze\(\{ readPowerPointArchive, read:/);
+  assert.match(editor, /readPowerPointArchive\(zip\)/);
+  assert.doesNotMatch(editor, /const blob=await zip\.generateAsync\(\{type:"blob"\}\);\s*const file=new File\(\[blob\]/);
+  assert.match(html, /office-edit-tools\.js\?v=office-pptx-paragraph-edit-20261119-3/);
+});
