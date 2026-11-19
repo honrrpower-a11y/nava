@@ -54,7 +54,10 @@ const CANONICAL_ATTRIBUTES = {
   gradientunits: "gradientUnits",
   gradienttransform: "gradientTransform",
   preserveaspectratio: "preserveAspectRatio",
-  spreadmethod: "spreadMethod"
+  spreadmethod: "spreadMethod",
+  clippathunits: "clipPathUnits",
+  textlength: "textLength",
+  lengthadjust: "lengthAdjust"
 };
 
 function sanitizeHtmlFragment(value) {
