@@ -131,26 +131,32 @@
     return "url(#" + id + ")";
   }
 
-  function parseShadow(value, id, defs) {
+  function parseShadow(value, id, defs, scale) {
     if (!value || value === "none") return null;
+    if (splitCssList(value).length !== 1 || /inset/i.test(value)) return null;
     const colorFirst = value.match(/(rgba?\([^)]*\)|#[0-9a-f]{3,8}|[a-z]+)\s+(-?[\d.]+)px\s+(-?[\d.]+)px(?:\s+([\d.]+)px)?(?:\s+(-?[\d.]+)px)?/i);
     const valuesFirst = value.match(/(-?[\d.]+)px\s+(-?[\d.]+)px(?:\s+([\d.]+)px)?(?:\s+(-?[\d.]+)px)?\s+(rgba?\([^)]*\)|#[0-9a-f]{3,8}|[a-z]+)/i);
-    const m = colorFirst || valuesFirst;
-    if (!m) return null;
-    const dx=Number(colorFirst ? m[2] : m[1]),dy=Number(colorFirst ? m[3] : m[2]);
-    const blur=Number(colorFirst ? m[4]||0 : m[3]||0),spread=Number(colorFirst ? m[5]||0 : m[4]||0);
-    const color=colorFirst ? m[1] : m[5];
-    if (spread !== 0 || /inset/i.test(value) || (value.match(/,/g)||[]).length > 3) return null;
-    const filter=node("filter",{id,x:"-40%",y:"-40%",width:"180%",height:"180%","color-interpolation-filters":"sRGB"},defs);
-    node("feGaussianBlur",{in:"SourceAlpha",stdDeviation:round(blur/2)},filter);
-    node("feOffset",{dx:round(dx),dy:round(dy),result:"offsetblur"},filter);
-    node("feFlood",{"flood-color":color,"flood-opacity":"1",result:"shadowcolor"},filter);
-    node("feComposite",{in:"shadowcolor",in2:"offsetblur",operator:"in",result:"shadow"},filter);
-    const merge=node("feMerge",{},filter);
-    node("feMergeNode",{in:"shadow"},merge);
-    node("feMergeNode",{in:"SourceGraphic"},merge);
-    return "url(#"+id+")";
+    const match = colorFirst || valuesFirst;
+    if (!match) return null;
+    const dx = Number(colorFirst ? match[2] : match[1]) * scale;
+    const dy = Number(colorFirst ? match[3] : match[2]) * scale;
+    const blur = Number(colorFirst ? match[4] || 0 : match[3] || 0) * scale;
+    const spread = Number(colorFirst ? match[5] || 0 : match[4] || 0);
+    const color = colorFirst ? match[1] : match[5];
+    if (spread !== 0) return null;
+    const filter = node("filter", {
+      id, x: "-100%", y: "-100%", width: "300%", height: "300%",
+      "color-interpolation-filters": "sRGB"
+    }, defs);
+    node("feGaussianBlur", { in: "SourceAlpha", stdDeviation: round(blur / 2) }, filter);
+    node("feOffset", { dx: round(dx), dy: round(dy), result: "offset-shadow" }, filter);
+    node("feFlood", { "flood-color": color, "flood-opacity": "1", result: "shadow-color" }, filter);
+    node("feComposite", {
+      in: "shadow-color", in2: "offset-shadow", operator: "in"
+    }, filter);
+    return "url(#" + id + ")";
   }
+
   function styleAttrs(style) {
     return {
       fill: style.color || "#111111",
@@ -266,115 +272,225 @@
   }
 
   function copySvgElement(source, parent, warnings) {
-    const tag=source.localName.toLowerCase();
-    if (!SVG_TAGS.has(tag)) { warnings.add("یک عنصر SVG پشتیبانی‌نشده شناسایی شد: "+tag); return; }
-    const target=node(tag==="lineargradient"?"linearGradient":tag==="radialgradient"?"radialGradient":tag==="clippath"?"clipPath":tag,{},parent);
-    ATTRS.forEach(attr=>{ if(source.hasAttribute(attr)) target.setAttribute(attr,source.getAttribute(attr)); });
-    const style=computedStyle(source);
-    ["fill","fill-rule","fill-opacity","stroke","stroke-width","stroke-linecap","stroke-linejoin","stroke-dasharray","stroke-dashoffset","stroke-opacity","opacity","font-size","font-weight","letter-spacing","text-anchor","dominant-baseline"].forEach(attr=>{
-      const value=style.getPropertyValue(attr); if(value && value!=="none" && value!=="normal") target.setAttribute(attr,value);
+    const tag = source.localName.toLowerCase();
+    if (!SVG_TAGS.has(tag)) {
+      warnings.add("عنصر SVG پشتیبانی‌نشده شناسایی شد: " + tag);
+      return;
+    }
+    const outputTag = tag === "lineargradient" ? "linearGradient"
+      : tag === "radialgradient" ? "radialGradient"
+      : tag === "clippath" ? "clipPath" : tag;
+    const target = node(outputTag, {}, parent);
+    ATTRS.forEach(attribute => {
+      if (source.hasAttribute(attribute)) target.setAttribute(attribute, source.getAttribute(attribute));
     });
-    Array.from(source.childNodes).forEach(child=>{
-      if(child.nodeType===Node.ELEMENT_NODE) copySvgElement(child,target,warnings);
-      else if(child.nodeType===Node.TEXT_NODE && child.nodeValue.trim()) target.textContent+=child.nodeValue;
+    const style = computedStyle(source);
+    [
+      "fill", "fill-rule", "fill-opacity", "stroke", "stroke-width",
+      "stroke-linecap", "stroke-linejoin", "stroke-dasharray",
+      "stroke-dashoffset", "stroke-opacity", "opacity", "font-family",
+      "font-size", "font-weight", "font-style", "font-stretch",
+      "letter-spacing", "word-spacing", "text-anchor", "dominant-baseline",
+      "direction", "unicode-bidi", "clip-path", "stop-color", "stop-opacity"
+    ].forEach(attribute => {
+      const value = style.getPropertyValue(attribute);
+      if (!value || (value === "normal" && !["fill", "stroke"].includes(attribute))) return;
+      target.setAttribute(attribute, value);
+    });
+    Array.from(source.childNodes).forEach(child => {
+      if (child.nodeType === 1) copySvgElement(child, target, warnings);
+      else if (child.nodeType === 3 && child.nodeValue) {
+        target.appendChild(document.createTextNode(child.nodeValue));
+      }
     });
     return target;
   }
+
   function renderHtmlElement(source, parent, rootRect, scale, defs, warnings, counter) {
-    if (source.nodeType===Node.TEXT_NODE) { appendText(source,parent,rootRect,scale,warnings); return; }
-    if (source.nodeType!==Node.ELEMENT_NODE) return;
-    const tag=source.localName.toLowerCase();
-    if (tag==="svg") {
-      const r=source.getBoundingClientRect();
-      const svg=node("svg",{x:round((r.left-rootRect.left)*scale),y:round((r.top-rootRect.top)*scale),width:round(r.width*scale),height:round(r.height*scale),viewBox:source.getAttribute("viewBox")||("0 0 "+(source.getAttribute("width")||r.width)+" "+(source.getAttribute("height")||r.height)),preserveAspectRatio:"xMidYMid meet"},parent);
-      Array.from(source.childNodes).forEach(child=>{if(child.nodeType===Node.ELEMENT_NODE)copySvgElement(child,svg,warnings);});
+    if (source.nodeType === 3) {
+      appendText(source, parent, rootRect, scale, warnings);
       return;
     }
-    const rect=source.getBoundingClientRect();
-    const style=getComputedStyle(source);
-    if (style.display==="none" || style.visibility==="hidden" || rect.width===0 || rect.height===0) return;
-    if (style.transform && style.transform!=="none") warnings.add("عنصر دارای transform در CSS است؛ برای حفظ هندسه، خروجی این طرح متوقف شد.");
-    if (style.textShadow && style.textShadow!=="none") warnings.add("text-shadow در خروجی برداری پشتیبانی نمی‌شود.");
-    if (style.outlineStyle && style.outlineStyle!=="none" && parseFloat(style.outlineWidth)>0) warnings.add("outline در خروجی برداری پشتیبانی نمی‌شود.");
-    if (style.borderImageSource && style.borderImageSource!=="none") warnings.add("border-image در خروجی برداری پشتیبانی نمی‌شود.");
-    if (style.animationName && style.animationName!=="none" && style.animationDuration!=="0s") warnings.add("انیمیشن CSS در خروجی برداری ثابت قابل بازسازی نیست.");
-    if (style.transitionDuration && style.transitionDuration!=="0s" && style.transitionDuration!=="0ms") warnings.add("transition CSS در خروجی برداری قابل بازسازی نیست.");
-    if (style.mixBlendMode && style.mixBlendMode!=="normal") warnings.add("ترکیب لایه‌های CSS در خروجی برداری پشتیبانی نمی‌شود.");
-    if (style.backgroundBlendMode && style.backgroundBlendMode!=="normal") warnings.add("ترکیب پس‌زمینه‌های CSS در خروجی برداری پشتیبانی نمی‌شود.");
-    if (style.borderTopWidth!==style.borderRightWidth || style.borderTopWidth!==style.borderBottomWidth || style.borderTopWidth!==style.borderLeftWidth) warnings.add("ضخامت‌های متفاوت border در این نسخه قابل بازسازی نیستند.");
-    if (style.borderTopLeftRadius!==style.borderTopRightRadius || style.borderTopLeftRadius!==style.borderBottomLeftRadius || style.borderTopLeftRadius!==style.borderBottomRightRadius) warnings.add("گوشه‌های با شعاع متفاوت در این نسخه قابل بازسازی نیستند.");
-    if (style.borderTopStyle!=="none" && style.borderTopStyle!=="solid") warnings.add("خط دور نقطه‌چین یا خط‌چین در خروجی برداری پشتیبانی نمی‌شود.");
-    if (style.filter && style.filter!=="none") warnings.add("فیلتر CSS در خروجی برداری پشتیبانی نمی‌شود.");
-    if (style.clipPath && style.clipPath!=="none") warnings.add("clip-path CSS در این نسخه قابل بازسازی نیست.");
-    if (style.maskImage && style.maskImage!=="none") warnings.add("CSS mask در این نسخه قابل بازسازی نیست.");
-    if (!source.classList.contains("logo-art-root") && (style.overflowX!=="visible" || style.overflowY!=="visible")) warnings.add("برش محتوای داخلی با overflow در این نسخه قابل بازسازی نیست.");
-    if (style.zIndex && style.zIndex!=="auto") warnings.add("ترتیب لایه‌های دارای z-index در این نسخه قابل بازسازی نیست.");
-    const x=round((rect.left-rootRect.left)*scale),y=round((rect.top-rootRect.top)*scale),w=round(rect.width*scale),h=round(rect.height*scale);
-    const group=node("g",{opacity:style.opacity==="1"?null:style.opacity},parent);
-    const bg=style.backgroundColor;
-    const bgImage=style.backgroundImage;
-    let fill=colorIsVisible(bg)?bg:"none";
-    if(bgImage && bgImage!=="none"){
-      const gradient=parseGradient(bgImage,"nava-gradient-"+(++counter.value),defs);
-      if(gradient) fill=gradient;
-      else warnings.add("تصویر پس‌زمینه یا گرادیان پیچیده قابل تبدیل به SVG نیست.");
+    if (source.nodeType !== 1) return;
+    const tag = source.localName.toLowerCase();
+    if (tag === "svg") {
+      const rect = source.getBoundingClientRect();
+      const nested = node("svg", {
+        x: round((rect.left - rootRect.left) * scale),
+        y: round((rect.top - rootRect.top) * scale),
+        width: round(rect.width * scale),
+        height: round(rect.height * scale),
+        viewBox: source.getAttribute("viewBox") || (
+          "0 0 " + (source.getAttribute("width") || rect.width) + " " +
+          (source.getAttribute("height") || rect.height)
+        ),
+        preserveAspectRatio: source.getAttribute("preserveAspectRatio") || "xMidYMid meet"
+      }, parent);
+      Array.from(source.childNodes).forEach(child => {
+        if (child.nodeType === 1) copySvgElement(child, nested, warnings);
+      });
+      return;
     }
-    const radiusValue=style.borderTopLeftRadius||"0px";
-    const radius=parseFloat(radiusValue)||0;
-    const border=parseFloat(style.borderTopWidth)||0;
-    const borderColor=style.borderTopColor;
-    if(fill!=="none" || border>0){
-      const shadow=parseShadow(style.boxShadow,"nava-shadow-"+(++counter.value),defs);
-      if (style.boxShadow && style.boxShadow!=="none" && !shadow) warnings.add("این نوع box-shadow در خروجی برداری پشتیبانی نمی‌شود.");
-      const shapeAttrs={fill,stroke:border>0?borderColor:"none","stroke-width":border>0?round(border*scale):null,filter:shadow||null};
-      if (radiusValue.includes("%")) {
-        if (parseFloat(radiusValue)>=49.9 && Math.abs(w-h)<1) {
-          node("ellipse",Object.assign({cx:round(x+w/2),cy:round(y+h/2),rx:round(w/2),ry:round(h/2)},shapeAttrs),group);
-        } else {
-          warnings.add("شعاع درصدی گوشه‌ها فقط برای شکل دایره‌ای قابل بازسازی است.");
-        }
-      } else {
-        node("rect",Object.assign({x,y,width:w,height:h,rx:round(radius*scale),ry:round(radius*scale)},shapeAttrs),group);
+
+    const rect = source.getBoundingClientRect();
+    const style = computedStyle(source);
+    if (style.display === "none" || style.visibility === "hidden" || rect.width === 0 || rect.height === 0) return;
+    const isArtboard = source.classList.contains("logo-art-root");
+    if (!isArtboard && (
+      rect.left < rootRect.left - 0.5 || rect.top < rootRect.top - 0.5 ||
+      rect.right > rootRect.right + 0.5 || rect.bottom > rootRect.bottom + 0.5
+    )) warnings.add("یک عنصر از محدوده بوم لوگو بیرون زده و در پیش‌نمایش بریده می‌شود.");
+
+    if (style.transform && style.transform !== "none") warnings.add("CSS transform در خروجی برداری پشتیبانی نمی‌شود.");
+    if (style.perspective && style.perspective !== "none") warnings.add("CSS perspective در خروجی برداری پشتیبانی نمی‌شود.");
+    if (style.textShadow && style.textShadow !== "none") warnings.add("text-shadow در خروجی برداری پشتیبانی نمی‌شود.");
+    if (style.outlineStyle && style.outlineStyle !== "none" && parseFloat(style.outlineWidth) > 0) warnings.add("outline در خروجی برداری پشتیبانی نمی‌شود.");
+    if (style.borderImageSource && style.borderImageSource !== "none") warnings.add("border-image در خروجی برداری پشتیبانی نمی‌شود.");
+    if (style.animationName && style.animationName !== "none" && style.animationDuration !== "0s") warnings.add("انیمیشن CSS در خروجی برداری ثابت قابل بازسازی نیست.");
+    if (style.transitionDuration && style.transitionDuration !== "0s" && style.transitionDuration !== "0ms") warnings.add("transition CSS در خروجی برداری قابل بازسازی نیست.");
+    if (style.mixBlendMode && style.mixBlendMode !== "normal") warnings.add("ترکیب لایه‌های CSS در خروجی برداری پشتیبانی نمی‌شود.");
+    if (style.backgroundBlendMode && style.backgroundBlendMode !== "normal") warnings.add("ترکیب پس‌زمینه‌های CSS در خروجی برداری پشتیبانی نمی‌شود.");
+    if (style.filter && style.filter !== "none") warnings.add("CSS filter در خروجی برداری پشتیبانی نمی‌شود.");
+    if (style.backdropFilter && style.backdropFilter !== "none") warnings.add("backdrop-filter در خروجی برداری پشتیبانی نمی‌شود.");
+    if (style.clipPath && style.clipPath !== "none") warnings.add("CSS clip-path در خروجی برداری پشتیبانی نمی‌شود.");
+    if (style.maskImage && style.maskImage !== "none") warnings.add("CSS mask در خروجی برداری پشتیبانی نمی‌شود.");
+    if (style.position === "fixed" || style.position === "sticky") warnings.add("موقعیت‌دهی fixed یا sticky در خروجی برداری پشتیبانی نمی‌شود.");
+    if (style.zIndex && style.zIndex !== "auto") warnings.add("z-index در خروجی برداری پشتیبانی نمی‌شود.");
+    if (!isArtboard && (style.overflowX !== "visible" || style.overflowY !== "visible")) warnings.add("برش داخلی با overflow در این نسخه پشتیبانی نمی‌شود.");
+    if (style.borderTopWidth !== style.borderRightWidth ||
+        style.borderTopWidth !== style.borderBottomWidth ||
+        style.borderTopWidth !== style.borderLeftWidth) warnings.add("ضخامت‌های متفاوت border در این نسخه پشتیبانی نمی‌شوند.");
+    if (style.borderTopStyle !== style.borderRightStyle ||
+        style.borderTopStyle !== style.borderBottomStyle ||
+        style.borderTopStyle !== style.borderLeftStyle) warnings.add("سبک‌های متفاوت border در این نسخه پشتیبانی نمی‌شوند.");
+    if (style.borderTopColor !== style.borderRightColor ||
+        style.borderTopColor !== style.borderBottomColor ||
+        style.borderTopColor !== style.borderLeftColor) warnings.add("رنگ‌های متفاوت border در این نسخه پشتیبانی نمی‌شوند.");
+    if (style.borderTopLeftRadius !== style.borderTopRightRadius ||
+        style.borderTopLeftRadius !== style.borderBottomLeftRadius ||
+        style.borderTopLeftRadius !== style.borderBottomRightRadius) warnings.add("شعاع‌های متفاوت گوشه‌ها در این نسخه پشتیبانی نمی‌شوند.");
+    if (style.borderTopStyle !== "none" && style.borderTopStyle !== "solid") warnings.add("فقط border یکپارچه و solid قابل تبدیل است.");
+
+    const x = round((rect.left - rootRect.left) * scale);
+    const y = round((rect.top - rootRect.top) * scale);
+    const width = round(rect.width * scale);
+    const height = round(rect.height * scale);
+    const group = node("g", { opacity: style.opacity === "1" ? null : style.opacity }, parent);
+
+    const backgroundColor = style.backgroundColor;
+    const backgroundImage = style.backgroundImage;
+    let gradientFill = null;
+    if (backgroundImage && backgroundImage !== "none") {
+      if (style.backgroundSize && !["auto", "auto auto"].includes(style.backgroundSize)) {
+        warnings.add("background-size سفارشی در خروجی برداری پشتیبانی نمی‌شود.");
       }
-    } else if(style.boxShadow && style.boxShadow!=="none") {
-      warnings.add("سایه روی عنصر بدون پس‌زمینه ممکن است در بازسازی دقیقاً یکسان نباشد.");
+      if (style.backgroundPosition && style.backgroundPosition !== "0% 0%") {
+        warnings.add("background-position سفارشی در خروجی برداری پشتیبانی نمی‌شود.");
+      }
+      if (style.backgroundRepeat && style.backgroundRepeat !== "repeat") {
+        warnings.add("background-repeat سفارشی در خروجی برداری پشتیبانی نمی‌شود.");
+      }
+      if (parseFloat(style.borderTopWidth) > 0 && style.backgroundOrigin !== "border-box") {
+        warnings.add("ترکیب background-origin با border در خروجی برداری پشتیبانی نمی‌شود.");
+      }
+      gradientFill = parseGradient(backgroundImage, "nava-gradient-" + (++counter.value), defs, {
+        x, y, width, height
+      });
+      if (!gradientFill) warnings.add("این نوع background-image یا gradient در خروجی برداری پشتیبانی نمی‌شود.");
     }
-    const before=computedStyle(source,"::before").content;
-    const after=computedStyle(source,"::after").content;
-    if((before&&before!=="none"&&before!=="normal")||(after&&after!=="none"&&after!=="normal")) warnings.add("شبه‌عنصرهای CSS در خروجی برداری پشتیبانی نمی‌شوند.");
-    Array.from(source.childNodes).forEach(child=>renderHtmlElement(child,group,rootRect,scale,defs,warnings,counter));
+
+    const radiusValue = style.borderTopLeftRadius || "0px";
+    const radiusParts = radiusValue.trim().split(/\s+/);
+    const radiusX = radiusParts[0] || "0px";
+    const radiusY = radiusParts[1] || radiusParts[0] || "0px";
+    const radiusToSvg = (value, dimension) => {
+      const amount = parseFloat(value) || 0;
+      return round((value.includes("%") ? amount * dimension / 100 : amount) * scale);
+    };
+    const rx = radiusToSvg(radiusX, rect.width);
+    const ry = radiusToSvg(radiusY, rect.height);
+    const borderWidth = Math.max(0, parseFloat(style.borderTopWidth) || 0);
+    const borderScaled = borderWidth * scale;
+    const borderColor = style.borderTopColor;
+    const box = { x, y, width, height, rx, ry };
+
+    const shadow = parseShadow(style.boxShadow, "nava-shadow-" + (++counter.value), defs, scale);
+    if (style.boxShadow && style.boxShadow !== "none" && !shadow) {
+      warnings.add("این نوع box-shadow در خروجی برداری پشتیبانی نمی‌شود.");
+    }
+    if (shadow) {
+      node("rect", Object.assign({}, box, { fill: "#000000", filter: shadow }), group);
+    }
+    if (colorIsVisible(backgroundColor)) {
+      node("rect", Object.assign({}, box, { fill: backgroundColor }), group);
+    }
+    if (gradientFill) {
+      node("rect", Object.assign({}, box, { fill: gradientFill }), group);
+    }
+    if (borderWidth > 0) {
+      const inset = borderScaled / 2;
+      node("rect", {
+        x: round(x + inset), y: round(y + inset),
+        width: round(Math.max(0, width - borderScaled)),
+        height: round(Math.max(0, height - borderScaled)),
+        rx: round(Math.max(0, rx - inset)), ry: round(Math.max(0, ry - inset)),
+        fill: "none", stroke: borderColor, "stroke-width": round(borderScaled)
+      }, group);
+    }
+
+    const before = computedStyle(source, "::before").content;
+    const after = computedStyle(source, "::after").content;
+    if ((before && before !== "none" && before !== "normal") ||
+        (after && after !== "none" && after !== "normal")) {
+      warnings.add("شبه‌عنصرهای CSS در خروجی برداری پشتیبانی نمی‌شوند.");
+    }
+    Array.from(source.childNodes).forEach(child => {
+      renderHtmlElement(child, group, rootRect, scale, defs, warnings, counter);
+    });
   }
-  function buildSvg(frame, options) {
-    if(!frame || !frame.contentDocument) throw new Error("پیش‌نمایش لوگو هنوز آماده نیست.");
-    const doc=frame.contentDocument,root=doc.querySelector(".logo-art-root");
-    if(!root) throw new Error("ساختار بوم طراحی پیدا نشد.");
-    const rootRect=root.getBoundingClientRect();
-    if(!rootRect.width || !rootRect.height) throw new Error("ابعاد بوم طراحی معتبر نیست.");
-    const scale=1000/rootRect.width;
-    const warnings=new Set(),counter={value:0};
-    const svg=node("svg",{xmlns:NS,width:options.width||1200,height:options.height||1200,viewBox:"0 0 1000 1000",role:"img","aria-labelledby":"nava-logo-title"},null);
-    node("title",{id:"nava-logo-title"},svg).textContent="Logo — "+(options.brandName||"NAVA");
-    const defs=node("defs",{},svg);
-    const rootStyle=computedStyle(root);
-    const bg=rootStyle.backgroundColor;
-    const bgImage=rootStyle.backgroundImage;
-    let rootFill=colorIsVisible(bg)?bg:"none";
-    if(bgImage&&bgImage!=="none") {
-      const gradient=parseGradient(bgImage,"nava-root-gradient",defs);
-      if(gradient) rootFill=gradient;
-      else warnings.add("پس‌زمینه پیچیده بوم قابل تبدیل به SVG نیست.");
+
+  async function buildSvg(frame, options = {}) {
+    if (!frame || !frame.contentDocument) throw new Error("پیش‌نمایش لوگو هنوز آماده نیست.");
+    const doc = frame.contentDocument;
+    if (doc.fonts && doc.fonts.ready) await doc.fonts.ready;
+    const root = doc.querySelector(".logo-art-root");
+    if (!root) throw new Error("ساختار بوم طراحی پیدا نشد.");
+    const rootRect = root.getBoundingClientRect();
+    if (!rootRect.width || !rootRect.height) throw new Error("ابعاد بوم طراحی معتبر نیست.");
+    if (Math.abs(rootRect.width - rootRect.height) > Math.max(rootRect.width, rootRect.height) * 0.01) {
+      throw new Error("بوم طراحی باید مربع باشد تا نسبت اجزای لوگو در خروجی تغییر نکند.");
     }
-    if(rootFill!=="none") node("rect",{x:0,y:0,width:1000,height:1000,fill:rootFill},svg);
-    Array.from(root.childNodes).forEach(child=>renderHtmlElement(child,svg,rootRect,scale,defs,warnings,counter));
-    const unsupported=Array.from(warnings).filter(w=>/متوقف|پشتیبانی نمی‌شود|قابل تبدیل|قابل بازسازی نیست/.test(w));
-    if(unsupported.length) {
-      const error=new Error("این طرح از جلوه‌هایی استفاده می‌کند که هنوز به‌صورت برداری قابل بازسازی نیستند؛ خروجی ناقص ساخته نشد.");
-      error.details=Array.from(warnings);
+
+    const scale = 1000 / rootRect.width;
+    const warnings = new Set();
+    const counter = { value: 0 };
+    const svg = node("svg", {
+      xmlns: NS, width: options.width || 1200, height: options.height || 1200,
+      viewBox: "0 0 1000 1000", role: "img", "aria-labelledby": "nava-logo-title"
+    }, null);
+    node("title", { id: "nava-logo-title" }, svg).textContent = "Logo — " + (options.brandName || "NAVA");
+    renderHtmlElement(root, svg, rootRect, scale, node("defs", {}, svg), warnings, counter);
+
+    if (svg.querySelector("foreignObject, image")) {
+      throw new Error("بازسازی برداری خالص ناموفق بود؛ خروجی ناامن رد شد.");
+    }
+    if (warnings.size) {
+      const error = new Error("این طرح از ویژگی‌هایی استفاده می‌کند که هنوز با دقت کافی به SVG برداری تبدیل نمی‌شوند؛ برای جلوگیری از خروجی ناقص، فایل ساخته نشد.");
+      error.details = Array.from(warnings);
       throw error;
     }
-    if(svg.querySelector("foreignObject,image")) throw new Error("بازسازی برداری خالص ناموفق بود؛ خروجی ناامن رد شد.");
-    return {svg:new XMLSerializer().serializeToString(svg),warnings:Array.from(warnings)};
+
+    const serialized = new XMLSerializer().serializeToString(svg);
+    const parsed = new DOMParser().parseFromString(serialized, "image/svg+xml");
+    if (parsed.querySelector("parsererror") || parsed.documentElement.localName !== "svg") {
+      throw new Error("اعتبارسنجی ساختار SVG نهایی ناموفق بود.");
+    }
+    if (parsed.querySelector("foreignObject, image, script")) {
+      throw new Error("خروجی شامل عنصر غیرمجاز است و رد شد.");
+    }
+    return { svg: serialized, warnings: [] };
   }
+
   function downloadBlob(blob,filename) {
     const url=URL.createObjectURL(blob),a=document.createElement("a");
     a.href=url;a.download=filename;document.body.appendChild(a);a.click();a.remove();
