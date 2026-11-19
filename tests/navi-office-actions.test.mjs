@@ -455,3 +455,34 @@ test("Office is split into separate accessible guidance and operations tabs", ()
   assert.match(app, /activateOfficeTab\("guide"\)/);
   assert.match(app, /event\.key !== "ArrowLeft" && event\.key !== "ArrowRight"/);
 });
+
+
+test("Office visual preview is mounted in the Office workflow and loads after the existing editors", () => {
+  const preview = readFileSync(new URL("../office-preview.js", import.meta.url), "utf8");
+  assert.match(html, /id="officePreviewPanel"[^>]*hidden/);
+  assert.match(html, /id="officePreviewStage"/);
+  assert.match(html, /id="officePreviewPrevious"/);
+  assert.match(html, /id="officePreviewNext"/);
+  assert.match(html, /id="officePreviewSheet"/);
+  assert.match(html, /office-preview\.css\?v=office-visual-preview-/);
+  assert.match(html, /office-preview\.js\?v=office-visual-preview-/);
+  assert.ok(html.indexOf('office-edit-tools.js?') < html.indexOf('office-preview.js?'));
+  assert.match(preview, /renderPptx/);
+  assert.match(preview, /PPTXViewer/);
+  assert.match(preview, /renderPdf/);
+  assert.match(preview, /pdfjsLib/);
+  assert.match(preview, /renderExcel/);
+  assert.match(preview, /renderWord/);
+  assert.match(preview, /mammoth\.convertToHtml/);
+  assert.match(preview, /safeHtmlInto/);
+});
+
+test("Office preview stays client-side and can refresh from the edited local Office model", () => {
+  const preview = readFileSync(new URL("../office-preview.js", import.meta.url), "utf8");
+  assert.match(preview, /URL\.createObjectURL/);
+  assert.match(preview, /refreshFromEditor/);
+  assert.match(editor, /async createPreviewBlob\(\)/);
+  assert.match(editor, /window\.NavaOfficePreview\?\.refreshFromEditor\?\.\(\)/);
+  assert.doesNotMatch(preview, /fetch\s*\(/);
+  assert.doesNotMatch(preview, /XMLHttpRequest/);
+});
