@@ -247,7 +247,9 @@
     const rtl = style.direction === "rtl";
     const align = style.textAlign;
     const anchor = align === "center" ? "middle"
-      : (align === "right" || align === "end" || (align === "start" && rtl) ? "end" : "start");
+      : (align === "right" ? (rtl ? "start" : "end")
+        : align === "left" ? (rtl ? "end" : "start")
+        : align === "end" ? "end" : "start");
     const canvas = doc.createElement("canvas");
     const context = canvas.getContext("2d");
     if (context) context.font = [style.fontStyle, style.fontWeight, style.fontSize, style.fontFamily].filter(Boolean).join(" ");
@@ -256,7 +258,7 @@
       const content = line.glyphs.join("");
       if (!content.trim()) return;
       const x = anchor === "middle" ? (line.left + line.right) / 2
-        : (anchor === "end" ? line.right : line.left);
+        : (anchor === "start" ? (rtl ? line.right : line.left) : (rtl ? line.left : line.right));
       const measured = context ? context.measureText(content) : null;
       const ascent = measured && measured.actualBoundingBoxAscent
         ? measured.actualBoundingBoxAscent : fontSize * 0.82;
