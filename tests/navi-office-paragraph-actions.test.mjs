@@ -87,7 +87,7 @@ test("PowerPoint post-edit sync reads the already-open JSZip archive without Fil
   assert.match(structured, /Object\.freeze\(\{ readPowerPointArchive, read:/);
   assert.match(editor, /readPowerPointArchive\(zip\)/);
   assert.doesNotMatch(editor, /const blob=await zip\.generateAsync\(\{type:"blob"\}\);\s*const file=new File\(\[blob\]/);
-  assert.match(html, /office-edit-tools\.js\?v=office-pptx-paragraph-edit-20261119-3/);
+  assert.match(html, /office-edit-tools\.js\?v=office-pptx-pptx-export-run-edit-20261119-4/);
 });
 
 
