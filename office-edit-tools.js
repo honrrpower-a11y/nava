@@ -47,8 +47,8 @@
    const nextText=pieces.join(replace);
    let first=true;
    const nextBody=body.replace(runPattern,run=>{
-    if(first){first=false;return run.replace(/>([\\s\\S]*?)<\\//,">"+escapeXmlText(nextText)+"</");}
-    return run.replace(/>([\\s\\S]*?)<\\//,"></");
+    if(first){first=false;return run.replace(/>([\s\S]*?)<\//,">"+escapeXmlText(nextText)+"</");}
+    return run.replace(/>([\s\S]*?)<\//,"></");
    });
    return paragraph.replace(body,nextBody);
   });
