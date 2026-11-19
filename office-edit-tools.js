@@ -378,7 +378,7 @@ async function syncActiveFileContext(){
     for(const item of action.edits){
      if(!item||!Number.isSafeInteger(item.slide)||item.slide<1||item.slide>500||typeof item.find!=="string"||!item.find.trim()||item.find.length>3000||typeof item.replace!=="string"||item.replace.length>3000)throw new Error("شماره اسلاید یا متن یکی از تغییرات معتبر نیست.");
      const path=slidePaths[item.slide-1];
-     if(!path||!/^ppt\\/slides\\/slide\\d+\\.xml$/.test(path)||!zip.files[path])throw new Error("اسلاید "+item.slide+" در فایل پیدا نشد؛ هیچ تغییری اعمال نشد.");
+     if(!path||!/^ppt\/slides\/slide\d+\.xml$/.test(path)||!zip.files[path])throw new Error("اسلاید "+item.slide+" در فایل پیدا نشد؛ هیچ تغییری اعمال نشد.");
      let xml=staged.has(path)?staged.get(path):await zip.files[path].async("string");
      const normalizeSlideText=value=>String(value||"").normalize("NFKC").replace(/[\u00a0\u200b-\u200d\ufeff]/g," ").replace(/\s+/g," ").trim();
      const paragraphMatches=Array.from(xml.matchAll(/<a:p(?:\s[^>]*)?>([\s\S]*?)<\/a:p>/g));
