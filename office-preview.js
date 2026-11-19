@@ -159,7 +159,7 @@
   // Persian/Arabic text must be drawn as a complete run. The upstream
   // PptxViewJS adapter currently paints many text runs one character at a time,
   // which prevents Canvas from applying contextual Arabic/Persian shaping.
-  const NAVA_RTL_TEXT = /[\\u0600-\\u06FF\\u0750-\\u077F\\u08A0-\\u08FF\\uFB50-\\uFDFF\\uFE70-\\uFEFF]/;
+  const NAVA_RTL_TEXT = /[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]/;
   let pptxRtlPatchInstalled = false;
   const installPptxRtlCompatibility = () => {
     if (pptxRtlPatchInstalled) return true;
