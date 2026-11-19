@@ -32,7 +32,7 @@ function makeDesign() {
     concepts: [
       { title: "موج پیوند", rationale: "پیوند صدا و خلاقیت", html: '<div class="mark"><span class="wave"></span><strong>{{BRAND_NAME}}</strong><small>{{SLOGAN}}</small><script>window.pwned=true</script></div>', css: '.logo-art-root{display:grid;place-items:center;background:var(--logo-background);color:var(--logo-primary)}.mark{text-align:center}.wave{display:block;width:150px;height:60px;border:8px solid var(--logo-primary);border-radius:50%}' },
       { title: "حرف ن", rationale: "تمرکز بر حرف آغازین برند", html: '<div class="letter"><strong>{{BRAND_NAME}}</strong><small>{{SLOGAN}}</small></div>', css: '.logo-art-root{display:grid;place-items:center;background:var(--logo-background);color:var(--logo-primary)}.letter{font-size:70px;font-weight:900}' },
-      { title: "طنین", rationale: "بازتاب ایده در صدا", html: '<div class="echo"><span>✦</span><strong>{{BRAND_NAME}}</strong><small>{{SLOGAN}}</small></div>', css: '.logo-art-root{display:grid;place-items:center;background:var(--logo-background);color:var(--logo-primary)}.echo{text-align:center;font-size:54px}' }
+      { title: "طنین", rationale: "بازتاب ایده در صدا", html: '<div class="echo"><svg viewBox="0 0 100 100" width="100" height="100"><defs><linearGradient id="brand-gradient"><stop offset="0%" stop-color="#D6A84F"/><stop offset="100%" stop-color="#FFFFFF"/></linearGradient></defs><path d="M10 10 L90 50 L10 90 Z" fill="url(#brand-gradient)" fill-rule="evenodd"/></svg><span>✦</span><strong>{{BRAND_NAME}}</strong><small>{{SLOGAN}}</small></div>', css: '.logo-art-root{display:grid;place-items:center;background:var(--logo-background);color:var(--logo-primary)}.echo{text-align:center;font-size:54px}' }
     ]
   };
 }
@@ -138,6 +138,10 @@ test("NAVI writes an English brief and three HTML/CSS logos in one Gemini call; 
     assert.ok(result.concepts.every(item => !JSON.stringify(item).includes("foreignObject")));
     assert.ok(result.concepts.every(item => item.html.includes("<div")));
     assert.ok(result.concepts.every(item => item.css.length > 0));
+    assert.ok(result.concepts[2].html.includes('viewBox="0 0 100 100"'));
+    assert.ok(result.concepts[2].html.includes('fill="url(#brand-gradient)"'));
+    assert.ok(result.concepts[2].html.includes('fill-rule="evenodd"'));
+    assert.ok(result.concepts.every(item => !item.html.includes("<script")));
     assert.equal(db.visitorUsed, 1, "one completed logo batch consumes one guest trial");
   } finally {
     globalThis.fetch = originalFetch;
@@ -196,4 +200,7 @@ test("native logo renderer is valid JavaScript and never constructs foreignObjec
   assert.ok(source.includes("global.NavaLogoRenderer"));
   assert.ok(!source.includes('createElementNS(NS, "foreignObject"'));
   assert.ok(source.includes("new XMLSerializer().serializeToString"));
+  assert.ok(source.includes("Intl.Segmenter"), "text is reconstructed from measured grapheme bounds");
+  assert.ok(source.includes("if (warnings.size)"), "any lossy feature blocks export");
+  assert.ok(source.includes("gradientUnits: " + '"userSpaceOnUse"'));
 });
