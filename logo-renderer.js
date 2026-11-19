@@ -20,6 +20,9 @@
     if (parent) parent.appendChild(el);
     return el;
   }
+  function computedStyle(element, pseudo) {
+    return element.ownerDocument.defaultView.getComputedStyle(element, pseudo || null);
+  }
   function colorIsVisible(color) { return !!color && color !== TRANSPARENT && color !== "transparent"; }
   function parseGradient(value, id, defs) {
     const match = /^(linear|radial)-gradient\((.*)\)$/i.exec(value || "");
@@ -115,10 +118,10 @@
     if (!text || !text.trim()) return;
     const el = textNode.parentElement;
     if (!el) return;
-    const range=document.createRange(); range.selectNodeContents(textNode);
+    const range=el.ownerDocument.createRange(); range.selectNodeContents(textNode);
     const rects=Array.from(range.getClientRects()).filter(r=>r.width>0&&r.height>0);
     if (!rects.length) return;
-    const style=getComputedStyle(el);
+    const style=computedStyle(el);
     if (style.textDecorationLine && style.textDecorationLine !== "none") warnings.add("زیرخط یا خط‌خوردگی متن در خروجی برداری این نسخه پشتیبانی نمی‌شود.");
     if (style.writingMode && style.writingMode !== "horizontal-tb") warnings.add("نوشتار عمودی در خروجی برداری پشتیبانی نمی‌شود.");
     const fontSize=parseFloat(style.fontSize)||16;
@@ -139,7 +142,7 @@
     if (!SVG_TAGS.has(tag)) { warnings.add("یک عنصر SVG پشتیبانی‌نشده شناسایی شد: "+tag); return; }
     const target=node(tag==="lineargradient"?"linearGradient":tag==="radialgradient"?"radialGradient":tag==="clippath"?"clipPath":tag,{},parent);
     ATTRS.forEach(attr=>{ if(source.hasAttribute(attr)) target.setAttribute(attr,source.getAttribute(attr)); });
-    const style=getComputedStyle(source);
+    const style=computedStyle(source);
     ["fill","fill-rule","fill-opacity","stroke","stroke-width","stroke-linecap","stroke-linejoin","stroke-dasharray","stroke-dashoffset","stroke-opacity","opacity","font-size","font-weight","letter-spacing","text-anchor","dominant-baseline"].forEach(attr=>{
       const value=style.getPropertyValue(attr); if(value && value!=="none" && value!=="normal") target.setAttribute(attr,value);
     });
@@ -194,8 +197,8 @@
     } else if(style.boxShadow && style.boxShadow!=="none") {
       warnings.add("سایه روی عنصر بدون پس‌زمینه ممکن است در بازسازی دقیقاً یکسان نباشد.");
     }
-    const before=getComputedStyle(source,"::before").content;
-    const after=getComputedStyle(source,"::after").content;
+    const before=computedStyle(source,"::before").content;
+    const after=computedStyle(source,"::after").content;
     if((before&&before!=="none"&&before!=="normal")||(after&&after!=="none"&&after!=="normal")) warnings.add("شبه‌عنصرهای CSS در خروجی برداری پشتیبانی نمی‌شوند.");
     Array.from(source.childNodes).forEach(child=>renderHtmlElement(child,group,rootRect,scale,defs,warnings,counter));
   }
@@ -210,7 +213,7 @@
     const svg=node("svg",{xmlns:NS,width:options.width||1200,height:options.height||1200,viewBox:"0 0 1000 1000",role:"img","aria-labelledby":"nava-logo-title"},null);
     node("title",{id:"nava-logo-title"},svg).textContent="Logo — "+(options.brandName||"NAVA");
     const defs=node("defs",{},svg);
-    const rootStyle=getComputedStyle(root);
+    const rootStyle=computedStyle(root);
     const bg=rootStyle.backgroundColor;
     const bgImage=rootStyle.backgroundImage;
     let rootFill=colorIsVisible(bg)?bg:"none";
