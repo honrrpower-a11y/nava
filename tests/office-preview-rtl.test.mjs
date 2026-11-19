@@ -97,7 +97,7 @@ test("Persian and Arabic runs are drawn as one shaped Canvas string", () => {
 
   const runStart = calls.length;
   const runEnd = adapter.renderRunTextStandard("تهیه‌شده", 100, 50, { letterSpacing: 0.5 }, 500);
-  assert.equal(runEnd, 143.5);
+  assert.equal(runEnd, 142 + 0.5 * Array.from("تهیه‌شده").length);
   assert.deepEqual(calls.slice(runStart).filter(call => call[0] === "fillText"), [
     ["fillText", "تهیه‌شده", 100, 50, "rtl", "left"]
   ], "the actual PPTX text renderer must shape a complete Persian word");
