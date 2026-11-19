@@ -38,9 +38,10 @@ async function syncActiveFileContext(){
    extracted=await window.NavaOfficeStructured.read(file);
   }else if(kind==="pptx"){
    if(!zip||!window.NavaOfficeStructured?.read)throw new Error("ابزار استخراج نسخه جدید PowerPoint آماده نیست.");
-   const blob=await zip.generateAsync({type:"blob"});
-   const file=new File([blob],sourceFile.name,{type:sourceFile.type||"application/vnd.openxmlformats-officedocument.presentationml.presentation"});
-   extracted=await window.NavaOfficeStructured.read(file);
+   if(typeof window.NavaOfficeStructured.readPowerPointArchive!=="function")throw new Error("ابزار استخراج مستقیم PowerPoint آماده نیست.");
+   // Reuse the already-open JSZip archive. Re-wrapping the generated Blob in a
+   // File and parsing it again invokes FileReader on some mobile browsers.
+   extracted=await window.NavaOfficeStructured.readPowerPointArchive(zip);
   }else if(kind==="docx"){
    if(!zip)throw new Error("نسخه کاری Word در دسترس نیست.");
    const names=Object.keys(zip.files).filter(name=>/^word\/(document|header\d+|footer\d+)\.xml$/.test(name)).sort();
