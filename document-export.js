@@ -223,7 +223,7 @@ function splitPresentation(text){
 async function powerpoint(text,name,button,status){
  button.disabled=true;const label=button.textContent;button.textContent="در حال ساخت PowerPoint...";
  try{
-  const PptxGenJS=await loadExternal("https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js","pptxgen");
+  const PptxGenJS=await loadExternal("https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js","PptxGenJS");
   const pptx=new PptxGenJS();pptx.layout="LAYOUT_WIDE";pptx.author="NAVA";pptx.subject="ارائه ساخته‌شده با NAVI";pptx.title="NAVA Presentation";
   pptx.theme={headFontFace:"Arial",bodyFontFace:"Arial",lang:"fa-IR"};
   const navy="101B2B",gold="D5AD65",white="F7F8FA",muted="B8C1CE";
