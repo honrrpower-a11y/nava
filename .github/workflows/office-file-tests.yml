@@ -37,6 +37,6 @@ jobs:
         with:
           node-version: 22
       - name: Check Office JavaScript syntax
-        run: node --check office-file-tools.js && node --check office-structured-files.js && node --check office-edit-tools.js && node --check document-export.js
+        run: node --check office-file-tools.js && node --check office-structured-files.js && node --check office-edit-tools.js && node --check office-preview.js && node --check document-export.js
       - name: Run Office extraction and OCR regression tests
-        run: node --test tests/office-ocr.test.mjs
+        run: node --test tests/office-ocr.test.mjs tests/office-preview-rtl.test.mjs
