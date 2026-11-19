@@ -2754,9 +2754,14 @@ async function handleChat({
       ? memoryResult
       : [];
 
-    conversationMatches = await searchNaviConversationHistory(
-      env.NAVA_DB, message, 8, dbHistory, userId, activeProjectId
-    );
+    // The public home-page chat is intentionally isolated from prior
+    // project conversations, including Office conversations in the same
+    // general project. Its own thread history remains available via dbHistory.
+    conversationMatches = input.isolatedContext === true
+      ? []
+      : await searchNaviConversationHistory(
+          env.NAVA_DB, message, 8, dbHistory, userId, activeProjectId
+        );
 
   } catch (error) {
     logError("Context loading failed", error);
