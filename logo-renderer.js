@@ -24,44 +24,113 @@
     return element.ownerDocument.defaultView.getComputedStyle(element, pseudo || null);
   }
   function colorIsVisible(color) { return !!color && color !== TRANSPARENT && color !== "transparent"; }
-  function parseGradient(value, id, defs) {
-    const match = /^(linear|radial)-gradient\((.*)\)$/i.exec(value || "");
-    if (!match) return null;
-    const gradientType = match[1].toLowerCase();
-    const body = match[2];
-    const parts = body.split(/,(?![^()]*\))/).map(s => s.trim());
-    if (gradientType === "radial" && parts.length && /^(circle|ellipse|closest-|farthest-)/i.test(parts[0])) {
-      if (/\bat\b/i.test(parts[0])) return null;
-      parts.shift();
+  function splitCssList(value) {
+    const parts = [];
+    let depth = 0, start = 0;
+    for (let i = 0; i < value.length; i += 1) {
+      if (value[i] === "(") depth += 1;
+      else if (value[i] === ")") depth = Math.max(0, depth - 1);
+      else if (value[i] === "," && depth === 0) {
+        parts.push(value.slice(start, i).trim());
+        start = i + 1;
+      }
     }
-    let angle = 180;
-    if (parts.length && /^(to\s|[-\d.]+deg)/i.test(parts[0])) {
-      const dir = parts.shift();
-      if (/deg$/i.test(dir)) angle = parseFloat(dir);
-      else if (/to right/i.test(dir)) angle = 90;
-      else if (/to left/i.test(dir)) angle = 270;
-      else if (/to top/i.test(dir)) angle = 0;
-      else if (/to bottom/i.test(dir)) angle = 180;
-      else if (/top right|right top/i.test(dir)) angle = 45;
-      else if (/bottom right|right bottom/i.test(dir)) angle = 135;
-      else if (/bottom left|left bottom/i.test(dir)) angle = 225;
-      else if (/top left|left top/i.test(dir)) angle = 315;
-    }
-    const stops = parts.map(part => {
-      const color = part.match(/(rgba?\([^)]*\)|#[0-9a-f]{3,8}|[a-z]+)/i);
-      if (!color) return null;
-      const pct = part.match(/([\d.]+)%\s*$/);
-      return { color: color[1], offset: pct ? Math.max(0, Math.min(100, Number(pct[1]))) + "%" : null };
-    }).filter(Boolean);
-    if (stops.length < 2) return null;
-    const rad = (angle - 90) * Math.PI / 180;
-    const dx = Math.cos(rad) * .5, dy = Math.sin(rad) * .5;
-    const grad = gradientType === "radial"
-      ? node("radialGradient", {id, cx: ".5", cy: ".5", r: ".5"}, defs)
-      : node("linearGradient", {id, x1: round(.5-dx), y1: round(.5-dy), x2: round(.5+dx), y2: round(.5+dy)}, defs);
-    stops.forEach((stop, i) => node("stop", {offset: stop.offset || (i/(stops.length-1)*100)+"%", "stop-color": stop.color}, grad));
-    return "url(#"+id+")";
+    parts.push(value.slice(start).trim());
+    return parts;
   }
+
+  function normalizeStops(parts) {
+    const stops = [];
+    for (const part of parts) {
+      const match = /^(rgba?\([^)]*\)|#[0-9a-f]{3,8}|[a-z]+)\s*(?:(\d+(?:\.\d+)?%)\s*)?$/i.exec(part);
+      if (!match) return null;
+      stops.push({ color: match[1], offset: match[2] ? Number.parseFloat(match[2]) : null });
+    }
+    if (stops.length < 2) return null;
+    if (stops[0].offset === null) stops[0].offset = 0;
+    if (stops[stops.length - 1].offset === null) stops[stops.length - 1].offset = 100;
+    let previous = 0;
+    for (let i = 0; i < stops.length; i += 1) {
+      if (stops[i].offset !== null) {
+        stops[i].offset = Math.max(previous, Math.max(0, Math.min(100, stops[i].offset)));
+        previous = stops[i].offset;
+        continue;
+      }
+      let next = i + 1;
+      while (next < stops.length && stops[next].offset === null) next += 1;
+      const from = stops[i - 1].offset;
+      const to = stops[next].offset;
+      const span = next - i + 1;
+      for (let j = i; j < next; j += 1) {
+        stops[j].offset = from + (to - from) * (j - i + 1) / span;
+      }
+      i = next - 1;
+      previous = stops[i].offset;
+    }
+    return stops;
+  }
+
+  function parseGradient(value, id, defs, bounds) {
+    const match = /^(linear|radial)-gradient\((.*)\)$/i.exec(value || "");
+    if (!match || !bounds || !bounds.width || !bounds.height) return null;
+    const type = match[1].toLowerCase();
+    const parts = splitCssList(match[2]);
+    let angle = 180;
+    if (type === "linear") {
+      if (/^(to\s|[-\d.]+deg)/i.test(parts[0])) {
+        const direction = parts.shift().toLowerCase();
+        if (/deg$/.test(direction)) angle = Number.parseFloat(direction);
+        else if (/to right/.test(direction)) angle = 90;
+        else if (/to left/.test(direction)) angle = 270;
+        else if (/to top right|to right top/.test(direction)) angle = 45;
+        else if (/to bottom right|to right bottom/.test(direction)) angle = 135;
+        else if (/to bottom left|to left bottom/.test(direction)) angle = 225;
+        else if (/to top left|to left top/.test(direction)) angle = 315;
+        else if (/to top/.test(direction)) angle = 0;
+        else if (/to bottom/.test(direction)) angle = 180;
+        else return null;
+      }
+    } else {
+      // The first native implementation deliberately supports only a centered
+      // CSS circle with the default farthest-corner radius. Other radial
+      // geometries are rejected rather than approximated.
+      if (/^circle(?:\s+at\s+(?:center|50%\s+50%))?$/i.test(parts[0])) {
+        parts.shift();
+      } else if (!/^(?:rgba?\(|#[0-9a-f]|[a-z])/i.test(parts[0])) {
+        return null;
+      } else {
+        return null;
+      }
+    }
+
+    const stops = normalizeStops(parts);
+    if (!stops) return null;
+    const x = bounds.x, y = bounds.y, width = bounds.width, height = bounds.height;
+    let gradient;
+    if (type === "radial") {
+      gradient = node("radialGradient", {
+        id, gradientUnits: "userSpaceOnUse",
+        cx: round(x + width / 2), cy: round(y + height / 2),
+        r: round(Math.hypot(width / 2, height / 2))
+      }, defs);
+    } else {
+      const radians = angle * Math.PI / 180;
+      const vx = Math.sin(radians), vy = -Math.cos(radians);
+      const halfLength = Math.abs(vx) * width / 2 + Math.abs(vy) * height / 2;
+      const cx = x + width / 2, cy = y + height / 2;
+      gradient = node("linearGradient", {
+        id, gradientUnits: "userSpaceOnUse",
+        x1: round(cx - vx * halfLength), y1: round(cy - vy * halfLength),
+        x2: round(cx + vx * halfLength), y2: round(cy + vy * halfLength)
+      }, defs);
+    }
+    stops.forEach(stop => node("stop", {
+      offset: round(stop.offset) + "%",
+      "stop-color": stop.color
+    }, gradient));
+    return "url(#" + id + ")";
+  }
+
   function parseShadow(value, id, defs) {
     if (!value || value === "none") return null;
     const colorFirst = value.match(/(rgba?\([^)]*\)|#[0-9a-f]{3,8}|[a-z]+)\s+(-?[\d.]+)px\s+(-?[\d.]+)px(?:\s+([\d.]+)px)?(?:\s+(-?[\d.]+)px)?/i);
@@ -95,48 +164,107 @@
       opacity: style.opacity === "1" ? null : style.opacity
     };
   }
-  function textLines(text, maxWidth, style) {
-    let source = String(text || "").replace(/\s+/g, " ").trim();
-    if (style.textTransform === "uppercase") source = source.toLocaleUpperCase();
-    if (style.textTransform === "lowercase") source = source.toLocaleLowerCase();
-    if (!source) return [];
-    const canvas = document.createElement("canvas"), ctx = canvas.getContext("2d");
-    if (!ctx) return [source];
-    ctx.font = [style.fontStyle,style.fontWeight,style.fontSize,style.fontFamily].filter(Boolean).join(" ");
-    const words = source.split(" "), lines = [];
-    let line = "";
-    words.forEach(word => {
-      const next = line ? line+" "+word : word;
-      if (line && ctx.measureText(next).width > maxWidth) { lines.push(line); line=word; }
-      else line=next;
-    });
-    if (line) lines.push(line);
-    return lines;
+  function textSegments(value) {
+    if (typeof Intl !== "undefined" && Intl.Segmenter) {
+      return Array.from(new Intl.Segmenter(undefined, { granularity: "grapheme" }).segment(value), item => ({
+        segment: item.segment, index: item.index
+      }));
+    }
+    const output = [];
+    let index = 0;
+    for (const segment of Array.from(value)) {
+      output.push({ segment, index });
+      index += segment.length;
+    }
+    return output;
   }
+
   function appendText(textNode, parent, rootRect, scale, warnings) {
-    const text = textNode.nodeValue;
-    if (!text || !text.trim()) return;
-    const el = textNode.parentElement;
-    if (!el) return;
-    const range=el.ownerDocument.createRange(); range.selectNodeContents(textNode);
-    const rects=Array.from(range.getClientRects()).filter(r=>r.width>0&&r.height>0);
-    if (!rects.length) return;
-    const style=computedStyle(el);
-    if (style.textDecorationLine && style.textDecorationLine !== "none") warnings.add("زیرخط یا خط‌خوردگی متن در خروجی برداری این نسخه پشتیبانی نمی‌شود.");
-    if (style.writingMode && style.writingMode !== "horizontal-tb") warnings.add("نوشتار عمودی در خروجی برداری پشتیبانی نمی‌شود.");
-    const fontSize=parseFloat(style.fontSize)||16;
-    const maxWidth=Math.max(...rects.map(r=>r.width));
-    const lines=textLines(text,Math.max(maxWidth,rects[0].width),style);
-    const box=rects[0];
+    const raw = textNode.nodeValue || "";
+    if (!raw.trim()) return;
+    const element = textNode.parentElement;
+    if (!element) return;
+    const doc = textNode.ownerDocument;
+    const style = computedStyle(element);
+    if (style.textDecorationLine && style.textDecorationLine !== "none") {
+      warnings.add("زیرخط یا خط‌خوردگی متن در خروجی برداری پشتیبانی نمی‌شود.");
+    }
+    if (style.writingMode && style.writingMode !== "horizontal-tb") {
+      warnings.add("نوشتار عمودی در خروجی برداری پشتیبانی نمی‌شود.");
+    }
+    if (style.textAlign === "justify" || style.textAlign === "justify-all") {
+      warnings.add("تراز justify متن در خروجی برداری پشتیبانی نمی‌شود.");
+    }
+    if (style.textOverflow && style.textOverflow !== "clip") {
+      warnings.add("متن کوتاه‌شده با ellipsis در خروجی برداری پشتیبانی نمی‌شود.");
+    }
+    if (style.textTransform && !["none", "uppercase", "lowercase"].includes(style.textTransform)) {
+      warnings.add("این نوع text-transform در خروجی برداری پشتیبانی نمی‌شود.");
+    }
+
+    const sourceSegments = textSegments(raw);
+    const range = doc.createRange();
+    const visualSegments = [];
+    sourceSegments.forEach(item => {
+      const start = item.index;
+      const end = start + item.segment.length;
+      range.setStart(textNode, start);
+      range.setEnd(textNode, end);
+      const rect = range.getBoundingClientRect();
+      if (!rect || rect.width <= 0 || rect.height <= 0) return;
+      let glyph = item.segment;
+      if (style.textTransform === "uppercase") glyph = glyph.toLocaleUpperCase();
+      if (style.textTransform === "lowercase") glyph = glyph.toLocaleLowerCase();
+      visualSegments.push({ glyph, rect });
+    });
+    if (!visualSegments.length) return;
+
+    const lines = [];
+    visualSegments.forEach(item => {
+      let line = lines.find(candidate => Math.abs(candidate.top - item.rect.top) <= 1.5);
+      if (!line) {
+        line = { top: item.rect.top, left: item.rect.left, right: item.rect.right, glyphs: [] };
+        lines.push(line);
+      }
+      line.left = Math.min(line.left, item.rect.left);
+      line.right = Math.max(line.right, item.rect.right);
+      line.glyphs.push(item.glyph);
+    });
+    lines.sort((a, b) => a.top - b.top);
+
+    const fontSize = Number.parseFloat(style.fontSize) || 16;
     const rtl = style.direction === "rtl";
-    const rightAligned = style.textAlign === "right" || (style.textAlign === "start" && rtl);
-    const leftAligned = style.textAlign === "left" || (style.textAlign === "start" && !rtl);
-    const x=style.textAlign==="center" ? box.left+box.width/2 : (rightAligned ? box.right : (leftAligned ? box.left : box.left));
-    const y=box.top-rootRect.top+fontSize*.86;
-    const t=node("text",Object.assign(styleAttrs(style),{x:round((x-rootRect.left)*scale),y:round(y*scale)}),parent);
-    lines.forEach((line,i)=>node("tspan",{x:round((x-rootRect.left)*scale),dy:i===0?0:round(fontSize*1.2*scale)},t).textContent=line);
-    if (lines.length>1) warnings.add("متن چندخطی با بازسازی تقریبی فاصله خطوط تبدیل شد.");
+    const align = style.textAlign;
+    const anchor = align === "center" ? "middle"
+      : (align === "right" || align === "end" || (align === "start" && rtl) ? "end" : "start");
+    const canvas = doc.createElement("canvas");
+    const context = canvas.getContext("2d");
+    if (context) context.font = [style.fontStyle, style.fontWeight, style.fontSize, style.fontFamily].filter(Boolean).join(" ");
+
+    lines.forEach(line => {
+      const content = line.glyphs.join("");
+      if (!content.trim()) return;
+      const x = anchor === "middle" ? (line.left + line.right) / 2
+        : (anchor === "end" ? line.right : line.left);
+      const measured = context ? context.measureText(content) : null;
+      const ascent = measured && measured.actualBoundingBoxAscent
+        ? measured.actualBoundingBoxAscent : fontSize * 0.82;
+      const y = line.top - rootRect.top + ascent;
+      const width = line.right - line.left;
+      const text = node("text", Object.assign(styleAttrs(style), {
+        x: round((x - rootRect.left) * scale),
+        y: round(y * scale),
+        "text-anchor": anchor,
+        direction: rtl ? "rtl" : "ltr",
+        "unicode-bidi": "plaintext",
+        "xml:space": "preserve",
+        textLength: round(width * scale),
+        lengthAdjust: "spacingAndGlyphs"
+      }), parent);
+      text.textContent = content;
+    });
   }
+
   function copySvgElement(source, parent, warnings) {
     const tag=source.localName.toLowerCase();
     if (!SVG_TAGS.has(tag)) { warnings.add("یک عنصر SVG پشتیبانی‌نشده شناسایی شد: "+tag); return; }
