@@ -33,7 +33,7 @@ const ALLOWED_TAGS = new Set([
   "text", "tspan"
 ]);
 const ALLOWED_ATTRIBUTES = new Set([
-  "class", "id", "role", "aria-hidden", "viewbox", "xmlns", "width", "height",
+  "class", "id", "role", "aria-hidden", "data-logo-role", "viewbox", "xmlns", "width", "height",
   "x", "y", "x1", "y1", "x2", "y2", "cx", "cy", "r", "rx", "ry", "d",
   "fill", "fill-rule", "fill-opacity", "stroke", "stroke-width", "stroke-linecap",
   "stroke-linejoin", "stroke-dasharray", "stroke-dashoffset", "stroke-opacity",
@@ -188,8 +188,8 @@ async function designLogos(data, apiKey) {
         throw new Error("Logo concept " + (index + 1) + " is missing the slogan placeholder.");
       }
       const finalHtml = html
-        .replace(/\{\{BRAND_NAME\}\}/g, escapeHtml(data.brandName))
-        .replace(/\{\{SLOGAN\}\}/g, escapeHtml(data.slogan));
+        .replace(/\{\{BRAND_NAME\}\}/g, '<span data-logo-role="brand">' + escapeHtml(data.brandName) + "</span>")
+        .replace(/\{\{SLOGAN\}\}/g, '<span data-logo-role="slogan">' + escapeHtml(data.slogan) + "</span>");
       const finalCss = css;
       const title = safeText(item?.title, 100) || "مسیر طراحی " + (index + 1);
       const rationale = safeText(item?.rationale, 420) || "این مسیر بر اساس بریف برند طراحی شده است.";
