@@ -130,7 +130,7 @@ test("PowerPoint supports complete-paragraph translation and rewriting across sp
   assert.match(editor, /syncActiveFileContext/);
   assert.match(app, /edit_slide_text/);
   assert.match(app, /قالب نویسه‌ای اولین بخش متن را به ارث می‌برد/);
-  assert.match(html, /office-pptx-paragraph-edit-20261119-3/);
+  assert.match(html, /office-pptx-pptx-export-run-edit-20261119-4/);
   assert.doesNotThrow(() => new Function(editor));
 });
 
