@@ -48,7 +48,9 @@
     if (stops.length < 2) return null;
     const rad = (angle - 90) * Math.PI / 180;
     const dx = Math.cos(rad) * .5, dy = Math.sin(rad) * .5;
-    const grad = node("linearGradient", {id, x1: round(.5-dx), y1: round(.5-dy), x2: round(.5+dx), y2: round(.5+dy)}, defs);
+    const grad = gradientType === "radial"
+      ? node("radialGradient", {id, cx: ".5", cy: ".5", r: ".5"}, defs)
+      : node("linearGradient", {id, x1: round(.5-dx), y1: round(.5-dy), x2: round(.5+dx), y2: round(.5+dy)}, defs);
     stops.forEach((stop, i) => node("stop", {offset: stop.offset || (i/(stops.length-1)*100)+"%", "stop-color": stop.color}, grad));
     return "url(#"+id+")";
   }
@@ -57,6 +59,7 @@
     const m = value.match(/(-?[\d.]+)px\s+(-?[\d.]+)px(?:\s+([\d.]+)px)?(?:\s+(-?[\d.]+)px)?\s+(rgba?\([^)]*\)|#[0-9a-f]{3,8}|[a-z]+)/i);
     if (!m) return null;
     const dx=Number(m[1]),dy=Number(m[2]),blur=Number(m[3]||0),spread=Number(m[4]||0),color=m[5];
+    if (spread !== 0 || /inset/i.test(value) || (value.match(/,/g)||[]).length > 3) return null;
     const filter=node("filter",{id,x:"-40%",y:"-40%",width:"180%",height:"180%",colorInterpolationFilters:"sRGB"},defs);
     node("feGaussianBlur",{in:"SourceAlpha",stdDeviation:round(blur/2)},filter);
     node("feOffset",{dx:round(dx),dy:round(dy),result:"offsetblur"},filter);
@@ -144,6 +147,12 @@
     const style=getComputedStyle(source);
     if (style.display==="none" || style.visibility==="hidden" || rect.width===0 || rect.height===0) return;
     if (style.transform && style.transform!=="none") warnings.add("عنصر دارای transform در CSS است؛ برای حفظ هندسه، خروجی این طرح متوقف شد.");
+    if (style.textShadow && style.textShadow!=="none") warnings.add("text-shadow در خروجی برداری پشتیبانی نمی‌شود.");
+    if (style.mixBlendMode && style.mixBlendMode!=="normal") warnings.add("ترکیب لایه‌های CSS در خروجی برداری پشتیبانی نمی‌شود.");
+    if (style.backgroundBlendMode && style.backgroundBlendMode!=="normal") warnings.add("ترکیب پس‌زمینه‌های CSS در خروجی برداری پشتیبانی نمی‌شود.");
+    if (style.borderTopWidth!==style.borderRightWidth || style.borderTopWidth!==style.borderBottomWidth || style.borderTopWidth!==style.borderLeftWidth) warnings.add("ضخامت‌های متفاوت border در این نسخه قابل بازسازی نیستند.");
+    if (style.borderTopLeftRadius!==style.borderTopRightRadius || style.borderTopLeftRadius!==style.borderBottomLeftRadius || style.borderTopLeftRadius!==style.borderBottomRightRadius) warnings.add("گوشه‌های با شعاع متفاوت در این نسخه قابل بازسازی نیستند.");
+    if (style.borderTopStyle!=="none" && style.borderTopStyle!=="solid") warnings.add("خط دور نقطه‌چین یا خط‌چین در خروجی برداری پشتیبانی نمی‌شود.");
     if (style.filter && style.filter!=="none") warnings.add("فیلتر CSS در خروجی برداری پشتیبانی نمی‌شود.");
     if (style.clipPath && style.clipPath!=="none") warnings.add("clip-path CSS در این نسخه قابل بازسازی نیست.");
     if (style.maskImage && style.maskImage!=="none") warnings.add("CSS mask در این نسخه قابل بازسازی نیست.");
@@ -162,6 +171,7 @@
     const borderColor=style.borderTopColor;
     if(fill!=="none" || border>0){
       const shadow=parseShadow(style.boxShadow,"nava-shadow-"+(++counter.value),defs);
+      if (style.boxShadow && style.boxShadow!=="none" && !shadow) warnings.add("این نوع box-shadow در خروجی برداری پشتیبانی نمی‌شود.");
       node("rect",{x,y,width:w,height:h,rx:round(radius*scale),ry:round(radius*scale),fill,stroke:border>0?borderColor:"none","stroke-width":border>0?round(border*scale):null,filter:shadow||null},group);
     } else if(style.boxShadow && style.boxShadow!=="none") {
       warnings.add("سایه روی عنصر بدون پس‌زمینه ممکن است در بازسازی دقیقاً یکسان نباشد.");
