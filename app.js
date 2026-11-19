@@ -111,6 +111,8 @@ const NAVI_CONTEXT_MESSAGES = 10;
 
 // Session state
 let naviSessionVersion = 0;
+// Set only after the owner-only API confirms this session on the server.
+let naviOwnerVerified = false;
 let naviAssistantContext = null;
 
 // History state
@@ -3208,7 +3210,11 @@ naviLoginForm.addEventListener("submit", async event => {
 ========================================= */
 
 async function loadNaviUsers() {
-  if (!naviUsersList || getNaviStoredValue(NAVI_USER_ROLE_KEY) !== "owner") return;
+  if (!naviUsersList || getNaviStoredValue(NAVI_USER_ROLE_KEY) !== "owner") {
+    naviOwnerVerified = false;
+    return;
+  }
+  naviOwnerVerified = false;
   if (naviUsersStatus) naviUsersStatus.textContent = "در حال دریافت حساب‌ها...";
   naviUsersList.replaceChildren();
 
@@ -3221,6 +3227,9 @@ async function loadNaviUsers() {
     if (!response.ok || !data.success) {
       throw new Error(data.error || "دریافت حساب‌ها ناموفق بود.");
     }
+    // /navi-users enforces owner role on the server; only this response
+    // authorizes owner-only diagnostics in the current browser session.
+    naviOwnerVerified = true;
 
     const allUsers = Array.isArray(data.users) ? data.users : [];
     // The owner is viewing this panel; list only the other accounts.
@@ -3688,7 +3697,7 @@ function setOfficeSubmitStatus(message) {
 // Owner-only local diagnostics. The panel contains workflow metadata only;
 // request text and workbook contents are never displayed.
 function updateOfficeActionDiagnostic(stage, details = {}) {
-  const isAuthenticatedOwner = getNaviStoredValue(NAVI_USER_ROLE_KEY) === "owner";
+  const isAuthenticatedOwner = naviOwnerVerified === true;
   const existingPanel = document.getElementById("officeActionDiagnostic");
   if (!isAuthenticatedOwner) {
     existingPanel?.remove();
@@ -3853,7 +3862,7 @@ async function sendMessageToNavi(options = {}) {
     activeOfficeFileInfo.sheetNames.length
       ? "شیت‌های فایل فعال (از فایل بارگذاری‌شده): " + JSON.stringify(activeOfficeFileInfo.sheetNames)
       : "";
-  if (options.officeDiagnostic && getNaviStoredValue(NAVI_USER_ROLE_KEY) === "owner") updateOfficeActionDiagnostic("درخواست آماده ارسال", {
+  if (options.officeDiagnostic && naviOwnerVerified === true) updateOfficeActionDiagnostic("درخواست آماده ارسال", {
     page: requestPage,
     service: selectedService,
     messageCharacters: message.length,
