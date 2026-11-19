@@ -38,8 +38,10 @@ const ALLOWED_ATTRIBUTES = new Set([
   "fill", "fill-rule", "fill-opacity", "stroke", "stroke-width", "stroke-linecap",
   "stroke-linejoin", "stroke-dasharray", "stroke-dashoffset", "stroke-opacity",
   "opacity", "transform", "points", "offset", "stop-color", "stop-opacity",
-  "text-anchor", "dominant-baseline", "font-size", "font-weight",
-  "letter-spacing", "direction", "gradientunits", "gradienttransform",
+  "text-anchor", "dominant-baseline", "font-size", "font-weight", "font-family",
+  "font-style", "font-stretch", "letter-spacing", "word-spacing", "direction",
+  "unicode-bidi", "textlength", "lengthadjust", "dx", "dy", "rotate",
+  "clip-path", "clippathunits", "gradientunits", "gradienttransform",
   "preserveaspectratio", "spreadmethod"
 ]);
 const CANONICAL_TAGS = {
@@ -49,21 +51,7 @@ const CANONICAL_TAGS = {
 };
 const CANONICAL_ATTRIBUTES = {
   viewbox: "viewBox",
-  "fill-rule": "fillRule",
-  "fill-opacity": "fillOpacity",
-  "stroke-width": "strokeWidth",
-  "stroke-linecap": "strokeLinecap",
-  "stroke-linejoin": "strokeLinejoin",
-  "stroke-dasharray": "strokeDasharray",
-  "stroke-dashoffset": "strokeDashoffset",
-  "stroke-opacity": "strokeOpacity",
-  "stop-color": "stopColor",
-  "stop-opacity": "stopOpacity",
-  "text-anchor": "textAnchor",
-  "dominant-baseline": "dominantBaseline",
-  "font-size": "fontSize",
-  "font-weight": "fontWeight",
-  "letter-spacing": "letterSpacing",
+  "viewbox": "viewBox",
   gradientunits: "gradientUnits",
   gradienttransform: "gradientTransform",
   preserveaspectratio: "preserveAspectRatio",
