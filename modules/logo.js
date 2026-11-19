@@ -70,6 +70,7 @@ function sanitizeHtmlFragment(value) {
     const outputTag = CANONICAL_TAGS[tag] || tag;
     const closing = /^<\//.test(whole);
     if (closing) return "</" + outputTag + ">";
+    const selfClosing = /\\/\\s*>$/.test(whole);
     const attrs = [];
     String(rawAttrs || "").replace(/([a-zA-Z_:][\w:.-]*)\s*=\s*("([^"]*)"|'([^']*)'|([^\s>]+))/g,
       (_match, rawName, _value, doubleValue, singleValue, bareValue) => {
@@ -82,7 +83,7 @@ function sanitizeHtmlFragment(value) {
         attrs.push((CANONICAL_ATTRIBUTES[name] || name) + '="' + escapeHtml(value) + '"');
         return "";
       });
-    return "<" + outputTag + (attrs.length ? " " + attrs.join(" ") : "") + ">";
+    return "<" + outputTag + (attrs.length ? " " + attrs.join(" ") : "") + (selfClosing ? " />" : ">");
   });
   return html;
 }
