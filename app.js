@@ -3726,6 +3726,55 @@ function scrollToRequest() {
 
 
 /* =========================================
+   ISOLATED HOME CHAT THREAD
+========================================= */
+
+async function ensureHomeNaviThread() {
+  const token = getNaviToken();
+  if (!token) throw new Error("برای گفت‌وگوی صفحه اصلی باید وارد ناوی شوی.");
+
+  const userId = getNaviStoredValue(NAVI_USER_ID_KEY) || "account";
+  const storageKey = "nava_navi_home_thread_" + userId;
+  const savedThreadId = getNaviStoredValue(storageKey) || "";
+
+  const response = await fetch(
+    NAVI_THREADS_API + "?project_id=project-general",
+    {
+      headers: { "Authorization": "Bearer " + token },
+      cache: "no-store"
+    }
+  );
+  const data = await response.json();
+  if (!response.ok || !data.success) {
+    throw new Error(data.error || "دریافت گفت‌وگوی مستقل صفحه اصلی ناموفق بود.");
+  }
+
+  const threads = Array.isArray(data.threads) ? data.threads : [];
+  const existing = threads.find(item => item.thread_id === savedThreadId);
+  if (existing) return existing.thread_id;
+
+  const createResponse = await fetch(NAVI_THREADS_API, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": "Bearer " + token
+    },
+    body: JSON.stringify({
+      title: "گفت‌وگوی صفحه اصلی",
+      projectId: "project-general"
+    }),
+    cache: "no-store"
+  });
+  const created = await createResponse.json();
+  if (!createResponse.ok || !created.success || !created.thread?.thread_id) {
+    throw new Error(created.error || "ساخت گفت‌وگوی مستقل صفحه اصلی ناموفق بود.");
+  }
+
+  setNaviStoredValue(storageKey, created.thread.thread_id);
+  return created.thread.thread_id;
+}
+
+/* =========================================
    NAVI CHAT — AUTHENTICATED REQUEST
 ========================================= */
 
@@ -3765,6 +3814,9 @@ async function sendMessageToNavi(options = {}) {
     (isHomePage ? "انتخاب نشده" : serviceSelect.value);
   const saveThisMessageToMemory = Boolean(naviSaveComposerMessage?.checked);
   if (naviSaveComposerMessage) naviSaveComposerMessage.checked = false;
+  // Home chat owns a separate persistent thread. It must never reuse the
+  // dashboard/Office thread selected in the shared NAVI workspace state.
+  let requestThreadId = isHomePage ? "" : naviActiveThreadId;
 
   const contextLines = requestContext
     ? Object.entries(requestContext.context || {}).map(([key, value]) => key + ": " + value)
@@ -3821,6 +3873,7 @@ async function sendMessageToNavi(options = {}) {
   showNaviReply("در حال دریافت پاسخ از ناوی...");
 
   try {
+    if (isHomePage) requestThreadId = await ensureHomeNaviThread();
     const response = await fetch(NAVI_API, {
       method: "POST",
       headers: {
@@ -3833,9 +3886,10 @@ async function sendMessageToNavi(options = {}) {
         page: requestPage,
         pageTab: document.querySelector("#bizPage .biz-tab.is-active")?.dataset.bizTab || "",
         businessId: document.querySelector("#bizProfileSelect")?.value || "",
-        threadId: naviActiveThreadId,
+        threadId: requestThreadId,
+        isolatedContext: isHomePage,
         saveToMemory: saveThisMessageToMemory,
-        history: naviHistory.slice(-NAVI_CONTEXT_MESSAGES)
+        history: isHomePage ? [] : naviHistory.slice(-NAVI_CONTEXT_MESSAGES)
       })
     });
 
@@ -3910,8 +3964,8 @@ async function sendMessageToNavi(options = {}) {
     }
 
     // Render the answer immediately. Secondary synchronization must not block chat.
-    const threadBeforeNaming = naviThreads.find(item => item.thread_id === naviActiveThreadId);
-    const shouldNameThread = threadBeforeNaming && Number(threadBeforeNaming.message_count || 0) === 0;
+    const threadBeforeNaming = isHomePage ? null : naviThreads.find(item => item.thread_id === naviActiveThreadId);
+    const shouldNameThread = !isHomePage && threadBeforeNaming && Number(threadBeforeNaming.message_count || 0) === 0;
     showNaviReply(reply);
     try {
       renderNaviOfficeAction(data.officeAction, { target: options.officeTarget ? "office" : "chat" });
@@ -3933,7 +3987,7 @@ async function sendMessageToNavi(options = {}) {
       throw renderError;
     }
     userRequest.value = "";
-    appendLocalNaviMessages(finalMessage, reply);
+    if (!isHomePage) appendLocalNaviMessages(finalMessage, reply);
     setNaviStatus("پاسخ ناوی دریافت شد.");
 
     const backgroundJobs = [];
@@ -3943,7 +3997,7 @@ async function sendMessageToNavi(options = {}) {
         await loadNaviThreads();
       })());
     }
-    backgroundJobs.push(loadNaviHistory({ silent: true }));
+    if (!isHomePage) backgroundJobs.push(loadNaviHistory({ silent: true }));
 
     const memoryResult = data.memory && typeof data.memory === "object" ? data.memory : null;
     if (memoryResult?.manualSaved || memoryResult?.manualDuplicate || memoryResult?.manualSaveError) {
@@ -3954,7 +4008,7 @@ async function sendMessageToNavi(options = {}) {
           : memoryResult.manualSaveError);
     }
 
-    if (!naviMemoryBusy) {
+    if (!isHomePage && !naviMemoryBusy) {
       backgroundJobs.push((async () => {
         const refreshed = await loadNaviMemories(true);
         if (!refreshed || !memoryResult || !memoryResult.composerSaveRequested || memoryResult.commandRecognized) return;
