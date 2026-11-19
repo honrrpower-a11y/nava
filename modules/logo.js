@@ -35,12 +35,40 @@ const ALLOWED_TAGS = new Set([
 const ALLOWED_ATTRIBUTES = new Set([
   "class", "id", "role", "aria-hidden", "viewbox", "xmlns", "width", "height",
   "x", "y", "x1", "y1", "x2", "y2", "cx", "cy", "r", "rx", "ry", "d",
-  "fill", "fill-rule", "stroke", "stroke-width", "stroke-linecap",
-  "stroke-linejoin", "stroke-dasharray", "stroke-dashoffset", "opacity",
-  "transform", "points", "offset", "stop-color", "stop-opacity",
+  "fill", "fill-rule", "fill-opacity", "stroke", "stroke-width", "stroke-linecap",
+  "stroke-linejoin", "stroke-dasharray", "stroke-dashoffset", "stroke-opacity",
+  "opacity", "transform", "points", "offset", "stop-color", "stop-opacity",
   "text-anchor", "dominant-baseline", "font-size", "font-weight",
-  "letter-spacing", "direction"
+  "letter-spacing", "direction", "gradientunits", "gradienttransform",
+  "preserveaspectratio", "spreadmethod"
 ]);
+const CANONICAL_TAGS = {
+  lineargradient: "linearGradient",
+  radialgradient: "radialGradient",
+  clippath: "clipPath"
+};
+const CANONICAL_ATTRIBUTES = {
+  viewbox: "viewBox",
+  "fill-rule": "fillRule",
+  "fill-opacity": "fillOpacity",
+  "stroke-width": "strokeWidth",
+  "stroke-linecap": "strokeLinecap",
+  "stroke-linejoin": "strokeLinejoin",
+  "stroke-dasharray": "strokeDasharray",
+  "stroke-dashoffset": "strokeDashoffset",
+  "stroke-opacity": "strokeOpacity",
+  "stop-color": "stopColor",
+  "stop-opacity": "stopOpacity",
+  "text-anchor": "textAnchor",
+  "dominant-baseline": "dominantBaseline",
+  "font-size": "fontSize",
+  "font-weight": "fontWeight",
+  "letter-spacing": "letterSpacing",
+  gradientunits: "gradientUnits",
+  gradienttransform: "gradientTransform",
+  preserveaspectratio: "preserveAspectRatio",
+  spreadmethod: "spreadMethod"
+};
 
 function sanitizeHtmlFragment(value) {
   let html = String(value || "").slice(0, 10000);
@@ -59,10 +87,10 @@ function sanitizeHtmlFragment(value) {
         if (!ALLOWED_ATTRIBUTES.has(name)) return "";
         if (/javascript:|data:|https?:|url\s*\(/i.test(value)) return "";
         if (/[<>]/.test(value)) return "";
-        attrs.push(name + '="' + escapeHtml(value) + '"');
+        attrs.push((CANONICAL_ATTRIBUTES[name] || name) + '="' + escapeHtml(value) + '"');
         return "";
       });
-    return "<" + tag + (attrs.length ? " " + attrs.join(" ") : "") + ">";
+    return "<" + outputTag + (attrs.length ? " " + attrs.join(" ") : "") + ">";
   });
   return html;
 }
