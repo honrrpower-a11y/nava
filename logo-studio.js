@@ -71,9 +71,9 @@
     return frame;
   }
 
-  function createVectorExport(frame, data) {
+  async function createVectorExport(frame, data) {
     if (!window.NavaLogoRenderer) throw new Error("موتور بازسازی برداری بارگذاری نشده است.");
-    return window.NavaLogoRenderer.buildSvg(frame, {
+    return await window.NavaLogoRenderer.buildSvg(frame, {
       brandName: fields.name.value.trim() || data.brandName,
       width: 1200,
       height: 1200
@@ -86,10 +86,10 @@
     }
   }
 
-  function downloadSvg(concept, frame, data, index) {
+  async function downloadSvg(concept, frame, data, index) {
     try {
       status.textContent = "در حال بازسازی هندسه و تایپوگرافی به SVG برداری...";
-      const result = createVectorExport(frame, data);
+      const result = await createVectorExport(frame, data);
       const blob = new Blob([result.svg], { type: "image/svg+xml;charset=utf-8" });
       window.NavaLogoRenderer.downloadBlob(
         blob,
@@ -106,7 +106,7 @@
   async function downloadPng(concept, frame, data, index) {
     try {
       status.textContent = "در حال ساخت PNG با وضوح ۲۴۰۰ پیکسل...";
-      const result = createVectorExport(frame, data);
+      const result = await createVectorExport(frame, data);
       await window.NavaLogoRenderer.exportPng(
         result.svg,
         safeFileName(fields.name.value || data.brandName) + "-logo-concept-" + (index + 1) + ".png",
