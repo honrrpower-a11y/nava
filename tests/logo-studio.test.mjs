@@ -126,6 +126,8 @@ test("NAVI writes an English brief and three HTML/CSS logos in one Gemini call; 
     assert.equal(result.planning.method, "navi-english-brief-html-css-design");
     assert.match(result.planning.designBriefEnglish, /distinctive Persian creative-studio identity/i);
     assert.ok(result.concepts.every(item => item.html.includes("نوا")));
+    assert.ok(result.concepts.every(item => item.html.includes('data-logo-role="brand"')));
+    assert.ok(result.concepts.every(item => item.html.includes('data-logo-role="slogan"')));
     assert.ok(result.concepts.every(item => item.html.includes("صدای ایده‌های تازه")));
     assert.ok(result.concepts.every(item => !item.html.includes("{{BRAND_NAME}}")));
     assert.ok(result.concepts.every(item => !item.html.includes("<script")));
