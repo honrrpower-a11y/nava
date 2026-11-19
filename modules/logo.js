@@ -51,7 +51,6 @@ const CANONICAL_TAGS = {
 };
 const CANONICAL_ATTRIBUTES = {
   viewbox: "viewBox",
-  "viewbox": "viewBox",
   gradientunits: "gradientUnits",
   gradienttransform: "gradientTransform",
   preserveaspectratio: "preserveAspectRatio",
