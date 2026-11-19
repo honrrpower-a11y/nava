@@ -158,15 +158,15 @@
     const packageZip = await window.JSZip.loadAsync(file);
     const hasCharts = Object.keys(packageZip.files).some(name => /^ppt\/charts\/chart\d+\.xml$/i.test(name));
     if (hasCharts) await loadScript("https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js", "Chart");
-    const pptxNamespace = await loadScript(
-      "https://cdn.jsdelivr.net/npm/pptxviewjs@1.1.9/dist/PptxViewJS.min.js?office-preview=20261119-3",
-      "PptxViewJS",
-      value => typeof value?.PPTXViewer === "function" || typeof value?.default?.PPTXViewer === "function"
-    );
+    // Use ESM so UMD/AMD globals elsewhere on the page cannot intercept the export.
+    const pptxModule = await import("https://cdn.jsdelivr.net/npm/pptxviewjs@1.1.9/+esm?office-preview=20261119-4");
     if (token !== generation) return;
-    const Viewer = typeof pptxNamespace.PPTXViewer === "function"
-      ? pptxNamespace.PPTXViewer
-      : pptxNamespace.default.PPTXViewer;
+    const Viewer = [
+      pptxModule.PPTXViewer,
+      pptxModule.default?.PPTXViewer,
+      pptxModule.default
+    ].find(candidate => typeof candidate === "function");
+    if (!Viewer) throw new Error("ماژول پیش‌نمایش بارگذاری شد، اما خروجی PPTXViewer در دسترس نیست.");
     const target = canvas();
     target.width = 1280; target.height = 720;
     pptxViewer = new Viewer({ canvas: target });
