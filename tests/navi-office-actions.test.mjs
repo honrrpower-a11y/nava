@@ -121,7 +121,8 @@ test("NAVI suppresses model-written edit confirmations without current-user auth
   const { guardNaviOfficeReply } = await import("../modules/navi.js");
   const fabricated = "درخواست ویرایش سلول B3 در شیت «آزمایش NAVI» به «تست موفق» آماده است. برای اعمال تغییرات در فایل اکسل، لطفاً کارت تأیید را بررسی کنید.";
   const guarded = guardNaviOfficeReply(fabricated, false);
-  assert.match(guarded, /درخواست مشخصی برای تغییر سلول وجود ندارد/);
+  assert.match(guarded, /جزئیات کافی برای ساخت عملیات ویرایش وجود ندارد/);
+  assert.doesNotMatch(guarded, /سلول|اکسل|شیت/);
   assert.doesNotMatch(guarded, /B3|تست موفق|کارت تأیید/);
   assert.equal(guardNaviOfficeReply("سلام، چطور می‌توانم کمک کنم؟", false), "سلام، چطور می‌توانم کمک کنم؟");
   assert.equal(guardNaviOfficeReply(fabricated, true), fabricated);
