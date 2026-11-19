@@ -133,7 +133,9 @@ test("Office file preview is optional and collapsed by default", () => {
   assert.ok(start >= 0 && end > start, "preview must use a native collapsible details panel");
   const preview = html.slice(start, end);
   assert.match(preview, /<summary class="office-preview-disclosure"/);
-  assert.match(preview, /برای مشاهده فایل/);
+  assert.match(preview, /فایل اولیه‌ای است که انتخاب کرده‌اید/);
+  assert.match(preview, /فایل جدید یا نسخه اصلاح‌شده/);
+  assert.match(preview, /دوباره در سایت بارگذاری کنید/);
   assert.match(preview, /id="officePreviewStage"/);
   assert.match(html, /id="officeEditSave"/);
 });
