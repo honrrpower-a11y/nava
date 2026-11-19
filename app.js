@@ -1013,7 +1013,7 @@ function renderNaviOfficeAction(action, options = {}) {
   if (chatSlot) chatSlot.replaceChildren();
   if (officeSlot) officeSlot.replaceChildren();
   if (host) host.hidden = true;
-  if (!action || !["replace_text", "edit_slide_text", "edit_cells", "append_row"].includes(action.kind)) return;
+  if (!action || !["replace_text", "edit_slide_text", "delete_slide", "delete_slide_text", "edit_cells", "append_row"].includes(action.kind)) return;
 
   const slot = options.target === "office"
     ? (officeSlot || chatSlot)
@@ -1040,9 +1040,13 @@ function renderNaviOfficeAction(action, options = {}) {
   const detail = document.createElement("p");
   detail.textContent = action.kind === "replace_text"
     ? "جایگزینی دقیق «" + action.find + "» با «" + action.replace + "»"
-    : action.kind === "edit_slide_text"
-      ? "بازنویسی متن کامل اسلایدها: " + action.edits.map(item => "اسلاید " + item.slide + "؛ «" + item.find + "» ← «" + item.replace + "»").join(" | ")
-      : action.kind === "append_row"
+    : action.kind === "delete_slide"
+      ? "حذف کامل اسلاید شماره " + action.slide
+      : action.kind === "delete_slide_text"
+        ? "حذف متن مشخص‌شده از اسلاید " + action.slide + ": «" + action.find + "»"
+        : action.kind === "edit_slide_text"
+          ? "بازنویسی متن کامل اسلایدها: " + action.edits.map(item => "اسلاید " + item.slide + "؛ «" + item.find + "» ← «" + item.replace + "»").join(" | ")
+          : action.kind === "append_row"
         ? "افزودن یک ردیف به انتهای شیت «" + action.sheet + "»: " + action.values.map(value => String(value)).join(" | ")
         : "اعمال تغییرات Excel: " + action.edits.map(item => item.sheet + "!" + item.cell + " ← " + String(item.value)).join("؛ ");
   const fileLine = document.createElement("p");
@@ -1052,9 +1056,13 @@ function renderNaviOfficeAction(action, options = {}) {
   const note = document.createElement("p");
   note.textContent = action.kind === "replace_text"
     ? "جایگزینی عبارت دقیق در Word یا PowerPoint انجام می‌شود."
-    : action.kind === "edit_slide_text"
-      ? "هر متن باید با یک پاراگراف کامل و دقیق از اسلاید مشخص‌شده منطبق باشد. ساختار و چیدمان اسلاید حفظ می‌شود؛ متن بازنویسی‌شده قالب نویسه‌ای اولین بخش متن را به ارث می‌برد."
-      : action.kind === "append_row"
+    : action.kind === "delete_slide"
+      ? "اسلاید انتخاب‌شده از ساختار ارائه حذف می‌شود. حذف آخرین اسلاید مجاز نیست."
+      : action.kind === "delete_slide_text"
+        ? "فقط پاراگراف کامل و دقیق مشخص‌شده حذف می‌شود؛ خود اسلاید و سایر متن‌ها باقی می‌مانند."
+        : action.kind === "edit_slide_text"
+          ? "هر متن باید با یک پاراگراف کامل و دقیق از اسلاید مشخص‌شده منطبق باشد. ساختار و چیدمان اسلاید حفظ می‌شود؛ متن بازنویسی‌شده قالب نویسه‌ای اولین بخش متن را به ارث می‌برد."
+          : action.kind === "append_row"
         ? "ردیف جدید در نخستین ردیف خالی پس از محدوده فعلی جدول درج می‌شود. تعداد مقادیر باید با ستون‌های جدول برابر باشد."
         : "فقط سلول‌های مشخص‌شده در شیت‌های موجود تغییر می‌کنند. فرمول‌نویسی از این مسیر مجاز نیست.";
 
@@ -1063,7 +1071,7 @@ function renderNaviOfficeAction(action, options = {}) {
   confirm.className = "btn-primary";
   confirm.textContent = "تأیید و اعمال تغییرات";
   confirm.dataset.naviOfficeApprovalButton = "confirm";
-  confirm.disabled = !file?.ready || (action.kind === "edit_slide_text" ? file.kind !== "pptx" : action.kind === "replace_text" ? !["docx", "pptx"].includes(file.kind) : file.kind !== "xlsx");
+  confirm.disabled = !file?.ready || (["edit_slide_text", "delete_slide", "delete_slide_text"].includes(action.kind) ? file.kind !== "pptx" : action.kind === "replace_text" ? !["docx", "pptx"].includes(file.kind) : file.kind !== "xlsx");
 
   const cancel = document.createElement("button");
   cancel.type = "button";

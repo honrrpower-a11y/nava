@@ -263,13 +263,122 @@ async function syncActiveFileContext(){
     panel.scrollIntoView({behavior:"smooth",block:"nearest"});
     return {message:"یک ردیف به شیت «"+action.sheet+"» اضافه و در بخش ویرایش مستقیم نمایش داده شد. پس از بررسی، دکمه دانلود فایل ویرایش‌شده را بزن. فایل اصلی تغییر نکرده است."};
    }
+   if(action?.kind==="delete_slide"||action?.kind==="delete_slide_text"){
+    if(kind!=="pptx"||!zip)throw new Error("حذف فقط برای فایل PowerPoint پشتیبانی می‌شود.");
+    if(!Number.isSafeInteger(action.slide)||action.slide<1||action.slide>500)throw new Error("شماره اسلاید معتبر نیست.");
+    const presentationPath="ppt/presentation.xml";
+    const relationshipsPath="ppt/_rels/presentation.xml.rels";
+    if(!zip.files[presentationPath]||!zip.files[relationshipsPath])throw new Error("ساختار اصلی پاورپوینت قابل‌خواندن نیست؛ فایل تغییری نکرد.");
+    const presentationXml=await zip.files[presentationPath].async("string");
+    const relationshipsXml=await zip.files[relationshipsPath].async("string");
+    const readAttribute=(source,name)=>{
+     const escaped=name.replace(/[^a-zA-Z0-9_:]/g,char=>"\\"+char);
+     const match=source.match(new RegExp('(?:^|\\s)'+escaped+'\\s*=\\s*"([^"]*)"'));
+     return match?match[2]:"";
+    };
+    const resolvePart=(base,target)=>{
+     const parts=(target.startsWith("/")?target.slice(1):base+"/"+target).split("/");
+     const result=[];
+     for(const part of parts){if(!part||part===".")continue;if(part==="..")result.pop();else result.push(part);}
+     return result.join("/");
+    };
+    const relationshipMap=new Map();
+    for(const match of relationshipsXml.matchAll(/<(?:[\w.-]+:)?Relationship\b([^>]*)\/?\s*>/g)){
+     const id=readAttribute(match[1],"Id"),target=readAttribute(match[1],"Target"),type=readAttribute(match[1],"Type");
+     if(id&&target)relationshipMap.set(id,{target,type});
+    }
+    const slideEntries=[];
+    for(const match of presentationXml.matchAll(/<(?:[\w.-]+:)?sldId\b([^>]*)\/?\s*>/g)){
+     const relId=readAttribute(match[1],"r:id");
+     const rel=relationshipMap.get(relId);
+     if(!rel||typeof rel.type!=="string"||!rel.type.endsWith("/slide"))throw new Error("ترتیب واقعی اسلایدها از روابط فایل قابل‌تشخیص نیست؛ هیچ تغییری اعمال نشد.");
+     const slidePath=resolvePart("ppt",rel.target);
+     if(!/^ppt\/slides\/slide\d+\.xml$/.test(slidePath)||!zip.files[slidePath])throw new Error("مسیر اسلاید در بسته پاورپوینت معتبر نیست؛ فایل تغییری نکرد.");
+     slideEntries.push({relId,slidePath});
+    }
+    if(action.slide>slideEntries.length)throw new Error("اسلاید "+action.slide+" در فایل وجود ندارد؛ فایل تغییری نکرد.");
+    const targetSlide=slideEntries[action.slide-1];
+    if(action.kind==="delete_slide_text"){
+     if(typeof action.find!=="string"||!action.find.trim()||action.find.length>3000)throw new Error("متن دقیق برای حذف معتبر نیست.");
+     const xml=await zip.files[targetSlide.slidePath].async("string");
+     const normalize=value=>String(value||"").normalize("NFKC").replace(/[\u00a0\u200b-\u200d\ufeff]/g," ").replace(/\s+/g," ").trim();
+     const paragraphs=Array.from(xml.matchAll(/<(?:[\w.-]+:)?p(?:\s[^>]*)?>([\s\S]*?)<\/(?:[\w.-]+:)?p>/g));
+     const matches=paragraphs.filter(match=>{
+      const runs=Array.from(match[1].matchAll(/<(?:[\w.-]+:)?t(?:\s[^>]*)?>([\s\S]*?)<\/(?:[\w.-]+:)?t>/g));
+      return normalize(runs.map(run=>decodeXmlText(run[1])).join(""))===normalize(action.find);
+     });
+     if(matches.length!==1)throw new Error(matches.length===0?"متن کامل و دقیق در اسلاید "+action.slide+" پیدا نشد؛ فایل تغییری نکرد.":"این متن بیش از یک‌بار در اسلاید "+action.slide+" وجود دارد؛ برای جلوگیری از حذف اشتباه، فایل تغییری نکرد.");
+     const paragraph=matches[0];
+     const updated=xml.slice(0,paragraph.index)+xml.slice(paragraph.index+paragraph[0].length);
+     zip.file(targetSlide.slidePath,updated);
+     pendingDownloadBlob=await zip.generateAsync({type:"blob",compression:"DEFLATE"});
+     setDownloadReady(true);
+     await syncActiveFileContext();
+     setStatus("متن مشخص‌شده از اسلاید "+action.slide+" حذف شد؛ خود اسلاید و سایر متن‌ها حفظ شدند. فایل اصلی بدون تغییر است.");
+     window.NavaOfficeFile?.setEditStatus?.("یک پاراگراف از اسلاید "+action.slide+" حذف شد.");
+     return {message:"متن مشخص‌شده از اسلاید "+action.slide+" حذف شد و خود اسلاید باقی ماند. نسخه خروجی را بررسی و دانلود کن؛ فایل اصلی تغییر نکرده است."};
+    }
+    if(slideEntries.length<=1)throw new Error("برای جلوگیری از ساخت ارائه خالی، حذف آخرین اسلاید مجاز نیست.");
+    const contentTypesPath="[Content_Types].xml";
+    if(!zip.files[contentTypesPath])throw new Error("فهرست نوع محتوای پاورپوینت پیدا نشد؛ فایل تغییری نکرد.");
+    let contentTypes=await zip.files[contentTypesPath].async("string");
+    const slidePart="/"+targetSlide.slidePath;
+    const updatedPresentation=presentationXml.replace(/<(?:[\w.-]+:)?sldId\b[^>]*\/>/g,tag=>readAttribute(tag,"r:id")===targetSlide.relId?"":tag);
+    if(updatedPresentation===presentationXml)throw new Error("ارجاع اسلاید در فهرست ارائه پیدا نشد؛ فایل تغییری نکرد.");
+    const updatedRelationships=relationshipsXml.replace(/<(?:[\w.-]+:)?Relationship\b[^>]*\/>/g,tag=>readAttribute(tag,"Id")===targetSlide.relId?"":tag);
+    if(updatedRelationships===relationshipsXml)throw new Error("رابطه اسلاید در فایل پاورپوینت پیدا نشد؛ فایل تغییری نکرد.");
+    contentTypes=contentTypes.replace(/<(?:[\w.-]+:)?Override\b[^>]*\/>/g,tag=>readAttribute(tag,"PartName")===slidePart?"":tag);
+    const slideRelsPath=targetSlide.slidePath.replace("slides/","slides/_rels/")+".rels";
+    if(zip.files[slideRelsPath]){
+     const slideRels=await zip.files[slideRelsPath].async("string");
+     const noteRel=Array.from(slideRels.matchAll(/<(?:[\w.-]+:)?Relationship\b([^>]*)\/?\s*>/g)).map(match=>({
+      target:readAttribute(match[1],"Target"),type:readAttribute(match[1],"Type")
+     })).find(rel=>typeof rel.type==="string"&&rel.type.endsWith("/notesSlide"));
+     if(noteRel){
+      const notesPath=resolvePart("ppt/slides",noteRel.target);
+      if(/^ppt\/notesSlides\/notesSlide\d+\.xml$/.test(notesPath)){
+       zip.remove(notesPath);
+       zip.remove(notesPath.replace("notesSlides/","notesSlides/_rels/")+".rels");
+       const notesPart="/"+notesPath;
+       contentTypes=contentTypes.replace(/<(?:[\w.-]+:)?Override\b[^>]*\/>/g,tag=>readAttribute(tag,"PartName")===notesPart?"":tag);
+      }
+     }
+    }
+    zip.file(presentationPath,updatedPresentation);
+    zip.file(relationshipsPath,updatedRelationships);
+    zip.file(contentTypesPath,contentTypes);
+    zip.remove(targetSlide.slidePath);
+    zip.remove(slideRelsPath);
+    pendingDownloadBlob=await zip.generateAsync({type:"blob",compression:"DEFLATE"});
+    setDownloadReady(true);
+    await syncActiveFileContext();
+    setStatus("اسلاید "+action.slide+" حذف شد. ترتیب اسلایدهای باقی‌مانده حفظ شده است. فایل اصلی بدون تغییر است.");
+    window.NavaOfficeFile?.setEditStatus?.("اسلاید "+action.slide+" حذف شد.");
+    return {message:"اسلاید "+action.slide+" از ارائه حذف شد و ترتیب اسلایدهای باقی‌مانده حفظ شده است. نسخه خروجی را بررسی و دانلود کن؛ فایل اصلی تغییر نکرده است."};
+   }
    if(action?.kind==="edit_slide_text"){
     if(kind!=="pptx"||!zip||!Array.isArray(action.edits)||action.edits.length<1||action.edits.length>10)throw new Error("این فایل یا عملیات ویرایش متن اسلاید معتبر نیست.");
+    const presentationXml=await zip.files["ppt/presentation.xml"]?.async("string");
+    const presentationRels=await zip.files["ppt/_rels/presentation.xml.rels"]?.async("string");
+    if(!presentationXml||!presentationRels)throw new Error("ترتیب اسلایدهای پاورپوینت قابل‌خواندن نیست.");
+    const presentationDoc=new DOMParser().parseFromString(presentationXml,"application/xml");
+    const relationshipsDoc=new DOMParser().parseFromString(presentationRels,"application/xml");
+    if(presentationDoc.querySelector("parsererror")||relationshipsDoc.querySelector("parsererror"))throw new Error("ساختار روابط اسلایدها معتبر نیست.");
+    const relationships=new Map(Array.from(relationshipsDoc.getElementsByTagName("*")).filter(node=>node.localName==="Relationship").map(node=>[node.getAttribute("Id"),node.getAttribute("Target")]));
+    const slidePaths=Array.from(presentationDoc.getElementsByTagName("*")).filter(node=>node.localName==="sldId").map(node=>{
+     const relId=node.getAttribute("r:id")||node.getAttributeNS("http://schemas.openxmlformats.org/officeDocument/2006/relationships","id");
+     const target=relationships.get(relId);
+     if(!target)throw new Error("رابطه یکی از اسلایدها پیدا نشد.");
+     const parts=(target.startsWith("/")?target.slice(1):"ppt/"+target).split("/");
+     const resolved=[];
+     for(const part of parts){if(!part||part===".")continue;if(part==="..")resolved.pop();else resolved.push(part);}
+     return resolved.join("/");
+    });
     const staged=new Map();
     for(const item of action.edits){
      if(!item||!Number.isSafeInteger(item.slide)||item.slide<1||item.slide>500||typeof item.find!=="string"||!item.find.trim()||item.find.length>3000||typeof item.replace!=="string"||item.replace.length>3000)throw new Error("شماره اسلاید یا متن یکی از تغییرات معتبر نیست.");
-     const path="ppt/slides/slide"+item.slide+".xml";
-     if(!zip.files[path])throw new Error("اسلاید "+item.slide+" در فایل پیدا نشد؛ هیچ تغییری اعمال نشد.");
+     const path=slidePaths[item.slide-1];
+     if(!path||!/^ppt\/slides\/slide\d+\.xml$/.test(path)||!zip.files[path])throw new Error("اسلاید "+item.slide+" در فایل پیدا نشد؛ هیچ تغییری اعمال نشد.");
      let xml=staged.has(path)?staged.get(path):await zip.files[path].async("string");
      const normalizeSlideText=value=>String(value||"").normalize("NFKC").replace(/[\u00a0\u200b-\u200d\ufeff]/g," ").replace(/\s+/g," ").trim();
      const paragraphMatches=Array.from(xml.matchAll(/<a:p(?:\s[^>]*)?>([\s\S]*?)<\/a:p>/g));

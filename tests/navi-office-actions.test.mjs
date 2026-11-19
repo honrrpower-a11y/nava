@@ -25,6 +25,15 @@ test("NAVI accepts only bounded exact text replacement actions", () => {
   assert.equal(normalizeNaviOfficeAction({kind:"replace_text",find:"x",replace:"y".repeat(501)}), null);
 });
 
+test("NAVI accepts only explicit bounded PowerPoint deletion actions", () => {
+  assert.deepEqual(normalizeNaviOfficeAction({kind:"delete_slide",slide:3}), {kind:"delete_slide",slide:3});
+  assert.deepEqual(normalizeNaviOfficeAction({kind:"delete_slide_text",slide:2,find:"متن کامل پاراگراف"}), {kind:"delete_slide_text",slide:2,find:"متن کامل پاراگراف"});
+  assert.equal(normalizeNaviOfficeAction({kind:"delete_slide",slide:0}), null);
+  assert.equal(normalizeNaviOfficeAction({kind:"delete_slide",slide:501}), null);
+  assert.equal(normalizeNaviOfficeAction({kind:"delete_slide_text",slide:2,find:""}), null);
+  assert.equal(normalizeNaviOfficeAction({kind:"delete_slide_text",slide:2,find:"x".repeat(3001)}), null);
+});
+
 test("NAVI accepts only bounded plain Excel cell edits", () => {
   const valid = {kind:"edit_cells",edits:[{sheet:"فروش",cell:"B5",value:200},{sheet:"فروش",cell:"C5",value:"پرداخت شد"}]};
   assert.deepEqual(normalizeNaviOfficeAction(valid), valid);
@@ -112,11 +121,36 @@ test("NAVI Excel cell edits expand the worksheet range when writing outside the 
   assert.match(editBlock, /sheet\["!ref"\]=XLSX\.utils\.encode_range\(range\)/);
 });
 
+test("Office prompt defines safe PowerPoint slide and text deletion actions", () => {
+  const prompt = buildSystemInstruction({
+    page: "officePage", pageContext: "فایل پاورپوینت فعال", memoryContext: "",
+    conversationContext: "", currentUser: { role: "owner", display_name: "مالک" }
+  });
+  assert.match(prompt, /"kind": "delete_slide"[\s\S]*?"slide": 2/);
+  assert.match(prompt, /"kind": "delete_slide_text"[\s\S]*?"find": "Exact complete source paragraph/);
+  assert.match(prompt, /Deleting the last remaining/);
+});
+
 test("Office prompt defines a non-null structured PowerPoint action schema", () => {
   const worker = readFileSync(new URL("../modules/navi.js", import.meta.url), "utf8");
   assert.match(worker, /"kind": "edit_slide_text"[\s\S]*?"slide": 2[\s\S]*?"find": "Exact complete source paragraph[\s\S]*?"replace": "Complete translated or rewritten paragraph"/);
   assert.match(worker, /return a valid edit_slide_text object; do NOT return officeAction:null/);
   assert.match(worker, /officeAction:null is for requests that do not authorize an edit/);
+});
+
+test("PowerPoint slide and paragraph deletion requests require explicit current-turn authorization", () => {
+  assert.equal(isExplicitOfficeEditRequest("پیام کاربر: اسلاید سوم را حذف کن"), true);
+  assert.equal(isExplicitOfficeEditRequest("پیام کاربر: متن پاراگراف دوم اسلاید سوم را حذف کن"), true);
+  assert.equal(isExplicitOfficeEditRequest("پیام کاربر: چطور می‌توانم یک اسلاید را حذف کنم؟"), false);
+});
+
+test("PowerPoint deletion actions are supported by the approval card and local editor", () => {
+  assert.match(app, /"delete_slide", "delete_slide_text"/);
+  assert.match(app, /حذف کامل اسلاید شماره/);
+  assert.match(app, /فقط پاراگراف کامل و دقیق مشخص‌شده حذف می‌شود/);
+  assert.match(editor, /action\?\.kind==="delete_slide"\|\|action\?\.kind==="delete_slide_text"/);
+  assert.match(editor, /برای جلوگیری از ساخت ارائه خالی، حذف آخرین اسلاید مجاز نیست/);
+  assert.match(editor, /متن کامل و دقیق در اسلاید/);
 });
 
 test("PowerPoint translation preview is not edit authorization, but explicit replacement follow-up is", () => {
@@ -293,7 +327,7 @@ test("deterministic Excel proposals are derived on every NAVI chat page while mo
   assert.match(worker, /const deterministicOfficeAction = extractNaviExplicitExcelEditAction\(currentUserTurn\);/);
   assert.match(worker, /const explicitOfficeEdit = page === "officePage" && isExplicitOfficeEditRequest\(currentUserTurn\);/);
   assert.ok(worker.includes('let officeAction = deterministicOfficeAction ||'));
-  assert.match(worker, /\["replace_text", "edit_slide_text"\]\.includes\(parsed\.officeAction\?\.kind\)/);
+  assert.match(worker, /\["replace_text", "edit_slide_text", "delete_slide", "delete_slide_text"\]\.includes\(parsed\.officeAction\?\.kind\)/);
   assert.match(worker, /guardNaviOfficeReply\(\s*parsed\.reply,\s*Boolean\(officeAction\)\s*\)/);
 });
 
