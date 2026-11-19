@@ -1,5 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import vm from "node:vm";
 import { handleLogoRoute } from "../modules/logo.js";
 
 const ORIGIN = "https://honrrpower-a11y.github.io";
@@ -185,4 +187,13 @@ test("NAVI CSS cannot load remote resources or execute injected markup", async (
   } finally {
     globalThis.fetch = originalFetch;
   }
+});
+
+
+test("native logo renderer is valid JavaScript and never constructs foreignObject", () => {
+  const source = readFileSync(new URL("../logo-renderer.js", import.meta.url), "utf8");
+  assert.doesNotThrow(() => new vm.Script(source));
+  assert.match(source, /global\\.NavaLogoRenderer/);
+  assert.doesNotMatch(source, /createElementNS\\([^,]+,\\s*["']foreignObject["']/i);
+  assert.match(source, /new XMLSerializer\\(\\)\\.serializeToString/);
 });
