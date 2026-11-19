@@ -171,10 +171,93 @@
     const Adapter = window.CanvasGraphicsAdapter;
     const prototype = Adapter && Adapter.prototype;
     if (!prototype || typeof prototype.t !== "function") return false;
-    if (prototype.t.__navaPersianRtlPatch) {
+    if (prototype.t.__navaPersianRtlPatch &&
+        prototype.renderRunTextStandard?.__navaPersianRtlPatch &&
+        prototype.calculateWrappedLines?.__navaPersianRtlPatch) {
       pptxRtlPatchInstalled = true;
       return true;
     }
+
+    // PptxViewJS 1.1.9 does not use adapter.t() for slide text. Its actual
+    // text pipeline splits paragraphs into word runs, then paints each word
+    // character-by-character in renderRunTextStandard(). Patch that pipeline.
+    if (typeof prototype.renderRunTextStandard === "function" &&
+        !prototype.renderRunTextStandard.__navaPersianRtlPatch) {
+      const originalRenderRun = prototype.renderRunTextStandard;
+      const renderRun = function(text, startX, y, runProps, maxX) {
+        const value = String(text == null ? "" : text);
+        const ctx = this.graphics?.context;
+        if (!ctx || !value || !NAVA_RTL_TEXT.test(value)) {
+          return originalRenderRun.call(this, text, startX, y, runProps, maxX);
+        }
+
+        const previousDirection = ctx.direction;
+        const previousAlign = ctx.textAlign;
+        let currentX = startX;
+        try {
+          if (this.currentRenderingShape?.effects) {
+            this.applyTextEffectsToContext(ctx, this.currentRenderingShape.effects);
+          }
+          ctx.direction = "rtl";
+          ctx.textAlign = "left";
+          // A complete word lets Canvas perform Arabic/Persian shaping.
+          ctx.fillText(value, startX, y);
+          const width = ctx.measureText(value).width;
+          const letterSpacing = runProps?.letterSpacing || 0;
+          currentX += width + letterSpacing * Array.from(value).length;
+          this.resetTextEffectsOnContext(ctx);
+          this.drawTextDecorations(startX, y, currentX - startX, runProps);
+          return currentX;
+        } finally {
+          ctx.direction = previousDirection;
+          ctx.textAlign = previousAlign;
+        }
+      };
+      renderRun.__navaPersianRtlPatch = true;
+      prototype.renderRunTextStandard = renderRun;
+    }
+
+    if (typeof prototype.measureRunText === "function" &&
+        !prototype.measureRunText.__navaPersianRtlPatch) {
+      const originalMeasureRun = prototype.measureRunText;
+      const measureRun = function(text, runProps) {
+        const value = String(text == null ? "" : text);
+        const ctx = this.graphics?.context;
+        if (!ctx || !value || !NAVA_RTL_TEXT.test(value)) {
+          return originalMeasureRun.call(this, text, runProps);
+        }
+        ctx.save();
+        try {
+          this.setupStandardFont(runProps);
+          return ctx.measureText(value).width +
+            (runProps?.letterSpacing || 0) * Array.from(value).length;
+        } finally {
+          ctx.restore();
+        }
+      };
+      measureRun.__navaPersianRtlPatch = true;
+      prototype.measureRunText = measureRun;
+    }
+
+    if (typeof prototype.calculateWrappedLines === "function" &&
+        !prototype.calculateWrappedLines.__navaPersianRtlPatch) {
+      const originalCalculateLines = prototype.calculateWrappedLines;
+      const calculateLines = function(paragraph, paraProps, maxWidth, currentShape) {
+        const lines = originalCalculateLines.call(this, paragraph, paraProps, maxWidth, currentShape);
+        const paragraphText = (paragraph?.runs || []).map(run => run?.text || "").join("");
+        if (NAVA_RTL_TEXT.test(paragraphText)) {
+          // PptxViewJS lays every line's runs from left to right. Reverse the
+          // word/space runs for RTL paragraphs so their visual order is right.
+          for (const line of lines) {
+            if (Array.isArray(line.runs)) line.runs.reverse();
+          }
+        }
+        return lines;
+      };
+      calculateLines.__navaPersianRtlPatch = true;
+      prototype.calculateWrappedLines = calculateLines;
+    }
+
     const original = prototype.t;
     const patched = function(text, x, y, isBounds) {
       const value = String(text == null ? "" : text);
@@ -213,6 +296,9 @@
     };
     patched.__navaPersianRtlPatch = true;
     prototype.t = patched;
+    // The real slide-text methods must also be patched; t() is only a legacy path.
+    if (!prototype.renderRunTextStandard?.__navaPersianRtlPatch ||
+        !prototype.calculateWrappedLines?.__navaPersianRtlPatch) return false;
     pptxRtlPatchInstalled = true;
     return true;
   };
