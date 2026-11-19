@@ -141,6 +141,8 @@ test("NAVI writes an English brief and three HTML/CSS logos in one Gemini call; 
     assert.ok(result.concepts[2].html.includes('viewBox="0 0 100 100"'));
     assert.ok(result.concepts[2].html.includes('fill="url(#brand-gradient)"'));
     assert.ok(result.concepts[2].html.includes('fill-rule="evenodd"'));
+    assert.match(result.concepts[2].html, /<path[^>]+\\/>/);
+    assert.match(result.concepts[2].html, /<stop[^>]+\\/>/);
     assert.ok(result.concepts.every(item => !item.html.includes("<script")));
     assert.equal(db.visitorUsed, 1, "one completed logo batch consumes one guest trial");
   } finally {
