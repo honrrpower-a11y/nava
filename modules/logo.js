@@ -69,7 +69,7 @@ function sanitizeHtmlFragment(value) {
 
 function sanitizeCss(value) {
   let css = String(value || "").slice(0, 16000);
-  if (/@import|@font-face|expression\s*\(|javascript:|behavior\s*:|-moz-binding|url\s*\(/i.test(css)) {
+  if (/@import|@font-face|expression\s*\(|javascript:|behavior\s*:|-moz-binding|url\s*\(|<\/?style|<\/?script/i.test(css)) {
     throw new Error("NAVI CSS included a blocked external or executable resource.");
   }
   css = css.replace(/<\/?style\b[^>]*>/gi, "");
@@ -88,7 +88,7 @@ function makeSvg({ html, css, brandName, primaryColor, darkColor }) {
     '<foreignObject x="0" y="0" width="1000" height="1000">',
     '<div xmlns="http://www.w3.org/1999/xhtml" class="logo-art-root" style="' + rootStyle + '">',
     "<style><![CDATA[" + safeCss + "]]></style>",
-    html,
+    html.replace(/<svg(?![^>]*\bxmlns=)/gi, '<svg xmlns="http://www.w3.org/2000/svg"'),
     "</div></foreignObject></svg>"
   ].join("");
 }
