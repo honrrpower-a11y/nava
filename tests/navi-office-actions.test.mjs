@@ -15,6 +15,7 @@ const editor = readFileSync(new URL("../office-edit-tools.js", import.meta.url),
 const css = readFileSync(new URL("../style.css", import.meta.url), "utf8");
 const officeCss = readFileSync(new URL("../office-workspace.css", import.meta.url), "utf8");
 const fileReader = readFileSync(new URL("../office-file-tools.js", import.meta.url), "utf8");
+const documentExport = readFileSync(new URL("../document-export.js", import.meta.url), "utf8");
 
 test("NAVI accepts only bounded exact text replacement actions", () => {
   assert.deepEqual(normalizeNaviOfficeAction({
@@ -494,4 +495,11 @@ test("PowerPoint preview uses the documented PPTXViewer render API", () => {
   assert.match(preview, /await pptxViewer\.loadFile\(file\)/);
   assert.match(preview, /await pptxViewer\.render\(\)/);
   assert.doesNotMatch(preview, /pptxViewer\.render\(target\)/);
+});
+
+
+test("PowerPoint export checks the documented PptxGenJS browser global", () => {
+  assert.match(documentExport, /loadExternal\("https:\/\/cdn\.jsdelivr\.net\/npm\/pptxgenjs@3\.12\.0\/dist\/pptxgen\.bundle\.js",\s*"PptxGenJS"\)/);
+  assert.match(documentExport, /const PptxGenJS=await loadExternal\([\s\S]*?\);\s*const pptx=new PptxGenJS\(\)/);
+  assert.doesNotMatch(documentExport, /pptxgen\.bundle\.js",\s*"pptxgen"/);
 });
