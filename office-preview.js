@@ -66,7 +66,10 @@
   };
   const syncZoom = () => {
     if (zoomValue) zoomValue.textContent = Math.round(zoom * 100) + "٪";
-    if (currentCanvas) currentCanvas.style.width = Math.round(zoom * 100) + "%";
+    if (currentCanvas) {
+      currentCanvas.style.width = Math.round(zoom * 100) + "%";
+      currentCanvas.style.maxWidth = zoom > 1 ? "none" : "100%";
+    }
   };
   const updateNavigation = (index, count, unit) => {
     pageLabel.textContent = unit + " " + (index + 1) + " از " + count;
@@ -102,12 +105,13 @@
     if (token !== generation) return;
     const base = page.getViewport({ scale: 1 });
     const fit = Math.min(1.5, Math.max(.45, (stage.clientWidth || 760) / base.width));
-    const viewport = page.getViewport({ scale: fit * zoom });
+    const viewport = page.getViewport({ scale: fit });
     const target = currentCanvas || canvas();
     const context = target.getContext("2d", { alpha: false });
     target.width = Math.ceil(viewport.width);
     target.height = Math.ceil(viewport.height);
-    target.style.width = "100%";
+    target.style.width = Math.round(zoom * 100) + "%";
+    target.style.maxWidth = zoom > 1 ? "none" : "100%";
     await page.render({ canvasContext: context, viewport }).promise;
     if (token !== generation) return;
     updateNavigation(pdfPage - 1, pdfDocument.numPages, "صفحه");
@@ -150,7 +154,7 @@
   const renderPptx = async (file, token) => {
     await loadScript("https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js", "JSZip");
     const packageZip = await window.JSZip.loadAsync(file);
-    const hasCharts = Object.keys(packageZip.files).some(name => /^ppt\/charts\/chart\\d+\\.xml$/i.test(name));
+    const hasCharts = Object.keys(packageZip.files).some(name => /^ppt\/charts\/chart\d+\.xml$/i.test(name));
     if (hasCharts) await loadScript("https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js", "Chart");
     await loadScript("https://cdn.jsdelivr.net/npm/pptxviewjs@1.1.9/dist/PptxViewJS.min.js", "PptxViewJS");
     if (token !== generation) return;
