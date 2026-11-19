@@ -1,7 +1,8 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import vm from "node:vm";
 import { handleLogoRoute } from "../modules/logo.js";
-import { releaseGuestTrialReservation } from "../modules/guest-trial.js";
 
 const ORIGIN = "https://honrrpower-a11y.github.io";
 const VISITOR = "2f8b7c1a-7e3d-4b9c-9a10-8f7c6d5e4a32";
@@ -23,14 +24,15 @@ const INPUT = {
   darkColor: "#101B30"
 };
 
-function makePlan() {
+function makeDesign() {
   return {
     brandCore: "هویتی شنیداری و خلاق",
     strategy: "سه مسیر مستقل با تکیه بر هویت برند و موج صوتی.",
+    designBriefEnglish: "Create a distinctive Persian creative-studio identity. Build a compact sound-inspired symbol with custom geometry, confident Persian typography, balanced negative space, and the exact gold and navy palette.",
     concepts: [
-      { logoType: "نشان تصویری", title: "موج پیوند", rationale: "پیوند صدا و خلاقیت", visualGrammar: "خطوط موجی یکپارچه", symbolDescription: "نشان انتزاعی موج و پیوند", silhouette: "فرم متقارن و فشرده", composition: "مرکزی", avoid: "آیکون آماده" },
-      { logoType: "مونوگرام", title: "حرف ن", rationale: "تمرکز بر حرف آغازین برند", visualGrammar: "حرف‌نگاری سفارشی", symbolDescription: "حرف ن با فضای منفی صوتی", silhouette: "فرم باز و زاویه‌دار", composition: "فشرده", avoid: "فونت پیش‌فرض" },
-      { logoType: "نشان انتزاعی", title: "طنین", rationale: "بازتاب ایده در صدا", visualGrammar: "هندسه نرم و لایه‌ای", symbolDescription: "بازتاب صوت به شکل هندسه اختصاصی", silhouette: "فرم دایره‌ای باز", composition: "متعادل", avoid: "دایره‌های تزئینی" }
+      { title: "موج پیوند", rationale: "پیوند صدا و خلاقیت", html: '<div class="mark"><span class="wave"></span><strong>{{BRAND_NAME}}</strong><small>{{SLOGAN}}</small><script>window.pwned=true</script></div>', css: '.logo-art-root{display:grid;place-items:center;background:var(--logo-background);color:var(--logo-primary)}.mark{text-align:center}.wave{display:block;width:150px;height:60px;border:8px solid var(--logo-primary);border-radius:50%}' },
+      { title: "حرف ن", rationale: "تمرکز بر حرف آغازین برند", html: '<div class="letter"><strong>{{BRAND_NAME}}</strong><small>{{SLOGAN}}</small></div>', css: '.logo-art-root{display:grid;place-items:center;background:var(--logo-background);color:var(--logo-primary)}.letter{font-size:70px;font-weight:900}' },
+      { title: "طنین", rationale: "بازتاب ایده در صدا", html: '<div class="echo"><svg viewBox="0 0 100 100" width="100" height="100"><defs><linearGradient id="brand-gradient"><stop offset="0%" stop-color="#D6A84F"/><stop offset="100%" stop-color="#FFFFFF"/></linearGradient></defs><path d="M10 10 L90 50 L10 90 Z" fill="url(#brand-gradient)" fill-rule="evenodd"/></svg><span>✦</span><strong>{{BRAND_NAME}}</strong><small>{{SLOGAN}}</small></div>', css: '.logo-art-root{display:grid;place-items:center;background:var(--logo-background);color:var(--logo-primary)}.echo{text-align:center;font-size:54px}' }
     ]
   };
 }
@@ -39,7 +41,6 @@ class FakeD1 {
   constructor() {
     this.visitorUsed = 0;
     this.ipUsed = 0;
-    this.logoDailyUsed = 0;
     this.reservations = new Map();
   }
   prepare(sql) {
@@ -51,10 +52,7 @@ class FakeD1 {
       bind(...values) { args = values; return this; },
       async run() {
         if (sql.includes("INSERT INTO nava_guest_trial_reservations")) {
-          db.reservations.set(args[0], { visitorHash: args[1], status: "reserved" });
-        }
-        if (sql.includes("UPDATE nava_logo_ai_daily_limits")) {
-          db.logoDailyUsed = Math.max(0, db.logoDailyUsed - 1);
+          db.reservations.set(args[0], { status: "reserved", visitorHash: args[1] });
         }
         return { meta: { changes: 1 } };
       },
@@ -70,25 +68,19 @@ class FakeD1 {
           db.visitorUsed += 1;
           return { used_count: db.visitorUsed };
         }
-        if (sql.includes("INSERT INTO nava_logo_ai_daily_limits")) {
-          if (db.logoDailyUsed >= 10) return null;
-          db.logoDailyUsed += 1;
-          return { used_count: db.logoDailyUsed };
-        }
         return null;
       }
     };
   }
   async batch(statements) {
-    const [reserve] = statements;
-    const reservationId = reserve.args[1];
+    const reservationId = statements[0].args[1];
     const row = this.reservations.get(reservationId);
     const changed = row?.status === "reserved";
     if (changed) {
       row.status = "refunded";
       this.visitorUsed = Math.max(0, this.visitorUsed - 1);
     }
-    return [{ meta: { changes: changed ? 1 : 0 } }, { meta: { changes: changed ? 1 : 0 } }, { meta: { changes: changed ? 1 : 0 } }];
+    return [{ meta: { changes: changed ? 1 : 0 } }];
   }
 }
 
@@ -104,44 +96,61 @@ function makeRequest(body = INPUT) {
   });
 }
 
-function makeGeminiResponse(plan = makePlan()) {
+function makeGeminiResponse(plan = makeDesign()) {
   return new Response(JSON.stringify({
     candidates: [{ content: { parts: [{ text: JSON.stringify(plan) }] } }]
   }), { status: 200, headers: { "Content-Type": "application/json" } });
 }
 
-test("NAVI strategy plus Cloudflare image model returns three actual image outputs", async () => {
+test("NAVI writes an English brief and three sanitized HTML/CSS logo designs in one Gemini call", async () => {
   const originalFetch = globalThis.fetch;
   const db = new FakeD1();
-  const prompts = [];
   let geminiCalls = 0;
-  globalThis.fetch = async () => { geminiCalls += 1; return makeGeminiResponse(); };
-  const env = {
-    NAVA_DB: db,
-    NAVI_SESSION_SECRET: "test-secret-key",
-    GEMINI_API_KEY: "test-gemini-key",
-    AI: { async run(model, args) { prompts.push({ model, prompt: args.prompt, steps: args.steps }); return { image: "aGVsbG8=" }; } }
+  let sentPrompt = "";
+  globalThis.fetch = async (_url, options) => {
+    geminiCalls += 1;
+    sentPrompt = JSON.stringify(JSON.parse(options.body));
+    return makeGeminiResponse();
   };
   try {
-    const response = await handleLogoRoute({ request: makeRequest(), env, origin: ORIGIN, corsOrigin: ORIGIN });
+    const response = await handleLogoRoute({
+      request: makeRequest(),
+      env: { NAVA_DB: db, NAVI_SESSION_SECRET: "test-secret-key", GEMINI_API_KEY: "test-gemini-key" },
+      origin: ORIGIN,
+      corsOrigin: ORIGIN
+    });
     const result = await response.json();
     assert.equal(response.status, 200);
     assert.equal(result.success, true);
-    assert.equal(result.images.length, 3);
-    assert.ok(result.images.every(item => item.url.startsWith("data:image/jpeg;charset=utf-8;base64,")));
-    assert.equal(geminiCalls, 1, "NAVI should plan once for the full batch");
-    assert.equal(prompts.length, 3, "the image model should render each art direction separately");
-    assert.ok(prompts.every(item => item.model === "@cf/black-forest-labs/flux-1-schnell"));
-    assert.ok(prompts.every(item => item.prompt.includes("#D6A84F") && item.prompt.includes("#101B30")));
-    assert.equal(result.planning.method, "navi-gemini-strategy-plus-cloudflare-image-model");
-    assert.equal(db.visitorUsed, 1, "a successful guest batch consumes one trial");
-    assert.equal(result.remaining, 1);
+    assert.equal(result.concepts.length, 3);
+    assert.equal(geminiCalls, 1, "one Gemini call creates the English brief and all three logo designs");
+    assert.match(sentPrompt, /English/i);
+    assert.equal(result.planning.method, "navi-english-brief-html-css-design");
+    assert.match(result.planning.designBriefEnglish, /distinctive Persian creative-studio identity/i);
+    assert.ok(result.concepts.every(item => item.html.includes("نوا")));
+    assert.ok(result.concepts.every(item => item.html.includes('data-logo-role="brand"')));
+    assert.ok(result.concepts.every(item => item.html.includes('data-logo-role="slogan"')));
+    assert.ok(result.concepts.every(item => item.html.includes("صدای ایده‌های تازه")));
+    assert.ok(result.concepts.every(item => !item.html.includes("{{BRAND_NAME}}")));
+    assert.ok(result.concepts.every(item => !item.html.includes("<script")));
+    assert.ok(result.concepts.every(item => item.css.includes("var(--logo-primary)")));
+    assert.ok(result.concepts.every(item => !Object.prototype.hasOwnProperty.call(item, "svg")));
+    assert.ok(result.concepts.every(item => !JSON.stringify(item).includes("foreignObject")));
+    assert.ok(result.concepts.every(item => item.html.includes("<div")));
+    assert.ok(result.concepts.every(item => item.css.length > 0));
+    assert.ok(result.concepts[2].html.includes('viewBox="0 0 100 100"'));
+    assert.ok(result.concepts[2].html.includes('fill="url(#brand-gradient)"'));
+    assert.ok(result.concepts[2].html.includes('fill-rule="evenodd"'));
+    assert.match(result.concepts[2].html, /<path[^>]+\/>/);
+    assert.match(result.concepts[2].html, /<stop[^>]+\/>/);
+    assert.ok(result.concepts.every(item => !item.html.includes("<script")));
+    assert.equal(db.visitorUsed, 1, "one completed logo batch consumes one guest trial");
   } finally {
     globalThis.fetch = originalFetch;
   }
 });
 
-test("failed NAVI planning refunds the guest trial and the reserved image batch", async () => {
+test("NAVI design failure refunds the guest trial reservation", async () => {
   const originalFetch = globalThis.fetch;
   const db = new FakeD1();
   globalThis.fetch = async () => new Response(JSON.stringify({
@@ -150,42 +159,51 @@ test("failed NAVI planning refunds the guest trial and the reserved image batch"
   try {
     const response = await handleLogoRoute({
       request: makeRequest(),
-      env: { NAVA_DB: db, NAVI_SESSION_SECRET: "test-secret-key", GEMINI_API_KEY: "test-gemini-key", AI: { run: async () => ({ image: "aGVsbG8=" }) } },
-      origin: ORIGIN, corsOrigin: ORIGIN
+      env: { NAVA_DB: db, NAVI_SESSION_SECRET: "test-secret-key", GEMINI_API_KEY: "test-gemini-key" },
+      origin: ORIGIN,
+      corsOrigin: ORIGIN
     });
     const result = await response.json();
     assert.equal(response.status, 502);
-    assert.equal(result.code, "LOGO_STRATEGY_PLANNING_FAILED");
+    assert.equal(result.code, "LOGO_HTML_CSS_DESIGN_FAILED");
     assert.equal(db.visitorUsed, 0);
-    assert.equal(db.logoDailyUsed, 0);
-    assert.equal(db.ipUsed, 1, "the IP abuse limit remains active after a failed attempt");
-    const reservationId = [...db.reservations.keys()][0];
-    assert.equal(await releaseGuestTrialReservation({ env: { NAVA_DB: db }, reservationId }), false,
-      "a repeated refund must be a no-op");
+    assert.equal([...db.reservations.values()][0].status, "refunded");
   } finally {
     globalThis.fetch = originalFetch;
   }
 });
 
-test("failed image rendering refunds guest trial but keeps the consumed inference batch", async () => {
+test("NAVI CSS cannot load remote resources or execute injected markup", async () => {
   const originalFetch = globalThis.fetch;
   const db = new FakeD1();
-  globalThis.fetch = async () => makeGeminiResponse();
+  const malicious = makeDesign();
+  malicious.concepts[0].css += '.bad{background-image:url(https://example.com/track)}';
+  globalThis.fetch = async () => makeGeminiResponse(malicious);
   try {
     const response = await handleLogoRoute({
       request: makeRequest(),
-      env: {
-        NAVA_DB: db, NAVI_SESSION_SECRET: "test-secret-key", GEMINI_API_KEY: "test-gemini-key",
-        AI: { run: async () => { throw new Error("simulated image inference failure"); } }
-      },
-      origin: ORIGIN, corsOrigin: ORIGIN
+      env: { NAVA_DB: db, NAVI_SESSION_SECRET: "test-secret-key", GEMINI_API_KEY: "test-gemini-key" },
+      origin: ORIGIN,
+      corsOrigin: ORIGIN
     });
     const result = await response.json();
     assert.equal(response.status, 502);
-    assert.equal(result.code, "LOGO_IMAGE_GENERATION_FAILED");
-    assert.equal(db.visitorUsed, 0, "an incomplete three-image batch does not consume the guest trial");
-    assert.equal(db.logoDailyUsed, 1, "an attempted image inference still counts against the daily safety cap");
+    assert.equal(result.code, "LOGO_HTML_CSS_DESIGN_FAILED");
+    assert.equal(db.visitorUsed, 0);
   } finally {
     globalThis.fetch = originalFetch;
   }
+});
+
+
+test("native logo renderer passes syntax checks and blocks lossy foreignObject exports", () => {
+  const source = readFileSync(new URL("../logo-renderer.js", import.meta.url), "utf8");
+  assert.doesNotThrow(() => new vm.Script(source));
+  assert.ok(source.includes("global.NavaLogoRenderer"));
+  assert.ok(!source.includes('createElementNS(NS, "foreignObject"'));
+  assert.ok(source.includes("new XMLSerializer().serializeToString"));
+  assert.ok(source.includes("new DOMParser().parseFromString"), "serialized SVG is parsed and validated before download");
+  assert.ok(source.includes("Intl.Segmenter"), "text is reconstructed from measured grapheme bounds");
+  assert.ok(source.includes("if (warnings.size)"), "any lossy feature blocks export");
+  assert.ok(source.includes("gradientUnits: " + '"userSpaceOnUse"'));
 });

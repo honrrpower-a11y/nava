@@ -108,3 +108,62 @@ body.light .logo-control{background:#fff;color:#273143}
   margin: .45rem 0 0;
   line-height: 1.9;
 }
+
+
+/* NAVI-authored HTML/CSS logo designs */
+.logo-html-css-preview {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  min-height: 250px;
+  border: 0;
+  background: transparent;
+}
+.logo-html-css-card .logo-concept-preview {
+  display: block;
+  padding: 0;
+  aspect-ratio: 1 / 1;
+  min-height: 0;
+  overflow: hidden;
+  background: #f4f1e9;
+}
+.logo-html-css-card .logo-concept-copy {
+  min-height: 88px;
+}
+.logo-html-css-card .logo-concept-actions button {
+  width: 100%;
+  min-height: 44px;
+}
+.logo-english-brief {
+  margin-top: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  direction: rtl;
+}
+.logo-english-brief summary {
+  color: var(--gold);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 700;
+}
+.logo-english-brief p {
+  margin: 10px 0 0;
+  color: var(--text);
+  font-size: 12px;
+  line-height: 1.9;
+  text-align: left;
+  white-space: normal;
+}
+body.light .logo-html-css-card .logo-concept-preview {
+  background: #f1eee6;
+}
+@media(max-width:760px) {
+  .logo-html-css-preview { min-height: 0; }
+}
+
+
+/* Native vector and high-resolution raster export controls */
+.logo-html-css-card .logo-concept-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.logo-html-css-card .logo-concept-actions button{min-height:44px;width:100%}
+@media(max-width:760px){.logo-html-css-card .logo-concept-actions{grid-template-columns:1fr}}
