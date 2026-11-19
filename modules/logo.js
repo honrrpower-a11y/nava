@@ -196,7 +196,7 @@ async function designLogos(data, apiKey) {
         .replace(/\{\{BRAND_NAME\}\}/g, '<span data-logo-role="brand">' + escapeHtml(data.brandName) + "</span>")
         .replace(/\{\{SLOGAN\}\}/g, '<span data-logo-role="slogan">' + escapeHtml(data.slogan) + "</span>");
       const finalCss = css;
-      const visualElementCount = (html.match(/<(?:div|span|p|strong|em|small|svg|path|circle|rect|line|polygon|polyline|ellipse)\\b/gi) || []).length;
+      const visualElementCount = (html.match(/</g) || []).length;
       if (html.length < 260 || css.length < 320 || visualElementCount < 5) {
         throw new Error("Logo concept " + (index + 1) + " is too structurally simple; NAVI must deliver a fully art-directed HTML/CSS composition.");
       }
