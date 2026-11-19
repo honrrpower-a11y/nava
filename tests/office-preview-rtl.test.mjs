@@ -62,6 +62,13 @@ test("Persian and Arabic runs are drawn as one shaped Canvas string", () => {
   assert.equal(adapter._context.direction, "ltr");
   assert.equal(adapter._context.textAlign, "start");
 
+  const mixedText = "ارائه تهیه‌شده با NAVI";
+  adapter.t(mixedText, 100, 50, false);
+  const mixedDraw = calls.filter(call => call[0] === "fillText").at(-1);
+  assert.deepEqual(mixedDraw, [
+    "fillText", "ارائه تهیه‌شده با \\u2066NAVI\\u2069", 100, 50, "rtl", "left"
+  ], "Latin tokens must be isolated while Persian words retain logical order");
+
   const before = calls.length;
   assert.equal(adapter.t("English", 10, 20, false), "original-result");
   assert.equal(calls.slice(before).some(call => call[0] === "original"), true);
