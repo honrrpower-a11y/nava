@@ -3358,6 +3358,7 @@ async function loadNaviUsers() {
         users.length + " حساب · " + registrationRequests.length + " درخواست در انتظار";
     }
   } catch (error) {
+    naviOwnerVerified = false;
     if (naviUsersStatus) {
       naviUsersStatus.textContent =
         error.message || "دریافت فهرست حساب‌ها ناموفق بود.";
