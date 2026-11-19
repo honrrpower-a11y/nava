@@ -358,11 +358,27 @@ async function syncActiveFileContext(){
    }
    if(action?.kind==="edit_slide_text"){
     if(kind!=="pptx"||!zip||!Array.isArray(action.edits)||action.edits.length<1||action.edits.length>10)throw new Error("این فایل یا عملیات ویرایش متن اسلاید معتبر نیست.");
+    const presentationXml=await zip.files["ppt/presentation.xml"]?.async("string");
+    const presentationRels=await zip.files["ppt/_rels/presentation.xml.rels"]?.async("string");
+    if(!presentationXml||!presentationRels)throw new Error("ترتیب اسلایدهای پاورپوینت قابل‌خواندن نیست.");
+    const presentationDoc=new DOMParser().parseFromString(presentationXml,"application/xml");
+    const relationshipsDoc=new DOMParser().parseFromString(presentationRels,"application/xml");
+    if(presentationDoc.querySelector("parsererror")||relationshipsDoc.querySelector("parsererror"))throw new Error("ساختار روابط اسلایدها معتبر نیست.");
+    const relationships=new Map(Array.from(relationshipsDoc.getElementsByTagName("*")).filter(node=>node.localName==="Relationship").map(node=>[node.getAttribute("Id"),node.getAttribute("Target")]));
+    const slidePaths=Array.from(presentationDoc.getElementsByTagName("*")).filter(node=>node.localName==="sldId").map(node=>{
+     const relId=node.getAttribute("r:id")||node.getAttributeNS("http://schemas.openxmlformats.org/officeDocument/2006/relationships","id");
+     const target=relationships.get(relId);
+     if(!target)throw new Error("رابطه یکی از اسلایدها پیدا نشد.");
+     const parts=(target.startsWith("/")?target.slice(1):"ppt/"+target).split("/");
+     const resolved=[];
+     for(const part of parts){if(!part||part===".")continue;if(part==="..")resolved.pop();else resolved.push(part);}
+     return resolved.join("/");
+    });
     const staged=new Map();
     for(const item of action.edits){
      if(!item||!Number.isSafeInteger(item.slide)||item.slide<1||item.slide>500||typeof item.find!=="string"||!item.find.trim()||item.find.length>3000||typeof item.replace!=="string"||item.replace.length>3000)throw new Error("شماره اسلاید یا متن یکی از تغییرات معتبر نیست.");
-     const path="ppt/slides/slide"+item.slide+".xml";
-     if(!zip.files[path])throw new Error("اسلاید "+item.slide+" در فایل پیدا نشد؛ هیچ تغییری اعمال نشد.");
+     const path=slidePaths[item.slide-1];
+     if(!path||!/^ppt\\/slides\\/slide\\d+\\.xml$/.test(path)||!zip.files[path])throw new Error("اسلاید "+item.slide+" در فایل پیدا نشد؛ هیچ تغییری اعمال نشد.");
      let xml=staged.has(path)?staged.get(path):await zip.files[path].async("string");
      const normalizeSlideText=value=>String(value||"").normalize("NFKC").replace(/[\u00a0\u200b-\u200d\ufeff]/g," ").replace(/\s+/g," ").trim();
      const paragraphMatches=Array.from(xml.matchAll(/<a:p(?:\s[^>]*)?>([\s\S]*?)<\/a:p>/g));
