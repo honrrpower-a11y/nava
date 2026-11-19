@@ -191,18 +191,25 @@
 
         const previousDirection = ctx.direction;
         const previousAlign = ctx.textAlign;
-        let currentX = startX;
         try {
+          // Keep PptxViewJS font setup, effects, decoration and normal kerning.
+          // Its native renderer already draws a whole run when letterSpacing is zero.
+          ctx.direction = "rtl";
+          ctx.textAlign = "left";
+          const letterSpacing = runProps?.letterSpacing || 0;
+          if (letterSpacing === 0) {
+            return originalRenderRun.call(this, text, startX, y, runProps, maxX);
+          }
+
+          // The upstream custom-spacing branch draws one UTF-16 character at a time,
+          // breaking Persian shaping. Draw the shaped run once and account for tracking
+          // in the returned cursor position instead.
+          const currentX = startX + ctx.measureText(value).width +
+            letterSpacing * Array.from(value).length;
           if (this.currentRenderingShape?.effects) {
             this.applyTextEffectsToContext(ctx, this.currentRenderingShape.effects);
           }
-          ctx.direction = "rtl";
-          ctx.textAlign = "left";
-          // Draw the complete word so Canvas applies contextual Persian shaping.
           ctx.fillText(value, startX, y);
-          const width = ctx.measureText(value).width;
-          const letterSpacing = runProps?.letterSpacing || 0;
-          currentX += width + letterSpacing * Array.from(value).length;
           this.resetTextEffectsOnContext(ctx);
           this.drawTextDecorations(startX, y, currentX - startX, runProps);
           return currentX;
