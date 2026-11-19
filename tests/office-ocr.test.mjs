@@ -67,7 +67,7 @@ test("Word and PDF exporters correctly recognize RTL, headings and ordered lists
 });
 
 test("Office export actions are styled and loaded with a fresh cache key", () => {
-  assert.match(html, /document-export\.js\?v=office-export-multiformat-20261117-1/);
+  assert.match(html, /document-export\.js\?v=office-pptx-global-fix-20261119-1/);
   assert.match(app, /NavaDocumentExport/);
   const css = readFileSync(new URL("../office-file-tools.css", import.meta.url), "utf8");
   assert.match(css, /\.nava-export-actions/);
