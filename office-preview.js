@@ -169,50 +169,135 @@
   const installPptxRtlCompatibility = () => {
     if (pptxRtlPatchInstalled) return true;
     const Adapter = window.CanvasGraphicsAdapter;
-    const prototype = Adapter && Adapter.prototype;
-    if (!prototype || typeof prototype.t !== "function") return false;
-    if (prototype.t.__navaPersianRtlPatch) {
-      pptxRtlPatchInstalled = true;
-      return true;
+    const adapterPrototype = Adapter && Adapter.prototype;
+    const Renderer = window.CDrawingDocument;
+    const rendererPrototype = Renderer && Renderer.prototype;
+    if (!adapterPrototype || typeof adapterPrototype.t !== "function" ||
+        !rendererPrototype ||
+        typeof rendererPrototype.renderRunTextStandard !== "function" ||
+        typeof rendererPrototype.calculateWrappedLines !== "function" ||
+        typeof rendererPrototype.measureRunText !== "function") return false;
+
+    // PptxViewJS 1.1.9 paints slide text through CDrawingDocument, not
+    // CanvasGraphicsAdapter.t(). Patch the actual renderer prototype.
+    if (!rendererPrototype.renderRunTextStandard.__navaPersianRtlPatch) {
+      const originalRenderRun = rendererPrototype.renderRunTextStandard;
+      const renderRun = function(text, startX, y, runProps, maxX) {
+        const value = String(text == null ? "" : text);
+        const ctx = this.graphics?.context;
+        if (!ctx || !value || !NAVA_RTL_TEXT.test(value)) {
+          return originalRenderRun.call(this, text, startX, y, runProps, maxX);
+        }
+
+        const previousDirection = ctx.direction;
+        const previousAlign = ctx.textAlign;
+        try {
+          // Keep PptxViewJS font setup, effects, decoration and normal kerning.
+          // Its native renderer already draws a whole run when letterSpacing is zero.
+          ctx.direction = "rtl";
+          ctx.textAlign = "left";
+          const letterSpacing = runProps?.letterSpacing || 0;
+          if (letterSpacing === 0) {
+            return originalRenderRun.call(this, text, startX, y, runProps, maxX);
+          }
+
+          // The upstream custom-spacing branch draws one UTF-16 character at a time,
+          // breaking Persian shaping. Draw the shaped run once and account for tracking
+          // in the returned cursor position instead.
+          const currentX = startX + ctx.measureText(value).width +
+            letterSpacing * Array.from(value).length;
+          if (this.currentRenderingShape?.effects) {
+            this.applyTextEffectsToContext(ctx, this.currentRenderingShape.effects);
+          }
+          ctx.fillText(value, startX, y);
+          this.resetTextEffectsOnContext(ctx);
+          this.drawTextDecorations(startX, y, currentX - startX, runProps);
+          return currentX;
+        } finally {
+          ctx.direction = previousDirection;
+          ctx.textAlign = previousAlign;
+        }
+      };
+      renderRun.__navaPersianRtlPatch = true;
+      rendererPrototype.renderRunTextStandard = renderRun;
     }
-    const original = prototype.t;
-    const patched = function(text, x, y, isBounds) {
-      const value = String(text == null ? "" : text);
-      if (this.bIsBreak || !this._context || !value || !NAVA_RTL_TEXT.test(value)) {
-        return original.call(this, text, x, y, isBounds);
-      }
-      // Canvas applies the Unicode Bidirectional Algorithm to the complete
-      // run. Isolate embedded Latin tokens so their internal LTR order is
-      // preserved without changing the surrounding Persian word order.
-      const drawValue = isolateLtrRuns(value);
-      const ctx = this._context;
-      ctx.save();
-      try {
-        ctx.fillStyle = this.brush && this.brush.Color1
-          ? this.colorToRgb(this.brush.Color1)
-          : ctx.fillStyle;
-        ctx.textBaseline = "alphabetic";
-        // Keep the existing left-edge coordinate convention, but let the
-        // browser shape and reorder the complete Persian/Arabic text run.
-        ctx.direction = "rtl";
-        ctx.textAlign = "left";
-        ctx.fillText(drawValue, x, y);
-        if (!isBounds) return null;
-        const metrics = ctx.measureText(drawValue);
-        return {
-          x,
-          y: metrics.actualBoundingBoxAscent !== undefined
-            ? y - metrics.actualBoundingBoxAscent : y,
-          r: x + metrics.width,
-          b: metrics.actualBoundingBoxDescent !== undefined
-            ? y + metrics.actualBoundingBoxDescent : y
-        };
-      } finally {
-        ctx.restore();
-      }
-    };
-    patched.__navaPersianRtlPatch = true;
-    prototype.t = patched;
+
+    if (!rendererPrototype.measureRunText.__navaPersianRtlPatch) {
+      const originalMeasureRun = rendererPrototype.measureRunText;
+      const measureRun = function(text, runProps) {
+        const value = String(text == null ? "" : text);
+        const ctx = this.graphics?.context;
+        if (!ctx || !value || !NAVA_RTL_TEXT.test(value)) {
+          return originalMeasureRun.call(this, text, runProps);
+        }
+        ctx.save();
+        try {
+          this.setupStandardFont(runProps);
+          return ctx.measureText(value).width +
+            (runProps?.letterSpacing || 0) * Array.from(value).length;
+        } finally {
+          ctx.restore();
+        }
+      };
+      measureRun.__navaPersianRtlPatch = true;
+      rendererPrototype.measureRunText = measureRun;
+    }
+
+    if (!rendererPrototype.calculateWrappedLines.__navaPersianRtlPatch) {
+      const originalCalculateLines = rendererPrototype.calculateWrappedLines;
+      const calculateLines = function(paragraph, paraProps, maxWidth, currentShape) {
+        const lines = originalCalculateLines.call(this, paragraph, paraProps, maxWidth, currentShape);
+        const paragraphText = (paragraph?.runs || []).map(run => run?.text || "").join("");
+        if (NAVA_RTL_TEXT.test(paragraphText)) {
+          // PptxViewJS places line runs left-to-right. Reverse word/space runs
+          // so the visual sequence of an RTL paragraph is correct.
+          for (const line of lines) {
+            if (Array.isArray(line.runs)) line.runs.reverse();
+          }
+        }
+        return lines;
+      };
+      calculateLines.__navaPersianRtlPatch = true;
+      rendererPrototype.calculateWrappedLines = calculateLines;
+    }
+
+    // Keep the legacy adapter.t() compatibility path for other PptxViewJS calls.
+    if (!adapterPrototype.t.__navaPersianRtlPatch) {
+      const original = adapterPrototype.t;
+      const patched = function(text, x, y, isBounds) {
+        const value = String(text == null ? "" : text);
+        if (this.bIsBreak || !this._context || !value || !NAVA_RTL_TEXT.test(value)) {
+          return original.call(this, text, x, y, isBounds);
+        }
+        const drawValue = isolateLtrRuns(value);
+        const ctx = this._context;
+        ctx.save();
+        try {
+          ctx.fillStyle = this.brush && this.brush.Color1
+            ? this.colorToRgb(this.brush.Color1)
+            : ctx.fillStyle;
+          ctx.textBaseline = "alphabetic";
+          ctx.direction = "rtl";
+          ctx.textAlign = "left";
+          ctx.fillText(drawValue, x, y);
+          if (!isBounds) return null;
+          const metrics = ctx.measureText(drawValue);
+          return {
+            x,
+            y: metrics.actualBoundingBoxAscent !== undefined
+              ? y - metrics.actualBoundingBoxAscent : y,
+            r: x + metrics.width,
+            b: metrics.actualBoundingBoxDescent !== undefined
+              ? y + metrics.actualBoundingBoxDescent : y
+          };
+        } finally {
+          ctx.restore();
+        }
+      };
+      patched.__navaPersianRtlPatch = true;
+      adapterPrototype.t = patched;
+    }
+
     pptxRtlPatchInstalled = true;
     return true;
   };

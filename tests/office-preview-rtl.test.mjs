@@ -43,7 +43,44 @@ test("Persian and Arabic runs are drawn as one shaped Canvas string", () => {
     }
   }
 
-  const window = { CanvasGraphicsAdapter };
+  class CDrawingDocument {
+    constructor() {
+      this.graphics = { context: new CanvasGraphicsAdapter()._context };
+    }
+    setupStandardFont() { calls.push(["setupStandardFont"]); }
+    applyTextEffectsToContext() { calls.push(["applyTextEffects"]); }
+    resetTextEffectsOnContext() { calls.push(["resetTextEffects"]); }
+    drawTextDecorations(...args) { calls.push(["decorations", ...args]); }
+    renderRunTextStandard(text, x, y, runProps) {
+      calls.push(["originalRenderRun", text, x, y, runProps, this.graphics.context.direction]);
+      const ctx = this.graphics.context;
+      let currentX = x;
+      const spacing = runProps.letterSpacing || 0;
+      if (spacing === 0) {
+        ctx.fillText(text, currentX, y);
+        currentX += ctx.measureText(text).width;
+      } else {
+        for (const char of Array.from(text)) {
+          ctx.fillText(char, currentX, y);
+          currentX += ctx.measureText(char).width + spacing;
+        }
+      }
+      this.resetTextEffectsOnContext(ctx);
+      this.drawTextDecorations(x, y, currentX - x, runProps);
+      return currentX;
+    }
+    measureRunText(text) {
+      calls.push(["originalMeasureRun", text]);
+      return 1;
+    }
+    calculateWrappedLines() {
+      return [{ runs: [
+        { text: "ارائه" }, { text: " " }, { text: "تهیه‌شده" },
+        { text: " " }, { text: "با" }, { text: " " }, { text: "NAVI" }
+      ], width: 100 }];
+    }
+  }
+  const window = { CanvasGraphicsAdapter, CDrawingDocument };
   const context = vm.createContext({ window });
   vm.runInContext(
     source.slice(start, end) + "\nglobalThis.installPatch = installPptxRtlCompatibility;",
@@ -68,6 +105,30 @@ test("Persian and Arabic runs are drawn as one shaped Canvas string", () => {
   assert.deepEqual(mixedDraw, [
     "fillText", "ارائه تهیه‌شده با \u2066NAVI\u2069", 100, 50, "rtl", "left"
   ], "Latin tokens must be isolated while Persian words retain logical order");
+
+  const renderer = new window.CDrawingDocument();
+  const rtlLines = renderer.calculateWrappedLines({
+    runs: [{ text: mixedText }]
+  }, {}, 500, null);
+  assert.deepEqual(rtlLines[0].runs.map(run => run.text),
+    ["NAVI", " ", "با", " ", "تهیه‌شده", " ", "ارائه"],
+    "RTL paragraphs must render word runs in visual right-to-left order");
+
+  const normalRunStart = calls.length;
+  const normalRunEnd = renderer.renderRunTextStandard("تهیه‌شده", 100, 50, { letterSpacing: 0 }, 500);
+  assert.equal(normalRunEnd, 142);
+  assert.deepEqual(calls.slice(normalRunStart).filter(call => call[0] === "fillText"), [
+    ["fillText", "تهیه‌شده", 100, 50, "rtl", "left"]
+  ], "zero-spacing RTL text must use the upstream whole-run shaping path");
+
+  const spacedRunStart = calls.length;
+  const spacedRunEnd = renderer.renderRunTextStandard("تهیه‌شده", 100, 50, { letterSpacing: 0.5 }, 500);
+  assert.equal(spacedRunEnd, 142 + 0.5 * Array.from("تهیه‌شده").length);
+  assert.deepEqual(calls.slice(spacedRunStart).filter(call => call[0] === "fillText"), [
+    ["fillText", "تهیه‌شده", 100, 50, "rtl", "left"]
+  ], "custom letter spacing must not split a Persian word into individual glyphs");
+  assert.equal(renderer.graphics.context.direction, "ltr", "Canvas direction must be restored");
+  assert.equal(renderer.graphics.context.textAlign, "start", "Canvas alignment must be restored");
 
   const before = calls.length;
   assert.equal(adapter.t("English", 10, 20, false), "original-result");
