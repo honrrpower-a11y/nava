@@ -466,7 +466,7 @@ test("Office visual preview is mounted in the Office workflow and loads after th
   assert.match(html, /id="officePreviewNext"/);
   assert.match(html, /id="officePreviewSheet"/);
   assert.match(html, /office-preview\.css\?v=office-visual-preview-/);
-  assert.match(html, /office-preview\.js\?v=office-pptx-render-fix-/);
+  assert.match(html, /office-preview\.js\?v=office-pptx-constructor-fix-/);
   assert.ok(html.indexOf('office-edit-tools.js?') < html.indexOf('office-preview.js?'));
   assert.match(preview, /renderPptx/);
   assert.match(preview, /PPTXViewer/);
@@ -489,12 +489,15 @@ test("Office preview stays client-side and can refresh from the edited local Off
 });
 
 
-test("PowerPoint preview uses the documented PPTXViewer render API", () => {
+test("PowerPoint preview validates the UMD constructor export and supports the documented default namespace", () => {
   const preview = readFileSync(new URL("../office-preview.js", import.meta.url), "utf8");
-  assert.match(preview, /new window\.PptxViewJS\.PPTXViewer\(\{ canvas: target \}\)/);
+  assert.match(preview, /value => typeof value\?\.PPTXViewer === "function" \|\| typeof value\?\.default\?\.PPTXViewer === "function"/);
+  assert.match(preview, /const Viewer = typeof pptxNamespace\.PPTXViewer === "function"[\s\S]*?pptxNamespace\.default\.PPTXViewer/);
+  assert.match(preview, /new Viewer\(\{ canvas: target \}\)/);
   assert.match(preview, /await pptxViewer\.loadFile\(file\)/);
   assert.match(preview, /await pptxViewer\.render\(\)/);
   assert.doesNotMatch(preview, /pptxViewer\.render\(target\)/);
+  assert.match(preview, /office-preview=20261119-3/);
 });
 
 

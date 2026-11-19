@@ -25,13 +25,15 @@
     status.textContent = message;
     status.dataset.state = error ? "error" : "success";
   };
-  const loadScript = (src, globalName) => {
-    if (window[globalName]) return Promise.resolve(window[globalName]);
+  const loadScript = (src, globalName, isReady = value => Boolean(value)) => {
+    if (isReady(window[globalName])) return Promise.resolve(window[globalName]);
     if (scripts[globalName]) return scripts[globalName];
     scripts[globalName] = new Promise((resolve, reject) => {
       const existing = Array.from(document.scripts).find(item => item.src === src);
       const script = existing || document.createElement("script");
-      const done = () => window[globalName] ? resolve(window[globalName]) : reject(new Error("کتابخانه پیش‌نمایش بارگذاری نشد."));
+      const done = () => isReady(window[globalName])
+        ? resolve(window[globalName])
+        : reject(new Error("کتابخانه بارگذاری شد، اما سازنده موردنیاز پیش‌نمایش را ارائه نکرد."));
       script.addEventListener("load", done, { once: true });
       script.addEventListener("error", () => reject(new Error("دریافت ابزار پیش‌نمایش ناموفق بود؛ اتصال اینترنت را بررسی کن.")), { once: true });
       if (!existing) { script.src = src; script.async = true; document.head.appendChild(script); }
@@ -156,11 +158,18 @@
     const packageZip = await window.JSZip.loadAsync(file);
     const hasCharts = Object.keys(packageZip.files).some(name => /^ppt\/charts\/chart\d+\.xml$/i.test(name));
     if (hasCharts) await loadScript("https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js", "Chart");
-    await loadScript("https://cdn.jsdelivr.net/npm/pptxviewjs@1.1.9/dist/PptxViewJS.min.js", "PptxViewJS");
+    const pptxNamespace = await loadScript(
+      "https://cdn.jsdelivr.net/npm/pptxviewjs@1.1.9/dist/PptxViewJS.min.js?office-preview=20261119-3",
+      "PptxViewJS",
+      value => typeof value?.PPTXViewer === "function" || typeof value?.default?.PPTXViewer === "function"
+    );
     if (token !== generation) return;
+    const Viewer = typeof pptxNamespace.PPTXViewer === "function"
+      ? pptxNamespace.PPTXViewer
+      : pptxNamespace.default.PPTXViewer;
     const target = canvas();
     target.width = 1280; target.height = 720;
-    pptxViewer = new window.PptxViewJS.PPTXViewer({ canvas: target });
+    pptxViewer = new Viewer({ canvas: target });
     pptxViewer.on?.("slideChanged", index => {
       const count = pptxViewer?.getSlideCount?.() || 0;
       updateNavigation(index, count, "اسلاید");
