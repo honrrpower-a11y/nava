@@ -61,9 +61,13 @@
   }
   function parseShadow(value, id, defs) {
     if (!value || value === "none") return null;
-    const m = value.match(/(-?[\d.]+)px\s+(-?[\d.]+)px(?:\s+([\d.]+)px)?(?:\s+(-?[\d.]+)px)?\s+(rgba?\([^)]*\)|#[0-9a-f]{3,8}|[a-z]+)/i);
+    const colorFirst = value.match(/(rgba?\([^)]*\)|#[0-9a-f]{3,8}|[a-z]+)\s+(-?[\d.]+)px\s+(-?[\d.]+)px(?:\s+([\d.]+)px)?(?:\s+(-?[\d.]+)px)?/i);
+    const valuesFirst = value.match(/(-?[\d.]+)px\s+(-?[\d.]+)px(?:\s+([\d.]+)px)?(?:\s+(-?[\d.]+)px)?\s+(rgba?\([^)]*\)|#[0-9a-f]{3,8}|[a-z]+)/i);
+    const m = colorFirst || valuesFirst;
     if (!m) return null;
-    const dx=Number(m[1]),dy=Number(m[2]),blur=Number(m[3]||0),spread=Number(m[4]||0),color=m[5];
+    const dx=Number(colorFirst ? m[2] : m[1]),dy=Number(colorFirst ? m[3] : m[2]);
+    const blur=Number(colorFirst ? m[4]||0 : m[3]||0),spread=Number(colorFirst ? m[5]||0 : m[4]||0);
+    const color=colorFirst ? m[1] : m[5];
     if (spread !== 0 || /inset/i.test(value) || (value.match(/,/g)||[]).length > 3) return null;
     const filter=node("filter",{id,x:"-40%",y:"-40%",width:"180%",height:"180%","color-interpolation-filters":"sRGB"},defs);
     node("feGaussianBlur",{in:"SourceAlpha",stdDeviation:round(blur/2)},filter);
@@ -89,7 +93,9 @@
     };
   }
   function textLines(text, maxWidth, style) {
-    const source = String(text || "").replace(/\s+/g, " ").trim();
+    let source = String(text || "").replace(/\s+/g, " ").trim();
+    if (style.textTransform === "uppercase") source = source.toLocaleUpperCase();
+    if (style.textTransform === "lowercase") source = source.toLocaleLowerCase();
     if (!source) return [];
     const canvas = document.createElement("canvas"), ctx = canvas.getContext("2d");
     if (!ctx) return [source];
@@ -113,11 +119,16 @@
     const rects=Array.from(range.getClientRects()).filter(r=>r.width>0&&r.height>0);
     if (!rects.length) return;
     const style=getComputedStyle(el);
+    if (style.textDecorationLine && style.textDecorationLine !== "none") warnings.add("زیرخط یا خط‌خوردگی متن در خروجی برداری این نسخه پشتیبانی نمی‌شود.");
+    if (style.writingMode && style.writingMode !== "horizontal-tb") warnings.add("نوشتار عمودی در خروجی برداری پشتیبانی نمی‌شود.");
     const fontSize=parseFloat(style.fontSize)||16;
     const maxWidth=Math.max(...rects.map(r=>r.width));
     const lines=textLines(text,Math.max(maxWidth,rects[0].width),style);
     const box=rects[0];
-    const x=style.textAlign==="center" ? box.left+box.width/2 : (style.textAlign==="right" ? box.right : box.left);
+    const rtl = style.direction === "rtl";
+    const rightAligned = style.textAlign === "right" || (style.textAlign === "start" && rtl);
+    const leftAligned = style.textAlign === "left" || (style.textAlign === "start" && !rtl);
+    const x=style.textAlign==="center" ? box.left+box.width/2 : (rightAligned ? box.right : (leftAligned ? box.left : box.left));
     const y=box.top-rootRect.top+fontSize*.86;
     const t=node("text",Object.assign(styleAttrs(style),{x:round((x-rootRect.left)*scale),y:round(y*scale)}),parent);
     lines.forEach((line,i)=>node("tspan",{x:round((x-rootRect.left)*scale),dy:i===0?0:round(fontSize*1.2*scale)},t).textContent=line);
@@ -161,6 +172,8 @@
     if (style.filter && style.filter!=="none") warnings.add("فیلتر CSS در خروجی برداری پشتیبانی نمی‌شود.");
     if (style.clipPath && style.clipPath!=="none") warnings.add("clip-path CSS در این نسخه قابل بازسازی نیست.");
     if (style.maskImage && style.maskImage!=="none") warnings.add("CSS mask در این نسخه قابل بازسازی نیست.");
+    if (!source.classList.contains("logo-art-root") && (style.overflowX!=="visible" || style.overflowY!=="visible")) warnings.add("برش محتوای داخلی با overflow در این نسخه قابل بازسازی نیست.");
+    if (style.zIndex && style.zIndex!=="auto") warnings.add("ترتیب لایه‌های دارای z-index در این نسخه قابل بازسازی نیست.");
     const x=round((rect.left-rootRect.left)*scale),y=round((rect.top-rootRect.top)*scale),w=round(rect.width*scale),h=round(rect.height*scale);
     const group=node("g",{opacity:style.opacity==="1"?null:style.opacity},parent);
     const bg=style.backgroundColor;
@@ -201,7 +214,11 @@
     const bg=rootStyle.backgroundColor;
     const bgImage=rootStyle.backgroundImage;
     let rootFill=colorIsVisible(bg)?bg:"none";
-    if(bgImage&&bgImage!=="none") rootFill=parseGradient(bgImage,"nava-root-gradient",defs)||"none";
+    if(bgImage&&bgImage!=="none") {
+      const gradient=parseGradient(bgImage,"nava-root-gradient",defs);
+      if(gradient) rootFill=gradient;
+      else warnings.add("پس‌زمینه پیچیده بوم قابل تبدیل به SVG نیست.");
+    }
     if(rootFill!=="none") node("rect",{x:0,y:0,width:1000,height:1000,fill:rootFill},svg);
     Array.from(root.childNodes).forEach(child=>renderHtmlElement(child,svg,rootRect,scale,defs,warnings,counter));
     const unsupported=Array.from(warnings).filter(w=>/متوقف|پشتیبانی نمی‌شود|قابل تبدیل|قابل بازسازی نیست/.test(w));
