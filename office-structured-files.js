@@ -20,9 +20,8 @@
     document.head.appendChild(script);
   });
   const trimOutput = value => String(value || "").replace(/\u0000/g, "").trim().slice(0, MAX_OUTPUT);
-  async function readPowerPoint(file) {
-    const JSZip = await loadScript("https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js", "JSZip");
-    const zip = await JSZip.loadAsync(file);
+  async function readPowerPointArchive(zip) {
+    if (!zip || !zip.files) throw new Error("بسته PowerPoint برای استخراج متن معتبر نیست.");
     const names = Object.keys(zip.files).filter(name => /^ppt\/slides\/slide\d+\.xml$/.test(name)).sort((a,b) => Number(a.match(/slide(\d+)/)[1]) - Number(b.match(/slide(\d+)/)[1]));
     if (!names.length) throw new Error("اسلاید قابل‌خواندنی در این فایل پاورپوینت پیدا نشد.");
     const output = ["نوع فایل: PowerPoint", "تعداد اسلایدهای متنی: " + names.length];
@@ -45,6 +44,11 @@
       }
     }
     return trimOutput(output.join("\n"));
+  }
+  async function readPowerPoint(file) {
+    const JSZip = await loadScript("https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js", "JSZip");
+    const zip = await JSZip.loadAsync(file);
+    return readPowerPointArchive(zip);
   }
   async function readExcel(file) {
     const XLSX = await loadScript("https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js", "XLSX");
@@ -81,7 +85,7 @@
     }
     return trimOutput(output.join("\n"));
   }
-  window.NavaOfficeStructured = Object.freeze({ read: async file => {
+  window.NavaOfficeStructured = Object.freeze({ readPowerPointArchive, read: async file => {
     const ext=(file.name.split(".").pop() || "").toLowerCase();
     if (ext==="pptx") return readPowerPoint(file);
     if (ext==="xlsx") return readExcel(file);
