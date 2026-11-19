@@ -273,7 +273,7 @@ async function syncActiveFileContext(){
     const relationshipsXml=await zip.files[relationshipsPath].async("string");
     const readAttribute=(source,name)=>{
      const escaped=name.replace(/[^a-zA-Z0-9_:]/g,char=>"\\"+char);
-     const match=source.match(new RegExp("(?:^|\\s)"+escaped+"\\s*=\\s*([\\"'])([\\s\\S]*?)\\1"));
+     const match=source.match(new RegExp('(?:^|\\s)'+escaped+'\\s*=\\s*"([^"]*)"'));
      return match?match[2]:"";
     };
     const resolvePart=(base,target)=>{
