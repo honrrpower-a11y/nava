@@ -127,7 +127,11 @@ test("NAVI writes an English brief and three sanitized HTML/CSS logo designs in 
     assert.match(sentPrompt, /English/i);
     assert.match(sentPrompt, /HTML and CSS are the primary composition and styling engine/i);
     assert.match(sentPrompt, /three concepts must differ in their central idea/i);
-    assert.match(sentPrompt, /CSS @keyframes/i);\n    assert.match(sentPrompt, /WORDMARK AND LANGUAGE/i);\n    assert.match(sentPrompt, /INTERNAL ART-DIRECTION REVIEW/i);\n    assert.match(sentPrompt, /near-black text on a dark background/i);\n    assert.match(sentPrompt, /one valid JSON object/i);
+    assert.match(sentPrompt, /CSS @keyframes/i);
+    assert.match(sentPrompt, /WORDMARK AND LANGUAGE/i);
+    assert.match(sentPrompt, /INTERNAL ART-DIRECTION REVIEW/i);
+    assert.match(sentPrompt, /near-black text on a dark background/i);
+    assert.match(sentPrompt, /one valid JSON object/i);
     assert.equal(result.planning.method, "navi-english-brief-html-css-design");
     assert.match(result.planning.designBriefEnglish, /distinctive Persian creative-studio identity/i);
     assert.ok(result.concepts.every(item => item.html.includes("نوا")));
