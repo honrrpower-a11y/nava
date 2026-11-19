@@ -7,7 +7,7 @@
  let sourceFile=null,workbook=null,currentSheet="",zip=null,kind="",editorReadyPromise=Promise.resolve();
  let pendingDownloadBlob=null,contextSyncPromise=Promise.resolve();
  const downloadButton=$("officeEditSave");
- function setDownloadReady(ready){if(downloadButton){downloadButton.disabled=!ready;downloadButton.textContent=kind==="xlsx"?"دانلود فایل ویرایش‌شده Excel":"دانلود فایل ویرایش‌شده";}if(ready)Promise.resolve().then(()=>window.NavaOfficePreview?.refreshFromEditor?.()).catch(()=>{});}
+ function setDownloadReady(ready){if(downloadButton){downloadButton.disabled=!ready;downloadButton.textContent=kind==="xlsx"?"دانلود فایل ویرایش‌شده Excel":"دانلود فایل ویرایش‌شده";}}
  const setStatus=(message,error=false)=>{status.textContent=message;status.dataset.state=error?"error":"success";};
  const libraryLoads=Object.create(null);
  const load=(src,name)=>{
@@ -90,7 +90,7 @@ async function syncActiveFileContext(){
   return true;
  }
  function queueContextSync(){
-  contextSyncPromise=contextSyncPromise.catch(()=>{}).then(()=>syncActiveFileContext());
+  contextSyncPromise=contextSyncPromise.catch(()=>{}).then(async()=>{const result=await syncActiveFileContext();await window.NavaOfficePreview?.refreshFromEditor?.();return result;});
   contextSyncPromise.catch(error=>setStatus("تغییر در ویرایشگر ثبت شد، اما همگام‌سازی محتوای مرجع ناموفق بود: "+(error.message||"خطای نامشخص")+". تا رفع مشکل درخواست بعدی اجرا نمی‌شود.",true));
   return contextSyncPromise;
  }
@@ -165,7 +165,7 @@ async function syncActiveFileContext(){
    }
   }catch(error){if(input.files?.[0]===file){hide();setStatus(error.message||"آماده‌سازی ویرایشگر ناموفق بود.",true);}throw error;}
  }
- $("officeEditSave")?.addEventListener("click",()=>{
+ $("officeEditSave")?.addEventListener("click",async()=>{
   if(!sourceFile||!kind)return;
   try{
    let blob=pendingDownloadBlob;
@@ -174,6 +174,7 @@ async function syncActiveFileContext(){
     const bytes=window.XLSX.write(workbook,{bookType:"xlsx",type:"array",cellStyles:true,compression:true});
     blob=new Blob([bytes],{type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"});
    }
+   if(kind!=="xlsx"&&pendingDownloadBlob){blob=await generateEditedBlob();pendingDownloadBlob=blob;}
    if(!blob)throw new Error("هنوز تغییری برای دانلود آماده نشده است.");
    download(blob,safeName(sourceFile.name)+"-edited."+kind);
    setStatus("فایل ویرایش‌شده دانلود شد. نسخه اصلی بدون تغییر باقی ماند.");
@@ -181,25 +182,23 @@ async function syncActiveFileContext(){
  });
  $("officeEditReplaceRun")?.addEventListener("click",async()=>{
   if(!zip||!sourceFile||!["pptx","docx"].includes(kind))return;
-  const find=$("officeEditFind").value,replace=$("officeEditReplaceValue").value.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+  const find=$("officeEditFind").value,replace=$("officeEditReplaceValue").value;
   if(!find){setStatus("عبارت موردنظر برای جست‌وجو را وارد کن.",true);return;}
   try{
    let count=0;
    const files=Object.keys(zip.files).filter(name=>kind==="pptx"?/^ppt\/slides\/slide\d+\.xml$/.test(name):/^word\/(document|header\d+|footer\d+)\.xml$/.test(name));
    for(const name of files){
-    const entry=zip.files[name];let xml=await entry.async("string");
-    xml=xml.replace(/<a:t(?:\s[^>]*)?>([\s\S]*?)<\/a:t>|<w:t(?:\s[^>]*)?>([\s\S]*?)<\/w:t>/g,(whole,a,b)=>{
-     const value=a??b??"",pieces=value.split(find);if(pieces.length<2)return whole;
-     count+=pieces.length-1;
-     const updated=pieces.join(replace);
-     return whole.replace(value,updated);
-    });
-    zip.file(name,xml);
+    const prefix=kind==="pptx"?"a":"w";
+    const result=replaceTextAcrossRuns(await zip.files[name].async("string"),find,replace,prefix);
+    count+=result.count;
+    if(result.count)zip.file(name,result.xml);
    }
    if(!count){setStatus("عبارت دقیق در قطعه‌های متنی مستقل پیدا نشد. اگر متن بین چند بخش شکسته شده باشد، این نسخه آن را تشخیص نمی‌دهد.",true);return;}
    pendingDownloadBlob=await generateEditedBlob();
    setDownloadReady(true);
-   setStatus(count+" جایگزینی آماده شد. برای دریافت نسخه ویرایش‌شده، دکمه دانلود را بزن.");
+   await syncActiveFileContext();
+   await window.NavaOfficePreview?.refreshFromEditor?.();
+   setStatus(count+" جایگزینی آماده شد و پیش‌نمایش نیز به‌روز شد. برای دریافت نسخه ویرایش‌شده، دکمه دانلود را بزن.");
   }catch(error){setStatus(error.message||"ویرایش فایل ناموفق بود.",true);}
  });
 
@@ -273,6 +272,7 @@ async function syncActiveFileContext(){
     workbook.Workbook=workbook.Workbook||{};workbook.Workbook.CalcPr={calcMode:"auto",fullCalcOnLoad:true,forceFullCalc:true};
     pendingDownloadBlob=null;setDownloadReady(true);drawGrid();
     await syncActiveFileContext();
+    await window.NavaOfficePreview?.refreshFromEditor?.();
     setStatus(staged.length+" سلول تغییرات NAVI در ویرایش مستقیم اعمال و نمایش داده شد. محتوای مرجع درخواست بعدی نیز به‌روز شد. مقادیر را بررسی کن؛ سپس با دکمه دانلود فایل خروجی را دریافت کن.");
     window.NavaOfficeFile?.setEditStatus?.("تغییرات ثبت‌شده: "+staged.map(item=>item.sheet+"!"+item.cell).join("، ")+". فایل اصلی بدون تغییر است.");
     panel.scrollIntoView({behavior:"smooth",block:"nearest"});
@@ -298,6 +298,7 @@ async function syncActiveFileContext(){
     workbook.Workbook=workbook.Workbook||{};workbook.Workbook.CalcPr={calcMode:"auto",fullCalcOnLoad:true,forceFullCalc:true};
     pendingDownloadBlob=null;setDownloadReady(true);drawGrid();
     await syncActiveFileContext();
+    await window.NavaOfficePreview?.refreshFromEditor?.();
     setStatus("ردیف جدید در ویرایش مستقیم نمایش داده شد. محتوای مرجع درخواست بعدی نیز به‌روز شد. اطلاعات را بررسی کن و سپس فایل را دانلود کن.");
     window.NavaOfficeFile?.setEditStatus?.("یک ردیف جدید در شیت «"+action.sheet+"» اضافه شد. فایل اصلی بدون تغییر است.");
     panel.scrollIntoView({behavior:"smooth",block:"nearest"});
@@ -354,6 +355,7 @@ async function syncActiveFileContext(){
      pendingDownloadBlob=await generateEditedBlob();
      setDownloadReady(true);
      await syncActiveFileContext();
+     await window.NavaOfficePreview?.refreshFromEditor?.();
      setStatus("متن مشخص‌شده از اسلاید "+action.slide+" حذف شد؛ خود اسلاید و سایر متن‌ها حفظ شدند. فایل اصلی بدون تغییر است.");
      window.NavaOfficeFile?.setEditStatus?.("یک پاراگراف از اسلاید "+action.slide+" حذف شد.");
      return {message:"متن مشخص‌شده از اسلاید "+action.slide+" حذف شد و خود اسلاید باقی ماند. نسخه خروجی را بررسی و دانلود کن؛ فایل اصلی تغییر نکرده است."};
@@ -392,6 +394,7 @@ async function syncActiveFileContext(){
     pendingDownloadBlob=await generateEditedBlob();
     setDownloadReady(true);
     await syncActiveFileContext();
+    await window.NavaOfficePreview?.refreshFromEditor?.();
     setStatus("اسلاید "+action.slide+" حذف شد. ترتیب اسلایدهای باقی‌مانده حفظ شده است. فایل اصلی بدون تغییر است.");
     window.NavaOfficeFile?.setEditStatus?.("اسلاید "+action.slide+" حذف شد.");
     return {message:"اسلاید "+action.slide+" از ارائه حذف شد و ترتیب اسلایدهای باقی‌مانده حفظ شده است. نسخه خروجی را بررسی و دانلود کن؛ فایل اصلی تغییر نکرده است."};
@@ -499,6 +502,7 @@ async function syncActiveFileContext(){
     pendingDownloadBlob=await generateEditedBlob();
     setDownloadReady(true);
     await syncActiveFileContext();
+    await window.NavaOfficePreview?.refreshFromEditor?.();
     setStatus(action.edits.length+" پاراگراف در اسلایدهای پاورپوینت بازنویسی شد. محتوای مرجع درخواست بعدی نیز به‌روز شد. برای دریافت نسخه ویرایش‌شده، دکمه دانلود را بزن.");
     window.NavaOfficeFile?.setEditStatus?.(action.edits.length+" پاراگراف پاورپوینت بازنویسی شد. فایل اصلی بدون تغییر است.");
     return {message:action.edits.length+" پاراگراف در اسلایدهای مشخص‌شده بازنویسی شد. چیدمان و ساختار اسلایدها حفظ شده است؛ پس از بررسی، فایل ویرایش‌شده را دانلود کن. فایل اصلی تغییر نکرده است."};
@@ -517,6 +521,7 @@ async function syncActiveFileContext(){
     pendingDownloadBlob=await generateEditedBlob();
     setDownloadReady(true);
     await syncActiveFileContext();
+    await window.NavaOfficePreview?.refreshFromEditor?.();
     setStatus(count+" جایگزینی در فایل اعمال شد. محتوای مرجع درخواست بعدی نیز به‌روز شد. برای دریافت نسخه ویرایش‌شده، دکمه دانلود را بزن.");
     window.NavaOfficeFile?.setEditStatus?.(count+" مورد جایگزینی متن انجام شد. فایل اصلی بدون تغییر است.");
     return {message:count+" جایگزینی در فایل اعمال شد. برای دریافت نسخه ویرایش‌شده، دکمه دانلود را بزن. فایل اصلی تغییر نکرده است."};
