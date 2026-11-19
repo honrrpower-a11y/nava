@@ -79,3 +79,17 @@ body.light .office-preview-word{box-shadow:0 8px 24px rgba(30,40,55,.12)}
  .office-preview-table th,.office-preview-table td{min-width:58px;padding:6px}
 }
 @media(prefers-reduced-motion:reduce){.office-preview-panel *{scroll-behavior:auto!important}}
+
+
+/* Collapsible, optional Office file preview — closed by default */
+.office-preview-disclosure{display:flex;align-items:center;gap:12px;min-height:48px;cursor:pointer;list-style:none;outline-offset:4px}
+.office-preview-disclosure::-webkit-details-marker{display:none}
+.office-preview-disclosure::marker{content:""}
+.office-preview-disclosure-copy{display:flex;flex:1;min-width:0;flex-direction:column;gap:4px}
+.office-preview-disclosure-copy strong{color:var(--gold);font-size:1rem}
+.office-preview-disclosure-copy>span{color:var(--muted);font-size:12px;line-height:1.7}
+.office-preview-disclosure-arrow{flex:0 0 auto;color:var(--gold);font-size:22px;transition:transform .18s ease}
+.office-preview-panel[open]>.office-preview-disclosure{margin-bottom:12px}
+.office-preview-panel[open]>.office-preview-disclosure .office-preview-disclosure-arrow{transform:rotate(180deg)}
+.office-preview-panel:not([open]){padding-top:10px;padding-bottom:10px}
+@media(max-width:640px){.office-preview-disclosure{gap:8px;align-items:flex-start}.office-preview-disclosure-copy>span{font-size:11px}.office-preview-file{max-width:36%}}

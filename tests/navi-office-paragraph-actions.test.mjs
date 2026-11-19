@@ -87,7 +87,7 @@ test("PowerPoint post-edit sync reads the already-open JSZip archive without Fil
   assert.match(structured, /Object\.freeze\(\{ readPowerPointArchive, read:/);
   assert.match(editor, /readPowerPointArchive\(zip\)/);
   assert.doesNotMatch(editor, /const blob=await zip\.generateAsync\(\{type:"blob"\}\);\s*const file=new File\(\[blob\]/);
-  assert.match(html, /office-edit-tools\.js\?v=office-pptx-pptx-export-run-edit-20261119-4/);
+  assert.match(html, /office-edit-tools\.js\?v=office-pptx-edit-persistence-preview-20261119-6/);
 });
 
 
@@ -97,7 +97,7 @@ test("PowerPoint exports use the correct Office MIME type", () => {
  assert.ok(editor.includes("application/vnd.openxmlformats-officedocument.presentationml.presentation"));
  assert.ok(editor.includes("mimeType:officeMimeTypes[kind]"));
  assert.ok(editor.includes("async function generateEditedBlob()"));
- assert.ok(html.includes("office-pptx-pptx-export-run-edit-20261119-4"));
+ assert.ok(html.includes("office-pptx-edit-persistence-preview-20261119-6"));
 });
 
 test("PowerPoint replacement searches concatenated text runs", () => {
@@ -111,4 +111,31 @@ test("PowerPoint rewrite accepts changed paragraph counts", () => {
  const editor=readFileSync(new URL("../office-edit-tools.js",import.meta.url),"utf8");
  assert.ok(editor.includes("Accept complete rewrites with a different paragraph count"));
  assert.ok(!editor.includes("متن جایگزین اسلاید \"+item.slide+\" باید دقیقاً"));
+});
+
+
+test("PowerPoint slide-number and footer placeholders are excluded from extracted text and edit targets", () => {
+  const editor = readFileSync(new URL("../office-edit-tools.js", import.meta.url), "utf8");
+  const structured = readFileSync(new URL("../office-structured-files.js", import.meta.url), "utf8");
+  assert.match(editor, /function isSlideDecorationParagraph\(paragraph\)/);
+  assert.match(editor, /!item\.isDecoration/);
+  assert.match(structured, /function isSlideDecorationParagraph\(paragraph\)/);
+  assert.match(structured, /paragraphs\.filter\(p => !isSlideDecorationParagraph\(p\)\)/);
+  assert.match(editor, /\["sldNum",\s*"ftr",\s*"hdr",\s*"dt"\]/);
+  assert.match(structured, /\["sldNum",\s*"ftr",\s*"hdr",\s*"dt"\]/);
+});
+
+
+test("Office file preview is optional and collapsed by default", () => {
+  const html = readFileSync(new URL("../index.html", import.meta.url), "utf8");
+  const start = html.indexOf('<details class="office-preview-panel" id="officePreviewPanel" hidden>');
+  const end = html.indexOf("</details>", start);
+  assert.ok(start >= 0 && end > start, "preview must use a native collapsible details panel");
+  const preview = html.slice(start, end);
+  assert.match(preview, /<summary class="office-preview-disclosure"/);
+  assert.match(preview, /فایل اولیه‌ای است که انتخاب کرده‌اید/);
+  assert.match(preview, /فایل جدید یا نسخه اصلاح‌شده/);
+  assert.match(preview, /دوباره در سایت بارگذاری کنید/);
+  assert.match(preview, /id="officePreviewStage"/);
+  assert.match(html, /id="officeEditSave"/);
 });

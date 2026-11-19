@@ -12,6 +12,7 @@ import {
 const app = readFileSync(new URL("../app.js", import.meta.url), "utf8");
 const html = readFileSync(new URL("../index.html", import.meta.url), "utf8");
 const editor = readFileSync(new URL("../office-edit-tools.js", import.meta.url), "utf8");
+const preview = readFileSync(new URL("../office-preview.js", import.meta.url), "utf8");
 const css = readFileSync(new URL("../style.css", import.meta.url), "utf8");
 const officeCss = readFileSync(new URL("../office-workspace.css", import.meta.url), "utf8");
 const fileReader = readFileSync(new URL("../office-file-tools.js", import.meta.url), "utf8");
@@ -507,4 +508,23 @@ test("PowerPoint export checks the documented PptxGenJS browser global", () => {
   assert.match(documentExport, /loadExternal\("https:\/\/cdn\.jsdelivr\.net\/npm\/pptxgenjs@3\.12\.0\/dist\/pptxgen\.bundle\.js",\s*"PptxGenJS"\)/);
   assert.match(documentExport, /const PptxGenJS=await loadExternal\([\s\S]*?\);\s*const pptx=new PptxGenJS\(\)/);
   assert.doesNotMatch(documentExport, /pptxgen\.bundle\.js",\s*"pptxgen"/);
+});
+
+
+test("PowerPoint manual replacement uses paragraph-aware cross-run replacement and refreshes after sync", () => {
+  const manual = editor.slice(editor.indexOf('$("officeEditReplaceRun")'), editor.indexOf("window.NavaOfficeTools ="));
+  assert.match(manual, /replaceTextAcrossRuns\(await zip\.files\[name\]\.async\("string"\),find,replace,prefix\)/);
+  assert.match(manual, /await syncActiveFileContext\(\);[\s\S]*?await window\.NavaOfficePreview\?\.refreshFromEditor\?\.\(\)/);
+  assert.doesNotMatch(manual, /pieces=value\.split\(find\)/);
+});
+
+test("PowerPoint download regenerates the archive from the current edited package", () => {
+  const save = editor.slice(editor.indexOf('$("officeEditSave")'), editor.indexOf('$("officeEditReplaceRun")'));
+  assert.match(save, /addEventListener\("click",async\(\)=>/);
+  assert.match(save, /blob=await generateEditedBlob\(\)/);
+});
+
+test("edited preview refresh preserves the last successful preview if the edited copy fails to render", () => {
+  assert.match(preview, /const previousFile = activeFile/);
+  assert.match(preview, /if \(!rendered\) \{[\s\S]*?await renderFile\(previousFile, previousBlob\)/);
 });

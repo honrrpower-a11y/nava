@@ -20,6 +20,18 @@
     document.head.appendChild(script);
   });
   const trimOutput = value => String(value || "").replace(/\u0000/g, "").trim().slice(0, MAX_OUTPUT);
+  function isSlideDecorationParagraph(paragraph) {
+    const descendants = Array.from(paragraph.getElementsByTagName("*"));
+    if (descendants.some(node => node.localName === "fld" && /^(?:slidenum|datetime\w*|header|footer)$/i.test(node.getAttribute("type") || ""))) return true;
+    let shape = paragraph.parentElement;
+    while (shape && !["sp", "graphicFrame", "cxnSp", "pic"].includes(shape.localName)) shape = shape.parentElement;
+    if (shape?.localName === "sp") {
+      const placeholder = Array.from(shape.getElementsByTagName("*")).find(node => node.localName === "ph");
+      const type = placeholder?.getAttribute("type") || "";
+      if (["sldNum", "ftr", "hdr", "dt"].includes(type)) return true;
+    }
+    return false;
+  }
   async function readPowerPointArchive(zip) {
     if (!zip || !zip.files) throw new Error("بسته PowerPoint برای استخراج متن معتبر نیست.");
     const names = Object.keys(zip.files).filter(name => /^ppt\/slides\/slide\d+\.xml$/.test(name)).sort((a,b) => Number(a.match(/slide(\d+)/)[1]) - Number(b.match(/slide(\d+)/)[1]));
@@ -30,7 +42,7 @@
       const doc = new DOMParser().parseFromString(xml, "application/xml");
       if (doc.querySelector("parsererror")) continue;
       const paragraphs = Array.from(doc.getElementsByTagName("*")).filter(node => node.localName === "p");
-      const lines = paragraphs.map(p => Array.from(p.getElementsByTagName("*")).filter(node => node.localName === "t").map(node => node.textContent || "").join("")).map(line => line.trim()).filter(Boolean);
+      const lines = paragraphs.filter(p => !isSlideDecorationParagraph(p)).map(p => Array.from(p.getElementsByTagName("*")).filter(node => node.localName === "t").map(node => node.textContent || "").join("")).map(line => line.trim()).filter(Boolean);
       output.push("\nاسلاید " + (i+1) + ":\n" + lines.join("\n"));
       if (output.join("\n").length >= MAX_OUTPUT) break;
     }

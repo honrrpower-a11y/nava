@@ -407,16 +407,25 @@
   }
   const refreshFromEditor = async () => {
     if (!activeFile || !window.NavaOfficeTools?.createPreviewBlob) return false;
+    const previousFile = activeFile;
+    const previousBlob = activeBlob;
     try {
       const blob = await window.NavaOfficeTools.createPreviewBlob();
       if (!blob) return false;
-      const updated = new File([blob], activeFile.name, { type: activeFile.type || "application/octet-stream", lastModified: Date.now() });
+      const updated = new File([blob], previousFile.name, { type: previousFile.type || "application/octet-stream", lastModified: Date.now() });
       const rendered = await renderFile(updated, blob);
-      if (!rendered) return false;
+      if (!rendered) {
+        // A failed edited render must not leave the preview area blank.
+        await renderFile(previousFile, previousBlob);
+        setStatus("نسخه ویرایش‌شده ساخته شد، اما پیش‌نمایش آن باز نشد؛ پیش‌نمایش قبلی حفظ شد. فایل دانلودی را جداگانه بررسی کن.", true);
+        return false;
+      }
       setStatus("پیش‌نمایش با نسخه ویرایش‌شده به‌روز شد. فایل اصلی همچنان بدون تغییر است.");
       return true;
     } catch (error) {
-      setStatus("ویرایش انجام شد، اما به‌روزرسانی پیش‌نمایش ناموفق بود: " + (error.message || "خطای نامشخص"), true);
+      // Keep the last known-good visual state when an edited package cannot render.
+      try { await renderFile(previousFile, previousBlob); } catch (_) {}
+      setStatus("به‌روزرسانی پیش‌نمایش ناموفق بود؛ پیش‌نمایش قبلی حفظ شد: " + (error.message || "خطای نامشخص"), true);
       return false;
     }
   };
