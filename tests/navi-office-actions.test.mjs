@@ -144,6 +144,10 @@ test("PowerPoint slide and paragraph deletion requests require explicit current-
   assert.equal(isExplicitOfficeEditRequest("پیام کاربر: چطور می‌توانم یک اسلاید را حذف کنم؟"), false);
 });
 
+test("PowerPoint deletion reads XML attribute values from the first capture group", () => {
+  assert.match(editor, /return match\?match\[1\]:"";/);
+});
+
 test("PowerPoint deletion actions are supported by the approval card and local editor", () => {
   assert.match(app, /"delete_slide", "delete_slide_text"/);
   assert.match(app, /حذف کامل اسلاید شماره/);
