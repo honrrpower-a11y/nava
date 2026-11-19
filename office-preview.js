@@ -167,7 +167,7 @@
     });
     await pptxViewer.loadFile(file);
     if (token !== generation) return;
-    await pptxViewer.render(target);
+    await pptxViewer.render();
     if (token !== generation) return;
     const count = pptxViewer.getSlideCount();
     updateNavigation(pptxViewer.getCurrentSlideIndex?.() || 0, count, "اسلاید");
