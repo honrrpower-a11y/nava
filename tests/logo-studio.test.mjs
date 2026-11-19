@@ -193,7 +193,7 @@ test("NAVI CSS cannot load remote resources or execute injected markup", async (
 test("native logo renderer is valid JavaScript and never constructs foreignObject", () => {
   const source = readFileSync(new URL("../logo-renderer.js", import.meta.url), "utf8");
   assert.doesNotThrow(() => new vm.Script(source));
-  assert.match(source, /global\\.NavaLogoRenderer/);
-  assert.doesNotMatch(source, /createElementNS\\([^,]+,\\s*["']foreignObject["']/i);
-  assert.match(source, /new XMLSerializer\\(\\)\\.serializeToString/);
+  assert.ok(source.includes("global.NavaLogoRenderer"));
+  assert.ok(!source.includes('createElementNS(NS, "foreignObject"'));
+  assert.ok(source.includes("new XMLSerializer().serializeToString"));
 });
