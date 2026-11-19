@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 
 import {
   guardNaviOfficeReply,
@@ -66,4 +67,13 @@ test("Office edit guard uses format-neutral wording when a proposal is not autho
 test("Office edit guard preserves an authorized PowerPoint approval response", () => {
   const reply = "کارت تأیید ویرایش پاورپوینت آماده است.";
   assert.equal(guardNaviOfficeReply(reply, true), reply);
+});
+
+
+test("PowerPoint editor preserves original paragraph boundaries for flattened append-only replacements", () => {
+  const editor = readFileSync(new URL("../office-edit-tools.js", import.meta.url), "utf8");
+  assert.match(editor, /const originalTargetText=paragraphs[\s\S]*?\.join\(" "\)/);
+  assert.match(editor, /normalizedReplacement\.startsWith\(normalizedOriginal\+" "\)/);
+  assert.match(editor, /replacementParagraphs\[lastIndex\][\s\S]*?appendedText/);
+  assert.match(editor, /replacementParagraphs\.length===1&&targetCount>1/);
 });

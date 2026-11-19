@@ -409,11 +409,33 @@ async function syncActiveFileContext(){
       ?"متن انتخاب‌شده در اسلاید "+item.slide+" پیدا نشد یا مرز پاراگراف‌ها با متن مرجع تطبیق نداشت؛ فایل تغییری نکرد."
       :"متن انتخاب‌شده بیش از یک‌بار در اسلاید "+item.slide+" وجود دارد؛ برای جلوگیری از تغییر اشتباه، فایل تغییری نکرد.");
      const target=candidates[0];
-     const replacementParagraphs=String(item.replace).split(/\r\n|\n|\r/);
+     let replacementParagraphs=String(item.replace).split(/\r\n|\n|\r/);
      const targetCount=target.end-target.start+1;
-     if(replacementParagraphs.length!==targetCount)throw new Error(
-      "متن جایگزین اسلاید "+item.slide+" باید دقیقاً "+targetCount+" پاراگراف جداشده با خط جدید داشته باشد؛ فایل تغییری نکرد."
-     );
+     if(replacementParagraphs.length!==targetCount){
+      // NAVI may return a flattened full-text replacement when the request only
+      // appends a sentence. Preserve every original paragraph and append only
+      // the verified suffix to the final paragraph instead of rejecting it.
+      const originalTargetText=paragraphs
+       .slice(target.start,target.end+1)
+       .map(paragraph=>paragraph.text)
+       .join(" ");
+      const normalizedOriginal=normalizeSlideText(originalTargetText);
+      const normalizedReplacement=normalizeSlideText(replacementParagraphs.join(" "));
+      if(replacementParagraphs.length===1&&targetCount>1&&
+         normalizedReplacement.startsWith(normalizedOriginal+" ")){
+       const appendedText=normalizedReplacement.slice(normalizedOriginal.length).trim();
+       replacementParagraphs=paragraphs
+        .slice(target.start,target.end+1)
+        .map(paragraph=>paragraph.text);
+       const lastIndex=replacementParagraphs.length-1;
+       replacementParagraphs[lastIndex]=
+        (replacementParagraphs[lastIndex].trim()?replacementParagraphs[lastIndex].trim()+" ":"")+appendedText;
+      }else{
+       throw new Error(
+        "متن جایگزین اسلاید "+item.slide+" باید دقیقاً "+targetCount+" پاراگراف جداشده با خط جدید داشته باشد؛ فایل تغییری نکرد."
+       );
+      }
+     }
      const updates=[];
      for(let offset=0;offset<targetCount;offset++){
       const source=paragraphs[target.start+offset];
