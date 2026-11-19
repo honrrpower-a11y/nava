@@ -67,6 +67,7 @@
       "</main></body></html>"
     ].join("");
     frame.srcdoc = documentHtml;
+    frame.addEventListener("load", syncLiveEdits);
     return frame;
   }
 
