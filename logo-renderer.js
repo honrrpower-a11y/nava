@@ -22,10 +22,15 @@
   }
   function colorIsVisible(color) { return !!color && color !== TRANSPARENT && color !== "transparent"; }
   function parseGradient(value, id, defs) {
-    const match = /^linear-gradient\((.*)\)$/i.exec(value || "");
+    const match = /^(linear|radial)-gradient\((.*)\)$/i.exec(value || "");
     if (!match) return null;
-    const body = match[1];
+    const gradientType = match[1].toLowerCase();
+    const body = match[2];
     const parts = body.split(/,(?![^()]*\))/).map(s => s.trim());
+    if (gradientType === "radial" && parts.length && /^(circle|ellipse|closest-|farthest-)/i.test(parts[0])) {
+      if (/\bat\b/i.test(parts[0])) return null;
+      parts.shift();
+    }
     let angle = 180;
     if (parts.length && /^(to\s|[-\d.]+deg)/i.test(parts[0])) {
       const dir = parts.shift();
@@ -60,14 +65,14 @@
     if (!m) return null;
     const dx=Number(m[1]),dy=Number(m[2]),blur=Number(m[3]||0),spread=Number(m[4]||0),color=m[5];
     if (spread !== 0 || /inset/i.test(value) || (value.match(/,/g)||[]).length > 3) return null;
-    const filter=node("filter",{id,x:"-40%",y:"-40%",width:"180%",height:"180%",colorInterpolationFilters:"sRGB"},defs);
+    const filter=node("filter",{id,x:"-40%",y:"-40%",width:"180%",height:"180%","color-interpolation-filters":"sRGB"},defs);
     node("feGaussianBlur",{in:"SourceAlpha",stdDeviation:round(blur/2)},filter);
     node("feOffset",{dx:round(dx),dy:round(dy),result:"offsetblur"},filter);
     node("feFlood",{"flood-color":color,"flood-opacity":"1",result:"shadowcolor"},filter);
     node("feComposite",{in:"shadowcolor",in2:"offsetblur",operator:"in",result:"shadow"},filter);
-    node("feMerge",{},filter).appendChild(document.createElementNS(NS,"feMergeNode"));
-    const merge=filter.lastChild; merge.setAttribute("in","shadow");
-    node("feMergeNode",{},filter).setAttribute("in","SourceGraphic");
+    const merge=node("feMerge",{},filter);
+    node("feMergeNode",{in:"shadow"},merge);
+    node("feMergeNode",{in:"SourceGraphic"},merge);
     return "url(#"+id+")";
   }
   function styleAttrs(style) {
