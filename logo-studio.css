@@ -161,3 +161,9 @@ body.light .logo-html-css-card .logo-concept-preview {
 @media(max-width:760px) {
   .logo-html-css-preview { min-height: 0; }
 }
+
+
+/* Native vector and high-resolution raster export controls */
+.logo-html-css-card .logo-concept-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.logo-html-css-card .logo-concept-actions button{min-height:44px;width:100%}
+@media(max-width:760px){.logo-html-css-card .logo-concept-actions{grid-template-columns:1fr}}
