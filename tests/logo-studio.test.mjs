@@ -124,7 +124,10 @@ test("NAVI writes an English brief and three sanitized HTML/CSS logo designs in 
     assert.equal(result.success, true);
     assert.equal(result.concepts.length, 3);
     assert.equal(geminiCalls, 1, "one Gemini call creates the English brief and all three logo designs");
-    assert.match(sentPrompt, /English/i);\n    assert.match(sentPrompt, /PRIMARY DESIGN ENGINE/i);\n    assert.match(sentPrompt, /THREE genuinely different creative directions/i);\n    assert.match(sentPrompt, /keyframe animation/i);
+    assert.match(sentPrompt, /English/i);
+    assert.match(sentPrompt, /PRIMARY DESIGN ENGINE/i);
+    assert.match(sentPrompt, /THREE genuinely different creative directions/i);
+    assert.match(sentPrompt, /keyframe animation/i);
     assert.equal(result.planning.method, "navi-english-brief-html-css-design");
     assert.match(result.planning.designBriefEnglish, /distinctive Persian creative-studio identity/i);
     assert.ok(result.concepts.every(item => item.html.includes("نوا")));
