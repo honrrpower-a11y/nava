@@ -127,18 +127,14 @@
         const doc = frame.contentDocument;
         const root = doc && doc.querySelector(".logo-art-root");
         if (!root) return;
-        const previous = frame.__navaData || current;
         root.style.setProperty("--logo-primary", current.primaryColor);
         root.style.setProperty("--logo-background", current.darkColor);
-        const walker = doc.createTreeWalker(root, NodeFilter.SHOW_TEXT);
-        let textNode;
-        while ((textNode = walker.nextNode())) {
-          let value = textNode.nodeValue;
-          if (previous.brandName) value = value.split(previous.brandName).join(current.brandName);
-          if (previous.slogan) value = value.split(previous.slogan).join(current.slogan);
-          textNode.nodeValue = value;
-        }
-        frame.__navaData = { brandName: current.brandName, slogan: current.slogan };
+        root.querySelectorAll('[data-logo-role="brand"]').forEach(el => {
+          el.textContent = current.brandName;
+        });
+        root.querySelectorAll('[data-logo-role="slogan"]').forEach(el => {
+          el.textContent = current.slogan;
+        });
       } catch (_) {}
     });
   }
