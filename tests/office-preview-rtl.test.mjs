@@ -17,8 +17,16 @@ test("Persian and Arabic runs are drawn as one shaped Canvas string", () => {
         textBaseline: "alphabetic",
         direction: "ltr",
         textAlign: "start",
-        save() { calls.push(["save"]); },
-        restore() { calls.push(["restore"]); },
+        _stack: [],
+        save() {
+          this._stack.push({ fillStyle: this.fillStyle, textBaseline: this.textBaseline, direction: this.direction, textAlign: this.textAlign });
+          calls.push(["save"]);
+        },
+        restore() {
+          const state = this._stack.pop();
+          Object.assign(this, state);
+          calls.push(["restore"]);
+        },
         fillText(...args) { calls.push(["fillText", ...args, this.direction, this.textAlign]); },
         measureText(text) {
           calls.push(["measureText", text]);
@@ -45,7 +53,7 @@ test("Persian and Arabic runs are drawn as one shaped Canvas string", () => {
 
   const adapter = new window.CanvasGraphicsAdapter();
   const bounds = adapter.t("سلام دنیا", 100, 50, true);
-  assert.deepEqual(bounds, { x: 100, y: 41, r: 142, b: 53 });
+  assert.equal(JSON.stringify(bounds), JSON.stringify({ x: 100, y: 41, r: 142, b: 53 }));
   assert.equal(calls.filter(call => call[0] === "fillText").length, 1);
   assert.deepEqual(calls.find(call => call[0] === "fillText"), [
     "fillText", "سلام دنیا", 100, 50, "rtl", "left"
