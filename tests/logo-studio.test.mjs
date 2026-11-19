@@ -102,7 +102,7 @@ function makeGeminiResponse(plan = makeDesign()) {
   }), { status: 200, headers: { "Content-Type": "application/json" } });
 }
 
-test("NAVI writes an English brief and three HTML/CSS logos in one Gemini call; SVG is exported without image AI", async () => {
+test("NAVI writes an English brief and three sanitized HTML/CSS logo designs in one Gemini call", async () => {
   const originalFetch = globalThis.fetch;
   const db = new FakeD1();
   let geminiCalls = 0;
@@ -196,12 +196,13 @@ test("NAVI CSS cannot load remote resources or execute injected markup", async (
 });
 
 
-test("native logo renderer is valid JavaScript and never constructs foreignObject", () => {
+test("native logo renderer passes syntax checks and blocks lossy foreignObject exports", () => {
   const source = readFileSync(new URL("../logo-renderer.js", import.meta.url), "utf8");
   assert.doesNotThrow(() => new vm.Script(source));
   assert.ok(source.includes("global.NavaLogoRenderer"));
   assert.ok(!source.includes('createElementNS(NS, "foreignObject"'));
   assert.ok(source.includes("new XMLSerializer().serializeToString"));
+  assert.ok(source.includes("new DOMParser().parseFromString"), "serialized SVG is parsed and validated before download");
   assert.ok(source.includes("Intl.Segmenter"), "text is reconstructed from measured grapheme bounds");
   assert.ok(source.includes("if (warnings.size)"), "any lossy feature blocks export");
   assert.ok(source.includes("gradientUnits: " + '"userSpaceOnUse"'));
