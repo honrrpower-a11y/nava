@@ -15,6 +15,7 @@
   const status = $("logoStudioStatus");
   const empty = $("logoStudioEmpty");
   const customColors = $("logoCustomColors");
+  let activeFrames = [];
   const paletteNames = {
     gold: "طلایی و سرمه‌ای", blue: "آبی و نقره‌ای", green: "سبز و کرم",
     violet: "بنفش و یاسی", mono: "تک‌رنگ", custom: "رنگ اختصاصی"
@@ -50,7 +51,7 @@
     const frame = document.createElement("iframe");
     frame.className = "logo-html-css-preview";
     frame.title = "پیش‌نمایش لوگوی " + data.brandName + "؛ " + concept.title;
-    frame.setAttribute("sandbox", "");
+    frame.setAttribute("sandbox", "allow-same-origin");
     frame.setAttribute("referrerpolicy", "no-referrer");
     const documentHtml = [
       "<!doctype html><html lang=\"fa\" dir=\"rtl\"><head>",
@@ -69,17 +70,76 @@
     return frame;
   }
 
-  function downloadSvg(concept, data, index) {
-    const blob = new Blob([concept.svg], { type: "image/svg+xml;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = safeFileName(data.brandName) + "-logo-concept-" + (index + 1) + ".svg";
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 2000);
-    status.textContent = "فایل SVG لوگو آماده شد.";
+  function createVectorExport(frame, data) {
+    if (!window.NavaLogoRenderer) throw new Error("موتور بازسازی برداری بارگذاری نشده است.");
+    return window.NavaLogoRenderer.buildSvg(frame, {
+      brandName: fields.name.value.trim() || data.brandName,
+      width: 1200,
+      height: 1200
+    });
+  }
+
+  function reportExportWarnings(warnings) {
+    if (warnings && warnings.length) {
+      status.textContent = "خروجی برداری ساخته شد؛ نکته: " + warnings.join(" ");
+    }
+  }
+
+  function downloadSvg(concept, frame, data, index) {
+    try {
+      status.textContent = "در حال بازسازی هندسه و تایپوگرافی به SVG برداری...";
+      const result = createVectorExport(frame, data);
+      const blob = new Blob([result.svg], { type: "image/svg+xml;charset=utf-8" });
+      window.NavaLogoRenderer.downloadBlob(
+        blob,
+        safeFileName(fields.name.value || data.brandName) + "-logo-concept-" + (index + 1) + ".svg"
+      );
+      reportExportWarnings(result.warnings);
+      if (!result.warnings.length) status.textContent = "فایل SVG برداری و بدون foreignObject آماده شد.";
+    } catch (error) {
+      const details = error.details && error.details.length ? " " + error.details.join(" ") : "";
+      status.textContent = (error.message || "بازسازی SVG ناموفق بود.") + details;
+    }
+  }
+
+  async function downloadPng(concept, frame, data, index) {
+    try {
+      status.textContent = "در حال ساخت PNG با وضوح ۲۴۰۰ پیکسل...";
+      const result = createVectorExport(frame, data);
+      await window.NavaLogoRenderer.exportPng(
+        result.svg,
+        safeFileName(fields.name.value || data.brandName) + "-logo-concept-" + (index + 1) + ".png",
+        2400
+      );
+      reportExportWarnings(result.warnings);
+      if (!result.warnings.length) status.textContent = "فایل PNG با وضوح ۲۴۰۰ پیکسل آماده شد.";
+    } catch (error) {
+      const details = error.details && error.details.length ? " " + error.details.join(" ") : "";
+      status.textContent = (error.message || "ساخت PNG ناموفق بود.") + details;
+    }
+  }
+
+  function syncLiveEdits() {
+    const current = readData();
+    activeFrames.forEach(frame => {
+      try {
+        const doc = frame.contentDocument;
+        const root = doc && doc.querySelector(".logo-art-root");
+        if (!root) return;
+        const previous = frame.__navaData || current;
+        root.style.setProperty("--logo-primary", current.primaryColor);
+        root.style.setProperty("--logo-background", current.darkColor);
+        const walker = doc.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+        let textNode;
+        while ((textNode = walker.nextNode())) {
+          let value = textNode.nodeValue;
+          if (previous.brandName) value = value.split(previous.brandName).join(current.brandName);
+          if (previous.slogan) value = value.split(previous.slogan).join(current.slogan);
+          textNode.nodeValue = value;
+        }
+        frame.__navaData = { brandName: current.brandName, slogan: current.slogan };
+      } catch (_) {}
+    });
   }
 
   function addStrategySummary(planning) {
@@ -109,7 +169,10 @@
     card.className = "logo-concept-card logo-html-css-card";
     const preview = document.createElement("div");
     preview.className = "logo-concept-preview logo-html-css-preview";
-    preview.appendChild(createPreview(concept, data));
+    const frame = createPreview(concept, data);
+    frame.__navaData = { brandName: data.brandName, slogan: data.slogan };
+    activeFrames.push(frame);
+    preview.appendChild(frame);
     card.appendChild(preview);
 
     const copy = document.createElement("div");
@@ -126,15 +189,25 @@
     const svgButton = document.createElement("button");
     svgButton.type = "button";
     svgButton.className = "btn-primary";
-    svgButton.textContent = "دریافت خروجی SVG";
-    svgButton.addEventListener("click", () => downloadSvg(concept, data, index));
-    actions.appendChild(svgButton);
+    svgButton.textContent = "دریافت SVG برداری";
+    svgButton.addEventListener("click", () => downloadSvg(concept, frame, data, index));
+    const pngButton = document.createElement("button");
+    pngButton.type = "button";
+    pngButton.className = "btn-secondary";
+    pngButton.textContent = "دریافت PNG باکیفیت";
+    pngButton.addEventListener("click", () => downloadPng(concept, frame, data, index));
+    actions.append(svgButton, pngButton);
     card.appendChild(actions);
     return card;
   }
 
   fields.palette.addEventListener("change", () => {
     customColors.hidden = fields.palette.value !== "custom";
+    syncLiveEdits();
+  });
+  [fields.name, fields.slogan, fields.primaryColor, fields.darkColor].forEach(field => {
+    field.addEventListener("input", syncLiveEdits);
+    field.addEventListener("change", syncLiveEdits);
   });
   form.addEventListener("reset", () => setTimeout(() => {
     customColors.hidden = fields.palette.value !== "custom";
@@ -188,12 +261,13 @@
         throw new Error("خروجی طراحی کامل نیست؛ دوباره تلاش کن.");
       }
       results.replaceChildren();
+      activeFrames = [];
       if (result.planning) addStrategySummary(result.planning);
       result.concepts.forEach((concept, index) => {
         results.appendChild(buildCard(concept, index, data));
       });
       empty.hidden = true;
-      status.textContent = "سه لوگوی طراحی‌شده توسط NAVI آماده‌اند. هر طرح را بررسی کن و خروجی SVG آن را دریافت کن.";
+      status.textContent = "سه طرح آماده‌اند. نام، شعار و رنگ‌ها را از فرم تغییر بده تا پیش‌نمایش‌ها زنده به‌روزرسانی شوند؛ سپس SVG برداری یا PNG بگیر.";
       results.scrollIntoView({ behavior: "smooth", block: "start" });
     } catch (error) {
       status.textContent = error.message || "ارتباط با موتور طراحی برقرار نشد؛ کمی بعد دوباره تلاش کن.";
