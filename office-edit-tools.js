@@ -274,7 +274,7 @@ async function syncActiveFileContext(){
     const readAttribute=(source,name)=>{
      const escaped=name.replace(/[^a-zA-Z0-9_:]/g,char=>"\\"+char);
      const match=source.match(new RegExp('(?:^|\\s)'+escaped+'\\s*=\\s*"([^"]*)"'));
-     return match?match[2]:"";
+     return match?match[1]:"";
     };
     const resolvePart=(base,target)=>{
      const parts=(target.startsWith("/")?target.slice(1):base+"/"+target).split("/");
