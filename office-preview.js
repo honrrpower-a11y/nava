@@ -149,6 +149,9 @@
   };
   const renderPptx = async (file, token) => {
     await loadScript("https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js", "JSZip");
+    const packageZip = await window.JSZip.loadAsync(file);
+    const hasCharts = Object.keys(packageZip.files).some(name => /^ppt\/charts\/chart\\d+\\.xml$/i.test(name));
+    if (hasCharts) await loadScript("https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js", "Chart");
     await loadScript("https://cdn.jsdelivr.net/npm/pptxviewjs@1.1.9/dist/PptxViewJS.min.js", "PptxViewJS");
     if (token !== generation) return;
     const target = canvas();
@@ -230,11 +233,13 @@
       else if (activeKind === "txt") await renderText(file, token);
       else if (["png","jpg","jpeg","webp"].includes(activeKind)) renderImage(file);
       else throw new Error("برای این نوع فایل پیش‌نمایش تصویری در دسترس نیست.");
-      if (token === generation) panel.hidden = false;
+      if (token === generation) { panel.hidden = false; return true; }
+      return false;
     } catch (error) {
       if (token !== generation) return;
       clearStage();
       setStatus((error.message || "نمایش فایل ناموفق بود.") + " فایل اصلی و ابزارهای ویرایش تغییری نکرده‌اند.", true);
+      return false;
     }
   }
   const refreshFromEditor = async () => {
@@ -243,7 +248,8 @@
       const blob = await window.NavaOfficeTools.createPreviewBlob();
       if (!blob) return false;
       const updated = new File([blob], activeFile.name, { type: activeFile.type || "application/octet-stream", lastModified: Date.now() });
-      await renderFile(updated, blob);
+      const rendered = await renderFile(updated, blob);
+      if (!rendered) return false;
       setStatus("پیش‌نمایش با نسخه ویرایش‌شده به‌روز شد. فایل اصلی همچنان بدون تغییر است.");
       return true;
     } catch (error) {
@@ -256,6 +262,11 @@
     const file = input.files?.[0];
     if (file) renderFile(file);
     else { generation++; clearStage(); panel.hidden = true; activeFile = null; activeBlob = null; }
+  });
+  input.closest("form")?.addEventListener("reset", () => {
+    queueMicrotask(() => {
+      if (!input.files?.length) { generation++; clearStage(); panel.hidden = true; activeFile = null; activeBlob = null; activeKind = ""; }
+    });
   });
   document.getElementById("officeClearFile")?.addEventListener("click", () => {
     generation++; clearStage(); panel.hidden = true; activeFile = null; activeBlob = null; activeKind = "";
