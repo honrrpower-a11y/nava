@@ -23,6 +23,7 @@ on:
       - "office-edit-tools.js"
       - "office-preview.js"
       - "tests/office-preview-rtl.test.mjs"
+      - "tests/navi-office-paragraph-actions.test.mjs"
       - "index.html"
       - "tests/office-ocr.test.mjs"
       - ".github/workflows/office-file-tests.yml"
