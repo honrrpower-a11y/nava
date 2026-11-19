@@ -508,3 +508,22 @@ test("PowerPoint export checks the documented PptxGenJS browser global", () => {
   assert.match(documentExport, /const PptxGenJS=await loadExternal\([\s\S]*?\);\s*const pptx=new PptxGenJS\(\)/);
   assert.doesNotMatch(documentExport, /pptxgen\.bundle\.js",\s*"pptxgen"/);
 });
+
+
+test("PowerPoint manual replacement uses paragraph-aware cross-run replacement and refreshes after sync", () => {
+  const manual = editor.slice(editor.indexOf('$("officeEditReplaceRun")'), editor.indexOf("window.NavaOfficeTools ="));
+  assert.match(manual, /replaceTextAcrossRuns\(await zip\.files\[name\]\.async\("string"\),find,replace,prefix\)/);
+  assert.match(manual, /await syncActiveFileContext\(\);[\s\S]*?await window\.NavaOfficePreview\?\.refreshFromEditor\?\.\(\)/);
+  assert.doesNotMatch(manual, /pieces=value\.split\(find\)/);
+});
+
+test("PowerPoint download regenerates the archive from the current edited package", () => {
+  const save = editor.slice(editor.indexOf('$("officeEditSave")'), editor.indexOf('$("officeEditReplaceRun")'));
+  assert.match(save, /addEventListener\("click",async\(\)=>/);
+  assert.match(save, /blob=await generateEditedBlob\(\)/);
+});
+
+test("edited preview refresh preserves the last successful preview if the edited copy fails to render", () => {
+  assert.match(preview, /const previousFile = activeFile/);
+  assert.match(preview, /if \(!rendered\) \{[\s\S]*?await renderFile\(previousFile, previousBlob\)/);
+});
