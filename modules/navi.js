@@ -436,6 +436,10 @@ export function isExplicitOfficeEditRequest(message) {
     !/(?:جایگزین|جای\s+متن\s+اصلی|اعمال\s+(?:کن|بده)|روی\s+اسلاید\s+(?:قرار|اعمال)|متن\s+اصلی)/iu.test(userText);
   if (powerpointPreviewOnly) return false;
 
+  // A how-to question about deletion is not authorization to modify the file.
+  if (/^(?:چطور|چگونه|به\\s+چه\\s+صورت|روش\\s+)?[\\s\\S]{0,100}(?:حذف|پاک\\s*کردن)[\\s\\S]{0,80}\\?$/iu.test(userText) &&
+      /^(?:چطور|چگونه|به\\s+چه\\s+صورت|روش)/iu.test(userText)) return false;
+
   // Treat Persian edit language flexibly instead of requiring a short list of
   // exact imperative spellings. The verb must still describe an action, not
   // merely mention words such as "تغییر" or "جایگزین" in a question.
