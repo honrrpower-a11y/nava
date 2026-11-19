@@ -489,12 +489,15 @@ test("Office preview stays client-side and can refresh from the edited local Off
 });
 
 
-test("PowerPoint preview uses the documented PPTXViewer render API", () => {
+test("PowerPoint preview validates the UMD constructor export and supports the documented default namespace", () => {
   const preview = readFileSync(new URL("../office-preview.js", import.meta.url), "utf8");
-  assert.match(preview, /new window\.PptxViewJS\.PPTXViewer\(\{ canvas: target \}\)/);
+  assert.match(preview, /value => typeof value\?\.PPTXViewer === "function" \|\| typeof value\?\.default\?\.PPTXViewer === "function"/);
+  assert.match(preview, /const Viewer = typeof pptxNamespace\.PPTXViewer === "function"[\s\S]*?pptxNamespace\.default\.PPTXViewer/);
+  assert.match(preview, /new Viewer\(\{ canvas: target \}\)/);
   assert.match(preview, /await pptxViewer\.loadFile\(file\)/);
   assert.match(preview, /await pptxViewer\.render\(\)/);
   assert.doesNotMatch(preview, /pptxViewer\.render\(target\)/);
+  assert.match(preview, /office-preview=20261119-3/);
 });
 
 
