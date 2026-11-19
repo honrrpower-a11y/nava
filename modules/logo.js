@@ -89,7 +89,7 @@ function sanitizeHtmlFragment(value) {
 
 function sanitizeCss(value) {
   let css = String(value || "").slice(0, 16000);
-  if (/@|expression\s*\(|javascript:|behavior\s*:|-moz-binding|url\s*\(|<\/?style|<\/?script/i.test(css)) {
+  if (/@|expression\s*\(|javascript:|behavior\s*:|-moz-binding|url\s*\((?!\s*#[a-zA-Z_][\w:.-]*\s*\))/i.test(css)) {
     throw new Error("NAVI CSS included a blocked external or executable resource.");
   }
   css = css.replace(/<\/?style\b[^>]*>/gi, "");
