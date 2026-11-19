@@ -52,8 +52,22 @@ test("Persian and Arabic runs are drawn as one shaped Canvas string", () => {
     resetTextEffectsOnContext() { calls.push(["resetTextEffects"]); }
     drawTextDecorations(...args) { calls.push(["decorations", ...args]); }
     renderRunTextStandard(text, x, y, runProps) {
-      calls.push(["originalRenderRun", text, x, y, runProps]);
-      return x + 1;
+      calls.push(["originalRenderRun", text, x, y, runProps, this.graphics.context.direction]);
+      const ctx = this.graphics.context;
+      let currentX = x;
+      const spacing = runProps.letterSpacing || 0;
+      if (spacing === 0) {
+        ctx.fillText(text, currentX, y);
+        currentX += ctx.measureText(text).width;
+      } else {
+        for (const char of Array.from(text)) {
+          ctx.fillText(char, currentX, y);
+          currentX += ctx.measureText(char).width + spacing;
+        }
+      }
+      this.resetTextEffectsOnContext(ctx);
+      this.drawTextDecorations(x, y, currentX - x, runProps);
+      return currentX;
     }
     measureRunText(text) {
       calls.push(["originalMeasureRun", text]);
@@ -100,12 +114,19 @@ test("Persian and Arabic runs are drawn as one shaped Canvas string", () => {
     ["NAVI", " ", "با", " ", "تهیه‌شده", " ", "ارائه"],
     "RTL paragraphs must render word runs in visual right-to-left order");
 
-  const runStart = calls.length;
-  const runEnd = renderer.renderRunTextStandard("تهیه‌شده", 100, 50, { letterSpacing: 0.5 }, 500);
-  assert.equal(runEnd, 142 + 0.5 * Array.from("تهیه‌شده").length);
-  assert.deepEqual(calls.slice(runStart).filter(call => call[0] === "fillText"), [
+  const normalRunStart = calls.length;
+  const normalRunEnd = renderer.renderRunTextStandard("تهیه‌شده", 100, 50, { letterSpacing: 0 }, 500);
+  assert.equal(normalRunEnd, 142);
+  assert.deepEqual(calls.slice(normalRunStart).filter(call => call[0] === "fillText"), [
     ["fillText", "تهیه‌شده", 100, 50, "rtl", "left"]
-  ], "the actual PPTX text renderer must shape a complete Persian word");
+  ], "zero-spacing RTL text must use the upstream whole-run shaping path");
+
+  const spacedRunStart = calls.length;
+  const spacedRunEnd = renderer.renderRunTextStandard("تهیه‌شده", 100, 50, { letterSpacing: 0.5 }, 500);
+  assert.equal(spacedRunEnd, 142 + 0.5 * Array.from("تهیه‌شده").length);
+  assert.deepEqual(calls.slice(spacedRunStart).filter(call => call[0] === "fillText"), [
+    ["fillText", "تهیه‌شده", 100, 50, "rtl", "left"]
+  ], "custom letter spacing must not split a Persian word into individual glyphs");
   assert.equal(renderer.graphics.context.direction, "ltr", "Canvas direction must be restored");
   assert.equal(renderer.graphics.context.textAlign, "start", "Canvas alignment must be restored");
 
