@@ -25,6 +25,36 @@
  const safeName=name=>String(name||"NAVA-edited").replace(/[\\/:*?"<>|]/g,"-").replace(/\.[^.]+$/,"").slice(0,65)||"NAVA-edited";
  const decodeXmlText=value=>String(value||"").replace(/&lt;/g,"<").replace(/&gt;/g,">").replace(/&quot;/g,'"').replace(/&apos;/g,"'").replace(/&amp;/g,"&").replace(/&#(\d+);/g,(_,n)=>String.fromCodePoint(Number(n))).replace(/&#x([0-9a-f]+);/gi,(_,n)=>String.fromCodePoint(parseInt(n,16)));
  const escapeXmlText=value=>String(value??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+ const officeMimeTypes={
+  pptx:"application/vnd.openxmlformats-officedocument.presentationml.presentation",
+  docx:"application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+ };
+ async function generateEditedBlob(){
+  if(!zip)throw new Error("بسته فایل برای ساخت خروجی در دسترس نیست.");
+  return zip.generateAsync({type:"blob",compression:"DEFLATE",mimeType:officeMimeTypes[kind]||"application/zip"});
+ }
+ function replaceTextAcrossRuns(xml,find,replace,prefix){
+  const paragraphPattern=new RegExp("<("+prefix+":p)(?:\\s[^>]*)?>([\\s\\S]*?)<\\/\\1>","g");
+  let count=0;
+  const updated=xml.replace(paragraphPattern,(paragraph,tag,body)=>{
+   const runPattern=new RegExp("<("+prefix+":t)(?:\\s[^>]*)?>([\\s\\S]*?)<\\/\\1>","g");
+   const runs=Array.from(body.matchAll(runPattern));
+   if(!runs.length)return paragraph;
+   const combined=runs.map(run=>decodeXmlText(run[2])).join("");
+   if(!combined.includes(find))return paragraph;
+   const pieces=combined.split(find);
+   count+=pieces.length-1;
+   const nextText=pieces.join(replace);
+   let first=true;
+   const nextBody=body.replace(runPattern,run=>{
+    if(first){first=false;return run.replace(/>([\s\S]*?)<\//,">"+escapeXmlText(nextText)+"</");}
+    return run.replace(/>([\s\S]*?)<\//,"></");
+   });
+   return paragraph.replace(body,nextBody);
+  });
+  return {xml:updated,count};
+ }
+
 async function syncActiveFileContext(){
   if(!sourceFile||!kind)throw new Error("فایل فعال برای همگام‌سازی پیدا نشد.");
   const fileApi=window.NavaOfficeFile;
@@ -131,7 +161,7 @@ async function syncActiveFileContext(){
     const nextZip=await window.JSZip.loadAsync(file);
     if(input.files?.[0]!==file)return;
     kind=ext;zip=nextZip;setDownloadReady(false);
-    setStatus("فایل برای جست‌وجو و جایگزینی متن آماده است. بسته و چیدمان کلی حفظ می‌شود؛ فقط متن‌های منطبق در قطعه‌های متنی مستقل تغییر می‌کنند.");
+    setStatus("فایل برای جست‌وجو و جایگزینی متن آماده است. متن حتی اگر بین چند قطعه نوشتاری شکسته شده باشد شناسایی و اصلاح می‌شود.");
    }
   }catch(error){if(input.files?.[0]===file){hide();setStatus(error.message||"آماده‌سازی ویرایشگر ناموفق بود.",true);}throw error;}
  }
@@ -167,7 +197,7 @@ async function syncActiveFileContext(){
     zip.file(name,xml);
    }
    if(!count){setStatus("عبارت دقیق در قطعه‌های متنی مستقل پیدا نشد. اگر متن بین چند بخش شکسته شده باشد، این نسخه آن را تشخیص نمی‌دهد.",true);return;}
-   pendingDownloadBlob=await zip.generateAsync({type:"blob",compression:"DEFLATE"});
+   pendingDownloadBlob=await generateEditedBlob();
    setDownloadReady(true);
    setStatus(count+" جایگزینی آماده شد. برای دریافت نسخه ویرایش‌شده، دکمه دانلود را بزن.");
   }catch(error){setStatus(error.message||"ویرایش فایل ناموفق بود.",true);}
@@ -200,7 +230,7 @@ async function syncActiveFileContext(){
     const bytes=window.XLSX.write(workbook,{bookType:"xlsx",type:"array",cellStyles:true,compression:true});
     return new Blob([bytes],{type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"});
    }
-   if(zip&&["pptx","docx"].includes(kind))return zip.generateAsync({type:"blob",compression:"DEFLATE"});
+   if(zip&&["pptx","docx"].includes(kind))return generateEditedBlob();
    return null;
   },
   getActiveFileInfo(){
@@ -321,7 +351,7 @@ async function syncActiveFileContext(){
      const paragraph=matches[0];
      const updated=xml.slice(0,paragraph.index)+xml.slice(paragraph.index+paragraph[0].length);
      zip.file(targetSlide.slidePath,updated);
-     pendingDownloadBlob=await zip.generateAsync({type:"blob",compression:"DEFLATE"});
+     pendingDownloadBlob=await generateEditedBlob();
      setDownloadReady(true);
      await syncActiveFileContext();
      setStatus("متن مشخص‌شده از اسلاید "+action.slide+" حذف شد؛ خود اسلاید و سایر متن‌ها حفظ شدند. فایل اصلی بدون تغییر است.");
@@ -359,7 +389,7 @@ async function syncActiveFileContext(){
     zip.file(contentTypesPath,contentTypes);
     zip.remove(targetSlide.slidePath);
     zip.remove(slideRelsPath);
-    pendingDownloadBlob=await zip.generateAsync({type:"blob",compression:"DEFLATE"});
+    pendingDownloadBlob=await generateEditedBlob();
     setDownloadReady(true);
     await syncActiveFileContext();
     setStatus("اسلاید "+action.slide+" حذف شد. ترتیب اسلایدهای باقی‌مانده حفظ شده است. فایل اصلی بدون تغییر است.");
@@ -432,9 +462,17 @@ async function syncActiveFileContext(){
        replacementParagraphs[lastIndex]=
         (replacementParagraphs[lastIndex].trim()?replacementParagraphs[lastIndex].trim()+" ":"")+appendedText;
       }else{
-       throw new Error(
-        "متن جایگزین اسلاید "+item.slide+" باید دقیقاً "+targetCount+" پاراگراف جداشده با خط جدید داشته باشد؛ فایل تغییری نکرد."
-       );
+       // Accept complete rewrites with a different paragraph count. Keep the
+       // existing slide paragraph structure: overflow is joined in the final
+       // target paragraph and unused target paragraphs are cleared.
+       const normalizedLines=replacementParagraphs.map(line=>String(line).trim()).filter(Boolean);
+       replacementParagraphs=Array.from({length:targetCount},()=> "");
+       if(normalizedLines.length<=targetCount){
+        normalizedLines.forEach((line,index)=>{replacementParagraphs[index]=line;});
+       }else{
+        for(let index=0;index<targetCount-1;index++)replacementParagraphs[index]=normalizedLines[index]||"";
+        replacementParagraphs[targetCount-1]=normalizedLines.slice(targetCount-1).join(" ");
+       }
       }
      }
      const updates=[];
@@ -458,7 +496,7 @@ async function syncActiveFileContext(){
      staged.set(path,xml);
     }
     for(const [path,xml] of staged)zip.file(path,xml);
-    pendingDownloadBlob=await zip.generateAsync({type:"blob",compression:"DEFLATE"});
+    pendingDownloadBlob=await generateEditedBlob();
     setDownloadReady(true);
     await syncActiveFileContext();
     setStatus(action.edits.length+" پاراگراف در اسلایدهای پاورپوینت بازنویسی شد. محتوای مرجع درخواست بعدی نیز به‌روز شد. برای دریافت نسخه ویرایش‌شده، دکمه دانلود را بزن.");
@@ -467,20 +505,16 @@ async function syncActiveFileContext(){
    }
    if(action?.kind==="replace_text"){
     if(!["docx","pptx"].includes(kind)||!zip||typeof action.find!=="string"||!action.find.trim()||action.find.length>500||typeof action.replace!=="string"||action.replace.length>500)throw new Error("این فایل یا عملیات جایگزینی معتبر نیست.");
-    const xmlEscape=value=>String(value).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
-    const find=xmlEscape(action.find),replace=xmlEscape(action.replace);
     let count=0;
     const names=Object.keys(zip.files).filter(name=>kind==="pptx"?/^ppt\/slides\/slide\d+\.xml$/.test(name):/^word\/(document|header\d+|footer\d+)\.xml$/.test(name));
     for(const name of names){
-     const entry=zip.files[name];let xml=await entry.async("string");
-     xml=xml.replace(/<a:t(?:\s[^>]*)?>([\s\S]*?)<\/a:t>|<w:t(?:\s[^>]*)?>([\s\S]*?)<\/w:t>/g,(whole,a,b)=>{
-      const value=a??b??"",pieces=value.split(find);if(pieces.length<2)return whole;
-      count+=pieces.length-1;return whole.replace(value,pieces.join(replace));
-     });
-     zip.file(name,xml);
+     const prefix=kind==="pptx"?"a":"w";
+     const result=replaceTextAcrossRuns(await zip.files[name].async("string"),action.find,action.replace,prefix);
+     count+=result.count;
+     if(result.count)zip.file(name,result.xml);
     }
     if(!count)throw new Error("عبارت دقیق در قطعه‌های متنی مستقل پیدا نشد؛ فایل تغییری نکرد.");
-    pendingDownloadBlob=await zip.generateAsync({type:"blob",compression:"DEFLATE"});
+    pendingDownloadBlob=await generateEditedBlob();
     setDownloadReady(true);
     await syncActiveFileContext();
     setStatus(count+" جایگزینی در فایل اعمال شد. محتوای مرجع درخواست بعدی نیز به‌روز شد. برای دریافت نسخه ویرایش‌شده، دکمه دانلود را بزن.");

@@ -87,5 +87,28 @@ test("PowerPoint post-edit sync reads the already-open JSZip archive without Fil
   assert.match(structured, /Object\.freeze\(\{ readPowerPointArchive, read:/);
   assert.match(editor, /readPowerPointArchive\(zip\)/);
   assert.doesNotMatch(editor, /const blob=await zip\.generateAsync\(\{type:"blob"\}\);\s*const file=new File\(\[blob\]/);
-  assert.match(html, /office-edit-tools\.js\?v=office-pptx-paragraph-edit-20261119-3/);
+  assert.match(html, /office-edit-tools\.js\?v=office-pptx-pptx-export-run-edit-20261119-4/);
+});
+
+
+test("PowerPoint exports use the correct Office MIME type", () => {
+ const editor=readFileSync(new URL("../office-edit-tools.js",import.meta.url),"utf8");
+ const html=readFileSync(new URL("../index.html",import.meta.url),"utf8");
+ assert.ok(editor.includes("application/vnd.openxmlformats-officedocument.presentationml.presentation"));
+ assert.ok(editor.includes("mimeType:officeMimeTypes[kind]"));
+ assert.ok(editor.includes("async function generateEditedBlob()"));
+ assert.ok(html.includes("office-pptx-pptx-export-run-edit-20261119-4"));
+});
+
+test("PowerPoint replacement searches concatenated text runs", () => {
+ const editor=readFileSync(new URL("../office-edit-tools.js",import.meta.url),"utf8");
+ assert.ok(editor.includes("function replaceTextAcrossRuns(xml,find,replace,prefix)"));
+ assert.ok(editor.includes('runs.map(run=>decodeXmlText(run[2])).join("")'));
+ assert.ok(editor.includes('replaceTextAcrossRuns(await zip.files[name].async("string"),action.find,action.replace,prefix)'));
+});
+
+test("PowerPoint rewrite accepts changed paragraph counts", () => {
+ const editor=readFileSync(new URL("../office-edit-tools.js",import.meta.url),"utf8");
+ assert.ok(editor.includes("Accept complete rewrites with a different paragraph count"));
+ assert.ok(!editor.includes("متن جایگزین اسلاید \"+item.slide+\" باید دقیقاً"));
 });
