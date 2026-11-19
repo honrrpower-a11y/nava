@@ -36,7 +36,17 @@ test("Persian and Arabic runs are drawn as one shaped Canvas string", () => {
       this.brush = { Color1: { R: 1, G: 2, B: 3, A: 255 } };
       this.bIsBreak = false;
     }
-    get graphics() { return { context: this._context }; }
+    colorToRgb() { return "rgb(1, 2, 3)"; }
+    t(text, x, y, isBounds) {
+      calls.push(["original", text, x, y, isBounds]);
+      return "original-result";
+    }
+  }
+
+  class CDrawingDocument {
+    constructor() {
+      this.graphics = { context: new CanvasGraphicsAdapter()._context };
+    }
     setupStandardFont() { calls.push(["setupStandardFont"]); }
     applyTextEffectsToContext() { calls.push(["applyTextEffects"]); }
     resetTextEffectsOnContext() { calls.push(["resetTextEffects"]); }
@@ -55,14 +65,8 @@ test("Persian and Arabic runs are drawn as one shaped Canvas string", () => {
         { text: " " }, { text: "با" }, { text: " " }, { text: "NAVI" }
       ], width: 100 }];
     }
-    colorToRgb() { return "rgb(1, 2, 3)"; }
-    t(text, x, y, isBounds) {
-      calls.push(["original", text, x, y, isBounds]);
-      return "original-result";
-    }
   }
-
-  const window = { CanvasGraphicsAdapter };
+  const window = { CanvasGraphicsAdapter, CDrawingDocument };
   const context = vm.createContext({ window });
   vm.runInContext(
     source.slice(start, end) + "\nglobalThis.installPatch = installPptxRtlCompatibility;",
@@ -88,7 +92,8 @@ test("Persian and Arabic runs are drawn as one shaped Canvas string", () => {
     "fillText", "ارائه تهیه‌شده با \u2066NAVI\u2069", 100, 50, "rtl", "left"
   ], "Latin tokens must be isolated while Persian words retain logical order");
 
-  const rtlLines = adapter.calculateWrappedLines({
+  const renderer = new window.CDrawingDocument();
+  const rtlLines = renderer.calculateWrappedLines({
     runs: [{ text: mixedText }]
   }, {}, 500, null);
   assert.deepEqual(rtlLines[0].runs.map(run => run.text),
@@ -96,13 +101,13 @@ test("Persian and Arabic runs are drawn as one shaped Canvas string", () => {
     "RTL paragraphs must render word runs in visual right-to-left order");
 
   const runStart = calls.length;
-  const runEnd = adapter.renderRunTextStandard("تهیه‌شده", 100, 50, { letterSpacing: 0.5 }, 500);
+  const runEnd = renderer.renderRunTextStandard("تهیه‌شده", 100, 50, { letterSpacing: 0.5 }, 500);
   assert.equal(runEnd, 142 + 0.5 * Array.from("تهیه‌شده").length);
   assert.deepEqual(calls.slice(runStart).filter(call => call[0] === "fillText"), [
     ["fillText", "تهیه‌شده", 100, 50, "rtl", "left"]
   ], "the actual PPTX text renderer must shape a complete Persian word");
-  assert.equal(adapter._context.direction, "ltr", "Canvas direction must be restored");
-  assert.equal(adapter._context.textAlign, "start", "Canvas alignment must be restored");
+  assert.equal(renderer.graphics.context.direction, "ltr", "Canvas direction must be restored");
+  assert.equal(renderer.graphics.context.textAlign, "start", "Canvas alignment must be restored");
 
   const before = calls.length;
   assert.equal(adapter.t("English", 10, 20, false), "original-result");
