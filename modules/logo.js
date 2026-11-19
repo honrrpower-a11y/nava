@@ -197,7 +197,7 @@ async function designLogos(data, apiKey) {
         .replace(/\{\{SLOGAN\}\}/g, '<span data-logo-role="slogan">' + escapeHtml(data.slogan) + "</span>");
       const finalCss = css;
       const visualElementCount = (html.match(/</g) || []).length;
-      if (html.length < 260 || css.length < 320 || visualElementCount < 5) {
+      if (html.length < 150 || css.length < 220 || visualElementCount < 5) {
         throw new Error("Logo concept " + (index + 1) + " is too structurally simple; NAVI must deliver a fully art-directed HTML/CSS composition.");
       }
       const title = safeText(item?.title, 100) || "مسیر طراحی " + (index + 1);
