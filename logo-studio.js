@@ -208,6 +208,7 @@
   });
   form.addEventListener("reset", () => setTimeout(() => {
     customColors.hidden = fields.palette.value !== "custom";
+    syncLiveEdits();
   }, 0));
 
   async function requestLogoDesign() {
