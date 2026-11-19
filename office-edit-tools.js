@@ -33,6 +33,18 @@
   if(!zip)throw new Error("بسته فایل برای ساخت خروجی در دسترس نیست.");
   return zip.generateAsync({type:"blob",compression:"DEFLATE",mimeType:officeMimeTypes[kind]||"application/zip"});
  }
+ function isSlideDecorationParagraph(paragraph){
+  const descendants=Array.from(paragraph.getElementsByTagName("*"));
+  if(descendants.some(node=>node.localName==="fld"&&/^(?:slidenum|datetime\w*|header|footer)$/i.test(node.getAttribute("type")||"")))return true;
+  let shape=paragraph.parentElement;
+  while(shape&&!["sp","graphicFrame","cxnSp","pic"].includes(shape.localName))shape=shape.parentElement;
+  if(shape?.localName==="sp"){
+   const placeholder=Array.from(shape.getElementsByTagName("*")).find(node=>node.localName==="ph");
+   const type=placeholder?.getAttribute("type")||"";
+   if(["sldNum","ftr","hdr","dt"].includes(type))return true;
+  }
+  return false;
+ }
  function replaceTextAcrossRuns(xml,find,replace,prefix){
   const paragraphPattern=new RegExp("<("+prefix+":p)(?:\\s[^>]*)?>([\\s\\S]*?)<\\/\\1>","g");
   let count=0;
@@ -425,10 +437,14 @@ async function syncActiveFileContext(){
      let xml=staged.has(path)?staged.get(path):await zip.files[path].async("string");
      const normalizeSlideText=value=>String(value||"").normalize("NFKC").replace(/[\u00a0\u200b-\u200d\ufeff]/g," ").replace(/\s+/g," ").trim();
      const paragraphMatches=Array.from(xml.matchAll(/<a:p(?:\s[^>]*)?>([\s\S]*?)<\/a:p>/g));
+     const slideDocument=new DOMParser().parseFromString(xml,"application/xml");
+     if(slideDocument.querySelector("parsererror"))throw new Error("ساختار XML اسلاید "+item.slide+" معتبر نیست؛ فایل تغییری نکرد.");
+     const slideParagraphNodes=Array.from(slideDocument.getElementsByTagName("*")).filter(node=>node.localName==="p");
      const paragraphs=paragraphMatches.map((match,index)=>{
       const runs=Array.from(match[1].matchAll(/<a:t(?:\s[^>]*)?>([\s\S]*?)<\/a:t>/g));
-      return {index,text:runs.map(run=>decodeXmlText(run[1])).join("")};
-     }).filter(item=>item.text.trim());
+      const node=slideParagraphNodes[index];
+      return {index,text:runs.map(run=>decodeXmlText(run[1])).join(""),isDecoration:node?isSlideDecorationParagraph(node):false};
+     }).filter(item=>item.text.trim()&&!item.isDecoration);
      const wanted=normalizeSlideText(item.find);
      const candidates=[];
      for(let start=0;start<paragraphs.length;start++){
