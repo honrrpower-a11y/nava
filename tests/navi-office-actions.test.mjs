@@ -429,8 +429,11 @@ test("Office operations contains the real NAVI chat inline and removes the separ
 test("Office technical diagnostics are displayed only for the authenticated owner", () => {
   assert.match(app, /function updateOfficeActionDiagnostic\(stage, details = \{\}\)\s*\{[\s\S]*?getNaviStoredValue\(NAVI_USER_ROLE_KEY\) === "owner"/);
   assert.match(app, /if \(!isAuthenticatedOwner\)\s*\{\s*existingPanel\?\.remove\(\);\s*return;/);
-  assert.match(app, /options\.officeDiagnostic && getNaviStoredValue\(NAVI_USER_ROLE_KEY\) === "owner"/);
+  assert.match(app, /options\.officeDiagnostic && naviOwnerVerified === true/);
   assert.match(app, /Owner-only local diagnostics/);
+  assert.match(app, /\/navi-users enforces owner role on the server/);
+  assert.match(app, /naviOwnerVerified = true;/);
+  assert.match(app, /naviOwnerVerified = false;/);
 });
 
 test("Office chat preserves NAVI authentication, chat route, and approval card rendering", () => {
