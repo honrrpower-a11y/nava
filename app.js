@@ -3685,8 +3685,15 @@ function setOfficeSubmitStatus(message) {
   if (officeSubmitStatus) officeSubmitStatus.textContent = message;
 }
 
-// Temporary, user-visible diagnostics. Request text and workbook contents are never displayed.
+// Owner-only local diagnostics. The panel contains workflow metadata only;
+// request text and workbook contents are never displayed.
 function updateOfficeActionDiagnostic(stage, details = {}) {
+  const isAuthenticatedOwner = getNaviStoredValue(NAVI_USER_ROLE_KEY) === "owner";
+  const existingPanel = document.getElementById("officeActionDiagnostic");
+  if (!isAuthenticatedOwner) {
+    existingPanel?.remove();
+    return;
+  }
   if (!officeBriefForm) return;
   let panel = document.getElementById("officeActionDiagnostic");
   if (!panel) {
@@ -3846,7 +3853,7 @@ async function sendMessageToNavi(options = {}) {
     activeOfficeFileInfo.sheetNames.length
       ? "شیت‌های فایل فعال (از فایل بارگذاری‌شده): " + JSON.stringify(activeOfficeFileInfo.sheetNames)
       : "";
-  if (options.officeDiagnostic) updateOfficeActionDiagnostic("درخواست آماده ارسال", {
+  if (options.officeDiagnostic && getNaviStoredValue(NAVI_USER_ROLE_KEY) === "owner") updateOfficeActionDiagnostic("درخواست آماده ارسال", {
     page: requestPage,
     service: selectedService,
     messageCharacters: message.length,
