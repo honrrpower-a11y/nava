@@ -491,7 +491,7 @@ test("Office preview stays client-side and can refresh from the edited local Off
 
 test("PowerPoint preview imports the viewer as an ES module and resolves its named or default constructor", () => {
   const preview = readFileSync(new URL("../office-preview.js", import.meta.url), "utf8");
-  assert.match(preview, /await import\\("https:\\/\\/cdn\\.jsdelivr\\.net\\/npm\\/pptxviewjs@1\\.1\\.9\\/\\+esm\\?office-preview=20261119-4"\\)/);
+  assert.ok(preview.includes('await import("https://cdn.jsdelivr.net/npm/pptxviewjs@1.1.9/+esm?office-preview=20261119-4")'));
   assert.match(preview, /pptxModule\\.PPTXViewer/);
   assert.match(preview, /pptxModule\\.default\\?\\.PPTXViewer/);
   assert.match(preview, /find\\(candidate => typeof candidate === "function"\\)/);
@@ -500,7 +500,7 @@ test("PowerPoint preview imports the viewer as an ES module and resolves its nam
   assert.match(preview, /await pptxViewer\\.render\\(\\)/);
   assert.doesNotMatch(preview, /pptxViewer\\.render\\(target\\)/);
   assert.match(preview, /office-preview=20261119-4/);
-});
+});;
 
 
 test("PowerPoint export checks the documented PptxGenJS browser global", () => {
