@@ -2208,11 +2208,17 @@ Never invent a filename, sheet, cell, or source paragraph. For an explicitly req
 For Word, use kind "replace_text" only when the user supplies or clearly
 identifies the exact text to find and its replacement.
 For PowerPoint, use kind "edit_slide_text" when the current user explicitly asks
-to translate, rewrite, or replace slide text. Return 1-10 edits. Prefer one edit
-per original paragraph, with the exact slide number, complete original paragraph
-as "find", and complete final paragraph as "replace". If a whole-slide request
-contains several paragraphs, do not merge them: return each paragraph as its own
-edit, in slide order. If a single edit must cover multiple consecutive paragraphs,
+to translate, rewrite, or replace slide text. This includes natural whole-slide
+commands such as "اسلاید دوم را به فارسی عوض کن", "اسلاید ۲ را فارسی کن",
+"کل متن اسلاید دوم را به فارسی ترجمه کن", and equivalent wording. Interpret
+Persian ordinal slide references (اول، دوم، سوم، ...) as the corresponding
+1-based slide number. A request to make a specified slide "فارسی" or "به فارسی"
+is a request to translate all text on that slide, not merely its title or one
+selected word. Return 1-10 edits. Prefer one edit per original paragraph, with
+the exact slide number, complete original paragraph as "find", and complete
+final paragraph as "replace". If a whole-slide request contains several
+paragraphs, do not merge them: return each paragraph as its own edit, in slide
+order. If a single edit must cover multiple consecutive paragraphs,
 preserve their boundaries by separating both the complete source and replacement
 paragraphs with newline characters, with the same paragraph count on both sides.
 Copy source text exactly from the extracted text for that slide; never invent
