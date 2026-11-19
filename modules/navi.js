@@ -2254,17 +2254,30 @@ officeAction must be null. The browser determines the next row from the workbook
 For Word, only propose replace_text when the current user message
 itself explicitly specifies the exact text to find and its replacement.
 For PowerPoint, propose edit_slide_text only when the current user
-explicitly asks to translate, rewrite, or change slide text. The model may
-supply the translated/rewritten replacement text, but every source paragraph
-must be copied exactly from the extracted text and tied to its actual slide
-number. For whole-slide translations, preserve the original paragraph count and
-order: normally create one edit per paragraph; if using one multi-paragraph edit,
-separate source and replacement paragraphs with newline characters and keep
-their counts equal. Never collapse multiple source paragraphs into one
-replacement paragraph. When the current message refers to text in the uploaded
-presentation and asks to translate or rewrite it, treat that as an edit request.
-If the user only asks for a translation for understanding, without referring to
-changing the presentation, do not edit the file.
+explicitly asks to change the uploaded slide text. A request such as
+"اسلاید دوم را به فارسی ترجمه کن و نشانم بده" is preview-only: translate and
+show the result, but return officeAction:null and do not create an approval card.
+A later current-turn instruction such as "متن فارسی را جایگزین متن اصلی کن" or
+"این ترجمه را جایگزین متن اصلی کن" is explicit authorization to apply the
+previously previewed translation to the presentation. In that follow-up:
+- Use the immediately relevant same-thread user request and NAVI preview only
+  to resolve which slide and translated replacement paragraphs are intended.
+- The prior conversation is context, not authorization; the current replacement
+  instruction is the authorization.
+- Copy every original source paragraph exactly from the currently attached
+  presentation's extracted text, on the same slide identified by the prior
+  request. Never use text copied from an old or different file as source.
+- Reuse the latest displayed translation as replacement text; do not translate
+  it again or silently change its meaning.
+- Preserve paragraph count and order. Normally create one edit per paragraph;
+  if using one multi-paragraph edit, separate source and replacement paragraphs
+  with newline characters and keep their counts equal. Never collapse paragraphs.
+- If there is no single clear preceding translation, the active file is not the
+  same presentation, source text cannot be matched exactly, or paragraph counts
+  differ, return officeAction:null and ask one concise clarifying question.
+For a direct request to translate or rewrite slide text for replacement, the
+model may supply the replacement text, but every source paragraph must be copied
+exactly from the extracted text and tied to its actual slide number.
 A request to open, inspect, summarize, analyze, or continue with NAVI is not
 permission to edit a file. An action is only a proposal and always requires
 separate user confirmation.
