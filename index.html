@@ -446,6 +446,25 @@
             <input id="officeSourceFile" class="studio-control office-file-input" type="file" aria-label="انتخاب فایل برای بررسی در Office" accept=".docx,.pdf,.pptx,.xlsx,.txt,.png,.jpg,.jpeg,.webp,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.openxmlformats-officedocument.presentationml.presentation,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/pdf,text/plain,image/png,image/jpeg,image/webp">
             <div class="office-file-actions"><button class="btn-secondary" id="officeClearFile" type="button" disabled>حذف فایل از درخواست</button><span id="officeFileStatus" class="office-file-status" role="status" aria-live="polite">حداکثر حجم فایل ۱۵ مگابایت است.</span></div>
           </div>
+          <section class="office-preview-panel" id="officePreviewPanel" hidden aria-labelledby="officePreviewTitle">
+            <div class="office-preview-heading">
+              <div><strong id="officePreviewTitle">پیش‌نمایش زنده فایل</strong><p>نمایش محلی فایل انتخاب‌شده؛ بدون بارگذاری خود فایل روی سرور.</p></div>
+              <span class="office-preview-file" data-office-preview-name></span>
+            </div>
+            <div class="office-preview-toolbar">
+              <button class="btn-secondary" id="officePreviewPrevious" type="button" disabled>قبلی</button>
+              <span id="officePreviewPage" aria-live="polite"></span>
+              <button class="btn-secondary" id="officePreviewNext" type="button" disabled>بعدی</button>
+              <select id="officePreviewSheet" class="studio-control" aria-label="انتخاب شیت پیش‌نمایش" hidden></select>
+              <span class="office-preview-toolbar-spacer"></span>
+              <button class="btn-secondary" id="officePreviewZoomOut" type="button" aria-label="کوچک‌نمایی">−</button>
+              <span id="officePreviewZoomValue">۱۰۰٪</span>
+              <button class="btn-secondary" id="officePreviewZoomIn" type="button" aria-label="بزرگ‌نمایی">+</button>
+              <button class="btn-secondary" id="officePreviewFullscreen" type="button">تمام‌صفحه</button>
+            </div>
+            <div class="office-preview-stage" id="officePreviewStage" aria-live="polite"></div>
+            <p id="officePreviewStatus" class="office-file-status" role="status" aria-live="polite">پس از انتخاب فایل، پیش‌نمایش در این کادر نمایش داده می‌شود.</p>
+          </section>
           <div class="studio-brief-actions"><button class="btn-secondary" type="reset">پاک کردن فرم</button><button class="btn-primary" id="officeOperationsGoToNavi" type="button">اجرای درخواست با NAVI</button></div>
           <p class="studio-note" id="officeSubmitStatus" role="status" aria-live="polite">پس از دریافت پاسخ ناوی، می‌توانی متن نهایی را مستقیماً به‌صورت Word یا PDF روی دستگاهت دریافت کنی.</p>
         </form>
@@ -1437,8 +1456,10 @@
   <script src="business-tabs.js?v=customer-accounts-20261116-1" defer></script>
   <script src="document-export.js?v=office-export-multiformat-20261117-1" defer></script>
   <link rel="stylesheet" href="office-file-tools.css?v=office-professional-workflow-20261117-1">
+  <link rel="stylesheet" href="office-preview.css?v=office-visual-preview-20261119-1">
   <script src="office-structured-files.js?v=office-pptx-xlsx-20261115-2" defer></script>
   <script src="office-file-tools.js?v=office-followup-sync-20261118-1" defer></script>
   <script src="office-edit-tools.js?v=office-pptx-paragraph-edit-20261119-2" defer></script>
+  <script src="office-preview.js?v=office-visual-preview-20261119-1" defer></script>
 </body>
 </html>
