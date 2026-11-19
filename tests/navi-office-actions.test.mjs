@@ -12,6 +12,7 @@ import {
 const app = readFileSync(new URL("../app.js", import.meta.url), "utf8");
 const html = readFileSync(new URL("../index.html", import.meta.url), "utf8");
 const editor = readFileSync(new URL("../office-edit-tools.js", import.meta.url), "utf8");
+const preview = readFileSync(new URL("../office-preview.js", import.meta.url), "utf8");
 const css = readFileSync(new URL("../style.css", import.meta.url), "utf8");
 const officeCss = readFileSync(new URL("../office-workspace.css", import.meta.url), "utf8");
 const fileReader = readFileSync(new URL("../office-file-tools.js", import.meta.url), "utf8");
