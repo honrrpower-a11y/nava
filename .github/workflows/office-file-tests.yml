@@ -12,6 +12,7 @@ on:
       - "tests/office-preview-rtl.test.mjs"
       - "index.html"
       - "tests/office-ocr.test.mjs"
+      - "tests/navi-office-paragraph-actions.test.mjs"
       - ".github/workflows/office-file-tests.yml"
   pull_request:
     branches: [main]
@@ -43,4 +44,4 @@ jobs:
       - name: Check Office JavaScript syntax
         run: node --check office-file-tools.js && node --check office-structured-files.js && node --check office-edit-tools.js && node --check office-preview.js && node --check document-export.js
       - name: Run Office extraction and OCR regression tests
-        run: node --test tests/office-ocr.test.mjs tests/office-preview-rtl.test.mjs
+        run: node --test tests/office-ocr.test.mjs tests/office-preview-rtl.test.mjs tests/navi-office-paragraph-actions.test.mjs
