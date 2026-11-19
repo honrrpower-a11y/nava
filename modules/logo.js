@@ -74,18 +74,19 @@ function sanitizeHtmlFragment(value) {
   let html = String(value || "").slice(0, 10000);
   html = html.replace(/<!--[\s\S]*?-->/g, "");
   html = html.replace(/<(script|style|iframe|object|embed|form|input|button|link|meta|base|video|audio|img|foreignObject)\b[^>]*>[\s\S]*?<\/\1\s*>/gi, "");
-  html = html.replace(/<\/?([a-z][a-z0-9:-]*)\b([^>]*)>/gi, (whole, rawTag, rawAttrs) => {
+  html = html.replace(/<\\/?([a-z][a-z0-9:-]*)\\b([^>]*)>/gi, (whole, rawTag, rawAttrs) => {
     const tag = rawTag.toLowerCase();
     if (!ALLOWED_TAGS.has(tag)) return "";
-    const closing = /^<\//.test(whole);
-    if (closing) return "</" + tag + ">";
+    const outputTag = CANONICAL_TAGS[tag] || tag;
+    const closing = /^<\\//.test(whole);
+    if (closing) return "</" + outputTag + ">";
     const attrs = [];
-    String(rawAttrs || "").replace(/([a-zA-Z_:][\w:.-]*)\s*=\s*("([^"]*)"|'([^']*)'|([^\s>]+))/g,
+    String(rawAttrs || "").replace(/([a-zA-Z_:][\\w:.-]*)\\s*=\\s*("([^"]*)"|'([^']*)'|([^\\s>]+))/g,
       (_match, rawName, _value, doubleValue, singleValue, bareValue) => {
         const name = rawName.toLowerCase();
         const value = doubleValue ?? singleValue ?? bareValue ?? "";
         if (!ALLOWED_ATTRIBUTES.has(name)) return "";
-        if (/javascript:|data:|https?:|url\s*\(/i.test(value)) return "";
+        if (/javascript:|data:|https?:|url\\s*\\(/i.test(value)) return "";
         if (/[<>]/.test(value)) return "";
         attrs.push((CANONICAL_ATTRIBUTES[name] || name) + '="' + escapeHtml(value) + '"');
         return "";
