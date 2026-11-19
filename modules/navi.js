@@ -418,6 +418,13 @@ export function isExplicitOfficeEditRequest(message) {
   if (!userText) return false;
   if (parseNaviCellEditInstructions(userText).length) return true;
 
+  // Translating and showing a slide is a preview, not permission to edit it.
+  // A later explicit replacement instruction is handled separately below.
+  const powerpointPreviewOnly =
+    /(?:ترجمه|بازنویسی|اصلاح)[\s\S]{0,100}(?:نشون(?:م|ش)?|نشان(?:م|ش)?|نمایش\s*بده|ببینم|برای\s+دیدن)/iu.test(userText) &&
+    !/(?:جایگزین|جای\s+متن\s+اصلی|اعمال\s+(?:کن|بده)|روی\s+اسلاید\s+(?:قرار|اعمال)|متن\s+اصلی)/iu.test(userText);
+  if (powerpointPreviewOnly) return false;
+
   // Treat Persian edit language flexibly instead of requiring a short list of
   // exact imperative spellings. The verb must still describe an action, not
   // merely mention words such as "تغییر" or "جایگزین" in a question.
@@ -432,13 +439,20 @@ export function isExplicitOfficeEditRequest(message) {
     /(?:(?:متن|محتوا(?:ی)?|عبارت)[\s\S]{0,100}(?:اسلاید|پاورپوینت)[\s\S]{0,100}(?:جایگزین(?:ی)?|عوض|ویرایش|بازنویسی|اصلاح|ترجمه|تغییر)\s*(?:کن(?:م|یم|ید|ین)?|بکن(?:م|یم|ید|ین)?|بده(?:م|یم|ید)?|شود|بشه)|(?:اسلاید|پاورپوینت)[\s\S]{0,100}(?:جایگزین(?:ی)?|عوض|ویرایش|بازنویسی|اصلاح|ترجمه|تغییر)\s*(?:کن(?:م|یم|ید|ین)?|بکن(?:م|یم|ید|ین)?|بده(?:م|یم|ید)?|شود|بشه)|(?:می‌خواهم|میخوام|می خواهم|لطفاً|لطفا|درخواست(?:\s+دارم)?)[\s\S]{0,80}(?:جایگزینی|ویرایش|بازنویسی|اصلاح|ترجمه|تغییر)[\s\S]{0,80}(?:اسلاید|پاورپوینت|متن))/iu.test(userText) &&
     !/(?:چیست|یعنی\s*چه|چطور|چگونه|چرا|توضیح\s+بده)/iu.test(userText);
 
+  // A follow-up such as "متن فارسی را جایگزین متن اصلی کن" is an explicit
+  // instruction to put the previously previewed translation into the slide.
+  // The current turn grants authorization; prior turns only resolve its target.
+  const powerpointTranslationFollowupIntent =
+    /(?:متن\s+(?:فارسی|ترجمه(?:‌شده| شده)?)|(?:این|همین)\s+ترجمه)[\s\S]{0,120}(?:جایگزین|جای\s+متن\s+اصلی)[\s\S]{0,80}(?:کن(?:م|یم|ید|ین)?|بکن(?:م|یم|ید|ین)?|بده(?:م|یم|ید)?|قرار\s*بده(?:ید)?|بذار(?:ید)?|بگذار(?:ید)?)/iu.test(userText) ||
+    /(?:جایگزین|جایگزینی)[\s\S]{0,100}(?:متن\s+اصلی|متن\s+قبلی)[\s\S]{0,80}(?:کن(?:م|یم|ید|ین)?|بکن(?:م|یم|ید|ین)?|بده(?:م|یم|ید)?)/iu.test(userText);
+
   const appendRowIntent =
     /(?:افزودن|اضافه\s*کردن|اضافه\s*کن(?:ید)?|درج)[\s\S]{0,100}(?:ردیف|سطر)|(?:ردیف|سطر)[\s\S]{0,180}(?:اضافه\s*کن|افزودن|درج)/iu.test(userText);
 
   const legacyPreciseIntent =
     /(?:قرار\s*بده(?:ید)?|بنویس(?:ید)?|سلول\s*[A-Z]{1,3}[1-9][0-9]{0,6}[\s\S]{0,80}(?:کن(?:ید)?|بذار(?:ید)?|بگذار(?:ید)?))|(?:فارسی|تبدیل)\s*(?:کن|کنید|بده|بدهید)|به\s+فارسی\s+برگردان|edit(?:\s+the)?|replace(?:\s+the)?|update(?:\s+the)?|set\s+(?:cell|value)/iu.test(userText);
 
-  return editIntent || powerpointEditIntent || appendRowIntent || legacyPreciseIntent;
+  return editIntent || powerpointEditIntent || powerpointTranslationFollowupIntent || appendRowIntent || legacyPreciseIntent;
 }
 
 function extractNaviActiveWorkbookSheetName(message) {
@@ -2254,17 +2268,30 @@ officeAction must be null. The browser determines the next row from the workbook
 For Word, only propose replace_text when the current user message
 itself explicitly specifies the exact text to find and its replacement.
 For PowerPoint, propose edit_slide_text only when the current user
-explicitly asks to translate, rewrite, or change slide text. The model may
-supply the translated/rewritten replacement text, but every source paragraph
-must be copied exactly from the extracted text and tied to its actual slide
-number. For whole-slide translations, preserve the original paragraph count and
-order: normally create one edit per paragraph; if using one multi-paragraph edit,
-separate source and replacement paragraphs with newline characters and keep
-their counts equal. Never collapse multiple source paragraphs into one
-replacement paragraph. When the current message refers to text in the uploaded
-presentation and asks to translate or rewrite it, treat that as an edit request.
-If the user only asks for a translation for understanding, without referring to
-changing the presentation, do not edit the file.
+explicitly asks to change the uploaded slide text. A request such as
+"اسلاید دوم را به فارسی ترجمه کن و نشانم بده" is preview-only: translate and
+show the result, but return officeAction:null and do not create an approval card.
+A later current-turn instruction such as "متن فارسی را جایگزین متن اصلی کن" or
+"این ترجمه را جایگزین متن اصلی کن" is explicit authorization to apply the
+previously previewed translation to the presentation. In that follow-up:
+- Use the immediately relevant same-thread user request and NAVI preview only
+  to resolve which slide and translated replacement paragraphs are intended.
+- The prior conversation is context, not authorization; the current replacement
+  instruction is the authorization.
+- Copy every original source paragraph exactly from the currently attached
+  presentation's extracted text, on the same slide identified by the prior
+  request. Never use text copied from an old or different file as source.
+- Reuse the latest displayed translation as replacement text; do not translate
+  it again or silently change its meaning.
+- Preserve paragraph count and order. Normally create one edit per paragraph;
+  if using one multi-paragraph edit, separate source and replacement paragraphs
+  with newline characters and keep their counts equal. Never collapse paragraphs.
+- If there is no single clear preceding translation, the active file is not the
+  same presentation, source text cannot be matched exactly, or paragraph counts
+  differ, return officeAction:null and ask one concise clarifying question.
+For a direct request to translate or rewrite slide text for replacement, the
+model may supply the replacement text, but every source paragraph must be copied
+exactly from the extracted text and tied to its actual slide number.
 A request to open, inspect, summarize, analyze, or continue with NAVI is not
 permission to edit a file. An action is only a proposal and always requires
 separate user confirmation.

@@ -5,7 +5,8 @@ import {
   normalizeNaviOfficeAction,
   parseNaviGeminiResponse,
   isExplicitOfficeEditRequest,
-  extractNaviExplicitExcelEditAction
+  extractNaviExplicitExcelEditAction,
+  buildSystemInstruction
 } from "../modules/navi.js";
 
 const app = readFileSync(new URL("../app.js", import.meta.url), "utf8");
@@ -116,6 +117,41 @@ test("Office prompt defines a non-null structured PowerPoint action schema", () 
   assert.match(worker, /"kind": "edit_slide_text"[\s\S]*?"slide": 2[\s\S]*?"find": "Exact complete source paragraph[\s\S]*?"replace": "Complete translated or rewritten paragraph"/);
   assert.match(worker, /return a valid edit_slide_text object; do NOT return officeAction:null/);
   assert.match(worker, /officeAction:null is for requests that do not authorize an edit/);
+});
+
+test("PowerPoint translation preview is not edit authorization, but explicit replacement follow-up is", () => {
+  assert.equal(
+    isExplicitOfficeEditRequest("پیام کاربر: اسلاید دوم را به فارسی ترجمه کن و نشانم بده"),
+    false
+  );
+  assert.equal(
+    isExplicitOfficeEditRequest("پیام کاربر: متن فارسی را جایگزین متن اصلی کن"),
+    true
+  );
+  assert.equal(
+    isExplicitOfficeEditRequest("پیام کاربر: این ترجمه را جایگزین متن اصلی کن"),
+    true
+  );
+  assert.equal(
+    isExplicitOfficeEditRequest("پیام کاربر: ترجمه اسلاید دوم را برای فهمیدن نشانم بده"),
+    false
+  );
+});
+
+test("PowerPoint prompt uses prior translation only to resolve an explicitly authorized replacement", () => {
+  const prompt = buildSystemInstruction({
+    page: "officePage",
+    pageContext: "فایل پاورپوینت فعال",
+    memoryContext: "",
+    conversationContext: "[پیام قبلی کاربر] اسلاید دوم را به فارسی ترجمه کن و نشانم بده\\n[پاسخ قبلی ناوی] ترجمه اسلاید دوم...",
+    currentUser: { role: "owner", display_name: "مالک" }
+  });
+  assert.match(prompt, /اسلاید دوم را به فارسی ترجمه کن و نشانم بده/);
+  assert.match(prompt, /متن فارسی را جایگزین متن اصلی کن/);
+  assert.match(prompt, /current replacement/);
+  assert.match(prompt, /instruction is the authorization/);
+  assert.match(prompt, /currently attached/);
+  assert.match(prompt, /officeAction:null/);
 });
 
 test("NAVI does not seed a fabricated B3 edit example in its Office prompt", () => {
