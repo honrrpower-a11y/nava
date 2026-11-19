@@ -167,6 +167,10 @@
     if (style.display==="none" || style.visibility==="hidden" || rect.width===0 || rect.height===0) return;
     if (style.transform && style.transform!=="none") warnings.add("عنصر دارای transform در CSS است؛ برای حفظ هندسه، خروجی این طرح متوقف شد.");
     if (style.textShadow && style.textShadow!=="none") warnings.add("text-shadow در خروجی برداری پشتیبانی نمی‌شود.");
+    if (style.outlineStyle && style.outlineStyle!=="none" && parseFloat(style.outlineWidth)>0) warnings.add("outline در خروجی برداری پشتیبانی نمی‌شود.");
+    if (style.borderImageSource && style.borderImageSource!=="none") warnings.add("border-image در خروجی برداری پشتیبانی نمی‌شود.");
+    if (style.animationName && style.animationName!=="none" && style.animationDuration!=="0s") warnings.add("انیمیشن CSS در خروجی برداری ثابت قابل بازسازی نیست.");
+    if (style.transitionDuration && style.transitionDuration!=="0s" && style.transitionDuration!=="0ms") warnings.add("transition CSS در خروجی برداری قابل بازسازی نیست.");
     if (style.mixBlendMode && style.mixBlendMode!=="normal") warnings.add("ترکیب لایه‌های CSS در خروجی برداری پشتیبانی نمی‌شود.");
     if (style.backgroundBlendMode && style.backgroundBlendMode!=="normal") warnings.add("ترکیب پس‌زمینه‌های CSS در خروجی برداری پشتیبانی نمی‌شود.");
     if (style.borderTopWidth!==style.borderRightWidth || style.borderTopWidth!==style.borderBottomWidth || style.borderTopWidth!==style.borderLeftWidth) warnings.add("ضخامت‌های متفاوت border در این نسخه قابل بازسازی نیستند.");
