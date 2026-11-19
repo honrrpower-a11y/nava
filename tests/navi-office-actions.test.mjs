@@ -125,6 +125,9 @@ test("NAVI suppresses model-written edit confirmations without current-user auth
   assert.doesNotMatch(guarded, /سلول|اکسل|شیت/);
   assert.doesNotMatch(guarded, /B3|تست موفق|کارت تأیید/);
   assert.equal(guardNaviOfficeReply("سلام، چطور می‌توانم کمک کنم؟", false), "سلام، چطور می‌توانم کمک کنم؟");
+  const falseSlideClaim = "ترجمه متن اسلاید دوم به زبان فارسی آماده شد. با تأیید کارت زیر، تغییرات مورد نظر روی فایل اعمال خواهد شد.";
+  assert.match(guardNaviOfficeReply(falseSlideClaim, false), /جزئیات کافی برای ساخت عملیات ویرایش وجود ندارد/);
+  assert.equal(guardNaviOfficeReply(falseSlideClaim, true), falseSlideClaim);
   assert.equal(guardNaviOfficeReply(fabricated, true), fabricated);
 });
 
