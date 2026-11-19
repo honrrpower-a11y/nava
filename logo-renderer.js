@@ -78,12 +78,12 @@
       if (/^(to\s|[-\d.]+deg)/i.test(parts[0])) {
         const direction = parts.shift().toLowerCase();
         if (/deg$/.test(direction)) angle = Number.parseFloat(direction);
-        else if (/to right/.test(direction)) angle = 90;
-        else if (/to left/.test(direction)) angle = 270;
         else if (/to top right|to right top/.test(direction)) angle = 45;
         else if (/to bottom right|to right bottom/.test(direction)) angle = 135;
         else if (/to bottom left|to left bottom/.test(direction)) angle = 225;
         else if (/to top left|to left top/.test(direction)) angle = 315;
+        else if (/to right/.test(direction)) angle = 90;
+        else if (/to left/.test(direction)) angle = 270;
         else if (/to top/.test(direction)) angle = 0;
         else if (/to bottom/.test(direction)) angle = 180;
         else return null;
