@@ -130,9 +130,10 @@ test("NAVI writes an English brief and three HTML/CSS logos in one Gemini call; 
     assert.ok(result.concepts.every(item => !item.html.includes("{{BRAND_NAME}}")));
     assert.ok(result.concepts.every(item => !item.html.includes("<script")));
     assert.ok(result.concepts.every(item => item.css.includes("var(--logo-primary)")));
-    assert.ok(result.concepts.every(item => item.svg.startsWith('<?xml version="1.0"')));
-    assert.ok(result.concepts.every(item => item.svg.includes("<foreignObject")));
-    assert.ok(result.concepts.every(item => item.svg.includes("نوا")));
+    assert.ok(result.concepts.every(item => !Object.prototype.hasOwnProperty.call(item, "svg")));
+    assert.ok(result.concepts.every(item => !JSON.stringify(item).includes("foreignObject")));
+    assert.ok(result.concepts.every(item => item.html.includes("<div")));
+    assert.ok(result.concepts.every(item => item.css.length > 0));
     assert.equal(db.visitorUsed, 1, "one completed logo batch consumes one guest trial");
   } finally {
     globalThis.fetch = originalFetch;
