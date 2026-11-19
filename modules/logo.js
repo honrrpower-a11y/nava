@@ -76,7 +76,7 @@ function sanitizeHtmlFragment(value) {
         const name = rawName.toLowerCase();
         const value = doubleValue ?? singleValue ?? bareValue ?? "";
         if (!ALLOWED_ATTRIBUTES.has(name)) return "";
-        if (/javascript:|data:|https?:/i.test(value)) return "";
+        if (/javascript:|data:/i.test(value) || (/https?:/i.test(value) && !(name === "xmlns" && value === "http://www.w3.org/2000/svg"))) return "";
         if (/url\s*\(/i.test(value) && !/^url\(#[a-zA-Z_][\w:.-]*\)$/i.test(value.trim())) return "";
         if (/[<>]/.test(value)) return "";
         attrs.push((CANONICAL_ATTRIBUTES[name] || name) + '="' + escapeHtml(value) + '"');
