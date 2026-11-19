@@ -106,22 +106,6 @@ function sanitizeCss(value) {
   return css;
 }
 
-function makeSvg({ html, css, brandName, primaryColor, darkColor }) {
-  const safeCss = css.replace(/]]>/g, "");
-  const rootStyle = "--logo-primary:" + primaryColor + ";--logo-background:" + darkColor + ";";
-  const title = escapeHtml("Logo for " + brandName);
-  return [
-    '<?xml version="1.0" encoding="UTF-8"?>',
-    '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xhtml="http://www.w3.org/1999/xhtml" width="1200" height="1200" viewBox="0 0 1000 1000" role="img" aria-labelledby="logo-title">',
-    "<title id=\"logo-title\">" + title + "</title>",
-    '<foreignObject x="0" y="0" width="1000" height="1000">',
-    '<div xmlns="http://www.w3.org/1999/xhtml" class="logo-art-root" style="' + rootStyle + '">',
-    "<style><![CDATA[" + safeCss + "]]></style>",
-    html.replace(/<svg(?![^>]*\bxmlns=)/gi, '<svg xmlns="http://www.w3.org/2000/svg"'),
-    "</div></foreignObject></svg>"
-  ].join("");
-}
-
 async function designLogos(data, apiKey) {
   if (!apiKey) throw new Error("NAVI design service is not configured.");
   const userBrief = {
@@ -214,14 +198,7 @@ async function designLogos(data, apiKey) {
         title,
         rationale,
         html: finalHtml,
-        css: finalCss,
-        svg: makeSvg({
-          html: finalHtml,
-          css: finalCss,
-          brandName: data.brandName,
-          primaryColor: data.primaryColor,
-          darkColor: data.darkColor
-        })
+        css: finalCss
       };
     });
     if (new Set(concepts.map(item => item.title.toLowerCase())).size !== 3) {
@@ -303,8 +280,8 @@ export async function handleLogoRoute({ request, env, origin, corsOrigin }) {
         extraModelCalls: 0,
         note: "NAVI authored the English design brief and all three HTML/CSS logo designs in one request."
       },
-      concepts: plan.concepts.map(({ id, title, rationale, html, css, svg }) => ({
-        id, title, rationale, html, css, svg
+      concepts: plan.concepts.map(({ id, title, rationale, html, css }) => ({
+        id, title, rationale, html, css
       }))
     }, 200, corsOrigin);
   } catch (error) {
