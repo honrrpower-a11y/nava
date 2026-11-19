@@ -810,7 +810,8 @@ window.sendOfficeNaviRequest = function({ message, context } = {}) {
     messageOverride: cleanMessage,
     serviceOverride: service,
     contextOverride: officeContext,
-    officeTarget: false
+    officeTarget: false,
+    officeDiagnostic: true
   });
 };
 
