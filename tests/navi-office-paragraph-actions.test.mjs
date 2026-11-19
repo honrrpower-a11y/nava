@@ -124,3 +124,15 @@ test("PowerPoint slide-number and footer placeholders are excluded from extracte
   assert.match(editor, /\["sldNum",\s*"ftr",\s*"hdr",\s*"dt"\]/);
   assert.match(structured, /\["sldNum",\s*"ftr",\s*"hdr",\s*"dt"\]/);
 });
+
+
+test("Office file preview is optional and collapsed by default", () => {
+  const html = readFileSync(new URL("../index.html", import.meta.url), "utf8");
+  const preview = html.match(/<details class="office-preview-panel" id="officePreviewPanel"[^>]*>([\\s\\S]*?)<\\/details>/);
+  assert.ok(preview, "preview must use a native collapsible details panel");
+  assert.match(preview[1], /<summary class="office-preview-disclosure"/);
+  assert.match(preview[1], /برای مشاهده فایل/);
+  assert.doesNotMatch(preview[0].split(">")[0], /\\sopen(?:\\s|>)/);
+  assert.match(preview[1], /id="officePreviewStage"/);
+  assert.match(html, /id="officeEditSave"/);
+});
