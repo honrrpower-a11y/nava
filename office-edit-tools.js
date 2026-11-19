@@ -506,7 +506,7 @@ async function syncActiveFileContext(){
    if(action?.kind==="replace_text"){
     if(!["docx","pptx"].includes(kind)||!zip||typeof action.find!=="string"||!action.find.trim()||action.find.length>500||typeof action.replace!=="string"||action.replace.length>500)throw new Error("این فایل یا عملیات جایگزینی معتبر نیست.");
     let count=0;
-    const names=Object.keys(zip.files).filter(name=>kind==="pptx"?/^ppt\\/slides\\/slide\\d+\\.xml$/.test(name):/^word\\/(document|header\\d+|footer\\d+)\\.xml$/.test(name));
+    const names=Object.keys(zip.files).filter(name=>kind==="pptx"?/^ppt\/slides\/slide\d+\.xml$/.test(name):/^word\/(document|header\d+|footer\d+)\.xml$/.test(name));
     for(const name of names){
      const prefix=kind==="pptx"?"a":"w";
      const result=replaceTextAcrossRuns(await zip.files[name].async("string"),action.find,action.replace,prefix);
