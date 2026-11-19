@@ -61,6 +61,9 @@
   const canvas = () => {
     const element = document.createElement("canvas");
     element.className = "office-preview-canvas";
+    // Canvas is a visual coordinate surface; do not inherit the page RTL direction.
+    element.dir = "ltr";
+    element.style.direction = "ltr";
     element.setAttribute("aria-label", "پیش‌نمایش صفحه یا اسلاید");
     stage.append(element);
     currentCanvas = element;
@@ -153,6 +156,58 @@
     pageLabel.textContent = workbook.SheetNames.length + " شیت";
     previous.disabled = true; next.disabled = true;
   };
+  // Persian/Arabic text must be drawn as a complete run. The upstream
+  // PptxViewJS adapter currently paints many text runs one character at a time,
+  // which prevents Canvas from applying contextual Arabic/Persian shaping.
+  const NAVA_RTL_TEXT = /[\\u0600-\\u06FF\\u0750-\\u077F\\u08A0-\\u08FF\\uFB50-\\uFDFF\\uFE70-\\uFEFF]/;
+  let pptxRtlPatchInstalled = false;
+  const installPptxRtlCompatibility = () => {
+    if (pptxRtlPatchInstalled) return true;
+    const Adapter = window.CanvasGraphicsAdapter;
+    const prototype = Adapter && Adapter.prototype;
+    if (!prototype || typeof prototype.t !== "function") return false;
+    if (prototype.t.__navaPersianRtlPatch) {
+      pptxRtlPatchInstalled = true;
+      return true;
+    }
+    const original = prototype.t;
+    const patched = function(text, x, y, isBounds) {
+      const value = String(text == null ? "" : text);
+      if (this.bIsBreak || !this._context || !value || !NAVA_RTL_TEXT.test(value)) {
+        return original.call(this, text, x, y, isBounds);
+      }
+      const ctx = this._context;
+      ctx.save();
+      try {
+        ctx.fillStyle = this.brush && this.brush.Color1
+          ? this.colorToRgb(this.brush.Color1)
+          : ctx.fillStyle;
+        ctx.textBaseline = "alphabetic";
+        // Keep the existing left-edge coordinate convention, but let the
+        // browser shape and reorder the complete Persian/Arabic text run.
+        ctx.direction = "rtl";
+        ctx.textAlign = "left";
+        ctx.fillText(value, x, y);
+        if (!isBounds) return null;
+        const metrics = ctx.measureText(value);
+        return {
+          x,
+          y: metrics.actualBoundingBoxAscent !== undefined
+            ? y - metrics.actualBoundingBoxAscent : y,
+          r: x + metrics.width,
+          b: metrics.actualBoundingBoxDescent !== undefined
+            ? y + metrics.actualBoundingBoxDescent : y
+        };
+      } finally {
+        ctx.restore();
+      }
+    };
+    patched.__navaPersianRtlPatch = true;
+    prototype.t = patched;
+    pptxRtlPatchInstalled = true;
+    return true;
+  };
+
   const renderPptx = async (file, token) => {
     await loadScript("https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js", "JSZip");
     const packageZip = await window.JSZip.loadAsync(file);
@@ -167,6 +222,7 @@
       pptxModule.default
     ].find(candidate => typeof candidate === "function");
     if (!Viewer) throw new Error("ماژول پیش‌نمایش بارگذاری شد، اما خروجی PPTXViewer در دسترس نیست.");
+    installPptxRtlCompatibility();
     const target = canvas();
     target.width = 1280; target.height = 720;
     pptxViewer = new Viewer({ canvas: target });
