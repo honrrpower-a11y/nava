@@ -90,13 +90,13 @@ function sanitizeHtmlFragment(value) {
 
 function sanitizeCss(value) {
   let css = String(value || "").slice(0, 16000);
-  if (/[<>]|expression\\s*\\(|javascript:|behavior\\s*:|-moz-binding|url\\s*\\((?!\\s*#[a-zA-Z_][\\w:.-]*\\s*\\))/i.test(css)) {
+  if (/[<>]|expression\s*\(|javascript:|behavior\s*:|-moz-binding|url\s*\((?!\s*#[a-zA-Z_][\w:.-]*\s*\))/i.test(css)) {
     throw new Error("NAVI CSS included a blocked external or executable resource.");
   }
-  css = css.replace(/\\/\\*[\\s\\S]*?\\*\\//g, "");
+  css = css.replace(/\/\*[\s\S]*?\*\//g, "");
   const keyframes = [];
-  css = css.replace(/@keyframes\\s+([a-zA-Z_][\\w-]*)\\s*\\{((?:[^{}]|\\{[^{}]*\\})*)\\}/gi, (_match, name, body) => {
-    if (!/^[-_a-zA-Z][\\w-]*$/.test(name) || /[<>@]/.test(body)) {
+  css = css.replace(/@keyframes\s+([a-zA-Z_][\w-]*)\s*\{((?:[^{}]|\{[^{}]*\})*)\}/gi, (_match, name, body) => {
+    if (!/^[-_a-zA-Z][\w-]*$/.test(name) || /[<>@]/.test(body)) {
       throw new Error("NAVI CSS included an invalid animation definition.");
     }
     keyframes.push("@keyframes " + name + " {" + body + "}");
@@ -105,7 +105,7 @@ function sanitizeCss(value) {
   if (/@/.test(css)) {
     throw new Error("NAVI CSS included an unsupported at-rule.");
   }
-  return css + (keyframes.length ? "\\n" + keyframes.join("\\n") : "");
+  return css + (keyframes.length ? "\n" + keyframes.join("\n") : "");
 }
 
 async function designLogos(data, apiKey) {
