@@ -420,7 +420,7 @@ async function syncActiveFileContext(){
        .map(paragraph=>paragraph.text)
        .join(" ");
       const normalizedOriginal=normalizeSlideText(originalTargetText);
-      const normalizedReplacement=normalizeSlideText(replacementParagraphs.join("\\n"));
+      const normalizedReplacement=normalizeSlideText(replacementParagraphs.join(" "));
       if(replacementParagraphs.length===1&&targetCount>1&&
          normalizedReplacement.startsWith(normalizedOriginal+" ")){
        const appendedText=normalizedReplacement.slice(normalizedOriginal.length).trim();
