@@ -35,3 +35,47 @@ body.light .office-file-status[data-state="error"]{color:#b0443d}
 .office-edit-panel button{margin-top:8px}
 .office-edit-panel .office-file-status{display:block;margin-top:10px;line-height:1.8}
 @media(max-width:640px){.office-edit-heading{flex-direction:column}.office-edit-replace-grid{grid-template-columns:1fr}.office-edit-table td input{width:94px}}
+
+
+/* NAVA Office — unified local visual preview */
+.office-preview-panel{margin-top:16px;padding:15px;border:1px solid var(--border);border-radius:16px;background:var(--panel);color:var(--text);min-width:0}
+.office-preview-panel[hidden],.office-preview-panel [hidden]{display:none!important}
+.office-preview-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:12px}
+.office-preview-heading strong{display:block;color:var(--gold);font-size:1.04rem}
+.office-preview-heading p{margin:5px 0 0;color:var(--muted);font-size:12px;line-height:1.8}
+.office-preview-file{max-width:48%;overflow-wrap:anywhere;color:var(--muted);font-size:12px;text-align:left}
+.office-preview-toolbar{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:7px;margin-bottom:10px;padding:8px;border:1px solid var(--border);border-radius:11px;background:var(--panel2)}
+.office-preview-toolbar button{min-height:34px;margin:0;padding:5px 10px;font-size:12px}
+.office-preview-toolbar span{color:var(--muted);font-size:12px;font-variant-numeric:tabular-nums}
+.office-preview-toolbar-spacer{flex:1 1 auto}
+.office-preview-toolbar select{width:auto;max-width:150px;min-height:34px;margin:0;padding:4px 8px;font-size:12px}
+.office-preview-toolbar button:disabled{opacity:.4;cursor:not-allowed}
+.office-preview-stage{display:flex;align-items:flex-start;justify-content:center;min-height:170px;max-height:72vh;overflow:auto;padding:12px;border:1px solid var(--border);border-radius:12px;background:#202735;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+.office-preview-canvas{display:block;flex:0 0 auto;max-width:100%;height:auto;margin:0 auto;background:#fff;box-shadow:0 8px 28px rgba(0,0,0,.28)}
+.office-preview-table-wrap{width:100%;max-height:65vh;overflow:auto;background:#fff;border-radius:7px}
+.office-preview-table{width:100%;border-collapse:collapse;color:#202735;font-size:12px;direction:ltr}
+.office-preview-table th,.office-preview-table td{min-width:72px;max-width:220px;padding:7px 9px;border:1px solid #d8dee8;text-align:start;white-space:pre-wrap;overflow-wrap:anywhere}
+.office-preview-table th{position:sticky;top:0;background:#e9eef5;color:#26364c;font-weight:800}
+.office-preview-table tr th:first-child{left:0;z-index:1}
+.office-preview-word{width:min(100%,850px);min-height:240px;padding:clamp(16px,4vw,42px);background:#fff;color:#222;direction:rtl;text-align:right;line-height:1.9;box-shadow:0 8px 28px rgba(0,0,0,.2);overflow-wrap:anywhere}
+.office-preview-word h1,.office-preview-word h2,.office-preview-word h3{line-height:1.5}
+.office-preview-word table{width:100%;border-collapse:collapse}
+.office-preview-word th,.office-preview-word td{border:1px solid #cbd2dc;padding:6px}
+.office-preview-word img{max-width:100%;height:auto}
+.office-preview-text{width:100%;margin:0;padding:16px;background:#fff;color:#202735;direction:auto;text-align:start;white-space:pre-wrap;overflow-wrap:anywhere}
+.office-preview-image{display:block;max-width:100%;max-height:65vh;object-fit:contain}
+.office-preview-status,.office-preview-panel .office-file-status{display:block;margin:10px 0 0;line-height:1.8}
+.office-preview-panel .office-file-status[data-state="error"]{color:#e28b82}
+body.light .office-preview-stage{background:#dce3eb}
+body.light .office-preview-word{box-shadow:0 8px 24px rgba(30,40,55,.12)}
+@media(max-width:640px){
+ .office-preview-panel{padding:10px}
+ .office-preview-heading{flex-direction:column;gap:5px}
+ .office-preview-file{max-width:100%;text-align:right}
+ .office-preview-toolbar{gap:5px}
+ .office-preview-toolbar button{padding:5px 8px}
+ .office-preview-toolbar-spacer{display:none}
+ .office-preview-stage{min-height:140px;max-height:65vh;padding:7px}
+ .office-preview-table th,.office-preview-table td{min-width:58px;padding:6px}
+}
+@media(prefers-reduced-motion:reduce){.office-preview-panel *{scroll-behavior:auto!important}}
