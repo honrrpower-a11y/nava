@@ -7,7 +7,7 @@
  let sourceFile=null,workbook=null,currentSheet="",zip=null,kind="",editorReadyPromise=Promise.resolve();
  let pendingDownloadBlob=null,contextSyncPromise=Promise.resolve();
  const downloadButton=$("officeEditSave");
- function setDownloadReady(ready){if(downloadButton){downloadButton.disabled=!ready;downloadButton.textContent=kind==="xlsx"?"دانلود فایل ویرایش‌شده Excel":"دانلود فایل ویرایش‌شده";}}
+ function setDownloadReady(ready){if(downloadButton){downloadButton.disabled=!ready;downloadButton.textContent=kind==="xlsx"?"دانلود فایل ویرایش‌شده Excel":"دانلود فایل ویرایش‌شده";}if(ready)Promise.resolve().then(()=>window.NavaOfficePreview?.refreshFromEditor?.()).catch(()=>{});}
  const setStatus=(message,error=false)=>{status.textContent=message;status.dataset.state=error?"error":"success";};
  const libraryLoads=Object.create(null);
  const load=(src,name)=>{
@@ -192,6 +192,15 @@ async function syncActiveFileContext(){
   reset(){
    sourceFile=null;workbook=null;zip=null;kind="";pendingDownloadBlob=null;contextSyncPromise=Promise.resolve();setDownloadReady(false);editorReadyPromise=Promise.resolve();
    hide();
+  },
+  async createPreviewBlob(){
+   if(!sourceFile||!kind)return null;
+   if(kind==="xlsx"&&workbook){
+    const bytes=window.XLSX.write(workbook,{bookType:"xlsx",type:"array",cellStyles:true,compression:true});
+    return new Blob([bytes],{type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"});
+   }
+   if(zip&&["pptx","docx"].includes(kind))return zip.generateAsync({type:"blob",compression:"DEFLATE"});
+   return null;
   },
   getActiveFileInfo(){
    const selected=input.files&&input.files[0];
