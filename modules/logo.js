@@ -73,7 +73,8 @@ function sanitizeHtmlFragment(value) {
         const name = rawName.toLowerCase();
         const value = doubleValue ?? singleValue ?? bareValue ?? "";
         if (!ALLOWED_ATTRIBUTES.has(name)) return "";
-        if (/javascript:|data:|https?:|url\s*\(/i.test(value)) return "";
+        if (/javascript:|data:|https?:/i.test(value)) return "";
+        if (/url\s*\(/i.test(value) && !/^url\(#[a-zA-Z_][\w:.-]*\)$/i.test(value.trim())) return "";
         if (/[<>]/.test(value)) return "";
         attrs.push((CANONICAL_ATTRIBUTES[name] || name) + '="' + escapeHtml(value) + '"');
         return "";
@@ -85,7 +86,7 @@ function sanitizeHtmlFragment(value) {
 
 function sanitizeCss(value) {
   let css = String(value || "").slice(0, 16000);
-  if (/@import|@font-face|expression\s*\(|javascript:|behavior\s*:|-moz-binding|url\s*\(|<\/?style|<\/?script/i.test(css)) {
+  if (/@|expression\s*\(|javascript:|behavior\s*:|-moz-binding|url\s*\(|<\/?style|<\/?script/i.test(css)) {
     throw new Error("NAVI CSS included a blocked external or executable resource.");
   }
   css = css.replace(/<\/?style\b[^>]*>/gi, "");
