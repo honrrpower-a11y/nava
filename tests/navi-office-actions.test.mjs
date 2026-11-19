@@ -486,3 +486,12 @@ test("Office preview stays client-side and can refresh from the edited local Off
   assert.doesNotMatch(preview, /fetch\s*\(/);
   assert.doesNotMatch(preview, /XMLHttpRequest/);
 });
+
+
+test("PowerPoint preview uses the documented PPTXViewer render API", () => {
+  const preview = readFileSync(new URL("../office-preview.js", import.meta.url), "utf8");
+  assert.match(preview, /new window\.PptxViewJS\.PPTXViewer\(\{ canvas: target \}\)/);
+  assert.match(preview, /await pptxViewer\.loadFile\(file\)/);
+  assert.match(preview, /await pptxViewer\.render\(\)/);
+  assert.doesNotMatch(preview, /pptxViewer\.render\(target\)/);
+});
