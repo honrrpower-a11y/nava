@@ -36,6 +36,25 @@ test("Persian and Arabic runs are drawn as one shaped Canvas string", () => {
       this.brush = { Color1: { R: 1, G: 2, B: 3, A: 255 } };
       this.bIsBreak = false;
     }
+    get graphics() { return { context: this._context }; }
+    setupStandardFont() { calls.push(["setupStandardFont"]); }
+    applyTextEffectsToContext() { calls.push(["applyTextEffects"]); }
+    resetTextEffectsOnContext() { calls.push(["resetTextEffects"]); }
+    drawTextDecorations(...args) { calls.push(["decorations", ...args]); }
+    renderRunTextStandard(text, x, y, runProps) {
+      calls.push(["originalRenderRun", text, x, y, runProps]);
+      return x + 1;
+    }
+    measureRunText(text) {
+      calls.push(["originalMeasureRun", text]);
+      return 1;
+    }
+    calculateWrappedLines() {
+      return [{ runs: [
+        { text: "ارائه" }, { text: " " }, { text: "تهیه‌شده" },
+        { text: " " }, { text: "با" }, { text: " " }, { text: "NAVI" }
+      ], width: 100 }];
+    }
     colorToRgb() { return "rgb(1, 2, 3)"; }
     t(text, x, y, isBounds) {
       calls.push(["original", text, x, y, isBounds]);
@@ -68,6 +87,22 @@ test("Persian and Arabic runs are drawn as one shaped Canvas string", () => {
   assert.deepEqual(mixedDraw, [
     "fillText", "ارائه تهیه‌شده با \u2066NAVI\u2069", 100, 50, "rtl", "left"
   ], "Latin tokens must be isolated while Persian words retain logical order");
+
+  const rtlLines = adapter.calculateWrappedLines({
+    runs: [{ text: mixedText }]
+  }, {}, 500, null);
+  assert.deepEqual(rtlLines[0].runs.map(run => run.text),
+    ["NAVI", " ", "با", " ", "تهیه‌شده", " ", "ارائه"],
+    "RTL paragraphs must render word runs in visual right-to-left order");
+
+  const runStart = calls.length;
+  const runEnd = adapter.renderRunTextStandard("تهیه‌شده", 100, 50, { letterSpacing: 0.5 }, 500);
+  assert.equal(runEnd, 143.5);
+  assert.deepEqual(calls.slice(runStart).filter(call => call[0] === "fillText"), [
+    ["fillText", "تهیه‌شده", 100, 50, "rtl", "left"]
+  ], "the actual PPTX text renderer must shape a complete Persian word");
+  assert.equal(adapter._context.direction, "ltr", "Canvas direction must be restored");
+  assert.equal(adapter._context.textAlign, "start", "Canvas alignment must be restored");
 
   const before = calls.length;
   assert.equal(adapter.t("English", 10, 20, false), "original-result");
