@@ -163,8 +163,8 @@
   // Keep Latin words and numbers as isolated LTR runs inside an RTL paragraph.
   // This prevents adjacent Persian text and neutral characters from pulling
   // an English token (for example, "NAVI") to the wrong visual position.
-  const NAVA_LTR_RUN = /[A-Za-z0-9]+(?:[ \\t]+[A-Za-z0-9]+)*(?:[._:/+-][A-Za-z0-9]+)*/g;
-  const isolateLtrRuns = value => value.replace(NAVA_LTR_RUN, run => "\\u2066" + run + "\\u2069");
+  const NAVA_LTR_RUN = /[A-Za-z0-9]+(?:[ ]+[A-Za-z0-9]+)*(?:[._:/+-][A-Za-z0-9]+)*/g;
+  const isolateLtrRuns = value => value.replace(NAVA_LTR_RUN, run => "\u2066" + run + "\u2069");
   let pptxRtlPatchInstalled = false;
   const installPptxRtlCompatibility = () => {
     if (pptxRtlPatchInstalled) return true;
