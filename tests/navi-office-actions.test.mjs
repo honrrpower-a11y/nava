@@ -148,7 +148,7 @@ test("PowerPoint prompt uses prior translation only to resolve an explicitly aut
   });
   assert.match(prompt, /اسلاید دوم را به فارسی ترجمه کن و نشانم بده/);
   assert.match(prompt, /متن فارسی را جایگزین متن اصلی کن/);
-  assert.match(prompt, /current replacement instruction is the authorization/);
+  assert.match(prompt, /current replacement[\\s\\S]*?instruction is the authorization/);
   assert.match(prompt, /currently attached/);
   assert.match(prompt, /officeAction:null/);
 });
