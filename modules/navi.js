@@ -418,6 +418,13 @@ export function isExplicitOfficeEditRequest(message) {
   if (!userText) return false;
   if (parseNaviCellEditInstructions(userText).length) return true;
 
+  // Translating and showing a slide is a preview, not permission to edit it.
+  // A later explicit replacement instruction is handled separately below.
+  const powerpointPreviewOnly =
+    /(?:ترجمه|بازنویسی|اصلاح)[\s\S]{0,100}(?:نشون(?:م|ش)?|نشان(?:م|ش)?|نمایش\s*بده|ببینم|برای\s+دیدن)/iu.test(userText) &&
+    !/(?:جایگزین|جای\s+متن\s+اصلی|اعمال\s+(?:کن|بده)|روی\s+اسلاید\s+(?:قرار|اعمال)|متن\s+اصلی)/iu.test(userText);
+  if (powerpointPreviewOnly) return false;
+
   // Treat Persian edit language flexibly instead of requiring a short list of
   // exact imperative spellings. The verb must still describe an action, not
   // merely mention words such as "تغییر" or "جایگزین" in a question.
@@ -432,13 +439,20 @@ export function isExplicitOfficeEditRequest(message) {
     /(?:(?:متن|محتوا(?:ی)?|عبارت)[\s\S]{0,100}(?:اسلاید|پاورپوینت)[\s\S]{0,100}(?:جایگزین(?:ی)?|عوض|ویرایش|بازنویسی|اصلاح|ترجمه|تغییر)\s*(?:کن(?:م|یم|ید|ین)?|بکن(?:م|یم|ید|ین)?|بده(?:م|یم|ید)?|شود|بشه)|(?:اسلاید|پاورپوینت)[\s\S]{0,100}(?:جایگزین(?:ی)?|عوض|ویرایش|بازنویسی|اصلاح|ترجمه|تغییر)\s*(?:کن(?:م|یم|ید|ین)?|بکن(?:م|یم|ید|ین)?|بده(?:م|یم|ید)?|شود|بشه)|(?:می‌خواهم|میخوام|می خواهم|لطفاً|لطفا|درخواست(?:\s+دارم)?)[\s\S]{0,80}(?:جایگزینی|ویرایش|بازنویسی|اصلاح|ترجمه|تغییر)[\s\S]{0,80}(?:اسلاید|پاورپوینت|متن))/iu.test(userText) &&
     !/(?:چیست|یعنی\s*چه|چطور|چگونه|چرا|توضیح\s+بده)/iu.test(userText);
 
+  // A follow-up such as "متن فارسی را جایگزین متن اصلی کن" is an explicit
+  // instruction to put the previously previewed translation into the slide.
+  // The current turn grants authorization; prior turns only resolve its target.
+  const powerpointTranslationFollowupIntent =
+    /(?:متن\s+(?:فارسی|ترجمه(?:‌شده| شده)?)|(?:این|همین)\s+ترجمه)[\s\S]{0,120}(?:جایگزین|جای\s+متن\s+اصلی)[\s\S]{0,80}(?:کن(?:م|یم|ید|ین)?|بکن(?:م|یم|ید|ین)?|بده(?:م|یم|ید)?|قرار\s*بده(?:ید)?|بذار(?:ید)?|بگذار(?:ید)?)/iu.test(userText) ||
+    /(?:جایگزین|جایگزینی)[\s\S]{0,100}(?:متن\s+اصلی|متن\s+قبلی)[\s\S]{0,80}(?:کن(?:م|یم|ید|ین)?|بکن(?:م|یم|ید|ین)?|بده(?:م|یم|ید)?)/iu.test(userText);
+
   const appendRowIntent =
     /(?:افزودن|اضافه\s*کردن|اضافه\s*کن(?:ید)?|درج)[\s\S]{0,100}(?:ردیف|سطر)|(?:ردیف|سطر)[\s\S]{0,180}(?:اضافه\s*کن|افزودن|درج)/iu.test(userText);
 
   const legacyPreciseIntent =
     /(?:قرار\s*بده(?:ید)?|بنویس(?:ید)?|سلول\s*[A-Z]{1,3}[1-9][0-9]{0,6}[\s\S]{0,80}(?:کن(?:ید)?|بذار(?:ید)?|بگذار(?:ید)?))|(?:فارسی|تبدیل)\s*(?:کن|کنید|بده|بدهید)|به\s+فارسی\s+برگردان|edit(?:\s+the)?|replace(?:\s+the)?|update(?:\s+the)?|set\s+(?:cell|value)/iu.test(userText);
 
-  return editIntent || powerpointEditIntent || appendRowIntent || legacyPreciseIntent;
+  return editIntent || powerpointEditIntent || powerpointTranslationFollowupIntent || appendRowIntent || legacyPreciseIntent;
 }
 
 function extractNaviActiveWorkbookSheetName(message) {
