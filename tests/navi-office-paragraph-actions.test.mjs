@@ -112,3 +112,15 @@ test("PowerPoint rewrite accepts changed paragraph counts", () => {
  assert.ok(editor.includes("Accept complete rewrites with a different paragraph count"));
  assert.ok(!editor.includes("متن جایگزین اسلاید \"+item.slide+\" باید دقیقاً"));
 });
+
+
+test("PowerPoint slide-number and footer placeholders are excluded from extracted text and edit targets", () => {
+  const editor = readFileSync(new URL("../office-edit-tools.js", import.meta.url), "utf8");
+  const structured = readFileSync(new URL("../office-structured-files.js", import.meta.url), "utf8");
+  assert.match(editor, /function isSlideDecorationParagraph\(paragraph\)/);
+  assert.match(editor, /!item\.isDecoration/);
+  assert.match(structured, /function isSlideDecorationParagraph\(paragraph\)/);
+  assert.match(structured, /paragraphs\.filter\(p => !isSlideDecorationParagraph\(p\)\)/);
+  assert.match(editor, /\["sldNum", "ftr", "hdr", "dt"\]/);
+  assert.match(structured, /\["sldNum", "ftr", "hdr", "dt"\]/);
+});
