@@ -155,14 +155,21 @@
     return "url(#" + id + ")";
   }
 
-  function styleAttrs(style) {
+  function styleAttrs(style, scale) {
+    const scaledLength = value => {
+      if (!value || value === "normal") return value || "normal";
+      const number = Number.parseFloat(value);
+      return Number.isFinite(number) ? round(number * scale) + "px" : value;
+    };
     return {
       fill: style.color || "#111111",
       "font-family": style.fontFamily || "Arial, sans-serif",
-      "font-size": style.fontSize || "16px",
+      "font-size": scaledLength(style.fontSize || "16px"),
       "font-weight": style.fontWeight || "400",
       "font-style": style.fontStyle || "normal",
-      "letter-spacing": style.letterSpacing || "normal",
+      "font-stretch": style.fontStretch || "normal",
+      "letter-spacing": scaledLength(style.letterSpacing),
+      "word-spacing": scaledLength(style.wordSpacing),
       "text-anchor": style.textAlign === "center" ? "middle" : (style.textAlign === "right" ? "end" : "start"),
       direction: style.direction || "ltr",
       opacity: style.opacity === "1" ? null : style.opacity
@@ -255,7 +262,7 @@
         ? measured.actualBoundingBoxAscent : fontSize * 0.82;
       const y = line.top - rootRect.top + ascent;
       const width = line.right - line.left;
-      const text = node("text", Object.assign(styleAttrs(style), {
+      const text = node("text", Object.assign(styleAttrs(style, scale), {
         x: round((x - rootRect.left) * scale),
         y: round(y * scale),
         "text-anchor": anchor,
@@ -283,6 +290,8 @@
       if (source.hasAttribute(attribute)) target.setAttribute(attribute, source.getAttribute(attribute));
     });
     const style = computedStyle(source);
+    if (style.transform && style.transform !== "none") warnings.add("CSS transform روی SVG در خروجی برداری پشتیبانی نمی‌شود.");
+    if (style.filter && style.filter !== "none") warnings.add("CSS filter روی SVG در خروجی برداری پشتیبانی نمی‌شود.");
     [
       "fill", "fill-rule", "fill-opacity", "stroke", "stroke-width",
       "stroke-linecap", "stroke-linejoin", "stroke-dasharray",
