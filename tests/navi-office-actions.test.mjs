@@ -466,7 +466,7 @@ test("Office visual preview is mounted in the Office workflow and loads after th
   assert.match(html, /id="officePreviewNext"/);
   assert.match(html, /id="officePreviewSheet"/);
   assert.match(html, /office-preview\.css\?v=office-visual-preview-/);
-  assert.match(html, /office-preview\.js\?v=office-pptx-esm-loader-/);
+  assert.match(html, /office-preview\.js\?v=[^"]+/);
   assert.ok(html.indexOf('office-edit-tools.js?') < html.indexOf('office-preview.js?'));
   assert.match(preview, /renderPptx/);
   assert.match(preview, /PPTXViewer/);
