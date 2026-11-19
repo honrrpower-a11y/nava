@@ -73,11 +73,22 @@
 
   async function createVectorExport(frame, data) {
     if (!window.NavaLogoRenderer) throw new Error("موتور بازسازی برداری بارگذاری نشده است.");
-    return await window.NavaLogoRenderer.buildSvg(frame, {
-      brandName: fields.name.value.trim() || data.brandName,
-      width: 1200,
-      height: 1200
-    });
+    const doc = frame && frame.contentDocument;
+    if (!doc || !doc.head) throw new Error("سند پیش‌نمایش لوگو هنوز آماده نیست.");
+    // Preview motion is intentionally frozen for a faithful, editable static SVG/PNG export.
+    const freezeMotion = doc.createElement("style");
+    freezeMotion.setAttribute("data-nava-export-freeze", "true");
+    freezeMotion.textContent = "*,*::before,*::after{animation:none!important;transition:none!important}";
+    doc.head.appendChild(freezeMotion);
+    try {
+      return await window.NavaLogoRenderer.buildSvg(frame, {
+        brandName: fields.name.value.trim() || data.brandName,
+        width: 1200,
+        height: 1200
+      });
+    } finally {
+      freezeMotion.remove();
+    }
   }
 
   function reportExportWarnings(warnings) {
@@ -96,7 +107,7 @@
         safeFileName(fields.name.value || data.brandName) + "-logo-concept-" + (index + 1) + ".svg"
       );
       reportExportWarnings(result.warnings);
-      if (!result.warnings.length) status.textContent = "فایل SVG برداری و بدون foreignObject آماده شد.";
+      if (!result.warnings.length) status.textContent = "فایل SVG برداریِ ثابت آماده شد؛ حرکت CSS فقط در پیش‌نمایش زنده اجرا می‌شود.";
     } catch (error) {
       const details = error.details && error.details.length ? " " + error.details.join(" ") : "";
       status.textContent = (error.message || "بازسازی SVG ناموفق بود.") + details;
@@ -113,7 +124,7 @@
         2400
       );
       reportExportWarnings(result.warnings);
-      if (!result.warnings.length) status.textContent = "فایل PNG با وضوح ۲۴۰۰ پیکسل آماده شد.";
+      if (!result.warnings.length) status.textContent = "فایل PNG ثابت با وضوح ۲۴۰۰ پیکسل آماده شد؛ حرکت CSS فقط در پیش‌نمایش زنده اجرا می‌شود.";
     } catch (error) {
       const details = error.details && error.details.length ? " " + error.details.join(" ") : "";
       status.textContent = (error.message || "ساخت PNG ناموفق بود.") + details;

@@ -30,9 +30,9 @@ function makeDesign() {
     strategy: "سه مسیر مستقل با تکیه بر هویت برند و موج صوتی.",
     designBriefEnglish: "Create a distinctive Persian creative-studio identity. Build a compact sound-inspired symbol with custom geometry, confident Persian typography, balanced negative space, and the exact gold and navy palette.",
     concepts: [
-      { title: "موج پیوند", rationale: "پیوند صدا و خلاقیت", html: '<div class="mark"><span class="wave"></span><strong>{{BRAND_NAME}}</strong><small>{{SLOGAN}}</small><script>window.pwned=true</script></div>', css: '.logo-art-root{display:grid;place-items:center;background:var(--logo-background);color:var(--logo-primary)}.mark{text-align:center}.wave{display:block;width:150px;height:60px;border:8px solid var(--logo-primary);border-radius:50%}' },
-      { title: "حرف ن", rationale: "تمرکز بر حرف آغازین برند", html: '<div class="letter"><strong>{{BRAND_NAME}}</strong><small>{{SLOGAN}}</small></div>', css: '.logo-art-root{display:grid;place-items:center;background:var(--logo-background);color:var(--logo-primary)}.letter{font-size:70px;font-weight:900}' },
-      { title: "طنین", rationale: "بازتاب ایده در صدا", html: '<div class="echo"><svg viewBox="0 0 100 100" width="100" height="100"><defs><linearGradient id="brand-gradient"><stop offset="0%" stop-color="#D6A84F"/><stop offset="100%" stop-color="#FFFFFF"/></linearGradient></defs><path d="M10 10 L90 50 L10 90 Z" fill="url(#brand-gradient)" fill-rule="evenodd"/></svg><span>✦</span><strong>{{BRAND_NAME}}</strong><small>{{SLOGAN}}</small></div>', css: '.logo-art-root{display:grid;place-items:center;background:var(--logo-background);color:var(--logo-primary)}.echo{text-align:center;font-size:54px}' }
+      { title: "موج پیوند", rationale: "پیوند صدا و خلاقیت", html: '<div class="mark"><div class="seal"><span class="wave"></span><span class="orbit"></span></div><strong>{{BRAND_NAME}}</strong><small>{{SLOGAN}}</small><script>window.pwned=true</script></div>', css: '.logo-art-root{display:grid;place-items:center;background:var(--logo-background);color:var(--logo-primary);width:100%;height:100%;padding:48px}.mark{text-align:center;display:grid;gap:24px;justify-items:center}.seal{display:grid;place-items:center;width:260px;height:260px;border:2px solid var(--logo-primary);border-radius:50%;background:radial-gradient(circle at center,#263b59,var(--logo-background));box-shadow:0 12px 28px rgba(0,0,0,.2)}.wave{display:block;width:150px;height:60px;border:8px solid var(--logo-primary);border-radius:50%}.orbit{display:block;width:190px;height:190px;border:1px solid #5ac9bd;border-radius:50%}@keyframes breathe{0%{opacity:.75}100%{opacity:1}}.wave{animation:breathe 3s ease-in-out infinite}' },
+      { title: "حرف ن", rationale: "تمرکز بر حرف آغازین برند", html: '<div class="letter"><div class="monogram"><span class="cut"></span><span class="accent"></span></div><strong>{{BRAND_NAME}}</strong><small>{{SLOGAN}}</small></div>', css: '.logo-art-root{display:grid;place-items:center;background:var(--logo-background);color:var(--logo-primary);width:100%;height:100%;padding:40px}.letter{font-size:70px;font-weight:900;display:grid;gap:22px;justify-items:center;text-align:center}.monogram{width:240px;height:240px;border:3px solid var(--logo-primary);display:grid;place-items:center;border-radius:28px;background:linear-gradient(135deg,#253b59,var(--logo-background));box-shadow:0 10px 24px rgba(0,0,0,.25)}.cut{display:block;width:110px;height:110px;border:12px solid var(--logo-primary);border-left-color:#59c9bc;border-radius:32px}.accent{display:block;width:70px;height:5px;background:#59c9bc;border-radius:5px}' },
+      { title: "طنین", rationale: "بازتاب ایده در صدا", html: '<div class="echo"><svg viewBox="0 0 100 100" width="100" height="100"><defs><linearGradient id="brand-gradient"><stop offset="0%" stop-color="#D6A84F"/><stop offset="100%" stop-color="#FFFFFF"/></linearGradient></defs><path d="M10 10 L90 50 L10 90 Z" fill="url(#brand-gradient)" fill-rule="evenodd"/></svg><span>✦</span><strong>{{BRAND_NAME}}</strong><small>{{SLOGAN}}</small></div>', css: '.logo-art-root{display:grid;place-items:center;background:var(--logo-background);color:var(--logo-primary);width:100%;height:100%;padding:36px}.echo{text-align:center;font-size:54px;display:grid;justify-items:center;gap:20px}.echo svg{width:220px;height:220px;padding:24px;border:2px solid var(--logo-primary);border-radius:50%;background:radial-gradient(circle at center,#344968,var(--logo-background));box-shadow:0 12px 26px rgba(0,0,0,.2)}.echo span{color:#59c9bc;letter-spacing:8px}.echo strong{font-weight:900;letter-spacing:2px}' }
     ]
   };
 }
@@ -125,6 +125,9 @@ test("NAVI writes an English brief and three sanitized HTML/CSS logo designs in 
     assert.equal(result.concepts.length, 3);
     assert.equal(geminiCalls, 1, "one Gemini call creates the English brief and all three logo designs");
     assert.match(sentPrompt, /English/i);
+    assert.match(sentPrompt, /PRIMARY DESIGN ENGINE/i);
+    assert.match(sentPrompt, /THREE genuinely different creative directions/i);
+    assert.match(sentPrompt, /keyframe animation/i);
     assert.equal(result.planning.method, "navi-english-brief-html-css-design");
     assert.match(result.planning.designBriefEnglish, /distinctive Persian creative-studio identity/i);
     assert.ok(result.concepts.every(item => item.html.includes("نوا")));
@@ -134,6 +137,7 @@ test("NAVI writes an English brief and three sanitized HTML/CSS logo designs in 
     assert.ok(result.concepts.every(item => !item.html.includes("{{BRAND_NAME}}")));
     assert.ok(result.concepts.every(item => !item.html.includes("<script")));
     assert.ok(result.concepts.every(item => item.css.includes("var(--logo-primary)")));
+    assert.ok(result.concepts[0].css.includes("@keyframes breathe"), "safe CSS keyframes remain available for live previews");
     assert.ok(result.concepts.every(item => !Object.prototype.hasOwnProperty.call(item, "svg")));
     assert.ok(result.concepts.every(item => !JSON.stringify(item).includes("foreignObject")));
     assert.ok(result.concepts.every(item => item.html.includes("<div")));
