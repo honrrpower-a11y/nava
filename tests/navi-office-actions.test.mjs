@@ -114,7 +114,7 @@ test("NAVI Excel cell edits expand the worksheet range when writing outside the 
 test("Office prompt defines a non-null structured PowerPoint action schema", () => {
   const worker = readFileSync(new URL("../modules/navi.js", import.meta.url), "utf8");
   assert.match(worker, /"kind": "edit_slide_text"[\s\S]*?"slide": 2[\s\S]*?"find": "Exact complete source paragraph[\s\S]*?"replace": "Complete translated or rewritten paragraph"/);
-  assert.match(worker, /officeAction MUST return a valid edit_slide_text object/);
+  assert.match(worker, /return a valid edit_slide_text object; do NOT return officeAction:null/);
   assert.match(worker, /officeAction:null is for requests that do not authorize an edit/);
 });
 
