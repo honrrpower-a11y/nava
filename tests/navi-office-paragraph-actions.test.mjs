@@ -87,7 +87,7 @@ test("PowerPoint post-edit sync reads the already-open JSZip archive without Fil
   assert.match(structured, /Object\.freeze\(\{ readPowerPointArchive, read:/);
   assert.match(editor, /readPowerPointArchive\(zip\)/);
   assert.doesNotMatch(editor, /const blob=await zip\.generateAsync\(\{type:"blob"\}\);\s*const file=new File\(\[blob\]/);
-  assert.match(html, /office-edit-tools\.js\?v=office-pptx-pptx-export-run-edit-20261119-4/);
+  assert.match(html, /office-edit-tools\.js\?v=office-pptx-edit-persistence-preview-20261119-6/);
 });
 
 
@@ -97,7 +97,7 @@ test("PowerPoint exports use the correct Office MIME type", () => {
  assert.ok(editor.includes("application/vnd.openxmlformats-officedocument.presentationml.presentation"));
  assert.ok(editor.includes("mimeType:officeMimeTypes[kind]"));
  assert.ok(editor.includes("async function generateEditedBlob()"));
- assert.ok(html.includes("office-pptx-pptx-export-run-edit-20261119-4"));
+ assert.ok(html.includes("office-pptx-edit-persistence-preview-20261119-6"));
 });
 
 test("PowerPoint replacement searches concatenated text runs", () => {
@@ -121,6 +121,6 @@ test("PowerPoint slide-number and footer placeholders are excluded from extracte
   assert.match(editor, /!item\.isDecoration/);
   assert.match(structured, /function isSlideDecorationParagraph\(paragraph\)/);
   assert.match(structured, /paragraphs\.filter\(p => !isSlideDecorationParagraph\(p\)\)/);
-  assert.match(editor, /\["sldNum", "ftr", "hdr", "dt"\]/);
-  assert.match(structured, /\["sldNum", "ftr", "hdr", "dt"\]/);
+  assert.match(editor, /\["sldNum",\s*"ftr",\s*"hdr",\s*"dt"\]/);
+  assert.match(structured, /\["sldNum",\s*"ftr",\s*"hdr",\s*"dt"\]/);
 });
