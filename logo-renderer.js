@@ -320,8 +320,31 @@
     }
     if (source.nodeType !== 1) return;
     const tag = source.localName.toLowerCase();
+    const style = computedStyle(source);
+    if (style.display === "none" || style.visibility === "hidden") return;
     if (tag === "svg") {
+      if (style.transform && style.transform !== "none") warnings.add("CSS transform روی SVG در خروجی برداری پشتیبانی نمی‌شود.");
+      if (style.filter && style.filter !== "none") warnings.add("CSS filter روی SVG در خروجی برداری پشتیبانی نمی‌شود.");
+      if (style.clipPath && style.clipPath !== "none") warnings.add("CSS clip-path روی SVG در خروجی برداری پشتیبانی نمی‌شود.");
       const rect = source.getBoundingClientRect();
+      const nested = node("svg", {
+        x: round((rect.left - rootRect.left) * scale),
+        y: round((rect.top - rootRect.top) * scale),
+        width: round(rect.width * scale),
+        height: round(rect.height * scale),
+        viewBox: source.getAttribute("viewBox") || (
+          "0 0 " + (source.getAttribute("width") || rect.width) + " " +
+          (source.getAttribute("height") || rect.height)
+        ),
+        preserveAspectRatio: source.getAttribute("preserveAspectRatio") || "xMidYMid meet",
+        opacity: style.opacity === "1" ? null : style.opacity
+      }, parent);
+      Array.from(source.childNodes).forEach(child => {
+        if (child.nodeType === 1) copySvgElement(child, nested, warnings);
+      });
+      return;
+    }
+    const rect = source.getBoundingClientRect();
       const nested = node("svg", {
         x: round((rect.left - rootRect.left) * scale),
         y: round((rect.top - rootRect.top) * scale),
@@ -340,8 +363,7 @@
     }
 
     const rect = source.getBoundingClientRect();
-    const style = computedStyle(source);
-    if (style.display === "none" || style.visibility === "hidden" || rect.width === 0 || rect.height === 0) return;
+    if (rect.width === 0 || rect.height === 0) return;
     const isArtboard = source.classList.contains("logo-art-root");
     if (!isArtboard && (
       rect.left < rootRect.left - 0.5 || rect.top < rootRect.top - 0.5 ||
