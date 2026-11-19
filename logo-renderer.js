@@ -8,7 +8,7 @@
   const NS = "http://www.w3.org/2000/svg";
   const XLINK = "http://www.w3.org/1999/xlink";
   const SVG_TAGS = new Set(["svg","g","path","circle","rect","line","polygon","polyline","ellipse","defs","lineargradient","radialgradient","stop","clippath","text","tspan"]);
-  const ATTRS = ["viewBox","x","y","x1","y1","x2","y2","cx","cy","r","rx","ry","d","points","offset","stop-color","stop-opacity","fill","fill-rule","fill-opacity","stroke","stroke-width","stroke-linecap","stroke-linejoin","stroke-dasharray","stroke-dashoffset","stroke-opacity","opacity","transform","text-anchor","dominant-baseline","font-size","font-weight","letter-spacing","direction","gradientUnits","gradientTransform","spreadMethod","preserveAspectRatio"];
+  const ATTRS = ["id","class","viewBox","x","y","x1","y1","x2","y2","cx","cy","r","rx","ry","d","points","offset","stop-color","stop-opacity","fill","fill-rule","fill-opacity","stroke","stroke-width","stroke-linecap","stroke-linejoin","stroke-dasharray","stroke-dashoffset","stroke-opacity","opacity","transform","text-anchor","dominant-baseline","font-size","font-weight","letter-spacing","direction","gradientUnits","gradientTransform","spreadMethod","preserveAspectRatio"];
   const TRANSPARENT = "rgba(0, 0, 0, 0)";
   const round = n => Math.round(Number(n) * 1000) / 1000;
   const esc = value => String(value == null ? "" : value).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&apos;"}[c]));
