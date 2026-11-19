@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 
 import {
+  guardNaviOfficeReply,
   isExplicitOfficeEditRequest,
   normalizeNaviOfficeAction
 } from "../modules/navi.js";
@@ -50,4 +51,16 @@ test("PowerPoint translation and rewriting requests require the current user-tur
   assert.equal(isExplicitOfficeEditRequest("پیام کاربر: اسلاید دوم رو با متن جدید عوض کن"), true);
   assert.equal(isExplicitOfficeEditRequest("پیام کاربر: لطفاً جایگزینی متن اسلاید دوم رو انجام بده"), true);
   assert.equal(isExplicitOfficeEditRequest("پیام کاربر: جایگزینی متن اسلاید دوم یعنی چه؟"), false);
+});
+
+
+test("Office edit guard uses format-neutral wording when a proposal is not authorized", () => {
+  const reply = guardNaviOfficeReply("کارت تأیید ویرایش پاورپوینت آماده است.", false);
+  assert.match(reply, /جزئیات کافی برای ساخت عملیات ویرایش/);
+  assert.doesNotMatch(reply, /سلول|اکسل|شیت/);
+});
+
+test("Office edit guard preserves an authorized PowerPoint approval response", () => {
+  const reply = "کارت تأیید ویرایش پاورپوینت آماده است.";
+  assert.equal(guardNaviOfficeReply(reply, true), reply);
 });
