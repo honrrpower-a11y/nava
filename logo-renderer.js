@@ -191,13 +191,23 @@
       if(gradient) fill=gradient;
       else warnings.add("تصویر پس‌زمینه یا گرادیان پیچیده قابل تبدیل به SVG نیست.");
     }
-    const radius=parseFloat(style.borderTopLeftRadius)||0;
+    const radiusValue=style.borderTopLeftRadius||"0px";
+    const radius=parseFloat(radiusValue)||0;
     const border=parseFloat(style.borderTopWidth)||0;
     const borderColor=style.borderTopColor;
     if(fill!=="none" || border>0){
       const shadow=parseShadow(style.boxShadow,"nava-shadow-"+(++counter.value),defs);
       if (style.boxShadow && style.boxShadow!=="none" && !shadow) warnings.add("این نوع box-shadow در خروجی برداری پشتیبانی نمی‌شود.");
-      node("rect",{x,y,width:w,height:h,rx:round(radius*scale),ry:round(radius*scale),fill,stroke:border>0?borderColor:"none","stroke-width":border>0?round(border*scale):null,filter:shadow||null},group);
+      const shapeAttrs={fill,stroke:border>0?borderColor:"none","stroke-width":border>0?round(border*scale):null,filter:shadow||null};
+      if (radiusValue.includes("%")) {
+        if (parseFloat(radiusValue)>=49.9 && Math.abs(w-h)<1) {
+          node("ellipse",Object.assign({cx:round(x+w/2),cy:round(y+h/2),rx:round(w/2),ry:round(h/2)},shapeAttrs),group);
+        } else {
+          warnings.add("شعاع درصدی گوشه‌ها فقط برای شکل دایره‌ای قابل بازسازی است.");
+        }
+      } else {
+        node("rect",Object.assign({x,y,width:w,height:h,rx:round(radius*scale),ry:round(radius*scale)},shapeAttrs),group);
+      }
     } else if(style.boxShadow && style.boxShadow!=="none") {
       warnings.add("سایه روی عنصر بدون پس‌زمینه ممکن است در بازسازی دقیقاً یکسان نباشد.");
     }
