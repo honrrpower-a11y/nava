@@ -128,11 +128,12 @@ test("PowerPoint slide-number and footer placeholders are excluded from extracte
 
 test("Office file preview is optional and collapsed by default", () => {
   const html = readFileSync(new URL("../index.html", import.meta.url), "utf8");
-  const preview = html.match(/<details class="office-preview-panel" id="officePreviewPanel"[^>]*>([\\s\\S]*?)<\\/details>/);
-  assert.ok(preview, "preview must use a native collapsible details panel");
-  assert.match(preview[1], /<summary class="office-preview-disclosure"/);
-  assert.match(preview[1], /برای مشاهده فایل/);
-  assert.doesNotMatch(preview[0].split(">")[0], /\\sopen(?:\\s|>)/);
-  assert.match(preview[1], /id="officePreviewStage"/);
+  const start = html.indexOf('<details class="office-preview-panel" id="officePreviewPanel" hidden>');
+  const end = html.indexOf("</details>", start);
+  assert.ok(start >= 0 && end > start, "preview must use a native collapsible details panel");
+  const preview = html.slice(start, end);
+  assert.match(preview, /<summary class="office-preview-disclosure"/);
+  assert.match(preview, /برای مشاهده فایل/);
+  assert.match(preview, /id="officePreviewStage"/);
   assert.match(html, /id="officeEditSave"/);
 });
