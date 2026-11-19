@@ -160,6 +160,11 @@
   // PptxViewJS adapter currently paints many text runs one character at a time,
   // which prevents Canvas from applying contextual Arabic/Persian shaping.
   const NAVA_RTL_TEXT = /[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]/;
+  // Keep Latin words and numbers as isolated LTR runs inside an RTL paragraph.
+  // This prevents adjacent Persian text and neutral characters from pulling
+  // an English token (for example, "NAVI") to the wrong visual position.
+  const NAVA_LTR_RUN = /[A-Za-z0-9]+(?:[ ]+[A-Za-z0-9]+)*(?:[._:/+-][A-Za-z0-9]+)*/g;
+  const isolateLtrRuns = value => value.replace(NAVA_LTR_RUN, run => "\u2066" + run + "\u2069");
   let pptxRtlPatchInstalled = false;
   const installPptxRtlCompatibility = () => {
     if (pptxRtlPatchInstalled) return true;
@@ -176,6 +181,10 @@
       if (this.bIsBreak || !this._context || !value || !NAVA_RTL_TEXT.test(value)) {
         return original.call(this, text, x, y, isBounds);
       }
+      // Canvas applies the Unicode Bidirectional Algorithm to the complete
+      // run. Isolate embedded Latin tokens so their internal LTR order is
+      // preserved without changing the surrounding Persian word order.
+      const drawValue = isolateLtrRuns(value);
       const ctx = this._context;
       ctx.save();
       try {
@@ -187,9 +196,9 @@
         // browser shape and reorder the complete Persian/Arabic text run.
         ctx.direction = "rtl";
         ctx.textAlign = "left";
-        ctx.fillText(value, x, y);
+        ctx.fillText(drawValue, x, y);
         if (!isBounds) return null;
-        const metrics = ctx.measureText(value);
+        const metrics = ctx.measureText(drawValue);
         return {
           x,
           y: metrics.actualBoundingBoxAscent !== undefined
