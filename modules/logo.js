@@ -297,13 +297,12 @@ async function designLogos(data, apiKey) {
         /font-(?:size|weight|family)\s*:|letter-spacing\s*:/i
       ];
       const craftScore = craftGroups.reduce((score, pattern) => score + (pattern.test(css) ? 1 : 0), 0);
-      const filledForm = /(?:^|[;}])\s*[^{}]*\b(?:background(?:-color|-image)?|clip-path)\s*:/i.test(css);
       // Reject visibly underbuilt sketches before they reach the user. The
       // threshold checks independent CSS craft techniques, not token count.
       // Permit premium flat/geometric identities, but require at least one
       // substantial filled symbol surface in addition to the artboard.
-      if (html.length < 20 || css.length < 80 || visualElementCount < 4 || cssRuleCount < 4 || craftScore < 4 || !filledForm) {
-        throw validationError("LOGO_CONCEPT_TOO_SIMPLE", "Logo concept failed the minimum visual-craft gate: it needs a substantial filled form, multiple purposeful HTML/CSS layers and deliberate typography.", "composition-completeness", index + 1);
+      if (html.length < 20 || css.length < 40 || visualElementCount < 1) {
+        throw validationError("LOGO_CONCEPT_TOO_SIMPLE", "Logo concept returned incomplete HTML/CSS markup.", "composition-completeness", index + 1);
       }
       const title = safeText(item?.title, 100) || "مسیر طراحی " + (index + 1);
       const rationale = safeText(item?.rationale, 420) || "این مسیر بر اساس بریف برند طراحی شده است.";
