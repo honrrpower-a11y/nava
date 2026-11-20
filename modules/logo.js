@@ -153,7 +153,7 @@ function validateVisualAnchorMap(html, css, item, conceptIndex, format) {
       "visual-anchor-plan", conceptIndex);
   }
   if (format !== "wordmark") {
-    const symbol = html.match(/<div\\b(?=[^>]*class="[^"]*\\bnavi-symbol\\b[^"]*")(?=[^>]*data-logo-role="symbol")[^>]*>([\\s\\S]*?)<\\/div>/i);
+    const symbol = html.match(/<div\b(?=[^>]*class="[^"]*\bnavi-symbol\b[^"]*")(?=[^>]*data-logo-role="symbol")[^>]*>([\s\S]*?)<\/div>/i);
     if (!symbol) {
       throw validationError("LOGO_VISUAL_ANCHOR_MAP_INVALID",
         "نشان اصلی برای تطبیق اجزای بریف پیدا نشد.", "visual-anchor-map", conceptIndex);
@@ -164,7 +164,23 @@ function validateVisualAnchorMap(html, css, item, conceptIndex, format) {
       if (!ids.has(entry.anchorId) || mapped.has(entry.anchorId) ||
           !/^[a-zA-Z_][a-zA-Z0-9_-]{0,63}$/.test(entry.layerClass) ||
           entry.visualRole.length < 8) continue;
-      const classPattern = new RegExp('class="[^"]*(?:^|\\\\s)' + entry.layerClass.replace(/[.*+?^${}()|[\\]\\\\]/g, "\\\\function conceptsAreNearDuplicates(left, right) {") + '(?:\\\\s|[^"])*"');
+      const classPattern = new RegExp('class="[^"]*\\b' + entry.layerClass + '\\b[^"]*"');
+      const appearsInsideSymbol = classPattern.test(symbol[1]);
+      const selectorPattern = new RegExp("\\." + entry.layerClass + "(?=[\\s.:#\\[,{>\\{])");
+      if (!appearsInsideSymbol || !selectorPattern.test(css)) continue;
+      mapped.add(entry.anchorId);
+    }
+    if (mapped.size !== visualAnchors.length) {
+      const missing = visualAnchors.filter(anchor => !mapped.has(anchor.id)).map(anchor => anchor.description).join("، ");
+      throw validationError("LOGO_VISUAL_ANCHOR_MAP_INVALID",
+        "بخش‌هایی از ایده بریف به لایه واقعی و استایل‌شده داخل نشان وصل نشده‌اند: " + missing + ".",
+        "visual-anchor-map", conceptIndex);
+    }
+  }
+  return { visualAnchors, anchorMap };
+}
+
+function conceptsAreNearDuplicates(left, right) {") + '(?:\\\\s|[^"])*"');
       const appearsInsideSymbol = classPattern.test(symbol[1]);
       const selectorPattern = new RegExp("\\\\." + entry.layerClass.replace(/[.*+?^${}()|[\\]\\\\]/g, "\\\\function conceptsAreNearDuplicates(left, right) {") + "(?=[\\\\s.:#\\\\[,{>\\\\{])");
       if (!appearsInsideSymbol || !selectorPattern.test(css)) continue;
