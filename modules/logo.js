@@ -143,6 +143,7 @@ async function designLogos(data, apiKey) {
     "ARTBOARD AND COMPOSITION: create a complete, balanced 1000x1000 artboard. The logo lockup should occupy a purposeful visual area, not float as a tiny central icon in a vast empty field. Use an intentional grid and optical centering; balance emblem and wordmark; maintain safe margins; align related elements; use negative space deliberately. The design must work as a standalone logo, not as a poster, splash screen, app screen, business card, mockup, or framed presentation.",
     "COLOR AND CONTRAST: use var(--logo-primary) and var(--logo-background) for the exact selected primary and background colors. Add at most two deliberate accent colors only if the concept benefits. Explicitly set color on .logo-art-root and on brand/slogan elements; never rely on inherited browser defaults. Ensure strong accessible contrast for every essential word and mark. Do not use near-black text on a dark background or pale details that disappear. Check the concept against the actual supplied palette rather than assuming gold/blue or any fixed colors.",
     "TYPOGRAPHY AND SCALE: use real HTML text for the brand name and slogan, not SVG text or pseudo-text. Establish a clear typographic hierarchy. Avoid default-looking typography, accidental font-size inheritance, excessive letter spacing on Persian, awkward line breaks, cramped text, and tiny slogans. At 1000x1000, the brand name should normally read as a major element (often roughly 56–100px depending on script and composition); slogan or descriptor should normally be around 20–30px if included. These are optical guides, not rigid values. Preserve legibility when scaled down.",
+    "IMPLEMENTATION DEPTH: do not satisfy the brief with only a container, a generic symbol and a wordmark. For every route, write enough nested HTML to express the actual mark (normally 5–9 meaningful elements including the wordmark and optional slogan) and a complete stylesheet with several focused selectors for the artboard, symbol silhouette, internal geometry, accents and typography. Prefer purposeful layers such as a custom cut-out, interlocking forms, a distinctive counter-shape, a controlled highlight or a secondary geometric component. Keep the three routes structurally and conceptually distinct. Do not inflate code with meaningless ornaments; every element must contribute to the visual thesis.",
     "CRAFT: build a considered multi-layered composition with nested HTML structure, bespoke geometry and purposeful detailing. Use CSS pseudo-elements ::before/::after, layered gradients, border geometry, rounded shapes, masks and basic clip-path shapes, carefully controlled transforms/rotation, shadows, highlights, inset depth and negative space to create custom marks. Combine several independently art-directed parts into a coherent silhouette. Every layer must support the idea; do not create random strokes or decorative clutter. The result must look like a finished identity designed by a premium brand studio, not a wireframe, placeholder, two-line sketch, generic badge or unfinished sketch.",
     "MOTION: tasteful CSS @keyframes may enrich the live preview only when motion expresses the identity (for example, a subtle reveal or pulse). The static first frame must already be a complete, beautiful logo and remain fully understandable without animation. Avoid distracting loops, constant movement, and motion that changes layout. Static SVG/PNG export may capture only the resting state.",
     "INTERNAL ART-DIRECTION REVIEW: before returning each concept, inspect it as if presenting to a demanding brand director. Check: (a) is the idea specific to this brand rather than a stock symbol? (b) can its silhouette be recognized? (c) are all three routes meaningfully different? (d) is the brand name immediately readable and visually dominant? (e) are Persian/Arabic glyphs preserved and correctly directed? (f) is text contrast strong against the actual background? (g) is the artboard balanced and not excessively empty? (h) does it work at small size? (i) does every decorative element have a reason? (j) is the code safe and export-friendly? Revise weak concepts before output. Never return a concept that fails basic readability, contrast or distinctiveness.",
@@ -274,9 +275,24 @@ async function designLogos(data, apiKey) {
       const finalCss = css +
         (html.includes('class="navi-brand-lockup"') ? "\n" + brandFallbackCss : "") +
         (html.includes('class="navi-slogan-lockup"') ? "\n" + sloganFallbackCss : "");
-      const visualElementCount = (html.match(/</g) || []).length;
-      const cssCraftSignals = (css.match(/::before|::after|linear-gradient|radial-gradient|box-shadow|clip-path|transform\s*:/gi) || []).length;
-      if (html.length < 90 || css.length < 400 || visualElementCount < 5 || cssCraftSignals < 2) {
+      const visualElementCount = (html.match(/<\s*(?:div|span|p|strong|em|b|i|small|br)\b/gi) || []).length;
+      const cssRuleCount = (css.match(/[^{}]+\{[^{}]*\}/g) || []).length;
+      // Score independent design disciplines, not raw keyword frequency.
+      // A strong typographic/geometric concept should not fail merely because
+      // it uses borders and layout instead of gradients or pseudo-elements.
+      const craftGroups = [
+        /::before|::after/i,
+        /linear-gradient|radial-gradient/i,
+        /box-shadow|text-shadow/i,
+        /border(?:-[a-z-]+)?\s*:/i,
+        /transform\s*:/i,
+        /clip-path\s*:|mask(?:-image)?\s*:/i,
+        /display\s*:\s*(?:grid|flex)/i,
+        /position\s*:/i,
+        /font-(?:size|weight|family)\s*:|letter-spacing\s*:/i
+      ];
+      const craftScore = craftGroups.reduce((score, pattern) => score + (pattern.test(css) ? 1 : 0), 0);
+      if (html.length < 90 || css.length < 350 || visualElementCount < 4 || cssRuleCount < 4 || craftScore < 3) {
         throw validationError("LOGO_CONCEPT_TOO_SIMPLE", "Logo concept does not meet the minimum composition structure.", "composition-completeness", index + 1);
       }
       const title = safeText(item?.title, 100) || "مسیر طراحی " + (index + 1);
