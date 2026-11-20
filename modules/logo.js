@@ -59,7 +59,7 @@ function sanitizeHtmlFragment(value) {
         if (/javascript:|data:|https?:/i.test(value)) return "";
         if (/url\s*\(/i.test(value) && !/^url\(#[a-zA-Z_][\w:.-]*\)$/i.test(value.trim())) return "";
         if (/[<>]/.test(value)) return "";
-        attrs.push((CANONICAL_ATTRIBUTES[name] || name) + '="' + escapeHtml(value) + '"');
+        attrs.push(name + '="' + escapeHtml(value) + '"');
         return "";
       });
     return "<" + outputTag + (attrs.length ? " " + attrs.join(" ") : "") + (selfClosing ? " />" : ">");
