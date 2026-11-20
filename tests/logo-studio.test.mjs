@@ -419,7 +419,7 @@ test("Logo Studio ignores initial iframe loads until the srcdoc artboard exists"
   const source = readFileSync(new URL("../logo-studio.js", import.meta.url), "utf8");
   assert.ok(!source.includes('doc.URL === "about:blank"'), "srcdoc readiness must not depend on browser-specific about: URL reporting");
   assert.ok(source.includes("// is the authoritative readiness signal."), "the actual artboard, not URL text, determines readiness");
-  assert.ok(source.includes('const root = doc.querySelector(".logo-art-root");'));
+  assert.ok(source.includes('const root = doc && doc.querySelector(".logo-art-root");'));
   assert.ok(source.includes("if (!root) return;"),
     "an initial or incomplete iframe load must not resolve readiness without the real artboard");
 });
