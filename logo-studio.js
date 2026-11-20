@@ -68,8 +68,6 @@
       "*,*::before,*::after{box-sizing:border-box}",
       ".logo-art-root{width:100%;height:100%;min-height:100%;position:relative;overflow:hidden;--logo-primary:" + data.primaryColor + ";--logo-background:" + data.darkColor + ";}",
       concept.css,
-      "/* Logo artwork is delivered on a transparent artboard, not a full-page navy poster. */",
-      ".logo-art-root{background-color:transparent!important;background-image:none!important;}",
       "</style></head><body><main class=\"logo-art-root\">",
       concept.html,
       "</main></body></html>"
