@@ -275,8 +275,8 @@ async function designLogos(data, apiKey) {
       const finalCss = css +
         (html.includes('class="navi-brand-lockup"') ? "\n" + brandFallbackCss : "") +
         (html.includes('class="navi-slogan-lockup"') ? "\n" + sloganFallbackCss : "");
-      const visualElementCount = (html.match(/<\\s*(?:div|span|p|strong|em|b|i|small|br)\\b/gi) || []).length;
-      const cssRuleCount = (css.match(/[^{}]+\\{[^{}]*\\}/g) || []).length;
+      const visualElementCount = (html.match(/<\s*(?:div|span|p|strong|em|b|i|small|br)\b/gi) || []).length;
+      const cssRuleCount = (css.match(/[^{}]+\{[^{}]*\}/g) || []).length;
       // Score independent design disciplines, not raw keyword frequency.
       // A strong typographic/geometric concept should not fail merely because
       // it uses borders and layout instead of gradients or pseudo-elements.
@@ -284,12 +284,12 @@ async function designLogos(data, apiKey) {
         /::before|::after/i,
         /linear-gradient|radial-gradient/i,
         /box-shadow|text-shadow/i,
-        /border(?:-[a-z-]+)?\\s*:/i,
-        /transform\\s*:/i,
-        /clip-path\\s*:|mask(?:-image)?\\s*:/i,
-        /display\\s*:\\s*(?:grid|flex)/i,
-        /position\\s*:/i,
-        /font-(?:size|weight|family)\\s*:|letter-spacing\\s*:/i
+        /border(?:-[a-z-]+)?\s*:/i,
+        /transform\s*:/i,
+        /clip-path\s*:|mask(?:-image)?\s*:/i,
+        /display\s*:\s*(?:grid|flex)/i,
+        /position\s*:/i,
+        /font-(?:size|weight|family)\s*:|letter-spacing\s*:/i
       ];
       const craftScore = craftGroups.reduce((score, pattern) => score + (pattern.test(css) ? 1 : 0), 0);
       if (html.length < 90 || css.length < 350 || visualElementCount < 4 || cssRuleCount < 4 || craftScore < 3) {
