@@ -657,3 +657,57 @@ test("Logo Studio lets the client delegate ideation to NAVI or supply a binding 
   assert.ok(backend.includes("designIdea: safeText(plan.designIdea, 320)"));
   assert.ok(ui.includes("planning.designIdea"));
 });
+
+
+// Filled inline SVG geometry is itself the symbol surface. A wrapper background,
+// border-radius or clip-path must not be required when the vector supplies them.
+test("NAVI accepts complete filled SVG symbols without duplicate CSS surface styling", async () => {
+  const originalFetch = globalThis.fetch;
+  const db = new FakeD1();
+  const vector = makeDesign();
+  vector.concepts[0].html = '<div class="mark"><div class="navi-symbol" data-logo-role="symbol"><svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"><path d="M28 30 H172 L124 92 L172 170 H28 Z" fill="var(--logo-primary)"/><path d="M62 82 L138 118" stroke="#fff" stroke-width="9" stroke-linecap="round"/></svg></div><strong>{{BRAND_NAME}}</strong></div>';
+  vector.concepts[0].css = '.logo-art-root{display:grid;place-items:center;width:100%;height:100%}.mark{display:grid;gap:20px;justify-items:center}.navi-symbol{width:220px;height:220px}.navi-symbol svg{display:block;width:100%;height:100%}.mark strong{font-size:48px;font-weight:900}';
+  globalThis.fetch = async () => makeGeminiResponse(vector);
+  try {
+    const response = await handleLogoRoute({
+      request: makeRequest(),
+      env: { NAVA_DB: db, NAVI_SESSION_SECRET: "test-secret-key", GEMINI_API_KEY: "test-gemini-key" },
+      origin: ORIGIN,
+      corsOrigin: ORIGIN
+    });
+    const result = await response.json();
+    assert.equal(response.status, 200);
+    assert.equal(result.success, true);
+    assert.equal(result.concepts.length, 3, JSON.stringify(result.rejectedConcepts));
+    assert.match(result.concepts[0].html, /<svg[^>]*viewBox="0 0 200 200"/i);
+    assert.equal(db.visitorUsed, 1);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+// A hollow stroke-only SVG is not a filled geometric symbol and must still fail.
+test("NAVI still rejects hollow stroke-only SVG marks as underbuilt", async () => {
+  const originalFetch = globalThis.fetch;
+  const db = new FakeD1();
+  const vector = makeDesign();
+  vector.concepts[0].html = '<div class="mark"><div class="navi-symbol" data-logo-role="symbol"><svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"><path d="M20 100 L180 100" fill="none" stroke="var(--logo-primary)" stroke-width="3"/></svg></div><strong>{{BRAND_NAME}}</strong></div>';
+  vector.concepts[0].css = '.logo-art-root{display:grid;place-items:center;width:100%;height:100%}.mark{display:grid;gap:20px;justify-items:center}.navi-symbol{width:220px;height:220px}.navi-symbol svg{display:block;width:100%;height:100%}.mark strong{font-size:48px;font-weight:900}';
+  globalThis.fetch = async () => makeGeminiResponse(vector);
+  try {
+    const response = await handleLogoRoute({
+      request: makeRequest(),
+      env: { NAVA_DB: db, NAVI_SESSION_SECRET: "test-secret-key", GEMINI_API_KEY: "test-gemini-key" },
+      origin: ORIGIN,
+      corsOrigin: ORIGIN
+    });
+    const result = await response.json();
+    assert.equal(response.status, 200);
+    assert.equal(result.concepts.length, 2);
+    assert.equal(result.rejectedConcepts.length, 1);
+    assert.equal(result.rejectedConcepts[0].code, "LOGO_SYMBOL_UNDERBUILT");
+    assert.equal(db.visitorUsed, 1);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
