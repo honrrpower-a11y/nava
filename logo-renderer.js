@@ -645,6 +645,9 @@
     stage.setAttribute("aria-hidden","true");
     stage.style.cssText="position:fixed;left:-100000px;top:0;width:"+rect.width+"px;height:"+rect.height+"px;overflow:hidden;margin:0;padding:0;pointer-events:none;z-index:-1;background:transparent;";
     const clone=copyComputedTree(root,document);
+    // Keep the logo independent of a poster background; PNG remains transparent.
+    clone.style.setProperty("background-color","transparent","important");
+    clone.style.setProperty("background-image","none","important");
     clone.style.setProperty("width",rect.width+"px","important");
     clone.style.setProperty("height",rect.height+"px","important");
     clone.style.setProperty("min-width",rect.width+"px","important");
