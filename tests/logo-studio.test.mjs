@@ -137,7 +137,7 @@ test("NAVI writes an English brief and three sanitized HTML/CSS logo designs in 
     assert.match(sentPrompt, /8–12 genuinely different/i);
     assert.match(sentPrompt, /different central thesis, outer silhouette/i);
     assert.match(sentPrompt, /16 px/i);
-    assert.match(sentPrompt, /HTML and CSS are the live design medium/i);
+    assert.match(sentPrompt, /HTML and CSS are the only design and rendering medium/i);
     assert.match(sentPrompt, /HTML and CSS are the only design and rendering medium/i);
     assert.match(sentPrompt, /coordinated HTML layers and CSS geometry/i);
     assert.match(sentPrompt, /For Z specifically, preserve a clear top horizontal/i);
