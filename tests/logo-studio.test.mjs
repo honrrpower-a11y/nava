@@ -398,6 +398,7 @@ test("PNG export rasterizes the rendered HTML/CSS DOM without SVG foreignObject 
   assert.match(exporter, /useCORS:false/);
   assert.match(exporter, /foreignObjectRendering:false/);
   assert.ok(exporter.includes("canvas.toBlob"));
+  assert.ok(exporter.includes("getImageData"), "empty raster output must be rejected instead of downloaded as a blank PNG");
   assert.ok(!exporter.includes("<foreignObject") && !exporter.includes("image.src"));
   assert.ok(source.includes("global.NavaLogoRenderer={buildSvg,downloadBlob,exportPng,exportPngFromFrame}"));
 });
@@ -418,5 +419,7 @@ test("Logo Studio mounts each card before assigning iframe srcdoc", () => {
   assert.ok(source.includes('card.querySelector("iframe.logo-html-css-preview")'));
   assert.ok(source.includes("frame.srcdoc = frame.__navaDocumentHtml;"));
   assert.ok(source.indexOf("results.appendChild(card);") < source.indexOf("frame.srcdoc = frame.__navaDocumentHtml;"), "the card must be in the live document before iframe layout starts");
-  assert.ok(source.includes('frame.style.minHeight = "0";'), "the iframe must use the square aspect-ratio parent without a conflicting minimum height");
+  assert.ok(source.includes("previewBox.getBoundingClientRect().width"), "the square artboard width must be measured after mounting");
+  assert.ok(source.includes("previewBox.style.height = Math.round(previewWidth) + \"px\""), "the artboard must receive an explicit square height before srcdoc initializes");
+  assert.ok(source.includes("frame.getBoundingClientRect();"), "iframe geometry must be flushed before srcdoc initializes");
 });
