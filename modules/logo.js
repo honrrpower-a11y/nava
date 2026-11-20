@@ -180,20 +180,6 @@ function validateVisualAnchorMap(html, css, item, conceptIndex, format) {
   return { visualAnchors, anchorMap };
 }
 
-function conceptsAreNearDuplicates(left, right) {") + "(?=[\\\\s.:#\\\\[,{>\\\\{])");
-      if (!appearsInsideSymbol || !selectorPattern.test(css)) continue;
-      mapped.add(entry.anchorId);
-    }
-    if (mapped.size !== visualAnchors.length) {
-      const missing = visualAnchors.filter(anchor => !mapped.has(anchor.id)).map(anchor => anchor.description).join("، ");
-      throw validationError("LOGO_VISUAL_ANCHOR_MAP_INVALID",
-        "بخش‌هایی از ایده بریف به لایه واقعی و استایل‌شده داخل نشان وصل نشده‌اند: " + missing + ".",
-        "visual-anchor-map", conceptIndex);
-    }
-  }
-  return { visualAnchors, anchorMap };
-}
-
 function conceptsAreNearDuplicates(left, right) {
   return textSimilarity(left.centralThesis, right.centralThesis) >= 0.76 &&
     textSimilarity(left.symbolConstruction, right.symbolConstruction) >= 0.76;
