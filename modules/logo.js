@@ -339,7 +339,7 @@ async function designLogos(data, apiKey) {
       const finalHtml = html
         .replace(/\{\{BRAND_NAME\}\}/g, '<span data-logo-role="brand">' + escapeHtml(data.brandName) + "</span>")
         .replace(/\{\{SLOGAN\}\}/g, '<span data-logo-role="slogan">' + escapeHtml(data.slogan) + "</span>");
-      const usesInlineVector = /<svg\\b/i.test(finalHtml);
+      const usesInlineVector = /<svg\b/i.test(finalHtml);
       if (data.format !== "wordmark") validateSymbolStructure(finalHtml, css, index + 1);
       const traceability = validateConceptTraceability(item, index + 1);
       const brandFallbackCss = '.navi-brand-lockup{display:flex;justify-content:center;align-items:center;width:100%;margin-top:28px;padding:12px 8px;text-align:center;color:var(--logo-primary);font-family:inherit;font-size:clamp(36px,8vw,76px);font-weight:900;line-height:1.25;direction:auto;unicode-bidi:plaintext}';
