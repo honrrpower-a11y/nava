@@ -196,13 +196,63 @@ test("NAVI CSS cannot load remote resources or execute injected markup", async (
     });
     const result = await response.json();
     assert.equal(response.status, 502);
-    assert.equal(result.code, "LOGO_VALIDATION_FAILED");
+    assert.equal(result.code, "LOGO_CSS_UNSAFE");
     assert.equal(db.visitorUsed, 0);
   } finally {
     globalThis.fetch = originalFetch;
   }
 });
 
+
+
+test("NAVI identifies a missing brand placeholder and refunds the trial", async () => {
+  const originalFetch = globalThis.fetch;
+  const db = new FakeD1();
+  const invalid = makeDesign();
+  invalid.concepts[1].html = invalid.concepts[1].html.replace("{{BRAND_NAME}}", "brand");
+  globalThis.fetch = async () => makeGeminiResponse(invalid);
+  try {
+    const response = await handleLogoRoute({
+      request: makeRequest(),
+      env: { NAVA_DB: db, NAVI_SESSION_SECRET: "test-secret-key", GEMINI_API_KEY: "test-gemini-key" },
+      origin: ORIGIN,
+      corsOrigin: ORIGIN
+    });
+    const result = await response.json();
+    assert.equal(response.status, 502);
+    assert.equal(result.code, "LOGO_BRAND_NAME_MISSING");
+    assert.match(result.error, /نام برند/);
+    assert.equal(db.visitorUsed, 0);
+    assert.equal([...db.reservations.values()][0].status, "refunded");
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test("NAVI identifies structurally incomplete logo concepts and refunds the trial", async () => {
+  const originalFetch = globalThis.fetch;
+  const db = new FakeD1();
+  const invalid = makeDesign();
+  invalid.concepts[2].html = '<div><strong>{{BRAND_NAME}}</strong><small>{{SLOGAN}}</small></div>';
+  invalid.concepts[2].css = '.logo-art-root{color:var(--logo-primary)}';
+  globalThis.fetch = async () => makeGeminiResponse(invalid);
+  try {
+    const response = await handleLogoRoute({
+      request: makeRequest(),
+      env: { NAVA_DB: db, NAVI_SESSION_SECRET: "test-secret-key", GEMINI_API_KEY: "test-gemini-key" },
+      origin: ORIGIN,
+      corsOrigin: ORIGIN
+    });
+    const result = await response.json();
+    assert.equal(response.status, 502);
+    assert.equal(result.code, "LOGO_CONCEPT_TOO_SIMPLE");
+    assert.match(result.error, /جزئیات و ساختار بصری/);
+    assert.equal(db.visitorUsed, 0);
+    assert.equal([...db.reservations.values()][0].status, "refunded");
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
 
 test("native logo renderer passes syntax checks and blocks lossy foreignObject exports", () => {
   const source = readFileSync(new URL("../logo-renderer.js", import.meta.url), "utf8");

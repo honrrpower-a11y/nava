@@ -60,6 +60,14 @@ const CANONICAL_ATTRIBUTES = {
   lengthadjust: "lengthAdjust"
 };
 
+function validationError(code, message, stage, conceptIndex = null) {
+  const error = new Error(message);
+  error.diagnosticCode = code;
+  error.validationStage = stage;
+  error.conceptIndex = conceptIndex;
+  return error;
+}
+
 function sanitizeHtmlFragment(value) {
   let html = String(value || "").slice(0, 10000);
   html = html.replace(/<!--[\s\S]*?-->/g, "");
@@ -91,19 +99,19 @@ function sanitizeHtmlFragment(value) {
 function sanitizeCss(value) {
   let css = String(value || "").slice(0, 16000);
   if (/[<>]|expression\s*\(|javascript:|behavior\s*:|-moz-binding|url\s*\((?!\s*#[a-zA-Z_][\w:.-]*\s*\))/i.test(css)) {
-    throw new Error("NAVI CSS included a blocked external or executable resource.");
+    throw validationError("LOGO_CSS_UNSAFE", "CSS contains a blocked external or executable resource.", "css-safety");
   }
   css = css.replace(/\/\*[\s\S]*?\*\//g, "");
   const keyframes = [];
   css = css.replace(/@keyframes\s+([a-zA-Z_][\w-]*)\s*\{((?:[^{}]|\{[^{}]*\})*)\}/gi, (_match, name, body) => {
     if (!/^[-_a-zA-Z][\w-]*$/.test(name) || /[<>@]/.test(body)) {
-      throw new Error("NAVI CSS included an invalid animation definition.");
+      throw validationError("LOGO_CSS_UNSUPPORTED", "CSS animation definition is not supported.", "css-compatibility");
     }
     keyframes.push("@keyframes " + name + " {" + body + "}");
     return "";
   });
   if (/@/.test(css)) {
-    throw new Error("NAVI CSS included an unsupported at-rule.");
+    throw validationError("LOGO_CSS_UNSUPPORTED", "CSS contains an unsupported at-rule.", "css-compatibility");
   }
   return css + (keyframes.length ? "\n" + keyframes.join("\n") : "");
 }
@@ -215,20 +223,34 @@ async function designLogos(data, apiKey) {
       throw error;
     }
     if (!Array.isArray(plan.concepts) || plan.concepts.length !== 3) {
-      throw new Error("NAVI did not return exactly three logo designs.");
+      throw validationError("LOGO_CONCEPT_COUNT", "NAVI did not return exactly three logo designs.", "concept-count");
     }
     const designBriefEnglish = safeText(plan.designBriefEnglish, 1800);
     if (!designBriefEnglish || !safeText(plan.strategy, 500)) {
-      throw new Error("NAVI returned an incomplete design brief.");
+      throw validationError("LOGO_BRIEF_INCOMPLETE", "NAVI returned an incomplete design brief.", "brief");
     }
     const concepts = plan.concepts.map((item, index) => {
-      const html = sanitizeHtmlFragment(item?.html);
-      const css = sanitizeCss(item?.css);
+      let html;
+      let css;
+      try {
+        html = sanitizeHtmlFragment(item?.html);
+      } catch {
+        throw validationError("LOGO_HTML_UNSAFE", "HTML safety validation failed.", "html-safety", index + 1);
+      }
+      try {
+        css = sanitizeCss(item?.css);
+      } catch (error) {
+        if (error?.diagnosticCode) {
+          error.conceptIndex = index + 1;
+          throw error;
+        }
+        throw validationError("LOGO_CSS_UNSAFE", "CSS validation failed.", "css-safety", index + 1);
+      }
       if (!html.includes("{{BRAND_NAME}}")) {
-        throw new Error("Logo concept " + (index + 1) + " is missing the exact brand-name placeholder.");
+        throw validationError("LOGO_BRAND_NAME_MISSING", "Required brand-name placeholder is missing.", "brand-placeholder", index + 1);
       }
       if (data.slogan && !html.includes("{{SLOGAN}}")) {
-        throw new Error("Logo concept " + (index + 1) + " is missing the slogan placeholder.");
+        throw validationError("LOGO_SLOGAN_MISSING", "Required slogan placeholder is missing.", "slogan-placeholder", index + 1);
       }
       const finalHtml = html
         .replace(/\{\{BRAND_NAME\}\}/g, '<span data-logo-role="brand">' + escapeHtml(data.brandName) + "</span>")
@@ -236,7 +258,7 @@ async function designLogos(data, apiKey) {
       const finalCss = css;
       const visualElementCount = (html.match(/</g) || []).length;
       if (html.length < 150 || css.length < 220 || visualElementCount < 5) {
-        throw new Error("Logo concept " + (index + 1) + " is too structurally simple; NAVI must deliver a fully art-directed HTML/CSS composition.");
+        throw validationError("LOGO_CONCEPT_TOO_SIMPLE", "Logo concept does not meet the minimum composition structure.", "composition-completeness", index + 1);
       }
       const title = safeText(item?.title, 100) || "مسیر طراحی " + (index + 1);
       const rationale = safeText(item?.rationale, 420) || "این مسیر بر اساس بریف برند طراحی شده است.";
@@ -249,7 +271,7 @@ async function designLogos(data, apiKey) {
       };
     });
     if (new Set(concepts.map(item => item.title.toLowerCase())).size !== 3) {
-      throw new Error("NAVI returned repeated logo concept titles.");
+      throw validationError("LOGO_CONCEPTS_NOT_DISTINCT", "NAVI returned repeated logo concept titles.", "concept-distinctness");
     }
     return {
       brandCore: safeText(plan.brandCore, 300),
@@ -342,6 +364,8 @@ export async function handleLogoRoute({ request, env, origin, corsOrigin }) {
       httpStatus: error?.httpStatus || null,
       finishReason: error?.finishReason || null,
       outputLength: error?.outputLength || null,
+      validationStage: error?.validationStage || null,
+      conceptIndex: error?.conceptIndex || null,
       message: String(error?.message || error).slice(0, 220)
     }));
     const messages = {
@@ -356,7 +380,16 @@ export async function handleLogoRoute({ request, env, origin, corsOrigin }) {
       MODEL_OUTPUT_BLOCKED: "خروجی طراحی توسط فیلتر ایمنی متوقف شد؛ فرصت آزمایشی آزاد شد.",
       MODEL_FINISH_ERROR: "تولید طرح پیش از تکمیل متوقف شد؛ فرصت آزمایشی آزاد شد.",
       MODEL_API_ERROR: "ارتباط با سرویس طراحی ناموفق بود؛ فرصت آزمایشی آزاد شد.",
-      LOGO_VALIDATION_FAILED: "طرح تولید شد اما از بررسی کیفیت و ایمنی نوا عبور نکرد؛ فرصت آزمایشی آزاد شد."
+      LOGO_VALIDATION_FAILED: "طرح تولید شد اما از بررسی کیفیت و ایمنی نوا عبور نکرد؛ فرصت آزمایشی آزاد شد.",
+      LOGO_CONCEPT_COUNT: "نوا سه مسیر طراحی کامل دریافت نکرد؛ فرصت آزمایشی آزاد شد.",
+      LOGO_BRIEF_INCOMPLETE: "بریف طراحی کامل نشد؛ فرصت آزمایشی آزاد شد.",
+      LOGO_BRAND_NAME_MISSING: "نام برند در یکی از طرح‌ها به‌درستی جای‌گذاری نشده؛ فرصت آزمایشی آزاد شد.",
+      LOGO_SLOGAN_MISSING: "شعار برند در یکی از طرح‌ها به‌درستی جای‌گذاری نشده؛ فرصت آزمایشی آزاد شد.",
+      LOGO_CONCEPT_TOO_SIMPLE: "یکی از طرح‌ها جزئیات و ساختار بصری کافی نداشت؛ فرصت آزمایشی آزاد شد.",
+      LOGO_CONCEPTS_NOT_DISTINCT: "سه مسیر طراحی به‌اندازه کافی با هم تفاوت نداشتند؛ فرصت آزمایشی آزاد شد.",
+      LOGO_CSS_UNSAFE: "کد یکی از طرح‌ها شامل دستور یا منبع غیرمجاز بود؛ فرصت آزمایشی آزاد شد.",
+      LOGO_CSS_UNSUPPORTED: "ساختار فنی یکی از طرح‌ها با پیش‌نمایش امن نوا سازگار نبود؛ فرصت آزمایشی آزاد شد.",
+      LOGO_HTML_UNSAFE: "ساختار HTML یکی از طرح‌ها ایمن نبود؛ فرصت آزمایشی آزاد شد."
     };
     return fail(messages[diagnosticCode] || messages.LOGO_VALIDATION_FAILED, 502, corsOrigin, {
       code: diagnosticCode,
