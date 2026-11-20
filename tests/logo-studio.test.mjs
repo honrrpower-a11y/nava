@@ -281,16 +281,14 @@ test("NAVI identifies structurally incomplete logo concepts and refunds the tria
   }
 });
 
-test("native logo renderer passes syntax checks and blocks lossy foreignObject exports", () => {
+test("logo SVG export preserves the rendered HTML/CSS artboard without lossy primitive reconstruction", () => {
   const source = readFileSync(new URL("../logo-renderer.js", import.meta.url), "utf8");
   assert.doesNotThrow(() => new vm.Script(source));
   assert.ok(source.includes("global.NavaLogoRenderer"));
   assert.ok(source.includes('createElementNS(NS, "foreignObject")'), "SVG export captures the actual HTML/CSS logo artboard instead of redrawing a few supported primitives");
   assert.ok(source.includes("new XMLSerializer().serializeToString"));
   assert.ok(source.includes("new DOMParser().parseFromString"), "serialized SVG is parsed and validated before download");
-  assert.ok(source.includes("Intl.Segmenter"), "text is reconstructed from measured grapheme bounds");
   assert.ok(source.includes("const css = Array.from(doc.querySelectorAll(\"style\"))"), "the final SVG preserves the design stylesheet");
-  assert.ok(source.includes("gradientUnits: " + '"userSpaceOnUse"'));
 });
 
 
