@@ -98,8 +98,12 @@ function makeRequest(body = INPUT) {
 
 function makeGeminiResponse(plan = makeDesign()) {
   for (const concept of plan.concepts || []) {
-    const symbol = String(concept.html || "").match(/<div\b(?=[^>]*class="[^"]*\bnavi-symbol\b[^"]*")(?=[^>]*data-logo-role="symbol")[^>]*>([\s\S]*?)<\/div>/i);
-    const innerClasses = [...(symbol?.[1] || "").matchAll(/class="([^"]+)"/g)]
+    const html = String(concept.html || "");
+    const symbolStart = html.indexOf('class="navi-symbol');
+    const symbolOpenEnd = symbolStart >= 0 ? html.indexOf(">", symbolStart) : -1;
+    const symbolClose = symbolOpenEnd >= 0 ? html.indexOf("</div>", symbolOpenEnd) : -1;
+    const symbolInner = symbolClose >= 0 ? html.slice(symbolOpenEnd + 1, symbolClose) : "";
+    const innerClasses = [...symbolInner.matchAll(/class="([^"]+)"/g)]
       .flatMap(match => match[1].split(/\s+/))
       .filter(name => name && name !== "navi-symbol");
     const styledClasses = [...new Set(innerClasses)].filter(name =>
