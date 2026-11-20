@@ -134,7 +134,7 @@ function validateSymbolStructure(html, css, conceptIndex) {
     .filter(name => name && name !== "navi-symbol");
   const styledLayers = [...new Set(layerClasses)].flatMap(name => {
     const escaped = name.replace(/[.*+?^\${}()|[\]\\]/g, "\\$&");
-    const selector = new RegExp("(?:^|})\\s*\\." + escaped + "(?:\\s|[.:#\\[,{>]|$)[^{]*\\{([^}]*)\\}", "i");
+    const selector = new RegExp("(?:^|})\\s*\\." + escaped + "\\s*\\{([^}]*)\\}", "i");
     const layerRule = css.match(selector);
     if (!layerRule) return [];
     return [{ name, body: layerRule[1] }];
