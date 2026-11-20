@@ -302,7 +302,7 @@ async function designLogos(data, apiKey) {
         (css.match(/\.logo-art-root\s*\{[^}]*\bbackground(?:-image|-color)?\s*:/i) ? 1 : 0);
       // Permit premium flat/geometric identities, but require at least one
       // substantial filled symbol surface in addition to the artboard.
-      if (html.length < 140 || css.length < 650 || visualElementCount < 6 || cssRuleCount < 7 || craftScore < 5 || filledSurfaceRules < 1) {
+      if (html.length < 90 || css.length < 350 || visualElementCount < 4 || cssRuleCount < 4 || craftScore < 3 || filledSurfaceRules < 1) {
         throw validationError("LOGO_CONCEPT_TOO_SIMPLE", "Logo concept does not meet the filled-form, layered-material and composition requirements.", "composition-completeness", index + 1);
       }
       const title = safeText(item?.title, 100) || "مسیر طراحی " + (index + 1);
