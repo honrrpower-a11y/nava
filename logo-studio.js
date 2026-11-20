@@ -187,6 +187,38 @@
     const rationale = document.createElement("p");
     rationale.textContent = concept.rationale || "";
     copy.append(heading, rationale);
+    const strategy = document.createElement("div");
+    strategy.className = "logo-concept-strategy";
+    const strategyRows = [
+      ["منطق شکل‌گیری", concept.mechanism],
+      ["ویژگی متمایز", concept.expressionMove],
+      ["تفاوت این مسیر", concept.differsBy]
+    ];
+    strategyRows.forEach(([label, value]) => {
+      if (!value) return;
+      const line = document.createElement("p");
+      const strong = document.createElement("strong");
+      strong.textContent = label + " · ";
+      line.append(strong, document.createTextNode(value));
+      strategy.append(line);
+    });
+    if (concept.axes && typeof concept.axes === "object") {
+      const axes = Object.entries(concept.axes).slice(0, 4)
+        .map(([label, value]) => label + ": " + value).join("  ·  ");
+      if (axes) {
+        const line = document.createElement("p");
+        line.className = "logo-concept-axes";
+        line.textContent = "جایگاه هویتی: " + axes;
+        strategy.append(line);
+      }
+    }
+    if (Array.isArray(concept.defaultsUsed) && concept.defaultsUsed.length) {
+      const line = document.createElement("p");
+      line.className = "logo-concept-defaults";
+      line.textContent = "انتخاب‌های آشنا با دلیل: " + concept.defaultsUsed.join("؛ ");
+      strategy.append(line);
+    }
+    if (strategy.childElementCount) copy.append(strategy);
 
     const actions = document.createElement("div");
     actions.className = "logo-concept-actions";

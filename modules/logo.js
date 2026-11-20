@@ -139,6 +139,8 @@ async function designLogos(data, apiKey) {
     "PHASE 2 — CATEGORY RESEARCH: identify visual clichés in the stated industry and explicitly avoid them unless transformed into a genuinely ownable idea. Use the reference library as comparative research only: study mark types, geometry, construction, negative space, silhouette and craft; never trace, imitate or reuse an existing trademark. A reference is a craft benchmark, not a template.",
     "PHASE 3 — WORD MAP: map the brand name, offer, promise and adjectives to nouns, verbs, metaphors, opposites, spatial relationships and geometric properties. Select intersections that are meaningful and visually distinctive.",
     "PHASE 4 — CONCEPT EXPLORATION: internally explore 8–12 genuinely different one-sentence design theses across at least two appropriate mark types: custom wordmark, letterform/monogram, pictorial, abstract, negative-space, emblem or combination. Score each for idea clarity, distinction, simplicity, relevance and small-size strength. Do not expose private chain-of-thought. For three concepts, return the strongest structurally different routes—not recolors or layout variations. For one, return the single strongest route.",
+    "PHASE 4A — IDENTITY COHESION: choose 2–4 decision axes that matter to this specific brief (for example classic–contemporary, quiet–expressive, technical–human, premium–accessible). Place every concept on those axes using concise labels, and make the three routes visibly different on at least two axes. For each concept write exactly one mechanism sentence explaining how its central idea generates the symbol, typography and color direction together, plus one expression move: the single most distinctive visual decision. The mark, type and palette must feel like one identity, not separately selected decorations.",
+    "PHASE 4B — ANTI-DEFAULT REFLEX: challenge familiar AI/logo defaults for this sector (generic circles/orbits, gradients, gold-on-cream, generic geometric sans, initials inside badges, stock industry icons). At least one concept must avoid the usual defaults entirely. If any concept uses a familiar choice, state the specific reason from the brief in defaultsUsed; otherwise return an empty array. Do not claim a choice is distinctive without explaining what makes it specific to this brand.",
     "PHASE 5 — DESIGN BUILD: for each chosen thesis define the one-sentence idea, recognizable silhouette, geometry, figure/ground, primary mass, supporting forms, optical center, proportions, negative-space gaps, typography and lockup. Start with monochrome shape logic before palette. Make symbol and wordmark share a visual language. A logo identifies; it does not illustrate every service.",
     "PHASE 6 — CRAFT: use deliberate grid logic, clean angles where appropriate, consistent radii/weights, intentional asymmetry, optical overshoot, junction cleanup and balanced spacing. Avoid accidental tangencies, near-miss angles, lumps, tiny details, hairlines and gaps that close when reduced. Do not add 3D, gradients, glow or shadows to rescue a weak concept.",
     "PHASE 7 — TEST AND REFINE: inspect the composition conceptually at full size and at 64, 32, 24 and 16 px; test one-color black on white, reversed white on dark, grayscale and silhouette-only. Check readability, crop safety, contrast, optical balance and accidental readings. Redesign failures. Do not claim an external browser render or pixel test was performed.",
@@ -149,7 +151,7 @@ async function designLogos(data, apiKey) {
     "HTML CONTRACT: output a fragment using only div, span, p, strong, em, small and br. No SVG, scripts, event handlers, style attributes, images, canvas, iframe, links, external fonts, external resources or embedded content. Scope selectors under .logo-art-root.",
     "CSS CONTRACT: output a complete stylesheet for a 1000×1000 artboard. Use original CSS geometry, pseudo-elements, gradients, transforms, clip-path with basic shapes, layered backgrounds and shadows only when useful. Set root layout, dimensions, overflow, direction, colors and typography explicitly. No url(), @import, @font-face, expressions or external resources.",
     "QUALITY GATE: reject generic doodles, crooked lines, stock icons, plain initials in an unmodified font, random ornament, over-complex illustration, weak silhouette, poor wordmark, bad spacing, low contrast or designs that fail at small sizes. Every detail must contribute to recognition, hierarchy, geometry or material.",
-    "OUTPUT: return one valid JSON object only with keys brandCore, designBriefEnglish, strategy, concepts. Return exactly " + conceptCount + " concept object(s), each with Persian title, Persian rationale, html and css. Include no chain-of-thought, markdown or explanation outside JSON. Each HTML fragment under 6500 chars and each CSS stylesheet under 9000 chars."
+    "OUTPUT: return one valid JSON object only with keys brandCore, designBriefEnglish, strategy, concepts. Return exactly " + conceptCount + " concept object(s), each with Persian title, Persian rationale, mechanism, expressionMove, differsBy, axes (a short object of 2–4 axis labels/positions), defaultsUsed (array of brief-grounded reasons, empty when none), html and css. Mechanism, expressionMove and differsBy must be concise Persian text. Include no chain-of-thought, markdown or explanation outside JSON. Each HTML fragment under 6500 chars and each CSS stylesheet under 9000 chars."
   ].join("\n");
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 90000);
@@ -304,6 +306,17 @@ async function designLogos(data, apiKey) {
         id: "navi-html-css-" + (index + 1),
         title,
         rationale,
+        mechanism: safeText(item?.mechanism, 260),
+        expressionMove: safeText(item?.expressionMove, 180),
+        differsBy: safeText(item?.differsBy, 220),
+        axes: item?.axes && typeof item.axes === "object" && !Array.isArray(item.axes)
+          ? Object.fromEntries(Object.entries(item.axes).slice(0, 4).map(([key, value]) => [
+            safeText(key, 48), safeText(value, 64)
+          ]).filter(([key, value]) => key && value))
+          : {},
+        defaultsUsed: Array.isArray(item?.defaultsUsed)
+          ? item.defaultsUsed.slice(0, 4).map(value => safeText(value, 140)).filter(Boolean)
+          : [],
         html: finalHtml,
         css: finalCss
       };
@@ -389,8 +402,8 @@ export async function handleLogoRoute({ request, env, origin, corsOrigin }) {
         extraModelCalls: 0,
         note: "NAVI authored the English design brief and all three HTML/CSS logo designs in one request."
       },
-      concepts: plan.concepts.map(({ id, title, rationale, html, css }) => ({
-        id, title, rationale, html, css
+      concepts: plan.concepts.map(({ id, title, rationale, mechanism, expressionMove, differsBy, axes, defaultsUsed, html, css }) => ({
+        id, title, rationale, mechanism, expressionMove, differsBy, axes, defaultsUsed, html, css
       }))
     }, 200, corsOrigin);
   } catch (error) {
