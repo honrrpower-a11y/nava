@@ -107,18 +107,42 @@ function validateSymbolStructure(html, css, conceptIndex) {
   const body = symbolRule[1];
   const hasWidth = /\bwidth\s*:\s*(?!0(?:px|%|rem)?\b)(?:[1-9]\d*(?:\.\d+)?(?:px|%|rem|cqw)|clamp\()/i.test(body);
   const hasHeight = /\bheight\s*:\s*(?!0(?:px|%|rem)?\b)(?:[1-9]\d*(?:\.\d+)?(?:px|%|rem|cqw)|clamp\()/i.test(body);
-  const hasSolidSurface = /\bbackground(?:-color|-image)?\s*:\s*(?!transparent\b|none\b)[^;]+/i.test(body);
+  const inlineVector = /<svg\b/i.test(symbol[1]);
+  const vectorElements = inlineVector
+    ? [...symbol[1].matchAll(/<(path|polygon|rect|circle|ellipse|polyline|line)\b([^>]*)>/gi)]
+    : [];
+  const vectorHasGeometry = !inlineVector || (
+    /<path\b[^>]*\bd\s*=\s*["'][^"']{12,}["']/i.test(symbol[1]) ||
+    vectorElements.length >= 2
+  );
+  // Filled SVG contours are real symbol surfaces; do not require duplicate CSS paint.
+  const vectorHasFilledSurface = inlineVector && vectorElements.some(([, tag, attrs]) =>
+    !/^(?:line|polyline)$/i.test(tag) &&
+    !/\bfill\s*=\s*["'](?:none|transparent)["']/i.test(attrs) &&
+    !/\bopacity\s*=\s*["']0(?:\.0+)?["']/i.test(attrs)
+  );
+  const vectorHasClosedShape = inlineVector && vectorElements.some(([, tag, attrs]) =>
+    /^(?:polygon|rect|circle|ellipse)$/i.test(tag) ||
+    (/^path$/i.test(tag) && /\bd\s*=\s*["'][^"']*\bz\s*["']/i.test(attrs))
+  );
+  const hasSolidSurface =
+    /\bbackground(?:-color|-image)?\s*:\s*(?!transparent\b|none\b)[^;]+/i.test(body) ||
+    (vectorHasFilledSurface && vectorHasGeometry);
   const radius = body.match(/\bborder-radius\s*:\s*([^;]+)/i)?.[1]?.trim() || "";
   const hasShape = Boolean(/\bclip-path\s*:\s*[^;]+/i.test(body)) ||
-    Boolean(radius && !/^0(?:px|%|rem)?(?:\s|$)/i.test(radius));
+    Boolean(radius && !/^0(?:px|%|rem)?(?:\s|$)/i.test(radius)) ||
+    (vectorHasClosedShape && vectorHasFilledSurface);
   const widthPx = Number(body.match(/\bwidth\s*:\s*([\d.]+)px/i)?.[1] || 0);
   const heightPx = Number(body.match(/\bheight\s*:\s*([\d.]+)px/i)?.[1] || 0);
   const proportionsAreUsable = !(widthPx > 0 && heightPx > 0) || heightPx / widthPx >= 0.22;
-  const hasConstructionDetail = /\.navi-symbol__detail\s*\{|\.navi-symbol::(?:before|after)\s*\{/i.test(css) ||
-    /<(?:span|em|i|svg|path|g|polygon|rect|circle|ellipse)\b/i.test(symbol[1]);
-  const inlineVector = /<svg\b/i.test(symbol[1]);
-  const vectorHasGeometry = !inlineVector || (/<path\b[^>]*\bd\s*=\s*["'][^"']{12,}["']/i.test(symbol[1]) ||
-    (symbol[1].match(/<(?:path|polygon|rect|circle|ellipse|line|polyline)\b/gi) || []).length >= 2);
+  const vectorHasInternalConstruction = vectorElements.length >= 2 ||
+    [...symbol[1].matchAll(/\bd\s*=\s*["']([^"']+)["']/gi)].some(([, d]) =>
+      (d.match(/\bM\s*[-\d.]/gi) || []).length >= 2 && d.length >= 48
+    );
+  const hasConstructionDetail =
+    /\.navi-symbol__detail\s*\{|\.navi-symbol::(?:before|after)\s*\{/i.test(css) ||
+    (/<(?:span|em|i|svg|path|g|polygon|rect|circle|ellipse)\b/i.test(symbol[1]) &&
+      (!inlineVector || (vectorHasGeometry && vectorHasInternalConstruction)));
   if (!hasWidth || !hasHeight || !hasSolidSurface || !hasShape || !proportionsAreUsable || !hasConstructionDetail || !vectorHasGeometry) {
     throw validationError("LOGO_SYMBOL_UNDERBUILT", "نشان لوگو بیش از حد ساده یا خطی است؛ باید سطح هندسی، فرم مشخص و جزئیات سازنده داشته باشد.", "symbol-craft", conceptIndex);
   }
