@@ -68,8 +68,6 @@
       "*,*::before,*::after{box-sizing:border-box}",
       ".logo-art-root{width:100%;height:100%;min-height:100%;position:relative;overflow:hidden;--logo-primary:" + data.primaryColor + ";--logo-background:" + data.darkColor + ";}",
       concept.css,
-      "/* Logo artwork is delivered on a transparent artboard, not a full-page navy poster. */",
-      ".logo-art-root{background-color:transparent!important;background-image:none!important;}",
       "</style></head><body><main class=\"logo-art-root\">",
       concept.html,
       "</main></body></html>"
@@ -295,7 +293,7 @@
     customColors.hidden = false;
     syncLiveEdits();
 
-    const designPrompt = "A minimalist, elegant vector logo for a modern music and art brand named 'Awaye Nava'. The symbol is a creative, fluid abstract wave intertwined with a sleek, solid musical note, symbolizing fresh acoustic sound. Clean lines, sophisticated deep navy blue and matte gold color palette, balanced composition, high-end branding style, flat vector art on a clean white background --no realistic details, complex gradients, or clutter";
+    const designPrompt = "Create a premium, ownable identity for Awaye Nava, a modern music and art label. Core concept: one substantial, sculptural sound-form in which a flowing wave and a musical note become ONE unified filled silhouette through a deliberate carved negative-space cut. The symbol must have a broad, closed visual mass and a memorable outer contour; build it from several purposeful HTML/CSS layers with controlled depth, a warm matte-gold body, refined dimensional highlights and subtle shadow. Pair it with a carefully typeset Awaye Nava wordmark in deep navy, optically balanced and clearly legible. White artboard, navy and gold palette. The mark must look like a finished professional brand identity at thumbnail size, not an illustration. ABSOLUTELY AVOID: thin line-art, open arcs, detached dots, two strokes, generic circles/orbits, default music-note clip art, tiny symbol, oversized empty space, low-contrast text, and generic geometric doodles.";
     const button = $("logoNoQuotaDiagnostic");
     if (button) button.disabled = true;
     try {
