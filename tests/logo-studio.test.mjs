@@ -392,7 +392,9 @@ test("PNG export rasterizes the rendered HTML/CSS DOM without SVG foreignObject 
   const end = source.indexOf("global.NavaLogoRenderer=", start);
   const exporter = source.slice(start, end);
   assert.ok(start >= 0 && end > start);
-  assert.ok(exporter.includes("global.html2canvas(root"));
+  assert.ok(exporter.includes("copyComputedTree(root,document)"), "iframe computed styles and pseudo-elements must be copied into the parent document");
+  assert.ok(exporter.includes("global.html2canvas(stage"), "rasterization must target a same-document staging tree, not the iframe document");
+  assert.ok(source.includes("appendPseudo(\"::before\")") && source.includes("appendPseudo(\"::after\")"));
   assert.match(exporter, /allowTaint:false/);
   assert.match(exporter, /useCORS:false/);
   assert.match(exporter, /foreignObjectRendering:false/);
