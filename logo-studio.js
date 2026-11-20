@@ -24,10 +24,18 @@
   };
   const safeName = value => String(value || "nava-logo")
     .trim().replace(/[^\p{L}\p{N}-]+/gu, "-").replace(/^-+|-+$/g, "") || "nava-logo";
+  const isLightCanvas = hex => {
+    const value = /^#([0-9a-f]{6})$/i.exec(hex || "");
+    if (!value) return false;
+    const channels = [0, 2, 4].map(i => parseInt(value[1].slice(i, i + 2), 16) / 255);
+    const linear = channels.map(v => v <= 0.04045 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4));
+    return 0.2126 * linear[0] + 0.7152 * linear[1] + 0.0722 * linear[2] >= 0.68;
+  };
 
   function readBrief() {
     const option = fields.palette.selectedOptions[0];
     const custom = fields.palette.value === "custom";
+    const requestedCanvas = custom ? fields.background.value : (option?.dataset.background || "#FFFFFF");
     return {
       brandName: fields.name.value.trim(),
       slogan: fields.slogan.value.trim(),
@@ -42,7 +50,7 @@
       formatLabel: fields.format.selectedOptions[0]?.textContent.trim() || "",
       palette: palettes[fields.palette.value] || fields.palette.value,
       primaryColor: custom ? fields.primary.value : (option?.dataset.foreground || "#22252B"),
-      darkColor: custom ? fields.background.value : (option?.dataset.background || "#FFFFFF")
+      darkColor: isLightCanvas(requestedCanvas) ? requestedCanvas : "#FFFFFF"
     };
   }
 
