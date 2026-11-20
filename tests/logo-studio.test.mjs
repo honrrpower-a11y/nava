@@ -708,3 +708,53 @@ test("NAVI correctly validates symbol layers nested inside multiple DIV wrappers
     globalThis.fetch = originalFetch;
   }
 });
+
+
+test("NAVI quality gate accepts responsive min/max dimensions while requiring a styled construction layer", async () => {
+  const originalFetch = globalThis.fetch;
+  const db = new FakeD1();
+  const responsive = makeDesign();
+  responsive.concepts[0].css = responsive.concepts[0].css
+    .replace("width:260px;height:260px", "width:min(72cqw, 320px);height:max(56cqw, 240px)");
+  globalThis.fetch = async () => makeGeminiResponse(responsive);
+  try {
+    const response = await handleLogoRoute({
+      request: makeRequest(),
+      env: { NAVA_DB: db, NAVI_SESSION_SECRET: "test-secret-key", GEMINI_API_KEY: "test-gemini-key" },
+      origin: ORIGIN,
+      corsOrigin: ORIGIN
+    });
+    const result = await response.json();
+    assert.equal(response.status, 200, JSON.stringify(result));
+    assert.equal(result.success, true);
+    assert.ok(result.concepts.some(concept => concept.title === "موج پیوند"));
+    assert.equal(db.visitorUsed, 1);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test("NAVI quality gate does not count an empty named layer as geometric construction", async () => {
+  const originalFetch = globalThis.fetch;
+  const db = new FakeD1();
+  const weak = makeDesign();
+  weak.concepts[0].css = weak.concepts[0].css.replace(
+    ".wave{display:block;width:150px;height:60px;border:8px solid var(--logo-primary);border-radius:50%}",
+    ".wave{display:block}"
+  );
+  globalThis.fetch = async () => makeGeminiResponse(weak);
+  try {
+    const response = await handleLogoRoute({
+      request: makeRequest(),
+      env: { NAVA_DB: db, NAVI_SESSION_SECRET: "test-secret-key", GEMINI_API_KEY: "test-gemini-key" },
+      origin: ORIGIN,
+      corsOrigin: ORIGIN
+    });
+    const result = await response.json();
+    assert.equal(response.status, 200);
+    assert.equal(result.success, true);
+    assert.ok(result.rejectedConcepts.some(item => item.index === 1 && item.code === "LOGO_SYMBOL_UNDERBUILT"));
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
