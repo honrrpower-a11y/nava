@@ -22,7 +22,6 @@
   function updateIdeaMode() {
     const custom = getIdeaMode() === "custom";
     fields.ideaPromptWrap.hidden = !custom;
-    if (!custom) fields.ideaPrompt.value = "";
   }
   let frames = [];
   let selectedConcept = "";
