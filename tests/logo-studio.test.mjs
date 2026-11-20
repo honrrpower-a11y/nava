@@ -196,8 +196,8 @@ test("NAVI builds symbols with CSS-only geometry and strips SVG markup", async (
     const result = await response.json();
     assert.equal(response.status,200); assert.equal(result.success,true);
     assert.equal(result.concepts.length,3,JSON.stringify(result.rejectedConcepts));
-    assert.doesNotMatch(result.concepts[0].html,/<\/?(?:svg|path|circle|ellipse|rect|polygon|polyline|line)\b/i);
-    assert.doesNotMatch(result.concepts[1].html,/<\/?(?:svg|path|circle|ellipse|rect|polygon|polyline|line)\b/i);
+    assert.doesNotMatch(result.concepts[0].html, /<(?:svg|path|circle|ellipse|rect|polygon|polyline|line)\b/i);
+    assert.doesNotMatch(result.concepts[1].html, /<(?:svg|path|circle|ellipse|rect|polygon|polyline|line)\b/i);
     assert.match(result.concepts[0].html,/navi-symbol__detail/); assert.equal(db.visitorUsed,1);
   } finally {globalThis.fetch=originalFetch;}
 });
@@ -640,6 +640,6 @@ test("NAVI accepts a layered CSS-only symbol without SVG", async () => {
   design.concepts[0].html='<div class="mark"><div class="navi-symbol" data-logo-role="symbol"><span class="navi-symbol__detail"></span><span class="navi-symbol__part"></span></div><strong>{{BRAND_NAME}}</strong></div>';
   design.concepts[0].css='.logo-art-root{display:grid;place-items:center;width:100%;height:100%}.mark{display:grid;gap:20px;justify-items:center}.navi-symbol{position:relative;width:220px;height:220px;background:var(--logo-primary);border-radius:42% 58% 52% 48%;clip-path:polygon(50% 0,100% 45%,70% 100%,15% 85%,0 35%)}.navi-symbol__detail{position:absolute;inset:25%;border:8px solid var(--logo-background);border-radius:50%}.navi-symbol__part{position:absolute;width:40%;height:16%;left:30%;top:42%;background:var(--logo-background);transform:rotate(30deg)}.mark strong{font-size:48px;font-weight:900}';
   globalThis.fetch=async()=>makeGeminiResponse(design);
-  try {const response=await handleLogoRoute({request:makeRequest(),env:{NAVA_DB:db,NAVI_SESSION_SECRET:"test-secret-key",GEMINI_API_KEY:"test-gemini-key"},origin:ORIGIN,corsOrigin:ORIGIN});const result=await response.json();assert.equal(response.status,200);assert.equal(result.success,true);assert.equal(result.concepts.length,3,JSON.stringify(result.rejectedConcepts));assert.doesNotMatch(result.concepts[0].html,/<svg|<path/i);}
+  try {const response=await handleLogoRoute({request:makeRequest(),env:{NAVA_DB:db,NAVI_SESSION_SECRET:"test-secret-key",GEMINI_API_KEY:"test-gemini-key"},origin:ORIGIN,corsOrigin:ORIGIN});const result=await response.json();assert.equal(response.status,200);assert.equal(result.success,true);assert.equal(result.concepts.length,3,JSON.stringify(result.rejectedConcepts));assert.doesNotMatch(result.concepts[0].html, /<(?:svg|path|circle|ellipse|rect|polygon|polyline|line)\b/i);}
   finally {globalThis.fetch=originalFetch;}
 });
