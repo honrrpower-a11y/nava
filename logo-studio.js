@@ -290,7 +290,13 @@
     syncLiveEdits();
 
     const designPrompt = "A minimalist, elegant vector logo for a modern music and art brand named 'Awaye Nava'. The symbol is a creative, fluid abstract wave intertwined with a sleek, solid musical note, symbolizing fresh acoustic sound. Clean lines, sophisticated deep navy blue and matte gold color palette, balanced composition, high-end branding style, flat vector art on a clean white background --no realistic details, complex gradients, or clutter";
-    await requestLogoDesign({ singleConcept: true, designPrompt });
+    const button = $("logoNoQuotaDiagnostic");
+    if (button) button.disabled = true;
+    try {
+      await requestLogoDesign({ singleConcept: true, designPrompt });
+    } finally {
+      if (button) button.disabled = false;
+    }
   }
 
   fields.palette.addEventListener("change", () => {
