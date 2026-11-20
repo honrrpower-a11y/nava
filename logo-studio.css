@@ -185,6 +185,13 @@ body.light .logo-html-css-card .logo-concept-preview {
 }
 .logo-html-css-card iframe.logo-html-css-preview {
   position: absolute;
+  z-index: 1;
+  visibility: visible;
+  opacity: 1;
+  pointer-events: none;
+  isolation: isolate;
+  contain: strict;
+  will-change: transform;
   inset: 0;
   display: block;
   width: 100%;
