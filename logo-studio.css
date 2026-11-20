@@ -181,6 +181,7 @@ body.light .logo-html-css-card .logo-concept-preview {
   min-height: 0;
   overflow: hidden;
   background: var(--panel);
+  /* JS writes an explicit square height after mounting for older WebViews. */
 }
 .logo-html-css-card iframe.logo-html-css-preview {
   position: absolute;
