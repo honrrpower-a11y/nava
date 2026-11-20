@@ -137,6 +137,8 @@ test("NAVI writes an English brief and three sanitized HTML/CSS logo designs in 
     assert.match(sentPrompt, /HTML and CSS are the live design medium/i);
     assert.match(sentPrompt, /SVG is permitted only as a later export format/i);
     assert.match(sentPrompt, /artboard\/canvas background must be white or a light neutral/i);
+    assert.match(sentPrompt, /Never assign the root a fixed 1000px width or height/i);
+    assert.match(sentPrompt, /320×320 mobile preview/i);
     assert.match(sentPrompt, /Navy or blue may still be used as an intentional brand-mark/i);
     assert.match(sentPrompt, /{{BRAND_NAME}}/i);
     assert.match(sentPrompt, /one valid JSON object/i);
@@ -428,6 +430,8 @@ test("Logo Studio waits for a measurable sandboxed preview before PNG export", (
 test("Logo Studio builds a new card and a sandboxed HTML/CSS preview for every concept", () => {
   const source = readFileSync(new URL("../logo-studio.js", import.meta.url), "utf8");
   assert.ok(source.includes("function previewDocument(concept, brief)"));
+  assert.ok(source.includes("container-type:size!important"), "the logo artboard must scale to the mobile preview viewport");
+  assert.ok(source.includes("max-width:100%!important;max-height:100%!important"), "preview and HTML export must not crop a fixed-size artboard");
   assert.ok(source.includes("function makeFrame(concept, brief)"));
   assert.ok(source.includes("frame.__navaMarkup = previewDocument(concept, brief)"));
   assert.ok(source.includes("frame.srcdoc = frame.__navaMarkup"));

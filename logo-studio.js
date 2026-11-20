@@ -65,6 +65,8 @@
       "<style>html,body{margin:0;width:100%;height:100%;overflow:hidden;background:transparent}*,*::before,*::after{box-sizing:border-box}",
       ".logo-art-root{position:relative;width:100%;height:100%;min-height:100%;overflow:hidden;--logo-primary:" + primary + ";--logo-background:" + background + ";}",
       concept.css,
+      // Keep the model's 1000×1000 design grid responsive inside phone-sized previews and exports.
+      ".logo-art-root{width:100%!important;height:100%!important;min-width:0!important;min-height:0!important;max-width:100%!important;max-height:100%!important;position:relative!important;overflow:hidden!important;box-sizing:border-box!important;container-type:size!important;}",
       "</style></head><body><main class=\"logo-art-root\">", concept.html, "</main></body></html>"
     ].join("");
   }
