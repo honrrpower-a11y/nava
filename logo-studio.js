@@ -9,13 +9,20 @@
     audience: $("logoAudience"), symbolIdea: $("logoSymbolIdea"),
     typography: $("logoTypography"), personality: $("logoPersonality"),
     format: $("logoFormat"), palette: $("logoPalette"),
-    primary: $("logoPrimaryColor"), background: $("logoDarkColor")
+    primary: $("logoPrimaryColor"), background: $("logoDarkColor"),
+    ideaPrompt: $("logoIdeaPrompt"), ideaPromptWrap: $("logoIdeaPromptWrap")
   };
   const results = $("logoConceptResults");
   const status = $("logoStudioStatus");
   const empty = $("logoStudioEmpty");
   const customColors = $("logoCustomColors");
   const submit = form.querySelector('button[type="submit"]');
+  const ideaModeInputs = Array.from(form.querySelectorAll('input[name="logoIdeaMode"]'));
+  const getIdeaMode = () => ideaModeInputs.find(input => input.checked)?.value === "custom" ? "custom" : "navi";
+  function updateIdeaMode() {
+    const custom = getIdeaMode() === "custom";
+    fields.ideaPromptWrap.hidden = !custom;
+  }
   let frames = [];
   let selectedConcept = "";
 
@@ -39,6 +46,8 @@
     const requestedCanvas = custom ? fields.background.value : (option?.dataset.background || "#FFFFFF");
     return {
       brandName: fields.name.value.trim(),
+      designMode: getIdeaMode(),
+      designPrompt: getIdeaMode() === "custom" ? fields.ideaPrompt.value.trim() : "",
       slogan: fields.slogan.value.trim(),
       industry: fields.industry.value.trim(),
       audience: fields.audience.value.trim(),
@@ -107,9 +116,12 @@
     const panel = document.createElement("section");
     panel.className = "logo-design-brief";
     const title = document.createElement("h3");
-    title.textContent = "جهت‌گیری طراحی";
+    title.textContent = "ایده و جهت‌گیری طراحی";
     const core = document.createElement("p");
     core.textContent = planning.brandCore || "";
+    const idea = document.createElement("p");
+    idea.className = "logo-design-idea";
+    idea.textContent = planning.designIdea || "";
     const strategy = document.createElement("p");
     strategy.textContent = planning.strategy || "";
     const details = document.createElement("details");
@@ -120,7 +132,11 @@
     brief.lang = "en";
     brief.textContent = planning.designBriefEnglish || "";
     details.append(summary, brief);
-    panel.append(title, core, strategy, details);
+    panel.append(title);
+    if (idea.textContent) panel.append(idea);
+    if (core.textContent) panel.append(core);
+    if (strategy.textContent) panel.append(strategy);
+    panel.append(details);
     results.append(panel);
   }
 
@@ -322,6 +338,11 @@
       fields.name.focus();
       return;
     }
+    if (brief.designMode === "custom" && !brief.designPrompt) {
+      status.textContent = "ایده یا خواسته طراحی خودت را بنویس؛ یا حالت ایده‌پردازی ناوی را انتخاب کن.";
+      fields.ideaPrompt.focus();
+      return;
+    }
     const { token, visitorId } = getSession();
     const headers = { "Content-Type": "application/json" };
     if (token) headers.Authorization = "Bearer " + token;
@@ -367,6 +388,8 @@
     }
   }
 
+  ideaModeInputs.forEach(input => input.addEventListener("change", updateIdeaMode));
+  updateIdeaMode();
   fields.palette.addEventListener("change", () => {
     customColors.hidden = fields.palette.value !== "custom";
     updatePreviews();
@@ -377,6 +400,7 @@
   });
   form.addEventListener("reset", () => setTimeout(() => {
     customColors.hidden = fields.palette.value !== "custom";
+    updateIdeaMode();
     updatePreviews();
   }, 0));
   form.addEventListener("submit", generate);

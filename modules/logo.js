@@ -138,7 +138,8 @@ async function designLogos(data, apiKey) {
   if (!apiKey) throw new Error("NAVI design service is not configured.");
   const userBrief = {
     brandName: data.brandName,
-    designPrompt: data.designPrompt || "",
+    designMode: data.designMode,
+    designPrompt: data.designMode === "custom" ? data.designPrompt : "",
     slogan: data.slogan || "No slogan supplied",
     industry: data.industry || "Not specified",
     audience: data.audience || "Not specified",
@@ -156,6 +157,9 @@ async function designLogos(data, apiKey) {
   const system = [
     "You are NAVI IDENTITY WORKSHOP: a senior brand strategist and identity designer. Work from the client brief, not from a fixed logo style.",
     "MISSION: design exactly " + conceptCount + " concept(s). HTML and CSS are the live design medium for NAVA. SVG is permitted only as a later export format, never as the concept construction engine. Do not return SVG, raster images, canvas, external assets or prebuilt templates.",
+    data.designMode === "custom"
+      ? "IDEA OWNERSHIP — CLIENT MODE: the client supplied a creative direction. Treat userBrief.designPrompt as the binding creative idea and primary design direction. Preserve its meaning and priorities; do not replace it with an unrelated concept. You may refine it professionally, but never contradict it. Technical safety, legibility and quality requirements remain mandatory."
+      : "IDEA OWNERSHIP — NAVI MODE: the client delegated creative ideation to NAVI. Independently derive a concise, brand-specific creative idea from the name, offer, audience, personality and constraints. Do not ask the client to invent a symbol. Avoid generic first associations; find a meaningful and ownable visual metaphor, then translate it into a coherent mark, wordmark and identity. State this idea briefly in Persian as designIdea.",
     "PHASE 1 — DISCOVERY: extract exact brand name/script, offer, audience, promise, personality, context, competitors if supplied, must-keep meanings, exclusions, use cases and constraints. Separate facts from assumptions. Do not invent brand history or claims.",
     "PHASE 2 — CATEGORY RESEARCH: identify visual clichés in the stated industry and explicitly avoid them unless transformed into a genuinely ownable idea. Use the reference library as comparative research only: study mark types, geometry, construction, negative space, silhouette and craft; never trace, imitate or reuse an existing trademark. A reference is a craft benchmark, not a template.",
     "PHASE 3 — WORD MAP: map the brand name, offer, promise and adjectives to nouns, verbs, metaphors, opposites, spatial relationships and geometric properties. Select intersections that are meaningful and visually distinctive.",
@@ -172,7 +176,7 @@ async function designLogos(data, apiKey) {
     "HTML CONTRACT: output a fragment using only div, span, p, strong, em, small and br. For combination or monogram logos, include exactly one dedicated <div class=\"navi-symbol\" data-logo-role=\"symbol\"> as the central mark, with at least one integrated child detail (class navi-symbol__detail) or a deliberate ::before/::after construction. The symbol must be a substantial filled geometric form, never two loose lines. Include the exact brand wordmark and optional slogan as semantic data-logo-role elements. No SVG, scripts, event handlers, style attributes, images, canvas, iframe, links, external fonts, external resources or embedded content. Scope selectors under .logo-art-root.",
     "CSS CONTRACT: output a complete responsive stylesheet for a square 1000×1000 logical artboard rendered inside a square viewport of any size. The .logo-art-root itself must use width:100%; height:100%; never fixed pixel dimensions. Use container-relative cqw units, percentages and clamp() for geometry and typography; all central elements must stay within the viewport. For combination/monogram formats, style .navi-symbol with explicit nonzero width and height, a visible filled background or gradient, a deliberate silhouette using border-radius or clip-path, and a coherent detail via .navi-symbol__detail or pseudo-elements. A thin border or line alone is not an acceptable symbol. Use original CSS geometry, gradients, transforms, clip-path with basic shapes, layered backgrounds and shadows only when useful. Set root layout, dimensions, overflow, direction, colors and typography explicitly. No url(), @import, @font-face, expressions or external resources.",
     "QUALITY GATE: reject generic doodles, crooked lines, two-line marks, stock icons, plain initials in an unmodified font, random ornament, over-complex illustration, weak silhouette, poor wordmark, bad spacing, low contrast or designs that fail at small sizes. Before returning, verify that the symbol reads as one intentional ownable silhouette at 32px, has a clear filled mass plus integrated detail, and is visually connected to the brand idea. Every detail must contribute to recognition, hierarchy, geometry or material. If any check fails, redesign rather than rationalize the sketch.",
-    "OUTPUT: return one valid JSON object only with keys brandCore, designBriefEnglish, strategy, concepts. Return exactly " + conceptCount + " concept object(s), each with Persian title, Persian rationale, mechanism, expressionMove, differsBy, axes (a short object of 2–4 axis labels/positions), defaultsUsed (array of brief-grounded reasons, empty when none), html and css. Mechanism, expressionMove and differsBy must be concise Persian text. Include no chain-of-thought, markdown or explanation outside JSON. Each HTML fragment under 6500 chars and each CSS stylesheet under 9000 chars."
+    "OUTPUT: return one valid JSON object only with keys brandCore, designIdea, designBriefEnglish, strategy, concepts. designIdea is a concise Persian statement (one or two sentences) of the central creative idea; in client mode it must accurately summarize the client's direction, and in NAVI mode it must express NAVI's own brand-specific idea. Return exactly " + conceptCount + " concept object(s), each with Persian title, Persian rationale, mechanism, expressionMove, differsBy, axes (a short object of 2–4 axis labels/positions), defaultsUsed (array of brief-grounded reasons, empty when none), html and css. Mechanism, expressionMove and differsBy must be concise Persian text. Include no chain-of-thought, markdown or explanation outside JSON. Each HTML fragment under 6500 chars and each CSS stylesheet under 9000 chars."
   ].join("\n");
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 90000);
@@ -373,6 +377,7 @@ async function designLogos(data, apiKey) {
     }
     return {
       brandCore: safeText(plan.brandCore, 300),
+      designIdea: safeText(plan.designIdea, 320) || safeText(plan.brandCore, 300) || safeText(plan.strategy, 320),
       strategy: safeText(plan.strategy, 500),
       designBriefEnglish,
       concepts,
@@ -398,7 +403,8 @@ export async function handleLogoRoute({ request, env, origin, corsOrigin }) {
 
   const data = {
     brandName: safeText(input?.brandName, 48),
-    designPrompt: safeText(input?.designPrompt, 1800),
+    designMode: input?.designMode === "custom" ? "custom" : "navi",
+    designPrompt: input?.designMode === "custom" ? safeText(input?.designPrompt, 1200) : "",
     singleConcept: input?.singleConcept === true,
     slogan: safeText(input?.slogan, 100),
     industry: safeText(input?.industry, 100),
@@ -445,6 +451,7 @@ export async function handleLogoRoute({ request, env, origin, corsOrigin }) {
       planning: {
         method: "navi-english-brief-html-css-design",
         brandCore: plan.brandCore,
+        designIdea: plan.designIdea,
         strategy: plan.strategy,
         designBriefEnglish: plan.designBriefEnglish,
         extraModelCalls: 0,
