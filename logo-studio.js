@@ -55,9 +55,12 @@
     frame.setAttribute("referrerpolicy", "no-referrer");
     frame.setAttribute("loading", "eager");
     frame.style.display = "block";
+    frame.style.position = "relative";
+    frame.style.inset = "auto";
     frame.style.width = "100%";
     frame.style.height = "100%";
     frame.style.minHeight = "0";
+    frame.style.flex = "0 0 100%";
     frame.style.border = "0";
     const documentHtml = [
       "<!doctype html><html lang=\"fa\" dir=\"rtl\"><head>",
