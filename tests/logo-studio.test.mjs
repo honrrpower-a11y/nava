@@ -738,10 +738,10 @@ test("NAVI quality gate does not count an empty named layer as geometric constru
   const originalFetch = globalThis.fetch;
   const db = new FakeD1();
   const weak = makeDesign();
-  weak.concepts[0].css = weak.concepts[0].css.replace(
-    ".wave{display:block;width:150px;height:60px;border:8px solid var(--logo-primary);border-radius:50%}",
-    ".wave{display:block}"
-  );
+  weak.concepts[0].html = weak.concepts[0].html.replace('<span class="orbit"></span>', "");
+  weak.concepts[0].css = weak.concepts[0].css
+    .replace(".wave{display:block;width:150px;height:60px;border:8px solid var(--logo-primary);border-radius:50%}", ".wave{display:block}")
+    .replace(".orbit{display:block;width:190px;height:190px;border:1px solid #5ac9bd;border-radius:50%}", ".orbit{display:block}");
   globalThis.fetch = async () => makeGeminiResponse(weak);
   try {
     const response = await handleLogoRoute({
