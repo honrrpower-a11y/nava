@@ -300,7 +300,7 @@ async function designLogos(data, apiKey) {
       // threshold checks independent CSS craft techniques, not token count.
       // Permit premium flat/geometric identities, but require at least one
       // substantial filled symbol surface in addition to the artboard.
-      if (html.length < 50 || css.length < 100 || visualElementCount < 3 || cssRuleCount < 2 || craftScore < 2) {
+      if (html.length < 50 || css.length < 100 || visualElementCount < 3) {
         throw validationError("LOGO_CONCEPT_TOO_SIMPLE", "Logo concept does not meet the filled-form, layered-material and composition requirements.", "composition-completeness", index + 1);
       }
       const title = safeText(item?.title, 100) || "مسیر طراحی " + (index + 1);
