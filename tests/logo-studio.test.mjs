@@ -402,36 +402,28 @@ test("PNG export rasterizes the rendered HTML/CSS DOM without SVG foreignObject 
   assert.ok(!exporter.includes("<foreignObject") && !exporter.includes("image.src"));
   assert.ok(source.includes("global.NavaLogoRenderer={buildSvg,downloadBlob,exportPng,exportPngFromFrame}"));
 });
-test("Logo Studio waits for iframe preview readiness before allowing exports", () => {
+test("Logo Studio waits for a measurable sandboxed preview before PNG export", () => {
   const source = readFileSync(new URL("../logo-studio.js", import.meta.url), "utf8");
-  assert.ok(source.includes("frame.__navaPreviewReady"));
-  assert.ok(source.includes("visibleContent"), "blank artboards are diagnosed instead of treated as completed previews");
-  assert.ok(source.includes("await waitForPreview(frame)"), "exports must wait for iframe readiness with a bounded timeout");
-  assert.ok(source.includes("while (Date.now() < deadline)"), "readiness must tolerate browser-specific iframe load timing");
-  assert.ok(source.includes('doc.querySelector(".logo-art-root")'), "readiness must verify the actual srcdoc artboard");
-  assert.ok(source.includes("rect.width > 0 && rect.height > 0"), "exports must wait for a measurable artboard");
+  assert.ok(source.includes("async function waitForFrame(frame)"));
+  assert.ok(source.includes("while (Date.now() < deadline)"));
+  assert.ok(source.includes('querySelector(".logo-art-root")'));
+  assert.ok(source.includes("rect.width > 0 && rect.height > 0"));
+  assert.ok(source.includes("await waitForFrame(frame)"));
   assert.ok(source.includes("exportPngFromFrame(frame"));
-  assert.ok(!source.includes("دریافت SVG برداری"));
+  assert.ok(source.includes('frame.setAttribute("sandbox", "allow-same-origin")'));
   assert.ok(!source.includes("downloadSvg("));
 });
 
-test("Logo Studio ignores initial iframe loads until the srcdoc artboard exists", () => {
+test("Logo Studio builds a new card and a sandboxed HTML/CSS preview for every concept", () => {
   const source = readFileSync(new URL("../logo-studio.js", import.meta.url), "utf8");
-  assert.ok(!source.includes('doc.URL === "about:blank"'), "srcdoc readiness must not depend on browser-specific about: URL reporting");
-  assert.ok(source.includes("// is the authoritative readiness signal."), "the actual artboard, not URL text, determines readiness");
-  assert.ok(source.includes('const root = doc && doc.querySelector(".logo-art-root");'));
-  assert.ok(source.includes("if (!root) return;"),
-    "an initial or incomplete iframe load must not resolve readiness without the real artboard");
+  assert.ok(source.includes("function previewDocument(concept, brief)"));
+  assert.ok(source.includes("function makeFrame(concept, brief)"));
+  assert.ok(source.includes("frame.srcdoc = previewDocument(concept, brief)"));
+  assert.ok(source.includes("function conceptCard(concept, index, brief)"));
+  assert.ok(source.includes("results.append(card)"));
+  assert.ok(source.includes("frame.className = \"logo-html-css-preview\""));
+  assert.ok(source.includes("function updatePreviews()"));
+  assert.ok(source.includes('data-logo-role=\"brand\"'));
+  assert.ok(source.includes('data-logo-role=\"slogan\"'));
 });
 
-test("Logo Studio mounts each card before assigning iframe srcdoc", () => {
-  const source = readFileSync(new URL("../logo-studio.js", import.meta.url), "utf8");
-  assert.ok(source.includes("preview.appendChild(frame);"));
-  assert.ok(source.includes("results.appendChild(card);"));
-  assert.ok(source.includes('card.querySelector("iframe.logo-html-css-preview")'));
-  assert.ok(source.includes("frame.srcdoc = frame.__navaDocumentHtml;"));
-  assert.ok(source.indexOf("results.appendChild(card);") < source.indexOf("frame.srcdoc = frame.__navaDocumentHtml;"), "the card must be in the live document before iframe layout starts");
-  assert.ok(source.includes("previewBox.getBoundingClientRect().width"), "the square artboard width must be measured after mounting");
-  assert.ok(source.includes("previewBox.style.height = Math.round(previewWidth) + \"px\""), "the artboard must receive an explicit square height before srcdoc initializes");
-  assert.ok(source.includes("frame.getBoundingClientRect();"), "iframe geometry must be flushed before srcdoc initializes");
-});
