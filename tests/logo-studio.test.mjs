@@ -418,7 +418,9 @@ test("Logo Studio builds a new card and a sandboxed HTML/CSS preview for every c
   const source = readFileSync(new URL("../logo-studio.js", import.meta.url), "utf8");
   assert.ok(source.includes("function previewDocument(concept, brief)"));
   assert.ok(source.includes("function makeFrame(concept, brief)"));
-  assert.ok(source.includes("frame.srcdoc = previewDocument(concept, brief)"));
+  assert.ok(source.includes("frame.__navaMarkup = previewDocument(concept, brief)"));
+  assert.ok(source.includes("frame.srcdoc = frame.__navaMarkup"));
+  assert.ok(source.indexOf("results.append(card)") < source.indexOf("frame.srcdoc = frame.__navaMarkup"), "the preview iframe is initialized only after its card is mounted");
   assert.ok(source.includes("function conceptCard(concept, index, brief)"));
   assert.ok(source.includes("results.append(card)"));
   assert.ok(source.includes("frame.className = \"logo-html-css-preview\""));
