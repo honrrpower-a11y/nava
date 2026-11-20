@@ -57,7 +57,7 @@
     frame.style.display = "block";
     frame.style.width = "100%";
     frame.style.height = "100%";
-    frame.style.minHeight = "320px";
+    frame.style.minHeight = "0";
     frame.style.border = "0";
     const documentHtml = [
       "<!doctype html><html lang=\"fa\" dir=\"rtl\"><head>",
@@ -198,11 +198,8 @@
     activeFrames.push(frame);
     preview.appendChild(frame);
     card.appendChild(preview);
-    // Attach the complete preview container to the live document before loading
-    // srcdoc; a detached iframe may never fire its load event in mobile WebViews.
-    frame.srcdoc = frame.__navaDocumentHtml;
-    delete frame.__navaDocumentHtml;
-
+    // The caller mounts the complete card in #logoConceptResults first, then
+    // assigns srcdoc. This guarantees the iframe has a real square viewport.
     const copy = document.createElement("div");
     copy.className = "logo-concept-copy";
     const title = document.createElement("h3");
@@ -294,7 +291,15 @@
       activeFrames = [];
       if (result.planning) addStrategySummary(result.planning);
       result.concepts.forEach((concept, index) => {
-        results.appendChild(buildCard(concept, index, data));
+        const card = buildCard(concept, index, data);
+        results.appendChild(card);
+        // Do not initialize srcdoc while the card is detached. Mobile browsers
+        // can otherwise lay out the iframe at 0x0 and keep that invalid canvas.
+        const frame = card.querySelector("iframe.logo-html-css-preview");
+        if (frame && frame.__navaDocumentHtml) {
+          frame.srcdoc = frame.__navaDocumentHtml;
+          delete frame.__navaDocumentHtml;
+        }
       });
       empty.hidden = true;
       status.textContent = "سه طرح آماده‌اند. نام، شعار و رنگ‌ها را از فرم تغییر بده تا پیش‌نمایش‌ها زنده به‌روزرسانی شوند؛ سپس PNG باکیفیت بگیر.";
