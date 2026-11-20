@@ -643,7 +643,10 @@
     const outputSize=Math.max(1200,Math.min(3200,Math.round(Number(size)||2400)));
     const stage=document.createElement("div");
     stage.setAttribute("aria-hidden","true");
-    stage.style.cssText="position:fixed;left:-100000px;top:0;width:"+rect.width+"px;height:"+rect.height+"px;overflow:hidden;margin:0;padding:0;pointer-events:none;z-index:-1;background:transparent;";
+    // Keep the temporary capture stage inside the actual viewport. Several
+    // Android WebViews return a transparent canvas when html2canvas is asked
+    // to rasterize a fixed element positioned far outside the viewport.
+    stage.style.cssText="position:fixed;left:0;top:0;width:"+rect.width+"px;height:"+rect.height+"px;overflow:hidden;margin:0;padding:0;pointer-events:none;z-index:2147483647;background:transparent;";
     const clone=copyComputedTree(root,document);
     // Preserve the generated artboard background exactly as seen in the iframe preview.
     clone.style.setProperty("width",rect.width+"px","important");
@@ -657,7 +660,7 @@
     document.body.appendChild(stage);
     let canvas;
     try {
-      canvas=await global.html2canvas(stage,{
+      canvas=await global.html2canvas(clone,{
         backgroundColor:null,
         scale:outputSize/rect.width,
         width:rect.width,
