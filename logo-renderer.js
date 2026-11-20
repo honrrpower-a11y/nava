@@ -538,7 +538,7 @@
     if(!rect.width||!rect.height||Math.abs(rect.width-rect.height)>Math.max(rect.width,rect.height)*0.01) {
       throw new Error("ابعاد بوم پیش‌نمایش برای ساخت PNG معتبر نیست.");
     }
-    const css=Array.from(doc.querySelectorAll("style")).map(style=>style.textContent||"").join("\\n");
+    const css=Array.from(doc.querySelectorAll("style")).map(style=>style.textContent||"").join("\n");
     const escapedCss=css.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
     const scale=1000/rect.width;
     const markup=root.cloneNode(true).outerHTML;
