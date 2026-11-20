@@ -285,7 +285,7 @@ test("quality gate accepts a structured geometric logo without requiring gradien
   }
 });
 
-test("NAVI identifies structurally incomplete logo concepts and refunds the trial", async () => {
+test("NAVI accepts compact but complete logo concepts without brittle visual-count rejection", async () => {
   const originalFetch = globalThis.fetch;
   const db = new FakeD1();
   const invalid = makeDesign();
@@ -300,11 +300,10 @@ test("NAVI identifies structurally incomplete logo concepts and refunds the tria
       corsOrigin: ORIGIN
     });
     const result = await response.json();
-    assert.equal(response.status, 502);
-    assert.equal(result.code, "LOGO_CONCEPT_TOO_SIMPLE");
-    assert.match(result.error, /جزئیات و ساختار بصری/);
-    assert.equal(db.visitorUsed, 0);
-    assert.equal([...db.reservations.values()][0].status, "refunded");
+    assert.equal(response.status, 200);
+    assert.equal(result.success, true);
+    assert.equal(result.concepts.length, 3);
+    assert.equal(db.visitorUsed, 1);
   } finally {
     globalThis.fetch = originalFetch;
   }
