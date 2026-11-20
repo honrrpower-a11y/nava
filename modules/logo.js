@@ -162,6 +162,10 @@ async function designLogos(data, apiKey) {
     .replace("strongest three routes", conceptCount === 1 ? "strongest route" : "strongest three routes")
     .replace("all three", conceptCount === 1 ? "the concept" : "all three")
     .replace("the three routes", conceptCount === 1 ? "the single route" : "the three routes")
+    .replace("The three concepts", conceptCount === 1 ? "The single concept" : "The three concepts")
+    .replace("the three routes structurally and conceptually distinct", conceptCount === 1 ? "the single route structurally complete and conceptually focused" : "the three routes structurally and conceptually distinct")
+    .replace("all three routes meaningfully different", conceptCount === 1 ? "the concept genuinely distinctive" : "all three routes meaningfully different")
+    .replace("Never force the same motif into all three.", conceptCount === 1 ? "Do not force a familiar music cliché when the brief suggests a more original idea." : "Never force the same motif into all three.")
     .replace("three objects", conceptCount === 1 ? "one object" : "three objects");
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 90000);
