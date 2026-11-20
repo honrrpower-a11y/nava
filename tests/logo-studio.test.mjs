@@ -138,7 +138,9 @@ test("NAVI writes an English brief and three sanitized HTML/CSS logo designs in 
     assert.match(sentPrompt, /different central thesis, outer silhouette/i);
     assert.match(sentPrompt, /16 px/i);
     assert.match(sentPrompt, /HTML and CSS are the live design medium/i);
-    assert.match(sentPrompt, /SVG is permitted only as a later export format/i);
+    assert.match(sentPrompt, /embed carefully authored inline SVG geometry inside the HTML symbol wrapper/i);
+    assert.match(sentPrompt, /custom vector contours/i);
+    assert.match(sentPrompt, /For Z specifically, preserve a clear top horizontal/i);
     assert.match(sentPrompt, /artboard\/canvas background must be white or a light neutral/i);
     assert.match(sentPrompt, /Never assign the root a fixed 1000px width or height/i);
     assert.match(sentPrompt, /320×320 mobile preview/i);
@@ -161,7 +163,7 @@ test("NAVI writes an English brief and three sanitized HTML/CSS logo designs in 
     assert.ok(result.concepts.every(item => !Object.prototype.hasOwnProperty.call(item, "svg")));
     assert.ok(result.concepts.every(item => !JSON.stringify(item).includes("foreignObject")));
     assert.ok(result.concepts.every(item => item.html.includes("<div")));
-    assert.ok(result.concepts.every(item => !item.html.toLowerCase().includes("<svg")), "generated concept markup is HTML-only");
+    assert.ok(result.concepts.every(item => !Object.prototype.hasOwnProperty.call(item, "svg")), "SVG is never returned as a separate export field");
     assert.ok(result.concepts.every(item => item.css.length > 0));
     assert.equal(result.concepts[0].centralThesis, "پیوند دو مسیر صوتی به یک نشانه پیوسته و باز تبدیل می‌شود");
     assert.equal(result.concepts[0].symbolConstruction, "دو مسیر منحنی در مرکز به هم می‌رسند و یک شکاف پیوسته در دل فرم می‌سازند");
@@ -175,6 +177,59 @@ test("NAVI writes an English brief and three sanitized HTML/CSS logo designs in 
     assert.ok(result.concepts.every(item => item.html.length >= 90 && item.css.length >= 350), "each concept must contain substantial HTML and CSS");
     assert.ok(result.concepts.every(item => !item.html.includes("<script")));
     assert.equal(db.visitorUsed, 1, "one completed logo batch consumes one guest trial");
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+
+test("NAVI preserves safe inline SVG path geometry inside HTML logo symbols", async () => {
+  const originalFetch = globalThis.fetch;
+  const db = new FakeD1();
+  const vector = makeDesign();
+  vector.concepts[0].html = '<div class="mark"><div class="navi-symbol" data-logo-role="symbol"><svg class="navi-symbol__vector" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"><path d="M30 35 H170 L120 95 L170 165 H30 Z" fill="var(--logo-primary)"/><path d="M70 80 L130 120" stroke="#fff" stroke-width="8"/></svg></div><strong>{{BRAND_NAME}}</strong></div>';
+  vector.concepts[0].css = '.logo-art-root{display:grid;place-items:center;background:var(--logo-background);width:100%;height:100%}.mark{display:grid;gap:20px;justify-items:center}.navi-symbol{width:220px;height:220px;background:var(--logo-background);border-radius:12px}.navi-symbol__vector{display:block;width:100%;height:100%}.mark strong{font-size:48px;font-weight:900}';
+  globalThis.fetch = async () => makeGeminiResponse(vector);
+  try {
+    const response = await handleLogoRoute({
+      request: makeRequest(),
+      env: { NAVA_DB: db, NAVI_SESSION_SECRET: "test-secret-key", GEMINI_API_KEY: "test-gemini-key" },
+      origin: ORIGIN,
+      corsOrigin: ORIGIN
+    });
+    const result = await response.json();
+    assert.equal(response.status, 200);
+    assert.equal(result.success, true);
+    assert.equal(result.concepts.length, 3, JSON.stringify(result.rejectedConcepts));
+    assert.match(result.concepts[0].html, /<svg[^>]*viewBox="0 0 200 200"/i);
+    assert.match(result.concepts[0].html, /<path[^>]*d="M30 35 H170/);
+    assert.doesNotMatch(result.concepts[0].html, /<script|onload=|foreignObject/i);
+    assert.equal(db.visitorUsed, 1);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test("NAVI strips executable SVG elements and event attributes from inline vector markup", async () => {
+  const originalFetch = globalThis.fetch;
+  const db = new FakeD1();
+  const unsafe = makeDesign();
+  unsafe.concepts[0].html = '<div class="mark"><div class="navi-symbol" data-logo-role="symbol"><svg viewBox="0 0 200 200" onload="alert(1)"><path d="M20 20 H180 V180 H20 Z" onclick="alert(1)"/><foreignObject><script>alert(1)</script></foreignObject></svg><span class="navi-symbol__detail"></span></div><strong>{{BRAND_NAME}}</strong></div>';
+  unsafe.concepts[0].css = '.logo-art-root{display:grid;place-items:center;width:100%;height:100%}.mark{display:grid;gap:20px}.navi-symbol{width:220px;height:220px;background:var(--logo-primary);border-radius:18px}.mark strong{font-size:48px}';
+  globalThis.fetch = async () => makeGeminiResponse(unsafe);
+  try {
+    const response = await handleLogoRoute({
+      request: makeRequest(),
+      env: { NAVA_DB: db, NAVI_SESSION_SECRET: "test-secret-key", GEMINI_API_KEY: "test-gemini-key" },
+      origin: ORIGIN,
+      corsOrigin: ORIGIN
+    });
+    const result = await response.json();
+    assert.equal(response.status, 200);
+    assert.equal(result.concepts.length, 3, JSON.stringify(result.rejectedConcepts));
+    assert.doesNotMatch(result.concepts[0].html, /onload=|onclick=|foreignObject|<script/i);
+    assert.match(result.concepts[0].html, /<svg/);
+    assert.match(result.concepts[0].html, /<path/);
   } finally {
     globalThis.fetch = originalFetch;
   }
