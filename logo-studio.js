@@ -112,26 +112,6 @@
     return frame;
   }
 
-  async function createVectorExport(frame, data) {
-    if (!window.NavaLogoRenderer) throw new Error("موتور بازسازی برداری بارگذاری نشده است.");
-    const doc = frame && frame.contentDocument;
-    if (!doc || !doc.head) throw new Error("سند پیش‌نمایش لوگو هنوز آماده نیست.");
-    // Preview motion is intentionally frozen for a faithful, editable static SVG/PNG export.
-    const freezeMotion = doc.createElement("style");
-    freezeMotion.setAttribute("data-nava-export-freeze", "true");
-    freezeMotion.textContent = "*,*::before,*::after{animation:none!important;transition:none!important}";
-    doc.head.appendChild(freezeMotion);
-    try {
-      return await window.NavaLogoRenderer.buildSvg(frame, {
-        brandName: fields.name.value.trim() || data.brandName,
-        width: 1200,
-        height: 1200
-      });
-    } finally {
-      freezeMotion.remove();
-    }
-  }
-
   function showExportFallback(feedback, url, filename) {
     if (!feedback || !url) return;
     const message = document.createElement("span");
@@ -146,48 +126,17 @@
     feedback.replaceChildren(message, link);
   }
 
-  function reportExportWarnings(warnings) {
-    if (warnings && warnings.length) {
-      status.textContent = "خروجی برداری ساخته شد؛ نکته: " + warnings.join(" ");
-    }
-  }
-
-  async function downloadSvg(concept, frame, data, index, feedback) {
-    try {
-      status.textContent = "در حال ثبت خودِ طرح نهایی در فایل SVG...";
-      if (frame.__navaPreviewReady) await frame.__navaPreviewReady;
-      if (frame.__navaPreviewError) throw new Error(frame.__navaPreviewError);
-      const result = await createVectorExport(frame, data);
-      const blob = new Blob([result.svg], { type: "image/svg+xml;charset=utf-8" });
-      const filename = safeFileName(fields.name.value || data.brandName) + "-logo-concept-" + (index + 1) + ".svg";
-      const url = window.NavaLogoRenderer.downloadBlob(blob, filename);
-      showExportFallback(feedback, url, filename);
-      reportExportWarnings(result.warnings);
-      if (!result.warnings.length) status.textContent = "فایل SVG شامل خودِ لوگوی طراحی‌شده آماده شد؛ حرکت CSS در خروجی ثابت نیست.";
-    } catch (error) {
-      const details = error.details && error.details.length ? " " + error.details.join(" ") : "";
-      const message = (error.message || "بازسازی SVG ناموفق بود.") + details;
-      status.textContent = message;
-      if (feedback) feedback.textContent = message;
-    }
-  }
-
   async function downloadPng(concept, frame, data, index, feedback) {
     try {
       status.textContent = "در حال آماده‌سازی تصویر با وضوح ۲۴۰۰ پیکسل...";
       if (frame.__navaPreviewReady) await frame.__navaPreviewReady;
       if (frame.__navaPreviewError) throw new Error(frame.__navaPreviewError);
       const filename = safeFileName(fields.name.value || data.brandName) + "-logo-concept-" + (index + 1) + ".png";
-      let url;
-      try {
-        // PNG preserves the actual browser-rendered HTML/CSS design, including
-        // supported visual effects that cannot be represented as pure SVG paths.
-        url = await window.NavaLogoRenderer.exportPngFromFrame(frame, filename, 2400);
-      } catch (rasterError) {
-        const result = await createVectorExport(frame, data);
-        url = await window.NavaLogoRenderer.exportPng(result.svg, filename, 2400);
-        if (result.warnings.length) reportExportWarnings(result.warnings);
+      if (!window.NavaLogoRenderer || typeof window.NavaLogoRenderer.exportPngFromFrame !== "function") {
+        throw new Error("موتور خروجی مستقیم PNG بارگذاری نشده است.");
       }
+      // PNG is the sole deliverable and captures the browser-rendered HTML/CSS artboard.
+      const url = await window.NavaLogoRenderer.exportPngFromFrame(frame, filename, 2400);
       showExportFallback(feedback, url, filename);
       status.textContent = "فایل PNG با وضوح ۲۴۰۰ پیکسل از پیش‌نمایش واقعی HTML/CSS ساخته شد.";
     } catch (error) {
@@ -270,17 +219,12 @@
 
     const actions = document.createElement("div");
     actions.className = "logo-concept-actions";
-    const svgButton = document.createElement("button");
-    svgButton.type = "button";
-    svgButton.className = "btn-primary";
-    svgButton.textContent = "دریافت SVG برداری";
-    svgButton.addEventListener("click", () => downloadSvg(concept, frame, data, index, feedback));
     const pngButton = document.createElement("button");
     pngButton.type = "button";
-    pngButton.className = "btn-secondary";
+    pngButton.className = "btn-primary";
     pngButton.textContent = "دریافت PNG باکیفیت";
     pngButton.addEventListener("click", () => downloadPng(concept, frame, data, index, feedback));
-    actions.append(svgButton, pngButton);
+    actions.append(pngButton);
     card.appendChild(actions);
     card.appendChild(feedback);
     return card;
@@ -330,7 +274,7 @@
     const submit = form.querySelector('button[type="submit"]');
     submit.disabled = true;
     submit.textContent = "NAVI در حال طراحی لوگو...";
-    status.textContent = "NAVI ابتدا بریف تخصصی انگلیسی را می‌نویسد و سپس سه لوگو را با HTML و CSS طراحی می‌کند. این کار ممکن است کمی زمان ببرد.";
+    status.textContent = "NAVI سه ایده مستقل را طراحی می‌کند و هرکدام را با HTML و CSS از پایه می‌سازد. این کار ممکن است کمی زمان ببرد.";
 
     try {
       const response = await fetch("https://nava-music-api.honrrpower.workers.dev/logo/generate", {
@@ -353,7 +297,7 @@
         results.appendChild(buildCard(concept, index, data));
       });
       empty.hidden = true;
-      status.textContent = "سه طرح آماده‌اند. نام، شعار و رنگ‌ها را از فرم تغییر بده تا پیش‌نمایش‌ها زنده به‌روزرسانی شوند؛ سپس SVG برداری یا PNG بگیر.";
+      status.textContent = "سه طرح آماده‌اند. نام، شعار و رنگ‌ها را از فرم تغییر بده تا پیش‌نمایش‌ها زنده به‌روزرسانی شوند؛ سپس PNG باکیفیت بگیر.";
       results.scrollIntoView({ behavior: "smooth", block: "start" });
     } catch (error) {
       status.textContent = error.message || "ارتباط با موتور طراحی برقرار نشد؛ کمی بعد دوباره تلاش کن.";
