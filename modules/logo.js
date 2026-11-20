@@ -103,37 +103,58 @@ function findSymbolElement(html) {
   return null;
 }
 
+function hasPositiveCssDimension(value) {
+  const dimension = String(value || "").trim();
+  if (!dimension || /^(?:0(?:px|%|rem|em|vw|vh|cqw|cqh)?|none|auto)$/i.test(dimension)) return false;
+  if (/^(?:[1-9]\d*(?:\.\d+)?|\.\d+)(?:px|%|rem|em|vw|vh|cqw|cqh)$/i.test(dimension)) return true;
+  // Modern responsive geometry commonly uses min()/max()/clamp()/calc().
+  // Accept these only when they contain an explicit positive CSS length.
+  return /^(?:min|max|clamp|calc)\([^;]+\)$/i.test(dimension) &&
+    /(?:[1-9]\d*(?:\.\d+)?|\.\d+)(?:px|%|rem|em|vw|vh|cqw|cqh)\b/i.test(dimension);
+}
+
 function validateSymbolStructure(html, css, conceptIndex) {
   const symbol = findSymbolElement(html);
   if (!symbol) throw validationError("LOGO_SYMBOL_MISSING", "نشان اصلی لوگو به‌صورت یک ساختار مشخص و مستقل ساخته نشده است.", "symbol-structure", conceptIndex);
   const rule = css.match(/\.navi-symbol\s*\{([^}]*)\}/i);
   if (!rule) throw validationError("LOGO_SYMBOL_UNSTYLED", "برای نشان اصلی لوگو هندسه و استایل مستقل تعریف نشده است.", "symbol-structure", conceptIndex);
   const body = rule[1];
-  const hasWidth = /\bwidth\s*:\s*(?!0(?:px|%|rem)?\b)(?:[1-9]\d*(?:\.\d+)?(?:px|%|rem|cqw)|clamp\()/i.test(body);
-  const hasHeight = /\bheight\s*:\s*(?!0(?:px|%|rem)?\b)(?:[1-9]\d*(?:\.\d+)?(?:px|%|rem|cqw)|clamp\()/i.test(body);
+  const widthValue = body.match(/\bwidth\s*:\s*([^;]+)/i)?.[1];
+  const heightValue = body.match(/\bheight\s*:\s*([^;]+)/i)?.[1];
+  const hasWidth = hasPositiveCssDimension(widthValue);
+  const hasHeight = hasPositiveCssDimension(heightValue);
   const hasSurface = /\bbackground(?:-color|-image)?\s*:\s*(?!transparent\b|none\b)[^;]+/i.test(body);
   const radius = body.match(/\bborder-radius\s*:\s*([^;]+)/i)?.[1]?.trim() || "";
-  const hasShape = /\bclip-path\s*:\s*[^;]+/i.test(body) || Boolean(radius && !/^0(?:px|%|rem)?(?:\s|$)/i.test(radius));
-  const widthPx = Number(body.match(/\bwidth\s*:\s*([\d.]+)px/i)?.[1] || 0);
-  const heightPx = Number(body.match(/\bheight\s*:\s*([\d.]+)px/i)?.[1] || 0);
+  const clipPath = body.match(/\bclip-path\s*:\s*([^;]+)/i)?.[1]?.trim() || "";
+  const hasShape = Boolean(clipPath && !/^none$/i.test(clipPath)) ||
+    Boolean(radius && !/^0(?:px|%|rem)?(?:\s|$)/i.test(radius));
+  const widthPx = Number(widthValue?.match(/^\s*([\d.]+)px\s*$/i)?.[1] || 0);
+  const heightPx = Number(heightValue?.match(/^\s*([\d.]+)px\s*$/i)?.[1] || 0);
   const proportions = !(widthPx > 0 && heightPx > 0) || heightPx / widthPx >= 0.22;
 
-  // Count named inner layers only when each layer has its own CSS selector.
+  // A named inner layer counts only when it has a real visual CSS rule,
+  // not merely because its class name appears somewhere in the stylesheet.
   const innerMarkup = symbol.inner;
   const layerClasses = [...innerMarkup.matchAll(/<(?:div|span|em|i)\b[^>]*class="([^"]+)"[^>]*>/gi)]
     .flatMap(match => match[1].split(/\s+/))
     .filter(name => name && name !== "navi-symbol");
-  const styledLayers = [...new Set(layerClasses)].filter(name => css.includes("." + name));
-  const pseudoLayer = /\.navi-symbol(?:::|:)(?:before|after)\s*\{/i.test(css);
+  const styledLayers = [...new Set(layerClasses)].filter(name => {
+    const layerRule = css.match(new RegExp("\\." + name + "\\s*\\{([^}]*)\\}", "i"));
+    if (!layerRule) return false;
+    return /\b(?:position|inset|top|right|bottom|left|width|height|background(?:-color|-image)?|border(?:-[a-z-]+)?|border-radius|clip-path|transform|mask(?:-image)?)\s*:/i.test(layerRule[1]);
+  });
+  const pseudoRule = css.match(/\.navi-symbol(?:::|:)(?:before|after)\s*\{([^}]*)\}/i);
+  const pseudoLayer = Boolean(pseudoRule && /\bcontent\s*:/i.test(pseudoRule[1]) &&
+    /\b(?:position|inset|width|height|background|border|clip-path|transform)\s*:/i.test(pseudoRule[1]));
   const detail = styledLayers.length >= 1 || pseudoLayer;
 
   if (!hasWidth || !hasHeight || !hasSurface || !hasShape || !proportions || !detail) {
     const missing = [
-      !hasWidth || !hasHeight ? "ابعاد مستقل" : "",
+      !hasWidth || !hasHeight ? "ابعاد مستقل و معتبر" : "",
       !hasSurface ? "سطح پرشده" : "",
       !hasShape ? "مرز یا برش هندسی" : "",
       !proportions ? "تناسب قابل‌قبول" : "",
-      !detail ? "حداقل یک لایه سازنده مستقل در کنار حجم اصلی" : ""
+      !detail ? "لایه سازنده مستقل با هندسه قابل‌مشاهده" : ""
     ].filter(Boolean).join("، ");
     throw validationError(
       "LOGO_SYMBOL_UNDERBUILT",
