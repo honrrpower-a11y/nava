@@ -679,3 +679,32 @@ test("NAVI accepts a layered CSS-only symbol without SVG", async () => {
   try {const response=await handleLogoRoute({request:makeRequest(),env:{NAVA_DB:db,NAVI_SESSION_SECRET:"test-secret-key",GEMINI_API_KEY:"test-gemini-key"},origin:ORIGIN,corsOrigin:ORIGIN});const result=await response.json();assert.equal(response.status,200);assert.equal(result.success,true);assert.equal(result.concepts.length,3,JSON.stringify(result.rejectedConcepts));assert.doesNotMatch(result.concepts[0].html, /<(?:svg|path|circle|ellipse|rect|polygon|polyline|line)\b/i);}
   finally {globalThis.fetch=originalFetch;}
 });
+
+
+test("NAVI correctly validates symbol layers nested inside multiple DIV wrappers", async () => {
+  const originalFetch = globalThis.fetch;
+  const db = new FakeD1();
+  const nested = makeDesign();
+  nested.concepts[0].html = nested.concepts[0].html.replace(
+    '<span class="wave"></span><span class="orbit"></span>',
+    '<div class="layer-shell"><div class="layer-core"><span class="wave"></span><span class="orbit"></span></div></div>'
+  );
+  nested.concepts[0].css += '.layer-shell{display:grid;place-items:center;width:100%;height:100%}.layer-core{display:flex;align-items:center;justify-content:center;width:90%;height:90%}';
+  globalThis.fetch = async () => makeGeminiResponse(nested);
+  try {
+    const response = await handleLogoRoute({
+      request: makeRequest(),
+      env: { NAVA_DB: db, NAVI_SESSION_SECRET: "test-secret-key", GEMINI_API_KEY: "test-gemini-key" },
+      origin: ORIGIN,
+      corsOrigin: ORIGIN
+    });
+    const result = await response.json();
+    assert.equal(response.status, 200, JSON.stringify(result));
+    assert.equal(result.success, true);
+    assert.equal(result.concepts.length, 3);
+    assert.equal(result.concepts[0].anchorMap.length, 2);
+    assert.equal(db.visitorUsed, 1);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
