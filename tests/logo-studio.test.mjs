@@ -30,9 +30,9 @@ function makeDesign() {
     strategy: "سه مسیر مستقل با تکیه بر هویت برند و موج صوتی.",
     designBriefEnglish: "Create a distinctive Persian creative-studio identity. Build a compact sound-inspired symbol with custom geometry, confident Persian typography, balanced negative space, and the exact gold and white palette.",
     concepts: [
-      { title: "موج پیوند", rationale: "پیوند صدا و خلاقیت", mechanism: "اتصال دو مسیر صوتی به یک فرم مشترک، نماد و تایپوگرافی را به هم پیوند می‌دهد.", expressionMove: "شکاف مرکزی پیوسته", differsBy: "ساختار باز و نامتقارن در برابر نشان‌های بسته رقبا", axes: { "سنتی–معاصر": "معاصر", "آرام–بیانگر": "بیانگر" }, defaultsUsed: [], html: '<div class="mark"><div class="seal"><span class="wave"></span><span class="orbit"></span></div><strong>{{BRAND_NAME}}</strong><small>{{SLOGAN}}</small><script>window.pwned=true</script></div>', css: '.logo-art-root{display:grid;place-items:center;background:var(--logo-background);color:var(--logo-primary);width:100%;height:100%;padding:48px}.mark{text-align:center;display:grid;gap:24px;justify-items:center}.seal{display:grid;place-items:center;width:260px;height:260px;border:2px solid var(--logo-primary);border-radius:50%;background:radial-gradient(circle at center,#263b59,var(--logo-background));box-shadow:0 12px 28px rgba(0,0,0,.2)}.wave{display:block;width:150px;height:60px;border:8px solid var(--logo-primary);border-radius:50%}.orbit{display:block;width:190px;height:190px;border:1px solid #5ac9bd;border-radius:50%}@keyframes breathe{0%{opacity:.75}100%{opacity:1}}.wave{animation:breathe 3s ease-in-out infinite}' },
-      { title: "حرف ن", rationale: "تمرکز بر حرف آغازین برند", mechanism: "ساختار حرف ن از فضای منفی به نشانی مستقل تبدیل می‌شود.", expressionMove: "برش منفی در تنه حرف", differsBy: "تکیه بر طراحی اختصاصی حرف به‌جای نماد صوتی", axes: { "سنتی–معاصر": "میانه", "آرام–بیانگر": "آرام" }, defaultsUsed: [], html: '<div class="letter"><div class="monogram"><span class="cut"></span><span class="accent"></span></div><strong>{{BRAND_NAME}}</strong><small>{{SLOGAN}}</small></div>', css: '.logo-art-root{display:grid;place-items:center;background:var(--logo-background);color:var(--logo-primary);width:100%;height:100%;padding:40px}.letter{font-size:70px;font-weight:900;display:grid;gap:22px;justify-items:center;text-align:center}.monogram{width:240px;height:240px;border:3px solid var(--logo-primary);display:grid;place-items:center;border-radius:28px;background:linear-gradient(135deg,#253b59,var(--logo-background));box-shadow:0 10px 24px rgba(0,0,0,.25)}.cut{display:block;width:110px;height:110px;border:12px solid var(--logo-primary);border-left-color:#59c9bc;border-radius:32px}.accent{display:block;width:70px;height:5px;background:#59c9bc;border-radius:5px}' },
-      { title: "طنین", rationale: "بازتاب ایده در صدا", mechanism: "تکرار کنترل‌شده یک واحد هندسی، طنین و توسعه ایده را هم‌زمان نشان می‌دهد.", expressionMove: "ریتم سه‌مرحله‌ای", differsBy: "نشانه انتزاعی مبتنی بر تکرار به‌جای حروف یا موج مستقیم", axes: { "سنتی–معاصر": "معاصر", "آرام–بیانگر": "میانه" }, defaultsUsed: [], html: '<div class="echo"><span class="symbol" aria-hidden="true"></span><strong>{{BRAND_NAME}}</strong><small>{{SLOGAN}}</small></div>', css: '.logo-art-root{display:grid;place-items:center;background:var(--logo-background);color:var(--logo-primary);width:100%;height:100%;padding:36px}.echo{text-align:center;font-size:54px;display:grid;justify-items:center;gap:20px}.echo .symbol{position:relative;width:220px;height:220px;padding:24px;border:2px solid var(--logo-primary);border-radius:50%;background:radial-gradient(circle at center,#344968,var(--logo-background));box-shadow:0 12px 26px rgba(0,0,0,.2)}.echo span{color:#59c9bc;letter-spacing:8px}.echo strong{font-weight:900;letter-spacing:2px}' }
+      { title: "موج پیوند", rationale: "پیوند صدا و خلاقیت", mechanism: "اتصال دو مسیر صوتی به یک فرم مشترک، نماد و تایپوگرافی را به هم پیوند می‌دهد.", expressionMove: "شکاف مرکزی پیوسته", differsBy: "ساختار باز و نامتقارن در برابر نشان‌های بسته رقبا", axes: { "سنتی–معاصر": "معاصر", "آرام–بیانگر": "بیانگر" }, defaultsUsed: [], html: '<div class="mark"><div class="navi-symbol seal" data-logo-role="symbol"><span class="wave"></span><span class="orbit"></span></div><strong>{{BRAND_NAME}}</strong><small>{{SLOGAN}}</small><script>window.pwned=true</script></div>', css: '.logo-art-root{display:grid;place-items:center;background:var(--logo-background);color:var(--logo-primary);width:100%;height:100%;padding:48px}.mark{text-align:center;display:grid;gap:24px;justify-items:center}.navi-symbol{display:grid;place-items:center;width:260px;height:260px;border:2px solid var(--logo-primary);border-radius:50%;background:radial-gradient(circle at center,#263b59,var(--logo-background));box-shadow:0 12px 28px rgba(0,0,0,.2)}.seal{display:grid;place-items:center}.wave{display:block;width:150px;height:60px;border:8px solid var(--logo-primary);border-radius:50%}.orbit{display:block;width:190px;height:190px;border:1px solid #5ac9bd;border-radius:50%}@keyframes breathe{0%{opacity:.75}100%{opacity:1}}.wave{animation:breathe 3s ease-in-out infinite}' },
+      { title: "حرف ن", rationale: "تمرکز بر حرف آغازین برند", mechanism: "ساختار حرف ن از فضای منفی به نشانی مستقل تبدیل می‌شود.", expressionMove: "برش منفی در تنه حرف", differsBy: "تکیه بر طراحی اختصاصی حرف به‌جای نماد صوتی", axes: { "سنتی–معاصر": "میانه", "آرام–بیانگر": "آرام" }, defaultsUsed: [], html: '<div class="letter"><div class="navi-symbol monogram" data-logo-role="symbol"><span class="cut"></span><span class="accent"></span></div><strong>{{BRAND_NAME}}</strong><small>{{SLOGAN}}</small></div>', css: '.logo-art-root{display:grid;place-items:center;background:var(--logo-background);color:var(--logo-primary);width:100%;height:100%;padding:40px}.letter{font-size:70px;font-weight:900;display:grid;gap:22px;justify-items:center;text-align:center}.navi-symbol{width:240px;height:240px;border:3px solid var(--logo-primary);display:grid;place-items:center;border-radius:28px;background:linear-gradient(135deg,#253b59,var(--logo-background));box-shadow:0 10px 24px rgba(0,0,0,.25)}.monogram{display:grid;place-items:center}.cut{display:block;width:110px;height:110px;border:12px solid var(--logo-primary);border-left-color:#59c9bc;border-radius:32px}.accent{display:block;width:70px;height:5px;background:#59c9bc;border-radius:5px}' },
+      { title: "طنین", rationale: "بازتاب ایده در صدا", mechanism: "تکرار کنترل‌شده یک واحد هندسی، طنین و توسعه ایده را هم‌زمان نشان می‌دهد.", expressionMove: "ریتم سه‌مرحله‌ای", differsBy: "نشانه انتزاعی مبتنی بر تکرار به‌جای حروف یا موج مستقیم", axes: { "سنتی–معاصر": "معاصر", "آرام–بیانگر": "میانه" }, defaultsUsed: [], html: '<div class="echo"><div class="navi-symbol symbol" data-logo-role="symbol"><span class="navi-symbol__detail" aria-hidden="true"></span></div><strong>{{BRAND_NAME}}</strong><small>{{SLOGAN}}</small></div>', css: '.logo-art-root{display:grid;place-items:center;background:var(--logo-background);color:var(--logo-primary);width:100%;height:100%;padding:36px}.echo{text-align:center;font-size:54px;display:grid;justify-items:center;gap:20px}.navi-symbol{position:relative;display:grid;place-items:center;width:220px;height:220px;padding:24px;border:2px solid var(--logo-primary);border-radius:50%;background:radial-gradient(circle at center,#344968,var(--logo-background));box-shadow:0 12px 26px rgba(0,0,0,.2)}.navi-symbol__detail{display:block;width:45%;height:45%;border:8px solid var(--logo-primary);border-radius:38%}.echo span{color:#59c9bc;letter-spacing:8px}.echo strong{font-weight:900;letter-spacing:2px}' }
     ]
   };
 }
@@ -139,6 +139,9 @@ test("NAVI writes an English brief and three sanitized HTML/CSS logo designs in 
     assert.match(sentPrompt, /artboard\/canvas background must be white or a light neutral/i);
     assert.match(sentPrompt, /Never assign the root a fixed 1000px width or height/i);
     assert.match(sentPrompt, /320×320 mobile preview/i);
+    assert.match(sentPrompt, /Never submit two stray diagonal strokes/i);
+    assert.match(sentPrompt, /navi-symbol__detail/i);
+    assert.match(sentPrompt, /A thin border or line alone is not an acceptable symbol/i);
     assert.match(sentPrompt, /Navy or blue may still be used as an intentional brand-mark/i);
     assert.match(sentPrompt, /{{BRAND_NAME}}/i);
     assert.match(sentPrompt, /one valid JSON object/i);
@@ -165,6 +168,29 @@ test("NAVI writes an English brief and three sanitized HTML/CSS logo designs in 
     assert.ok(result.concepts.every(item => item.html.length >= 90 && item.css.length >= 350), "each concept must contain substantial HTML and CSS");
     assert.ok(result.concepts.every(item => !item.html.includes("<script")));
     assert.equal(db.visitorUsed, 1, "one completed logo batch consumes one guest trial");
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test("NAVI rejects a two-line sketch instead of presenting it as a logo", async () => {
+  const originalFetch = globalThis.fetch;
+  const db = new FakeD1();
+  const sketch = makeDesign();
+  sketch.concepts[0].html = '<div class="mark"><div class="navi-symbol" data-logo-role="symbol"><span></span><span></span></div><strong>{{BRAND_NAME}}</strong></div>';
+  sketch.concepts[0].css = '.logo-art-root{display:grid;place-items:center}.mark{display:grid;gap:20px}.navi-symbol{width:220px;height:8px;background:transparent;border-radius:0}.navi-symbol span{display:block;width:100px;height:2px;background:var(--logo-primary);transform:rotate(-20deg)}.mark strong{font-size:48px;font-weight:900}';
+  globalThis.fetch = async () => makeGeminiResponse(sketch);
+  try {
+    const response = await handleLogoRoute({
+      request: makeRequest(),
+      env: { NAVA_DB: db, NAVI_SESSION_SECRET: "test-secret-key", GEMINI_API_KEY: "test-gemini-key" },
+      origin: ORIGIN,
+      corsOrigin: ORIGIN
+    });
+    const result = await response.json();
+    assert.equal(response.status, 502);
+    assert.equal(result.code, "LOGO_SYMBOL_UNDERBUILT");
+    assert.equal(db.visitorUsed, 0, "a rejected sketch must not consume the guest trial");
   } finally {
     globalThis.fetch = originalFetch;
   }
@@ -275,7 +301,8 @@ test("quality gate accepts a structured geometric logo without requiring gradien
   geometric.concepts[2].css = [
     ".logo-art-root{display:grid;place-items:center;background:var(--logo-background);color:var(--logo-primary);width:100%;height:100%;padding:36px}",
     ".echo{display:flex;flex-direction:column;align-items:center;gap:20px;text-align:center}",
-    ".echo .symbol{position:relative;width:220px;height:220px;background:var(--logo-primary);border:0;border-radius:42% 58% 52% 48%;transform:rotate(-12deg)}",
+    ".navi-symbol{position:relative;display:flex;width:220px;height:220px;background:var(--logo-primary);border:0;border-radius:42% 58% 52% 48%;clip-path:polygon(50% 0,100% 45%,70% 100%,15% 85%,0 35%);transform:rotate(-12deg)}",
+    ".navi-symbol::before{content:'';position:absolute;width:45%;height:45%;border:8px solid var(--logo-background);border-radius:50%}",
     ".echo strong{font-size:54px;font-weight:900;letter-spacing:1px;color:var(--logo-primary)}",
     ".echo small{font-size:22px;line-height:1.5;color:var(--logo-primary)}"
   ].join("");
@@ -300,8 +327,8 @@ test("NAVI accepts compact but complete logo concepts without brittle visual-cou
   const originalFetch = globalThis.fetch;
   const db = new FakeD1();
   const invalid = makeDesign();
-  invalid.concepts[2].html = '<div><strong>{{BRAND_NAME}}</strong><small>{{SLOGAN}}</small></div>';
-  invalid.concepts[2].css = '.logo-art-root{color:var(--logo-primary)}';
+  invalid.concepts[2].html = '<div class="echo"><div class="navi-symbol" data-logo-role="symbol"><span class="navi-symbol__detail"></span></div><strong>{{BRAND_NAME}}</strong><small>{{SLOGAN}}</small></div>';
+  invalid.concepts[2].css = '.logo-art-root{display:grid;place-items:center}.echo{display:flex;flex-direction:column;align-items:center;font-size:48px;font-weight:900;position:relative}.navi-symbol{width:180px;height:180px;background:var(--logo-primary);border-radius:38%;display:grid;place-items:center;box-shadow:0 8px 18px rgba(0,0,0,.2)}.navi-symbol__detail{display:block;width:45%;height:45%;border:8px solid var(--logo-background);border-radius:50%}';
   globalThis.fetch = async () => makeGeminiResponse(invalid);
   try {
     const response = await handleLogoRoute({
@@ -413,7 +440,8 @@ test("PNG export rasterizes the rendered HTML/CSS DOM without SVG foreignObject 
   assert.ok(exporter.includes("canvas.toBlob"));
   assert.ok(exporter.includes("getImageData"), "empty raster output must be rejected instead of downloaded as a blank PNG");
   assert.ok(!exporter.includes("<foreignObject") && !exporter.includes("image.src"));
-  assert.ok(source.includes("global.NavaLogoRenderer={buildSvg,downloadBlob,exportPng,exportPngFromFrame}"));
+  assert.ok(source.includes("global.NavaLogoRenderer={downloadBlob,exportPngFromFrame}"), "the public renderer exposes PNG only, not SVG export");
+  assert.ok(!source.includes("global.NavaLogoRenderer={buildSvg"), "SVG is not available as a user-facing export");
 });
 test("Logo Studio waits for a measurable sandboxed preview before PNG export", () => {
   const source = readFileSync(new URL("../logo-studio.js", import.meta.url), "utf8");
