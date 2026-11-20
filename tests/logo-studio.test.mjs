@@ -173,7 +173,7 @@ test("NAVI design failure refunds the guest trial reservation", async () => {
     });
     const result = await response.json();
     assert.equal(response.status, 502);
-    assert.equal(result.code, "LOGO_HTML_CSS_DESIGN_FAILED");
+    assert.equal(result.code, "MODEL_RATE_LIMIT");
     assert.equal(db.visitorUsed, 0);
     assert.equal([...db.reservations.values()][0].status, "refunded");
   } finally {
@@ -196,7 +196,7 @@ test("NAVI CSS cannot load remote resources or execute injected markup", async (
     });
     const result = await response.json();
     assert.equal(response.status, 502);
-    assert.equal(result.code, "LOGO_HTML_CSS_DESIGN_FAILED");
+    assert.equal(result.code, "LOGO_VALIDATION_FAILED");
     assert.equal(db.visitorUsed, 0);
   } finally {
     globalThis.fetch = originalFetch;
