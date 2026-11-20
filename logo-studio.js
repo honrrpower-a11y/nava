@@ -79,10 +79,13 @@
       // Appending an iframe can fire an initial about:blank load before srcdoc
       // is parsed. Ignore that event; only the actual srcdoc may resolve readiness.
       if (!doc || doc.URL === "about:blank") return;
+      // A queued initial iframe load can arrive after srcdoc is assigned.
+      // Do not mark readiness until the actual artboard exists in this document.
+      const root = doc.querySelector(".logo-art-root");
+      if (!root) return;
       syncLiveEdits();
       try {
-        const root = doc.querySelector(".logo-art-root");
-        const rect = root && root.getBoundingClientRect();
+        const rect = root.getBoundingClientRect();
         const visibleContent = root && Array.from(root.querySelectorAll("*")).some(element => {
           const box = element.getBoundingClientRect();
           if (!box.width || !box.height) return false;
