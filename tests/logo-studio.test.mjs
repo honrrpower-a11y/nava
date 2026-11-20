@@ -151,7 +151,7 @@ test("NAVI writes an English brief and three sanitized HTML/CSS logo designs in 
     assert.ok(result.concepts.every(item => item.html.includes("<div")));
     assert.ok(result.concepts.every(item => !item.html.toLowerCase().includes("<svg")), "generated concept markup is HTML-only");
     assert.ok(result.concepts.every(item => item.css.length > 0));
-    assert.ok(result.concepts.every(item => (item.css.match(/::before|::after|linear-gradient|radial-gradient|box-shadow|clip-path|transform:/gi) || []).length >= 2), "each logo must use multiple intentional CSS craft techniques");
+    assert.ok(result.concepts.every(item => item.html.length >= 90 && item.css.length >= 350), "each concept must contain substantial HTML and CSS");
     assert.ok(result.concepts.every(item => !item.html.includes("<script")));
     assert.equal(db.visitorUsed, 1, "one completed logo batch consumes one guest trial");
   } finally {
@@ -252,6 +252,34 @@ test("NAVI repairs a missing slogan placeholder with a visible semantic slogan",
     assert.ok(result.concepts[1].css.includes(".navi-slogan-lockup"));
     assert.equal(db.visitorUsed, 1);
     assert.equal([...db.reservations.values()][0].status, "reserved");
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test("quality gate accepts a structured geometric logo without requiring gradients or shadows", async () => {
+  const originalFetch = globalThis.fetch;
+  const db = new FakeD1();
+  const geometric = makeDesign();
+  geometric.concepts[2].css = [
+    ".logo-art-root{display:grid;place-items:center;background:var(--logo-background);color:var(--logo-primary);width:100%;height:100%;padding:36px}",
+    ".echo{display:flex;flex-direction:column;align-items:center;gap:20px;text-align:center}",
+    ".echo .symbol{position:relative;width:220px;height:220px;border:8px solid var(--logo-primary);border-radius:42% 58% 52% 48%;transform:rotate(-12deg)}",
+    ".echo strong{font-size:54px;font-weight:900;letter-spacing:1px;color:var(--logo-primary)}",
+    ".echo small{font-size:22px;line-height:1.5;color:var(--logo-primary)}"
+  ].join("");
+  globalThis.fetch = async () => makeGeminiResponse(geometric);
+  try {
+    const response = await handleLogoRoute({
+      request: makeRequest(),
+      env: { NAVA_DB: db, NAVI_SESSION_SECRET: "test-secret-key", GEMINI_API_KEY: "test-gemini-key" },
+      origin: ORIGIN,
+      corsOrigin: ORIGIN
+    });
+    const result = await response.json();
+    assert.equal(response.status, 200);
+    assert.equal(result.concepts.length, 3);
+    assert.equal(db.visitorUsed, 1);
   } finally {
     globalThis.fetch = originalFetch;
   }
@@ -359,14 +387,20 @@ test("NAVI categorizes Gemini quota errors without exposing provider error text"
   }
 });
 
-test("PNG export has a browser-rendered HTML/CSS raster path independent of SVG conversion limits", () => {
+test("PNG export rasterizes the rendered HTML/CSS DOM without SVG foreignObject or tainted image input", () => {
   const source = readFileSync(new URL("../logo-renderer.js", import.meta.url), "utf8");
-  assert.ok(source.includes("async function exportPngFromFrame"));
-  assert.ok(source.includes("<foreignObject x="), "foreignObject is isolated to the raster-only PNG path");
+  const start = source.indexOf("async function exportPngFromFrame");
+  const end = source.indexOf("global.NavaLogoRenderer=", start);
+  const exporter = source.slice(start, end);
+  assert.ok(start >= 0 && end > start);
+  assert.match(exporter, /global\\.html2canvas\\(root/);
+  assert.match(exporter, /allowTaint:false/);
+  assert.match(exporter, /useCORS:false/);
+  assert.match(exporter, /foreignObjectRendering:false/);
+  assert.match(exporter, /canvas\\.toBlob/);
+  assert.doesNotMatch(exporter, /<foreignObject|image\\.src/);
   assert.ok(source.includes("global.NavaLogoRenderer={buildSvg,downloadBlob,exportPng,exportPngFromFrame}"));
-  assert.ok(source.includes("root.cloneNode(true).outerHTML"), "PNG export captures the actual rendered artboard");
 });
-
 test("Logo Studio waits for iframe preview readiness before allowing exports", () => {
   const source = readFileSync(new URL("../logo-studio.js", import.meta.url), "utf8");
   assert.ok(source.includes("frame.__navaPreviewReady"));
