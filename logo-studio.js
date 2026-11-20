@@ -230,14 +230,8 @@
 
 
   function installNoQuotaDiagnostic() {
-    if (new URLSearchParams(window.location.search).get("logoDiagnostics") !== "1") return;
-    const button = document.createElement("button");
-    button.type = "button";
-    button.className = "btn-secondary";
-    button.textContent = "اجرای آزمایش فنی لوگوساز (بدون سهمیه)";
-    button.style.width = "100%";
-    button.style.margin = "0 0 14px";
-    results.parentElement.insertBefore(button, results);
+    const button = $("logoNoQuotaDiagnostic");
+    if (!button) return;
     button.addEventListener("click", runNoQuotaDiagnostic);
   }
 
