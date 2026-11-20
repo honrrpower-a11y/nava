@@ -59,6 +59,11 @@
     frame.style.height = "100%";
     frame.style.minHeight = "0";
     frame.style.border = "0";
+    // Force a stable composited iframe layer on mobile Chromium/WebView.
+    frame.style.transform = "translate3d(0,0,0)";
+    frame.style.backfaceVisibility = "hidden";
+    frame.style.webkitTransform = "translate3d(0,0,0)";
+    frame.style.webkitBackfaceVisibility = "hidden";
     const documentHtml = [
       "<!doctype html><html lang=\"fa\" dir=\"rtl\"><head>",
       '<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">',
@@ -84,16 +89,20 @@
         if (!root) return; // Ignore the iframe's initial empty-document load.
         syncLiveEdits();
         const rect = root.getBoundingClientRect();
-        const visibleContent = Array.from(root.querySelectorAll("*")).some(element => {
+        const hasPaint = element => {
           const box = element.getBoundingClientRect();
           if (!box.width || !box.height) return false;
           const style = doc.defaultView.getComputedStyle(element);
-          return !!element.textContent.trim() ||
-            element.localName.toLowerCase() === "svg" ||
-            (style.backgroundColor && style.backgroundColor !== "transparent" && style.backgroundColor !== "rgba(0, 0, 0, 0)") ||
-            (style.backgroundImage && style.backgroundImage !== "none") ||
-            (parseFloat(style.borderTopWidth) > 0 && style.borderTopStyle !== "none");
-        });
+          const before = doc.defaultView.getComputedStyle(element, "::before");
+          const after = doc.defaultView.getComputedStyle(element, "::after");
+          const painted = value => value && value !== "none" && value !== "transparent" && value !== "rgba(0, 0, 0, 0)";
+          return !!element.textContent.trim() || painted(style.backgroundColor) || painted(style.backgroundImage) ||
+            (parseFloat(style.borderTopWidth) > 0 && style.borderTopStyle !== "none") ||
+            painted(before.backgroundColor) || painted(before.backgroundImage) || painted(after.backgroundColor) || painted(after.backgroundImage);
+        };
+        // Include the artboard itself: many polished CSS marks are composed
+        // entirely from its background and ::before/::after pseudo-elements.
+        const visibleContent = hasPaint(root) || Array.from(root.querySelectorAll("*")).some(hasPaint);
         if (!rect.width || !rect.height) {
           frame.__navaPreviewError = "بوم طراحی ابعاد معتبر ندارد.";
           status.textContent = "پیش‌نمایش بارگذاری شد، اما بوم طراحی ابعاد معتبر ندارد. طرح برای بررسی فنی نگه داشته شد.";
