@@ -240,6 +240,15 @@
     syncLiveEdits();
   }, 0));
 
+  // Keep every artboard square when the phone rotates or the layout changes.
+  window.addEventListener("resize", () => {
+    activeFrames.forEach(frame => {
+      const previewBox = frame.parentElement;
+      const width = previewBox && previewBox.getBoundingClientRect().width;
+      if (width > 0) previewBox.style.height = Math.round(width) + "px";
+    });
+  });
+
   async function requestLogoDesign() {
     const data = readData();
     if (!data.brandName) {
@@ -297,6 +306,17 @@
         // can otherwise lay out the iframe at 0x0 and keep that invalid canvas.
         const frame = card.querySelector("iframe.logo-html-css-preview");
         if (frame && frame.__navaDocumentHtml) {
+          // Force a real square layout before the mobile WebView creates the
+          // srcdoc browsing context. Appending the card alone is not enough:
+          // some WebViews defer aspect-ratio layout until the next paint.
+          const previewBox = frame.parentElement;
+          const previewWidth = previewBox ? previewBox.getBoundingClientRect().width : 0;
+          if (previewBox && previewWidth > 0) {
+            previewBox.style.height = Math.round(previewWidth) + "px";
+            frame.getBoundingClientRect(); // synchronously flush iframe geometry
+          } else if (previewBox) {
+            previewBox.style.height = "320px";
+          }
           frame.srcdoc = frame.__navaDocumentHtml;
           delete frame.__navaDocumentHtml;
         }
