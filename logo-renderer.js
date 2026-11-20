@@ -604,6 +604,17 @@
     if(!canvas || !canvas.width || !canvas.height) {
       throw new Error("موتور رندر، تصویر معتبر برای خروجی PNG تولید نکرد.");
     }
+    // Never let an empty/transparent canvas masquerade as a successful logo.
+    const pixelContext = canvas.getContext("2d", { willReadFrequently: true });
+    if(!pixelContext) throw new Error("خواندن تصویر نهایی PNG در این مرورگر ممکن نیست.");
+    const pixels = pixelContext.getImageData(0,0,canvas.width,canvas.height).data;
+    let visiblePixels = 0;
+    for(let i=3;i<pixels.length;i+=4) {
+      if(pixels[i] > 8 && ++visiblePixels >= 24) break;
+    }
+    if(visiblePixels < 24) {
+      throw new Error("پیش‌نمایش به تصویر واقعی تبدیل نشده است؛ فایل خالی ذخیره نشد. ابعاد و محتوای بوم باید اصلاح شود.");
+    }
     let png;
     try {
       png=await new Promise((resolve,reject)=>{
