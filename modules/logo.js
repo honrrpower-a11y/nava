@@ -332,7 +332,7 @@ async function designLogos(data, apiKey) {
       }
       const title = safeText(item?.title, 100) || "مسیر طراحی " + (index + 1);
       const rationale = safeText(item?.rationale, 420) || "این مسیر بر اساس بریف برند طراحی شده است.";
-      return {
+      const concept = {
         id: "navi-html-css-" + (index + 1),
         title,
         rationale,
@@ -451,7 +451,7 @@ export async function handleLogoRoute({ request, env, origin, corsOrigin }) {
         note: "NAVI authored the English design brief and the accepted HTML/CSS logo designs in one request."
       },
       concepts,
-      rejectedConcepts: plan.rejectedConcepts
+      rejectedConcepts: plan.rejectedConcepts || []
     }, 200, corsOrigin);
   } catch (error) {
     if (quota.reservationId) {
