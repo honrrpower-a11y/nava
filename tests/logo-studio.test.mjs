@@ -125,7 +125,7 @@ test("NAVI writes an English brief and three sanitized HTML/CSS logo designs in 
     assert.equal(result.concepts.length, 3);
     assert.equal(geminiCalls, 1, "one Gemini call creates the English brief and all three logo designs");
     assert.match(sentPrompt, /English/i);
-    assert.match(sentPrompt, /HTML and CSS are the primary composition and styling engine/i);
+    assert.match(sentPrompt, /HTML and CSS are the entire design engine/i);
     assert.match(sentPrompt, /three concepts must differ in their central idea/i);
     assert.match(sentPrompt, /CSS @keyframes/i);
     assert.match(sentPrompt, /pseudo-elements ::before\/::after/i);
@@ -149,11 +149,6 @@ test("NAVI writes an English brief and three sanitized HTML/CSS logo designs in 
     assert.ok(result.concepts.every(item => !JSON.stringify(item).includes("foreignObject")));
     assert.ok(result.concepts.every(item => item.html.includes("<div")));
     assert.ok(result.concepts.every(item => item.css.length > 0));
-    assert.ok(result.concepts[2].html.includes('viewBox="0 0 100 100"'));
-    assert.ok(result.concepts[2].html.includes('fill="url(#brand-gradient)"'));
-    assert.ok(result.concepts[2].html.includes('fill-rule="evenodd"'));
-    assert.match(result.concepts[2].html, /<path[^>]+\/>/);
-    assert.match(result.concepts[2].html, /<stop[^>]+\/>/);
     assert.ok(result.concepts.every(item => !item.html.includes("<script")));
     assert.equal(db.visitorUsed, 1, "one completed logo batch consumes one guest trial");
   } finally {
