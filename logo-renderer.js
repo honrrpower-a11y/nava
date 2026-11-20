@@ -472,32 +472,74 @@
       throw new Error("بوم طراحی باید مربع باشد تا نسبت اجزای لوگو در خروجی تغییر نکند.");
     }
 
-    const scale = 1000 / rootRect.width;
-    const warnings = new Set();
-    const counter = { value: 0 };
-    const svg = node("svg", {
-      xmlns: NS, width: options.width || 1200, height: options.height || 1200,
-      viewBox: "0 0 1000 1000", role: "img", "aria-labelledby": "nava-logo-title"
-    }, null);
-    node("title", { id: "nava-logo-title" }, svg).textContent = "Logo — " + (options.brandName || "NAVA");
-    renderHtmlElement(root, svg, rootRect, scale, node("defs", {}, svg), warnings, counter);
+    // The HTML/CSS browser renderer is the design engine. Do not redraw it
+    // with a reduced set of SVG primitives: that lossy conversion caused
+    // complex marks, shadows, gradients and typography to collapse into lines.
+    // This SVG packages only the final logo artboard, not the Studio UI.
+    const XHTML_NS = "http://www.w3.org/1999/xhtml";
+    const size = 1000;
+    const svg = document.createElementNS(NS, "svg");
+    svg.setAttribute("xmlns", NS);
+    svg.setAttribute("xmlns:xhtml", XHTML_NS);
+    svg.setAttribute("width", String(options.width || 1200));
+    svg.setAttribute("height", String(options.height || 1200));
+    svg.setAttribute("viewBox", "0 0 " + size + " " + size);
+    svg.setAttribute("role", "img");
+    const title = document.createElementNS(NS, "title");
+    title.textContent = "Logo — " + (options.brandName || "NAVA");
+    svg.appendChild(title);
 
-    if (svg.querySelector("foreignObject, image")) {
-      throw new Error("بازسازی برداری خالص ناموفق بود؛ خروجی ناامن رد شد.");
-    }
-    if (warnings.size) {
-      const error = new Error("این طرح از ویژگی‌هایی استفاده می‌کند که هنوز با دقت کافی به SVG برداری تبدیل نمی‌شوند؛ برای جلوگیری از خروجی ناقص، فایل ساخته نشد.");
-      error.details = Array.from(warnings);
-      throw error;
-    }
+    const foreign = document.createElementNS(NS, "foreignObject");
+    foreign.setAttribute("x", "0");
+    foreign.setAttribute("y", "0");
+    foreign.setAttribute("width", String(size));
+    foreign.setAttribute("height", String(size));
+
+    const stage = doc.createElementNS(XHTML_NS, "div");
+    stage.setAttribute("xmlns", XHTML_NS);
+    stage.setAttribute("style", "width:" + size + "px;height:" + size + "px;overflow:hidden;margin:0;padding:0;");
+    const css = Array.from(doc.querySelectorAll("style"))
+      .map(style => style.textContent || "")
+      .join("\n");
+    const styleNode = doc.createElementNS(XHTML_NS, "style");
+    styleNode.textContent = css + "\nhtml,body{margin:0!important;width:100%!important;height:100%!important;overflow:hidden!important}*{box-sizing:border-box}";
+    stage.appendChild(styleNode);
+
+    const scale = size / rootRect.width;
+    const scaled = doc.createElementNS(XHTML_NS, "div");
+    scaled.setAttribute("style",
+      "position:relative;width:" + rootRect.width + "px;height:" + rootRect.height +
+      "px;overflow:hidden;transform:scale(" + scale + ");transform-origin:top left;");
+    const art = root.cloneNode(true);
+
+    // Export only safe logo markup; no executable or interactive document nodes.
+    art.querySelectorAll("script,iframe,object,embed,form,button,input,textarea,select,link,meta,base,foreignObject")
+      .forEach(element => element.remove());
+    [art, ...Array.from(art.querySelectorAll("*"))].forEach(element => {
+      Array.from(element.attributes || []).forEach(attribute => {
+        const name = attribute.name.toLowerCase();
+        const value = attribute.value.trim();
+        if (name.startsWith("on") || name === "srcdoc" ||
+            ((name === "src" || name === "href") && value &&
+             !value.startsWith("#") && !value.startsWith("data:"))) {
+          element.removeAttribute(attribute.name);
+        }
+      });
+    });
+    art.style.width = rootRect.width + "px";
+    art.style.height = rootRect.height + "px";
+    scaled.appendChild(art);
+    stage.appendChild(scaled);
+    foreign.appendChild(stage);
+    svg.appendChild(foreign);
 
     const serialized = new XMLSerializer().serializeToString(svg);
     const parsed = new DOMParser().parseFromString(serialized, "image/svg+xml");
     if (parsed.querySelector("parsererror") || parsed.documentElement.localName !== "svg") {
       throw new Error("اعتبارسنجی ساختار SVG نهایی ناموفق بود.");
     }
-    if (parsed.querySelector("foreignObject, image, script")) {
-      throw new Error("خروجی شامل عنصر غیرمجاز است و رد شد.");
+    if (parsed.querySelector("script,iframe,object,embed,form,foreignObject foreignObject")) {
+      throw new Error("ساختار خروجی شامل محتوای اجرایی یا غیرمجاز است.");
     }
     return { svg: serialized, warnings: [] };
   }
