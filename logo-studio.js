@@ -6,7 +6,7 @@
 
   const fields = {
     name: $("logoBrandName"), slogan: $("logoSlogan"), industry: $("logoIndustry"),
-    audience: $("logoAudience"), symbolIdea: $("logoSymbolIdea"),
+    audience: $("logoAudience"),
     typography: $("logoTypography"), personality: $("logoPersonality"),
     format: $("logoFormat"), palette: $("logoPalette"),
     primary: $("logoPrimaryColor"), background: $("logoDarkColor"),
@@ -51,7 +51,6 @@
       slogan: fields.slogan.value.trim(),
       industry: fields.industry.value.trim(),
       audience: fields.audience.value.trim(),
-      symbolIdea: fields.symbolIdea.value.trim(),
       typography: fields.typography.selectedOptions[0]?.textContent.trim() || "",
       typographyValue: fields.typography.value,
       personality: fields.personality.selectedOptions[0]?.textContent.trim() || "",
