@@ -130,6 +130,10 @@ test("NAVI writes an English brief and three sanitized HTML/CSS logo designs in 
     assert.match(sentPrompt, /2–4 decision axes/i);
     assert.match(sentPrompt, /PHASE 4B — ANTI-DEFAULT REFLEX/i);
     assert.match(sentPrompt, /PHASE 4C — BRIEF TRACEABILITY/i);
+    assert.match(sentPrompt, /PHASE 4D — CLIENT BRIEF DOMINANCE/i);
+    assert.match(sentPrompt, /exact client idea and relationships/i);
+    assert.match(sentPrompt, /brief fidelity first/i);
+    assert.match(sentPrompt, /actual \.navi-symbol/i);
     assert.match(sentPrompt, /symbolConstruction/i);
     assert.match(sentPrompt, /HTML\/CSS symbol itself MUST visibly implement/i);
     assert.match(sentPrompt, /at least one concept must avoid the usual defaults/i);
