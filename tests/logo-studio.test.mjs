@@ -190,6 +190,7 @@ test("NAVI builds symbols with CSS-only geometry and strips SVG markup", async (
   design.concepts[0].html = '<div class="mark"><div class="navi-symbol" data-logo-role="symbol"><span class="navi-symbol__detail"></span><span class="navi-symbol__part"></span></div><strong>{{BRAND_NAME}}</strong></div>';
   design.concepts[0].css = '.logo-art-root{display:grid;place-items:center;width:100%;height:100%}.mark{display:grid;gap:20px;justify-items:center}.navi-symbol{position:relative;width:220px;height:220px;background:var(--logo-primary);clip-path:polygon(50% 0,94% 26%,82% 82%,50% 100%,18% 82%,6% 26%)}.navi-symbol__detail{position:absolute;inset:22%;border:10px solid var(--logo-background);border-radius:50%}.navi-symbol__part{position:absolute;width:32%;height:18%;right:12%;top:38%;background:var(--logo-background);transform:rotate(-28deg);border-radius:50%}.mark strong{font-size:48px;font-weight:900}';
   design.concepts[1].html = '<div class="mark"><div class="navi-symbol" data-logo-role="symbol"><svg viewBox="0 0 200 200"><path d="M20 20 H180 V180 H20 Z"/></svg><span class="navi-symbol__detail"></span></div><strong>{{BRAND_NAME}}</strong></div>';
+  design.concepts[1].css += ".navi-symbol__detail{display:block;width:45%;height:45%;border:8px solid var(--logo-primary);border-radius:38%}";
   globalThis.fetch = async () => makeGeminiResponse(design);
   try {
     const response = await handleLogoRoute({request:makeRequest(),env:{NAVA_DB:db,NAVI_SESSION_SECRET:"test-secret-key",GEMINI_API_KEY:"test-gemini-key"},origin:ORIGIN,corsOrigin:ORIGIN});
