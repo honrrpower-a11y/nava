@@ -1,217 +1,59 @@
-/* NAVA LOGO STUDIO */
-.logo-studio-page{padding:28px 0 70px;max-width:1120px;margin:0 auto}
+/* NAVA Logo Studio — clean component stylesheet */
+.logo-studio-page{max-width:1120px;margin:0 auto;padding:28px 0 70px}
 .logo-studio-head{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:22px}
 .logo-studio-back{white-space:nowrap}
-.logo-studio-intro{padding:28px;border:1px solid var(--border);border-radius:22px;background:radial-gradient(circle at 90% 0,rgba(201,155,72,.13),transparent 42%),var(--card-surface);box-shadow:var(--shadow);margin-bottom:20px}
-.logo-studio-eyebrow,.logo-concept-kicker{font-size:10px;letter-spacing:2px;color:var(--gold);font-weight:700}
-.logo-studio-intro h1{font-size:clamp(24px,4vw,34px);color:var(--text);margin:9px 0}
+.logo-studio-intro{margin-bottom:20px;padding:28px;border:1px solid var(--border);border-radius:22px;background:radial-gradient(circle at 90% 0,rgba(201,155,72,.13),transparent 42%),var(--card-surface);box-shadow:var(--shadow)}
+.logo-studio-eyebrow{font-size:10px;letter-spacing:2px;color:var(--gold);font-weight:700}
+.logo-studio-intro h1{margin:9px 0;color:var(--text);font-size:clamp(24px,4vw,34px)}
 .logo-studio-intro h1 span{color:var(--gold)}
-.logo-studio-intro p{max-width:720px;color:var(--muted);font-size:13px;line-height:2;margin:0}
+.logo-studio-intro p{max-width:720px;margin:0;color:var(--muted);font-size:13px;line-height:2}
+.logo-studio-disclaimer{margin-top:9px!important;font-size:11px!important;opacity:.9}
 .logo-studio-layout{display:grid;grid-template-columns:minmax(260px,.85fr) minmax(0,1.5fr);gap:18px;align-items:start}
-.logo-studio-form,.logo-studio-results{border:1px solid var(--border);border-radius:20px;background:var(--card-surface);padding:22px;box-shadow:var(--shadow);min-width:0}
-.logo-studio-form h2,.logo-studio-results h2{font-size:17px;color:var(--gold);margin:0 0 7px}
-.logo-studio-form>p,.logo-studio-results>p{font-size:12px;color:var(--muted);line-height:1.9;margin:0 0 14px}
+.logo-studio-form,.logo-studio-results{min-width:0;padding:22px;border:1px solid var(--border);border-radius:20px;background:var(--card-surface);box-shadow:var(--shadow)}
+.logo-studio-form h2,.logo-studio-results h2{margin:0 0 7px;color:var(--gold);font-size:17px}
+.logo-studio-form>p,.logo-studio-results>p{margin:0 0 14px;color:var(--muted);font-size:12px;line-height:1.9}
 .logo-field{display:block;margin:15px 0 7px;color:var(--text);font-size:12px;font-weight:600}
 .logo-control{width:100%;min-height:44px;padding:11px 12px;border:1px solid var(--border);border-radius:11px;background:var(--bg);color:var(--text);font:inherit;font-size:13px;outline:none}
 .logo-control:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(201,155,72,.12)}
 .logo-control::placeholder{color:var(--muted);opacity:.8}
-.logo-studio-form>.btn-primary,.logo-brief-actions button{width:100%;margin-top:16px;min-height:44px}
-.logo-brief-actions{display:grid;grid-template-columns:1fr;gap:8px}
-.logo-brief-actions .btn-secondary{width:100%;min-height:42px}
+.logo-studio-form>.btn-primary{width:100%;min-height:46px;margin-top:18px}
+.logo-brief-hint{margin:10px 0 0!important;color:var(--muted);font-size:11px;line-height:1.8}
 .logo-studio-status{min-height:38px;margin-top:12px;color:var(--muted);font-size:11px;line-height:1.9}
-.logo-studio-empty{min-height:270px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;border:1px dashed var(--border);border-radius:15px;padding:25px;color:var(--muted)}
-.logo-studio-empty[hidden]{display:none}
-.logo-studio-empty-mark{width:62px;height:62px;border:1px solid rgba(201,155,72,.45);border-radius:18px;display:grid;place-items:center;color:var(--gold);font-size:30px;margin-bottom:12px;background:rgba(201,155,72,.07)}
-.logo-studio-empty strong{color:var(--text);font-size:14px;margin-bottom:5px}
-.logo-studio-empty span{font-size:11px;line-height:1.9;max-width:300px}
-.logo-concept-results{display:grid;grid-template-columns:1fr;gap:14px}
-.logo-concept-card{border:1px solid var(--border);border-radius:15px;overflow:hidden;background:var(--panel);min-width:0}
-.logo-concept-preview{padding:12px;background:#f5f5f3}
-.logo-concept-preview svg{display:block;width:100%;height:auto;max-height:260px;border-radius:8px}
-.logo-concept-copy{padding:14px 15px 7px}
-.logo-concept-copy h3{font-size:15px;color:var(--text);margin:4px 0}
-.logo-concept-copy p{font-size:11px;line-height:1.8;color:var(--muted);margin:5px 0}
-.logo-concept-palette{display:inline-block;font-size:10px;color:var(--gold);margin-top:4px}
-.logo-concept-actions{display:flex;gap:8px;padding:10px 14px 14px}
-.logo-concept-actions button{flex:1;min-height:39px;font-size:11px}
+.logo-studio-empty{min-height:270px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:25px;border:1px dashed var(--border);border-radius:15px;color:var(--muted);text-align:center}
+.logo-studio-empty[hidden],.logo-custom-colors[hidden]{display:none}
+.logo-studio-empty-mark{width:62px;height:62px;display:grid;place-items:center;margin-bottom:12px;border:1px solid rgba(201,155,72,.45);border-radius:18px;background:rgba(201,155,72,.07);color:var(--gold);font-size:30px}
+.logo-studio-empty strong{margin-bottom:5px;color:var(--text);font-size:14px}
+.logo-studio-empty span{max-width:300px;font-size:11px;line-height:1.9}
+.logo-concept-results{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;align-items:start}
+.logo-concept-card{min-width:0;overflow:hidden;border:1px solid var(--border);border-radius:15px;background:var(--panel)}
+.logo-concept-card:first-child{grid-column:1/-1}
+.logo-concept-preview{position:relative;display:block;width:100%;aspect-ratio:1/1;overflow:hidden;padding:0;background:#fff}
+.logo-html-css-preview{display:block;width:100%;height:100%;min-height:0;border:0;background:#fff;aspect-ratio:1/1}
+.logo-concept-copy{min-height:100px;padding:14px 15px 7px}
+.logo-concept-copy h3{margin:4px 0;color:var(--text);font-size:15px}
+.logo-concept-copy p{margin:5px 0;color:var(--muted);font-size:11px;line-height:1.9}
+.logo-concept-actions{display:grid;grid-template-columns:1fr;gap:8px;padding:10px 14px 14px}
+.logo-concept-actions button{width:100%;min-height:43px;font-size:11px}
+.logo-export-feedback{padding:0 14px 14px;color:var(--muted);font-size:11px;line-height:1.8}
+.logo-export-feedback a{color:var(--gold);text-decoration:underline}
+.logo-design-brief{grid-column:1/-1;margin:0 0 4px;padding:16px;border:1px solid rgba(201,162,74,.34);border-radius:15px;background:var(--card-surface);color:var(--text)}
+.logo-design-brief h3{margin:0 0 8px;color:var(--gold);font-size:15px}
+.logo-design-brief p{margin:6px 0;font-size:12px;line-height:1.9}
+.logo-design-brief details{margin-top:10px;padding-top:10px;border-top:1px solid var(--border)}
+.logo-design-brief summary{color:var(--gold);cursor:pointer;font-size:12px;font-weight:700}
+.logo-design-brief details p{margin-top:10px;text-align:left;white-space:pre-wrap}
+.logo-custom-colors{display:grid;grid-template-columns:1fr 1fr;gap:8px 14px;margin-top:8px;padding:12px;border:1px solid var(--border);border-radius:12px;background:rgba(201,155,72,.045)}
+.logo-custom-colors .logo-field{grid-column:1/-1;margin:4px 0 0}
+.logo-color-control{width:100%;height:42px;padding:4px;border:1px solid var(--border);border-radius:9px;background:var(--bg);cursor:pointer}
 body.light .logo-studio-intro,body.light .logo-studio-form,body.light .logo-studio-results{background-color:#fffdf8}
 body.light .logo-control{background:#fff;color:#273143}
 @media(max-width:760px){
-.logo-studio-page{padding:18px 0 48px}
-.logo-studio-head{align-items:flex-start;flex-direction:column}
-.logo-studio-intro{padding:20px}
-.logo-studio-layout{grid-template-columns:1fr}
-.logo-studio-form,.logo-studio-results{padding:17px}
-.logo-concept-actions{flex-direction:column}
-.logo-concept-actions button{width:100%}
-}
-.logo-studio-disclaimer{margin-top:9px!important;font-size:11px!important;color:var(--muted)!important;opacity:.9}
-
-/* Professional logo concept controls and transparent vector previews */
-.logo-custom-colors{display:grid;grid-template-columns:1fr 1fr;gap:8px 14px;margin-top:8px;padding:12px;border:1px solid var(--border);border-radius:12px;background:rgba(201,155,72,.045)}
-.logo-custom-colors[hidden]{display:none}
-.logo-custom-colors .logo-field{grid-column:1/-1;margin:4px 0 0}
-.logo-color-control{width:100%;height:42px;padding:4px;border:1px solid var(--border);border-radius:9px;background:var(--bg);cursor:pointer}
-.logo-concept-results{grid-template-columns:repeat(2,minmax(0,1fr))}
-.logo-concept-card:first-child{grid-column:1/-1}
-.logo-concept-preview{min-height:190px;display:flex;align-items:center;justify-content:center}
-.logo-concept-preview svg{max-height:230px;overflow:visible}
-.logo-concept-card:first-child .logo-concept-preview svg{max-height:280px}
-.logo-concept-copy{min-height:118px}
-.logo-concept-actions button{min-width:0}
-@media(max-width:760px){.logo-concept-results{grid-template-columns:1fr}.logo-concept-card:first-child{grid-column:auto}.logo-custom-colors{grid-template-columns:1fr 1fr}}
-
-/* Real AI logo image concepts */
-.logo-concept-results{grid-template-columns:repeat(2,minmax(0,1fr));align-items:start}
-.logo-concept-card:first-child{grid-column:1/-1}
-.logo-ai-preview{padding:0;background:transparent;min-height:230px}
-.logo-ai-preview img{display:block;width:100%;height:auto;max-height:520px;object-fit:contain;background:transparent}
-.logo-ai-card:first-child .logo-ai-preview img{max-height:520px}
-.logo-ai-lockup{display:flex;flex-direction:column;align-items:center;gap:7px;padding:12px 16px 6px;background:#fff;text-align:center}
-.logo-ai-lockup strong{font-family:Tahoma,Arial,sans-serif;font-size:clamp(24px,4vw,36px);font-weight:800;color:var(--logo-dark);direction:auto;unicode-bidi:plaintext}
-.logo-ai-lockup span{font-family:Tahoma,Arial,sans-serif;font-size:13px;color:#687386;direction:auto;unicode-bidi:plaintext}
-.logo-ai-card .logo-concept-copy{min-height:unset}
-.logo-ai-card .logo-concept-actions{padding-top:6px}
-.logo-ai-card .logo-concept-actions button{width:100%;min-height:43px}
-@media(max-width:760px){.logo-concept-results{grid-template-columns:1fr}.logo-concept-card:first-child{grid-column:auto}.logo-ai-preview{min-height:180px}.logo-ai-preview img{max-height:360px}}
-
-
-/* Distinct art-direction review cues */
-.logo-ai-visual-review{margin-top:12px;padding:12px;border:1px solid var(--border);border-radius:12px;background:rgba(16,29,53,.045);font-size:12px;line-height:1.8}
-.logo-ai-visual-review strong{display:block;color:var(--text);font-size:13px;margin-bottom:4px}
-.logo-ai-visual-review p{margin:3px 0;color:var(--muted)}
-.logo-ai-rubric{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
-.logo-ai-rubric span{display:inline-flex;align-items:center;padding:5px 8px;border:1px solid var(--border);border-radius:999px;color:var(--muted);font-size:10px;line-height:1.4;background:rgba(201,162,74,.055)}
-
-/* Local, no-API logo checks and preference feedback */
-.logo-ai-feedback{display:flex;flex-wrap:wrap;align-items:center;gap:7px;padding:10px 14px 14px;border-top:1px solid var(--border)}
-.logo-ai-feedback strong{flex-basis:100%;font-size:11px;color:var(--text)}
-.logo-ai-feedback button{flex:1;min-height:36px;font-size:11px}
-.logo-ai-feedback button[aria-pressed="true"]{border-color:var(--gold);color:var(--gold);background:rgba(201,162,74,.1)}
-
-
-/* NAVI-directed logo strategy summary */
-.logo-ai-strategy-summary {
-  margin: 0 0 1.25rem;
-  padding: 1rem 1.1rem;
-  border: 1px solid rgba(201,162,74,.34);
-  border-radius: 16px;
-  background: rgba(16,29,53,.42);
-  color: inherit;
-}
-.logo-ai-strategy-summary h3 {
-  margin: 0 0 .65rem;
-  color: var(--nava-gold, #c9a24a);
-  font-size: 1rem;
-}
-.logo-ai-strategy-summary p {
-  margin: .45rem 0 0;
-  line-height: 1.9;
-}
-
-
-/* NAVI-authored HTML/CSS logo designs */
-.logo-html-css-preview {
-  display: block;
-  width: 100%;
-  aspect-ratio: 1 / 1;
-  min-height: 250px;
-  border: 0;
-  background: transparent;
-}
-.logo-html-css-card .logo-concept-preview {
-  position: relative;
-  display: block;
-  width: 100%;
-  height: auto;
-  padding: 0;
-  aspect-ratio: 1 / 1;
-  min-height: 0;
-  overflow: hidden;
-  background: #f5f5f3;
-}
-.logo-html-css-card .logo-concept-copy {
-  min-height: 88px;
-}
-.logo-html-css-card .logo-concept-actions button {
-  width: 100%;
-  min-height: 44px;
-}
-.logo-english-brief {
-  margin-top: 12px;
-  padding: 10px 12px;
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  direction: rtl;
-}
-.logo-english-brief summary {
-  color: var(--gold);
-  cursor: pointer;
-  font-size: 12px;
-  font-weight: 700;
-}
-.logo-english-brief p {
-  margin: 10px 0 0;
-  color: var(--text);
-  font-size: 12px;
-  line-height: 1.9;
-  text-align: left;
-  white-space: normal;
-}
-body.light .logo-html-css-card .logo-concept-preview {
-  background: #f5f5f3;
-}
-@media(max-width:760px) {
-  .logo-html-css-preview { min-height: 0; }
-}
-
-
-/* Native vector and high-resolution raster export controls */
-.logo-html-css-card .logo-concept-actions{display:grid;grid-template-columns:1fr;gap:8px}
-.logo-html-css-card .logo-concept-actions button{min-height:44px;width:100%}
-
-
-/* Reliable square iframe viewport and visible mobile export fallback */
-.logo-html-css-card .logo-concept-preview {
-  position: relative;
-  display: block;
-  width: 100%;
-  height: auto;
-  aspect-ratio: 1 / 1;
-  min-height: 0;
-  overflow: hidden;
-  background: #f5f5f3;
-  /* JS writes an explicit square height after mounting for older WebViews. */
-}
-.logo-html-css-card iframe.logo-html-css-preview {
-  /* Keep the iframe in normal document flow. Absolute-positioned iframe
-     compositing is unreliable in several Android Chromium WebViews. */
-  position: relative;
-  inset: auto;
-  z-index: auto;
-  display: block;
-  visibility: visible;
-  opacity: 1;
-  pointer-events: none;
-  width: 100%;
-  height: 100%;
-  min-height: 0;
-  aspect-ratio: auto;
-  border: 0;
-  background: transparent;
-  flex: 0 0 100%;
-}
-.logo-export-feedback {
-  min-height: 0;
-  padding: 0 14px 12px;
-  color: var(--muted);
-  font-size: 11px;
-  line-height: 1.8;
-  overflow-wrap: anywhere;
-}
-.logo-export-feedback:empty { display: none; }
-.logo-export-feedback a { display: inline-block; margin-inline-start: 4px; }
-@media(max-width:760px) {
-  .logo-html-css-card .logo-concept-preview { min-height: 0; }
-  .logo-html-css-card iframe.logo-html-css-preview { min-height: 0; }
+ .logo-studio-page{padding:18px 0 48px}
+ .logo-studio-head{align-items:flex-start;flex-direction:column}
+ .logo-studio-intro{padding:20px}
+ .logo-studio-layout{grid-template-columns:1fr}
+ .logo-studio-form,.logo-studio-results{padding:17px}
+ .logo-concept-results{grid-template-columns:1fr}
+ .logo-concept-card:first-child{grid-column:auto}
+ .logo-custom-colors{grid-template-columns:1fr 1fr}
 }
