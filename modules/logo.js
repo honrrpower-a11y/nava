@@ -402,8 +402,8 @@ export async function handleLogoRoute({ request, env, origin, corsOrigin }) {
         extraModelCalls: 0,
         note: "NAVI authored the English design brief and all three HTML/CSS logo designs in one request."
       },
-      concepts: plan.concepts.map(({ id, title, rationale, html, css }) => ({
-        id, title, rationale, html, css
+      concepts: plan.concepts.map(({ id, title, rationale, mechanism, expressionMove, differsBy, axes, defaultsUsed, html, css }) => ({
+        id, title, rationale, mechanism, expressionMove, differsBy, axes, defaultsUsed, html, css
       }))
     }, 200, corsOrigin);
   } catch (error) {
