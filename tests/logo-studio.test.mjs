@@ -97,6 +97,31 @@ function makeRequest(body = INPUT) {
 }
 
 function makeGeminiResponse(plan = makeDesign()) {
+  for (const concept of plan.concepts || []) {
+    const html = String(concept.html || "");
+    const symbolStart = html.indexOf('class="navi-symbol');
+    const symbolOpenEnd = symbolStart >= 0 ? html.indexOf(">", symbolStart) : -1;
+    const symbolClose = symbolOpenEnd >= 0 ? html.indexOf("</div>", symbolOpenEnd) : -1;
+    const symbolInner = symbolClose >= 0 ? html.slice(symbolOpenEnd + 1, symbolClose) : "";
+    const innerClasses = [...symbolInner.matchAll(/class="([^"]+)"/g)]
+      .flatMap(match => match[1].split(/\s+/))
+      .filter(name => name && name !== "navi-symbol");
+    const styledClasses = [...new Set(innerClasses)].filter(name =>
+      new RegExp("\\." + name + "(?=[\\s.:#\\[,{>\\{])").test(concept.css || ""));
+    const elements = Array.isArray(concept.briefElements) && concept.briefElements.length >= 2
+      ? concept.briefElements.slice(0, 5)
+      : ["عنصر اصلی بریف", "رابطه هندسی اصلی"];
+    concept.visualAnchors = elements.map((description, index) => ({
+      id: "anchor-" + (index + 1),
+      description,
+      relationship: "این جزء در ساختار اصلی نشان با فرم مکمل پیوند دارد"
+    }));
+    concept.anchorMap = concept.visualAnchors.map((anchor, index) => ({
+      anchorId: anchor.id,
+      layerClass: styledClasses[index % Math.max(1, styledClasses.length)] || "",
+      visualRole: "این لایه هندسه قابل مشاهده جزء مربوط را در نشان می‌سازد"
+    })).filter(entry => entry.layerClass);
+  }
   return new Response(JSON.stringify({
     candidates: [{ content: { parts: [{ text: JSON.stringify(plan) }] } }]
   }), { status: 200, headers: { "Content-Type": "application/json" } });
@@ -131,6 +156,9 @@ test("NAVI writes an English brief and three sanitized HTML/CSS logo designs in 
     assert.match(sentPrompt, /PHASE 4B — ANTI-DEFAULT REFLEX/i);
     assert.match(sentPrompt, /PHASE 4C — BRIEF TRACEABILITY/i);
     assert.match(sentPrompt, /PHASE 4D — CLIENT BRIEF DOMINANCE/i);
+    assert.match(sentPrompt, /PHASE 4E — ANCHOR-TO-LAYER CONTRACT/i);
+    assert.match(sentPrompt, /anchorMap with exactly one object per visualAnchor/i);
+    assert.match(sentPrompt, /real nested HTML element inside the single \.navi-symbol/i);
     assert.match(sentPrompt, /exact client idea and relationships/i);
     assert.match(sentPrompt, /brief fidelity first/i);
     assert.match(sentPrompt, /actual \.navi-symbol/i);
@@ -171,6 +199,8 @@ test("NAVI writes an English brief and three sanitized HTML/CSS logo designs in 
     assert.ok(result.concepts.every(item => item.html.includes("<div")));
     assert.ok(result.concepts.every(item => !Object.prototype.hasOwnProperty.call(item, "svg")), "SVG is never returned as a separate export field");
     assert.ok(result.concepts.every(item => item.css.length > 0));
+    assert.ok(result.concepts.every(item => item.visualAnchors.length >= 2));
+    assert.ok(result.concepts.every(item => item.anchorMap.length === item.visualAnchors.length));
     assert.equal(result.concepts[0].centralThesis, "پیوند دو مسیر صوتی به یک نشانه پیوسته و باز تبدیل می‌شود");
     assert.equal(result.concepts[0].symbolConstruction, "دو مسیر منحنی در مرکز به هم می‌رسند و یک شکاف پیوسته در دل فرم می‌سازند");
     assert.equal(result.concepts[0].briefAlignment, "این فرم اتصال صدا و خلاقیت را در هویت استودیوی موسیقی نشان می‌دهد");
@@ -433,6 +463,7 @@ test("quality gate accepts a structured geometric logo without requiring gradien
     ".echo{display:flex;flex-direction:column;align-items:center;gap:20px;text-align:center}",
     ".navi-symbol{position:relative;display:flex;width:220px;height:220px;background:var(--logo-primary);border:0;border-radius:42% 58% 52% 48%;clip-path:polygon(50% 0,100% 45%,70% 100%,15% 85%,0 35%);transform:rotate(-12deg)}",
     ".navi-symbol::before{content:'';position:absolute;width:45%;height:45%;border:8px solid var(--logo-background);border-radius:50%}",
+    ".navi-symbol__detail{display:block;position:absolute;width:45%;height:45%;border:8px solid var(--logo-background);border-radius:50%}",
     ".echo strong{font-size:54px;font-weight:900;letter-spacing:1px;color:var(--logo-primary)}",
     ".echo small{font-size:22px;line-height:1.5;color:var(--logo-primary)}"
   ].join("");
