@@ -138,14 +138,16 @@ test("NAVI writes an English brief and three sanitized HTML/CSS logo designs in 
     assert.match(sentPrompt, /different central thesis, outer silhouette/i);
     assert.match(sentPrompt, /16 px/i);
     assert.match(sentPrompt, /HTML and CSS are the live design medium/i);
-    assert.match(sentPrompt, /embed carefully authored inline SVG geometry inside the HTML symbol wrapper/i);
-    assert.match(sentPrompt, /custom vector contours/i);
+    assert.match(sentPrompt, /HTML and CSS are the only design and rendering medium/i);
+    assert.match(sentPrompt, /coordinated HTML layers and CSS geometry/i);
     assert.match(sentPrompt, /For Z specifically, preserve a clear top horizontal/i);
     assert.match(sentPrompt, /artboard\/canvas background must be white or a light neutral/i);
     assert.match(sentPrompt, /Never assign the root a fixed 1000px width or height/i);
     assert.match(sentPrompt, /320×320 mobile preview/i);
     assert.match(sentPrompt, /Never submit two stray diagonal strokes/i);
     assert.match(sentPrompt, /navi-symbol__detail/i);
+    assert.match(sentPrompt, /SVG and all SVG-derived tags or attributes are forbidden/i);
+    assert.match(sentPrompt, /CSS clip-path polygons/i);
     assert.match(sentPrompt, /A thin border or line alone is not an acceptable symbol/i);
     assert.match(sentPrompt, /Navy or blue may still be used as an intentional brand-mark/i);
     assert.match(sentPrompt, /{{BRAND_NAME}}/i);
@@ -183,56 +185,30 @@ test("NAVI writes an English brief and three sanitized HTML/CSS logo designs in 
 });
 
 
-test("NAVI preserves safe inline SVG path geometry inside HTML logo symbols", async () => {
-  const originalFetch = globalThis.fetch;
-  const db = new FakeD1();
-  const vector = makeDesign();
-  vector.concepts[0].html = '<div class="mark"><div class="navi-symbol" data-logo-role="symbol"><svg class="navi-symbol__vector" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"><path d="M30 35 H170 L120 95 L170 165 H30 Z" fill="var(--logo-primary)"/><path d="M70 80 L130 120" stroke="#fff" stroke-width="8"/></svg></div><strong>{{BRAND_NAME}}</strong></div>';
-  vector.concepts[0].css = '.logo-art-root{display:grid;place-items:center;background:var(--logo-background);width:100%;height:100%}.mark{display:grid;gap:20px;justify-items:center}.navi-symbol{width:220px;height:220px;background:var(--logo-background);border-radius:12px}.navi-symbol__vector{display:block;width:100%;height:100%}.mark strong{font-size:48px;font-weight:900}';
-  globalThis.fetch = async () => makeGeminiResponse(vector);
+test("NAVI builds symbols with CSS-only geometry and strips SVG markup", async () => {
+  const originalFetch = globalThis.fetch, db = new FakeD1(), design = makeDesign();
+  design.concepts[0].html = '<div class="mark"><div class="navi-symbol" data-logo-role="symbol"><span class="navi-symbol__detail"></span><span class="navi-symbol__part"></span></div><strong>{{BRAND_NAME}}</strong></div>';
+  design.concepts[0].css = '.logo-art-root{display:grid;place-items:center;width:100%;height:100%}.mark{display:grid;gap:20px;justify-items:center}.navi-symbol{position:relative;width:220px;height:220px;background:var(--logo-primary);clip-path:polygon(50% 0,94% 26%,82% 82%,50% 100%,18% 82%,6% 26%)}.navi-symbol__detail{position:absolute;inset:22%;border:10px solid var(--logo-background);border-radius:50%}.navi-symbol__part{position:absolute;width:32%;height:18%;right:12%;top:38%;background:var(--logo-background);transform:rotate(-28deg);border-radius:50%}.mark strong{font-size:48px;font-weight:900}';
+  design.concepts[1].html = '<div class="mark"><div class="navi-symbol" data-logo-role="symbol"><svg viewBox="0 0 200 200"><path d="M20 20 H180 V180 H20 Z"/></svg><span class="navi-symbol__detail"></span></div><strong>{{BRAND_NAME}}</strong></div>';
+  globalThis.fetch = async () => makeGeminiResponse(design);
   try {
-    const response = await handleLogoRoute({
-      request: makeRequest(),
-      env: { NAVA_DB: db, NAVI_SESSION_SECRET: "test-secret-key", GEMINI_API_KEY: "test-gemini-key" },
-      origin: ORIGIN,
-      corsOrigin: ORIGIN
-    });
+    const response = await handleLogoRoute({request:makeRequest(),env:{NAVA_DB:db,NAVI_SESSION_SECRET:"test-secret-key",GEMINI_API_KEY:"test-gemini-key"},origin:ORIGIN,corsOrigin:ORIGIN});
     const result = await response.json();
-    assert.equal(response.status, 200);
-    assert.equal(result.success, true);
-    assert.equal(result.concepts.length, 3, JSON.stringify(result.rejectedConcepts));
-    assert.match(result.concepts[0].html, /<svg[^>]*viewBox="0 0 200 200"/i);
-    assert.match(result.concepts[0].html, /<path[^>]*d="M30 35 H170/);
-    assert.doesNotMatch(result.concepts[0].html, /<script|onload=|foreignObject/i);
-    assert.equal(db.visitorUsed, 1);
-  } finally {
-    globalThis.fetch = originalFetch;
-  }
+    assert.equal(response.status,200); assert.equal(result.success,true);
+    assert.equal(result.concepts.length,3,JSON.stringify(result.rejectedConcepts));
+    assert.doesNotMatch(result.concepts[0].html,/<\\/?(?:svg|path|circle|ellipse|rect|polygon|polyline|line)\\b/i);
+    assert.doesNotMatch(result.concepts[1].html,/<\\/?(?:svg|path|circle|ellipse|rect|polygon|polyline|line)\\b/i);
+    assert.match(result.concepts[0].html,/navi-symbol__detail/); assert.equal(db.visitorUsed,1);
+  } finally {globalThis.fetch=originalFetch;}
 });
 
-test("NAVI strips executable SVG elements and event attributes from inline vector markup", async () => {
-  const originalFetch = globalThis.fetch;
-  const db = new FakeD1();
-  const unsafe = makeDesign();
-  unsafe.concepts[0].html = '<div class="mark"><div class="navi-symbol" data-logo-role="symbol"><svg viewBox="0 0 200 200" onload="alert(1)"><path d="M20 20 H180 V180 H20 Z" onclick="alert(1)"/><foreignObject><script>alert(1)</script></foreignObject></svg><span class="navi-symbol__detail"></span></div><strong>{{BRAND_NAME}}</strong></div>';
-  unsafe.concepts[0].css = '.logo-art-root{display:grid;place-items:center;width:100%;height:100%}.mark{display:grid;gap:20px}.navi-symbol{width:220px;height:220px;background:var(--logo-primary);border-radius:18px}.mark strong{font-size:48px}';
-  globalThis.fetch = async () => makeGeminiResponse(unsafe);
-  try {
-    const response = await handleLogoRoute({
-      request: makeRequest(),
-      env: { NAVA_DB: db, NAVI_SESSION_SECRET: "test-secret-key", GEMINI_API_KEY: "test-gemini-key" },
-      origin: ORIGIN,
-      corsOrigin: ORIGIN
-    });
-    const result = await response.json();
-    assert.equal(response.status, 200);
-    assert.equal(result.concepts.length, 3, JSON.stringify(result.rejectedConcepts));
-    assert.doesNotMatch(result.concepts[0].html, /onload=|onclick=|foreignObject|<script/i);
-    assert.match(result.concepts[0].html, /<svg/);
-    assert.match(result.concepts[0].html, /<path/);
-  } finally {
-    globalThis.fetch = originalFetch;
-  }
+test("NAVI rejects SVG-only artwork when no CSS-built symbol remains", async () => {
+  const originalFetch=globalThis.fetch,db=new FakeD1(),design=makeDesign();
+  design.concepts[0].html='<div class="mark"><div class="navi-symbol" data-logo-role="symbol"><svg viewBox="0 0 200 200"><path d="M20 20 H180 V180 H20 Z"/></svg></div><strong>{{BRAND_NAME}}</strong></div>';
+  design.concepts[0].css='.logo-art-root{display:grid;place-items:center;width:100%;height:100%}.mark{display:grid}.navi-symbol{width:220px;height:220px}';
+  globalThis.fetch=async()=>makeGeminiResponse(design);
+  try {const response=await handleLogoRoute({request:makeRequest(),env:{NAVA_DB:db,NAVI_SESSION_SECRET:"test-secret-key",GEMINI_API_KEY:"test-gemini-key"},origin:ORIGIN,corsOrigin:ORIGIN});const result=await response.json();assert.equal(response.status,200);assert.equal(result.concepts.length,2);assert.equal(result.rejectedConcepts[0].code,"LOGO_SYMBOL_UNDERBUILT");}
+  finally {globalThis.fetch=originalFetch;}
 });
 
 test("NAVI rejects a two-line sketch instead of presenting it as a logo", async () => {
@@ -659,55 +635,11 @@ test("Logo Studio lets the client delegate ideation to NAVI or supply a binding 
 });
 
 
-// Filled inline SVG geometry is itself the symbol surface. A wrapper background,
-// border-radius or clip-path must not be required when the vector supplies them.
-test("NAVI accepts complete filled SVG symbols without duplicate CSS surface styling", async () => {
-  const originalFetch = globalThis.fetch;
-  const db = new FakeD1();
-  const vector = makeDesign();
-  vector.concepts[0].html = '<div class="mark"><div class="navi-symbol" data-logo-role="symbol"><svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"><path d="M28 30 H172 L124 92 L172 170 H28 Z" fill="var(--logo-primary)"/><path d="M62 82 L138 118" stroke="#fff" stroke-width="9" stroke-linecap="round"/></svg></div><strong>{{BRAND_NAME}}</strong></div>';
-  vector.concepts[0].css = '.logo-art-root{display:grid;place-items:center;width:100%;height:100%}.mark{display:grid;gap:20px;justify-items:center}.navi-symbol{width:220px;height:220px}.navi-symbol svg{display:block;width:100%;height:100%}.mark strong{font-size:48px;font-weight:900}';
-  globalThis.fetch = async () => makeGeminiResponse(vector);
-  try {
-    const response = await handleLogoRoute({
-      request: makeRequest(),
-      env: { NAVA_DB: db, NAVI_SESSION_SECRET: "test-secret-key", GEMINI_API_KEY: "test-gemini-key" },
-      origin: ORIGIN,
-      corsOrigin: ORIGIN
-    });
-    const result = await response.json();
-    assert.equal(response.status, 200);
-    assert.equal(result.success, true);
-    assert.equal(result.concepts.length, 3, JSON.stringify(result.rejectedConcepts));
-    assert.match(result.concepts[0].html, /<svg[^>]*viewBox="0 0 200 200"/i);
-    assert.equal(db.visitorUsed, 1);
-  } finally {
-    globalThis.fetch = originalFetch;
-  }
-});
-
-// A hollow stroke-only SVG is not a filled geometric symbol and must still fail.
-test("NAVI still rejects hollow stroke-only SVG marks as underbuilt", async () => {
-  const originalFetch = globalThis.fetch;
-  const db = new FakeD1();
-  const vector = makeDesign();
-  vector.concepts[0].html = '<div class="mark"><div class="navi-symbol" data-logo-role="symbol"><svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"><path d="M20 100 L180 100" fill="none" stroke="var(--logo-primary)" stroke-width="3"/></svg></div><strong>{{BRAND_NAME}}</strong></div>';
-  vector.concepts[0].css = '.logo-art-root{display:grid;place-items:center;width:100%;height:100%}.mark{display:grid;gap:20px;justify-items:center}.navi-symbol{width:220px;height:220px}.navi-symbol svg{display:block;width:100%;height:100%}.mark strong{font-size:48px;font-weight:900}';
-  globalThis.fetch = async () => makeGeminiResponse(vector);
-  try {
-    const response = await handleLogoRoute({
-      request: makeRequest(),
-      env: { NAVA_DB: db, NAVI_SESSION_SECRET: "test-secret-key", GEMINI_API_KEY: "test-gemini-key" },
-      origin: ORIGIN,
-      corsOrigin: ORIGIN
-    });
-    const result = await response.json();
-    assert.equal(response.status, 200);
-    assert.equal(result.concepts.length, 2);
-    assert.equal(result.rejectedConcepts.length, 1);
-    assert.equal(result.rejectedConcepts[0].code, "LOGO_SYMBOL_UNDERBUILT");
-    assert.equal(db.visitorUsed, 1);
-  } finally {
-    globalThis.fetch = originalFetch;
-  }
+test("NAVI accepts a layered CSS-only symbol without SVG", async () => {
+  const originalFetch=globalThis.fetch,db=new FakeD1(),design=makeDesign();
+  design.concepts[0].html='<div class="mark"><div class="navi-symbol" data-logo-role="symbol"><span class="navi-symbol__detail"></span><span class="navi-symbol__part"></span></div><strong>{{BRAND_NAME}}</strong></div>';
+  design.concepts[0].css='.logo-art-root{display:grid;place-items:center;width:100%;height:100%}.mark{display:grid;gap:20px;justify-items:center}.navi-symbol{position:relative;width:220px;height:220px;background:var(--logo-primary);border-radius:42% 58% 52% 48%;clip-path:polygon(50% 0,100% 45%,70% 100%,15% 85%,0 35%)}.navi-symbol__detail{position:absolute;inset:25%;border:8px solid var(--logo-background);border-radius:50%}.navi-symbol__part{position:absolute;width:40%;height:16%;left:30%;top:42%;background:var(--logo-background);transform:rotate(30deg)}.mark strong{font-size:48px;font-weight:900}';
+  globalThis.fetch=async()=>makeGeminiResponse(design);
+  try {const response=await handleLogoRoute({request:makeRequest(),env:{NAVA_DB:db,NAVI_SESSION_SECRET:"test-secret-key",GEMINI_API_KEY:"test-gemini-key"},origin:ORIGIN,corsOrigin:ORIGIN});const result=await response.json();assert.equal(response.status,200);assert.equal(result.success,true);assert.equal(result.concepts.length,3,JSON.stringify(result.rejectedConcepts));assert.doesNotMatch(result.concepts[0].html,/<svg|<path/i);}
+  finally {globalThis.fetch=originalFetch;}
 });
