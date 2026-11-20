@@ -406,7 +406,8 @@ test("Logo Studio waits for iframe preview readiness before allowing exports", (
   const source = readFileSync(new URL("../logo-studio.js", import.meta.url), "utf8");
   assert.ok(source.includes("frame.__navaPreviewReady"));
   assert.ok(source.includes("visibleContent"), "blank artboards are diagnosed instead of treated as completed previews");
-  assert.ok(source.includes("await frame.__navaPreviewReady"));
+  assert.ok(source.includes("await waitForPreview(frame)"), "exports must wait for iframe readiness with a bounded timeout");
+  assert.ok(source.includes("Promise.race") && source.includes("frame.__navaPreviewReady"));
   assert.ok(source.includes("exportPngFromFrame(frame"));
   assert.ok(!source.includes("دریافت SVG برداری"));
   assert.ok(!source.includes("downloadSvg("));
