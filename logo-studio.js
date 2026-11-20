@@ -68,7 +68,7 @@
     frame.setAttribute("referrerpolicy", "no-referrer");
     frame.setAttribute("loading", "eager");
     frame.__navaData = { ...brief };
-    frame.srcdoc = previewDocument(concept, brief);
+    frame.__navaMarkup = previewDocument(concept, brief);
     return frame;
   }
 
@@ -243,6 +243,14 @@
       result.concepts.forEach((concept, index) => {
         const card = conceptCard(concept, index, brief);
         results.append(card);
+        const frame = card.querySelector("iframe.logo-html-css-preview");
+        if (frame) {
+          const box = frame.parentElement;
+          const width = box?.getBoundingClientRect().width || 0;
+          if (box && width > 0) box.style.height = Math.round(width) + "px";
+          frame.srcdoc = frame.__navaMarkup;
+          delete frame.__navaMarkup;
+        }
       });
       empty.hidden = true;
       status.textContent = "سه مسیر طراحی آماده‌اند. هر طرح را بررسی کن و خروجی PNG بگیر.";
