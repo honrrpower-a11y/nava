@@ -126,10 +126,21 @@
     feedback.replaceChildren(message, link);
   }
 
+  async function waitForPreview(frame) {
+    if (!frame || !frame.__navaPreviewReady) return;
+    await Promise.race([
+      frame.__navaPreviewReady,
+      new Promise((_, reject) => setTimeout(
+        () => reject(new Error("پیش‌نمایش در زمان مقرر آماده نشد؛ صفحه را تازه‌سازی کن و دوباره آزمایش کن.")),
+        12000
+      ))
+    ]);
+  }
+
   async function downloadPng(concept, frame, data, index, feedback) {
     try {
       status.textContent = "در حال آماده‌سازی تصویر با وضوح ۲۴۰۰ پیکسل...";
-      if (frame.__navaPreviewReady) await frame.__navaPreviewReady;
+      await waitForPreview(frame);
       if (frame.__navaPreviewError) throw new Error(frame.__navaPreviewError);
       const filename = safeFileName(fields.name.value || data.brandName) + "-logo-concept-" + (index + 1) + ".png";
       if (!window.NavaLogoRenderer || typeof window.NavaLogoRenderer.exportPngFromFrame !== "function") {
@@ -291,6 +302,9 @@
     pngButton.textContent = "آزمایش ساخت PNG (بدون سهمیه)";
     const feedback = document.createElement("div");
     feedback.className = "logo-export-feedback";
+    // Bind the action immediately: a delayed diagnostic must never leave a
+    // visible PNG button that has no click handler.
+    pngButton.addEventListener("click", () => downloadPng(concept, frame, data, 0, feedback));
     actions.appendChild(pngButton);
     card.append(actions, feedback);
     results.appendChild(card);
@@ -302,7 +316,7 @@
     delete frame.__navaDocumentHtml;
 
     try {
-      await frame.__navaPreviewReady;
+      await waitForPreview(frame);
       const doc = frame.contentDocument;
       const root = doc && doc.querySelector(".logo-art-root");
       if (!root) throw new Error("مرحله نمایش: عنصر اصلی بوم در iframe ساخته نشد.");
@@ -331,7 +345,6 @@
         throw new Error("مرحله نمایش ناموفق است؛ جزئیات رندر در گزارش بالا آمده است.");
       }
       status.textContent = "آزمایش داخلی: HTML/CSS در iframe رندر شد. اکنون مرحله PNG را جداگانه آزمایش کن.";
-      pngButton.addEventListener("click", () => downloadPng(concept, frame, data, 0, feedback));
     } catch (error) {
       report.textContent += " | خطا: " + (error.message || String(error));
       status.textContent = error.message || "آزمایش داخلی پیش‌نمایش ناموفق بود.";
