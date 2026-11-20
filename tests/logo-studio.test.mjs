@@ -200,7 +200,7 @@ test("NAVI preserves safe inline SVG path geometry inside HTML logo symbols", as
     const result = await response.json();
     assert.equal(response.status, 200);
     assert.equal(result.success, true);
-    assert.match(result.concepts[0].html, /<svg[^>]*viewBox="0 0 200 200"/i);
+    assert.match(result.concepts[0].html, /<svg[^>]*viewBox="0 0 200 200"/i, JSON.stringify(result.rejectedConcepts));
     assert.match(result.concepts[0].html, /<path[^>]*d="M30 35 H170/);
     assert.doesNotMatch(result.concepts[0].html, /<script|onload=|foreignObject/i);
     assert.equal(db.visitorUsed, 1);
@@ -225,7 +225,7 @@ test("NAVI strips executable SVG elements and event attributes from inline vecto
     });
     const result = await response.json();
     assert.equal(response.status, 200);
-    assert.doesNotMatch(result.concepts[0].html, /onload=|onclick=|foreignObject|<script/i);
+    assert.doesNotMatch(result.concepts[0].html, /onload=|onclick=|foreignObject|<script/i, JSON.stringify(result.rejectedConcepts));
     assert.match(result.concepts[0].html, /<svg/);
     assert.match(result.concepts[0].html, /<path/);
   } finally {
