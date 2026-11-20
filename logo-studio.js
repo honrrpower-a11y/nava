@@ -75,18 +75,16 @@
     let resolvePreviewReady;
     frame.__navaPreviewReady = new Promise(resolve => { resolvePreviewReady = resolve; });
     frame.addEventListener("load", () => {
-      const doc = frame.contentDocument;
-      // Appending an iframe can fire an initial about:blank load before srcdoc
-      // is parsed. Ignore that event; only the actual srcdoc may resolve readiness.
-      if (!doc || doc.URL === "about:blank") return;
-      // A queued initial iframe load can arrive after srcdoc is assigned.
-      // Do not mark readiness until the actual artboard exists in this document.
-      const root = doc.querySelector(".logo-art-root");
-      if (!root) return;
-      syncLiveEdits();
+      // Do not use doc.URL to identify srcdoc: browser engines can expose
+      // different about: URLs while the iframe navigates. The artboard itself
+      // is the authoritative readiness signal.
       try {
+        const doc = frame.contentDocument;
+        const root = doc && doc.querySelector(".logo-art-root");
+        if (!root) return; // Ignore the iframe's initial empty-document load.
+        syncLiveEdits();
         const rect = root.getBoundingClientRect();
-        const visibleContent = root && Array.from(root.querySelectorAll("*")).some(element => {
+        const visibleContent = Array.from(root.querySelectorAll("*")).some(element => {
           const box = element.getBoundingClientRect();
           if (!box.width || !box.height) return false;
           const style = doc.defaultView.getComputedStyle(element);
@@ -96,7 +94,7 @@
             (style.backgroundImage && style.backgroundImage !== "none") ||
             (parseFloat(style.borderTopWidth) > 0 && style.borderTopStyle !== "none");
         });
-        if (!root || !rect || !rect.width || !rect.height) {
+        if (!rect.width || !rect.height) {
           frame.__navaPreviewError = "بوم طراحی ابعاد معتبر ندارد.";
           status.textContent = "پیش‌نمایش بارگذاری شد، اما بوم طراحی ابعاد معتبر ندارد. طرح برای بررسی فنی نگه داشته شد.";
         } else if (!visibleContent && !root.textContent.trim()) {
@@ -109,7 +107,11 @@
         frame.__navaPreviewError = "دسترسی به محتوای پیش‌نمایش ایزوله ممکن نشد.";
         status.textContent = "مرورگر نتوانست محتوای ایزوله پیش‌نمایش را بخواند.";
       } finally {
-        resolvePreviewReady();
+        // Resolve only after this iframe has navigated to a document containing
+        // the actual artboard. waitForPreview independently verifies its layout.
+        if (frame.contentDocument && frame.contentDocument.querySelector(".logo-art-root")) {
+          resolvePreviewReady();
+        }
       }
     });
     // Register the load handler before assigning srcdoc so fast mobile WebViews
@@ -133,14 +135,32 @@
   }
 
   async function waitForPreview(frame) {
-    if (!frame || !frame.__navaPreviewReady) return;
-    await Promise.race([
-      frame.__navaPreviewReady,
-      new Promise((_, reject) => setTimeout(
-        () => reject(new Error("پیش‌نمایش در زمان مقرر آماده نشد؛ صفحه را تازه‌سازی کن و دوباره آزمایش کن.")),
-        12000
-      ))
-    ]);
+    if (!frame) throw new Error("قاب پیش‌نمایش لوگو ساخته نشده است.");
+    // Chrome and Firefox may dispatch iframe load events at slightly different
+    // points around srcdoc navigation. Poll the actual document and artboard
+    // geometry instead of treating a single load event as proof of readiness.
+    const deadline = Date.now() + 12000;
+    while (Date.now() < deadline) {
+      let doc = null;
+      let root = null;
+      try {
+        doc = frame.contentDocument;
+        root = doc && doc.querySelector(".logo-art-root");
+        if (root) {
+          const rect = root.getBoundingClientRect();
+          if (rect.width > 0 && rect.height > 0) {
+            if (frame.__navaPreviewError) throw new Error(frame.__navaPreviewError);
+            return;
+          }
+        }
+      } catch (error) {
+        if (error && error.message && error.message !== "Cannot read properties of null (reading 'getBoundingClientRect')") {
+          throw error;
+        }
+      }
+      await new Promise(resolve => setTimeout(resolve, 50));
+    }
+    throw new Error("بوم لوگو در iframe پس از ۱۲ ثانیه آماده نشد؛ سند یا اندازه بوم در مرورگر قابل‌دسترسی نیست.");
   }
 
   async function downloadPng(concept, frame, data, index, feedback) {
