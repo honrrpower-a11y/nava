@@ -139,6 +139,17 @@
     return feedback;
   }
 
+  function showExportLink(feedback, message, link) {
+    feedback.replaceChildren();
+    feedback.append(document.createTextNode(message + " "));
+    const anchor = document.createElement("a");
+    anchor.href = link;
+    anchor.target = "_blank";
+    anchor.rel = "noopener";
+    anchor.textContent = "بازکردن فایل";
+    feedback.append(anchor);
+  }
+
   async function waitForFrame(frame) {
     const deadline = Date.now() + 12000;
     while (Date.now() < deadline) {
@@ -162,7 +173,7 @@
       }
       const filename = safeName(brief.brandName) + "-logo-" + (index + 1) + ".png";
       const url = await window.NavaLogoRenderer.exportPngFromFrame(frame, filename, 2400);
-      feedback.replaceWith(exportFeedback("تصویر با موفقیت آماده شد.", url));
+      showExportLink(feedback, "تصویر با موفقیت آماده شد.", url);
       status.textContent = "خروجی PNG با وضوح ۲۴۰۰ پیکسل آماده شد.";
     } catch (error) {
       feedback.textContent = error?.message || "ساخت خروجی PNG ناموفق بود.";
