@@ -59,11 +59,6 @@
     frame.style.height = "100%";
     frame.style.minHeight = "0";
     frame.style.border = "0";
-    // Force a stable composited iframe layer on mobile Chromium/WebView.
-    frame.style.transform = "translate3d(0,0,0)";
-    frame.style.backfaceVisibility = "hidden";
-    frame.style.webkitTransform = "translate3d(0,0,0)";
-    frame.style.webkitBackfaceVisibility = "hidden";
     const documentHtml = [
       "<!doctype html><html lang=\"fa\" dir=\"rtl\"><head>",
       '<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">',
