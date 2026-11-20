@@ -398,5 +398,6 @@ test("Logo Studio loads the iframe only after attaching it to the square preview
   const source = readFileSync(new URL("../logo-studio.js", import.meta.url), "utf8");
   assert.ok(source.includes("preview.appendChild(frame);"));
   assert.ok(source.includes("frame.srcdoc = frame.__navaDocumentHtml;"));
-  assert.ok(source.indexOf("preview.appendChild(frame);") < source.indexOf("frame.srcdoc = frame.__navaDocumentHtml;"));
+  assert.ok(source.indexOf("preview.appendChild(frame);") < source.indexOf("card.appendChild(preview);"));
+  assert.ok(source.indexOf("card.appendChild(preview);") < source.indexOf("frame.srcdoc = frame.__navaDocumentHtml;"), "the full preview container must be connected before srcdoc is assigned");
 });
