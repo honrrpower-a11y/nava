@@ -393,12 +393,12 @@ test("PNG export rasterizes the rendered HTML/CSS DOM without SVG foreignObject 
   const end = source.indexOf("global.NavaLogoRenderer=", start);
   const exporter = source.slice(start, end);
   assert.ok(start >= 0 && end > start);
-  assert.match(exporter, /global\\.html2canvas\\(root/);
+  assert.ok(exporter.includes("global.html2canvas(root"));
   assert.match(exporter, /allowTaint:false/);
   assert.match(exporter, /useCORS:false/);
   assert.match(exporter, /foreignObjectRendering:false/);
-  assert.match(exporter, /canvas\\.toBlob/);
-  assert.doesNotMatch(exporter, /<foreignObject|image\\.src/);
+  assert.ok(exporter.includes("canvas.toBlob"));
+  assert.ok(!exporter.includes("<foreignObject") && !exporter.includes("image.src"));
   assert.ok(source.includes("global.NavaLogoRenderer={buildSvg,downloadBlob,exportPng,exportPngFromFrame}"));
 });
 test("Logo Studio waits for iframe preview readiness before allowing exports", () => {
