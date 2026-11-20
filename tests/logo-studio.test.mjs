@@ -195,9 +195,14 @@ test("NAVI rejects a two-line sketch instead of presenting it as a logo", async 
       corsOrigin: ORIGIN
     });
     const result = await response.json();
-    assert.equal(response.status, 502);
-    assert.equal(result.code, "LOGO_SYMBOL_UNDERBUILT");
-    assert.equal(db.visitorUsed, 0, "a rejected sketch must not consume the guest trial");
+    // A bad concept is rejected individually while the two valid concepts survive.
+    assert.equal(response.status, 200);
+    assert.equal(result.success, true);
+    assert.equal(result.concepts.length, 2);
+    assert.equal(result.rejectedConcepts.length, 1);
+    assert.equal(result.rejectedConcepts[0].code, "LOGO_SYMBOL_UNDERBUILT");
+    assert.ok(result.concepts.every(item => !item.html.includes("width:220px;height:8px")));
+    assert.equal(db.visitorUsed, 1, "a usable partial batch consumes one guest trial");
   } finally {
     globalThis.fetch = originalFetch;
   }

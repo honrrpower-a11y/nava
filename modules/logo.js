@@ -106,10 +106,15 @@ function validateSymbolStructure(html, css, conceptIndex) {
   const hasWidth = /\bwidth\s*:\s*(?!0(?:px|%|rem)?\b)(?:[1-9]\d*(?:\.\d+)?(?:px|%|rem|cqw)|clamp\()/i.test(body);
   const hasHeight = /\bheight\s*:\s*(?!0(?:px|%|rem)?\b)(?:[1-9]\d*(?:\.\d+)?(?:px|%|rem|cqw)|clamp\()/i.test(body);
   const hasSolidSurface = /\bbackground(?:-color|-image)?\s*:\s*(?!transparent\b|none\b)[^;]+/i.test(body);
-  const hasShape = /\bborder-radius\s*:[^;]+|\bclip-path\s*:[^;]+/i.test(body);
+  const radius = body.match(/\bborder-radius\s*:\s*([^;]+)/i)?.[1]?.trim() || "";
+  const hasShape = Boolean(/\bclip-path\s*:\s*[^;]+/i.test(body)) ||
+    Boolean(radius && !/^0(?:px|%|rem)?(?:\s|$)/i.test(radius));
+  const widthPx = Number(body.match(/\bwidth\s*:\s*([\d.]+)px/i)?.[1] || 0);
+  const heightPx = Number(body.match(/\bheight\s*:\s*([\d.]+)px/i)?.[1] || 0);
+  const proportionsAreUsable = !(widthPx > 0 && heightPx > 0) || heightPx / widthPx >= 0.22;
   const hasConstructionDetail = /\.navi-symbol__detail\s*\{|\.navi-symbol::(?:before|after)\s*\{/i.test(css) ||
     /<(?:span|em|i)\b/i.test(symbol[1]);
-  if (!hasWidth || !hasHeight || !hasSolidSurface || !hasShape || !hasConstructionDetail) {
+  if (!hasWidth || !hasHeight || !hasSolidSurface || !hasShape || !proportionsAreUsable || !hasConstructionDetail) {
     throw validationError("LOGO_SYMBOL_UNDERBUILT", "نشان لوگو بیش از حد ساده یا خطی است؛ باید سطح هندسی، فرم مشخص و جزئیات سازنده داشته باشد.", "symbol-craft", conceptIndex);
   }
 }
@@ -304,7 +309,8 @@ async function designLogos(data, apiKey) {
       }
       // Recover a missing model placeholder deterministically instead of rejecting the whole batch.
       // If the exact brand name already exists as visible text, promote it to the required semantic wordmark.
-      if (!html.includes("{{BRAND_NAME}}")) {
+      const needsBrandFallback = !html.includes("{{BRAND_NAME}}");
+      if (needsBrandFallback) {
         const escapedBrand = escapeHtml(data.brandName);
         const visibleText = html.replace(/<[^>]*>/g, "");
         if (escapedBrand && visibleText.includes(escapedBrand)) {
@@ -315,7 +321,8 @@ async function designLogos(data, apiKey) {
       }
       // Recover a missing slogan placeholder without rejecting an otherwise usable concept.
       // Preserve exact supplied wording and make the slogan a semantic, visibly styled secondary element.
-      if (data.slogan && !html.includes("{{SLOGAN}}")) {
+      const needsSloganFallback = Boolean(data.slogan && !html.includes("{{SLOGAN}}"));
+      if (needsSloganFallback) {
         const escapedSlogan = escapeHtml(data.slogan);
         const visibleText = html.replace(/<[^>]*>/g, "");
         if (escapedSlogan && visibleText.includes(escapedSlogan)) {
@@ -328,11 +335,12 @@ async function designLogos(data, apiKey) {
         .replace(/\{\{BRAND_NAME\}\}/g, '<span data-logo-role="brand">' + escapeHtml(data.brandName) + "</span>")
         .replace(/\{\{SLOGAN\}\}/g, '<span data-logo-role="slogan">' + escapeHtml(data.slogan) + "</span>");
       if (data.format !== "wordmark") validateSymbolStructure(finalHtml, css, index + 1);
+      const traceability = validateConceptTraceability(item, index + 1);
       const brandFallbackCss = '.navi-brand-lockup{display:flex;justify-content:center;align-items:center;width:100%;margin-top:28px;padding:12px 8px;text-align:center;color:var(--logo-primary);font-family:inherit;font-size:clamp(36px,8vw,76px);font-weight:900;line-height:1.25;direction:auto;unicode-bidi:plaintext}';
       const sloganFallbackCss = '.navi-slogan-lockup{display:flex;justify-content:center;align-items:center;width:100%;margin-top:10px;padding:4px 8px;text-align:center;color:var(--logo-primary);font-family:inherit;font-size:clamp(16px,3vw,26px);font-weight:500;line-height:1.5;direction:auto;unicode-bidi:plaintext;opacity:.88}';
       const finalCss = css +
-        (html.includes('class="navi-brand-lockup"') ? "\n" + brandFallbackCss : "") +
-        (html.includes('class="navi-slogan-lockup"') ? "\n" + sloganFallbackCss : "");
+        (needsBrandFallback && html.includes('class="navi-brand-lockup"') ? "\n" + brandFallbackCss : "") +
+        (needsSloganFallback && html.includes('class="navi-slogan-lockup"') ? "\n" + sloganFallbackCss : "");
       const visualElementCount = (html.match(/<\s*(?:div|span|p|strong|em|b|i|small|br)\b/gi) || []).length;
       const cssRuleCount = (css.match(/[^{}]+\{[^{}]*\}/g) || []).length;
       // Score independent design disciplines, not raw keyword frequency.
@@ -351,8 +359,10 @@ async function designLogos(data, apiKey) {
         /font-(?:size|weight|family)\s*:|letter-spacing\s*:/i
       ];
       const craftScore = craftGroups.reduce((score, pattern) => score + (pattern.test(css) ? 1 : 0), 0);
-      const minimumCraftScore = data.format === "wordmark" ? 3 : 5;
-      const minimumCssRules = data.format === "wordmark" ? 2 : 4;
+      // The structural symbol validator is the primary quality gate. This score
+      // is a secondary craft signal and must not reject clean flat/geometric work.
+      const minimumCraftScore = data.format === "wordmark" ? 3 : 4;
+      const minimumCssRules = data.format === "wordmark" ? 2 : 3;
       if (craftScore < minimumCraftScore || cssRuleCount < minimumCssRules) {
         throw validationError("LOGO_CRAFT_TOO_WEAK", "ساختار بصری لوگو به اندازه کافی پرداخت نشده است؛ طرح خام و کم‌جزئیات تحویل داده نمی‌شود.", "craft-quality", index + 1);
       }
@@ -363,7 +373,6 @@ async function designLogos(data, apiKey) {
       if (html.length < 20 || css.length < 40 || visualElementCount < 1) {
         throw validationError("LOGO_CONCEPT_TOO_SIMPLE", "Logo concept returned incomplete HTML/CSS markup.", "composition-completeness", index + 1);
       }
-      const traceability = validateConceptTraceability(item, index + 1);
       const title = safeText(item?.title, 100) || "مسیر طراحی " + (index + 1);
       const rationale = safeText(item?.rationale, 420) || "این مسیر بر اساس بریف برند طراحی شده است.";
       const concept = {
@@ -392,6 +401,9 @@ async function designLogos(data, apiKey) {
           concepts.push(concept);
         }
       } catch (error) {
+        // Unsafe markup/resources invalidate the whole response, not just one
+        // concept: never return a partially accepted batch after a security hit.
+        if (["LOGO_HTML_UNSAFE", "LOGO_CSS_UNSAFE"].includes(error?.diagnosticCode)) throw error;
         rejectedConcepts.push({
           index: index + 1,
           code: error?.diagnosticCode || "LOGO_CONCEPT_REJECTED",
