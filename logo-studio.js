@@ -273,109 +273,24 @@
   }
 
   async function runNoQuotaDiagnostic() {
-    const data = {
-      brandName: "NAVA",
-      slogan: "CREATE · DESIGN · GROW",
-      primaryColor: "#D6A84F",
-      darkColor: "#101B30"
-    };
-    const concept = {
-      title: "آزمایش داخلی رندر HTML/CSS",
-      rationale: "این نمونه ثابت است و هیچ درخواست هوش مصنوعی یا سهمیه‌ای مصرف نمی‌کند.",
-      html: '<div class="diag-composition"><div class="diag-emblem"><span>N</span><i></i></div><strong data-logo-role="brand">NAVA</strong><small data-logo-role="slogan">CREATE · DESIGN · GROW</small></div>',
-      css: [
-        ".logo-art-root{display:grid;place-items:center;width:100%;height:100%;padding:8%;background:var(--logo-background);color:var(--logo-primary);font-family:Arial,Tahoma,sans-serif;text-align:center}",
-        ".diag-composition{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;width:100%;height:100%;}",
-        ".diag-emblem{position:relative;display:grid;place-items:center;width:230px;height:230px;border:8px solid var(--logo-primary);border-radius:34% 66% 42% 58%;transform:rotate(-8deg);background:linear-gradient(145deg,rgba(214,168,79,.24),rgba(16,27,48,.1));box-shadow:0 18px 42px rgba(0,0,0,.35),inset 0 0 0 12px rgba(214,168,79,.12)}",
-        ".diag-emblem:before{content:'';position:absolute;inset:22px;border:3px solid var(--logo-primary);border-radius:50%;opacity:.7}",
-        ".diag-emblem span{position:relative;z-index:1;color:var(--logo-primary);font-size:128px;font-weight:900;line-height:1;transform:rotate(8deg)}",
-        ".diag-emblem i{position:absolute;width:72px;height:9px;right:-22px;bottom:38px;border-radius:9px;background:var(--logo-primary);transform:rotate(-32deg)}",
-        ".diag-composition strong{display:block;color:var(--logo-primary);font-size:82px;font-weight:900;letter-spacing:9px;line-height:1.1}",
-        ".diag-composition small{display:block;color:#F2E8D2;font-size:22px;font-weight:600;letter-spacing:4px;line-height:1.5}"
-      ].join("")
-    };
-    results.replaceChildren();
-    activeFrames = [];
-    empty.hidden = true;
+    // This button now exercises the real NAVI design engine with the supplied
+    // Awaye Nava brief; it is no longer a hard-coded rendering sample.
+    fields.name.value = "Awaye Nava";
+    fields.slogan.value = "";
+    fields.industry.value = "Modern music and art brand";
+    fields.audience.value = "People who appreciate contemporary music and art";
+    fields.symbolIdea.value = "A fluid abstract wave intertwined with a sleek, solid musical note; create one distinctive unified silhouette.";
+    fields.personality.value = "elegant";
+    fields.typography.value = "elegant";
+    fields.format.value = "combination";
+    fields.palette.value = "custom";
+    fields.primaryColor.value = "#101B30";
+    fields.darkColor.value = "#FFFFFF";
+    customColors.hidden = false;
+    syncLiveEdits();
 
-    const card = document.createElement("article");
-    card.className = "logo-concept-card logo-html-css-card";
-    const preview = document.createElement("div");
-    preview.className = "logo-concept-preview";
-    preview.style.width = "100%";
-    preview.style.height = "min(88vw, 520px)";
-    preview.style.minHeight = "280px";
-    preview.style.padding = "0";
-    const frame = createPreview(concept, data);
-    frame.__navaData = data;
-    activeFrames.push(frame);
-    preview.appendChild(frame);
-    card.appendChild(preview);
-
-    const title = document.createElement("h3");
-    title.textContent = concept.title;
-    title.style.padding = "12px 14px 0";
-    const report = document.createElement("p");
-    report.className = "logo-export-feedback";
-    report.textContent = "در حال بررسی دریافت HTML/CSS و رندر مرورگر…";
-    card.append(title, report);
-
-    const actions = document.createElement("div");
-    actions.className = "logo-concept-actions";
-    const pngButton = document.createElement("button");
-    pngButton.type = "button";
-    pngButton.className = "btn-primary";
-    pngButton.textContent = "آزمایش ساخت PNG (بدون سهمیه)";
-    const feedback = document.createElement("div");
-    feedback.className = "logo-export-feedback";
-    // Bind the action immediately: a delayed diagnostic must never leave a
-    // visible PNG button that has no click handler.
-    pngButton.addEventListener("click", () => downloadPng(concept, frame, data, 0, feedback));
-    actions.appendChild(pngButton);
-    card.append(actions, feedback);
-    results.appendChild(card);
-
-    const width = preview.getBoundingClientRect().width;
-    preview.style.height = Math.max(280, Math.round(width)) + "px";
-    frame.getBoundingClientRect();
-    frame.srcdoc = frame.__navaDocumentHtml;
-    delete frame.__navaDocumentHtml;
-
-    try {
-      await waitForPreview(frame);
-      const doc = frame.contentDocument;
-      const root = doc && doc.querySelector(".logo-art-root");
-      if (!root) throw new Error("مرحله نمایش: عنصر اصلی بوم در iframe ساخته نشد.");
-      const rect = root.getBoundingClientRect();
-      const elements = Array.from(root.querySelectorAll("*"));
-      const visible = elements.filter(element => {
-        const box = element.getBoundingClientRect();
-        const style = doc.defaultView.getComputedStyle(element);
-        return box.width > 1 && box.height > 1 && style.display !== "none" &&
-          style.visibility !== "hidden" && Number(style.opacity || 1) > 0;
-      });
-      const textNodes = elements.filter(element => (element.textContent || "").trim());
-      const mark = root.querySelector(".diag-emblem");
-      const markStyle = mark ? doc.defaultView.getComputedStyle(mark) : null;
-      const reportData = {
-        artboard: Math.round(rect.width) + "×" + Math.round(rect.height),
-        htmlElements: elements.length,
-        visibleElements: visible.length,
-        textElements: textNodes.length,
-        markDisplay: markStyle ? markStyle.display : "missing",
-        markBackground: markStyle ? markStyle.backgroundImage : "missing",
-        previewError: frame.__navaPreviewError || "none"
-      };
-      report.textContent = "گزارش رندر: " + JSON.stringify(reportData);
-      if (!rect.width || !rect.height || !visible.length || !textNodes.length) {
-        throw new Error("مرحله نمایش ناموفق است؛ جزئیات رندر در گزارش بالا آمده است.");
-      }
-      status.textContent = "آزمایش داخلی: HTML/CSS در iframe رندر شد. اکنون مرحله PNG را جداگانه آزمایش کن.";
-    } catch (error) {
-      report.textContent += " | خطا: " + (error.message || String(error));
-      status.textContent = error.message || "آزمایش داخلی پیش‌نمایش ناموفق بود.";
-      pngButton.disabled = true;
-    }
+    const designPrompt = "A minimalist, elegant vector logo for a modern music and art brand named 'Awaye Nava'. The symbol is a creative, fluid abstract wave intertwined with a sleek, solid musical note, symbolizing fresh acoustic sound. Clean lines, sophisticated deep navy blue and matte gold color palette, balanced composition, high-end branding style, flat vector art on a clean white background --no realistic details, complex gradients, or clutter";
+    await requestLogoDesign({ singleConcept: true, designPrompt });
   }
 
   fields.palette.addEventListener("change", () => {
@@ -400,7 +315,7 @@
     });
   });
 
-  async function requestLogoDesign() {
+  async function requestLogoDesign(options = {}) {
     const data = readData();
     if (!data.brandName) {
       status.textContent = "نام برند را وارد کن.";
@@ -438,13 +353,14 @@
         method: "POST",
         headers,
         cache: "no-store",
-        body: JSON.stringify({ ...data, visitorId })
+        body: JSON.stringify({ ...data, singleConcept: options.singleConcept === true, designPrompt: options.designPrompt || "", visitorId })
       });
       const result = await response.json();
       if (!response.ok || !result.success) {
         throw new Error(result.error || "طراحی لوگو انجام نشد.");
       }
-      if (!Array.isArray(result.concepts) || result.concepts.length !== 3) {
+      const expectedConcepts = options.singleConcept === true ? 1 : 3;
+      if (!Array.isArray(result.concepts) || result.concepts.length !== expectedConcepts) {
         throw new Error("خروجی طراحی کامل نیست؛ دوباره تلاش کن.");
       }
       results.replaceChildren();
@@ -473,7 +389,7 @@
         }
       });
       empty.hidden = true;
-      status.textContent = "سه طرح آماده‌اند. نام، شعار و رنگ‌ها را از فرم تغییر بده تا پیش‌نمایش‌ها زنده به‌روزرسانی شوند؛ سپس PNG باکیفیت بگیر.";
+      status.textContent = options.singleConcept === true ? "یک طرح اختصاصی بر اساس پرامپت نمونه NAVI آماده شد؛ پیش‌نمایش و خروجی PNG را بررسی کن." : "سه طرح آماده‌اند. نام، شعار و رنگ‌ها را از فرم تغییر بده تا پیش‌نمایش‌ها زنده به‌روزرسانی شوند؛ سپس PNG باکیفیت بگیر.";
       results.scrollIntoView({ behavior: "smooth", block: "start" });
     } catch (error) {
       status.textContent = error.message || "ارتباط با موتور طراحی برقرار نشد؛ کمی بعد دوباره تلاش کن.";
