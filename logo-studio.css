@@ -64,3 +64,19 @@ body.light .logo-control{background:#fff;color:#273143}
  .logo-concept-card:first-child{grid-column:auto}
  .logo-custom-colors{grid-template-columns:1fr 1fr}
 }
+/* NAVI creative direction selector */
+.logo-idea-mode{display:grid;gap:10px;margin:16px 0 18px;padding:14px;border:1px solid rgba(201,155,72,.32);border-radius:14px;background:rgba(201,155,72,.045)}
+.logo-idea-mode-head{display:flex;align-items:flex-start;gap:10px;margin-bottom:3px}
+.logo-idea-mode-head h3{margin:0 0 4px;color:var(--text);font-size:14px}
+.logo-idea-mode-head p{margin:0;color:var(--muted);font-size:11px;line-height:1.8}
+.logo-idea-mode-mark{display:grid;place-items:center;flex:0 0 34px;height:34px;border:1px solid rgba(201,155,72,.4);border-radius:10px;color:var(--gold)}
+.logo-idea-choice{display:flex;align-items:flex-start;gap:9px;padding:10px;border:1px solid var(--border);border-radius:10px;background:var(--panel);cursor:pointer}
+.logo-idea-choice:has(input:checked){border-color:var(--gold);background:rgba(201,155,72,.07)}
+.logo-idea-choice input{margin:4px 0 0;accent-color:var(--gold)}
+.logo-idea-choice span{display:grid;gap:3px}
+.logo-idea-choice strong{color:var(--text);font-size:12px}
+.logo-idea-choice small,.logo-idea-prompt-wrap>small{color:var(--muted);font-size:10px;line-height:1.8}
+.logo-idea-prompt-wrap{display:grid;gap:7px;padding-top:4px}
+.logo-idea-prompt-wrap[hidden]{display:none}
+.logo-idea-prompt{min-height:88px;resize:vertical}
+.logo-design-idea{padding:10px 12px;border-inline-start:3px solid var(--gold);border-radius:8px;background:rgba(201,155,72,.07);color:var(--text)!important;font-weight:600}
