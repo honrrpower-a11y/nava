@@ -173,7 +173,7 @@ test("NAVI design failure refunds the guest trial reservation", async () => {
     });
     const result = await response.json();
     assert.equal(response.status, 502);
-    assert.equal(result.code, "LOGO_HTML_CSS_DESIGN_FAILED");
+    assert.equal(result.code, "MODEL_RATE_LIMIT");
     assert.equal(db.visitorUsed, 0);
     assert.equal([...db.reservations.values()][0].status, "refunded");
   } finally {
@@ -196,7 +196,7 @@ test("NAVI CSS cannot load remote resources or execute injected markup", async (
     });
     const result = await response.json();
     assert.equal(response.status, 502);
-    assert.equal(result.code, "LOGO_HTML_CSS_DESIGN_FAILED");
+    assert.equal(result.code, "LOGO_VALIDATION_FAILED");
     assert.equal(db.visitorUsed, 0);
   } finally {
     globalThis.fetch = originalFetch;
@@ -214,4 +214,82 @@ test("native logo renderer passes syntax checks and blocks lossy foreignObject e
   assert.ok(source.includes("Intl.Segmenter"), "text is reconstructed from measured grapheme bounds");
   assert.ok(source.includes("if (warnings.size)"), "any lossy feature blocks export");
   assert.ok(source.includes("gradientUnits: " + '"userSpaceOnUse"'));
+});
+
+
+test("NAVI reports truncated model output and refunds the reserved trial without retrying", async () => {
+  const originalFetch = globalThis.fetch;
+  const db = new FakeD1();
+  let calls = 0;
+  globalThis.fetch = async (_url, options) => {
+    calls += 1;
+    const body = JSON.parse(options.body);
+    assert.equal(body.generationConfig.thinkingConfig.thinkingLevel, "MEDIUM");
+    assert.equal(body.generationConfig.maxOutputTokens, 32768);
+    assert.equal("temperature" in body.generationConfig, false);
+    return new Response(JSON.stringify({
+      candidates: [{ finishReason: "MAX_TOKENS", content: { parts: [{ text: '{"concepts":' }] } }],
+      usageMetadata: { candidatesTokenCount: 32768 }
+    }), { status: 200, headers: { "Content-Type": "application/json" } });
+  };
+  try {
+    const response = await handleLogoRoute({
+      request: makeRequest(),
+      env: { NAVA_DB: db, NAVI_SESSION_SECRET: "test-secret-key", GEMINI_API_KEY: "test-gemini-key" },
+      origin: ORIGIN,
+      corsOrigin: ORIGIN
+    });
+    const result = await response.json();
+    assert.equal(response.status, 502);
+    assert.equal(result.code, "MODEL_OUTPUT_TRUNCATED");
+    assert.match(result.error, /پاسخ طراحی ناقص/);
+    assert.equal(calls, 1, "diagnostics must not trigger a second paid model request");
+    assert.equal(db.visitorUsed, 0);
+    assert.equal([...db.reservations.values()][0].status, "refunded");
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test("NAVI distinguishes an empty candidate response and refunds the trial", async () => {
+  const originalFetch = globalThis.fetch;
+  const db = new FakeD1();
+  globalThis.fetch = async () => new Response(JSON.stringify({ candidates: [] }), {
+    status: 200, headers: { "Content-Type": "application/json" }
+  });
+  try {
+    const response = await handleLogoRoute({
+      request: makeRequest(),
+      env: { NAVA_DB: db, NAVI_SESSION_SECRET: "test-secret-key", GEMINI_API_KEY: "test-gemini-key" },
+      origin: ORIGIN,
+      corsOrigin: ORIGIN
+    });
+    const result = await response.json();
+    assert.equal(result.code, "MODEL_EMPTY_RESPONSE");
+    assert.equal(db.visitorUsed, 0);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test("NAVI categorizes Gemini quota errors without exposing provider error text", async () => {
+  const originalFetch = globalThis.fetch;
+  const db = new FakeD1();
+  globalThis.fetch = async () => new Response(JSON.stringify({
+    error: { message: "private provider quota detail and internal metadata" }
+  }), { status: 429, headers: { "Content-Type": "application/json" } });
+  try {
+    const response = await handleLogoRoute({
+      request: makeRequest(),
+      env: { NAVA_DB: db, NAVI_SESSION_SECRET: "test-secret-key", GEMINI_API_KEY: "test-gemini-key" },
+      origin: ORIGIN,
+      corsOrigin: ORIGIN
+    });
+    const result = await response.json();
+    assert.equal(result.code, "MODEL_RATE_LIMIT");
+    assert.doesNotMatch(result.error, /private provider quota detail/);
+    assert.equal(db.visitorUsed, 0);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
 });

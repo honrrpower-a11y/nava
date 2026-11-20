@@ -158,8 +158,8 @@ async function designLogos(data, apiKey) {
           systemInstruction: { parts: [{ text: system }] },
           contents: [{ role: "user", parts: [{ text: "Create three logo designs from this brand brief:\n" + JSON.stringify(userBrief) }] }],
           generationConfig: {
-            temperature: 0.65,
-            maxOutputTokens: 12288,
+            thinkingConfig: { thinkingLevel: "MEDIUM" },
+            maxOutputTokens: 32768,
             responseMimeType: "application/json"
           }
         }),
@@ -168,12 +168,52 @@ async function designLogos(data, apiKey) {
     );
     const payload = await response.json().catch(() => ({}));
     if (!response.ok) {
-      const error = new Error(payload?.error?.message || "NAVI logo design request failed.");
+      const error = new Error("Gemini HTTP " + response.status);
       error.httpStatus = response.status;
+      error.diagnosticCode = response.status === 429 ? "MODEL_RATE_LIMIT" :
+        response.status >= 500 ? "MODEL_SERVICE_ERROR" :
+        response.status === 400 ? "MODEL_REQUEST_REJECTED" : "MODEL_API_ERROR";
       throw error;
     }
-    const raw = (payload.candidates?.[0]?.content?.parts || []).map(part => part.text || "").join("");
-    const plan = extractJsonObject(raw);
+    if (payload?.promptFeedback?.blockReason) {
+      const error = new Error("Gemini blocked the logo-design prompt: " + payload.promptFeedback.blockReason);
+      error.diagnosticCode = "MODEL_PROMPT_BLOCKED";
+      throw error;
+    }
+    const candidate = payload?.candidates?.[0];
+    if (!candidate) {
+      const error = new Error("Gemini returned no candidate.");
+      error.diagnosticCode = "MODEL_EMPTY_RESPONSE";
+      throw error;
+    }
+    const finishReason = String(candidate.finishReason || "");
+    if (finishReason === "MAX_TOKENS") {
+      const error = new Error("Gemini output reached maxOutputTokens; output is incomplete.");
+      error.diagnosticCode = "MODEL_OUTPUT_TRUNCATED";
+      error.finishReason = finishReason;
+      throw error;
+    }
+    if (finishReason && !["STOP", "FINISH_REASON_UNSPECIFIED"].includes(finishReason)) {
+      const error = new Error("Gemini stopped generation: " + finishReason);
+      error.diagnosticCode = finishReason === "SAFETY" ? "MODEL_OUTPUT_BLOCKED" : "MODEL_FINISH_ERROR";
+      error.finishReason = finishReason;
+      throw error;
+    }
+    const raw = (candidate.content?.parts || []).map(part => part.text || "").join("");
+    if (!raw.trim()) {
+      const error = new Error("Gemini returned an empty text response.");
+      error.diagnosticCode = "MODEL_EMPTY_RESPONSE";
+      throw error;
+    }
+    let plan;
+    try {
+      plan = extractJsonObject(raw);
+    } catch {
+      const error = new Error("Gemini response was not complete valid JSON.");
+      error.diagnosticCode = "MODEL_INVALID_JSON";
+      error.outputLength = raw.length;
+      throw error;
+    }
     if (!Array.isArray(plan.concepts) || plan.concepts.length !== 3) {
       throw new Error("NAVI did not return exactly three logo designs.");
     }
@@ -295,10 +335,32 @@ export async function handleLogoRoute({ request, env, origin, corsOrigin }) {
     if (quota.reservationId) {
       await releaseGuestTrialReservation({ env, reservationId: quota.reservationId });
     }
-    console.error("[NAVA LOGO] NAVI HTML/CSS design failed:", String(error?.message || error).slice(0, 350));
-    const message = /aborted|timeout/i.test(String(error?.message || ""))
-      ? "زمان طراحی لوگو طولانی شد؛ فرصت آزمایشی آزاد شد. دوباره تلاش کن."
-      : "ناوی نتوانست طراحی را کامل کند؛ فرصت آزمایشی آزاد شد. کمی بعد دوباره تلاش کن.";
-    return fail(message, 502, corsOrigin, { code: "LOGO_HTML_CSS_DESIGN_FAILED" });
+    const diagnosticCode = error?.diagnosticCode ||
+      (/aborted|timeout/i.test(String(error?.message || "")) ? "MODEL_TIMEOUT" : "LOGO_VALIDATION_FAILED");
+    console.error("[NAVA LOGO] design failure:", JSON.stringify({
+      diagnosticCode,
+      httpStatus: error?.httpStatus || null,
+      finishReason: error?.finishReason || null,
+      outputLength: error?.outputLength || null,
+      message: String(error?.message || error).slice(0, 220)
+    }));
+    const messages = {
+      MODEL_TIMEOUT: "زمان طراحی لوگو تمام شد؛ فرصت آزمایشی آزاد شد. بعداً دوباره تلاش کن.",
+      MODEL_RATE_LIMIT: "سرویس طراحی فعلاً به محدودیت درخواست رسیده؛ فرصت آزمایشی آزاد شد. کمی بعد دوباره تلاش کن.",
+      MODEL_SERVICE_ERROR: "سرویس طراحی موقتاً پاسخ‌گو نیست؛ فرصت آزمایشی آزاد شد. کمی بعد دوباره تلاش کن.",
+      MODEL_REQUEST_REJECTED: "درخواست طراحی توسط سرویس پذیرفته نشد؛ فرصت آزمایشی آزاد شد.",
+      MODEL_PROMPT_BLOCKED: "درخواست طراحی توسط فیلتر ایمنی سرویس متوقف شد؛ فرصت آزمایشی آزاد شد.",
+      MODEL_OUTPUT_TRUNCATED: "پاسخ طراحی ناقص ماند و به سقف تولید رسید؛ فرصت آزمایشی آزاد شد. دوباره تلاش کن.",
+      MODEL_EMPTY_RESPONSE: "سرویس طراحی خروجی قابل استفاده‌ای برنگرداند؛ فرصت آزمایشی آزاد شد.",
+      MODEL_INVALID_JSON: "ساختار پاسخ طراحی ناقص یا نامعتبر بود؛ فرصت آزمایشی آزاد شد.",
+      MODEL_OUTPUT_BLOCKED: "خروجی طراحی توسط فیلتر ایمنی متوقف شد؛ فرصت آزمایشی آزاد شد.",
+      MODEL_FINISH_ERROR: "تولید طرح پیش از تکمیل متوقف شد؛ فرصت آزمایشی آزاد شد.",
+      MODEL_API_ERROR: "ارتباط با سرویس طراحی ناموفق بود؛ فرصت آزمایشی آزاد شد.",
+      LOGO_VALIDATION_FAILED: "طرح تولید شد اما از بررسی کیفیت و ایمنی نوا عبور نکرد؛ فرصت آزمایشی آزاد شد."
+    };
+    return fail(messages[diagnosticCode] || messages.LOGO_VALIDATION_FAILED, 502, corsOrigin, {
+      code: diagnosticCode,
+      retryable: ["MODEL_TIMEOUT", "MODEL_RATE_LIMIT", "MODEL_SERVICE_ERROR", "MODEL_EMPTY_RESPONSE"].includes(diagnosticCode)
+    });
   }
 }
