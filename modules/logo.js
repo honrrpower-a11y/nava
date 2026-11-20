@@ -264,7 +264,7 @@ async function designLogos(data, apiKey) {
         .replace(/\{\{BRAND_NAME\}\}/g, '<span data-logo-role="brand">' + escapeHtml(data.brandName) + "</span>")
         .replace(/\{\{SLOGAN\}\}/g, '<span data-logo-role="slogan">' + escapeHtml(data.slogan) + "</span>");
       const brandFallbackCss = '.navi-brand-lockup{display:flex;justify-content:center;align-items:center;width:100%;margin-top:28px;padding:12px 8px;text-align:center;color:var(--logo-primary);font-family:inherit;font-size:clamp(36px,8vw,76px);font-weight:900;line-height:1.25;direction:auto;unicode-bidi:plaintext}';
-      const finalCss = css + (html.includes('class="navi-brand-lockup"') ? "\\n" + brandFallbackCss : "");
+      const finalCss = css + (html.includes('class="navi-brand-lockup"') ? "\n" + brandFallbackCss : "");
       const visualElementCount = (html.match(/</g) || []).length;
       if (html.length < 150 || css.length < 220 || visualElementCount < 5) {
         throw validationError("LOGO_CONCEPT_TOO_SIMPLE", "Logo concept does not meet the minimum composition structure.", "composition-completeness", index + 1);
