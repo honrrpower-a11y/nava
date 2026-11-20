@@ -123,36 +123,49 @@ function validateSymbolStructure(html, css, conceptIndex) {
   const heightValue = body.match(/\bheight\s*:\s*([^;]+)/i)?.[1];
   const hasWidth = hasPositiveCssDimension(widthValue);
   const hasHeight = hasPositiveCssDimension(heightValue);
-  const hasSurface = /\bbackground(?:-color|-image)?\s*:\s*(?!transparent\b|none\b)[^;]+/i.test(body);
-  const radius = body.match(/\bborder-radius\s*:\s*([^;]+)/i)?.[1]?.trim() || "";
-  const clipPath = body.match(/\bclip-path\s*:\s*([^;]+)/i)?.[1]?.trim() || "";
-  const hasShape = Boolean(clipPath && !/^none$/i.test(clipPath)) ||
-    Boolean(radius && !/^0(?:px|%|rem)?(?:\s|$)/i.test(radius));
-  const widthPx = Number(widthValue?.match(/^\s*([\d.]+)px\s*$/i)?.[1] || 0);
-  const heightPx = Number(heightValue?.match(/^\s*([\d.]+)px\s*$/i)?.[1] || 0);
-  const proportions = !(widthPx > 0 && heightPx > 0) || heightPx / widthPx >= 0.22;
 
-  // A named inner layer counts only when it has a real visual CSS rule,
-  // not merely because its class name appears somewhere in the stylesheet.
+  // The wrapper is a coordinate system, not necessarily the visible mass.
+  // In layered marks the filled silhouette and its geometry often live on
+  // nested parts, so validate the whole symbol construction rather than
+  // requiring background/border/clip-path on .navi-symbol itself.
   const innerMarkup = symbol.inner;
   const layerClasses = [...innerMarkup.matchAll(/<(?:div|span|em|i)\b[^>]*class="([^"]+)"[^>]*>/gi)]
     .flatMap(match => match[1].split(/\s+/))
     .filter(name => name && name !== "navi-symbol");
-  const styledLayers = [...new Set(layerClasses)].filter(name => {
-    const layerRule = css.match(new RegExp("\\." + name + "\\s*\\{([^}]*)\\}", "i"));
-    if (!layerRule) return false;
-    return /\b(?:position|inset|top|right|bottom|left|width|height|background(?:-color|-image)?|border(?:-[a-z-]+)?|border-radius|clip-path|transform|mask(?:-image)?)\s*:/i.test(layerRule[1]);
+  const styledLayers = [...new Set(layerClasses)].flatMap(name => {
+    const escaped = name.replace(/[.*+?^\${}()|[\]\\]/g, "\\$&");
+    const selector = new RegExp("(?:^|})\\s*\\." + escaped + "(?:\\s|[.:#\\[,{>]|$)[^{]*\\{([^}]*)\\}", "i");
+    const layerRule = css.match(selector);
+    if (!layerRule) return [];
+    return [{ name, body: layerRule[1] }];
   });
+  const allGeometryCss = [body, ...styledLayers.map(layer => layer.body)];
+  const hasSurface = allGeometryCss.some(ruleBody =>
+    /\bbackground(?:-color|-image)?\s*:\s*(?!transparent\b|none\b)[^;]+/i.test(ruleBody));
+  const hasShape = allGeometryCss.some(ruleBody => {
+    const radius = ruleBody.match(/\bborder-radius\s*:\s*([^;]+)/i)?.[1]?.trim() || "";
+    const clipPath = ruleBody.match(/\bclip-path\s*:\s*([^;]+)/i)?.[1]?.trim() || "";
+    const border = ruleBody.match(/\bborder(?:-[a-z-]+)?\s*:\s*([^;]+)/i)?.[1]?.trim() || "";
+    return Boolean(clipPath && !/^none$/i.test(clipPath)) ||
+      Boolean(radius && !/^0(?:px|%|rem)?(?:\s|$)/i.test(radius)) ||
+      Boolean(border && !/^0(?:px|%|rem)?(?:\s|$)/i.test(border));
+  });
+  const widthPx = Number(widthValue?.match(/^\s*([\d.]+)px\s*$/i)?.[1] || 0);
+  const heightPx = Number(heightValue?.match(/^\s*([\d.]+)px\s*$/i)?.[1] || 0);
+  const proportions = !(widthPx > 0 && heightPx > 0) || heightPx / widthPx >= 0.22;
+
   const pseudoRule = css.match(/\.navi-symbol(?:::|:)(?:before|after)\s*\{([^}]*)\}/i);
-  const pseudoLayer = Boolean(pseudoRule && /\bcontent\s*:/i.test(pseudoRule[1]) &&
+  const pseudoLayer = Boolean(pseudoRule &&
     /\b(?:position|inset|width|height|background|border|clip-path|transform)\s*:/i.test(pseudoRule[1]));
-  const detail = styledLayers.length >= 1 || pseudoLayer;
+  const detail = styledLayers.some(layer =>
+    /\b(?:position|inset|top|right|bottom|left|width|height|background(?:-color|-image)?|border(?:-[a-z-]+)?|border-radius|clip-path|transform|mask(?:-image)?)\s*:/i.test(layer.body)
+  ) || pseudoLayer;
 
   if (!hasWidth || !hasHeight || !hasSurface || !hasShape || !proportions || !detail) {
     const missing = [
       !hasWidth || !hasHeight ? "ابعاد مستقل و معتبر" : "",
-      !hasSurface ? "سطح پرشده" : "",
-      !hasShape ? "مرز یا برش هندسی" : "",
+      !hasSurface ? "سطح پرشده در بدنه یا لایه‌های نشان" : "",
+      !hasShape ? "مرز یا برش هندسی در ساختار نشان" : "",
       !proportions ? "تناسب قابل‌قبول" : "",
       !detail ? "لایه سازنده مستقل با هندسه قابل‌مشاهده" : ""
     ].filter(Boolean).join("، ");
@@ -164,7 +177,6 @@ function validateSymbolStructure(html, css, conceptIndex) {
     );
   }
 }
-
 function normalizeConceptText(value) {
   return String(value || "").toLocaleLowerCase("fa").normalize("NFKC")
     .replace(/[\u064B-\u065F\u0670]/g, "").replace(/[ي]/g, "ی").replace(/[ك]/g, "ک")
