@@ -180,9 +180,7 @@ function validateVisualAnchorMap(html, css, item, conceptIndex, format) {
   return { visualAnchors, anchorMap };
 }
 
-function conceptsAreNearDuplicates(left, right) {") + '(?:\\\\s|[^"])*"');
-      const appearsInsideSymbol = classPattern.test(symbol[1]);
-      const selectorPattern = new RegExp("\\\\." + entry.layerClass.replace(/[.*+?^${}()|[\\]\\\\]/g, "\\\\function conceptsAreNearDuplicates(left, right) {") + "(?=[\\\\s.:#\\\\[,{>\\\\{])");
+function conceptsAreNearDuplicates(left, right) {") + "(?=[\\\\s.:#\\\\[,{>\\\\{])");
       if (!appearsInsideSymbol || !selectorPattern.test(css)) continue;
       mapped.add(entry.anchorId);
     }
