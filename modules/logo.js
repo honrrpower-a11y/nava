@@ -246,8 +246,16 @@ async function designLogos(data, apiKey) {
         }
         throw validationError("LOGO_CSS_UNSAFE", "CSS validation failed.", "css-safety", index + 1);
       }
+      // Recover a missing model placeholder deterministically instead of rejecting the whole batch.
+      // If the exact brand name already exists as visible text, promote it to the required semantic wordmark.
       if (!html.includes("{{BRAND_NAME}}")) {
-        throw validationError("LOGO_BRAND_NAME_MISSING", "Required brand-name placeholder is missing.", "brand-placeholder", index + 1);
+        const escapedBrand = escapeHtml(data.brandName);
+        const visibleText = html.replace(/<[^>]*>/g, "");
+        if (escapedBrand && visibleText.includes(escapedBrand)) {
+          html = html.replace(escapedBrand, '<span data-logo-role="brand">' + escapedBrand + "</span>");
+        } else {
+          html += '<div class="navi-brand-lockup"><span data-logo-role="brand">' + escapedBrand + "</span></div>";
+        }
       }
       if (data.slogan && !html.includes("{{SLOGAN}}")) {
         throw validationError("LOGO_SLOGAN_MISSING", "Required slogan placeholder is missing.", "slogan-placeholder", index + 1);
@@ -255,7 +263,8 @@ async function designLogos(data, apiKey) {
       const finalHtml = html
         .replace(/\{\{BRAND_NAME\}\}/g, '<span data-logo-role="brand">' + escapeHtml(data.brandName) + "</span>")
         .replace(/\{\{SLOGAN\}\}/g, '<span data-logo-role="slogan">' + escapeHtml(data.slogan) + "</span>");
-      const finalCss = css;
+      const brandFallbackCss = '.navi-brand-lockup{display:flex;justify-content:center;align-items:center;width:100%;margin-top:28px;padding:12px 8px;text-align:center;color:var(--logo-primary);font-family:inherit;font-size:clamp(36px,8vw,76px);font-weight:900;line-height:1.25;direction:auto;unicode-bidi:plaintext}';
+      const finalCss = css + (html.includes('class="navi-brand-lockup"') ? "\\n" + brandFallbackCss : "");
       const visualElementCount = (html.match(/</g) || []).length;
       if (html.length < 150 || css.length < 220 || visualElementCount < 5) {
         throw validationError("LOGO_CONCEPT_TOO_SIMPLE", "Logo concept does not meet the minimum composition structure.", "composition-completeness", index + 1);
