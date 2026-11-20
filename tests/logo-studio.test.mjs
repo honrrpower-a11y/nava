@@ -225,7 +225,7 @@ test("NAVI repairs a missing brand placeholder with a visible semantic wordmark"
     assert.ok(result.concepts[1].html.includes('<span data-logo-role="brand">نوا</span>'));
     assert.ok(result.concepts[1].css.includes(".navi-brand-lockup"));
     assert.equal(db.visitorUsed, 1, "a recovered design batch should consume the trial normally");
-    assert.equal([...db.reservations.values()][0].status, "consumed");
+    assert.equal([...db.reservations.values()][0].status, "reserved", "successful requests keep their reservation active for quota accounting");
   } finally {
     globalThis.fetch = originalFetch;
   }
