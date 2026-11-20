@@ -70,26 +70,26 @@ function sanitizeHtmlFragment(value) {
 // Find the complete symbol DIV, including any nested DIV layers.
 // A non-greedy </div> match is incorrect here because logo geometry is intentionally nested.
 function findSymbolElement(html) {
-  const tags = /<\\/?div\\b[^>]*>/gi;
+  const tags = /<\/?div\b[^>]*>/gi;
   let match;
   let depth = 0;
   let openingStart = -1;
   let innerStart = -1;
   while ((match = tags.exec(String(html || "")))) {
     const tag = match[0];
-    const closing = /^<\\//.test(tag);
+    const closing = /^<\//.test(tag);
     if (openingStart < 0) {
       if (closing) continue;
-      const classValue = tag.match(/\\bclass="([^"]*)"/i)?.[1] || "";
-      const role = tag.match(/\\bdata-logo-role="([^"]*)"/i)?.[1] || "";
-      if (!classValue.split(/\\s+/).includes("navi-symbol") || role !== "symbol") continue;
+      const classValue = tag.match(/\bclass="([^"]*)"/i)?.[1] || "";
+      const role = tag.match(/\bdata-logo-role="([^"]*)"/i)?.[1] || "";
+      if (!classValue.split(/\s+/).includes("navi-symbol") || role !== "symbol") continue;
       openingStart = match.index;
       innerStart = tags.lastIndex;
       depth = 1;
       continue;
     }
     if (closing) depth -= 1;
-    else if (!/\\/\\s*>$/.test(tag)) depth += 1;
+    else if (!/\/\s*>$/.test(tag)) depth += 1;
     if (depth === 0) {
       const closingStart = match.index;
       const end = tags.lastIndex;
@@ -104,7 +104,7 @@ function findSymbolElement(html) {
 }
 
 function validateSymbolStructure(html, css, conceptIndex) {
-  const symbol = html.match(/<div\b(?=[^>]*class="[^"]*\bnavi-symbol\b[^"]*")(?=[^>]*data-logo-role="symbol")[^>]*>([\s\S]*?)<\/div>/i);
+  const symbol = findSymbolElement(html);
   if (!symbol) throw validationError("LOGO_SYMBOL_MISSING", "نشان اصلی لوگو به‌صورت یک ساختار مشخص و مستقل ساخته نشده است.", "symbol-structure", conceptIndex);
   const rule = css.match(/\.navi-symbol\s*\{([^}]*)\}/i);
   if (!rule) throw validationError("LOGO_SYMBOL_UNSTYLED", "برای نشان اصلی لوگو هندسه و استایل مستقل تعریف نشده است.", "symbol-structure", conceptIndex);
@@ -189,7 +189,7 @@ function validateVisualAnchorMap(html, css, item, conceptIndex, format) {
       "visual-anchor-plan", conceptIndex);
   }
   if (format !== "wordmark") {
-    const symbol = html.match(/<div\b(?=[^>]*class="[^"]*\bnavi-symbol\b[^"]*")(?=[^>]*data-logo-role="symbol")[^>]*>([\s\S]*?)<\/div>/i);
+    const symbol = findSymbolElement(html);
     if (!symbol) {
       throw validationError("LOGO_VISUAL_ANCHOR_MAP_INVALID",
         "نشان اصلی برای تطبیق اجزای بریف پیدا نشد.", "visual-anchor-map", conceptIndex);
