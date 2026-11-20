@@ -426,7 +426,7 @@ test("Logo Studio builds a new card and a sandboxed HTML/CSS preview for every c
   assert.ok(source.includes("results.append(card)"));
   assert.ok(source.includes("frame.className = \"logo-html-css-preview\""));
   assert.ok(source.includes("function updatePreviews()"));
-  assert.ok(source.includes("function isLightCanvas(hex)"), "preview background remains light without constraining logo colors");
+  assert.ok(source.includes("const isLightCanvas = hex =>"), "preview background remains light without constraining logo colors");
   assert.ok(source.includes('data-logo-role=\"brand\"'));
   assert.ok(source.includes('data-logo-role=\"slogan\"'));
 });
