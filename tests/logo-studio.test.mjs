@@ -151,6 +151,7 @@ test("NAVI writes an English brief and three sanitized HTML/CSS logo designs in 
     assert.ok(result.concepts.every(item => item.html.includes("<div")));
     assert.ok(result.concepts.every(item => !item.html.toLowerCase().includes("<svg")), "generated concept markup is HTML-only");
     assert.ok(result.concepts.every(item => item.css.length > 0));
+    assert.ok(result.concepts.every(item => (item.css.match(/::before|::after|linear-gradient|radial-gradient|box-shadow|clip-path|transform\\s*:/gi) || []).length >= 2), "each logo must use multiple intentional CSS craft techniques");
     assert.ok(result.concepts.every(item => !item.html.includes("<script")));
     assert.equal(db.visitorUsed, 1, "one completed logo batch consumes one guest trial");
   } finally {
