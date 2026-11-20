@@ -504,8 +504,13 @@
 
   function downloadBlob(blob,filename) {
     const url=URL.createObjectURL(blob),a=document.createElement("a");
-    a.href=url;a.download=filename;document.body.appendChild(a);a.click();a.remove();
-    setTimeout(()=>URL.revokeObjectURL(url),3000);
+    a.href=url;a.download=filename;a.rel="noopener";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    // Keep the URL alive long enough for mobile browsers/WebViews to open the fallback link.
+    setTimeout(()=>URL.revokeObjectURL(url),5*60*1000);
+    return url;
   }
   async function exportPng(svgText,filename,size) {
     const blob=new Blob([svgText],{type:"image/svg+xml;charset=utf-8"});
@@ -518,8 +523,46 @@
       ctx.drawImage(img,0,0,canvas.width,canvas.height);
       const png=await new Promise(resolve=>canvas.toBlob(resolve,"image/png"));
       if(!png)throw new Error("ساخت فایل PNG ناموفق بود.");
-      downloadBlob(png,filename);
+      return downloadBlob(png,filename);
     } finally { URL.revokeObjectURL(url); }
   }
-  global.NavaLogoRenderer={buildSvg,downloadBlob,exportPng};
+
+  // Raster-only export path: preserve the exact, already-sanitized HTML/CSS
+  // layout rendered by the browser. SVG downloads continue using the native
+  // editable-vector reconstruction above; foreignObject is never used there.
+  async function exportPngFromFrame(frame,filename,size) {
+    const doc=frame && frame.contentDocument;
+    const root=doc && doc.querySelector(".logo-art-root");
+    if(!root)throw new Error("بوم پیش‌نمایش برای ساخت PNG پیدا نشد.");
+    const rect=root.getBoundingClientRect();
+    if(!rect.width||!rect.height||Math.abs(rect.width-rect.height)>Math.max(rect.width,rect.height)*0.01) {
+      throw new Error("ابعاد بوم پیش‌نمایش برای ساخت PNG معتبر نیست.");
+    }
+    const css=Array.from(doc.querySelectorAll("style")).map(style=>style.textContent||"").join("\n");
+    const escapedCss=css.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+    const scale=1000/rect.width;
+    const markup=root.cloneNode(true).outerHTML;
+    const wrapperWidth=Number(rect.width.toFixed(3));
+    const wrapperHeight=Number(rect.height.toFixed(3));
+    const svgText=
+      '<svg xmlns="'+NS+'" xmlns:xhtml="http://www.w3.org/1999/xhtml" width="1000" height="1000" viewBox="0 0 1000 1000">'+
+      '<foreignObject x="0" y="0" width="1000" height="1000">'+
+      '<div xmlns="http://www.w3.org/1999/xhtml" style="width:1000px;height:1000px;overflow:hidden">'+
+      '<style>'+escapedCss+' html,body{margin:0;width:100%;height:100%;overflow:hidden}*{box-sizing:border-box}</style>'+
+      '<div style="width:'+wrapperWidth+'px;height:'+wrapperHeight+'px;overflow:hidden;transform:scale('+scale+');transform-origin:top left">'+
+      markup+'</div></div></foreignObject></svg>';
+    const blob=new Blob([svgText],{type:"image/svg+xml;charset=utf-8"});
+    const sourceUrl=URL.createObjectURL(blob);
+    try {
+      const img=new Image();
+      await new Promise((resolve,reject)=>{img.onload=resolve;img.onerror=()=>reject(new Error("رندر مستقیم HTML/CSS برای PNG در این مرورگر پشتیبانی نشد."));img.src=sourceUrl;});
+      const canvas=document.createElement("canvas");canvas.width=size||2400;canvas.height=size||2400;
+      const ctx=canvas.getContext("2d");if(!ctx)throw new Error("ساخت PNG در این مرورگر پشتیبانی نمی‌شود.");
+      ctx.drawImage(img,0,0,canvas.width,canvas.height);
+      const png=await new Promise(resolve=>canvas.toBlob(resolve,"image/png"));
+      if(!png)throw new Error("تبدیل پیش‌نمایش به PNG ناموفق بود.");
+      return downloadBlob(png,filename);
+    } finally { URL.revokeObjectURL(sourceUrl); }
+  }
+  global.NavaLogoRenderer={buildSvg,downloadBlob,exportPng,exportPngFromFrame};
 })(window);

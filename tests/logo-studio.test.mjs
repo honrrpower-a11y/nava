@@ -370,3 +370,19 @@ test("NAVI categorizes Gemini quota errors without exposing provider error text"
     globalThis.fetch = originalFetch;
   }
 });
+
+test("PNG export has a browser-rendered HTML/CSS raster path independent of SVG conversion limits", () => {
+  const source = readFileSync(new URL("../logo-renderer.js", import.meta.url), "utf8");
+  assert.ok(source.includes("async function exportPngFromFrame"));
+  assert.ok(source.includes("<foreignObject x="), "foreignObject is isolated to the raster-only PNG path");
+  assert.ok(source.includes("global.NavaLogoRenderer={buildSvg,downloadBlob,exportPng,exportPngFromFrame}"));
+  assert.ok(source.includes("root.cloneNode(true).outerHTML"), "PNG export captures the actual rendered artboard");
+});
+
+test("Logo Studio waits for iframe preview readiness before allowing exports", () => {
+  const source = readFileSync(new URL("../logo-studio.js", import.meta.url), "utf8");
+  assert.ok(source.includes("frame.__navaPreviewReady"));
+  assert.ok(source.includes("visibleContent"), "blank artboards are diagnosed instead of treated as completed previews");
+  assert.ok(source.includes("await frame.__navaPreviewReady"));
+  assert.ok(source.includes("exportPngFromFrame(frame"));
+});
