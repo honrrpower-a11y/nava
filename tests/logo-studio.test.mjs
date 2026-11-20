@@ -98,12 +98,12 @@ function makeRequest(body = INPUT) {
 
 function makeGeminiResponse(plan = makeDesign()) {
   for (const concept of plan.concepts || []) {
-    const symbol = String(concept.html || "").match(/<div\\b(?=[^>]*class="[^"]*\\bnavi-symbol\\b[^"]*")(?=[^>]*data-logo-role="symbol")[^>]*>([\\s\\S]*?)<\\/div>/i);
+    const symbol = String(concept.html || "").match(/<div\b(?=[^>]*class="[^"]*\bnavi-symbol\b[^"]*")(?=[^>]*data-logo-role="symbol")[^>]*>([\s\S]*?)<\/div>/i);
     const innerClasses = [...(symbol?.[1] || "").matchAll(/class="([^"]+)"/g)]
-      .flatMap(match => match[1].split(/\\s+/))
+      .flatMap(match => match[1].split(/\s+/))
       .filter(name => name && name !== "navi-symbol");
     const styledClasses = [...new Set(innerClasses)].filter(name =>
-      new RegExp("\\\\." + name + "(?=[\\\\s.:#\\\\[,{>\\\\{])").test(concept.css || ""));
+      new RegExp("\\." + name + "(?=[\\s.:#\\[,{>\\{])").test(concept.css || ""));
     const elements = Array.isArray(concept.briefElements) && concept.briefElements.length >= 2
       ? concept.briefElements.slice(0, 5)
       : ["عنصر اصلی بریف", "رابطه هندسی اصلی"];
