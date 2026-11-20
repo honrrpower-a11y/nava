@@ -281,16 +281,14 @@ test("NAVI identifies structurally incomplete logo concepts and refunds the tria
   }
 });
 
-test("native logo renderer passes syntax checks and blocks lossy foreignObject exports", () => {
+test("logo SVG export preserves the rendered HTML/CSS artboard without lossy primitive reconstruction", () => {
   const source = readFileSync(new URL("../logo-renderer.js", import.meta.url), "utf8");
   assert.doesNotThrow(() => new vm.Script(source));
   assert.ok(source.includes("global.NavaLogoRenderer"));
-  assert.ok(!source.includes('createElementNS(NS, "foreignObject"'));
+  assert.ok(source.includes('createElementNS(NS, "foreignObject")'), "SVG export captures the actual HTML/CSS logo artboard instead of redrawing a few supported primitives");
   assert.ok(source.includes("new XMLSerializer().serializeToString"));
   assert.ok(source.includes("new DOMParser().parseFromString"), "serialized SVG is parsed and validated before download");
-  assert.ok(source.includes("Intl.Segmenter"), "text is reconstructed from measured grapheme bounds");
-  assert.ok(source.includes("if (warnings.size)"), "any lossy feature blocks export");
-  assert.ok(source.includes("gradientUnits: " + '"userSpaceOnUse"'));
+  assert.ok(source.includes("const css = Array.from(doc.querySelectorAll(\"style\"))"), "the final SVG preserves the design stylesheet");
 });
 
 
@@ -385,4 +383,20 @@ test("Logo Studio waits for iframe preview readiness before allowing exports", (
   assert.ok(source.includes("visibleContent"), "blank artboards are diagnosed instead of treated as completed previews");
   assert.ok(source.includes("await frame.__navaPreviewReady"));
   assert.ok(source.includes("exportPngFromFrame(frame"));
+});
+
+test("SVG export contains only the rendered logo artboard and preserves its HTML/CSS composition", () => {
+  const source = readFileSync(new URL("../logo-renderer.js", import.meta.url), "utf8");
+  assert.ok(source.includes("const art = root.cloneNode(true)"));
+  assert.ok(source.includes("const css = Array.from(doc.querySelectorAll(\"style\"))"));
+  assert.ok(source.includes('foreign.setAttribute("width", String(size))'));
+  assert.ok(source.includes('art.querySelectorAll("script,iframe,object,embed,form,button,input,textarea,select,link,meta,base,foreignObject")'));
+  assert.ok(!source.includes("renderHtmlElement(root, svg"), "SVG must not use the lossy CSS-to-line reconstruction as its design output");
+});
+
+test("Logo Studio loads the iframe only after attaching it to the square preview container", () => {
+  const source = readFileSync(new URL("../logo-studio.js", import.meta.url), "utf8");
+  assert.ok(source.includes("preview.appendChild(frame);"));
+  assert.ok(source.includes("frame.srcdoc = frame.__navaDocumentHtml;"));
+  assert.ok(source.indexOf("preview.appendChild(frame);") < source.indexOf("frame.srcdoc = frame.__navaDocumentHtml;"));
 });
