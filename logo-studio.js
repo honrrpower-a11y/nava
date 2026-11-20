@@ -72,21 +72,43 @@
       concept.html,
       "</main></body></html>"
     ].join("");
-    frame.srcdoc = documentHtml;
+    let resolvePreviewReady;
+    frame.__navaPreviewReady = new Promise(resolve => { resolvePreviewReady = resolve; });
     frame.addEventListener("load", () => {
       syncLiveEdits();
       try {
         const doc = frame.contentDocument;
         const root = doc && doc.querySelector(".logo-art-root");
-        if (!root || !root.getBoundingClientRect().width || !root.getBoundingClientRect().height) {
+        const rect = root && root.getBoundingClientRect();
+        const visibleContent = root && Array.from(root.querySelectorAll("*")).some(element => {
+          const box = element.getBoundingClientRect();
+          if (!box.width || !box.height) return false;
+          const style = doc.defaultView.getComputedStyle(element);
+          return !!element.textContent.trim() ||
+            element.localName.toLowerCase() === "svg" ||
+            (style.backgroundColor && style.backgroundColor !== "transparent" && style.backgroundColor !== "rgba(0, 0, 0, 0)") ||
+            (style.backgroundImage && style.backgroundImage !== "none") ||
+            (parseFloat(style.borderTopWidth) > 0 && style.borderTopStyle !== "none");
+        });
+        if (!root || !rect || !rect.width || !rect.height) {
+          frame.__navaPreviewError = "بوم طراحی ابعاد معتبر ندارد.";
           status.textContent = "پیش‌نمایش بارگذاری شد، اما بوم طراحی ابعاد معتبر ندارد. طرح برای بررسی فنی نگه داشته شد.";
-        } else if (!root.textContent.trim() && !root.querySelector("svg")) {
-          status.textContent = "کد طرح دریافت شد، اما محتوای قابل‌نمایش در بوم پیدا نشد.";
+        } else if (!visibleContent && !root.textContent.trim()) {
+          frame.__navaPreviewError = "هیچ عنصر قابل‌مشاهده‌ای در HTML/CSS طرح پیدا نشد.";
+          status.textContent = "کد طرح دریافت شد، اما عناصر بصری آن نمایش داده نمی‌شوند؛ این طرح خالی است و باید اصلاح شود.";
+        } else {
+          frame.__navaPreviewError = "";
         }
       } catch (_) {
+        frame.__navaPreviewError = "دسترسی به محتوای پیش‌نمایش ایزوله ممکن نشد.";
         status.textContent = "مرورگر نتوانست محتوای ایزوله پیش‌نمایش را بخواند.";
+      } finally {
+        resolvePreviewReady();
       }
     });
+    // Register the load handler before assigning srcdoc so fast mobile WebViews
+    // cannot complete the document before readiness diagnostics are attached.
+    frame.srcdoc = documentHtml;
     return frame;
   }
 
@@ -133,6 +155,8 @@
   async function downloadSvg(concept, frame, data, index, feedback) {
     try {
       status.textContent = "در حال بازسازی هندسه و تایپوگرافی به SVG برداری...";
+      if (frame.__navaPreviewReady) await frame.__navaPreviewReady;
+      if (frame.__navaPreviewError) throw new Error(frame.__navaPreviewError);
       const result = await createVectorExport(frame, data);
       const blob = new Blob([result.svg], { type: "image/svg+xml;charset=utf-8" });
       const filename = safeFileName(fields.name.value || data.brandName) + "-logo-concept-" + (index + 1) + ".svg";
@@ -150,13 +174,22 @@
 
   async function downloadPng(concept, frame, data, index, feedback) {
     try {
-      status.textContent = "در حال ساخت PNG با وضوح ۲۴۰۰ پیکسل...";
-      const result = await createVectorExport(frame, data);
+      status.textContent = "در حال آماده‌سازی تصویر با وضوح ۲۴۰۰ پیکسل...";
+      if (frame.__navaPreviewReady) await frame.__navaPreviewReady;
+      if (frame.__navaPreviewError) throw new Error(frame.__navaPreviewError);
       const filename = safeFileName(fields.name.value || data.brandName) + "-logo-concept-" + (index + 1) + ".png";
-      const url = await window.NavaLogoRenderer.exportPng(result.svg, filename, 2400);
+      let url;
+      try {
+        // PNG preserves the actual browser-rendered HTML/CSS design, including
+        // supported visual effects that cannot be represented as pure SVG paths.
+        url = await window.NavaLogoRenderer.exportPngFromFrame(frame, filename, 2400);
+      } catch (rasterError) {
+        const result = await createVectorExport(frame, data);
+        url = await window.NavaLogoRenderer.exportPng(result.svg, filename, 2400);
+        if (result.warnings.length) reportExportWarnings(result.warnings);
+      }
       showExportFallback(feedback, url, filename);
-      reportExportWarnings(result.warnings);
-      if (!result.warnings.length) status.textContent = "فایل PNG ثابت با وضوح ۲۴۰۰ پیکسل آماده شد؛ حرکت CSS فقط در پیش‌نمایش زنده اجرا می‌شود.";
+      status.textContent = "فایل PNG با وضوح ۲۴۰۰ پیکسل از پیش‌نمایش واقعی HTML/CSS ساخته شد.";
     } catch (error) {
       const details = error.details && error.details.length ? " " + error.details.join(" ") : "";
       const message = (error.message || "ساخت PNG ناموفق بود.") + details;
