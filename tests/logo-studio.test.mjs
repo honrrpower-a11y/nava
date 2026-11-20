@@ -413,6 +413,12 @@ test("Logo Studio waits for iframe preview readiness before allowing exports", (
   assert.ok(!source.includes("downloadSvg("));
 });
 
+test("Logo Studio ignores the iframe initial about:blank load before srcdoc readiness", () => {
+  const source = readFileSync(new URL("../logo-studio.js", import.meta.url), "utf8");
+  assert.ok(source.includes('if (!doc || doc.URL === "about:blank") return;'),
+    "the initial iframe navigation must not resolve preview readiness before srcdoc is parsed");
+});
+
 test("Logo Studio mounts each card before assigning iframe srcdoc", () => {
   const source = readFileSync(new URL("../logo-studio.js", import.meta.url), "utf8");
   assert.ok(source.includes("preview.appendChild(frame);"));
