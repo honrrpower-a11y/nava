@@ -124,19 +124,15 @@ test("NAVI writes an English brief and three sanitized HTML/CSS logo designs in 
     assert.equal(result.success, true);
     assert.equal(result.concepts.length, 3);
     assert.equal(geminiCalls, 1, "one Gemini call creates the English brief and all three logo designs");
-    assert.match(sentPrompt, /English/i);
-    assert.match(sentPrompt, /HTML and CSS are the entire design engine/i);
-    assert.match(sentPrompt, /three concepts must differ in their central idea/i);
-    assert.match(sentPrompt, /CSS @keyframes/i);
-    assert.match(sentPrompt, /pseudo-elements ::before\/::after/i);
-    assert.match(sentPrompt, /NO SVG markup/i);
-    assert.match(sentPrompt, /crooked lines/i);
-    assert.match(sentPrompt, /REFERENCE QUALITY BENCHMARK/i);
-    assert.match(sentPrompt, /WORDMARK AND LANGUAGE/i);
-    assert.match(sentPrompt, /INTERNAL ART-DIRECTION REVIEW/i);
-    assert.match(sentPrompt, /near-black text on a dark background/i);
-    assert.match(sentPrompt, /navy and all dark-blue tones are prohibited/i);
-    assert.match(sentPrompt, /white or a light neutral artboard/i);
+    assert.match(sentPrompt, /PHASE 1 — DISCOVERY/i);
+    assert.match(sentPrompt, /PHASE 2 — CATEGORY RESEARCH/i);
+    assert.match(sentPrompt, /8–12 genuinely different/i);
+    assert.match(sentPrompt, /different central thesis, outer silhouette/i);
+    assert.match(sentPrompt, /16 px/i);
+    assert.match(sentPrompt, /HTML and CSS are the live design medium/i);
+    assert.match(sentPrompt, /SVG is permitted only as a later export format/i);
+    assert.match(sentPrompt, /navy\/dark-blue tones are prohibited/i);
+    assert.match(sentPrompt, /{{BRAND_NAME}}/i);
     assert.match(sentPrompt, /one valid JSON object/i);
     assert.equal(result.planning.method, "navi-english-brief-html-css-design");
     assert.match(result.planning.designBriefEnglish, /distinctive Persian creative-studio identity/i);
@@ -395,7 +391,8 @@ test("PNG export rasterizes the rendered HTML/CSS DOM without SVG foreignObject 
   const exporter = source.slice(start, end);
   assert.ok(start >= 0 && end > start);
   assert.ok(exporter.includes("copyComputedTree(root,document)"), "iframe computed styles and pseudo-elements must be copied into the parent document");
-  assert.ok(exporter.includes("global.html2canvas(stage"), "rasterization must target a same-document staging tree, not the iframe document");
+  assert.ok(exporter.includes("global.html2canvas(clone"), "rasterization must target the same-document cloned artboard");
+  assert.ok(exporter.includes("stage.appendChild(clone)"), "the cloned artboard must be mounted in the visible staging layer");
   assert.ok(source.includes("appendPseudo(\"::before\")") && source.includes("appendPseudo(\"::after\")"));
   assert.match(exporter, /allowTaint:false/);
   assert.match(exporter, /useCORS:false/);
@@ -405,36 +402,30 @@ test("PNG export rasterizes the rendered HTML/CSS DOM without SVG foreignObject 
   assert.ok(!exporter.includes("<foreignObject") && !exporter.includes("image.src"));
   assert.ok(source.includes("global.NavaLogoRenderer={buildSvg,downloadBlob,exportPng,exportPngFromFrame}"));
 });
-test("Logo Studio waits for iframe preview readiness before allowing exports", () => {
+test("Logo Studio waits for a measurable sandboxed preview before PNG export", () => {
   const source = readFileSync(new URL("../logo-studio.js", import.meta.url), "utf8");
-  assert.ok(source.includes("frame.__navaPreviewReady"));
-  assert.ok(source.includes("visibleContent"), "blank artboards are diagnosed instead of treated as completed previews");
-  assert.ok(source.includes("await waitForPreview(frame)"), "exports must wait for iframe readiness with a bounded timeout");
-  assert.ok(source.includes("while (Date.now() < deadline)"), "readiness must tolerate browser-specific iframe load timing");
-  assert.ok(source.includes('doc.querySelector(".logo-art-root")'), "readiness must verify the actual srcdoc artboard");
-  assert.ok(source.includes("rect.width > 0 && rect.height > 0"), "exports must wait for a measurable artboard");
+  assert.ok(source.includes("async function waitForFrame(frame)"));
+  assert.ok(source.includes("while (Date.now() < deadline)"));
+  assert.ok(source.includes('querySelector(".logo-art-root")'));
+  assert.ok(source.includes("rect.width > 0 && rect.height > 0"));
+  assert.ok(source.includes("await waitForFrame(frame)"));
   assert.ok(source.includes("exportPngFromFrame(frame"));
-  assert.ok(!source.includes("دریافت SVG برداری"));
+  assert.ok(source.includes('frame.setAttribute("sandbox", "allow-same-origin")'));
   assert.ok(!source.includes("downloadSvg("));
 });
 
-test("Logo Studio ignores initial iframe loads until the srcdoc artboard exists", () => {
+test("Logo Studio builds a new card and a sandboxed HTML/CSS preview for every concept", () => {
   const source = readFileSync(new URL("../logo-studio.js", import.meta.url), "utf8");
-  assert.ok(!source.includes('doc.URL === "about:blank"'), "srcdoc readiness must not depend on browser-specific about: URL reporting");
-  assert.ok(source.includes("// is the authoritative readiness signal."), "the actual artboard, not URL text, determines readiness");
-  assert.ok(source.includes('const root = doc && doc.querySelector(".logo-art-root");'));
-  assert.ok(source.includes("if (!root) return;"),
-    "an initial or incomplete iframe load must not resolve readiness without the real artboard");
+  assert.ok(source.includes("function previewDocument(concept, brief)"));
+  assert.ok(source.includes("function makeFrame(concept, brief)"));
+  assert.ok(source.includes("frame.__navaMarkup = previewDocument(concept, brief)"));
+  assert.ok(source.includes("frame.srcdoc = frame.__navaMarkup"));
+  assert.ok(source.indexOf("results.append(card)") < source.indexOf("frame.srcdoc = frame.__navaMarkup"), "the preview iframe is initialized only after its card is mounted");
+  assert.ok(source.includes("function conceptCard(concept, index, brief)"));
+  assert.ok(source.includes("results.append(card)"));
+  assert.ok(source.includes("frame.className = \"logo-html-css-preview\""));
+  assert.ok(source.includes("function updatePreviews()"));
+  assert.ok(source.includes('data-logo-role=\"brand\"'));
+  assert.ok(source.includes('data-logo-role=\"slogan\"'));
 });
 
-test("Logo Studio mounts each card before assigning iframe srcdoc", () => {
-  const source = readFileSync(new URL("../logo-studio.js", import.meta.url), "utf8");
-  assert.ok(source.includes("preview.appendChild(frame);"));
-  assert.ok(source.includes("results.appendChild(card);"));
-  assert.ok(source.includes('card.querySelector("iframe.logo-html-css-preview")'));
-  assert.ok(source.includes("frame.srcdoc = frame.__navaDocumentHtml;"));
-  assert.ok(source.indexOf("results.appendChild(card);") < source.indexOf("frame.srcdoc = frame.__navaDocumentHtml;"), "the card must be in the live document before iframe layout starts");
-  assert.ok(source.includes("previewBox.getBoundingClientRect().width"), "the square artboard width must be measured after mounting");
-  assert.ok(source.includes("previewBox.style.height = Math.round(previewWidth) + \"px\""), "the artboard must receive an explicit square height before srcdoc initializes");
-  assert.ok(source.includes("frame.getBoundingClientRect();"), "iframe geometry must be flushed before srcdoc initializes");
-});
