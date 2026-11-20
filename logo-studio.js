@@ -98,9 +98,15 @@
             (parseFloat(style.borderTopWidth) > 0 && style.borderTopStyle !== "none") ||
             painted(before.backgroundColor) || painted(before.backgroundImage) || painted(after.backgroundColor) || painted(after.backgroundImage);
         };
-        // Include the artboard itself: many polished CSS marks are composed
-        // entirely from its background and ::before/::after pseudo-elements.
-        const visibleContent = hasPaint(root) || Array.from(root.querySelectorAll("*")).some(hasPaint);
+        // The artboard background is only a canvas, not proof that a logo exists.
+        // Count visible descendants (including their pseudo-elements) so a plain
+        // navy/white background cannot pass as a successfully rendered identity.
+        const descendants = Array.from(root.querySelectorAll("*"));
+        const visibleContent = descendants.some(element => {
+          const style = doc.defaultView.getComputedStyle(element);
+          if (style.display === "none" || style.visibility === "hidden" || Number(style.opacity) === 0) return false;
+          return hasPaint(element);
+        });
         if (!rect.width || !rect.height) {
           frame.__navaPreviewError = "بوم طراحی ابعاد معتبر ندارد.";
           status.textContent = "پیش‌نمایش بارگذاری شد، اما بوم طراحی ابعاد معتبر ندارد. طرح برای بررسی فنی نگه داشته شد.";
