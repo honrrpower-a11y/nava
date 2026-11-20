@@ -569,9 +569,65 @@
     } finally { URL.revokeObjectURL(url); }
   }
 
-  // PNG export rasterizes the actual browser-rendered HTML/CSS DOM.
-  // html2canvas paints DOM primitives directly; no SVG/foreignObject image is
-  // fed into Canvas, avoiding the tainted-canvas failure on mobile WebViews.
+  // Copy the iframe's *computed* visual tree into the parent document before
+  // rasterizing. html2canvas cannot reliably paint a foreign-document subtree
+  // on Android WebView; it often captures only the iframe/artboard background.
+  // Inlining computed styles also preserves gradients, dimensions, transforms,
+  // borders and shadows without relying on the model's stylesheet at export time.
+  function copyComputedTree(source, targetDocument) {
+    if (source.nodeType === 3) return targetDocument.createTextNode(source.nodeValue || "");
+    if (source.nodeType !== 1) return null;
+    const namespace = source.namespaceURI;
+    const clone = namespace && namespace !== "http://www.w3.org/1999/xhtml"
+      ? targetDocument.createElementNS(namespace, source.nodeName)
+      : targetDocument.createElement(source.localName);
+    Array.from(source.attributes || []).forEach(attribute => {
+      const name = attribute.name.toLowerCase();
+      if (!name.startsWith("on") && name !== "srcdoc") {
+        try { clone.setAttribute(attribute.name, attribute.value); } catch (_) {}
+      }
+    });
+    const sourceWindow = source.ownerDocument.defaultView;
+    const applyStyle = (from, to) => {
+      const style = sourceWindow.getComputedStyle(source, from || null);
+      for (let i = 0; i < style.length; i += 1) {
+        const property = style[i];
+        if (!property || property.startsWith("--")) continue;
+        try { to.style.setProperty(property, style.getPropertyValue(property)); } catch (_) {}
+      }
+      to.style.setProperty("animation", "none", "important");
+      to.style.setProperty("transition", "none", "important");
+      to.style.setProperty("caret-color", "transparent", "important");
+    };
+    applyStyle(null, clone);
+    const appendPseudo = pseudo => {
+      const pseudoStyle = sourceWindow.getComputedStyle(source, pseudo);
+      const content = pseudoStyle.getPropertyValue("content");
+      if (!content || content === "none" || content === "normal" || content === "''" || content === '""') return;
+      const generated = targetDocument.createElement("span");
+      generated.setAttribute("aria-hidden", "true");
+      for (let i = 0; i < pseudoStyle.length; i += 1) {
+        const property = pseudoStyle[i];
+        if (!property || property === "content" || property.startsWith("--")) continue;
+        try { generated.style.setProperty(property, pseudoStyle.getPropertyValue(property)); } catch (_) {}
+      }
+      generated.style.setProperty("animation", "none", "important");
+      generated.style.setProperty("transition", "none", "important");
+      const text = content.length >= 2 && ((content[0] === '"' && content.at(-1) === '"') || (content[0] === "'" && content.at(-1) === "'"))
+        ? content.slice(1, -1) : "";
+      if (text && text !== "none") generated.textContent = text;
+      if (pseudo === "::before") clone.insertBefore(generated, clone.firstChild);
+      else clone.appendChild(generated);
+    };
+    appendPseudo("::before");
+    Array.from(source.childNodes).forEach(child => {
+      const copied = copyComputedTree(child, targetDocument);
+      if (copied) clone.appendChild(copied);
+    });
+    appendPseudo("::after");
+    return clone;
+  }
+
   async function exportPngFromFrame(frame,filename,size) {
     const doc=frame && frame.contentDocument;
     const root=doc && doc.querySelector(".logo-art-root");
@@ -585,47 +641,50 @@
       throw new Error("موتور رندر PNG بارگذاری نشده است؛ صفحه را تازه‌سازی کن و دوباره تلاش کن.");
     }
     const outputSize=Math.max(1200,Math.min(3200,Math.round(Number(size)||2400)));
-    const canvas=await global.html2canvas(root,{
-      backgroundColor:null,
-      scale:outputSize/rect.width,
-      width:rect.width,
-      height:rect.height,
-      windowWidth:Math.max(doc.documentElement.clientWidth,Math.ceil(rect.width)),
-      windowHeight:Math.max(doc.documentElement.clientHeight,Math.ceil(rect.height)),
-      scrollX:0,
-      scrollY:0,
-      useCORS:false,
-      allowTaint:false,
-      imageTimeout:0,
-      logging:false,
-      removeContainer:true,
-      foreignObjectRendering:false
-    });
+    const stage=document.createElement("div");
+    stage.setAttribute("aria-hidden","true");
+    stage.style.cssText="position:fixed;left:-100000px;top:0;width:"+rect.width+"px;height:"+rect.height+"px;overflow:hidden;margin:0;padding:0;pointer-events:none;z-index:-1;background:transparent;";
+    const clone=copyComputedTree(root,document);
+    clone.style.setProperty("width",rect.width+"px","important");
+    clone.style.setProperty("height",rect.height+"px","important");
+    clone.style.setProperty("min-width",rect.width+"px","important");
+    clone.style.setProperty("min-height",rect.height+"px","important");
+    clone.style.setProperty("max-width","none","important");
+    clone.style.setProperty("max-height","none","important");
+    clone.style.setProperty("transform","none","important");
+    stage.appendChild(clone);
+    document.body.appendChild(stage);
+    let canvas;
+    try {
+      canvas=await global.html2canvas(stage,{
+        backgroundColor:null,
+        scale:outputSize/rect.width,
+        width:rect.width,
+        height:rect.height,
+        windowWidth:Math.max(document.documentElement.clientWidth,Math.ceil(rect.width)),
+        windowHeight:Math.max(document.documentElement.clientHeight,Math.ceil(rect.height)),
+        scrollX:0,
+        scrollY:0,
+        useCORS:false,
+        allowTaint:false,
+        imageTimeout:0,
+        logging:false,
+        removeContainer:true,
+        foreignObjectRendering:false
+      });
+    } finally {
+      stage.remove();
+    }
     if(!canvas || !canvas.width || !canvas.height) {
       throw new Error("موتور رندر، تصویر معتبر برای خروجی PNG تولید نکرد.");
     }
-    // Never let an empty/transparent canvas masquerade as a successful logo.
-    const pixelContext = canvas.getContext("2d", { willReadFrequently: true });
-    if(!pixelContext) throw new Error("خواندن تصویر نهایی PNG در این مرورگر ممکن نیست.");
-    const pixels = pixelContext.getImageData(0,0,canvas.width,canvas.height).data;
-    let visiblePixels = 0;
-    for(let i=3;i<pixels.length;i+=4) {
-      if(pixels[i] > 8 && ++visiblePixels >= 24) break;
-    }
-    if(visiblePixels < 24) {
-      throw new Error("پیش‌نمایش به تصویر واقعی تبدیل نشده است؛ فایل خالی ذخیره نشد. ابعاد و محتوای بوم باید اصلاح شود.");
-    }
-    let png;
-    try {
-      png=await new Promise((resolve,reject)=>{
-        canvas.toBlob(blob=>blob?resolve(blob):reject(new Error("ساخت فایل PNG ناموفق بود.")),"image/png");
-      });
-    } catch(error) {
-      if(error && error.name==="SecurityError") {
-        throw new Error("یک منبع تصویری غیرمجاز وارد بوم شده است؛ طرح را بدون منبع خارجی دوباره بساز.");
-      }
-      throw error;
-    }
+    const pixelContext=canvas.getContext("2d",{willReadFrequently:true});
+    if(!pixelContext)throw new Error("خواندن تصویر نهایی PNG در این مرورگر ممکن نیست.");
+    const pixels=pixelContext.getImageData(0,0,canvas.width,canvas.height).data;
+    let visiblePixels=0;
+    for(let i=3;i<pixels.length;i+=4)if(pixels[i]>8&&++visiblePixels>=24)break;
+    if(visiblePixels<24)throw new Error("طرح واقعی در خروجی PNG دیده نشد؛ فایل خالی ذخیره نشد.");
+    const png=await new Promise((resolve,reject)=>canvas.toBlob(blob=>blob?resolve(blob):reject(new Error("ساخت فایل PNG ناموفق بود.")),"image/png"));
     if(!png)throw new Error("ساخت فایل PNG ناموفق بود.");
     return downloadBlob(png,filename);
   }
