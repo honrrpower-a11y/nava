@@ -249,7 +249,10 @@ async function designLogos(data, apiKey) {
     if (!designBriefEnglish || !safeText(plan.strategy, 500)) {
       throw validationError("LOGO_BRIEF_INCOMPLETE", "NAVI returned an incomplete design brief.", "brief");
     }
-    const concepts = plan.concepts.map((item, index) => {
+    const concepts = [];
+    const rejectedConcepts = [];
+    plan.concepts.forEach((item, index) => {
+      try {
       let html;
       let css;
       try {
@@ -347,15 +350,33 @@ async function designLogos(data, apiKey) {
         html: finalHtml,
         css: finalCss
       };
+        concepts.push(concept);
+      } catch (error) {
+        rejectedConcepts.push({
+          index: index + 1,
+          code: error?.diagnosticCode || "LOGO_CONCEPT_REJECTED",
+          stage: error?.validationStage || "concept-validation"
+        });
+      }
     });
-    if (new Set(concepts.map(item => item.title.toLowerCase())).size !== conceptCount) {
+    if (!concepts.length) {
+      const first = rejectedConcepts[0];
+      throw validationError(
+        first?.code || "LOGO_ALL_CONCEPTS_REJECTED",
+        "هیچ‌یک از طرح‌ها از کنترل کیفیت و ایمنی عبور نکرد. فرصت آزمایشی آزاد شد؛ بریف و ساختار طراحی باید اصلاح شود.",
+        first?.stage || "concept-validation",
+        first?.index || null
+      );
+    }
+    if (new Set(concepts.map(item => item.title.toLowerCase())).size !== concepts.length) {
       throw validationError("LOGO_CONCEPTS_NOT_DISTINCT", "NAVI returned repeated logo concept titles.", "concept-distinctness");
     }
     return {
       brandCore: safeText(plan.brandCore, 300),
       strategy: safeText(plan.strategy, 500),
       designBriefEnglish,
-      concepts
+      concepts,
+      rejectedConcepts
     };
   } finally {
     clearTimeout(timer);
@@ -427,11 +448,10 @@ export async function handleLogoRoute({ request, env, origin, corsOrigin }) {
         strategy: plan.strategy,
         designBriefEnglish: plan.designBriefEnglish,
         extraModelCalls: 0,
-        note: "NAVI authored the English design brief and all three HTML/CSS logo designs in one request."
+        note: "NAVI authored the English design brief and the accepted HTML/CSS logo designs in one request."
       },
-      concepts: plan.concepts.map(({ id, title, rationale, mechanism, expressionMove, differsBy, axes, defaultsUsed, html, css }) => ({
-        id, title, rationale, mechanism, expressionMove, differsBy, axes, defaultsUsed, html, css
-      }))
+      concepts,
+      rejectedConcepts: plan.rejectedConcepts
     }, 200, corsOrigin);
   } catch (error) {
     if (quota.reservationId) {
