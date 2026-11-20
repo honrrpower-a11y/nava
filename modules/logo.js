@@ -145,6 +145,158 @@ async function designLogos(data, apiKey) {
     "CONCEPT DIFFERENTIATION: every concept needs a different central thesis, outer silhouette and structural construction. Avoid category clip art. Do not default to circles, orbits, sound waves, equalizers, musical notes, globes, leaves, arrows or generic letter-in-a-shield. Use only when the brief supports a fresh transformation.",
     "WORDMARK: render the exact brand name as live HTML text exactly once using {{BRAND_NAME}}. Preserve spelling, language and script. Persian/Arabic must use direction:rtl, unicode-bidi:plaintext and a suitable system font stack. Typography must be intentionally styled and legible. If a slogan exists, include {{SLOGAN}} exactly once as secondary text; otherwise do not invent one.",
     "ARTBOARD: build a balanced square 1000×1000 artboard with deliberate margins. Give the lockup clear hierarchy and use the canvas meaningfully; no tiny floating logo, poster, mockup, border frame or UI card.",
+    "COLOR: honor the client palette and use var(--logo-primary) and var(--logo-background). For NAVA Logo Studio previews, the canvas must be white or light neutral and navy/dark-blue tones are prohibited in artwork, wordmark, accents, gradients and artboard. Use charcoal or another non-blue neutral for dark text. Do not assume gold is required. Use at most two justified accent colors.",
+    "HTML CONTRACT: output a fragment using only div, span, p, strong, em, small and br. No SVG, scripts, event handlers, style attributes, images, canvas, iframe, links, external fonts, external resources or embedded content. Scope selectors under .logo-art-root.",
+    "CSS CONTRACT: output a complete stylesheet for a 1000×1000 artboard. Use original CSS geometry, pseudo-elements, gradients, transforms, clip-path with basic shapes, layered backgrounds and shadows only when useful. Set root layout, dimensions, overflow, direction, colors and typography explicitly. No url(), @import, @font-face, expressions or external resources.",
+    "QUALITY GATE: reject generic doodles, crooked lines, stock icons, plain initials in an unmodified font, random ornament, over-complex illustration, weak silhouette, poor wordmark, bad spacing, low contrast or designs that fail at small sizes. Every detail must contribute to recognition, hierarchy, geometry or material.",
+    "OUTPUT: return one valid JSON object only with keys brandCore, designBriefEnglish, strategy, concepts. Return exactly " + conceptCount + " concept object(s), each with Persian title, Persian rationale, html and css. Include no chain-of-thought, markdown or explanation outside JSON. Each HTML fragment under 6500 chars and each CSS stylesheet under 9000 chars."
+  ].join("\n");CSS Logo Studio.
+// NAVI writes an English art-direction brief and the actual HTML/CSS logo.
+// The browser only renders inert markup in a sandboxed iframe; no image model is used.
+import { json, safeText } from "./shared.js";
+import { GEMINI_MODEL, ALLOWED_ORIGIN } from "./config.js";
+import { handleGuestTrial, releaseGuestTrialReservation } from "./guest-trial.js";
+
+function fail(message, status, corsOrigin, extra = {}) {
+  return json({ success: false, error: message, ...extra }, status, corsOrigin);
+}
+
+function extractJsonObject(raw) {
+  const text = String(raw || "").trim();
+  try { return JSON.parse(text); } catch (_) {}
+  const first = text.indexOf("{");
+  const last = text.lastIndexOf("}");
+  if (first >= 0 && last > first) {
+    try { return JSON.parse(text.slice(first, last + 1)); } catch (_) {}
+  }
+  throw new Error("NAVI returned invalid logo design data.");
+}
+
+function escapeHtml(value) {
+  return String(value || "").replace(/[&<>"']/g, char => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+  })[char]);
+}
+
+const ALLOWED_TAGS = new Set([
+  "div", "span", "p", "strong", "em", "b", "i", "small", "br"
+]);
+const ALLOWED_ATTRIBUTES = new Set([
+  "class", "id", "role", "aria-hidden", "data-logo-role", "viewbox", "xmlns", "width", "height",
+  "x", "y", "x1", "y1", "x2", "y2", "cx", "cy", "r", "rx", "ry", "d",
+  "fill", "fill-rule", "fill-opacity", "stroke", "stroke-width", "stroke-linecap",
+  "stroke-linejoin", "stroke-dasharray", "stroke-dashoffset", "stroke-opacity",
+  "opacity", "transform", "points", "offset", "stop-color", "stop-opacity",
+  "text-anchor", "dominant-baseline", "font-size", "font-weight", "font-family",
+  "font-style", "font-stretch", "letter-spacing", "word-spacing", "direction",
+  "unicode-bidi", "textlength", "lengthadjust", "dx", "dy", "rotate",
+  "clip-path", "clippathunits", "gradientunits", "gradienttransform",
+  "preserveaspectratio", "spreadmethod"
+]);
+const CANONICAL_TAGS = {
+  lineargradient: "linearGradient",
+  radialgradient: "radialGradient",
+  clippath: "clipPath"
+};
+const CANONICAL_ATTRIBUTES = {
+  viewbox: "viewBox",
+  gradientunits: "gradientUnits",
+  gradienttransform: "gradientTransform",
+  preserveaspectratio: "preserveAspectRatio",
+  spreadmethod: "spreadMethod",
+  clippathunits: "clipPathUnits",
+  textlength: "textLength",
+  lengthadjust: "lengthAdjust"
+};
+
+function validationError(code, message, stage, conceptIndex = null) {
+  const error = new Error(message);
+  error.diagnosticCode = code;
+  error.validationStage = stage;
+  error.conceptIndex = conceptIndex;
+  return error;
+}
+
+function sanitizeHtmlFragment(value) {
+  let html = String(value || "").slice(0, 10000);
+  html = html.replace(/<!--[\s\S]*?-->/g, "");
+  html = html.replace(/<(script|style|iframe|object|embed|form|input|button|link|meta|base|video|audio|img|foreignObject)\b[^>]*>[\s\S]*?<\/\1\s*>/gi, "");
+  html = html.replace(/<\/?([a-z][a-z0-9:-]*)\b([^>]*)>/gi, (whole, rawTag, rawAttrs) => {
+    const tag = rawTag.toLowerCase();
+    if (!ALLOWED_TAGS.has(tag)) return "";
+    const outputTag = CANONICAL_TAGS[tag] || tag;
+    const closing = /^<\//.test(whole);
+    if (closing) return "</" + outputTag + ">";
+    const selfClosing = /\/\s*>$/.test(whole);
+    const attrs = [];
+    String(rawAttrs || "").replace(/([a-zA-Z_:][\w:.-]*)\s*=\s*("([^"]*)"|'([^']*)'|([^\s>]+))/g,
+      (_match, rawName, _value, doubleValue, singleValue, bareValue) => {
+        const name = rawName.toLowerCase();
+        const value = doubleValue ?? singleValue ?? bareValue ?? "";
+        if (!ALLOWED_ATTRIBUTES.has(name)) return "";
+        if (/javascript:|data:/i.test(value) || (/https?:/i.test(value) && !(name === "xmlns" && value === "http://www.w3.org/2000/svg"))) return "";
+        if (/url\s*\(/i.test(value) && !/^url\(#[a-zA-Z_][\w:.-]*\)$/i.test(value.trim())) return "";
+        if (/[<>]/.test(value)) return "";
+        attrs.push((CANONICAL_ATTRIBUTES[name] || name) + '="' + escapeHtml(value) + '"');
+        return "";
+      });
+    return "<" + outputTag + (attrs.length ? " " + attrs.join(" ") : "") + (selfClosing ? " />" : ">");
+  });
+  return html;
+}
+
+function sanitizeCss(value) {
+  let css = String(value || "").slice(0, 16000);
+  if (/[<>]|expression\s*\(|javascript:|behavior\s*:|-moz-binding|url\s*\((?!\s*#[a-zA-Z_][\w:.-]*\s*\))/i.test(css)) {
+    throw validationError("LOGO_CSS_UNSAFE", "CSS contains a blocked external or executable resource.", "css-safety");
+  }
+  css = css.replace(/\/\*[\s\S]*?\*\//g, "");
+  const keyframes = [];
+  css = css.replace(/@keyframes\s+([a-zA-Z_][\w-]*)\s*\{((?:[^{}]|\{[^{}]*\})*)\}/gi, (_match, name, body) => {
+    if (!/^[-_a-zA-Z][\w-]*$/.test(name) || /[<>@]/.test(body)) {
+      throw validationError("LOGO_CSS_UNSUPPORTED", "CSS animation definition is not supported.", "css-compatibility");
+    }
+    keyframes.push("@keyframes " + name + " {" + body + "}");
+    return "";
+  });
+  if (/@/.test(css)) {
+    throw validationError("LOGO_CSS_UNSUPPORTED", "CSS contains an unsupported at-rule.", "css-compatibility");
+  }
+  return css + (keyframes.length ? "\n" + keyframes.join("\n") : "");
+}
+
+async function designLogos(data, apiKey) {
+  if (!apiKey) throw new Error("NAVI design service is not configured.");
+  const userBrief = {
+    brandName: data.brandName,
+    designPrompt: data.designPrompt || "",
+    slogan: data.slogan || "No slogan supplied",
+    industry: data.industry || "Not specified",
+    audience: data.audience || "Not specified",
+    symbolIdea: data.symbolIdea || "Infer a defensible visual idea from the brand; do not invent unrelated symbols.",
+    personality: data.personality || "Not specified",
+    typography: data.typography || "Not specified",
+    logoStructure: data.formatLabel || data.format,
+    palette: {
+      primary: data.primaryColor,
+      background: data.darkColor,
+      paletteName: data.palette
+    }
+  };
+  const conceptCount = data.singleConcept ? 1 : 3;
+  const system = [
+    "You are NAVI IDENTITY WORKSHOP: a senior brand strategist and identity designer. Work from the client brief, not from a fixed logo style.",
+    "MISSION: design exactly " + conceptCount + " concept(s). HTML and CSS are the live design medium for NAVA. SVG is permitted only as a later export format, never as the concept construction engine. Do not return SVG, raster images, canvas, external assets or prebuilt templates.",
+    "PHASE 1 — DISCOVERY: extract exact brand name/script, offer, audience, promise, personality, context, competitors if supplied, must-keep meanings, exclusions, use cases and constraints. Separate facts from assumptions. Do not invent brand history or claims.",
+    "PHASE 2 — CATEGORY RESEARCH: identify visual clichés in the stated industry and explicitly avoid them unless transformed into a genuinely ownable idea. Use the reference library as comparative research only: study mark types, geometry, construction, negative space, silhouette and craft; never trace, imitate or reuse an existing trademark. A reference is a craft benchmark, not a template.",
+    "PHASE 3 — WORD MAP: map the brand name, offer, promise and adjectives to nouns, verbs, metaphors, opposites, spatial relationships and geometric properties. Select intersections that are meaningful and visually distinctive.",
+    "PHASE 4 — CONCEPT EXPLORATION: internally explore 8–12 genuinely different one-sentence design theses across at least two appropriate mark types: custom wordmark, letterform/monogram, pictorial, abstract, negative-space, emblem or combination. Score each for idea clarity, distinction, simplicity, relevance and small-size strength. Do not expose private chain-of-thought. For three concepts, return the strongest structurally different routes—not recolors or layout variations. For one, return the single strongest route.",
+    "PHASE 5 — DESIGN BUILD: for each chosen thesis define the one-sentence idea, recognizable silhouette, geometry, figure/ground, primary mass, supporting forms, optical center, proportions, negative-space gaps, typography and lockup. Start with monochrome shape logic before palette. Make symbol and wordmark share a visual language. A logo identifies; it does not illustrate every service.",
+    "PHASE 6 — CRAFT: use deliberate grid logic, clean angles where appropriate, consistent radii/weights, intentional asymmetry, optical overshoot, junction cleanup and balanced spacing. Avoid accidental tangencies, near-miss angles, lumps, tiny details, hairlines and gaps that close when reduced. Do not add 3D, gradients, glow or shadows to rescue a weak concept.",
+    "PHASE 7 — TEST AND REFINE: inspect the composition conceptually at full size and at 64, 32, 24 and 16 px; test one-color black on white, reversed white on dark, grayscale and silhouette-only. Check readability, crop safety, contrast, optical balance and accidental readings. Redesign failures. Do not claim an external browser render or pixel test was performed.",
+    "CONCEPT DIFFERENTIATION: every concept needs a different central thesis, outer silhouette and structural construction. Avoid category clip art. Do not default to circles, orbits, sound waves, equalizers, musical notes, globes, leaves, arrows or generic letter-in-a-shield. Use only when the brief supports a fresh transformation.",
+    "WORDMARK: render the exact brand name as live HTML text exactly once using {{BRAND_NAME}}. Preserve spelling, language and script. Persian/Arabic must use direction:rtl, unicode-bidi:plaintext and a suitable system font stack. Typography must be intentionally styled and legible. If a slogan exists, include {{SLOGAN}} exactly once as secondary text; otherwise do not invent one.",
+    "ARTBOARD: build a balanced square 1000×1000 artboard with deliberate margins. Give the lockup clear hierarchy and use the canvas meaningfully; no tiny floating logo, poster, mockup, border frame or UI card.",
     "COLOR: honor the client palette and use var(--logo-primary) and var(--logo-background). For NAVA Logo Studio previews, the artboard/canvas background must be white or a light neutral and must never default to navy or dark blue. Navy or blue may still be used as an intentional brand-mark or wordmark color when the client brief or selected brand palette calls for it; never force or ban a brand color globally. Keep the canvas separate from the logo identity colors. Do not assume gold is required. Use at most two justified accent colors.",
     "HTML CONTRACT: output a fragment using only div, span, p, strong, em, small and br. No SVG, scripts, event handlers, style attributes, images, canvas, iframe, links, external fonts, external resources or embedded content. Scope selectors under .logo-art-root.",
     "CSS CONTRACT: output a complete stylesheet for a 1000×1000 artboard. Use original CSS geometry, pseudo-elements, gradients, transforms, clip-path with basic shapes, layered backgrounds and shadows only when useful. Set root layout, dimensions, overflow, direction, colors and typography explicitly. No url(), @import, @font-face, expressions or external resources.",
