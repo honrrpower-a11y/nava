@@ -196,6 +196,35 @@ test("NAVI rejects a two-line sketch instead of presenting it as a logo", async 
   }
 });
 
+test("NAVI keeps valid concepts when one of three fails quality validation", async () => {
+  const originalFetch = globalThis.fetch;
+  const db = new FakeD1();
+  const mixed = makeDesign();
+  mixed.concepts[1].html = '<div class="mark"><div class="navi-symbol" data-logo-role="symbol"><span></span><span></span></div><strong>{{BRAND_NAME}}</strong></div>';
+  mixed.concepts[1].css = '.logo-art-root{display:grid;place-items:center}.mark{display:grid;gap:20px}.navi-symbol{width:220px;height:8px;background:transparent;border-radius:0}.navi-symbol span{display:block;width:100px;height:2px;background:var(--logo-primary);transform:rotate(-20deg)}.mark strong{font-size:48px;font-weight:900}';
+  globalThis.fetch = async () => makeGeminiResponse(mixed);
+  try {
+    const response = await handleLogoRoute({
+      request: makeRequest(),
+      env: { NAVA_DB: db, NAVI_SESSION_SECRET: "test-secret-key", GEMINI_API_KEY: "test-gemini-key" },
+      origin: ORIGIN,
+      corsOrigin: ORIGIN
+    });
+    const result = await response.json();
+    assert.equal(response.status, 200);
+    assert.equal(result.success, true);
+    assert.equal(result.concepts.length, 2);
+    assert.equal(result.rejectedConcepts.length, 1);
+    assert.equal(result.rejectedConcepts[0].index, 2);
+    assert.equal(result.rejectedConcepts[0].code, "LOGO_SYMBOL_UNDERBUILT");
+    assert.ok(result.concepts.every(item => item.id && item.html.includes('data-logo-role="brand"')));
+    assert.ok(result.concepts.every(item => !item.html.includes("{{BRAND_NAME}}")));
+    assert.equal(db.visitorUsed, 1, "a usable partial batch consumes one guest trial");
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
 test("NAVI design failure refunds the guest trial reservation", async () => {
   const originalFetch = globalThis.fetch;
   const db = new FakeD1();
