@@ -108,7 +108,7 @@
     });
     // Register the load handler before assigning srcdoc so fast mobile WebViews
     // cannot complete the document before readiness diagnostics are attached.
-    frame.srcdoc = documentHtml;
+    frame.__navaDocumentHtml = documentHtml;
     return frame;
   }
 
@@ -154,7 +154,7 @@
 
   async function downloadSvg(concept, frame, data, index, feedback) {
     try {
-      status.textContent = "در حال بازسازی هندسه و تایپوگرافی به SVG برداری...";
+      status.textContent = "در حال ثبت خودِ طرح نهایی در فایل SVG...";
       if (frame.__navaPreviewReady) await frame.__navaPreviewReady;
       if (frame.__navaPreviewError) throw new Error(frame.__navaPreviewError);
       const result = await createVectorExport(frame, data);
@@ -163,7 +163,7 @@
       const url = window.NavaLogoRenderer.downloadBlob(blob, filename);
       showExportFallback(feedback, url, filename);
       reportExportWarnings(result.warnings);
-      if (!result.warnings.length) status.textContent = "فایل SVG برداریِ ثابت آماده شد؛ حرکت CSS فقط در پیش‌نمایش زنده اجرا می‌شود.";
+      if (!result.warnings.length) status.textContent = "فایل SVG شامل خودِ لوگوی طراحی‌شده آماده شد؛ حرکت CSS در خروجی ثابت نیست.";
     } catch (error) {
       const details = error.details && error.details.length ? " " + error.details.join(" ") : "";
       const message = (error.message || "بازسازی SVG ناموفق بود.") + details;
@@ -248,6 +248,10 @@
     frame.__navaData = { brandName: data.brandName, slogan: data.slogan };
     activeFrames.push(frame);
     preview.appendChild(frame);
+    // Attach the iframe to its final square viewport before loading srcdoc.
+    // Some mobile WebViews skip or delay load events for detached iframes.
+    frame.srcdoc = frame.__navaDocumentHtml;
+    delete frame.__navaDocumentHtml;
     card.appendChild(preview);
 
     const copy = document.createElement("div");
