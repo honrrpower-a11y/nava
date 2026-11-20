@@ -327,8 +327,8 @@ test("NAVI accepts compact but complete logo concepts without brittle visual-cou
   const originalFetch = globalThis.fetch;
   const db = new FakeD1();
   const invalid = makeDesign();
-  invalid.concepts[2].html = '<div><strong>{{BRAND_NAME}}</strong><small>{{SLOGAN}}</small></div>';
-  invalid.concepts[2].css = '.logo-art-root{color:var(--logo-primary)}';
+  invalid.concepts[2].html = '<div class="echo"><div class="navi-symbol" data-logo-role="symbol"><span class="navi-symbol__detail"></span></div><strong>{{BRAND_NAME}}</strong><small>{{SLOGAN}}</small></div>';
+  invalid.concepts[2].css = '.logo-art-root{display:grid;place-items:center}.echo{display:flex;flex-direction:column;align-items:center;font-size:48px;font-weight:900;position:relative}.navi-symbol{width:180px;height:180px;background:var(--logo-primary);border-radius:38%;display:grid;place-items:center;box-shadow:0 8px 18px rgba(0,0,0,.2)}.navi-symbol__detail{display:block;width:45%;height:45%;border:8px solid var(--logo-background);border-radius:50%}';
   globalThis.fetch = async () => makeGeminiResponse(invalid);
   try {
     const response = await handleLogoRoute({
