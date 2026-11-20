@@ -231,6 +231,31 @@ test("NAVI repairs a missing brand placeholder with a visible semantic wordmark"
   }
 });
 
+test("NAVI repairs a missing slogan placeholder with a visible semantic slogan", async () => {
+  const originalFetch = globalThis.fetch;
+  const db = new FakeD1();
+  const invalid = makeDesign();
+  invalid.concepts[1].html = invalid.concepts[1].html.replace("{{SLOGAN}}", "decorative text");
+  globalThis.fetch = async () => makeGeminiResponse(invalid);
+  try {
+    const response = await handleLogoRoute({
+      request: makeRequest(),
+      env: { NAVA_DB: db, NAVI_SESSION_SECRET: "test-secret-key", GEMINI_API_KEY: "test-gemini-key" },
+      origin: ORIGIN,
+      corsOrigin: ORIGIN
+    });
+    const result = await response.json();
+    assert.equal(response.status, 200);
+    assert.equal(result.success, true);
+    assert.ok(result.concepts[1].html.includes('<span data-logo-role="slogan">صدای ایده‌های تازه</span>'));
+    assert.ok(result.concepts[1].css.includes(".navi-slogan-lockup"));
+    assert.equal(db.visitorUsed, 1);
+    assert.equal([...db.reservations.values()][0].status, "reserved");
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
 test("NAVI identifies structurally incomplete logo concepts and refunds the trial", async () => {
   const originalFetch = globalThis.fetch;
   const db = new FakeD1();
