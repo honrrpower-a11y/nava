@@ -17,6 +17,7 @@
   const customColors = $("logoCustomColors");
   const submit = form.querySelector('button[type="submit"]');
   let frames = [];
+  let selectedConcept = "";
 
   const palettes = {
     gold: "طلایی و سفید", blue: "آبی و نقره‌ای", green: "سبز و کرم",
@@ -138,6 +139,17 @@
     return feedback;
   }
 
+  function showExportLink(feedback, message, link) {
+    feedback.replaceChildren();
+    feedback.append(document.createTextNode(message + " "));
+    const anchor = document.createElement("a");
+    anchor.href = link;
+    anchor.target = "_blank";
+    anchor.rel = "noopener";
+    anchor.textContent = "بازکردن فایل";
+    feedback.append(anchor);
+  }
+
   async function waitForFrame(frame) {
     const deadline = Date.now() + 12000;
     while (Date.now() < deadline) {
@@ -161,11 +173,35 @@
       }
       const filename = safeName(brief.brandName) + "-logo-" + (index + 1) + ".png";
       const url = await window.NavaLogoRenderer.exportPngFromFrame(frame, filename, 2400);
-      feedback.replaceWith(exportFeedback("تصویر با موفقیت آماده شد.", url));
+      showExportLink(feedback, "تصویر با موفقیت آماده شد.", url);
       status.textContent = "خروجی PNG با وضوح ۲۴۰۰ پیکسل آماده شد.";
     } catch (error) {
       feedback.textContent = error?.message || "ساخت خروجی PNG ناموفق بود.";
       status.textContent = feedback.textContent;
+    } finally {
+      button.disabled = false;
+    }
+  }
+
+  function downloadHtml(concept, brief, index, feedback, button) {
+    button.disabled = true;
+    feedback.textContent = "در حال آماده‌سازی فایل HTML قابل‌ویرایش…";
+    try {
+      const html = previewDocument(concept, brief);
+      const blob = new Blob([html], { type: "text/html;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = safeName(brief.brandName) + "-logo-" + (index + 1) + ".html";
+      anchor.rel = "noopener";
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 60000);
+      feedback.textContent = "فایل مستقل HTML/CSS آماده شد؛ می‌توانی آن را در مرورگر باز و کدش را ویرایش کنی.";
+      status.textContent = "سورس قابل‌ویرایش مسیر «" + (concept.title || (index + 1)) + "» دریافت شد.";
+    } catch (error) {
+      feedback.textContent = error?.message || "ساخت فایل HTML ناموفق بود.";
     } finally {
       button.disabled = false;
     }
@@ -222,13 +258,36 @@
 
     const actions = document.createElement("div");
     actions.className = "logo-concept-actions";
+
+    const chooseButton = document.createElement("button");
+    chooseButton.type = "button";
+    chooseButton.className = "btn-secondary";
+    chooseButton.dataset.logoSelect = "true";
+    chooseButton.textContent = "انتخاب این مسیر";
+    chooseButton.addEventListener("click", () => {
+      selectedConcept = concept.id || String(index + 1);
+      results.querySelectorAll(".logo-concept-card").forEach(item => {
+        const selected = item === card;
+        item.classList.toggle("is-selected", selected);
+        const control = item.querySelector("[data-logo-select]");
+        if (control) control.textContent = selected ? "این مسیر انتخاب شده" : "انتخاب این مسیر";
+      });
+      status.textContent = "مسیر «" + (concept.title || (index + 1)) + "» انتخاب شد؛ خروجی PNG یا فایل HTML/CSS قابل‌ویرایش آن را دریافت کن.";
+    });
+
+    const htmlButton = document.createElement("button");
+    htmlButton.type = "button";
+    htmlButton.className = "btn-secondary";
+    htmlButton.textContent = "دریافت سورس HTML/CSS";
+    const feedback = exportFeedback("آماده دریافت خروجی.");
+    htmlButton.addEventListener("click", () => downloadHtml(concept, brief, index, feedback, htmlButton));
+
     const button = document.createElement("button");
     button.type = "button";
     button.className = "btn-primary";
     button.textContent = "دریافت PNG باکیفیت";
-    const feedback = exportFeedback("آماده دریافت خروجی.");
     button.addEventListener("click", () => exportPng(frame, brief, index, feedback, button));
-    actions.append(button);
+    actions.append(chooseButton, htmlButton, button);
     card.append(preview, copy, actions, feedback);
     return card;
   }
@@ -279,6 +338,7 @@
       }
       results.replaceChildren();
       frames = [];
+      selectedConcept = "";
       addStrategy(result.planning);
       result.concepts.forEach((concept, index) => {
         const card = conceptCard(concept, index, brief);
