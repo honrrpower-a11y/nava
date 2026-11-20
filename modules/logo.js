@@ -141,8 +141,8 @@ function validateSymbolStructure(html, css, conceptIndex) {
     );
   const hasConstructionDetail =
     /\.navi-symbol__detail\s*\{|\.navi-symbol::(?:before|after)\s*\{/i.test(css) ||
-    (/<(?:span|em|i|svg|path|g|polygon|rect|circle|ellipse)\b/i.test(symbol[1]) &&
-      (!inlineVector || (vectorHasGeometry && vectorHasInternalConstruction)));
+    /<(?:span|em|i)\b/i.test(symbol[1]) ||
+    (inlineVector && vectorHasGeometry && vectorHasInternalConstruction);
   if (!hasWidth || !hasHeight || !hasSolidSurface || !hasShape || !proportionsAreUsable || !hasConstructionDetail || !vectorHasGeometry) {
     throw validationError("LOGO_SYMBOL_UNDERBUILT", "نشان لوگو بیش از حد ساده یا خطی است؛ باید سطح هندسی، فرم مشخص و جزئیات سازنده داشته باشد.", "symbol-craft", conceptIndex);
   }
