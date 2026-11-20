@@ -79,8 +79,8 @@
         const root = frame.contentDocument?.querySelector(".logo-art-root");
         if (!root) return;
         const data = frame.__navaData || current;
-        root.style.setProperty("--logo-primary", data.primaryColor);
-        root.style.setProperty("--logo-background", data.darkColor);
+        root.style.setProperty("--logo-primary", current.primaryColor);
+        root.style.setProperty("--logo-background", current.darkColor);
         root.querySelectorAll('[data-logo-role="brand"]').forEach(el => {
           el.textContent = current.brandName;
         });
