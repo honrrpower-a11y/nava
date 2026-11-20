@@ -264,7 +264,7 @@ test("quality gate accepts a structured geometric logo without requiring gradien
   geometric.concepts[2].css = [
     ".logo-art-root{display:grid;place-items:center;background:var(--logo-background);color:var(--logo-primary);width:100%;height:100%;padding:36px}",
     ".echo{display:flex;flex-direction:column;align-items:center;gap:20px;text-align:center}",
-    ".echo .symbol{position:relative;width:220px;height:220px;border:8px solid var(--logo-primary);border-radius:42% 58% 52% 48%;transform:rotate(-12deg)}",
+    ".echo .symbol{position:relative;width:220px;height:220px;background:var(--logo-primary);border:0;border-radius:42% 58% 52% 48%;transform:rotate(-12deg)}",
     ".echo strong{font-size:54px;font-weight:900;letter-spacing:1px;color:var(--logo-primary)}",
     ".echo small{font-size:22px;line-height:1.5;color:var(--logo-primary)}"
   ].join("");

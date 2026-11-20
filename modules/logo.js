@@ -298,11 +298,11 @@ async function designLogos(data, apiKey) {
       const craftScore = craftGroups.reduce((score, pattern) => score + (pattern.test(css) ? 1 : 0), 0);
       // Reject visibly underbuilt sketches before they reach the user. The
       // threshold checks independent CSS craft techniques, not token count.
-      const gradientCount = (css.match(/(?:linear|radial|conic)-gradient\s*\(/gi) || []).length;
-      const insetShadow = /box-shadow\s*:[^;]*\binset\b/i.test(css);
-      const filledSurfaceRules = (css.match(/[^{}]+\{[^{}]*(?:background(?:-image|-color)?\s*:\s*(?!transparent|none)[^;}]+)[^{}]*\}/gi) || [])
+      const filledSurfaceRules = (css.match(/[^{}]+\{[^{}]*\bbackground(?:-image|-color)?\s*:\s*(?!transparent|none)[^;}]+[^{}]*\}/gi) || [])
         .filter(rule => !/\.logo-art-root\b/i.test(rule.split("{")[0])).length;
-      if (html.length < 180 || css.length < 900 || visualElementCount < 7 || cssRuleCount < 9 || craftScore < 6 || gradientCount < 3 || !insetShadow || filledSurfaceRules < 3) {
+      // Permit premium flat/geometric identities, but require at least one
+      // substantial filled symbol surface in addition to the artboard.
+      if (html.length < 140 || css.length < 650 || visualElementCount < 6 || cssRuleCount < 7 || craftScore < 5 || filledSurfaceRules < 1) {
         throw validationError("LOGO_CONCEPT_TOO_SIMPLE", "Logo concept does not meet the filled-form, layered-material and composition requirements.", "composition-completeness", index + 1);
       }
       const title = safeText(item?.title, 100) || "مسیر طراحی " + (index + 1);
