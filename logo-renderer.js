@@ -692,5 +692,7 @@
     if(!png)throw new Error("ساخت فایل PNG ناموفق بود.");
     return downloadBlob(png,filename);
   }
-  global.NavaLogoRenderer={buildSvg,downloadBlob,exportPng,exportPngFromFrame};
+  // SVG reconstruction is intentionally not exposed as a user export.
+  // PNG is captured directly from the browser-rendered HTML/CSS artboard.
+  global.NavaLogoRenderer={downloadBlob,exportPngFromFrame};
 })(window);
