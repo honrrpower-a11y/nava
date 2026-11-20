@@ -27,10 +27,7 @@ function escapeHtml(value) {
 }
 
 const ALLOWED_TAGS = new Set([
-  "div", "span", "p", "strong", "em", "b", "i", "small", "br",
-  "svg", "g", "path", "circle", "rect", "line", "polygon", "polyline",
-  "ellipse", "defs", "lineargradient", "radialgradient", "stop", "clippath",
-  "text", "tspan"
+  "div", "span", "p", "strong", "em", "b", "i", "small", "br"
 ]);
 const ALLOWED_ATTRIBUTES = new Set([
   "class", "id", "role", "aria-hidden", "data-logo-role", "viewbox", "xmlns", "width", "height",
