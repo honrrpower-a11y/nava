@@ -53,6 +53,12 @@
     frame.title = "پیش‌نمایش لوگوی " + data.brandName + "؛ " + concept.title;
     frame.setAttribute("sandbox", "allow-same-origin");
     frame.setAttribute("referrerpolicy", "no-referrer");
+    frame.setAttribute("loading", "eager");
+    frame.style.display = "block";
+    frame.style.width = "100%";
+    frame.style.height = "100%";
+    frame.style.minHeight = "320px";
+    frame.style.border = "0";
     const documentHtml = [
       "<!doctype html><html lang=\"fa\" dir=\"rtl\"><head>",
       '<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">',
@@ -67,7 +73,20 @@
       "</main></body></html>"
     ].join("");
     frame.srcdoc = documentHtml;
-    frame.addEventListener("load", syncLiveEdits);
+    frame.addEventListener("load", () => {
+      syncLiveEdits();
+      try {
+        const doc = frame.contentDocument;
+        const root = doc && doc.querySelector(".logo-art-root");
+        if (!root || !root.getBoundingClientRect().width || !root.getBoundingClientRect().height) {
+          status.textContent = "پیش‌نمایش بارگذاری شد، اما بوم طراحی ابعاد معتبر ندارد. طرح برای بررسی فنی نگه داشته شد.";
+        } else if (!root.textContent.trim() && !root.querySelector("svg")) {
+          status.textContent = "کد طرح دریافت شد، اما محتوای قابل‌نمایش در بوم پیدا نشد.";
+        }
+      } catch (_) {
+        status.textContent = "مرورگر نتوانست محتوای ایزوله پیش‌نمایش را بخواند.";
+      }
+    });
     return frame;
   }
 
@@ -91,43 +110,58 @@
     }
   }
 
+  function showExportFallback(feedback, url, filename) {
+    if (!feedback || !url) return;
+    const message = document.createElement("span");
+    message.textContent = "اگر فایل خودکار ذخیره نشد، از این پیوند استفاده کن: ";
+    const link = document.createElement("a");
+    link.href = url;
+    link.target = "_blank";
+    link.rel = "noopener";
+    link.textContent = "بازکردن فایل " + filename;
+    link.style.color = "var(--gold)";
+    link.style.textDecoration = "underline";
+    feedback.replaceChildren(message, link);
+  }
+
   function reportExportWarnings(warnings) {
     if (warnings && warnings.length) {
       status.textContent = "خروجی برداری ساخته شد؛ نکته: " + warnings.join(" ");
     }
   }
 
-  async function downloadSvg(concept, frame, data, index) {
+  async function downloadSvg(concept, frame, data, index, feedback) {
     try {
       status.textContent = "در حال بازسازی هندسه و تایپوگرافی به SVG برداری...";
       const result = await createVectorExport(frame, data);
       const blob = new Blob([result.svg], { type: "image/svg+xml;charset=utf-8" });
-      window.NavaLogoRenderer.downloadBlob(
-        blob,
-        safeFileName(fields.name.value || data.brandName) + "-logo-concept-" + (index + 1) + ".svg"
-      );
+      const filename = safeFileName(fields.name.value || data.brandName) + "-logo-concept-" + (index + 1) + ".svg";
+      const url = window.NavaLogoRenderer.downloadBlob(blob, filename);
+      showExportFallback(feedback, url, filename);
       reportExportWarnings(result.warnings);
       if (!result.warnings.length) status.textContent = "فایل SVG برداریِ ثابت آماده شد؛ حرکت CSS فقط در پیش‌نمایش زنده اجرا می‌شود.";
     } catch (error) {
       const details = error.details && error.details.length ? " " + error.details.join(" ") : "";
-      status.textContent = (error.message || "بازسازی SVG ناموفق بود.") + details;
+      const message = (error.message || "بازسازی SVG ناموفق بود.") + details;
+      status.textContent = message;
+      if (feedback) feedback.textContent = message;
     }
   }
 
-  async function downloadPng(concept, frame, data, index) {
+  async function downloadPng(concept, frame, data, index, feedback) {
     try {
       status.textContent = "در حال ساخت PNG با وضوح ۲۴۰۰ پیکسل...";
       const result = await createVectorExport(frame, data);
-      await window.NavaLogoRenderer.exportPng(
-        result.svg,
-        safeFileName(fields.name.value || data.brandName) + "-logo-concept-" + (index + 1) + ".png",
-        2400
-      );
+      const filename = safeFileName(fields.name.value || data.brandName) + "-logo-concept-" + (index + 1) + ".png";
+      const url = await window.NavaLogoRenderer.exportPng(result.svg, filename, 2400);
+      showExportFallback(feedback, url, filename);
       reportExportWarnings(result.warnings);
       if (!result.warnings.length) status.textContent = "فایل PNG ثابت با وضوح ۲۴۰۰ پیکسل آماده شد؛ حرکت CSS فقط در پیش‌نمایش زنده اجرا می‌شود.";
     } catch (error) {
       const details = error.details && error.details.length ? " " + error.details.join(" ") : "";
-      status.textContent = (error.message || "ساخت PNG ناموفق بود.") + details;
+      const message = (error.message || "ساخت PNG ناموفق بود.") + details;
+      status.textContent = message;
+      if (feedback) feedback.textContent = message;
     }
   }
 
@@ -192,20 +226,26 @@
     copy.append(title, rationale);
     card.appendChild(copy);
 
+    const feedback = document.createElement("div");
+    feedback.className = "logo-export-feedback";
+    feedback.setAttribute("role", "status");
+    feedback.setAttribute("aria-live", "polite");
+
     const actions = document.createElement("div");
     actions.className = "logo-concept-actions";
     const svgButton = document.createElement("button");
     svgButton.type = "button";
     svgButton.className = "btn-primary";
     svgButton.textContent = "دریافت SVG برداری";
-    svgButton.addEventListener("click", () => downloadSvg(concept, frame, data, index));
+    svgButton.addEventListener("click", () => downloadSvg(concept, frame, data, index, feedback));
     const pngButton = document.createElement("button");
     pngButton.type = "button";
     pngButton.className = "btn-secondary";
     pngButton.textContent = "دریافت PNG باکیفیت";
-    pngButton.addEventListener("click", () => downloadPng(concept, frame, data, index));
+    pngButton.addEventListener("click", () => downloadPng(concept, frame, data, index, feedback));
     actions.append(svgButton, pngButton);
     card.appendChild(actions);
+    card.appendChild(feedback);
     return card;
   }
 
