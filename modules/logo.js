@@ -274,7 +274,7 @@ async function designLogos(data, apiKey) {
         (html.includes('class="navi-brand-lockup"') ? "\n" + brandFallbackCss : "") +
         (html.includes('class="navi-slogan-lockup"') ? "\n" + sloganFallbackCss : "");
       const visualElementCount = (html.match(/</g) || []).length;
-      const cssCraftSignals = (css.match(/::before|::after|linear-gradient|radial-gradient|box-shadow|clip-path|transform\\s*:/gi) || []).length;
+      const cssCraftSignals = (css.match(/::before|::after|linear-gradient|radial-gradient|box-shadow|clip-path|transform\s*:/gi) || []).length;
       if (html.length < 90 || css.length < 400 || visualElementCount < 5 || cssCraftSignals < 2) {
         throw validationError("LOGO_CONCEPT_TOO_SIMPLE", "Logo concept does not meet the minimum composition structure.", "composition-completeness", index + 1);
       }
