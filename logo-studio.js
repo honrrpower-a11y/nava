@@ -243,6 +243,10 @@
     const strategy = document.createElement("div");
     strategy.className = "logo-concept-strategy";
     const strategyRows = [
+      ["ایده مرکزی", concept.centralThesis],
+      ["ارتباط با درخواست", concept.briefAlignment],
+      ["تبدیل ایده به نماد", concept.symbolConstruction],
+      ["عناصر اصلی بریف", Array.isArray(concept.briefElements) ? concept.briefElements.join("، ") : ""],
       ["منطق شکل‌گیری", concept.mechanism],
       ["ویژگی متمایز", concept.expressionMove],
       ["تفاوت این مسیر", concept.differsBy]
