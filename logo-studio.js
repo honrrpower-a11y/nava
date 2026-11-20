@@ -248,11 +248,11 @@
     frame.__navaData = { brandName: data.brandName, slogan: data.slogan };
     activeFrames.push(frame);
     preview.appendChild(frame);
-    // Attach the iframe to its final square viewport before loading srcdoc.
-    // Some mobile WebViews skip or delay load events for detached iframes.
+    card.appendChild(preview);
+    // Attach the complete preview container to the live document before loading
+    // srcdoc; a detached iframe may never fire its load event in mobile WebViews.
     frame.srcdoc = frame.__navaDocumentHtml;
     delete frame.__navaDocumentHtml;
-    card.appendChild(preview);
 
     const copy = document.createElement("div");
     copy.className = "logo-concept-copy";
