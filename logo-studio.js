@@ -335,8 +335,8 @@
       });
       const result = await response.json();
       if (!response.ok || !result.success) throw new Error(result.error || "طراحی لوگو انجام نشد.");
-      if (!Array.isArray(result.concepts) || result.concepts.length !== 3) {
-        throw new Error("پاسخ موتور طراحی کامل نیست؛ سه طرح مستقل دریافت نشد.");
+      if (!Array.isArray(result.concepts) || result.concepts.length < 1 || result.concepts.length > 3) {
+        throw new Error("پاسخ موتور طراحی معتبر نیست؛ طرح قابل‌قبولی دریافت نشد.");
       }
       results.replaceChildren();
       frames = [];
@@ -355,7 +355,9 @@
         }
       });
       empty.hidden = true;
-      status.textContent = "سه مسیر طراحی آماده‌اند. هر طرح را بررسی کن و خروجی PNG بگیر.";
+      status.textContent = result.concepts.length === 3
+        ? "سه مسیر طراحی آماده‌اند. هر طرح را بررسی کن و خروجی PNG بگیر."
+        : `${result.concepts.length} طرح از کنترل کیفیت عبور کرد. طرح‌های ضعیف نمایش داده نشدند؛ طرح‌های باقی‌مانده را بررسی کن و خروجی PNG بگیر.`;
       results.scrollIntoView({ behavior: "smooth", block: "start" });
     } catch (error) {
       status.textContent = error?.message || "ارتباط با موتور طراحی برقرار نشد.";
