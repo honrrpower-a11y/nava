@@ -441,3 +441,18 @@ test("Logo Studio builds a new card and a sandboxed HTML/CSS preview for every c
   assert.ok(source.includes('data-logo-role=\"slogan\"'));
 });
 
+
+
+test("Logo Studio offers explicit concept selection and a standalone editable HTML/CSS export", () => {
+  const source = readFileSync(new URL("../logo-studio.js", import.meta.url), "utf8");
+  const styles = readFileSync(new URL("../logo-studio.css", import.meta.url), "utf8");
+  assert.ok(source.includes("function downloadHtml(concept, brief, index, feedback, button)"));
+  assert.ok(source.includes('type: "text/html;charset=utf-8"'));
+  assert.ok(source.includes("previewDocument(concept, brief)"));
+  assert.ok(source.includes('anchor.download = safeName(brief.brandName)'));
+  assert.ok(source.includes('chooseButton.dataset.logoSelect = "true"'));
+  assert.ok(source.includes('item.classList.toggle("is-selected", selected)'));
+  assert.ok(source.includes('htmlButton.textContent = "دریافت سورس HTML/CSS"'));
+  assert.ok(styles.includes(".logo-concept-card.is-selected"));
+  assert.ok(styles.includes(".logo-concept-actions [data-logo-select]"));
+});
