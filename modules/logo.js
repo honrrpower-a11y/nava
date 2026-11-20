@@ -363,7 +363,7 @@ async function designLogos(data, apiKey) {
         /position\s*:/i,
         /font-(?:size|weight|family)\s*:|letter-spacing\s*:/i
       ];
-      const craftScore = craftGroups.reduce((score, pattern) => score + (pattern.test(css) ? 1 : 0), 0);
+      const craftScore = craftGroups.reduce((score, pattern) => score + (pattern.test(css) ? 1 : 0), 0) + (inlineVector ? 2 : 0);
       // The structural symbol validator is the primary quality gate. This score
       // is a secondary craft signal and must not reject clean flat/geometric work.
       const minimumCraftScore = data.format === "wordmark" ? 3 : 4;
