@@ -131,7 +131,8 @@ test("NAVI writes an English brief and three sanitized HTML/CSS logo designs in 
     assert.match(sentPrompt, /16 px/i);
     assert.match(sentPrompt, /HTML and CSS are the live design medium/i);
     assert.match(sentPrompt, /SVG is permitted only as a later export format/i);
-    assert.match(sentPrompt, /navy\/dark-blue tones are prohibited/i);
+    assert.match(sentPrompt, /artboard\/canvas background must be white or a light neutral/i);
+    assert.match(sentPrompt, /Navy or blue may still be used as an intentional brand-mark/i);
     assert.match(sentPrompt, /{{BRAND_NAME}}/i);
     assert.match(sentPrompt, /one valid JSON object/i);
     assert.equal(result.planning.method, "navi-english-brief-html-css-design");
