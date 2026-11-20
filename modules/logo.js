@@ -450,7 +450,7 @@ export async function handleLogoRoute({ request, env, origin, corsOrigin }) {
         extraModelCalls: 0,
         note: "NAVI authored the English design brief and the accepted HTML/CSS logo designs in one request."
       },
-      concepts,
+      concepts: plan.concepts,
       rejectedConcepts: plan.rejectedConcepts || []
     }, 200, corsOrigin);
   } catch (error) {
