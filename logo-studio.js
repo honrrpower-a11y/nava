@@ -17,7 +17,7 @@
   const customColors = $("logoCustomColors");
   let activeFrames = [];
   const paletteNames = {
-    gold: "طلایی و سرمه‌ای", blue: "آبی و نقره‌ای", green: "سبز و کرم",
+    gold: "طلایی و سفید", blue: "آبی و نقره‌ای", green: "سبز و کرم",
     violet: "بنفش و یاسی", mono: "تک‌رنگ", custom: "رنگ اختصاصی"
   };
   const safeFileName = value => String(value || "nava-logo").trim()
@@ -297,12 +297,12 @@
     fields.typography.value = "elegant";
     fields.format.value = "combination";
     fields.palette.value = "custom";
-    fields.primaryColor.value = "#101B30";
+    fields.primaryColor.value = "#D6A84F";
     fields.darkColor.value = "#FFFFFF";
     customColors.hidden = false;
     syncLiveEdits();
 
-    const designPrompt = "Create a premium, ownable identity for Awaye Nava, a modern music and art label. Core concept: one substantial, sculptural sound-form in which a flowing wave and a musical note become ONE unified filled silhouette through a deliberate carved negative-space cut. The symbol must have a broad, closed visual mass and a memorable outer contour; build it from several purposeful HTML/CSS layers with controlled depth, a warm matte-gold body, refined dimensional highlights and subtle shadow. Pair it with a carefully typeset Awaye Nava wordmark in deep navy, optically balanced and clearly legible. White artboard, navy and gold palette. The mark must look like a finished professional brand identity at thumbnail size, not an illustration. ABSOLUTELY AVOID: thin line-art, open arcs, detached dots, two strokes, generic circles/orbits, default music-note clip art, tiny symbol, oversized empty space, low-contrast text, and generic geometric doodles.";
+    const designPrompt = "Create a premium, ownable identity for Awaye Nava, a modern music and art label. Core concept: one substantial, sculptural sound-form in which a flowing wave and a musical note become ONE unified filled silhouette through a deliberate carved negative-space cut. The symbol must have a broad, closed visual mass and a memorable outer contour; build it from several purposeful HTML/CSS layers with controlled depth, a warm matte-gold body, refined dimensional highlights and subtle shadow. Pair it with a carefully typeset Awaye Nava wordmark in deep charcoal, optically balanced and clearly legible. Use a clean white artboard with warm gold and charcoal only; absolutely no navy or dark-blue tones anywhere in the logo preview. The mark must look like a finished professional brand identity at thumbnail size, not an illustration. ABSOLUTELY AVOID: thin line-art, open arcs, detached dots, two strokes, generic circles/orbits, default music-note clip art, tiny symbol, oversized empty space, low-contrast text, and generic geometric doodles.";
     const button = $("logoNoQuotaDiagnostic");
     if (button) button.disabled = true;
     try {
