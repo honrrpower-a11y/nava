@@ -189,9 +189,6 @@ body.light .logo-html-css-card .logo-concept-preview {
   visibility: visible;
   opacity: 1;
   pointer-events: none;
-  isolation: isolate;
-  contain: strict;
-  will-change: transform;
   inset: 0;
   display: block;
   width: 100%;
