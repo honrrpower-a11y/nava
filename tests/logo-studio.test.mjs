@@ -205,7 +205,7 @@ test("NAVI CSS cannot load remote resources or execute injected markup", async (
 
 
 
-test("NAVI identifies a missing brand placeholder and refunds the trial", async () => {
+test("NAVI repairs a missing brand placeholder with a visible semantic wordmark", async () => {
   const originalFetch = globalThis.fetch;
   const db = new FakeD1();
   const invalid = makeDesign();
@@ -219,11 +219,13 @@ test("NAVI identifies a missing brand placeholder and refunds the trial", async 
       corsOrigin: ORIGIN
     });
     const result = await response.json();
-    assert.equal(response.status, 502);
-    assert.equal(result.code, "LOGO_BRAND_NAME_MISSING");
-    assert.match(result.error, /نام برند/);
-    assert.equal(db.visitorUsed, 0);
-    assert.equal([...db.reservations.values()][0].status, "refunded");
+    assert.equal(response.status, 200);
+    assert.equal(result.success, true);
+    assert.equal(result.concepts.length, 3);
+    assert.ok(result.concepts[1].html.includes('<span data-logo-role="brand">نوا</span>'));
+    assert.ok(result.concepts[1].css.includes(".navi-brand-lockup"));
+    assert.equal(db.visitorUsed, 1, "a recovered design batch should consume the trial normally");
+    assert.equal([...db.reservations.values()][0].status, "consumed");
   } finally {
     globalThis.fetch = originalFetch;
   }
