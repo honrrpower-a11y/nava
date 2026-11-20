@@ -131,6 +131,7 @@ test("NAVI writes an English brief and three sanitized HTML/CSS logo designs in 
     assert.match(sentPrompt, /pseudo-elements ::before\/::after/i);
     assert.match(sentPrompt, /NO SVG markup/i);
     assert.match(sentPrompt, /crooked lines/i);
+    assert.match(sentPrompt, /REFERENCE QUALITY BENCHMARK/i);
     assert.match(sentPrompt, /WORDMARK AND LANGUAGE/i);
     assert.match(sentPrompt, /INTERNAL ART-DIRECTION REVIEW/i);
     assert.match(sentPrompt, /near-black text on a dark background/i);
@@ -148,6 +149,7 @@ test("NAVI writes an English brief and three sanitized HTML/CSS logo designs in 
     assert.ok(result.concepts.every(item => !Object.prototype.hasOwnProperty.call(item, "svg")));
     assert.ok(result.concepts.every(item => !JSON.stringify(item).includes("foreignObject")));
     assert.ok(result.concepts.every(item => item.html.includes("<div")));
+    assert.ok(result.concepts.every(item => !/<svg\\b/i.test(item.html)), "generated concept markup is HTML-only");
     assert.ok(result.concepts.every(item => item.css.length > 0));
     assert.ok(result.concepts.every(item => !item.html.includes("<script")));
     assert.equal(db.visitorUsed, 1, "one completed logo batch consumes one guest trial");
