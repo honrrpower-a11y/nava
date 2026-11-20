@@ -97,6 +97,27 @@ function makeRequest(body = INPUT) {
 }
 
 function makeGeminiResponse(plan = makeDesign()) {
+  for (const concept of plan.concepts || []) {
+    const symbol = String(concept.html || "").match(/<div\\b(?=[^>]*class="[^"]*\\bnavi-symbol\\b[^"]*")(?=[^>]*data-logo-role="symbol")[^>]*>([\\s\\S]*?)<\\/div>/i);
+    const innerClasses = [...(symbol?.[1] || "").matchAll(/class="([^"]+)"/g)]
+      .flatMap(match => match[1].split(/\\s+/))
+      .filter(name => name && name !== "navi-symbol");
+    const styledClasses = [...new Set(innerClasses)].filter(name =>
+      new RegExp("\\\\." + name + "(?=[\\\\s.:#\\\\[,{>\\\\{])").test(concept.css || ""));
+    const elements = Array.isArray(concept.briefElements) && concept.briefElements.length >= 2
+      ? concept.briefElements.slice(0, 5)
+      : ["عنصر اصلی بریف", "رابطه هندسی اصلی"];
+    concept.visualAnchors = elements.map((description, index) => ({
+      id: "anchor-" + (index + 1),
+      description,
+      relationship: "این جزء در ساختار اصلی نشان با فرم مکمل پیوند دارد"
+    }));
+    concept.anchorMap = concept.visualAnchors.map((anchor, index) => ({
+      anchorId: anchor.id,
+      layerClass: styledClasses[index % Math.max(1, styledClasses.length)] || "",
+      visualRole: "این لایه هندسه قابل مشاهده جزء مربوط را در نشان می‌سازد"
+    })).filter(entry => entry.layerClass);
+  }
   return new Response(JSON.stringify({
     candidates: [{ content: { parts: [{ text: JSON.stringify(plan) }] } }]
   }), { status: 200, headers: { "Content-Type": "application/json" } });
@@ -131,6 +152,9 @@ test("NAVI writes an English brief and three sanitized HTML/CSS logo designs in 
     assert.match(sentPrompt, /PHASE 4B — ANTI-DEFAULT REFLEX/i);
     assert.match(sentPrompt, /PHASE 4C — BRIEF TRACEABILITY/i);
     assert.match(sentPrompt, /PHASE 4D — CLIENT BRIEF DOMINANCE/i);
+    assert.match(sentPrompt, /PHASE 4E — ANCHOR-TO-LAYER CONTRACT/i);
+    assert.match(sentPrompt, /anchorMap with exactly one object per visualAnchor/i);
+    assert.match(sentPrompt, /real nested HTML element inside the single \.navi-symbol/i);
     assert.match(sentPrompt, /exact client idea and relationships/i);
     assert.match(sentPrompt, /brief fidelity first/i);
     assert.match(sentPrompt, /actual \.navi-symbol/i);
@@ -171,6 +195,8 @@ test("NAVI writes an English brief and three sanitized HTML/CSS logo designs in 
     assert.ok(result.concepts.every(item => item.html.includes("<div")));
     assert.ok(result.concepts.every(item => !Object.prototype.hasOwnProperty.call(item, "svg")), "SVG is never returned as a separate export field");
     assert.ok(result.concepts.every(item => item.css.length > 0));
+    assert.ok(result.concepts.every(item => item.visualAnchors.length >= 2));
+    assert.ok(result.concepts.every(item => item.anchorMap.length === item.visualAnchors.length));
     assert.equal(result.concepts[0].centralThesis, "پیوند دو مسیر صوتی به یک نشانه پیوسته و باز تبدیل می‌شود");
     assert.equal(result.concepts[0].symbolConstruction, "دو مسیر منحنی در مرکز به هم می‌رسند و یک شکاف پیوسته در دل فرم می‌سازند");
     assert.equal(result.concepts[0].briefAlignment, "این فرم اتصال صدا و خلاقیت را در هویت استودیوی موسیقی نشان می‌دهد");
