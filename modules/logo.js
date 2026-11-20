@@ -257,14 +257,25 @@ async function designLogos(data, apiKey) {
           html += '<div class="navi-brand-lockup"><span data-logo-role="brand">' + escapedBrand + "</span></div>";
         }
       }
+      // Recover a missing slogan placeholder without rejecting an otherwise usable concept.
+      // Preserve exact supplied wording and make the slogan a semantic, visibly styled secondary element.
       if (data.slogan && !html.includes("{{SLOGAN}}")) {
-        throw validationError("LOGO_SLOGAN_MISSING", "Required slogan placeholder is missing.", "slogan-placeholder", index + 1);
+        const escapedSlogan = escapeHtml(data.slogan);
+        const visibleText = html.replace(/<[^>]*>/g, "");
+        if (escapedSlogan && visibleText.includes(escapedSlogan)) {
+          html = html.replace(escapedSlogan, '<span data-logo-role="slogan">' + escapedSlogan + "</span>");
+        } else {
+          html += '<div class="navi-slogan-lockup"><span data-logo-role="slogan">' + escapedSlogan + "</span></div>";
+        }
       }
       const finalHtml = html
         .replace(/\{\{BRAND_NAME\}\}/g, '<span data-logo-role="brand">' + escapeHtml(data.brandName) + "</span>")
         .replace(/\{\{SLOGAN\}\}/g, '<span data-logo-role="slogan">' + escapeHtml(data.slogan) + "</span>");
       const brandFallbackCss = '.navi-brand-lockup{display:flex;justify-content:center;align-items:center;width:100%;margin-top:28px;padding:12px 8px;text-align:center;color:var(--logo-primary);font-family:inherit;font-size:clamp(36px,8vw,76px);font-weight:900;line-height:1.25;direction:auto;unicode-bidi:plaintext}';
-      const finalCss = css + (html.includes('class="navi-brand-lockup"') ? "\n" + brandFallbackCss : "");
+      const sloganFallbackCss = '.navi-slogan-lockup{display:flex;justify-content:center;align-items:center;width:100%;margin-top:10px;padding:4px 8px;text-align:center;color:var(--logo-primary);font-family:inherit;font-size:clamp(16px,3vw,26px);font-weight:500;line-height:1.5;direction:auto;unicode-bidi:plaintext;opacity:.88}';
+      const finalCss = css +
+        (html.includes('class="navi-brand-lockup"') ? "\n" + brandFallbackCss : "") +
+        (html.includes('class="navi-slogan-lockup"') ? "\n" + sloganFallbackCss : "");
       const visualElementCount = (html.match(/</g) || []).length;
       if (html.length < 150 || css.length < 220 || visualElementCount < 5) {
         throw validationError("LOGO_CONCEPT_TOO_SIMPLE", "Logo concept does not meet the minimum composition structure.", "composition-completeness", index + 1);
