@@ -196,8 +196,8 @@ test("NAVI builds symbols with CSS-only geometry and strips SVG markup", async (
     const result = await response.json();
     assert.equal(response.status,200); assert.equal(result.success,true);
     assert.equal(result.concepts.length,3,JSON.stringify(result.rejectedConcepts));
-    assert.doesNotMatch(result.concepts[0].html,/<\\/?(?:svg|path|circle|ellipse|rect|polygon|polyline|line)\\b/i);
-    assert.doesNotMatch(result.concepts[1].html,/<\\/?(?:svg|path|circle|ellipse|rect|polygon|polyline|line)\\b/i);
+    assert.doesNotMatch(result.concepts[0].html,/<\/?(?:svg|path|circle|ellipse|rect|polygon|polyline|line)\b/i);
+    assert.doesNotMatch(result.concepts[1].html,/<\/?(?:svg|path|circle|ellipse|rect|polygon|polyline|line)\b/i);
     assert.match(result.concepts[0].html,/navi-symbol__detail/); assert.equal(db.visitorUsed,1);
   } finally {globalThis.fetch=originalFetch;}
 });
