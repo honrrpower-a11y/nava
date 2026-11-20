@@ -114,6 +114,33 @@ function validateSymbolStructure(html, css, conceptIndex) {
   }
 }
 
+function normalizeConceptText(value) {
+  return String(value || "").toLocaleLowerCase("fa").normalize("NFKC")
+    .replace(/[\u064B-\u065F\u0670]/g, "").replace(/[ي]/g, "ی").replace(/[ك]/g, "ک")
+    .replace(/[^\p{L}\p{N}]+/gu, " ").trim().split(/\s+/).filter(token => token.length > 1);
+}
+function textSimilarity(left, right) {
+  const a = new Set(normalizeConceptText(left)), b = new Set(normalizeConceptText(right));
+  if (!a.size || !b.size) return 0;
+  let intersection = 0;
+  for (const token of a) if (b.has(token)) intersection += 1;
+  return intersection / (a.size + b.size - intersection);
+}
+function validateConceptTraceability(item, conceptIndex) {
+  const centralThesis = safeText(item?.centralThesis, 260);
+  const symbolConstruction = safeText(item?.symbolConstruction, 320);
+  const briefAlignment = safeText(item?.briefAlignment, 320);
+  const briefElements = Array.isArray(item?.briefElements) ? item.briefElements.slice(0, 6).map(value => safeText(value, 100)).filter(Boolean) : [];
+  if (centralThesis.length < 24 || symbolConstruction.length < 28 || briefAlignment.length < 28 || briefElements.length < 1) {
+    throw validationError("LOGO_BRIEF_TRACEABILITY_MISSING", "ارتباط ایده با درخواست در یکی از طرح‌ها به‌صورت روشن توضیح داده نشده است.", "brief-traceability", conceptIndex);
+  }
+  return { centralThesis, symbolConstruction, briefAlignment, briefElements };
+}
+function conceptsAreNearDuplicates(left, right) {
+  return textSimilarity(left.centralThesis, right.centralThesis) >= 0.76 &&
+    textSimilarity(left.symbolConstruction, right.symbolConstruction) >= 0.76;
+}
+
 function sanitizeCss(value) {
   let css = String(value || "").slice(0, 16000);
   if (/[<>]|expression\s*\(|javascript:|behavior\s*:|-moz-binding|url\s*\((?!\s*#[a-zA-Z_][\w:.-]*\s*\))/i.test(css)) {
@@ -166,6 +193,7 @@ async function designLogos(data, apiKey) {
     "PHASE 4 — CONCEPT EXPLORATION: internally explore 8–12 genuinely different one-sentence design theses across at least two appropriate mark types: custom wordmark, letterform/monogram, pictorial, abstract, negative-space, emblem or combination. Score each for idea clarity, distinction, simplicity, relevance and small-size strength. Do not expose private chain-of-thought. For three concepts, return the strongest structurally different routes—not recolors or layout variations. For one, return the single strongest route.",
     "PHASE 4A — IDENTITY COHESION: choose 2–4 decision axes that matter to this specific brief (for example classic–contemporary, quiet–expressive, technical–human, premium–accessible). Place every concept on those axes using concise labels, and make the three routes visibly different on at least two axes. For each concept write exactly one mechanism sentence explaining how its central idea generates the symbol, typography and color direction together, plus one expression move: the single most distinctive visual decision. The mark, type and palette must feel like one identity, not separately selected decorations.",
     "PHASE 4B — ANTI-DEFAULT REFLEX: challenge familiar AI/logo defaults for this sector (generic circles/orbits, gradients, gold-on-cream, generic geometric sans, initials inside badges, stock industry icons). At least one concept must avoid the usual defaults entirely. If any concept uses a familiar choice, state the specific reason from the brief in defaultsUsed; otherwise return an empty array. Do not claim a choice is distinctive without explaining what makes it specific to this brand.",
+    "PHASE 4C — BRIEF TRACEABILITY: before drawing, convert the supplied request into explicit visual anchors. For every concept return centralThesis (one precise sentence describing the actual design idea), briefElements (1–6 concrete requested or brand-derived elements), symbolConstruction (describe exactly how those elements are physically encoded in the symbol silhouette, geometry, overlap, cut-out or negative space), and briefAlignment (explain the direct connection to the user request or, in NAVI mode, to the brand name and business). These are not decorative explanations: the HTML/CSS symbol itself MUST visibly implement the stated construction. In client mode preserve every essential requested relationship; do not substitute an unrelated symbol. In NAVI mode derive anchors from brand name + industry + audience, not generic industry clip art. Do not claim an element is present unless it is visibly built into the mark. If the brief is ambiguous, make a restrained defensible interpretation rather than inventing a different brief.",
     "PHASE 5 — DESIGN BUILD: for each chosen thesis define the one-sentence idea, recognizable silhouette, geometry, figure/ground, primary mass, supporting forms, optical center, proportions, negative-space gaps, typography and lockup. Start with monochrome shape logic before palette. Make symbol and wordmark share a visual language. A logo identifies; it does not illustrate every service.",
     "PHASE 6 — CRAFT: use deliberate grid logic, clean angles where appropriate, consistent radii/weights, intentional asymmetry, optical overshoot, junction cleanup and balanced spacing. Avoid accidental tangencies, near-miss angles, lumps, tiny details, hairlines and gaps that close when reduced. Do not add 3D, gradients, glow or shadows to rescue a weak concept. A logo symbol is a designed silhouette, not decoration: it must have a clear outer mass, intentional negative space and at least one integrated construction detail. Never submit two stray diagonal strokes, parallel lines, random squiggles, a lone border, or a generic abstract doodle as a logo. If the idea cannot be expressed as a memorable compact shape, redesign it.",
     "PHASE 7 — TEST AND REFINE: inspect the composition conceptually at full size and at 64, 32, 24 and 16 px; test one-color black on white, reversed white on dark, grayscale and silhouette-only. Check readability, crop safety, contrast, optical balance and accidental readings. Redesign failures. Do not claim an external browser render or pixel test was performed.",
@@ -176,13 +204,7 @@ async function designLogos(data, apiKey) {
     "HTML CONTRACT: output a fragment using only div, span, p, strong, em, small and br. For combination or monogram logos, include exactly one dedicated <div class=\"navi-symbol\" data-logo-role=\"symbol\"> as the central mark, with at least one integrated child detail (class navi-symbol__detail) or a deliberate ::before/::after construction. The symbol must be a substantial filled geometric form, never two loose lines. Include the exact brand wordmark and optional slogan as semantic data-logo-role elements. No SVG, scripts, event handlers, style attributes, images, canvas, iframe, links, external fonts, external resources or embedded content. Scope selectors under .logo-art-root.",
     "CSS CONTRACT: output a complete responsive stylesheet for a square 1000×1000 logical artboard rendered inside a square viewport of any size. The .logo-art-root itself must use width:100%; height:100%; never fixed pixel dimensions. Use container-relative cqw units, percentages and clamp() for geometry and typography; all central elements must stay within the viewport. For combination/monogram formats, style .navi-symbol with explicit nonzero width and height, a visible filled background or gradient, a deliberate silhouette using border-radius or clip-path, and a coherent detail via .navi-symbol__detail or pseudo-elements. A thin border or line alone is not an acceptable symbol. Use original CSS geometry, gradients, transforms, clip-path with basic shapes, layered backgrounds and shadows only when useful. Set root layout, dimensions, overflow, direction, colors and typography explicitly. No url(), @import, @font-face, expressions or external resources.",
     "QUALITY GATE: reject generic doodles, crooked lines, two-line marks, stock icons, plain initials in an unmodified font, random ornament, over-complex illustration, weak silhouette, poor wordmark, bad spacing, low contrast or designs that fail at small sizes. Before returning, verify that the symbol reads as one intentional ownable silhouette at 32px, has a clear filled mass plus integrated detail, and is visually connected to the brand idea. Every detail must contribute to recognition, hierarchy, geometry or material. If any check fails, redesign rather than rationalize the sketch.",
-    "OUTPUT: return one valid JSON object only with keys brandCore, designIdea, designBriefEnglish, strategy, concepts. designIdea is a concise Persian statement (one or two sentences) of the central creative idea; in client mode it must accurately summarize the client's direction, and in NAVI mode it must express NAVI's own brand-specific idea. Return exactly " + conceptCount + " concept object(s), each with Persian title, Persian rationale, mechanism, expressionMove, differsBy, axes (a short object of 2–4 axis labels/positions), defaultsUsed (array of brief-grounded reasons, empty when none), html and css. Mechanism, expressionMove and differsBy must be concise Persian text. Include no chain-of-thought, markdown or explanation outside JSON. Each HTML fragment under 6500 chars and each CSS stylesheet under 9000 chars."
-  ].join("\n");
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 90000);
-  try {
-    const response = await fetch(
-      "https://generativelanguage.googleapis.com/v1beta/models/" + GEMINI_MODEL + ":generateContent",
+    "OUTPUT: return one valid JSON object only with keys brandCore, designIdea, designBriefEnglish, strategy, concepts. designIdea is a concise Persian statement of the central creative idea. Return exactly " + conceptCount + " concept object(s), each with Persian title, Persian rationale, centralThesis, briefElements, symbolConstruction, briefAlignment, mechanism, expressionMove, differsBy, axes, defaultsUsed, html and css. centralThesis, briefElements, symbolConstruction and briefAlignment must be concise, concrete Persian text checked against the visible mark. Include no chain-of-thought, markdown or explanation outside JSON. Each HTML fragment under 6500 chars and each CSS stylesheet under 9000 chars.,
       {
         method: "POST",
         headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
@@ -334,12 +356,14 @@ async function designLogos(data, apiKey) {
       if (html.length < 20 || css.length < 40 || visualElementCount < 1) {
         throw validationError("LOGO_CONCEPT_TOO_SIMPLE", "Logo concept returned incomplete HTML/CSS markup.", "composition-completeness", index + 1);
       }
+      const traceability = validateConceptTraceability(item, index + 1);
       const title = safeText(item?.title, 100) || "مسیر طراحی " + (index + 1);
       const rationale = safeText(item?.rationale, 420) || "این مسیر بر اساس بریف برند طراحی شده است.";
       const concept = {
         id: "navi-html-css-" + (index + 1),
         title,
         rationale,
+        ...traceability,
         mechanism: safeText(item?.mechanism, 260),
         expressionMove: safeText(item?.expressionMove, 180),
         differsBy: safeText(item?.differsBy, 220),
@@ -354,7 +378,12 @@ async function designLogos(data, apiKey) {
         html: finalHtml,
         css: finalCss
       };
-        concepts.push(concept);
+        const duplicateOf = concepts.findIndex(existing => conceptsAreNearDuplicates(existing, concept));
+        if (duplicateOf >= 0) {
+          rejectedConcepts.push({ index: index + 1, code: "LOGO_CONCEPTS_NOT_DISTINCT", stage: "concept-distinctness", similarTo: duplicateOf + 1 });
+        } else {
+          concepts.push(concept);
+        }
       } catch (error) {
         rejectedConcepts.push({
           index: index + 1,
@@ -490,6 +519,7 @@ export async function handleLogoRoute({ request, env, origin, corsOrigin }) {
       LOGO_VALIDATION_FAILED: "طرح تولید شد اما از بررسی کیفیت و ایمنی نوا عبور نکرد؛ فرصت آزمایشی آزاد شد.",
       LOGO_CONCEPT_COUNT: "نوا سه مسیر طراحی کامل دریافت نکرد؛ فرصت آزمایشی آزاد شد.",
       LOGO_BRIEF_INCOMPLETE: "بریف طراحی کامل نشد؛ فرصت آزمایشی آزاد شد.",
+      LOGO_BRIEF_TRACEABILITY_MISSING: "ارتباط یکی از طرح‌ها با خواسته یا هویت برند روشن نیست؛ طرح برای اصلاح کنار گذاشته شد.",
       LOGO_BRAND_NAME_MISSING: "نام برند در یکی از طرح‌ها به‌درستی جای‌گذاری نشده؛ فرصت آزمایشی آزاد شد.",
       LOGO_SLOGAN_MISSING: "شعار برند در یکی از طرح‌ها به‌درستی جای‌گذاری نشده؛ فرصت آزمایشی آزاد شد.",
       LOGO_SYMBOL_MISSING: "نشان اصلی در طرح به‌صورت یک فرم مستقل ساخته نشده؛ نوا آن را برای جلوگیری از تحویل لوگوی ناقص رد کرد و فرصت آزمایشی آزاد شد.",
