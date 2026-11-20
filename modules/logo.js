@@ -298,8 +298,11 @@ async function designLogos(data, apiKey) {
       const craftScore = craftGroups.reduce((score, pattern) => score + (pattern.test(css) ? 1 : 0), 0);
       // Reject visibly underbuilt sketches before they reach the user. The
       // threshold checks independent CSS craft techniques, not token count.
-      const filledSurfaceRules = (css.match(/[^{}]+\{[^{}]*\bbackground(?:-image|-color)?\s*:\s*(?!transparent|none)[^;}]+[^{}]*\}/gi) || [])
-        .filter(rule => !/\.logo-art-root\b/i.test(rule.split("{")[0])).length;
+      const filledSurfaceRules = css.split("}").filter(rule => {
+        const brace = rule.indexOf("{");
+        if (brace < 0 || /\.logo-art-root\b/i.test(rule.slice(0, brace))) return false;
+        return /\bbackground(?:-image|-color)?\s*:\s*(?!transparent|none)/i.test(rule.slice(brace + 1));
+      }).length;
       // Permit premium flat/geometric identities, but require at least one
       // substantial filled symbol surface in addition to the artboard.
       if (html.length < 140 || css.length < 650 || visualElementCount < 6 || cssRuleCount < 7 || craftScore < 5 || filledSurfaceRules < 1) {
