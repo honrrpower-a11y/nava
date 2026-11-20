@@ -518,3 +518,22 @@ test("Logo Studio offers explicit concept selection and a standalone editable HT
   assert.ok(styles.includes(".logo-concept-card.is-selected"));
   assert.ok(styles.includes(".logo-concept-actions [data-logo-select]"));
 });
+
+
+test("Logo Studio lets the client delegate ideation to NAVI or supply a binding custom idea", () => {
+  const ui = readFileSync(new URL("../logo-studio.js", import.meta.url), "utf8");
+  const html = readFileSync(new URL("../index.html", import.meta.url), "utf8");
+  const backend = readFileSync(new URL("../modules/logo.js", import.meta.url), "utf8");
+  assert.ok(html.includes('name="logoIdeaMode" value="navi" checked'));
+  assert.ok(html.includes('name="logoIdeaMode" value="custom"'));
+  assert.ok(html.includes('id="logoIdeaPrompt"'));
+  assert.ok(ui.includes("designMode: getIdeaMode()"));
+  assert.ok(ui.includes('designPrompt: getIdeaMode() === "custom" ? fields.ideaPrompt.value.trim() : ""'));
+  assert.ok(ui.includes('brief.designMode === "custom" && !brief.designPrompt'));
+  assert.ok(backend.includes('designMode: input?.designMode === "custom" ? "custom" : "navi"'));
+  assert.ok(backend.includes('data.designMode === "custom" ? data.designPrompt : ""'));
+  assert.ok(backend.includes("IDEA OWNERSHIP — CLIENT MODE"));
+  assert.ok(backend.includes("IDEA OWNERSHIP — NAVI MODE"));
+  assert.ok(backend.includes("designIdea: safeText(plan.designIdea, 320)"));
+  assert.ok(ui.includes("planning.designIdea"));
+});
