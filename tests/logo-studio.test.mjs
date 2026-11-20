@@ -32,7 +32,7 @@ function makeDesign() {
     concepts: [
       { title: "موج پیوند", rationale: "پیوند صدا و خلاقیت", html: '<div class="mark"><div class="seal"><span class="wave"></span><span class="orbit"></span></div><strong>{{BRAND_NAME}}</strong><small>{{SLOGAN}}</small><script>window.pwned=true</script></div>', css: '.logo-art-root{display:grid;place-items:center;background:var(--logo-background);color:var(--logo-primary);width:100%;height:100%;padding:48px}.mark{text-align:center;display:grid;gap:24px;justify-items:center}.seal{display:grid;place-items:center;width:260px;height:260px;border:2px solid var(--logo-primary);border-radius:50%;background:radial-gradient(circle at center,#263b59,var(--logo-background));box-shadow:0 12px 28px rgba(0,0,0,.2)}.wave{display:block;width:150px;height:60px;border:8px solid var(--logo-primary);border-radius:50%}.orbit{display:block;width:190px;height:190px;border:1px solid #5ac9bd;border-radius:50%}@keyframes breathe{0%{opacity:.75}100%{opacity:1}}.wave{animation:breathe 3s ease-in-out infinite}' },
       { title: "حرف ن", rationale: "تمرکز بر حرف آغازین برند", html: '<div class="letter"><div class="monogram"><span class="cut"></span><span class="accent"></span></div><strong>{{BRAND_NAME}}</strong><small>{{SLOGAN}}</small></div>', css: '.logo-art-root{display:grid;place-items:center;background:var(--logo-background);color:var(--logo-primary);width:100%;height:100%;padding:40px}.letter{font-size:70px;font-weight:900;display:grid;gap:22px;justify-items:center;text-align:center}.monogram{width:240px;height:240px;border:3px solid var(--logo-primary);display:grid;place-items:center;border-radius:28px;background:linear-gradient(135deg,#253b59,var(--logo-background));box-shadow:0 10px 24px rgba(0,0,0,.25)}.cut{display:block;width:110px;height:110px;border:12px solid var(--logo-primary);border-left-color:#59c9bc;border-radius:32px}.accent{display:block;width:70px;height:5px;background:#59c9bc;border-radius:5px}' },
-      { title: "طنین", rationale: "بازتاب ایده در صدا", html: '<div class="echo"><svg viewBox="0 0 100 100" width="100" height="100"><defs><linearGradient id="brand-gradient"><stop offset="0%" stop-color="#D6A84F"/><stop offset="100%" stop-color="#FFFFFF"/></linearGradient></defs><path d="M10 10 L90 50 L10 90 Z" fill="url(#brand-gradient)" fill-rule="evenodd"/></svg><span>✦</span><strong>{{BRAND_NAME}}</strong><small>{{SLOGAN}}</small></div>', css: '.logo-art-root{display:grid;place-items:center;background:var(--logo-background);color:var(--logo-primary);width:100%;height:100%;padding:36px}.echo{text-align:center;font-size:54px;display:grid;justify-items:center;gap:20px}.echo svg{width:220px;height:220px;padding:24px;border:2px solid var(--logo-primary);border-radius:50%;background:radial-gradient(circle at center,#344968,var(--logo-background));box-shadow:0 12px 26px rgba(0,0,0,.2)}.echo span{color:#59c9bc;letter-spacing:8px}.echo strong{font-weight:900;letter-spacing:2px}' }
+      { title: "طنین", rationale: "بازتاب ایده در صدا", html: '<div class="echo"><span class="symbol" aria-hidden="true"></span><strong>{{BRAND_NAME}}</strong><small>{{SLOGAN}}</small></div>', css: '.logo-art-root{display:grid;place-items:center;background:var(--logo-background);color:var(--logo-primary);width:100%;height:100%;padding:36px}.echo{text-align:center;font-size:54px;display:grid;justify-items:center;gap:20px}.echo .symbol{position:relative;width:220px;height:220px;padding:24px;border:2px solid var(--logo-primary);border-radius:50%;background:radial-gradient(circle at center,#344968,var(--logo-background));box-shadow:0 12px 26px rgba(0,0,0,.2)}.echo span{color:#59c9bc;letter-spacing:8px}.echo strong{font-weight:900;letter-spacing:2px}' }
     ]
   };
 }
@@ -125,9 +125,13 @@ test("NAVI writes an English brief and three sanitized HTML/CSS logo designs in 
     assert.equal(result.concepts.length, 3);
     assert.equal(geminiCalls, 1, "one Gemini call creates the English brief and all three logo designs");
     assert.match(sentPrompt, /English/i);
-    assert.match(sentPrompt, /HTML and CSS are the primary composition and styling engine/i);
+    assert.match(sentPrompt, /HTML and CSS are the entire design engine/i);
     assert.match(sentPrompt, /three concepts must differ in their central idea/i);
     assert.match(sentPrompt, /CSS @keyframes/i);
+    assert.match(sentPrompt, /pseudo-elements ::before\/::after/i);
+    assert.match(sentPrompt, /NO SVG markup/i);
+    assert.match(sentPrompt, /crooked lines/i);
+    assert.match(sentPrompt, /REFERENCE QUALITY BENCHMARK/i);
     assert.match(sentPrompt, /WORDMARK AND LANGUAGE/i);
     assert.match(sentPrompt, /INTERNAL ART-DIRECTION REVIEW/i);
     assert.match(sentPrompt, /near-black text on a dark background/i);
@@ -145,12 +149,9 @@ test("NAVI writes an English brief and three sanitized HTML/CSS logo designs in 
     assert.ok(result.concepts.every(item => !Object.prototype.hasOwnProperty.call(item, "svg")));
     assert.ok(result.concepts.every(item => !JSON.stringify(item).includes("foreignObject")));
     assert.ok(result.concepts.every(item => item.html.includes("<div")));
+    assert.ok(result.concepts.every(item => !item.html.toLowerCase().includes("<svg")), "generated concept markup is HTML-only");
     assert.ok(result.concepts.every(item => item.css.length > 0));
-    assert.ok(result.concepts[2].html.includes('viewBox="0 0 100 100"'));
-    assert.ok(result.concepts[2].html.includes('fill="url(#brand-gradient)"'));
-    assert.ok(result.concepts[2].html.includes('fill-rule="evenodd"'));
-    assert.match(result.concepts[2].html, /<path[^>]+\/>/);
-    assert.match(result.concepts[2].html, /<stop[^>]+\/>/);
+    assert.ok(result.concepts.every(item => (item.css.match(/::before|::after|linear-gradient|radial-gradient|box-shadow|clip-path|transform:/gi) || []).length >= 2), "each logo must use multiple intentional CSS craft techniques");
     assert.ok(result.concepts.every(item => !item.html.includes("<script")));
     assert.equal(db.visitorUsed, 1, "one completed logo batch consumes one guest trial");
   } finally {
@@ -281,17 +282,6 @@ test("NAVI identifies structurally incomplete logo concepts and refunds the tria
   }
 });
 
-test("logo SVG export preserves the rendered HTML/CSS artboard without lossy primitive reconstruction", () => {
-  const source = readFileSync(new URL("../logo-renderer.js", import.meta.url), "utf8");
-  assert.doesNotThrow(() => new vm.Script(source));
-  assert.ok(source.includes("global.NavaLogoRenderer"));
-  assert.ok(source.includes('createElementNS(NS, "foreignObject")'), "SVG export captures the actual HTML/CSS logo artboard instead of redrawing a few supported primitives");
-  assert.ok(source.includes("new XMLSerializer().serializeToString"));
-  assert.ok(source.includes("new DOMParser().parseFromString"), "serialized SVG is parsed and validated before download");
-  assert.ok(source.includes("const css = Array.from(doc.querySelectorAll(\"style\"))"), "the final SVG preserves the design stylesheet");
-});
-
-
 test("NAVI reports truncated model output and refunds the reserved trial without retrying", async () => {
   const originalFetch = globalThis.fetch;
   const db = new FakeD1();
@@ -383,15 +373,8 @@ test("Logo Studio waits for iframe preview readiness before allowing exports", (
   assert.ok(source.includes("visibleContent"), "blank artboards are diagnosed instead of treated as completed previews");
   assert.ok(source.includes("await frame.__navaPreviewReady"));
   assert.ok(source.includes("exportPngFromFrame(frame"));
-});
-
-test("SVG export contains only the rendered logo artboard and preserves its HTML/CSS composition", () => {
-  const source = readFileSync(new URL("../logo-renderer.js", import.meta.url), "utf8");
-  assert.ok(source.includes("const art = root.cloneNode(true)"));
-  assert.ok(source.includes("const css = Array.from(doc.querySelectorAll(\"style\"))"));
-  assert.ok(source.includes('foreign.setAttribute("width", String(size))'));
-  assert.ok(source.includes('art.querySelectorAll("script,iframe,object,embed,form,button,input,textarea,select,link,meta,base,foreignObject")'));
-  assert.ok(!source.includes("renderHtmlElement(root, svg"), "SVG must not use the lossy CSS-to-line reconstruction as its design output");
+  assert.ok(!source.includes("دریافت SVG برداری"));
+  assert.ok(!source.includes("downloadSvg("));
 });
 
 test("Logo Studio loads the iframe only after attaching it to the square preview container", () => {
