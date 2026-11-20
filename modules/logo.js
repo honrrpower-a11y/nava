@@ -315,7 +315,9 @@ async function designLogos(data, apiKey) {
         /font-(?:size|weight|family)\s*:|letter-spacing\s*:/i
       ];
       const craftScore = craftGroups.reduce((score, pattern) => score + (pattern.test(css) ? 1 : 0), 0);
-      if (craftScore < 5 || cssRuleCount < 4) {
+      const minimumCraftScore = data.format === "wordmark" ? 3 : 5;
+      const minimumCssRules = data.format === "wordmark" ? 2 : 4;
+      if (craftScore < minimumCraftScore || cssRuleCount < minimumCssRules) {
         throw validationError("LOGO_CRAFT_TOO_WEAK", "ساختار بصری لوگو به اندازه کافی پرداخت نشده است؛ طرح خام و کم‌جزئیات تحویل داده نمی‌شود.", "craft-quality", index + 1);
       }
       // Reject visibly underbuilt sketches before they reach the user. The
