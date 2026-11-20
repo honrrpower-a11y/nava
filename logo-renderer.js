@@ -504,8 +504,13 @@
 
   function downloadBlob(blob,filename) {
     const url=URL.createObjectURL(blob),a=document.createElement("a");
-    a.href=url;a.download=filename;document.body.appendChild(a);a.click();a.remove();
-    setTimeout(()=>URL.revokeObjectURL(url),3000);
+    a.href=url;a.download=filename;a.rel="noopener";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    // Keep the URL alive long enough for mobile browsers/WebViews to open the fallback link.
+    setTimeout(()=>URL.revokeObjectURL(url),5*60*1000);
+    return url;
   }
   async function exportPng(svgText,filename,size) {
     const blob=new Blob([svgText],{type:"image/svg+xml;charset=utf-8"});
@@ -518,7 +523,8 @@
       ctx.drawImage(img,0,0,canvas.width,canvas.height);
       const png=await new Promise(resolve=>canvas.toBlob(resolve,"image/png"));
       if(!png)throw new Error("ساخت فایل PNG ناموفق بود.");
-      downloadBlob(png,filename);
+      const downloadUrl = downloadBlob(png,filename);
+      return downloadUrl;
     } finally { URL.revokeObjectURL(url); }
   }
   global.NavaLogoRenderer={buildSvg,downloadBlob,exportPng};
