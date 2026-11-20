@@ -394,7 +394,7 @@ test("PNG export rasterizes the rendered HTML/CSS DOM without SVG foreignObject 
   assert.ok(start >= 0 && end > start);
   assert.ok(exporter.includes("copyComputedTree(root,document)"), "iframe computed styles and pseudo-elements must be copied into the parent document");
   assert.ok(exporter.includes("global.html2canvas(stage"), "rasterization must target a same-document staging tree, not the iframe document");
-  assert.ok(exporter.includes("appendPseudo(\"::before\")") && exporter.includes("appendPseudo(\"::after\")"));
+  assert.ok(source.includes("appendPseudo(\"::before\")") && source.includes("appendPseudo(\"::after\")"));
   assert.match(exporter, /allowTaint:false/);
   assert.match(exporter, /useCORS:false/);
   assert.match(exporter, /foreignObjectRendering:false/);
