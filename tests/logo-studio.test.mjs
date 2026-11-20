@@ -232,6 +232,59 @@ test("NAVI keeps valid concepts when one of three fails quality validation", asy
   }
 });
 
+test("NAVI rejects repeated concepts that describe the same central idea and construction", async () => {
+  const originalFetch = globalThis.fetch;
+  const db = new FakeD1();
+  const repeated = makeDesign();
+  repeated.concepts[1].centralThesis = repeated.concepts[0].centralThesis;
+  repeated.concepts[1].symbolConstruction = repeated.concepts[0].symbolConstruction;
+  repeated.concepts[2].centralThesis = repeated.concepts[0].centralThesis;
+  repeated.concepts[2].symbolConstruction = repeated.concepts[0].symbolConstruction;
+  globalThis.fetch = async () => makeGeminiResponse(repeated);
+  try {
+    const response = await handleLogoRoute({
+      request: makeRequest(),
+      env: { NAVA_DB: db, NAVI_SESSION_SECRET: "test-secret-key", GEMINI_API_KEY: "test-gemini-key" },
+      origin: ORIGIN,
+      corsOrigin: ORIGIN
+    });
+    const result = await response.json();
+    assert.equal(response.status, 200);
+    assert.equal(result.concepts.length, 1);
+    assert.equal(result.rejectedConcepts.length, 2);
+    assert.ok(result.rejectedConcepts.every(item => item.code === "LOGO_CONCEPTS_NOT_DISTINCT"));
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test("NAVI rejects a concept with no traceable connection to the brief", async () => {
+  const originalFetch = globalThis.fetch;
+  const db = new FakeD1();
+  const untraceable = makeDesign();
+  untraceable.concepts.forEach(item => {
+    delete item.centralThesis;
+    delete item.symbolConstruction;
+    delete item.briefAlignment;
+    delete item.briefElements;
+  });
+  globalThis.fetch = async () => makeGeminiResponse(untraceable);
+  try {
+    const response = await handleLogoRoute({
+      request: makeRequest(),
+      env: { NAVA_DB: db, NAVI_SESSION_SECRET: "test-secret-key", GEMINI_API_KEY: "test-gemini-key" },
+      origin: ORIGIN,
+      corsOrigin: ORIGIN
+    });
+    const result = await response.json();
+    assert.equal(response.status, 502);
+    assert.equal(result.code, "LOGO_BRIEF_TRACEABILITY_MISSING");
+    assert.equal(db.visitorUsed, 0);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
 test("NAVI design failure refunds the guest trial reservation", async () => {
   const originalFetch = globalThis.fetch;
   const db = new FakeD1();
