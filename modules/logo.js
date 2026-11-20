@@ -130,6 +130,56 @@ function validateConceptTraceability(item, conceptIndex) {
   }
   return { centralThesis, symbolConstruction, briefAlignment, briefElements };
 }
+function validateVisualAnchorMap(html, css, item, conceptIndex, format) {
+  const visualAnchors = Array.isArray(item?.visualAnchors)
+    ? item.visualAnchors.slice(0, 5).map(anchor => ({
+      id: safeText(anchor?.id, 40).toLowerCase(),
+      description: safeText(anchor?.description, 120),
+      relationship: safeText(anchor?.relationship, 180)
+    }))
+    : [];
+  const anchorMap = Array.isArray(item?.anchorMap)
+    ? item.anchorMap.slice(0, 5).map(entry => ({
+      anchorId: safeText(entry?.anchorId, 40).toLowerCase(),
+      layerClass: safeText(entry?.layerClass, 64),
+      visualRole: safeText(entry?.visualRole, 180)
+    }))
+    : [];
+  if (visualAnchors.length < 2 || visualAnchors.length > 5 ||
+      visualAnchors.some(anchor => !/^[a-z][a-z0-9-]{1,31}$/.test(anchor.id) ||
+        anchor.description.length < 3 || anchor.relationship.length < 8)) {
+    throw validationError("LOGO_VISUAL_ANCHORS_MISSING",
+      "اجزای تصویری اصلی بریف به‌صورت دقیق و قابل‌ردیابی استخراج نشده‌اند.",
+      "visual-anchor-plan", conceptIndex);
+  }
+  if (format !== "wordmark") {
+    const symbol = html.match(/<div\\b(?=[^>]*class="[^"]*\\bnavi-symbol\\b[^"]*")(?=[^>]*data-logo-role="symbol")[^>]*>([\\s\\S]*?)<\\/div>/i);
+    if (!symbol) {
+      throw validationError("LOGO_VISUAL_ANCHOR_MAP_INVALID",
+        "نشان اصلی برای تطبیق اجزای بریف پیدا نشد.", "visual-anchor-map", conceptIndex);
+    }
+    const ids = new Set(visualAnchors.map(anchor => anchor.id));
+    const mapped = new Set();
+    for (const entry of anchorMap) {
+      if (!ids.has(entry.anchorId) || mapped.has(entry.anchorId) ||
+          !/^[a-zA-Z_][a-zA-Z0-9_-]{0,63}$/.test(entry.layerClass) ||
+          entry.visualRole.length < 8) continue;
+      const classPattern = new RegExp('class="[^"]*(?:^|\\\\s)' + entry.layerClass.replace(/[.*+?^${}()|[\\]\\\\]/g, "\\\\function conceptsAreNearDuplicates(left, right) {") + '(?:\\\\s|[^"])*"');
+      const appearsInsideSymbol = classPattern.test(symbol[1]);
+      const selectorPattern = new RegExp("\\\\." + entry.layerClass.replace(/[.*+?^${}()|[\\]\\\\]/g, "\\\\function conceptsAreNearDuplicates(left, right) {") + "(?=[\\\\s.:#\\\\[,{>\\\\{])");
+      if (!appearsInsideSymbol || !selectorPattern.test(css)) continue;
+      mapped.add(entry.anchorId);
+    }
+    if (mapped.size !== visualAnchors.length) {
+      const missing = visualAnchors.filter(anchor => !mapped.has(anchor.id)).map(anchor => anchor.description).join("، ");
+      throw validationError("LOGO_VISUAL_ANCHOR_MAP_INVALID",
+        "بخش‌هایی از ایده بریف به لایه واقعی و استایل‌شده داخل نشان وصل نشده‌اند: " + missing + ".",
+        "visual-anchor-map", conceptIndex);
+    }
+  }
+  return { visualAnchors, anchorMap };
+}
+
 function conceptsAreNearDuplicates(left, right) {
   return textSimilarity(left.centralThesis, right.centralThesis) >= 0.76 &&
     textSimilarity(left.symbolConstruction, right.symbolConstruction) >= 0.76;
@@ -198,6 +248,7 @@ async function designLogos(data, apiKey) {
     "PHASE 4B — ANTI-DEFAULT REFLEX: challenge familiar AI/logo defaults for this sector (generic circles/orbits, gradients, gold-on-cream, generic geometric sans, initials inside badges, stock industry icons). At least one concept must avoid the usual defaults entirely. If any concept uses a familiar choice, state the specific reason from the brief in defaultsUsed; otherwise return an empty array. Do not claim a choice is distinctive without explaining what makes it specific to this brand.",
     "PHASE 4C — BRIEF TRACEABILITY: before drawing, convert the supplied request into explicit visual anchors. For every concept return centralThesis (one precise sentence describing the actual design idea), briefElements (1–6 concrete requested or brand-derived elements), symbolConstruction (describe exactly how those elements are physically encoded in the symbol silhouette, geometry, overlap, cut-out or negative space), and briefAlignment (explain the direct connection to the user request or, in NAVI mode, to the brand name and business). These are not decorative explanations: the HTML/CSS symbol itself MUST visibly implement the stated construction. In client mode preserve every essential requested relationship; do not substitute an unrelated symbol. For a requested Persian/Arabic or Latin letter, do not merely typeset the glyph or mention it in the rationale: study its recognizable skeleton and rebuild that skeleton from coordinated HTML layers and CSS geometry (clip-path polygons, carefully controlled border-radius, pseudo-elements and negative-space cutouts). For ظ specifically, preserve the visual relationship of the ط-like body/stem and its distinctive dot above; the dot must be deliberately integrated and positioned, not an unrelated floating ornament. For Z specifically, preserve a clear top horizontal, diagonal connecting stroke and bottom horizontal, but customize their terminals, joins, proportions or negative-space cut so it becomes a designed monogram rather than a typed font glyph. The letter may be abstracted, but should remain discoverable in the silhouette or negative space. In NAVI mode derive anchors from brand name + industry + audience, not generic industry clip art. Do not claim an element is present unless it is visibly built into the mark. If the brief is ambiguous, make a restrained defensible interpretation rather than inventing a different brief.",
     "PHASE 4D — CLIENT BRIEF DOMINANCE (HIGHEST CREATIVE PRIORITY): treat userBrief.briefPriority.sourceOfTruth and userBrief.designPrompt as the controlling design specification whenever designMode is custom. First identify the 2–5 most important visual anchors and the exact relationships between them (for example: object A becomes/contains/intersects object B; a letter is formed by a specific object; one shape surrounds, cuts through or emerges from another). Preserve those anchors and relationships in every concept. Do not turn a specific request into a generic symbol, do not replace named objects with vague metaphors, and do not let premium-style instructions, industry conventions, anti-default rules or concept diversity override the brief. In custom mode, all three concepts must remain recognizably different executions of the SAME requested core idea; vary geometry, silhouette, negative space, proportion and construction—not the subject or meaning. For every concept, map each essential anchor to a visible part of the actual .navi-symbol; if an anchor is only described in rationale or briefElements but cannot be pointed to in the HTML/CSS construction, it is missing. Prioritize in this order: (1) exact client idea and relationships, (2) recognizable symbol built from that idea, (3) professional geometry and craft, (4) stylistic novelty. Before returning, compare the rendered-intent of each symbol against the original brief sentence by sentence and redesign any concept that would still look essentially the same if the client brief were replaced with a different brand brief. In NAVI mode, use the same anchor-to-form discipline for the idea NAVI derives from the brand context.",
+    "PHASE 4E — ANCHOR-TO-LAYER CONTRACT (REQUIRED, MACHINE-CHECKED): for every concept return visualAnchors as 2–5 objects {id, description, relationship}. These are the exact concrete visual ingredients extracted from the controlling brief, not generic brand adjectives. In custom mode derive them from the client's actual requested objects, letterforms, shapes and spatial relationships; do not invent replacements. Also return anchorMap with exactly one object per visualAnchor: {anchorId, layerClass, visualRole}. layerClass MUST be the exact class name of a real nested HTML element inside the single .navi-symbol; that class MUST have its own non-empty CSS selector/rule. visualRole states the visible geometry or role this layer performs. Do not map an anchor to the outer wrapper, wordmark, a rationale sentence, an absent element or an unstyled class. Every anchor must map to an actual styled symbol layer. Use different named layers when the idea has distinct parts; a shared layer is acceptable only when the same physical form genuinely encodes multiple anchors. The same requested core idea and essential relationships must remain recognizable across all client-mode concepts. These fields are validated against the sanitized HTML and CSS before a concept can be returned.",
     "PHASE 5 — DESIGN BUILD: for each chosen thesis define the one-sentence idea, recognizable silhouette, geometry, figure/ground, primary mass, supporting forms, optical center, proportions, negative-space gaps, typography and lockup. Start with monochrome shape logic before palette. Make symbol and wordmark share a visual language. A logo identifies; it does not illustrate every service. Build the symbol exclusively from coordinated HTML layers and CSS geometry. Use 3–5 purposeful layers that form ONE coherent silhouette: one primary filled mass plus at least one separately styled inner construction layer (named .navi-symbol__part or .navi-symbol__detail); a second inner layer is preferred when the idea benefits from it. The inner layer must visibly change the silhouette, create a cut-out, interlock, structural segment or deliberate counterform; never count a floating dot, decorative line or unstyled span as a construction layer. Create negative space with positioned cutout layers matching the artboard background, overlapping forms, pseudo-elements and clip-path polygons. Keep all layers nested inside the single .navi-symbol wrapper. Avoid generic Unicode characters and unrelated primitives. Every layer must be responsive and anchored to the .navi-symbol wrapper.",
     "PHASE 6 — CRAFT: use deliberate grid logic, clean angles where appropriate, consistent radii/weights, intentional asymmetry, optical overshoot, junction cleanup and balanced spacing. Avoid accidental tangencies, near-miss angles, lumps, tiny details, hairlines and gaps that close when reduced. Do not add 3D, gradients, glow or shadows to rescue a weak concept. A thin border or line alone is not an acceptable symbol. A logo symbol is a designed silhouette, not decoration: it must have a clear outer mass, intentional negative space and integrated construction details. Never submit two stray diagonal strokes, parallel lines, random squiggles, a lone border, or a generic abstract doodle as a logo. If the idea cannot be expressed as a memorable compact shape, redesign it.",
     "PHASE 6A — PREMIUM IDENTITY CRAFT: do not stop at a valid icon. Build a distinctive, art-directed mark with a deliberate silhouette, a primary mass, at least one supporting geometric decision built as a separately styled inner layer, and preferably a second supporting decision when it strengthens recognition; use intentional overlap or cut-out, controlled negative space and precise optical balance. The inner layer must be visible in CSS as a named .navi-symbol__part or .navi-symbol__detail element, or as a purposeful .navi-symbol::before/::after construction. Use a coherent construction system (shared angles, radii, stroke weights and spacing); details must grow from the core idea, never be pasted-on decoration. Avoid the default single circle + one dot, simple blob + line, basic ring, generic flower, or one primitive with a tiny accent. Prefer custom geometry, interlocking forms, bespoke letterform construction and a considered figure/ground relationship when the brief supports them. Make the wordmark feel custom through weight, spacing, scale, alignment and lockup—not merely a large default font. Use visual richness through form and craft, not unnecessary gradients, shadows or ornament. Premium does not mean complicated: every added component must improve recognition, meaning or balance.",
@@ -209,7 +260,7 @@ async function designLogos(data, apiKey) {
     "HTML CONTRACT: output a fragment using only div, span, p, strong, em, small and br. SVG and all SVG-derived tags or attributes are forbidden. For combination or monogram logos, include exactly one dedicated <div class=\"navi-symbol\" data-logo-role=\"symbol\"> as the central mark. Build its internal construction with 2–5 purposeful nested span/div layers using meaningful classes such as .navi-symbol__detail and .navi-symbol__part; do not leave the mark as one primitive. Include the exact brand wordmark and optional slogan as semantic data-logo-role elements. No scripts, event handlers, style attributes, images, canvas, iframe, links, external fonts, external resources or embedded content. Scope selectors under .logo-art-root.",
     "CSS CONTRACT: output a complete responsive stylesheet for a square 1000×1000 logical artboard rendered inside a square viewport of any size. The .logo-art-root itself must use width:100%; height:100%; never fixed pixel dimensions. Use container-relative cqw units, percentages and clamp() for geometry and typography; all central elements must stay within the viewport. Style .navi-symbol with explicit nonzero width and height, visible filled background or layered surfaces, and intentional proportions. Use CSS clip-path polygons, border-radius, layered backgrounds, pseudo-elements and at least one separately styled named child layer (.navi-symbol__part or .navi-symbol__detail), with a second layer preferred when useful to create custom contours, integrated details and negative-space effects. The child layer must have its own non-empty CSS rule and visible geometry. Do not use SVG, vector path data, canvas or raster imagery. Set root layout, dimensions, overflow, direction, colors and typography explicitly. No url(), @import, @font-face, expressions or external resources.",
     "QUALITY GATE: reject generic doodles, crooked lines, two-line marks, stock icons, plain initials in an unmodified font, random ornament, over-complex illustration, weak silhouette, poor wordmark, bad spacing, low contrast or designs that fail at small sizes. Before returning, verify that the symbol reads as one intentional ownable silhouette at 32px, has a clear filled mass, at least one separately styled and visibly integrated inner construction layer in addition to the primary silhouette (not merely mentioned in the rationale), deliberate negative space, and a visible relationship to the brand idea. Verify that each named inner layer has a matching CSS rule and changes the visible mark. Do not count a default circle, border or lone dot as a meaningful construction detail. Inspect the design as a black one-color silhouette: if it becomes a generic blob, ring or primitive icon, redesign it. Every detail must contribute to recognition, hierarchy, geometry or material. If any check fails, redesign rather than rationalize the sketch.",
-    "OUTPUT: return one valid JSON object only with keys brandCore, designIdea, designBriefEnglish, strategy, concepts. designIdea is a concise Persian statement of the central creative idea. Return exactly " + conceptCount + " concept object(s), each with Persian title, Persian rationale, centralThesis, briefElements, symbolConstruction, briefAlignment, mechanism, expressionMove, differsBy, axes, defaultsUsed, html and css. centralThesis, briefElements, symbolConstruction and briefAlignment must be concise, concrete Persian text checked against the visible mark. Include no chain-of-thought, markdown or explanation outside JSON. Each HTML fragment under 6500 chars and each CSS stylesheet under 9000 chars."
+    "OUTPUT: return one valid JSON object only with keys brandCore, designIdea, designBriefEnglish, strategy, concepts. designIdea is a concise Persian statement of the central creative idea. Return exactly " + conceptCount + " concept object(s), each with Persian title, Persian rationale, centralThesis, briefElements, visualAnchors, anchorMap, symbolConstruction, briefAlignment, mechanism, expressionMove, differsBy, axes, defaultsUsed, html and css. centralThesis, briefElements, symbolConstruction and briefAlignment must be concise, concrete Persian text checked against the visible mark. Include no chain-of-thought, markdown or explanation outside JSON. Each HTML fragment under 6500 chars and each CSS stylesheet under 9000 chars."
   ].join("\n");
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 90000);
@@ -335,6 +386,7 @@ async function designLogos(data, apiKey) {
         .replace(/\{\{SLOGAN\}\}/g, '<span data-logo-role="slogan">' + escapeHtml(data.slogan) + "</span>");
       if (data.format !== "wordmark") validateSymbolStructure(finalHtml, css, index + 1);
       const traceability = validateConceptTraceability(item, index + 1);
+      const anchorContract = validateVisualAnchorMap(finalHtml, css, item, index + 1, data.format);
       const brandFallbackCss = '.navi-brand-lockup{display:flex;justify-content:center;align-items:center;width:100%;margin-top:28px;padding:12px 8px;text-align:center;color:var(--logo-primary);font-family:inherit;font-size:clamp(36px,8vw,76px);font-weight:900;line-height:1.25;direction:auto;unicode-bidi:plaintext}';
       const sloganFallbackCss = '.navi-slogan-lockup{display:flex;justify-content:center;align-items:center;width:100%;margin-top:10px;padding:4px 8px;text-align:center;color:var(--logo-primary);font-family:inherit;font-size:clamp(16px,3vw,26px);font-weight:500;line-height:1.5;direction:auto;unicode-bidi:plaintext;opacity:.88}';
       const finalCss = css +
@@ -379,6 +431,7 @@ async function designLogos(data, apiKey) {
         title,
         rationale,
         ...traceability,
+        ...anchorContract,
         mechanism: safeText(item?.mechanism, 260),
         expressionMove: safeText(item?.expressionMove, 180),
         differsBy: safeText(item?.differsBy, 220),
