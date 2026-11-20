@@ -377,10 +377,12 @@ test("Logo Studio waits for iframe preview readiness before allowing exports", (
   assert.ok(!source.includes("downloadSvg("));
 });
 
-test("Logo Studio loads the iframe only after attaching it to the square preview container", () => {
+test("Logo Studio mounts each card before assigning iframe srcdoc", () => {
   const source = readFileSync(new URL("../logo-studio.js", import.meta.url), "utf8");
   assert.ok(source.includes("preview.appendChild(frame);"));
+  assert.ok(source.includes("results.appendChild(card);"));
+  assert.ok(source.includes('card.querySelector("iframe.logo-html-css-preview")'));
   assert.ok(source.includes("frame.srcdoc = frame.__navaDocumentHtml;"));
-  assert.ok(source.indexOf("preview.appendChild(frame);") < source.indexOf("card.appendChild(preview);"));
-  assert.ok(source.indexOf("card.appendChild(preview);") < source.indexOf("frame.srcdoc = frame.__navaDocumentHtml;"), "the full preview container must be connected before srcdoc is assigned");
+  assert.ok(source.indexOf("results.appendChild(card);") < source.indexOf("frame.srcdoc = frame.__navaDocumentHtml;"), "the card must be in the live document before iframe layout starts");
+  assert.ok(source.includes('frame.style.minHeight = "0";'), "the iframe must use the square aspect-ratio parent without a conflicting minimum height");
 });
