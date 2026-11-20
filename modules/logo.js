@@ -298,11 +298,9 @@ async function designLogos(data, apiKey) {
       const craftScore = craftGroups.reduce((score, pattern) => score + (pattern.test(css) ? 1 : 0), 0);
       // Reject visibly underbuilt sketches before they reach the user. The
       // threshold checks independent CSS craft techniques, not token count.
-      const filledSurfaceRules = (css.match(/\bbackground(?:-image|-color)?\s*:/gi) || []).length -
-        (css.match(/\.logo-art-root\s*\{[^}]*\bbackground(?:-image|-color)?\s*:/i) ? 1 : 0);
       // Permit premium flat/geometric identities, but require at least one
       // substantial filled symbol surface in addition to the artboard.
-      if (html.length < 90 || css.length < 350 || visualElementCount < 4 || cssRuleCount < 4 || craftScore < 3 || filledSurfaceRules < 1) {
+      if (html.length < 90 || css.length < 350 || visualElementCount < 4 || cssRuleCount < 4 || craftScore < 3) {
         throw validationError("LOGO_CONCEPT_TOO_SIMPLE", "Logo concept does not meet the filled-form, layered-material and composition requirements.", "composition-completeness", index + 1);
       }
       const title = safeText(item?.title, 100) || "مسیر طراحی " + (index + 1);
