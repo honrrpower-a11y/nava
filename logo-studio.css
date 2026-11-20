@@ -184,19 +184,22 @@ body.light .logo-html-css-card .logo-concept-preview {
   /* JS writes an explicit square height after mounting for older WebViews. */
 }
 .logo-html-css-card iframe.logo-html-css-preview {
-  position: absolute;
-  z-index: 1;
+  /* Keep the iframe in normal document flow. Absolute-positioned iframe
+     compositing is unreliable in several Android Chromium WebViews. */
+  position: relative;
+  inset: auto;
+  z-index: auto;
+  display: block;
   visibility: visible;
   opacity: 1;
   pointer-events: none;
-  inset: 0;
-  display: block;
   width: 100%;
   height: 100%;
   min-height: 0;
   aspect-ratio: auto;
   border: 0;
   background: transparent;
+  flex: 0 0 100%;
 }
 .logo-export-feedback {
   min-height: 0;
