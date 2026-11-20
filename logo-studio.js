@@ -154,13 +154,14 @@
         const doc = frame.contentDocument;
         const root = doc && doc.querySelector(".logo-art-root");
         if (!root) return;
-        root.style.setProperty("--logo-primary", current.primaryColor);
-        root.style.setProperty("--logo-background", current.darkColor);
+        const frameData = frame.__navaData || current;
+        root.style.setProperty("--logo-primary", frameData.primaryColor || current.primaryColor);
+        root.style.setProperty("--logo-background", frameData.darkColor || current.darkColor);
         root.querySelectorAll('[data-logo-role="brand"]').forEach(el => {
-          el.textContent = current.brandName;
+          el.textContent = frameData.brandName ?? current.brandName;
         });
         root.querySelectorAll('[data-logo-role="slogan"]').forEach(el => {
-          el.textContent = current.slogan;
+          el.textContent = frameData.slogan ?? current.slogan;
         });
       } catch (_) {}
     });
@@ -225,6 +226,123 @@
     card.appendChild(actions);
     card.appendChild(feedback);
     return card;
+  }
+
+
+  function installNoQuotaDiagnostic() {
+    if (new URLSearchParams(window.location.search).get("logoDiagnostics") !== "1") return;
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "btn-secondary";
+    button.textContent = "اجرای آزمایش فنی لوگوساز (بدون سهمیه)";
+    button.style.width = "100%";
+    button.style.margin = "0 0 14px";
+    results.parentElement.insertBefore(button, results);
+    button.addEventListener("click", runNoQuotaDiagnostic);
+  }
+
+  async function runNoQuotaDiagnostic() {
+    const data = {
+      brandName: "NAVA",
+      slogan: "CREATE · DESIGN · GROW",
+      primaryColor: "#D6A84F",
+      darkColor: "#101B30"
+    };
+    const concept = {
+      title: "آزمایش داخلی رندر HTML/CSS",
+      rationale: "این نمونه ثابت است و هیچ درخواست هوش مصنوعی یا سهمیه‌ای مصرف نمی‌کند.",
+      html: '<div class="diag-composition"><div class="diag-emblem"><span>N</span><i></i></div><strong data-logo-role="brand">NAVA</strong><small data-logo-role="slogan">CREATE · DESIGN · GROW</small></div>',
+      css: [
+        ".logo-art-root{display:grid;place-items:center;width:100%;height:100%;padding:8%;background:var(--logo-background);color:var(--logo-primary);font-family:Arial,Tahoma,sans-serif;text-align:center}",
+        ".diag-composition{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;width:100%;height:100%;}",
+        ".diag-emblem{position:relative;display:grid;place-items:center;width:230px;height:230px;border:8px solid var(--logo-primary);border-radius:34% 66% 42% 58%;transform:rotate(-8deg);background:linear-gradient(145deg,rgba(214,168,79,.24),rgba(16,27,48,.1));box-shadow:0 18px 42px rgba(0,0,0,.35),inset 0 0 0 12px rgba(214,168,79,.12)}",
+        ".diag-emblem:before{content:'';position:absolute;inset:22px;border:3px solid var(--logo-primary);border-radius:50%;opacity:.7}",
+        ".diag-emblem span{position:relative;z-index:1;color:var(--logo-primary);font-size:128px;font-weight:900;line-height:1;transform:rotate(8deg)}",
+        ".diag-emblem i{position:absolute;width:72px;height:9px;right:-22px;bottom:38px;border-radius:9px;background:var(--logo-primary);transform:rotate(-32deg)}",
+        ".diag-composition strong{display:block;color:var(--logo-primary);font-size:82px;font-weight:900;letter-spacing:9px;line-height:1.1}",
+        ".diag-composition small{display:block;color:#F2E8D2;font-size:22px;font-weight:600;letter-spacing:4px;line-height:1.5}"
+      ].join("")
+    };
+    results.replaceChildren();
+    activeFrames = [];
+    empty.hidden = true;
+
+    const card = document.createElement("article");
+    card.className = "logo-concept-card logo-html-css-card";
+    const preview = document.createElement("div");
+    preview.className = "logo-concept-preview";
+    preview.style.width = "100%";
+    preview.style.height = "min(88vw, 520px)";
+    preview.style.minHeight = "280px";
+    preview.style.padding = "0";
+    const frame = createPreview(concept, data);
+    frame.__navaData = data;
+    activeFrames.push(frame);
+    preview.appendChild(frame);
+    card.appendChild(preview);
+
+    const title = document.createElement("h3");
+    title.textContent = concept.title;
+    title.style.padding = "12px 14px 0";
+    const report = document.createElement("p");
+    report.className = "logo-export-feedback";
+    report.textContent = "در حال بررسی دریافت HTML/CSS و رندر مرورگر…";
+    card.append(title, report);
+
+    const actions = document.createElement("div");
+    actions.className = "logo-concept-actions";
+    const pngButton = document.createElement("button");
+    pngButton.type = "button";
+    pngButton.className = "btn-primary";
+    pngButton.textContent = "آزمایش ساخت PNG (بدون سهمیه)";
+    const feedback = document.createElement("div");
+    feedback.className = "logo-export-feedback";
+    actions.appendChild(pngButton);
+    card.append(actions, feedback);
+    results.appendChild(card);
+
+    const width = preview.getBoundingClientRect().width;
+    preview.style.height = Math.max(280, Math.round(width)) + "px";
+    frame.getBoundingClientRect();
+    frame.srcdoc = frame.__navaDocumentHtml;
+    delete frame.__navaDocumentHtml;
+
+    try {
+      await frame.__navaPreviewReady;
+      const doc = frame.contentDocument;
+      const root = doc && doc.querySelector(".logo-art-root");
+      if (!root) throw new Error("مرحله نمایش: عنصر اصلی بوم در iframe ساخته نشد.");
+      const rect = root.getBoundingClientRect();
+      const elements = Array.from(root.querySelectorAll("*"));
+      const visible = elements.filter(element => {
+        const box = element.getBoundingClientRect();
+        const style = doc.defaultView.getComputedStyle(element);
+        return box.width > 1 && box.height > 1 && style.display !== "none" &&
+          style.visibility !== "hidden" && Number(style.opacity || 1) > 0;
+      });
+      const textNodes = elements.filter(element => (element.textContent || "").trim());
+      const mark = root.querySelector(".diag-emblem");
+      const markStyle = mark ? doc.defaultView.getComputedStyle(mark) : null;
+      const reportData = {
+        artboard: Math.round(rect.width) + "×" + Math.round(rect.height),
+        htmlElements: elements.length,
+        visibleElements: visible.length,
+        textElements: textNodes.length,
+        markDisplay: markStyle ? markStyle.display : "missing",
+        markBackground: markStyle ? markStyle.backgroundImage : "missing",
+        previewError: frame.__navaPreviewError || "none"
+      };
+      report.textContent = "گزارش رندر: " + JSON.stringify(reportData);
+      if (!rect.width || !rect.height || !visible.length || !textNodes.length) {
+        throw new Error("مرحله نمایش ناموفق است؛ جزئیات رندر در گزارش بالا آمده است.");
+      }
+      status.textContent = "آزمایش داخلی: HTML/CSS در iframe رندر شد. اکنون مرحله PNG را جداگانه آزمایش کن.";
+      pngButton.addEventListener("click", () => downloadPng(concept, frame, data, 0, feedback));
+    } catch (error) {
+      report.textContent += " | خطا: " + (error.message || String(error));
+      status.textContent = error.message || "آزمایش داخلی پیش‌نمایش ناموفق بود.";
+      pngButton.disabled = true;
+    }
   }
 
   fields.palette.addEventListener("change", () => {
@@ -331,6 +449,8 @@
       submit.textContent = "طراحی سه لوگو با NAVI";
     }
   }
+
+  installNoQuotaDiagnostic();
 
   form.addEventListener("submit", event => {
     event.preventDefault();
