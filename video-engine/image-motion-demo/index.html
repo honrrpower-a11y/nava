@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=1080,height=1920">
+  <meta name="theme-color" content="#080d19">
+  <title>NAVA Image Motion Proof</title>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+  <style>
+    * { box-sizing: border-box; }
+    html, body { width:1080px; height:1920px; margin:0; overflow:hidden; background:#080d19; }
+    body { font-family:Arial,sans-serif; color:#fff; }
+    #stage { position:relative; width:1080px; height:1920px; overflow:hidden; background:#080d19; }
+    #hero-wrap { position:absolute; inset:-5%; overflow:hidden; }
+    #hero { position:absolute; width:110%; height:110%; inset:-5%; object-fit:cover; transform-origin:52% 48%; }
+    .shade { position:absolute; inset:0; background:linear-gradient(180deg,rgba(5,12,22,.12) 0%,rgba(5,12,22,.04) 38%,rgba(5,12,22,.76) 100%),linear-gradient(90deg,rgba(4,10,18,.18),transparent 55%,rgba(4,10,18,.12)); }
+    .sun { position:absolute; width:440px; height:440px; top:250px; right:130px; border-radius:50%; background:rgba(255,211,142,.22); filter:blur(90px); opacity:0; }
+    .frame { position:absolute; inset:90px; border:1px solid rgba(255,255,255,.3); opacity:0; }
+    .eyebrow { position:absolute; top:1320px; right:110px; left:110px; font-size:25px; letter-spacing:7px; color:#f2d5a4; opacity:0; }
+    h1 { position:absolute; top:1390px; right:105px; left:105px; margin:0; font-size:82px; line-height:1.5; font-weight:700; text-shadow:0 5px 30px rgba(0,0,0,.3); opacity:0; }
+    .sub { position:absolute; top:1605px; right:110px; left:110px; margin:0; font-size:32px; line-height:1.8; color:rgba(255,255,255,.88); opacity:0; }
+    .brand { position:absolute; top:130px; left:105px; font-size:30px; letter-spacing:12px; font-weight:700; opacity:0; }
+    .line { position:absolute; right:110px; top:1735px; width:0; height:4px; border-radius:8px; background:#f2d5a4; }
+  </style>
+</head>
+<body>
+  <main id="stage" data-composition-id="nava-image-motion" data-start="0" data-width="1080" data-height="1920">
+    <div id="hero-wrap"><img id="hero" src="./assets/landscape.jpg" alt=""></div>
+    <div class="sun"></div>
+    <div class="shade"></div>
+    <div class="frame"></div>
+    <div class="brand" data-start="0.2" data-duration="7.8" data-track-index="1">NAVA</div>
+    <div class="eyebrow" data-start="1.2" data-duration="6.8" data-track-index="2">A MOMENT OF STILLNESS</div>
+    <h1 data-start="1.6" data-duration="6.4" data-track-index="3">گاهی،<br>فقط باید مکث کرد</h1>
+    <p class="sub" data-start="2.5" data-duration="5.5" data-track-index="4">یک تصویر؛ با حرکت دوربین، عمق و حس سینمایی.</p>
+    <div class="line" data-start="3.2" data-duration="4.8" data-track-index="5"></div>
+  </main>
+  <script>
+    const tl = gsap.timeline({ paused:true });
+    tl.fromTo("#hero", { scale:1.18, xPercent:2, yPercent:1 }, { scale:1.02, xPercent:-1, yPercent:-1, duration:8, ease:"none" }, 0);
+    tl.fromTo(".sun", { opacity:0, scale:.72 }, { opacity:.8, scale:1.12, duration:5, ease:"sine.inOut" }, .4);
+    tl.fromTo(".frame", { opacity:0, scale:.97 }, { opacity:1, scale:1, duration:1.2, ease:"power2.out" }, .3);
+    tl.fromTo(".brand", { opacity:0, y:-15 }, { opacity:1, y:0, duration:.8, ease:"power2.out" }, .2);
+    tl.fromTo(".eyebrow", { opacity:0, y:24 }, { opacity:1, y:0, duration:.8, ease:"power2.out" }, 1.2);
+    tl.fromTo("h1", { opacity:0, y:42 }, { opacity:1, y:0, duration:1, ease:"power3.out" }, 1.6);
+    tl.fromTo(".sub", { opacity:0, y:28 }, { opacity:1, y:0, duration:.9, ease:"power2.out" }, 2.5);
+    tl.fromTo(".line", { width:0 }, { width:190, duration:1, ease:"power2.out" }, 3.2);
+    tl.to({}, { duration:8 }, 0);
+    window.__timelines = window.__timelines || {};
+    window.__timelines["nava-image-motion"] = tl;
+  </script>
+</body>
+</html>
