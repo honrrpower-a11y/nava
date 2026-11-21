@@ -132,9 +132,11 @@ test("NAVI writes an English brief and three sanitized HTML/CSS logo designs in 
   const db = new FakeD1();
   let geminiCalls = 0;
   let sentPrompt = "";
+  const sentPrompts = [];
   globalThis.fetch = async (_url, options) => {
     geminiCalls += 1;
     sentPrompt = JSON.stringify(JSON.parse(options.body));
+    sentPrompts.push(sentPrompt);
     return makeGeminiResponse();
   };
   try {
@@ -148,7 +150,12 @@ test("NAVI writes an English brief and three sanitized HTML/CSS logo designs in 
     assert.equal(response.status, 200);
     assert.equal(result.success, true);
     assert.equal(result.concepts.length, 3);
-    assert.equal(geminiCalls, 1, "one Gemini call creates the English brief and all three logo designs");
+    assert.equal(geminiCalls, 2, "NAVI first plans visual construction, then builds the HTML/CSS designs");
+    assert.match(sentPrompts[0], /senior identity concept architect/i);
+    assert.match(sentPrompts[0], /geometryRecipe/i);
+    assert.match(sentPrompts[0], /Do not write HTML, CSS, SVG/i);
+    assert.match(sentPrompt, /APPROVED VISUAL CONSTRUCTION BLUEPRINT/i);
+    assert.match(sentPrompt, /diagnostic object cues, spatial relationships, negative space and geometry recipe/i);
     assert.match(sentPrompt, /CRAFT BENCHMARK — STUDY THE HAND-BUILT NAVA HTML\/CSS LAB AS A CRAFT REFERENCE ONLY/i);
     assert.match(sentPrompt, /DESIGN BEFORE DECORATION/i);
     assert.match(sentPrompt, /PHASE 1 — DISCOVERY/i);
