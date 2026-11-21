@@ -591,6 +591,14 @@ test("NAVI categorizes Gemini quota errors without exposing provider error text"
   }
 });
 
+test("Persian text is painted with the browser canvas text shaper after DOM rasterization", () => {
+ const source=readFileSync(new URL("../logo-renderer.js",import.meta.url),"utf8");
+ assert.ok(source.includes("function paintNativeText"));
+ assert.ok(source.includes("ctx.direction=style.direction"));
+ assert.ok(source.includes("ctx.fillText(line.text"));
+ assert.ok(source.includes("hideCloneText(clone)"));
+ assert.ok(source.includes("paintNativeText(canvas,root,rect"));
+});
 test("PNG export rasterizes the live HTML/CSS DOM directly with no SVG pipeline", () => {
   const source = readFileSync(new URL("../logo-renderer.js", import.meta.url), "utf8");
   const start = source.indexOf("async function renderFrameCanvas");
