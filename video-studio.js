@@ -56,20 +56,76 @@
   $("navaVideoAutoOrder").addEventListener("click",()=>{if(!scenes.length){$("navaVideoNaviResult").textContent="ابتدا عکس‌ها را در تب رسانه‌ها انتخاب کن.";return;}scenes.sort((a,b)=>a.file.name.localeCompare(b.file.name,"fa"));renderSceneList();drawFrame(0);$("navaVideoNaviResult").textContent="تصاویر بر اساس نام فایل مرتب شدند. برای ترتیب خلاقانه و معنایی، بریف را به NAVI بفرست." ;});
   $("navaVideoAskNavi").addEventListener("click",()=>{const brief=$("navaVideoBrief").value.trim();const names=scenes.map((s,i)=>(i+1)+". "+s.file.name).join("\n");const prompt="برای این پروژه نقش کارگردان خلاق و تدوینگر ویدئو را بر عهده بگیر. موضوع و هدف: "+(brief||"بر اساس تصاویر انتخاب‌شده یک روایت مناسب پیشنهاد بده.")+"\nتعداد تصاویر: "+scenes.length+"\nفهرست فایل‌ها:\n"+(names||"هنوز تصویری انتخاب نشده")+"\nموسیقی: "+(musicElement?"بارگذاری شده":"هنوز انتخاب نشده")+"\nلطفاً سناریوی صحنه‌به‌صحنه، ترتیب پیشنهادی تصاویر، مدت هر صحنه، متن روی تصویر، ریتم هماهنگ با موسیقی، نوع انتقال و حرکت دوربین را پیشنهاد بده. توضیح بده کدام تصمیم‌ها نیازمند تأیید من هستند.";
     const briefField=document.getElementById("studioBrief-av");if(briefField)briefField.value=prompt;const task=document.getElementById("studioTask-av");if(task)task.value="ایده‌پردازی و برنامه‌ریزی";const result=$("navaVideoNaviResult");result.textContent="بریف در فرم اصلی استودیو آماده شد. برای فرستادن آن به NAVI، دکمه «ادامه با NAVI» را در بالای همین استودیو بزن.";const briefForm=root.closest("#avPage")?.querySelector(".studio-brief-card");if(briefForm){briefForm.scrollIntoView({behavior:"smooth",block:"center"});briefForm.querySelector("#studioBrief-av")?.focus({preventScroll:true});}else{result.textContent="بریف آماده است، اما فرم اصلی NAVI پیدا نشد.";}});
+  let renderTimer=0,renderWatchdog=0;
+  function finishRender(message){
+    if(renderTimer){clearInterval(renderTimer);renderTimer=0;}
+    if(renderWatchdog){clearTimeout(renderWatchdog);renderWatchdog=0;}
+    if(recorder&&recorder.state!=="inactive"){try{recorder.stop();}catch(_){}}
+    else if(recording){recording=false;renderBtn.disabled=false;previewBtn.disabled=false;say(message||"ضبط ویدئو متوقف شد.");}
+  }
   renderBtn.addEventListener("click",async()=>{
-    if(!scenes.length||recording)return;if(!window.MediaRecorder||!canvas.captureStream){say("این مرورگر ضبط ویدئو را پشتیبانی نمی‌کند.");return;}
-    stopPreview();resize();drawFrame(0);const mime=["video/webm;codecs=vp9,opus","video/webm;codecs=vp8,opus","video/webm"].find(t=>MediaRecorder.isTypeSupported(t));if(!mime){say("کدک سازگار پیدا نشد.");return;}
-    const stream=canvas.captureStream(30);
+    if(!scenes.length||recording)return;
+    if(!window.MediaRecorder||!canvas.captureStream){say("این مرورگر ضبط ویدئو را پشتیبانی نمی‌کند.");return;}
     try{
-      if(musicElement){if(!audioContext){audioContext=new (window.AudioContext||window.webkitAudioContext)();audioSource=audioContext.createMediaElementSource(musicElement);audioDestination=audioContext.createMediaStreamDestination();musicGain=audioContext.createGain();audioSource.connect(musicGain);musicGain.connect(audioDestination);}await audioContext.resume();musicGain.gain.value=Math.max(0,Number(musicVolume.value)/100);audioDestination.stream.getAudioTracks().forEach(t=>stream.addTrack(t));musicElement.currentTime=0;await musicElement.play();}
-      chunks=[];recording=true;renderBtn.disabled=true;previewBtn.disabled=true;progress.style.width="0%";recorder=new MediaRecorder(stream,{mimeType:mime,videoBitsPerSecond:8000000});
+      stopPreview();resize();drawFrame(0);
+      const mime=["video/webm;codecs=vp9,opus","video/webm;codecs=vp8,opus","video/webm"].find(t=>MediaRecorder.isTypeSupported(t));
+      if(!mime){say("کدک سازگار پیدا نشد.");return;}
+      const stream=canvas.captureStream(30);
+      if(musicElement){
+        if(!audioContext){audioContext=new (window.AudioContext||window.webkitAudioContext)();audioSource=audioContext.createMediaElementSource(musicElement);audioDestination=audioContext.createMediaStreamDestination();musicGain=audioContext.createGain();audioSource.connect(musicGain);musicGain.connect(audioDestination);}
+        await audioContext.resume();
+        musicGain.gain.value=Math.max(0,Number(musicVolume.value)/100);
+        audioDestination.stream.getAudioTracks().forEach(t=>stream.addTrack(t));
+        musicElement.currentTime=0;
+        await musicElement.play();
+      }
+      chunks=[];recording=true;renderBtn.disabled=true;previewBtn.disabled=true;progress.style.width="0%";
+      recorder=new MediaRecorder(stream,{mimeType:mime,videoBitsPerSecond:5000000});
       recorder.ondataavailable=e=>{if(e.data&&e.data.size)chunks.push(e.data);};
-      recorder.onerror=()=>say("هنگام ضبط ویدئو خطایی رخ داد.");
-      recorder.onstop=()=>{stream.getTracks().forEach(t=>t.stop());if(musicElement)musicElement.pause();recording=false;renderBtn.disabled=false;previewBtn.disabled=false;const blob=new Blob(chunks,{type:mime});if(outputUrl)URL.revokeObjectURL(outputUrl);outputUrl=URL.createObjectURL(blob);const video=$("navaVideoOutput");video.src=outputUrl;const link=$("navaVideoDownload");link.href=outputUrl;link.download="nava-multiphoto-video.webm";link.hidden=false;result.hidden=false;progress.style.width="100%";say("ویدئوی چندعکسی "+(musicElement?"همراه موسیقی ":"")+"آماده شد. برای مشاهده به تب خروجی برو.");};
-      recorder.start(250);const start=performance.now(),duration=totalDuration(),fade=Number(fadeInput.value),baseVolume=Math.max(0,Number(musicVolume.value)/100);
-      const tick=now=>{if(!recording)return;const t=(now-start)/1000;drawFrame(Math.min(t,duration));if(musicElement&&musicGain){const remaining=duration-t;const factor=fade>0?Math.max(0,Math.min(1,t/fade,remaining/fade)):1;musicGain.gain.setTargetAtTime(baseVolume*factor,audioContext.currentTime,0.04);}progress.style.width=Math.min(100,t/duration*100)+"%";if(t>=duration){recorder.stop();return;}requestAnimationFrame(tick);};
-      requestAnimationFrame(tick);say("در حال تدوین و ضبط ویدئو در مرورگر؛ صفحه را باز نگه دار.");
-    }catch(e){recording=false;stream.getTracks().forEach(t=>t.stop());renderBtn.disabled=false;previewBtn.disabled=false;say("ساخت ویدئو ناموفق بود: "+(e.message||"خطای ناشناخته"));}
+      recorder.onerror=()=>{
+        stream.getTracks().forEach(t=>t.stop());if(musicElement)musicElement.pause();
+        recording=false;renderBtn.disabled=false;previewBtn.disabled=false;
+        if(renderTimer){clearInterval(renderTimer);renderTimer=0;}
+        if(renderWatchdog){clearTimeout(renderWatchdog);renderWatchdog=0;}
+        say("ضبط ویدئو با خطا متوقف شد؛ دوباره تلاش کن.");
+      };
+      recorder.onstop=()=>{
+        if(renderTimer){clearInterval(renderTimer);renderTimer=0;}
+        if(renderWatchdog){clearTimeout(renderWatchdog);renderWatchdog=0;}
+        stream.getTracks().forEach(t=>t.stop());if(musicElement)musicElement.pause();
+        recording=false;renderBtn.disabled=false;previewBtn.disabled=false;
+        const blob=new Blob(chunks,{type:mime});
+        if(!blob.size){say("فایل ویدئو خالی ساخته شد؛ لطفاً دوباره تلاش کن.");return;}
+        if(outputUrl)URL.revokeObjectURL(outputUrl);outputUrl=URL.createObjectURL(blob);
+        const video=$("navaVideoOutput");video.src=outputUrl;
+        const link=$("navaVideoDownload");link.href=outputUrl;link.download="nava-multiphoto-video.webm";link.hidden=false;
+        result.hidden=false;progress.style.width="100%";
+        say("ویدئوی چندعکسی "+(musicElement?"همراه موسیقی ":"")+"آماده شد. برای مشاهده به تب خروجی برو.");
+      };
+      recorder.start(250);
+      const start=performance.now(),duration=totalDuration(),fade=Number(fadeInput.value),baseVolume=Math.max(0,Number(musicVolume.value)/100);
+      const tick=()=>{
+        if(!recording)return;
+        const t=Math.min((performance.now()-start)/1000,duration);
+        drawFrame(t);
+        if(musicElement&&musicGain){
+          const remaining=duration-t;
+          const factor=fade>0?Math.max(0,Math.min(1,t/fade,remaining/fade)):1;
+          musicGain.gain.setTargetAtTime(baseVolume*factor,audioContext.currentTime,0.04);
+        }
+        progress.style.width=Math.min(100,t/duration*100)+"%";
+        if(t>=duration){finishRender();return;}
+      };
+      say("در حال ساخت ویدئو؛ لطفاً صفحه را باز و روشن نگه دار.");
+      tick();
+      renderTimer=setInterval(tick,33);
+      renderWatchdog=setTimeout(()=>{if(recording)finishRender("ساخت ویدئو بیش از زمان مجاز طول کشید؛ دوباره با عکس‌های کم‌حجم‌تر امتحان کن.");},(duration+20)*1000);
+    }catch(e){
+      recording=false;
+      if(recorder&&recorder.state!=="inactive"){try{recorder.stop();}catch(_){}}
+      renderBtn.disabled=false;previewBtn.disabled=false;
+      say("ساخت ویدئو ناموفق بود: "+(e.message||"خطای ناشناخته"));
+    }
   });
   resize();say("چند عکس را انتخاب کن تا تدوین را شروع کنیم.");
 })();
