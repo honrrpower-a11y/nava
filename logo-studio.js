@@ -384,7 +384,13 @@
         body: JSON.stringify({ ...brief, singleConcept: false, visitorId })
       });
       const result = await response.json();
-      if (!response.ok || !result.success) throw new Error(result.error || "طراحی لوگو انجام نشد.");
+      if (!response.ok || !result.success) {
+        const diagnostic = result.code
+          ? " [" + result.code + (result.stage ? " / " + result.stage : "") +
+            (result.conceptIndex ? " / طرح " + result.conceptIndex : "") + "]"
+          : "";
+        throw new Error((result.error || "طراحی لوگو انجام نشد.") + diagnostic);
+      }
       if (!Array.isArray(result.concepts) || result.concepts.length < 1 || result.concepts.length > 3) {
         throw new Error("پاسخ موتور طراحی معتبر نیست؛ طرح قابل‌قبولی دریافت نشد.");
       }
