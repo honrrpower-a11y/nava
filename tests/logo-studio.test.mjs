@@ -162,7 +162,7 @@ test("NAVI writes an English brief and three sanitized HTML/CSS logo designs in 
     assert.match(sentPrompt, /give each relevant layer a deliberate position, scale, transform and stacking order/i);
     assert.match(sentPrompt, /the sun is a rear layer, its lower arc is occluded by the book/i);
     assert.match(sentPrompt, /never hardcode this example as the default logo idea/i);
-    assert.match(sentPrompt, /silhouette, component geometry, spatial placement, overlap\/occlusion, depth order/i);
+    assert.match(sentPrompt, /Start with the strongest recognizable shape in monochrome/i);
     assert.match(sentPrompt, /anchorMap with exactly one object per visualAnchor/i);
     assert.match(sentPrompt, /real styled HTML element inside \.navi-symbol/i);
     assert.match(sentPrompt, /exact client idea and relationships/i);
@@ -182,7 +182,7 @@ test("NAVI writes an English brief and three sanitized HTML/CSS logo designs in 
     assert.match(sentPrompt, /artboard\/canvas background must be white or a light neutral/i);
     assert.match(sentPrompt, /Never assign the root a fixed 1000px width or height/i);
     assert.match(sentPrompt, /320×320 mobile preview/i);
-    assert.match(sentPrompt, /Never submit two stray diagonal strokes/i);
+    assert.match(sentPrompt, /crooked stray strokes/i);
     assert.match(sentPrompt, /navi-symbol__detail/i);
     assert.match(sentPrompt, /SVG and all SVG-derived tags or attributes are forbidden/i);
     assert.match(sentPrompt, /CSS clip-path polygons/i);
