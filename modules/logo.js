@@ -376,10 +376,10 @@ async function designLogos(data, apiKey) {
   };
   const conceptCount = data.singleConcept ? 1 : 3;
   const system = [
-    "You are NAVI IDENTITY WORKSHOP: a senior brand strategist and identity designer. Work from the client brief, not from a fixed logo style.",
+    "You are NAVI IDENTITY WORKSHOP: a senior brand strategist and identity designer. Work from the client brief and its approved visual construction blueprint, not from a fixed logo style.",
     "CRAFT BENCHMARK — STUDY THE HAND-BUILT NAVA HTML/CSS LAB AS A CRAFT REFERENCE ONLY: its quality comes from deliberate layered DOM construction, custom CSS-built monogram parts, controlled pseudo-elements, material-aware gradients and highlights, optical balance, responsive proportions and a disciplined symbol/wordmark lockup. Transfer that level of construction care to the client's own idea. NEVER copy the NAVA letter N, orbit rings, circular badge, gold/navy/cyan palette or its composition. The reference teaches craft, not a reusable template.",
     "DESIGN BEFORE DECORATION: first describe the mark's exact silhouette in one sentence, then identify the diagnostic contours, cut-outs, overlaps and proportions that make the named object recognizable. Build those defining contours with native HTML elements and CSS geometry. Only after the one-colour silhouette reads correctly may you add material, depth, lighting or typography.",
-    "MISSION: design exactly " + conceptCount + " concept(s). HTML and CSS are the only design and rendering medium for NAVA. SVG is prohibited in every form, including inline SVG, SVG paths, SVG data, and SVG-based intermediate markup. Do not return SVG, raster images, canvas, external assets or prebuilt templates.",
+    "MISSION: design exactly " + conceptCount + " concept(s) by faithfully implementing the supplied approved visual construction blueprint. HTML and CSS are the only design and rendering medium for NAVA. SVG is prohibited in every form, including inline SVG, SVG paths, SVG data, and SVG-based intermediate markup. Do not return SVG, raster images, canvas, external assets or prebuilt templates.",
     data.designMode === "custom"
       ? "IDEA OWNERSHIP — CLIENT MODE: the client supplied a creative direction. Treat userBrief.designPrompt as the binding creative idea and primary design direction. Preserve its meaning and priorities; do not replace it with an unrelated concept. You may refine it professionally, but never contradict it. Technical safety, legibility and quality requirements remain mandatory."
       : "IDEA OWNERSHIP — NAVI MODE: the client delegated creative ideation to NAVI. Independently derive a concise, brand-specific creative idea from the name, offer, audience, personality and constraints. Do not ask the client to invent a symbol. Avoid generic first associations; find a meaningful and ownable visual metaphor, then translate it into a coherent mark, wordmark and identity. State this idea briefly in Persian as designIdea.",
@@ -394,7 +394,7 @@ async function designLogos(data, apiKey) {
     "PHASE 4E — ANCHOR-TO-FORM GUIDANCE: return 1–5 visualAnchors only for meaningful ingredients or relationships in the brief, not as a checklist. Return an anchorMap explaining where each important idea is visibly expressed. Each visualAnchors item MUST contain id (lowercase kebab-case, e.g. anchor-1), description and relationship; each anchorMap item MUST contain anchorId, layerClass and visualRole. A map may point to the main .navi-symbol silhouette itself or to a real styled child layer. One unified silhouette may express the whole idea; multiple layers are appropriate only when the idea genuinely contains distinct objects, cut-outs or overlaps. Never create extra spans, lines, dots or geometry just to satisfy a mapping count. The visible symbol must communicate the client's actual idea; the map is a concise explanation, not a construction quota. If you cannot provide the two arrays, ensure briefElements and symbolConstruction are complete and precise because the server will derive the traceability map from those fields and the actual HTML/CSS structure.",
     "PHASE 4G — OBJECT IDENTITY: when the client names a concrete object, preserve its recognizable identity. Identify the few structural cues that make it read as that object and keep them visible in the final silhouette. Never replace a named object with a different object for stylistic convenience. Prefer a simple faithful shape over an elaborate but ambiguous substitute.",
     "PHASE 4F — SPATIAL RELATIONSHIPS: when the brief depends on relationships such as behind, emerging, overlapping, containing or cutting through, make that relationship visually clear in the composition. Use actual placement, overlap, clipping and stacking only where the idea needs them. If the brief is naturally flat or unified, do not invent depth or separate layers.",
-    "PHASE 5 — DESIGN BUILD: first solve the recognizable idea and outer silhouette in monochrome. Choose the construction that best serves the brief: solid pictorial form, custom letterform, monogram, negative-space mark, abstract symbol or wordmark-led identity. Use as few or as many HTML/CSS layers as the idea genuinely needs. Every part must improve recognition, meaning, spatial relationship or optical balance. Do not add empty layers, parallel strokes or floating accents. Use CSS geometry, clip-path, border-radius, backgrounds, pseudo-elements and negative space only when they make the idea clearer. The symbol should read as one intentional compact design before effects and colour.",
+    "PHASE 5 — DESIGN BUILD: implement the approved blueprint's geometryRecipe, diagnostic object cues, spatialRelationship and negativeSpace exactly before styling. First solve the recognizable idea and outer silhouette in monochrome. Choose the construction that best serves the brief: solid pictorial form, custom letterform, monogram, negative-space mark, abstract symbol or wordmark-led identity. Use as few or as many HTML/CSS layers as the idea genuinely needs. Every part must improve recognition, meaning, spatial relationship or optical balance. Do not add empty layers, parallel strokes or floating accents. Use CSS geometry, clip-path, border-radius, backgrounds, pseudo-elements and negative space only when they make the idea clearer. The symbol should read as one intentional compact design before effects and colour.",
     "PHASE 6 — CRAFT AND FINISH: use deliberate grid logic, consistent radii and weights, intentional asymmetry, optical overshoot, clean junctions and balanced spacing. Avoid accidental tangencies, near-miss angles, lumps, tiny details, hairlines and gaps that close when reduced. Once the silhouette is strong, use appropriate visual richness—layering, controlled gradients, highlights, shadows, rotation, bevel-like CSS lighting or texture—when it reinforces the concept and material. These are allowed, not mandatory; never use them to disguise weak geometry. A line-based mark is acceptable only when its strokes form a complete, recognizable and intentional symbol, not a few stray or parallel lines. Never submit random squiggles, a lone border or a generic doodle. If the idea cannot be expressed as a memorable compact shape, redesign it.",
     "PHASE 6A — PREMIUM IDENTITY CRAFT: make the mark feel art-directed rather than like a valid placeholder. Establish a distinctive silhouette and one defining feature people can remember. Add a supporting geometric decision only when it strengthens recognition, meaning or balance. Use a coherent construction system (shared angles, radii, stroke weights and spacing); details must grow from the core idea, never be pasted-on decoration. Avoid default circle-plus-dot, blob-plus-line, generic ring or flower unless transformed into a brief-specific idea. Prefer custom geometry, interlocking forms, bespoke letterform construction and considered figure/ground when the brief supports them. Give the wordmark its own typographic character through weight, spacing, scale and lockup. Premium means resolved and memorable—not automatically minimal, nor needlessly complicated.",
     "PHASE 6C — SEMANTIC RECOGNITION AND INTEGRATION (CRITICAL): judge the mark as an unfamiliar person seeing only the symbol, with the brand name and rationale hidden. They should be able to identify the principal requested object or idea from its defining silhouette—not merely guess the industry. For every concrete object in the brief, preserve at least two unmistakable structural cues. For a brief combining two ideas, do NOT place two generic icons next to each other or stack unrelated primitives (such as a dome under three equal bars). Find one authored visual relationship: one object becomes the other, one shared contour carries both meanings, a cut-out reveals the second idea, or a distinctive part of one object is transformed by the other. The integrated mark must still read as the named object(s), not as an arbitrary shape with a matching explanation. Avoid generic equalizer bars, sound-wave bars, dots, circles and semicircles unless each is structurally justified by the brief and integrated into the object itself. A music reference must be more specific than three vertical bars; a bread reference must look like actual bread rather than a plain dome. Do not solve semantic integration by adding a tiny floating note or unrelated ornament. If the design only communicates after reading its rationale, it has failed: redesign the silhouette. Before returning each concept, perform a blind-read check: identify the first plausible reading of the symbol alone, compare it with the brief's central idea, and change the geometry if the readings diverge. The visible construction, not the title, text or rationale, must carry the meaning.",
@@ -412,6 +412,100 @@ async function designLogos(data, apiKey) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 120000);
   try {
+    // Stage 1: turn the brief into a concrete visual construction blueprint
+    // before asking the model to write any HTML or CSS.
+    const planningSystem = [
+      "You are NAVI's senior identity concept architect. This is a design-planning stage, NOT a logo drawing stage.",
+      "For each concept define title, centralThesis, briefElements, symbolConstruction, briefAlignment, silhouette, objectCues, spatialRelationship, negativeSpace, geometryRecipe, firstRead and mustAvoid.",
+      "For every named object identify at least two diagnostic visual cues that make it recognizable without its label. For a combined idea, define one integrated shape relationship; never propose unrelated icons side by side, generic bars, random dots or a decorative badge.",
+      "Describe the outer silhouette precisely, including contour, proportions, major masses, cut-outs, overlap and negative space. geometryRecipe must be a practical construction sequence for visible HTML/CSS layers or one unified shape. State which visual part carries each brief element.",
+      "CUSTOM BRIEF: preserve exact named objects, requested letterforms and relationships. Creative freedom is limited to professional execution, not replacing the idea. NAVI BRIEF: derive a distinctive idea from brand, industry, audience and personality.",
+      "Create exactly " + conceptCount + " distinct construction routes. In custom mode all routes must express the same requested core idea but use genuinely different geometry. Do not vary only color, layout or decoration.",
+      "The NAVA HTML/CSS lab is a craft benchmark only. Do not copy its N mark, orbit rings, badge, palette or composition.",
+      "Do not write HTML, CSS, SVG, markup, paths or code. Do not expose chain-of-thought. Return concise final design decisions only as valid JSON."
+    ].join("\n");
+    const planningResponse = await fetchGeminiWithRetry(
+      "https://generativelanguage.googleapis.com/v1beta/models/" + GEMINI_MODEL + ":generateContent",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
+        body: JSON.stringify({
+          systemInstruction: { parts: [{ text: planningSystem }] },
+          contents: [{ role: "user", parts: [{ text: "Create exactly " + conceptCount + " visual construction blueprint(s) from this client brief. Return only the requested JSON.\n" + JSON.stringify(userBrief) }] }],
+          generationConfig: {
+            thinkingConfig: { thinkingLevel: "HIGH" },
+            maxOutputTokens: 8192,
+            responseMimeType: "application/json"
+          }
+        }),
+        signal: controller.signal
+      }
+    );
+    const planningPayload = await planningResponse.json().catch(() => ({}));
+    if (!planningResponse.ok) {
+      const error = new Error("Gemini concept-planning HTTP " + planningResponse.status);
+      error.httpStatus = planningResponse.status;
+      error.diagnosticCode = planningResponse.status === 429 ? "MODEL_RATE_LIMIT" :
+        planningResponse.status >= 500 ? "MODEL_SERVICE_ERROR" :
+        planningResponse.status === 400 ? "MODEL_REQUEST_REJECTED" : "MODEL_API_ERROR";
+      error.stage = "concept-planning";
+      throw error;
+    }
+    if (planningPayload?.promptFeedback?.blockReason) {
+      const error = new Error("Gemini blocked concept planning: " + planningPayload.promptFeedback.blockReason);
+      error.diagnosticCode = "MODEL_PROMPT_BLOCKED";
+      error.stage = "concept-planning";
+      throw error;
+    }
+    const planningCandidate = planningPayload?.candidates?.[0];
+    if (!planningCandidate) {
+      const error = new Error("Gemini returned no candidate during concept planning.");
+      error.diagnosticCode = "MODEL_EMPTY_RESPONSE";
+      error.stage = "concept-planning";
+      throw error;
+    }
+    const planningFinish = String(planningCandidate.finishReason || "");
+    if (planningFinish && !["STOP", "FINISH_REASON_UNSPECIFIED"].includes(planningFinish)) {
+      const error = new Error("Gemini did not complete concept planning: " + (planningFinish || "EMPTY"));
+      error.diagnosticCode = planningFinish === "MAX_TOKENS" ? "MODEL_OUTPUT_TRUNCATED" : "MODEL_PLANNING_INCOMPLETE";
+      error.stage = "concept-planning";
+      throw error;
+    }
+    const planningRaw = (planningCandidate.content?.parts || []).map(part => part.text || "").join("");
+    let blueprint;
+    try {
+      blueprint = extractJsonObject(planningRaw);
+    } catch {
+      const error = new Error("Gemini concept-planning response was not valid JSON.");
+      error.diagnosticCode = "MODEL_PLANNING_INVALID_JSON";
+      error.stage = "concept-planning";
+      throw error;
+    }
+    if (!Array.isArray(blueprint.concepts) || blueprint.concepts.length !== conceptCount) {
+      throw validationError("LOGO_BLUEPRINT_COUNT", "NAVI did not return the requested number of visual construction blueprints.", "concept-planning");
+    }
+    const designBlueprints = blueprint.concepts.map((item, index) => {
+      const normalized = {
+        index: index + 1,
+        title: safeText(item?.title, 120),
+        centralThesis: safeText(item?.centralThesis, 500),
+        briefElements: Array.isArray(item?.briefElements) ? item.briefElements.slice(0, 6).map(value => safeText(value, 180)).filter(Boolean) : [],
+        symbolConstruction: safeText(item?.symbolConstruction, 700),
+        briefAlignment: safeText(item?.briefAlignment, 500),
+        silhouette: safeText(item?.silhouette, 700),
+        objectCues: Array.isArray(item?.objectCues) ? item.objectCues.slice(0, 6).map(value => safeText(value, 180)).filter(Boolean) : [],
+        spatialRelationship: safeText(item?.spatialRelationship, 500),
+        negativeSpace: safeText(item?.negativeSpace, 500),
+        geometryRecipe: safeText(item?.geometryRecipe, 900),
+        firstRead: safeText(item?.firstRead, 400),
+        mustAvoid: Array.isArray(item?.mustAvoid) ? item.mustAvoid.slice(0, 8).map(value => safeText(value, 120)).filter(Boolean) : []
+      };
+      if (!normalized.centralThesis || !normalized.symbolConstruction || !normalized.briefAlignment || !normalized.briefElements.length || !normalized.silhouette || normalized.objectCues.length < 2 || !normalized.spatialRelationship || !normalized.negativeSpace || !normalized.geometryRecipe || !normalized.firstRead) {
+        throw validationError("LOGO_BLUEPRINT_INCOMPLETE", "نقشه ساخت بصری باید سیلوئت، نشانه‌های تشخیصی، رابطه فضایی، فضای منفی و دستور ساخت دقیق داشته باشد.", "concept-planning", index + 1);
+      }
+      return normalized;
+    });
+    const blueprintForBuilder = JSON.stringify(designBlueprints);
     const response = await fetchGeminiWithRetry(
       "https://generativelanguage.googleapis.com/v1beta/models/" + GEMINI_MODEL + ":generateContent",
       {
@@ -419,7 +513,7 @@ async function designLogos(data, apiKey) {
         headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
         body: JSON.stringify({
           systemInstruction: { parts: [{ text: system }] },
-          contents: [{ role: "user", parts: [{ text: "Create exactly " + conceptCount + " complete logo design" + (conceptCount === 1 ? "" : " concepts") + " from this client brief. Preserve every named object literally and recognizably; do not substitute one object for another. Identify diagnostic shape features for each named object before designing. Follow the designPrompt as binding art direction and return a production-ready HTML/CSS identity, not a sketch.\n" + JSON.stringify(userBrief) }] }],
+          contents: [{ role: "user", parts: [{ text: "Create exactly " + conceptCount + " complete logo design" + (conceptCount === 1 ? "" : " concepts") + " using BOTH the original client brief and the approved visual construction blueprint below. The blueprint is the committed concept direction: implement its exact silhouette, diagnostic object cues, spatial relationships, negative space and geometry recipe visibly in HTML/CSS. Do not replace it with a different metaphor. The client brief remains the final authority if any wording conflicts.\\nCLIENT BRIEF:\\n" + JSON.stringify(userBrief) + "\\nAPPROVED VISUAL CONSTRUCTION BLUEPRINT:\\n" + blueprintForBuilder }] }],
           generationConfig: {
             thinkingConfig: { thinkingLevel: "HIGH" },
             maxOutputTokens: 32768,
@@ -616,6 +710,7 @@ async function designLogos(data, apiKey) {
       designIdea: safeText(plan.designIdea, 320) || safeText(plan.brandCore, 300) || safeText(plan.strategy, 320),
       strategy: safeText(plan.strategy, 500),
       designBriefEnglish,
+      visualBlueprints: designBlueprints,
       concepts,
       rejectedConcepts
     };
@@ -958,13 +1053,14 @@ export async function handleLogoRoute({ request, env, origin, corsOrigin }) {
       reviewToken,
       remaining: quota.remaining ?? null,
       planning: {
-        method: "navi-english-brief-html-css-design",
+        method: "navi-visual-blueprint-then-html-css-build",
         brandCore: plan.brandCore,
         designIdea: plan.designIdea,
         strategy: plan.strategy,
         designBriefEnglish: plan.designBriefEnglish,
-        extraModelCalls: 0,
-        note: "NAVI authored the English design brief and the accepted HTML/CSS logo designs in one request."
+        extraModelCalls: 1,
+        visualBlueprints: plan.visualBlueprints,
+        note: "NAVI first commits to explicit visual construction blueprints, then builds and validates the final HTML/CSS logo designs."
       },
       concepts: plan.concepts,
       rejectedConcepts: plan.rejectedConcepts || []

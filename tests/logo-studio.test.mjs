@@ -98,6 +98,13 @@ function makeRequest(body = INPUT) {
 
 function makeGeminiResponse(plan = makeDesign()) {
   for (const concept of plan.concepts || []) {
+    concept.silhouette ||= concept.symbolConstruction || concept.centralThesis;
+    concept.objectCues ||= (concept.briefElements || []).slice(0, 2);
+    while (concept.objectCues.length < 2) concept.objectCues.push("ویژگی تشخیصی فرم");
+    concept.spatialRelationship ||= concept.briefAlignment || concept.symbolConstruction;
+    concept.negativeSpace ||= concept.symbolConstruction;
+    concept.geometryRecipe ||= concept.symbolConstruction;
+    concept.firstRead ||= concept.centralThesis;
     const html = String(concept.html || "");
     const symbolStart = html.indexOf('class="navi-symbol');
     const symbolOpenEnd = symbolStart >= 0 ? html.indexOf(">", symbolStart) : -1;
@@ -132,9 +139,11 @@ test("NAVI writes an English brief and three sanitized HTML/CSS logo designs in 
   const db = new FakeD1();
   let geminiCalls = 0;
   let sentPrompt = "";
+  const sentPrompts = [];
   globalThis.fetch = async (_url, options) => {
     geminiCalls += 1;
     sentPrompt = JSON.stringify(JSON.parse(options.body));
+    sentPrompts.push(sentPrompt);
     return makeGeminiResponse();
   };
   try {
@@ -148,7 +157,13 @@ test("NAVI writes an English brief and three sanitized HTML/CSS logo designs in 
     assert.equal(response.status, 200);
     assert.equal(result.success, true);
     assert.equal(result.concepts.length, 3);
-    assert.equal(geminiCalls, 1, "one Gemini call creates the English brief and all three logo designs");
+    assert.equal(geminiCalls, 2, "NAVI first plans visual construction, then builds the HTML/CSS designs");
+    assert.match(sentPrompts[0], /senior identity concept architect/i);
+    assert.match(sentPrompts[0], /geometryRecipe/i);
+    assert.match(sentPrompts[0], /Do not write HTML, CSS, SVG/i);
+    assert.match(sentPrompts[0], /at least two diagnostic visual cues/i);
+    assert.match(sentPrompt, /APPROVED VISUAL CONSTRUCTION BLUEPRINT/i);
+    assert.match(sentPrompt, /diagnostic object cues, spatial relationships, negative space and geometry recipe/i);
     assert.match(sentPrompt, /CRAFT BENCHMARK — STUDY THE HAND-BUILT NAVA HTML\/CSS LAB AS A CRAFT REFERENCE ONLY/i);
     assert.match(sentPrompt, /DESIGN BEFORE DECORATION/i);
     assert.match(sentPrompt, /PHASE 1 — DISCOVERY/i);
@@ -189,7 +204,10 @@ test("NAVI writes an English brief and three sanitized HTML/CSS logo designs in 
     assert.match(sentPrompt, /Navy or blue may still be used as an intentional brand-mark/i);
     assert.match(sentPrompt, /{{BRAND_NAME}}/i);
     assert.match(sentPrompt, /one valid JSON object/i);
-    assert.equal(result.planning.method, "navi-english-brief-html-css-design");
+    assert.equal(result.planning.method, "navi-visual-blueprint-then-html-css-build");
+    assert.equal(result.planning.extraModelCalls, 1);
+    assert.equal(result.planning.visualBlueprints.length, 3);
+    assert.ok(result.planning.visualBlueprints.every(item => item.geometryRecipe && item.silhouette && item.objectCues.length >= 2));
     assert.match(result.planning.designBriefEnglish, /distinctive Persian creative-studio identity/i);
     assert.ok(result.concepts.every(item => item.html.includes("نوا")));
     assert.ok(result.concepts.every(item => item.html.includes('data-logo-role="brand"')));
@@ -234,9 +252,7 @@ test("Logo Studio recovers omitted visual-anchor arrays from the validated brief
   delete design.concepts[0].anchorMap;
   design.concepts[0].html = '<div class="mark"><div class="navi-symbol" data-logo-role="symbol"><span class="wave"></span></div><strong>{{BRAND_NAME}}</strong></div>';
   design.concepts[0].css = '.logo-art-root{display:grid;place-items:center;width:100%;height:100%}.mark{display:grid;justify-items:center;gap:20px}.navi-symbol{width:240px;height:240px;background:var(--logo-primary);border-radius:38% 62% 55% 45%}.wave{display:block;width:50%;height:30%;border:8px solid var(--logo-background);border-radius:50%}';
-  globalThis.fetch = async () => new Response(JSON.stringify({
-    candidates: [{ content: { parts: [{ text: JSON.stringify(design) }] } }]
-  }), { status: 200, headers: { "Content-Type": "application/json" } });
+  globalThis.fetch = async () => makeGeminiResponse(design);
   try {
     const response = await handleLogoRoute({
       request: makeRequest({ ...INPUT, singleConcept: true }),
@@ -375,7 +391,11 @@ test("NAVI rejects a concept with no traceable connection to the brief", async (
     delete item.briefAlignment;
     delete item.briefElements;
   });
-  globalThis.fetch = async () => makeGeminiResponse(untraceable);
+  let untraceCalls = 0;
+  globalThis.fetch = async () => {
+    untraceCalls += 1;
+    return makeGeminiResponse(untraceCalls === 1 ? makeDesign() : untraceable);
+  };
   try {
     const response = await handleLogoRoute({
       request: makeRequest(),
@@ -552,8 +572,9 @@ test("NAVI reports truncated model output and refunds the reserved trial without
     calls += 1;
     const body = JSON.parse(options.body);
     assert.equal(body.generationConfig.thinkingConfig.thinkingLevel, "HIGH");
-    assert.equal(body.generationConfig.maxOutputTokens, 32768);
     assert.equal("temperature" in body.generationConfig, false);
+    if (body.generationConfig.maxOutputTokens === 8192) return makeGeminiResponse();
+    assert.equal(body.generationConfig.maxOutputTokens, 32768);
     return new Response(JSON.stringify({
       candidates: [{ finishReason: "MAX_TOKENS", content: { parts: [{ text: '{"concepts":' }] } }],
       usageMetadata: { candidatesTokenCount: 32768 }
@@ -570,7 +591,7 @@ test("NAVI reports truncated model output and refunds the reserved trial without
     assert.equal(response.status, 502);
     assert.equal(result.code, "MODEL_OUTPUT_TRUNCATED");
     assert.match(result.error, /پاسخ طراحی ناقص/);
-    assert.equal(calls, 1, "diagnostics must not trigger a second paid model request");
+    assert.equal(calls, 2, "the planner succeeds once; the truncated builder response is not retried as another stage");
     assert.equal(db.visitorUsed, 0);
     assert.equal([...db.reservations.values()][0].status, "refunded");
   } finally {
@@ -1100,7 +1121,7 @@ test("NAVI retries a transient Gemini service failure once before returning a lo
     const result = await response.json();
     assert.equal(response.status, 200, JSON.stringify(result));
     assert.equal(result.success, true);
-    assert.equal(calls, 2);
+    assert.equal(calls, 3, "planner retry plus one successful planner/build sequence");
     assert.equal(db.visitorUsed, 1);
   } finally {
     globalThis.fetch = originalFetch;
