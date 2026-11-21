@@ -388,38 +388,10 @@
       if (!Array.isArray(result.concepts) || result.concepts.length < 1 || result.concepts.length > 3) {
         throw new Error("پاسخ موتور طراحی معتبر نیست؛ طرح قابل‌قبولی دریافت نشد.");
       }
-      let finalConcepts = result.concepts;
-      let activeFrames = mountConcepts(finalConcepts, brief, result.planning);
+      const finalConcepts = result.concepts;
+      mountConcepts(finalConcepts, brief, result.planning);
       empty.hidden = true;
-      status.textContent = "طرح‌ها ساخته شدند؛ نوا در حال مشاهده رندر واقعی و اصلاح بصری آن‌هاست…";
-      try {
-        await Promise.all(activeFrames.map(waitForFrame));
-        if (!window.NavaLogoRenderer?.capturePreviewDataUrl) {
-          throw new Error("موتور ثبت تصویر برای بازبینی بصری بارگذاری نشده است.");
-        }
-        const conceptsForReview = await Promise.all(activeFrames.map(async (frame, index) => ({
-          ...finalConcepts[index],
-          previewImage: await window.NavaLogoRenderer.capturePreviewDataUrl(frame, 640)
-        })));
-        const reviewResponse = await fetch("https://nava-music-api.honrrpower.workers.dev/logo/generate", {
-          method: "POST", headers, cache: "no-store",
-          body: JSON.stringify({ ...brief, action: "visual-refine", reviewToken: result.reviewToken, concepts: conceptsForReview })
-        });
-        const review = await reviewResponse.json();
-        if (!reviewResponse.ok || !review.success ||
-            !Array.isArray(review.concepts) || review.concepts.length !== finalConcepts.length) {
-          throw new Error(review.error || "بازبینی بصری طرح‌ها انجام نشد.");
-        }
-        finalConcepts = review.concepts;
-        activeFrames = mountConcepts(finalConcepts, brief, result.planning);
-        const refinedCount = Number(review.visualReview?.refinedCount || 0);
-        status.textContent = refinedCount > 0
-          ? `نوا هر ${review.visualReview.reviewedCount} طرح را از روی تصویر واقعی بررسی کرد و ${refinedCount} طرح را با اصلاح HTML/CSS بازسازی کرد. خروجی‌ها آماده‌اند.`
-          : "نوا طرح‌ها را از روی تصویر واقعی بررسی کرد؛ اما اصلاح معتبر از کنترل کیفیت عبور نکرد. نسخه‌های اولیه حفظ شدند.";
-      } catch (reviewError) {
-        status.textContent = "بازبینی تصویری تکمیل نشد؛ طرح‌های اولیه حفظ شدند. علت: " +
-          (reviewError?.message || "خطای نامشخص");
-      }
+      status.textContent = "سه طرح HTML/CSS ساخته شدند؛ همان طرح‌های اولیه بدون بازطراحی خودکار نمایش داده شدند.";
       results.scrollIntoView({ behavior: "smooth", block: "start" });
     } catch (error) {
       status.textContent = error?.message || "ارتباط با موتور طراحی برقرار نشد.";
