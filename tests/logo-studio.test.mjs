@@ -203,7 +203,10 @@ test("NAVI writes an English brief and three sanitized HTML/CSS logo designs in 
     assert.match(sentPrompt, /Navy or blue may still be used as an intentional brand-mark/i);
     assert.match(sentPrompt, /{{BRAND_NAME}}/i);
     assert.match(sentPrompt, /one valid JSON object/i);
-    assert.equal(result.planning.method, "navi-english-brief-html-css-design");
+    assert.equal(result.planning.method, "navi-visual-blueprint-then-html-css-build");
+    assert.equal(result.planning.extraModelCalls, 1);
+    assert.equal(result.planning.visualBlueprints.length, 3);
+    assert.ok(result.planning.visualBlueprints.every(item => item.geometryRecipe && item.silhouette && item.objectCues.length >= 2));
     assert.match(result.planning.designBriefEnglish, /distinctive Persian creative-studio identity/i);
     assert.ok(result.concepts.every(item => item.html.includes("نوا")));
     assert.ok(result.concepts.every(item => item.html.includes('data-logo-role="brand"')));
