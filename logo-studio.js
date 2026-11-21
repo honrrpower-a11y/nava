@@ -156,15 +156,21 @@
     return feedback;
   }
 
-  function showExportLink(feedback, message, link) {
+  function showExportLink(feedback, message, link, filename) {
     feedback.replaceChildren();
     feedback.append(document.createTextNode(message + " "));
     const anchor = document.createElement("a");
     anchor.href = link;
-    anchor.target = "_blank";
+    anchor.download = filename || "nava-logo.png";
     anchor.rel = "noopener";
-    anchor.textContent = "بازکردن فایل";
+    anchor.textContent = "دانلود PNG";
     feedback.append(anchor);
+    const open = document.createElement("a");
+    open.href = link;
+    open.target = "_blank";
+    open.rel = "noopener";
+    open.textContent = " · بازکردن تصویر";
+    feedback.append(open);
   }
 
   async function waitForFrame(frame) {
@@ -190,8 +196,8 @@
       }
       const filename = safeName(brief.brandName) + "-logo-" + (index + 1) + ".png";
       const url = await window.NavaLogoRenderer.exportPngFromFrame(frame, filename, 2400);
-      showExportLink(feedback, "تصویر با موفقیت آماده شد.", url);
-      status.textContent = "خروجی PNG با وضوح ۲۴۰۰ پیکسل آماده شد.";
+      showExportLink(feedback, "فایل PNG آماده است؛ برای ذخیره روی لینک دریافت بزن.", url, filename);
+      status.textContent = "فایل PNG آماده دریافت است.";
     } catch (error) {
       feedback.textContent = error?.message || "ساخت خروجی PNG ناموفق بود.";
       status.textContent = feedback.textContent;
