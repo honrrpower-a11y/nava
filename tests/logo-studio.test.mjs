@@ -937,7 +937,7 @@ test("NAVI visual refinement reviews real PNGs, validates revised HTML/CSS, and 
 
     const original = initial.concepts[0];
     const html = '<div class="mark"><div class="navi-symbol seal" data-logo-role="symbol"><span class="wave"></span><span class="orbit"></span></div><strong><span data-logo-role="brand">نوا</span></strong><small><span data-logo-role="slogan">صدای ایده‌های تازه</span></small></div>';
-    const css = original.css + '.mark{transform:scale(1.02)}';
+    const css = original.css.replace("border-radius:50%", "border-radius:34% 66% 42% 58%;clip-path:polygon(50% 0,100% 42%,72% 100%,0 78%,12% 28%)");
     globalThis.fetch = async (_url, options) => {
       sentPayload = JSON.parse(options.body);
       return new Response(JSON.stringify({
@@ -966,7 +966,41 @@ test("NAVI visual refinement reviews real PNGs, validates revised HTML/CSS, and 
     assert.match(result.concepts[0].html, /data-logo-role="brand"/);
     assert.match(result.concepts[0].html, /نوا/);
     assert.ok(sentPayload.contents[0].parts.some(part => part.inlineData?.mimeType === "image/png"));
+    assert.ok(sentPayload.contents[0].parts.some(part => part.text?.includes(original.briefAlignment)));
     assert.equal(db.visitorUsed, 1, "visual review must not reserve or consume another guest trial");
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test("NAVI rejects cosmetic-only visual revisions that leave the logo symbol geometry unchanged", async () => {
+  const originalFetch = globalThis.fetch;
+  const db = new FakeD1();
+  try {
+    globalThis.fetch = async () => makeGeminiResponse();
+    const initialResponse = await handleLogoRoute({
+      request: makeRequest(),
+      env: { NAVA_DB: db, NAVI_SESSION_SECRET: "test-secret-key", GEMINI_API_KEY: "test-gemini-key" },
+      origin: ORIGIN,
+      corsOrigin: ORIGIN
+    });
+    const initial = await initialResponse.json();
+    const original = initial.concepts[0];
+    globalThis.fetch = async () => new Response(JSON.stringify({
+      candidates: [{ content: { parts: [{ text: JSON.stringify({
+        concepts: [{ index: 1, html: original.html, css: original.css + ".mark{transform:scale(1.02)}", visualRevisionNotes: "اندازه قاب کمی تغییر کرد." }]
+      }) }] } }]
+    }), { status: 200, headers: { "Content-Type": "application/json" } });
+    const response = await handleLogoRoute({
+      request: makeRequest({ ...INPUT, action: "visual-refine", reviewToken: initial.reviewToken, concepts: [{ ...original, previewImage: "data:image/png;base64,aGVsbG8=" }] }),
+      env: { NAVA_DB: db, NAVI_SESSION_SECRET: "test-secret-key", GEMINI_API_KEY: "test-gemini-key" },
+      origin: ORIGIN,
+      corsOrigin: ORIGIN
+    });
+    const result = await response.json();
+    assert.equal(response.status, 200);
+    assert.equal(result.visualReview.refinedCount, 0);
+    assert.equal(result.concepts[0].visualReviewIssue, "LOGO_REVIEW_NO_MATERIAL_CHANGE");
   } finally {
     globalThis.fetch = originalFetch;
   }
@@ -977,11 +1011,12 @@ test("NAVI prioritizes the actual brief and only uses layers when the idea needs
   assert.ok(!backend.includes("PHASE 5B — GEOMETRY BLUEPRINT"));
   assert.ok(backend.includes("Use as few or as many HTML/CSS layers as the idea genuinely needs"));
   assert.ok(backend.includes("child layers are optional"));
-  assert.ok(backend.includes("Do not make cosmetic-only edits."));
-  assert.ok(backend.includes("redesign the actual symbol geometry and composition"));
+  assert.ok(backend.includes("NON-NEGOTIABLE REVISION STANDARD"));
+  assert.ok(backend.includes("Change the actual silhouette"));
   assert.ok(backend.includes("PHASE 6B — PROFESSIONAL LOGO FINISH"));
   assert.ok(backend.includes("Treat negative space as designed geometry"));
   assert.ok(backend.includes("optical centering and the mark-to-wordmark relationship"));
+  assert.ok(backend.includes("LOGO_REVIEW_NO_MATERIAL_CHANGE"));
   assert.ok(backend.includes('thinkingLevel: "HIGH"'));
 });
 
