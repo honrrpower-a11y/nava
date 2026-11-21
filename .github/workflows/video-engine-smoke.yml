@@ -1,0 +1,68 @@
+name: Video Engine Smoke
+
+on:
+  pull_request:
+    paths:
+      - "video-engine/**"
+      - ".github/workflows/video-engine-smoke.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  render:
+    name: Render and validate a real MP4
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: ""
+
+      - name: Install FFmpeg and Persian fonts
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg fonts-noto-core fonts-noto-extra fonts-noto-ui-core
+          ffmpeg -version
+          ffprobe -version
+
+      - name: Validate composition
+        working-directory: video-engine/demo
+        run: npx --yes hyperframes@0.9.72 lint
+
+      - name: Render MP4
+        working-directory: video-engine/demo
+        run: npx --yes hyperframes@0.9.72 render --output nava-first-render.mp4 --fps 30 --quality draft --workers 1
+
+      - name: Verify MP4 stream, dimensions and duration
+        working-directory: video-engine/demo
+        run: |
+          ffprobe -v error -select_streams v:0 \
+            -show_entries stream=codec_name,width,height \
+            -show_entries format=duration \
+            -of json nava-first-render.mp4 > render-metadata.json
+          node --input-type=module <<'NODE'
+          import fs from "node:fs";
+          const data = JSON.parse(fs.readFileSync("render-metadata.json", "utf8"));
+          const stream = data.streams?.[0];
+          const duration = Number(data.format?.duration);
+          if (!stream || stream.codec_name !== "h264") throw new Error("Expected an H.264 video stream.");
+          if (stream.width !== 1080 || stream.height !== 1920) throw new Error(`Unexpected dimensions: ${stream.width}x${stream.height}`);
+          if (!Number.isFinite(duration) || duration < 7.5 || duration > 8.5) throw new Error(`Unexpected duration: ${duration}`);
+          if (fs.statSync("nava-first-render.mp4").size < 50000) throw new Error("Rendered MP4 is unexpectedly small.");
+          console.log(`Validated H.264 MP4: ${stream.width}x${stream.height}, ${duration.toFixed(2)}s`);
+          NODE
+
+      - name: Upload rendered MP4
+        uses: actions/upload-artifact@v4
+        with:
+          name: nava-video-engine-smoke
+          path: video-engine/demo/nava-first-render.mp4
+          if-no-files-found: error
+          retention-days: 7
