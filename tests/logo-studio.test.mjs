@@ -566,8 +566,9 @@ test("NAVI reports truncated model output and refunds the reserved trial without
     calls += 1;
     const body = JSON.parse(options.body);
     assert.equal(body.generationConfig.thinkingConfig.thinkingLevel, "HIGH");
-    assert.equal(body.generationConfig.maxOutputTokens, 32768);
     assert.equal("temperature" in body.generationConfig, false);
+    if (body.generationConfig.maxOutputTokens === 8192) return makeGeminiResponse();
+    assert.equal(body.generationConfig.maxOutputTokens, 32768);
     return new Response(JSON.stringify({
       candidates: [{ finishReason: "MAX_TOKENS", content: { parts: [{ text: '{"concepts":' }] } }],
       usageMetadata: { candidatesTokenCount: 32768 }
@@ -584,7 +585,7 @@ test("NAVI reports truncated model output and refunds the reserved trial without
     assert.equal(response.status, 502);
     assert.equal(result.code, "MODEL_OUTPUT_TRUNCATED");
     assert.match(result.error, /پاسخ طراحی ناقص/);
-    assert.equal(calls, 1, "diagnostics must not trigger a second paid model request");
+    assert.equal(calls, 2, "the planner succeeds once; the truncated builder response is not retried as another stage");
     assert.equal(db.visitorUsed, 0);
     assert.equal([...db.reservations.values()][0].status, "refunded");
   } finally {
