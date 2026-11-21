@@ -58,6 +58,53 @@ function downloadBlob(blob, filename) {
     return clone;
   }
 
+function paintNativeText(canvas, root, rootRect, scale) {
+ const ctx=canvas.getContext("2d"); if(!ctx) throw new Error("بوم متن فارسی در دسترس نیست.");
+ const doc=root.ownerDocument, walker=doc.createTreeWalker(root,NodeFilter.SHOW_TEXT), groups=[]; let node;
+ while((node=walker.nextNode())) {
+  const value=node.nodeValue||""; if(!value.trim()||!node.parentElement) continue;
+  const parent=node.parentElement, style=doc.defaultView.getComputedStyle(parent);
+  if(style.display==="none"||style.visibility==="hidden"||style.writingMode!=="horizontal-tb") continue;
+  let offset=0;
+  for(const character of value) {
+   const range=doc.createRange(); range.setStart(node,offset); range.setEnd(node,offset+character.length); offset+=character.length;
+   for(const rect of Array.from(range.getClientRects()).filter(r=>r.width||r.height)) {
+    const top=Math.round(rect.top*2)/2;
+    let line=groups.find(item=>item.node===node&&Math.abs(item.top-top)<=1);
+    if(!line){line={node,parent,style,top,minX:rect.left,maxX:rect.right,minY:rect.top,maxY:rect.bottom,text:""};groups.push(line);}
+    line.text+=character; line.minX=Math.min(line.minX,rect.left); line.maxX=Math.max(line.maxX,rect.right); line.minY=Math.min(line.minY,rect.top); line.maxY=Math.max(line.maxY,rect.bottom);
+   }
+  }
+ }
+ ctx.save(); ctx.setTransform(scale,0,0,scale,-rootRect.left*scale,-rootRect.top*scale);
+ for(const line of groups) {
+  const style=line.style, fontSize=parseFloat(style.fontSize)||16;
+  ctx.font=[style.fontStyle,style.fontVariant,style.fontWeight,fontSize+"px",style.fontFamily].filter(Boolean).join(" ");
+  ctx.direction=style.direction==="rtl"?"rtl":"ltr";
+  const alignment=style.textAlign;
+  if(alignment==="center") ctx.textAlign="center";
+  else if(alignment==="right"||(alignment==="end"&&ctx.direction==="ltr")||(alignment==="start"&&ctx.direction==="rtl")) ctx.textAlign="right";
+  else if(alignment==="left"||(alignment==="start"&&ctx.direction==="ltr")||(alignment==="end"&&ctx.direction==="rtl")) ctx.textAlign="left";
+  else ctx.textAlign=ctx.direction==="rtl"?"right":"left";
+  const lineHeight=style.lineHeight==="normal"?fontSize*1.2:(parseFloat(style.lineHeight)||fontSize*1.2);
+  const ascent=ctx.measureText(line.text).actualBoundingBoxAscent||fontSize*.8;
+  const baseline=line.minY+(lineHeight-fontSize)/2+ascent;
+  const x=ctx.textAlign==="center"?(line.minX+line.maxX)/2:ctx.textAlign==="right"?line.maxX:line.minX;
+  let opacity=1, element=line.parent;
+  while(element&&element!==root.parentElement){opacity*=Number(doc.defaultView.getComputedStyle(element).opacity||1);if(element===root)break;element=element.parentElement;}
+  ctx.globalAlpha=Math.max(0,Math.min(1,opacity)); ctx.fillStyle=style.color; ctx.shadowColor="transparent"; ctx.shadowBlur=0;
+  ctx.shadowOffsetX=0; ctx.shadowOffsetY=0; if("letterSpacing" in ctx) ctx.letterSpacing=style.letterSpacing||"0px";
+  ctx.fillText(line.text,x,baseline);
+ }
+ ctx.restore();
+}
+function hideCloneText(root) {
+ for(const element of [root,...root.querySelectorAll("*")]) {
+  element.style.setProperty("color","transparent","important");
+  element.style.setProperty("-webkit-text-fill-color","transparent","important");
+  element.style.setProperty("text-shadow","none","important");
+ }
+}
 async function renderFrameCanvas(frame,size) {
  const doc=frame&&frame.contentDocument, root=doc&&doc.querySelector(".logo-art-root");
  if(!root) throw new Error("بوم پیش‌نمایش برای ساخت تصویر پیدا نشد.");
@@ -69,14 +116,14 @@ async function renderFrameCanvas(frame,size) {
  const outputSize=Math.max(1200,Math.min(3200,Math.round(Number(size)||2400))), scale=outputSize/rect.width;
  const stage=document.createElement("div"); stage.setAttribute("aria-hidden","true");
  stage.style.cssText="position:fixed;left:-100000px;top:0;z-index:-1;width:"+rect.width+"px;height:"+rect.height+"px;overflow:hidden;pointer-events:none;contain:layout paint style";
- const clone=copyComputedTree(root,document);
+ const clone=copyComputedTree(root,document);\n hideCloneText(clone);
  clone.style.setProperty("width",rect.width+"px","important"); clone.style.setProperty("height",rect.height+"px","important");
  clone.style.setProperty("max-width","none","important"); clone.style.setProperty("max-height","none","important");
  stage.appendChild(clone); document.body.appendChild(stage);
  try {
   if(document.fonts&&document.fonts.ready) await document.fonts.ready;
   const canvas=await global.html2canvas(clone,{backgroundColor:null,scale,width:rect.width,height:rect.height,windowWidth:Math.ceil(rect.width),windowHeight:Math.ceil(rect.height),scrollX:0,scrollY:0,useCORS:false,allowTaint:false,logging:false,removeContainer:true});
-  if(!canvas||canvas.width<outputSize*.95||canvas.height<outputSize*.95) throw new Error("تصویر PNG با وضوح درخواستی ساخته نشد.");
+  if(!canvas||canvas.width<outputSize*.95||canvas.height<outputSize*.95) throw new Error("تصویر PNG با وضوح درخواستی ساخته نشد.");\n  paintNativeText(canvas,root,rect,canvas.width/rect.width);
   const pixels=canvas.getContext("2d")?.getImageData(0,0,canvas.width,canvas.height).data; let visible=0;
   if(pixels) for(let i=3;i<pixels.length;i+=4) if(pixels[i]>8&&++visible>=24) break;
   if(visible<24) throw new Error("طرح واقعی در تصویر نهایی دیده نشد؛ فایل خالی ذخیره نشد.");
