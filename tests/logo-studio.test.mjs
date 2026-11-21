@@ -118,7 +118,7 @@ function makeGeminiResponse(plan = makeDesign()) {
     }));
     concept.anchorMap = concept.visualAnchors.map((anchor, index) => ({
       anchorId: anchor.id,
-      layerClass: styledClasses[index % Math.max(1, styledClasses.length)] || "",
+      layerClass: styledClasses[index % Math.max(1, styledClasses.length)] || "navi-symbol",
       visualRole: "این لایه هندسه قابل مشاهده جزء مربوط را در نشان می‌سازد"
     })).filter(entry => entry.layerClass);
   }
@@ -156,15 +156,12 @@ test("NAVI writes an English brief and three sanitized HTML/CSS logo designs in 
     assert.match(sentPrompt, /PHASE 4B — ANTI-DEFAULT REFLEX/i);
     assert.match(sentPrompt, /PHASE 4C — BRIEF TRACEABILITY/i);
     assert.match(sentPrompt, /PHASE 4D — CLIENT BRIEF DOMINANCE/i);
-    assert.match(sentPrompt, /PHASE 4E — ANCHOR-TO-FORM CONTRACT/i);
-    assert.match(sentPrompt, /PHASE 4F — SPATIAL COMPOSITION, DEPTH AND OCCLUSION/i);
-    assert.match(sentPrompt, /Distinguish true overlap\/occlusion from mere adjacency/i);
-    assert.match(sentPrompt, /give each relevant layer a deliberate position, scale, transform and stacking order/i);
-    assert.match(sentPrompt, /the sun is a rear layer, its lower arc is occluded by the book/i);
-    assert.match(sentPrompt, /never hardcode this example as the default logo idea/i);
-    assert.match(sentPrompt, /Start with the strongest recognizable shape in monochrome/i);
-    assert.match(sentPrompt, /anchorMap with exactly one object per visualAnchor/i);
-    assert.match(sentPrompt, /real styled HTML element inside \.navi-symbol/i);
+    assert.match(sentPrompt, /PHASE 4E — ANCHOR-TO-FORM GUIDANCE/i);
+    assert.match(sentPrompt, /PHASE 4F — SPATIAL RELATIONSHIPS/i);
+    assert.match(sentPrompt, /Use actual placement, overlap, clipping and stacking only where the idea needs them/i);
+    assert.match(sentPrompt, /first solve the recognizable idea and outer silhouette in monochrome/i);
+    assert.match(sentPrompt, /anchorMap explaining where each important idea is visibly expressed/i);
+    assert.match(sentPrompt, /main \.navi-symbol silhouette itself or to a real styled child layer/i);
     assert.match(sentPrompt, /exact client idea and relationships/i);
     assert.match(sentPrompt, /brief fidelity first/i);
     assert.match(sentPrompt, /actual \.navi-symbol/i);
@@ -774,6 +771,34 @@ test("NAVI accepts a clean solid silhouette without forcing decorative CSS effec
   }
 });
 
+
+
+test("NAVI accepts a single unified symbol silhouette without artificial child layers", async () => {
+  const originalFetch = globalThis.fetch;
+  const db = new FakeD1();
+  const unified = makeDesign();
+  unified.concepts[0].briefElements = ["یک نشان یکپارچه"];
+  unified.concepts[0].html = '<div class="mark"><div class="navi-symbol" data-logo-role="symbol"></div><strong>{{BRAND_NAME}}</strong></div>';
+  unified.concepts[0].css = '.logo-art-root{display:grid;place-items:center;width:100%;height:100%}.mark{display:grid;justify-items:center;gap:20px}.navi-symbol{width:240px;height:240px;background:var(--logo-primary);border-radius:18% 52% 24% 58%;clip-path:polygon(50% 0,100% 40%,72% 100%,0 78%,12% 28%)}';
+  globalThis.fetch = async () => makeGeminiResponse(unified);
+  try {
+    const response = await handleLogoRoute({
+      request: makeRequest(),
+      env: { NAVA_DB: db, NAVI_SESSION_SECRET: "test-secret-key", GEMINI_API_KEY: "test-gemini-key" },
+      origin: ORIGIN,
+      corsOrigin: ORIGIN
+    });
+    const result = await response.json();
+    assert.equal(response.status, 200, JSON.stringify(result));
+    assert.equal(result.success, true);
+    assert.equal(result.concepts[0].visualAnchors.length, 1);
+    assert.equal(result.concepts[0].anchorMap[0].layerClass, "navi-symbol");
+    assert.equal(db.visitorUsed, 1);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
 test("NAVI rejects stray line strokes that do not form a filled logo silhouette", async () => {
   const originalFetch = globalThis.fetch;
   const db = new FakeD1();
@@ -910,11 +935,11 @@ test("NAVI visual refinement reviews real PNGs, validates revised HTML/CSS, and 
   }
 });
 
-test("NAVI uses a geometry-first blueprint and demands substantive visual revisions", () => {
+test("NAVI prioritizes the actual brief and only uses layers when the idea needs them", () => {
   const backend = readFileSync(new URL("../modules/logo.js", import.meta.url), "utf8");
-  assert.ok(backend.includes("PHASE 5B — GEOMETRY BLUEPRINT"));
-  assert.ok(backend.includes("bounding box on the 0–100% symbol grid"));
-  assert.ok(backend.includes("dedicated named HTML layer and a direct CSS rule"));
+  assert.ok(!backend.includes("PHASE 5B — GEOMETRY BLUEPRINT"));
+  assert.ok(backend.includes("Use as few or as many HTML/CSS layers as the idea genuinely needs"));
+  assert.ok(backend.includes("child layers are optional"));
   assert.ok(backend.includes("Do not make cosmetic-only edits."));
   assert.ok(backend.includes("redesign the actual symbol geometry and composition"));
   assert.ok(backend.includes('thinkingLevel: "HIGH"'));
