@@ -407,7 +407,7 @@ async function designLogos(data, apiKey) {
     "OUTPUT: return one valid JSON object only with keys brandCore, designIdea, designBriefEnglish, strategy, concepts. designIdea is a concise Persian statement of the central creative idea. Return exactly " + conceptCount + " concept object(s), each with Persian title, Persian rationale, centralThesis, briefElements, visualAnchors, anchorMap, symbolConstruction, briefAlignment, mechanism, expressionMove, differsBy, axes, defaultsUsed, html and css. centralThesis, briefElements, symbolConstruction and briefAlignment must be concise, concrete Persian text checked against the visible mark. Include no chain-of-thought, markdown or explanation outside JSON. Each HTML fragment under 6500 chars and each CSS stylesheet under 9000 chars."
   ].join("\n");
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 90000);
+  const timer = setTimeout(() => controller.abort(), 120000);
   try {
     const response = await fetchGeminiWithRetry(
       "https://generativelanguage.googleapis.com/v1beta/models/" + GEMINI_MODEL + ":generateContent",
@@ -652,6 +652,63 @@ async function verifyLogoReviewToken(secret, brandName, token) {
   }
 }
 
+function extractSymbolDesignFingerprint(html, css) {
+  const sourceHtml = String(html || "");
+  const opening = /<div\b[^>]*class="[^"]*\bnavi-symbol\b[^"]*"[^>]*>/i.exec(sourceHtml);
+  if (!opening) return "";
+  const tags = /<\/?div\b[^>]*>/gi;
+  tags.lastIndex = opening.index;
+  let depth = 0;
+  let end = -1;
+  let match;
+  while ((match = tags.exec(sourceHtml)) !== null) {
+    if (/^<\//.test(match[0])) depth -= 1;
+    else if (!/\/\s*>$/.test(match[0])) depth += 1;
+    if (depth === 0) { end = tags.lastIndex; break; }
+  }
+  if (end < 0) return "";
+  const symbolMarkup = sourceHtml.slice(opening.index, end);
+  const classes = new Set(["navi-symbol"]);
+  for (const classMatch of symbolMarkup.matchAll(/class="([^"]+)"/g)) {
+    for (const name of classMatch[1].split(/\s+/)) {
+      if (/^[a-zA-Z_][\w-]*$/.test(name)) classes.add(name);
+    }
+  }
+  const geometryProperties = new Set([
+    "width", "height", "min-width", "min-height", "max-width", "max-height",
+    "aspect-ratio", "display", "position", "inset", "inset-block", "inset-inline",
+    "top", "right", "bottom", "left", "margin", "padding", "gap", "row-gap", "column-gap",
+    "grid-template-columns", "grid-template-rows", "grid-area", "place-items", "align-items",
+    "justify-items", "flex", "flex-direction", "align-self", "justify-self", "z-index",
+    "border", "border-width", "border-style", "border-radius", "clip-path", "transform",
+    "transform-origin", "overflow", "box-shadow", "background", "background-image",
+    "mask", "mask-image"
+  ]);
+  const rules = [];
+  for (const rule of String(css || "").matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
+    const selector = rule[1].trim();
+    const relevant = [...classes].some(name =>
+      new RegExp("(?:^|[\\s>+~,.])\\." + name + "(?=[\\s.#:[>+~,.]|$)").test(selector));
+    if (!relevant) continue;
+    const declarations = [];
+    for (const declaration of rule[2].split(";")) {
+      const colon = declaration.indexOf(":");
+      if (colon < 1) continue;
+      const property = declaration.slice(0, colon).trim().toLowerCase();
+      const value = declaration.slice(colon + 1).trim().replace(/\s+/g, " ");
+      if (geometryProperties.has(property) && value) declarations.push(property + ":" + value);
+    }
+    if (declarations.length) rules.push(selector + "{" + declarations.sort().join(";") + "}");
+  }
+  return symbolMarkup.replace(/>\s+</g, "><").replace(/\s+/g, " ").trim() + "\n" + rules.sort().join("\n");
+}
+
+function hasMaterialSymbolRevision(originalHtml, originalCss, revisedHtml, revisedCss) {
+  const before = extractSymbolDesignFingerprint(originalHtml, originalCss);
+  const after = extractSymbolDesignFingerprint(revisedHtml, revisedCss);
+  return Boolean(before && after && before !== after);
+}
+
 async function refineLogoConcepts(data, conceptsInput, apiKey) {
   if (!apiKey) throw new Error("NAVI design service is not configured.");
   if (!Array.isArray(conceptsInput) || conceptsInput.length < 1 || conceptsInput.length > 3) {
@@ -686,7 +743,7 @@ async function refineLogoConcepts(data, conceptsInput, apiKey) {
     "For each concept diagnose visible problems in silhouette, object recognition, spatial relationships, overlap/occlusion, hierarchy, balance, scale, depth, lighting, material, typography and fidelity to the exact brief. Then revise the HTML and CSS so the rendered result visibly fixes those problems.",
     "The original client brief is the source of truth. Preserve its subject, required objects, exact spatial relationships, brand name and supplied slogan. Never replace the core idea with a generic icon or a different metaphor.",
     "For front/behind/emerging/partially hidden relationships, implement real CSS positioning, stacking and overlap. A relationship is not fixed by adding explanatory text or adjacent shapes.",
-    "Do not make cosmetic-only edits. Compare the rendered image against the brief and identify the single biggest mismatch first; redesign the actual symbol geometry and composition to fix it. If the current mark is merely an abstract approximation of a named object, replace that approximation with a recognizable constructed silhouette. Preserve the requested idea, but do not preserve a weak arrangement just because it already exists. The revision must be visibly distinguishable at normal preview size and its notes must name the exact changed shapes, positions, overlaps or proportions. If no meaningful correction can be made, explicitly return the original source unchanged rather than claiming an improvement.",
+    "NON-NEGOTIABLE REVISION STANDARD: a successful revision must materially change the visible .navi-symbol construction, not just its wrapper, color, typography, shadow, scale or decorative effects. Change the actual silhouette, cut-out, contour, proportions, placement, overlap, or geometry of a meaningful symbol layer. Make the smallest set of high-impact changes that fixes the biggest visible mismatch with the original brief. If the current mark is merely an abstract approximation of a named object, replace that approximation with a recognizable constructed silhouette. Preserve the requested idea, but do not preserve a weak arrangement just because it already exists. In visualRevisionNotes name the exact shape/geometry changed and why it better expresses a specific brief anchor. A revision that only changes presentation styling will be rejected; do not claim an improvement without a visible structural correction.",
     "Improve the actual graphic design, not just the code structure: custom silhouette, deliberate geometry, considered negative space, intentional proportions, optical alignment and purposeful layered construction. Avoid arbitrary extra ornaments, generic rings, random diagonal strokes and default badges.",
     "Keep the existing .navi-symbol wrapper and every class referenced by anchorMap so the verified visual anchors remain attached to real layers. You may redesign their geometry and add nested HTML/CSS layers.",
     "Keep all text exactly as supplied. Preserve data-logo-role=brand and data-logo-role=slogan. Persian/Arabic must remain real HTML text with direction:rtl, unicode-bidi:plaintext and suitable font fallbacks.",
@@ -701,6 +758,7 @@ async function refineLogoConcepts(data, conceptsInput, apiKey) {
       title: source.title,
       centralThesis: source.centralThesis,
       symbolConstruction: source.symbolConstruction,
+      briefAlignment: source.briefAlignment,
       briefElements: source.briefElements,
       visualAnchors: source.visualAnchors,
       anchorMap: source.anchorMap,
@@ -721,8 +779,8 @@ async function refineLogoConcepts(data, conceptsInput, apiKey) {
           systemInstruction: { parts: [{ text: system }] },
           contents: [{ role: "user", parts }],
           generationConfig: {
-            thinkingConfig: { thinkingLevel: "MEDIUM" },
-            maxOutputTokens: 24576,
+            thinkingConfig: { thinkingLevel: "HIGH" },
+            maxOutputTokens: 32768,
             responseMimeType: "application/json"
           }
         }),
@@ -764,6 +822,9 @@ async function refineLogoConcepts(data, conceptsInput, apiKey) {
           throw validationError("LOGO_REVIEW_SLOGAN_MISSING", "Visual refinement removed the exact slogan.", "visual-review-slogan", index + 1);
         }
         if (data.format !== "wordmark") validateSymbolStructure(html, css, index + 1);
+        if (data.format !== "wordmark" && !hasMaterialSymbolRevision(source.html, source.css, html, css)) {
+          throw validationError("LOGO_REVIEW_NO_MATERIAL_CHANGE", "Visual review changed presentation styling but did not materially redesign the symbol geometry.", "visual-review-materiality", index + 1);
+        }
         validateConceptTraceability(source, index + 1);
         validateVisualAnchorMap(html, css, source, index + 1, data.format);
         const notes = safeText(candidateConcept.visualRevisionNotes, 360);
