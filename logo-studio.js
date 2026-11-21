@@ -313,6 +313,26 @@
     return card;
   }
 
+  function mountConcepts(concepts, brief, planning) {
+    results.replaceChildren();
+    frames = [];
+    selectedConcept = "";
+    addStrategy(planning);
+    concepts.forEach((concept, index) => {
+      const card = conceptCard(concept, index, brief);
+      results.append(card);
+      const frame = card.querySelector("iframe.logo-html-css-preview");
+      if (frame) {
+        const box = frame.parentElement;
+        const width = box?.getBoundingClientRect().width || 0;
+        if (box && width > 0) box.style.height = Math.round(width) + "px";
+        frame.srcdoc = frame.__navaMarkup;
+        delete frame.__navaMarkup;
+      }
+    });
+    return frames.slice();
+  }
+
   function getSession() {
     let token = "";
     try {
@@ -362,26 +382,38 @@
       if (!Array.isArray(result.concepts) || result.concepts.length < 1 || result.concepts.length > 3) {
         throw new Error("پاسخ موتور طراحی معتبر نیست؛ طرح قابل‌قبولی دریافت نشد.");
       }
-      results.replaceChildren();
-      frames = [];
-      selectedConcept = "";
-      addStrategy(result.planning);
-      result.concepts.forEach((concept, index) => {
-        const card = conceptCard(concept, index, brief);
-        results.append(card);
-        const frame = card.querySelector("iframe.logo-html-css-preview");
-        if (frame) {
-          const box = frame.parentElement;
-          const width = box?.getBoundingClientRect().width || 0;
-          if (box && width > 0) box.style.height = Math.round(width) + "px";
-          frame.srcdoc = frame.__navaMarkup;
-          delete frame.__navaMarkup;
-        }
-      });
+      let finalConcepts = result.concepts;
+      let activeFrames = mountConcepts(finalConcepts, brief, result.planning);
       empty.hidden = true;
-      status.textContent = result.concepts.length === 3
-        ? "سه مسیر طراحی آماده‌اند. هر طرح را بررسی کن و خروجی PNG بگیر."
-        : `${result.concepts.length} طرح از کنترل کیفیت عبور کرد. طرح‌های ضعیف نمایش داده نشدند؛ طرح‌های باقی‌مانده را بررسی کن و خروجی PNG بگیر.`;
+      status.textContent = "طرح‌ها ساخته شدند؛ نوا در حال مشاهده رندر واقعی و اصلاح بصری آن‌هاست…";
+      try {
+        await Promise.all(activeFrames.map(waitForFrame));
+        if (!window.NavaLogoRenderer?.capturePreviewDataUrl) {
+          throw new Error("موتور ثبت تصویر برای بازبینی بصری بارگذاری نشده است.");
+        }
+        const conceptsForReview = await Promise.all(activeFrames.map(async (frame, index) => ({
+          ...finalConcepts[index],
+          previewImage: await window.NavaLogoRenderer.capturePreviewDataUrl(frame, 640)
+        })));
+        const reviewResponse = await fetch("https://nava-music-api.honrrpower.workers.dev/logo/generate", {
+          method: "POST", headers, cache: "no-store",
+          body: JSON.stringify({ ...brief, action: "visual-refine", concepts: conceptsForReview })
+        });
+        const review = await reviewResponse.json();
+        if (!reviewResponse.ok || !review.success ||
+            !Array.isArray(review.concepts) || review.concepts.length !== finalConcepts.length) {
+          throw new Error(review.error || "بازبینی بصری طرح‌ها انجام نشد.");
+        }
+        finalConcepts = review.concepts;
+        activeFrames = mountConcepts(finalConcepts, brief, result.planning);
+        const refinedCount = Number(review.visualReview?.refinedCount || 0);
+        status.textContent = refinedCount > 0
+          ? `نوا هر ${review.visualReview.reviewedCount} طرح را از روی تصویر واقعی بررسی کرد و ${refinedCount} طرح را با اصلاح HTML/CSS بازسازی کرد. خروجی‌ها آماده‌اند.`
+          : "نوا طرح‌ها را از روی تصویر واقعی بررسی کرد؛ اما اصلاح معتبر از کنترل کیفیت عبور نکرد. نسخه‌های اولیه حفظ شدند.";
+      } catch (reviewError) {
+        status.textContent = "بازبینی تصویری تکمیل نشد؛ طرح‌های اولیه حفظ شدند. علت: " +
+          (reviewError?.message || "خطای نامشخص");
+      }
       results.scrollIntoView({ behavior: "smooth", block: "start" });
     } catch (error) {
       status.textContent = error?.message || "ارتباط با موتور طراحی برقرار نشد.";
