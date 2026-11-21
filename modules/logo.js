@@ -700,8 +700,9 @@ export async function handleLogoRoute({ request, env, origin, corsOrigin }) {
   let input;
   try {
     const raw = await request.text();
-    if (raw.length > 12000) return fail("حجم بریف بیش از حد مجاز است.", 413, corsOrigin);
     input = JSON.parse(raw);
+    const maximumBodyLength = input?.action === "visual-refine" ? 3000000 : 12000;
+    if (raw.length > maximumBodyLength) return fail("حجم اطلاعات درخواست بیش از حد مجاز است.", 413, corsOrigin);
   } catch {
     return fail("اطلاعات بریف معتبر نیست.", 400, corsOrigin);
   }
@@ -729,6 +730,30 @@ export async function handleLogoRoute({ request, env, origin, corsOrigin }) {
   if (!data.format) return fail("ساختار لوگوی انتخاب‌شده معتبر نیست.", 400, corsOrigin);
   if (!/^#[0-9a-fA-F]{6}$/.test(data.primaryColor) || !/^#[0-9a-fA-F]{6}$/.test(data.darkColor)) {
     return fail("رنگ‌های انتخاب‌شده معتبر نیستند؛ پالت را دوباره انتخاب کن.", 400, corsOrigin);
+  }
+
+  if (input?.action === "visual-refine") {
+    try {
+      const review = await refineLogoConcepts(data, input.concepts, env.GEMINI_API_KEY);
+      return json({
+        success: true,
+        visualReview: { method: "render-review-refine", reviewedCount: review.reviewedCount, refinedCount: review.refinedCount },
+        concepts: review.concepts
+      }, 200, corsOrigin);
+    } catch (error) {
+      const diagnosticCode = error?.diagnosticCode || "LOGO_VISUAL_REVIEW_FAILED";
+      console.error("[NAVA LOGO] visual review failure:", JSON.stringify({
+        diagnosticCode,
+        httpStatus: error?.httpStatus || null,
+        validationStage: error?.validationStage || null,
+        conceptIndex: error?.conceptIndex || null,
+        message: String(error?.message || error).slice(0, 220)
+      }));
+      return fail("بازبینی بصری طرح‌ها کامل نشد؛ نسخه اولیه طرح‌ها حفظ می‌شود.", 502, corsOrigin, {
+        code: diagnosticCode,
+        retryable: ["MODEL_RATE_LIMIT", "MODEL_SERVICE_ERROR", "MODEL_TIMEOUT"].includes(diagnosticCode)
+      });
+    }
   }
 
   const quotaRequest = new Request(request.url, {
