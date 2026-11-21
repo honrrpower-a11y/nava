@@ -23,7 +23,7 @@
 
   function say(message) { status.textContent = message; }
   function dimensions() { return formatInput.value === "landscape" ? [1920,1080] : [1080,1920]; }
-  function resizeCanvas() { const [w,h] = dimensions(); canvas.width=w; canvas.height=h; }
+  function resizeCanvas() { const [w,h] = dimensions(); canvas.width=w; canvas.height=h; const wrap=root.querySelector(".nava-video-canvas-wrap"); if(wrap) wrap.style.aspectRatio=w+" / "+h; }
   function drawFrame(seconds) {
     if (!sourceImage) return;
     const [w,h] = dimensions();
