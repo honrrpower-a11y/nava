@@ -116,14 +116,16 @@ async function renderFrameCanvas(frame,size) {
  const outputSize=Math.max(1200,Math.min(3200,Math.round(Number(size)||2400))), scale=outputSize/rect.width;
  const stage=document.createElement("div"); stage.setAttribute("aria-hidden","true");
  stage.style.cssText="position:fixed;left:-100000px;top:0;z-index:-1;width:"+rect.width+"px;height:"+rect.height+"px;overflow:hidden;pointer-events:none;contain:layout paint style";
- const clone=copyComputedTree(root,document);\n hideCloneText(clone);
+ const clone=copyComputedTree(root,document);
+ hideCloneText(clone);
  clone.style.setProperty("width",rect.width+"px","important"); clone.style.setProperty("height",rect.height+"px","important");
  clone.style.setProperty("max-width","none","important"); clone.style.setProperty("max-height","none","important");
  stage.appendChild(clone); document.body.appendChild(stage);
  try {
   if(document.fonts&&document.fonts.ready) await document.fonts.ready;
   const canvas=await global.html2canvas(clone,{backgroundColor:null,scale,width:rect.width,height:rect.height,windowWidth:Math.ceil(rect.width),windowHeight:Math.ceil(rect.height),scrollX:0,scrollY:0,useCORS:false,allowTaint:false,logging:false,removeContainer:true});
-  if(!canvas||canvas.width<outputSize*.95||canvas.height<outputSize*.95) throw new Error("تصویر PNG با وضوح درخواستی ساخته نشد.");\n  paintNativeText(canvas,root,rect,canvas.width/rect.width);
+  if(!canvas||canvas.width<outputSize*.95||canvas.height<outputSize*.95) throw new Error("تصویر PNG با وضوح درخواستی ساخته نشد.");
+  paintNativeText(canvas,root,rect,canvas.width/rect.width);
   const pixels=canvas.getContext("2d")?.getImageData(0,0,canvas.width,canvas.height).data; let visible=0;
   if(pixels) for(let i=3;i<pixels.length;i+=4) if(pixels[i]>8&&++visible>=24) break;
   if(visible<24) throw new Error("طرح واقعی در تصویر نهایی دیده نشد؛ فایل خالی ذخیره نشد.");
