@@ -558,6 +558,176 @@ async function designLogos(data, apiKey) {
   }
 }
 
+
+async function createLogoReviewToken(secret, brandName) {
+  if (!secret || !globalThis.crypto?.subtle) return "";
+  const timestamp = String(Date.now());
+  const message = timestamp + "." + brandName;
+  const key = await crypto.subtle.importKey(
+    "raw", new TextEncoder().encode(secret),
+    { name: "HMAC", hash: "SHA-256" }, false, ["sign"]
+  );
+  const signature = new Uint8Array(await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(message)));
+  const encoded = btoa(String.fromCharCode(...signature)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
+  return timestamp + "." + encoded;
+}
+
+async function verifyLogoReviewToken(secret, brandName, token) {
+  if (!secret || !globalThis.crypto?.subtle || typeof token !== "string") return false;
+  const [timestamp, encoded, extra] = token.split(".");
+  const issuedAt = Number(timestamp);
+  if (!timestamp || !encoded || extra || !Number.isFinite(issuedAt) ||
+      issuedAt > Date.now() + 30000 || Date.now() - issuedAt > 5 * 60 * 1000) return false;
+  try {
+    const base64 = encoded.replace(/-/g, "+").replace(/_/g, "/");
+    const paddedBase64 = base64 + "=".repeat((4 - base64.length % 4) % 4);
+    const signature = Uint8Array.from(atob(paddedBase64), character => character.charCodeAt(0));
+    const key = await crypto.subtle.importKey(
+      "raw", new TextEncoder().encode(secret),
+      { name: "HMAC", hash: "SHA-256" }, false, ["verify"]
+    );
+    return await crypto.subtle.verify(
+      "HMAC", key, signature, new TextEncoder().encode(timestamp + "." + brandName)
+    );
+  } catch {
+    return false;
+  }
+}
+
+async function refineLogoConcepts(data, conceptsInput, apiKey) {
+  if (!apiKey) throw new Error("NAVI design service is not configured.");
+  if (!Array.isArray(conceptsInput) || conceptsInput.length < 1 || conceptsInput.length > 3) {
+    throw validationError("LOGO_REVIEW_INPUT_INVALID", "Visual review requires one to three rendered concepts.", "visual-review-input");
+  }
+  const concepts = conceptsInput.map((item, index) => {
+    const match = /^data:image\/png;base64,([A-Za-z0-9+/]+={0,2})$/.exec(String(item?.previewImage || ""));
+    if (!match || match[1].length > 850000) {
+      throw validationError("LOGO_REVIEW_IMAGE_INVALID", "A rendered concept preview is missing or too large.", "visual-review-image", index + 1);
+    }
+    if (String(item?.html || "").length > 10000 || String(item?.css || "").length > 16000) {
+      throw validationError("LOGO_REVIEW_SOURCE_TOO_LARGE", "A logo concept source exceeds the review limit.", "visual-review-source", index + 1);
+    }
+    return { source: item, image: match[1] };
+  });
+  const userBrief = {
+    brandName: data.brandName,
+    designMode: data.designMode,
+    designPrompt: data.designPrompt,
+    slogan: data.slogan,
+    industry: data.industry,
+    audience: data.audience,
+    symbolIdea: data.symbolIdea,
+    format: data.format,
+    typography: data.typography,
+    personality: data.personality,
+    palette: { primary: data.primaryColor, background: data.darkColor, name: data.palette }
+  };
+  const system = [
+    "You are NAVI VISUAL ART DIRECTOR performing a real render-review-revision pass.",
+    "You are given the actual browser-rendered PNG preview for each concept, its HTML/CSS source, and the original client brief. Inspect the image itself. Do not merely repeat the rationale or validate that classes exist.",
+    "For each concept diagnose visible problems in silhouette, object recognition, spatial relationships, overlap/occlusion, hierarchy, balance, scale, depth, lighting, material, typography and fidelity to the exact brief. Then revise the HTML and CSS so the rendered result visibly fixes those problems.",
+    "The original client brief is the source of truth. Preserve its subject, required objects, exact spatial relationships, brand name and supplied slogan. Never replace the core idea with a generic icon or a different metaphor.",
+    "For front/behind/emerging/partially hidden relationships, implement real CSS positioning, stacking and overlap. A relationship is not fixed by adding explanatory text or adjacent shapes.",
+    "Improve the actual graphic design, not just the code structure: custom silhouette, deliberate geometry, considered negative space, intentional proportions, optical alignment and purposeful layered construction. Avoid arbitrary extra ornaments, generic rings, random diagonal strokes and default badges.",
+    "Keep the existing .navi-symbol wrapper and every class referenced by anchorMap so the verified visual anchors remain attached to real layers. You may redesign their geometry and add nested HTML/CSS layers.",
+    "Keep all text exactly as supplied. Preserve data-logo-role=brand and data-logo-role=slogan. Persian/Arabic must remain real HTML text with direction:rtl, unicode-bidi:plaintext and suitable font fallbacks.",
+    "Return a single valid JSON object with a concepts array in the same order. Each item must contain only index (1-based), html, css and visualRevisionNotes (short Persian explanation of concrete visible changes). Do not return SVG, images, scripts, markdown or chain-of-thought. HTML must use only the already-supported safe tags and CSS must use the existing safe CSS subset."
+  ].join("\n");
+  const parts = [{
+    text: "Review the actual rendered images and revise every concept. The brief is binding:\n" +
+      JSON.stringify(userBrief) + "\nFor each concept, inspect its attached PNG first, then its source and anchor map. Preserve each concept's core thesis but materially improve visible design quality.\n"
+  }];
+  concepts.forEach(({ source, image }, index) => {
+    parts.push({ text: "CONCEPT " + (index + 1) + "\n" + JSON.stringify({
+      title: source.title,
+      centralThesis: source.centralThesis,
+      symbolConstruction: source.symbolConstruction,
+      briefElements: source.briefElements,
+      visualAnchors: source.visualAnchors,
+      anchorMap: source.anchorMap,
+      html: source.html,
+      css: source.css
+    }) + "\nActual browser-rendered preview image follows." });
+    parts.push({ inlineData: { mimeType: "image/png", data: image } });
+  });
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 90000);
+  try {
+    const response = await fetch(
+      "https://generativelanguage.googleapis.com/v1beta/models/" + GEMINI_MODEL + ":generateContent",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
+        body: JSON.stringify({
+          systemInstruction: { parts: [{ text: system }] },
+          contents: [{ role: "user", parts }],
+          generationConfig: {
+            thinkingConfig: { thinkingLevel: "MEDIUM" },
+            maxOutputTokens: 24576,
+            responseMimeType: "application/json"
+          }
+        }),
+        signal: controller.signal
+      }
+    );
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      const error = new Error("Gemini visual review HTTP " + response.status);
+      error.httpStatus = response.status;
+      error.diagnosticCode = response.status === 429 ? "MODEL_RATE_LIMIT" :
+        response.status >= 500 ? "MODEL_SERVICE_ERROR" :
+        response.status === 400 ? "MODEL_REQUEST_REJECTED" : "MODEL_API_ERROR";
+      throw error;
+    }
+    const candidate = payload?.candidates?.[0];
+    if (!candidate) throw validationError("MODEL_EMPTY_RESPONSE", "Visual review returned no candidate.", "visual-review-model");
+    if (candidate.finishReason === "MAX_TOKENS") {
+      throw validationError("MODEL_OUTPUT_TRUNCATED", "Visual review output was truncated.", "visual-review-model");
+    }
+    const raw = (candidate.content?.parts || []).map(part => part.text || "").join("");
+    const plan = extractJsonObject(raw);
+    if (!Array.isArray(plan.concepts) || plan.concepts.length !== concepts.length) {
+      throw validationError("LOGO_REVIEW_CONCEPT_COUNT", "Visual review did not return every concept.", "visual-review-count");
+    }
+    let refinedCount = 0;
+    const refined = concepts.map(({ source }, index) => {
+      const candidateConcept = plan.concepts[index] || {};
+      try {
+        let html = sanitizeHtmlFragment(candidateConcept.html);
+        const css = sanitizeCss(candidateConcept.css);
+        const visibleText = html.replace(/<[^>]*>/g, "");
+        const brandText = escapeHtml(data.brandName);
+        const sloganText = escapeHtml(data.slogan);
+        if (!visibleText.includes(brandText) || !html.includes('data-logo-role="brand"')) {
+          throw validationError("LOGO_REVIEW_BRAND_MISSING", "Visual refinement removed the exact brand wordmark.", "visual-review-brand", index + 1);
+        }
+        if (data.slogan && (!visibleText.includes(sloganText) || !html.includes('data-logo-role="slogan"'))) {
+          throw validationError("LOGO_REVIEW_SLOGAN_MISSING", "Visual refinement removed the exact slogan.", "visual-review-slogan", index + 1);
+        }
+        if (data.format !== "wordmark") validateSymbolStructure(html, css, index + 1);
+        validateConceptTraceability(source, index + 1);
+        validateVisualAnchorMap(html, css, source, index + 1, data.format);
+        const notes = safeText(candidateConcept.visualRevisionNotes, 360);
+        if (html.length < 20 || css.length < 40 || !notes) {
+          throw validationError("LOGO_REVIEW_INCOMPLETE", "Visual refinement was incomplete.", "visual-review-output", index + 1);
+        }
+        refinedCount += 1;
+        return { ...source, html, css, visualRevisionNotes: notes, visualReview: "refined" };
+      } catch (error) {
+        return {
+          ...source,
+          visualRevisionNotes: "این مسیر در بازبینی بصری معتبرسازی نشد؛ نسخه اولیه بدون تغییر حفظ شد.",
+          visualReview: "original-preserved",
+          visualReviewIssue: error?.diagnosticCode || "LOGO_REVIEW_REJECTED"
+        };
+      }
+    });
+    return { concepts: refined, refinedCount, reviewedCount: concepts.length };
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 export async function handleLogoRoute({ request, env, origin, corsOrigin }) {
   if (origin !== ALLOWED_ORIGIN) return fail("مبدأ درخواست مجاز نیست.", 403, corsOrigin);
   if (request.method !== "POST") return fail("روش درخواست پشتیبانی نمی‌شود.", 405, corsOrigin);
@@ -565,8 +735,9 @@ export async function handleLogoRoute({ request, env, origin, corsOrigin }) {
   let input;
   try {
     const raw = await request.text();
-    if (raw.length > 12000) return fail("حجم بریف بیش از حد مجاز است.", 413, corsOrigin);
     input = JSON.parse(raw);
+    const maximumBodyLength = input?.action === "visual-refine" ? 3000000 : 12000;
+    if (raw.length > maximumBodyLength) return fail("حجم اطلاعات درخواست بیش از حد مجاز است.", 413, corsOrigin);
   } catch {
     return fail("اطلاعات بریف معتبر نیست.", 400, corsOrigin);
   }
@@ -596,6 +767,34 @@ export async function handleLogoRoute({ request, env, origin, corsOrigin }) {
     return fail("رنگ‌های انتخاب‌شده معتبر نیستند؛ پالت را دوباره انتخاب کن.", 400, corsOrigin);
   }
 
+  if (input?.action === "visual-refine") {
+    const reviewAuthorized = await verifyLogoReviewToken(
+      env.NAVI_SESSION_SECRET, data.brandName, input.reviewToken
+    );
+    if (!reviewAuthorized) return fail("مجوز بازبینی بصری معتبر نیست یا زمان آن پایان یافته است؛ دوباره طرح را تولید کن.", 403, corsOrigin);
+    try {
+      const review = await refineLogoConcepts(data, input.concepts, env.GEMINI_API_KEY);
+      return json({
+        success: true,
+        visualReview: { method: "render-review-refine", reviewedCount: review.reviewedCount, refinedCount: review.refinedCount },
+        concepts: review.concepts
+      }, 200, corsOrigin);
+    } catch (error) {
+      const diagnosticCode = error?.diagnosticCode || "LOGO_VISUAL_REVIEW_FAILED";
+      console.error("[NAVA LOGO] visual review failure:", JSON.stringify({
+        diagnosticCode,
+        httpStatus: error?.httpStatus || null,
+        validationStage: error?.validationStage || null,
+        conceptIndex: error?.conceptIndex || null,
+        message: String(error?.message || error).slice(0, 220)
+      }));
+      return fail("بازبینی بصری طرح‌ها کامل نشد؛ نسخه اولیه طرح‌ها حفظ می‌شود.", 502, corsOrigin, {
+        code: diagnosticCode,
+        retryable: ["MODEL_RATE_LIMIT", "MODEL_SERVICE_ERROR", "MODEL_TIMEOUT"].includes(diagnosticCode)
+      });
+    }
+  }
+
   const quotaRequest = new Request(request.url, {
     method: "POST",
     headers: request.headers,
@@ -614,9 +813,11 @@ export async function handleLogoRoute({ request, env, origin, corsOrigin }) {
 
   try {
     const plan = await designLogos(data, env.GEMINI_API_KEY);
+    const reviewToken = await createLogoReviewToken(env.NAVI_SESSION_SECRET, data.brandName);
     return json({
       success: true,
       brandName: data.brandName,
+      reviewToken,
       remaining: quota.remaining ?? null,
       planning: {
         method: "navi-english-brief-html-css-design",
