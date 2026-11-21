@@ -34,11 +34,11 @@ jobs:
 
       - name: Validate composition
         working-directory: video-engine/demo
-        run: npx --yes hyperframes@0.9.78 lint
+        run: npx --yes hyperframes@0.9.72 lint
 
       - name: Render MP4
         working-directory: video-engine/demo
-        run: npx --yes hyperframes@0.9.78 render --output nava-first-render.mp4 --fps 30 --quality draft --workers 1
+        run: npx --yes hyperframes@0.9.72 render --output nava-first-render.mp4 --fps 30 --quality draft --workers 1
 
       - name: Verify MP4 stream, dimensions and duration
         working-directory: video-engine/demo
