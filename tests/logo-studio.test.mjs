@@ -911,6 +911,7 @@ test("Logo Studio captures real renders and runs validated automatic visual refi
   assert.ok(ui.includes("async function visuallyRefineConcepts"));
   assert.ok(ui.includes('action: "visual-refine"'));
   assert.ok(ui.includes("capturePreviewDataUrl(frame, 640)"));
+  assert.ok(ui.includes("briefAlignment: concept.briefAlignment"), "visual review must retain the original concept brief traceability fields");
   assert.ok(ui.includes("result.reviewToken"));
   assert.ok(ui.includes("finalConcepts = visualReview.concepts"));
   assert.ok(ui.includes("طرح‌های اولیه حفظ شدند"));
