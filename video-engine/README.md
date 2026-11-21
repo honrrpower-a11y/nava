@@ -1,40 +1,54 @@
-# NAVA Video Engine — first render proof
+# NAVA Video Engine — render proofs
 
-This folder is an isolated proof of the first real video-rendering path for NAVA. It uses [HyperFrames](https://github.com/heygen-com/hyperframes) (Apache-2.0) to turn a timed HTML/CSS/GSAP composition into an MP4.
+This folder contains two isolated proofs of NAVA's first real video-rendering path. HyperFrames (Apache-2.0) turns timed HTML/CSS/GSAP compositions into MP4 files.
 
-## What this proves
+## What is proven
 
-- A video scene is authored with HTML, CSS and a finite GSAP timeline.
-- HyperFrames captures frames in headless Chromium and encodes an actual MP4 with FFmpeg.
-- The GitHub Actions smoke workflow validates the output dimensions and duration and uploads the MP4 as a workflow artifact.
-- No paid video-generation API, GPU model, R2 bucket, or production Worker change is required for this first rendering proof.
+- **Text/motion graphics:** timed Persian typography and animated design elements render to MP4.
+- **Image-to-motion:** a photographic input is loaded as an image asset; camera-style zoom/pan, a light bloom, framing and timed titles animate over it.
+- HyperFrames captures frames in headless Chromium and FFmpeg encodes H.264 MP4.
+- CI validates both outputs as 1080×1920, approximately eight seconds, and uploads them as one workflow artifact.
+- No paid video-generation API, GPU model, R2 bucket, or production Worker change is required for these deterministic rendering tests.
 
-The demo is a motion-graphics video, not yet text-to-video or image-to-video generation. It deliberately proves the render pipeline before adding AI-generated footage, voice, music, subtitles, project persistence, or the NAVA UI.
+The image test is deliberately honest about its capability: it animates the photograph as a cinematic moving shot (Ken Burns/parallax-style presentation). It does **not** make people or objects inside the photo move. Generative image-to-video remains a separate future capability requiring a GPU-backed model/service.
+
+## Demo inputs
+
+- demo/ — the first Persian motion-graphics test.
+- image-motion-demo/ — image-based cinematic motion test. CI downloads a sample landscape photograph from Unsplash into assets/landscape.jpg before rendering; the binary image is not committed to the repository.
 
 ## Run locally
 
 Requirements: Node.js 22+, FFmpeg, and an available Chromium installation (the CLI can provision its browser).
 
-From this directory:
+Text demo:
 
 ```bash
-npx --yes hyperframes@0.9.72 doctor
+cd video-engine/demo
 npx --yes hyperframes@0.9.72 lint
 npx --yes hyperframes@0.9.72 render --output nava-first-render.mp4 --fps 30 --quality draft --workers 1
 ```
 
+Image-motion demo (first place a landscape image at image-motion-demo/assets/landscape.jpg):
+
+```bash
+cd video-engine/image-motion-demo
+npx --yes hyperframes@0.9.72 lint
+npx --yes hyperframes@0.9.72 render --output nava-image-motion.mp4 --fps 30 --quality draft --workers 1
+```
+
 ## CI output
 
-The `Video Engine Smoke` workflow renders this sample on pull requests and manual dispatch, verifies that it is an 1080×1920 MP4 of approximately eight seconds, and uploads `nava-video-engine-smoke.mp4` as a downloadable workflow artifact.
+The Video Engine Smoke workflow renders both samples, verifies codec, dimensions and duration, and uploads both MP4s as the nava-video-engine-smoke artifact.
 
-## Integration boundary
+## Production integration boundary
 
-NAVA's current `avPage` only sends a brief to NAVI; it explicitly has no renderer. Cloudflare Workers are not the place to run Chromium/FFmpeg rendering. A production integration therefore needs a separate Node.js rendering service (HyperFrames producer) and a small authenticated Worker job API. This proof does not pretend that service is deployed or expose a non-working Generate button.
+NAVA's current AV page does not yet have a production renderer. Cloudflare Workers are not the place to run Chromium/FFmpeg rendering. A production integration needs a separate Node.js rendering service with bounded job size, queue, timeout, cleanup and output streaming, plus an authenticated Worker job API. This proof does not pretend that service is deployed or expose a non-working Generate button.
 
-## Next implementation stages
+## Next stages
 
-1. Validate this MP4 render in CI.
-2. Package the renderer as a separately deployable Node service with bounded job size, queue, timeout, cleanup, and output streaming.
-3. Connect the NAVA Worker to that service through a secret-bound service URL; keep auth and project ownership checks in NAVA.
-4. Replace the current text-only AV brief with a real production form and job status / MP4 download UI.
-5. Add optional voice and footage providers. Keep local/open-source rendering available without paid AI APIs; AI video generation remains a separate optional GPU capability.
+1. Validate both MP4 renders in CI and inspect their visual quality.
+2. Package the renderer as a separately deployable Node service.
+3. Connect the NAVA Worker through a secret-bound service URL; preserve authentication and project ownership checks.
+4. Replace the current text-only AV brief with an image upload, scene direction, render status and MP4 download flow.
+5. Add optional voice, music and footage providers. Keep local/open-source rendering available; generative image-to-video remains a separate optional GPU capability.
