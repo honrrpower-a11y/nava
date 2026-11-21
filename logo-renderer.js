@@ -10,10 +10,7 @@ function downloadBlob(blob, filename) {
   function copyComputedTree(source, targetDocument) {
     if (source.nodeType === 3) return targetDocument.createTextNode(source.nodeValue || "");
     if (source.nodeType !== 1) return null;
-    const namespace = source.namespaceURI;
-    const clone = namespace && namespace !== "http://www.w3.org/1999/xhtml"
-      ? targetDocument.createElementNS(namespace, source.nodeName)
-      : targetDocument.createElement(source.localName);
+    const clone = targetDocument.createElement(source.localName);
     Array.from(source.attributes || []).forEach(attribute => {
       const name = attribute.name.toLowerCase();
       if (!name.startsWith("on") && name !== "srcdoc") {
