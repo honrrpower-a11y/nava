@@ -159,7 +159,7 @@ test("NAVI writes an English brief and three sanitized HTML/CSS logo designs in 
     assert.match(sentPrompt, /PHASE 4E — ANCHOR-TO-LAYER CONTRACT/i);
     assert.match(sentPrompt, /PHASE 4F — SPATIAL COMPOSITION, DEPTH AND OCCLUSION/i);
     assert.match(sentPrompt, /Distinguish true overlap\/occlusion from mere adjacency/i);
-    assert.match(sentPrompt, /explicit position, scale, transform and stacking order/i);
+    assert.match(sentPrompt, /give each relevant layer a deliberate position, scale, transform and stacking order/i);
     assert.match(sentPrompt, /the sun is a rear layer, its lower arc is occluded by the book/i);
     assert.match(sentPrompt, /never hardcode this example as the default logo idea/i);
     assert.match(sentPrompt, /silhouette, component geometry, spatial placement, overlap\/occlusion, depth order/i);
