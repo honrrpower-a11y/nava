@@ -967,7 +967,6 @@ test("NAVI visual refinement reviews real PNGs, validates revised HTML/CSS, and 
     assert.match(result.concepts[0].html, /نوا/);
     assert.ok(sentPayload.contents[0].parts.some(part => part.inlineData?.mimeType === "image/png"));
     assert.ok(sentPayload.contents[0].parts.some(part => part.text?.includes(original.briefAlignment)));
-    assert.ok(sentPayload.contents[0].parts.some(part => part.text?.includes(original.briefAlignment)));
     assert.equal(db.visitorUsed, 1, "visual review must not reserve or consume another guest trial");
   } finally {
     globalThis.fetch = originalFetch;
@@ -1013,11 +1012,10 @@ test("NAVI prioritizes the actual brief and only uses layers when the idea needs
   assert.ok(backend.includes("Use as few or as many HTML/CSS layers as the idea genuinely needs"));
   assert.ok(backend.includes("child layers are optional"));
   assert.ok(backend.includes("NON-NEGOTIABLE REVISION STANDARD"));
-  assert.ok(backend.includes("redesign the actual symbol geometry and composition"));
+  assert.ok(backend.includes("Change the actual silhouette"));
   assert.ok(backend.includes("PHASE 6B — PROFESSIONAL LOGO FINISH"));
   assert.ok(backend.includes("Treat negative space as designed geometry"));
   assert.ok(backend.includes("optical centering and the mark-to-wordmark relationship"));
-  assert.ok(backend.includes("NON-NEGOTIABLE REVISION STANDARD"));
   assert.ok(backend.includes("LOGO_REVIEW_NO_MATERIAL_CHANGE"));
   assert.ok(backend.includes('thinkingLevel: "HIGH"'));
 });
