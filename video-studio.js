@@ -7,7 +7,7 @@
   const previewBtn=$("navaVideoPreview"),renderBtn=$("navaVideoRender"),status=$("navaVideoStatus"),progress=$("navaVideoProgress"),result=$("navaVideoResult");
   const titleInput=$("navaVideoTitle"),subtitleInput=$("navaVideoSubtitle"),durationInput=$("navaVideoDuration"),formatInput=$("navaVideoFormat"),motionInput=$("navaVideoMotion");
   const sceneList=$("navaVideoSceneList"),musicVolume=$("navaVideoMusicVolume"),fadeInput=$("navaVideoFade");
-  let scenes=[],musicUrl="",musicElement=null,previewFrame=0,recorder=null,chunks=[],recording=false,startedAt=0,previewing=false,outputUrl="";
+  let scenes=[],musicUrl="",musicElement=null,audioContext=null,audioSource=null,audioDestination=null,musicGain=null,previewFrame=0,recorder=null,chunks=[],recording=false,startedAt=0,previewing=false,outputUrl="";
   const totalDuration=()=>Number(durationInput.value);
   const say=m=>{status.textContent=m;};
   function dimensions(){return formatInput.value==="landscape"?[1920,1080]:[1080,1920];}
@@ -49,7 +49,7 @@
     scenes.forEach(s=>URL.revokeObjectURL(s.url));scenes=[];stopPreview();
     Promise.all(files.map(file=>new Promise((resolve,reject)=>{const url=URL.createObjectURL(file),img=new Image();img.onload=()=>resolve({file,url,image:img});img.onerror=()=>{URL.revokeObjectURL(url);reject(new Error("خواندن یکی از تصاویر ناموفق بود."));};img.src=url;}))).then(items=>{scenes=items;resize();renderSceneList();drawFrame(0);updateReady();}).catch(e=>say(e.message));
   });
-  musicInput.addEventListener("change",()=>{const file=musicInput.files&&musicInput.files[0];if(!file)return;if(!file.type.startsWith("audio/")){say("فایل صوتی معتبر انتخاب کن.");musicInput.value="";return;}if(musicUrl)URL.revokeObjectURL(musicUrl);musicUrl=URL.createObjectURL(file);musicElement=new Audio(musicUrl);musicElement.preload="auto";musicElement.loop=false;say("موسیقی آماده است.");});
+  musicInput.addEventListener("change",()=>{const file=musicInput.files&&musicInput.files[0];if(!file)return;if(!file.type.startsWith("audio/")){say("فایل صوتی معتبر انتخاب کن.");musicInput.value="";return;}if(musicUrl)URL.revokeObjectURL(musicUrl);musicUrl=URL.createObjectURL(file);if(!musicElement){musicElement=new Audio();musicElement.preload="auto";musicElement.loop=false;}musicElement.src=musicUrl;say("موسیقی آماده است.");});
   [titleInput,subtitleInput,formatInput,motionInput].forEach(el=>el.addEventListener("input",()=>{resize();drawFrame(0);}));
   previewBtn.addEventListener("click",preview);
   root.querySelectorAll("[data-video-tab]").forEach(btn=>btn.addEventListener("click",()=>{root.querySelectorAll("[data-video-tab]").forEach(b=>{const active=b===btn;b.classList.toggle("is-active",active);b.setAttribute("aria-selected",String(active));});root.querySelectorAll(".nava-video-panel").forEach(p=>{const active=p.id===btn.getAttribute("aria-controls");p.hidden=!active;p.classList.toggle("is-active",active);});}));
@@ -59,17 +59,17 @@
   renderBtn.addEventListener("click",async()=>{
     if(!scenes.length||recording)return;if(!window.MediaRecorder||!canvas.captureStream){say("این مرورگر ضبط ویدئو را پشتیبانی نمی‌کند.");return;}
     stopPreview();resize();drawFrame(0);const mime=["video/webm;codecs=vp9,opus","video/webm;codecs=vp8,opus","video/webm"].find(t=>MediaRecorder.isTypeSupported(t));if(!mime){say("کدک سازگار پیدا نشد.");return;}
-    const stream=canvas.captureStream(30);let audioContext=null,audioSource=null,audioDestination=null,musicGain=null;
+    const stream=canvas.captureStream(30);
     try{
-      if(musicElement){audioContext=new (window.AudioContext||window.webkitAudioContext)();await audioContext.resume();audioSource=audioContext.createMediaElementSource(musicElement);audioDestination=audioContext.createMediaStreamDestination();musicGain=audioContext.createGain();musicGain.gain.value=Math.max(0,Number(musicVolume.value)/100);audioSource.connect(musicGain);musicGain.connect(audioDestination);audioDestination.stream.getAudioTracks().forEach(t=>stream.addTrack(t));musicElement.currentTime=0;await musicElement.play();}
+      if(musicElement){if(!audioContext){audioContext=new (window.AudioContext||window.webkitAudioContext)();audioSource=audioContext.createMediaElementSource(musicElement);audioDestination=audioContext.createMediaStreamDestination();musicGain=audioContext.createGain();audioSource.connect(musicGain);musicGain.connect(audioDestination);}await audioContext.resume();musicGain.gain.value=Math.max(0,Number(musicVolume.value)/100);audioDestination.stream.getAudioTracks().forEach(t=>stream.addTrack(t));musicElement.currentTime=0;await musicElement.play();}
       chunks=[];recording=true;renderBtn.disabled=true;previewBtn.disabled=true;progress.style.width="0%";recorder=new MediaRecorder(stream,{mimeType:mime,videoBitsPerSecond:8000000});
       recorder.ondataavailable=e=>{if(e.data&&e.data.size)chunks.push(e.data);};
       recorder.onerror=()=>say("هنگام ضبط ویدئو خطایی رخ داد.");
-      recorder.onstop=()=>{stream.getTracks().forEach(t=>t.stop());if(musicElement)musicElement.pause();if(audioContext)audioContext.close();recording=false;renderBtn.disabled=false;previewBtn.disabled=false;const blob=new Blob(chunks,{type:mime});if(outputUrl)URL.revokeObjectURL(outputUrl);outputUrl=URL.createObjectURL(blob);const video=$("navaVideoOutput");video.src=outputUrl;const link=$("navaVideoDownload");link.href=outputUrl;link.download="nava-multiphoto-video.webm";link.hidden=false;result.hidden=false;progress.style.width="100%";say("ویدئوی چندعکسی "+(musicElement?"همراه موسیقی ":"")+"آماده شد. برای مشاهده به تب خروجی برو.");};
+      recorder.onstop=()=>{stream.getTracks().forEach(t=>t.stop());if(musicElement)musicElement.pause();recording=false;renderBtn.disabled=false;previewBtn.disabled=false;const blob=new Blob(chunks,{type:mime});if(outputUrl)URL.revokeObjectURL(outputUrl);outputUrl=URL.createObjectURL(blob);const video=$("navaVideoOutput");video.src=outputUrl;const link=$("navaVideoDownload");link.href=outputUrl;link.download="nava-multiphoto-video.webm";link.hidden=false;result.hidden=false;progress.style.width="100%";say("ویدئوی چندعکسی "+(musicElement?"همراه موسیقی ":"")+"آماده شد. برای مشاهده به تب خروجی برو.");};
       recorder.start(250);const start=performance.now(),duration=totalDuration(),fade=Number(fadeInput.value),baseVolume=Math.max(0,Number(musicVolume.value)/100);
       const tick=now=>{if(!recording)return;const t=(now-start)/1000;drawFrame(Math.min(t,duration));if(musicElement&&musicGain){const remaining=duration-t;const factor=fade>0?Math.max(0,Math.min(1,t/fade,remaining/fade)):1;musicGain.gain.setTargetAtTime(baseVolume*factor,audioContext.currentTime,0.04);}progress.style.width=Math.min(100,t/duration*100)+"%";if(t>=duration){recorder.stop();return;}requestAnimationFrame(tick);};
       requestAnimationFrame(tick);say("در حال تدوین و ضبط ویدئو در مرورگر؛ صفحه را باز نگه دار.");
-    }catch(e){recording=false;stream.getTracks().forEach(t=>t.stop());if(audioContext)audioContext.close();renderBtn.disabled=false;previewBtn.disabled=false;say("ساخت ویدئو ناموفق بود: "+(e.message||"خطای ناشناخته"));}
+    }catch(e){recording=false;stream.getTracks().forEach(t=>t.stop());renderBtn.disabled=false;previewBtn.disabled=false;say("ساخت ویدئو ناموفق بود: "+(e.message||"خطای ناشناخته"));}
   });
   resize();say("چند عکس را انتخاب کن تا تدوین را شروع کنیم.");
 })();
