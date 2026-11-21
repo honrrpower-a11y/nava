@@ -314,7 +314,7 @@ test("assistant-style proposal text is not treated as user authorization", () =>
 
 
 test("Office-context requests are sent to the Office route even from the global NAVI chat", () => {
-  assert.match(app, /const officeRequestContext =\s*requestContext\?\.service === officeService\s*\|\|\s*naviAssistantContext\?\.service === officeService\s*\|\|\s*selectedService === officeService\s*\|\|\s*activePageId === "officePage"/);
+  assert.match(app, /const officeRequestContext =\s*requestContext\?\.service === officeService\s*\|\|\s*selectedService === officeService\s*\|\|\s*activePageId === "officePage"\s*\|\|\s*options\.pageOverride === "officePage"/);
   assert.match(app, /const requestPage = options\.pageOverride === "officePage"[\s\S]*?\? "officePage"[\s\S]*?: officeRequestContext \? "officePage" : activePageId/);
   assert.match(app, /page: requestPage,/);
 });
@@ -339,7 +339,7 @@ test("deterministic Excel proposals are derived on every NAVI chat page while mo
 
 
 test("Office context in the global NAVI chat consistently selects the Office route and prompt", () => {
-  assert.match(app, /const officeRequestContext =\s*requestContext\?\.service === officeService\s*\|\|\s*naviAssistantContext\?\.service === officeService\s*\|\|\s*selectedService === officeService\s*\|\|\s*activePageId === "officePage"/);
+  assert.match(app, /const officeRequestContext =\s*requestContext\?\.service === officeService\s*\|\|\s*selectedService === officeService\s*\|\|\s*activePageId === "officePage"\s*\|\|\s*options\.pageOverride === "officePage"/);
   assert.match(app, /const promptService = officeRequestContext \? officeService : selectedService/);
   assert.match(app, /officeRequestContext\s*\? "راهنمای اجرای Office:/);
   assert.match(app, /const requestPage = options\.pageOverride === "officePage"[\s\S]*?\? "officePage"[\s\S]*?: officeRequestContext \? "officePage" : activePageId/);
@@ -427,7 +427,7 @@ test("Office operations contains the real NAVI chat inline and removes the separ
 });
 
 test("Office technical diagnostics are displayed only for the authenticated owner", () => {
-  assert.match(app, /function updateOfficeActionDiagnostic\(stage, details = \{\}\)\s*\{[\s\S]*?getNaviStoredValue\(NAVI_USER_ROLE_KEY\) === "owner"/);
+  assert.match(app, /function updateOfficeActionDiagnostic\(stage, details = \{\}\)\s*\{[\s\S]*?naviOwnerVerified === true/);
   assert.match(app, /if \(!isAuthenticatedOwner\)\s*\{\s*existingPanel\?\.remove\(\);\s*return;/);
   assert.match(app, /options\.officeDiagnostic && naviOwnerVerified === true/);
   assert.match(app, /Owner-only local diagnostics/);
