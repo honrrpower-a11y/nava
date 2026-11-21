@@ -645,7 +645,10 @@ test("Logo Studio offers explicit concept selection and a standalone editable HT
   assert.ok(source.includes("function downloadHtml(concept, brief, index, feedback, button)"));
   assert.ok(source.includes('type: "text/html;charset=utf-8"'));
   assert.ok(source.includes("previewDocument(concept, brief)"));
-  assert.ok(source.includes("function showExportLink(feedback, message, link)"), "successful exports must keep the same feedback node reusable for later downloads");
+  assert.ok(source.includes("function showExportLink(feedback, message, link, filename)"), "successful exports must keep the same feedback node reusable for later downloads");
+  assert.ok(source.includes("anchor.download = filename || \"nava-logo.png\""), "the visible fallback link must trigger an actual PNG download on mobile");
+  assert.ok(source.includes('anchor.textContent = "دانلود PNG"'), "the user must have an explicit save link after rendering");
+  assert.ok(source.includes("open.textContent = \" · بازکردن تصویر\""), "opening the rendered image remains available when the browser ignores download attributes");
   assert.ok(source.includes('anchor.download = safeName(brief.brandName)'));
   assert.ok(source.includes('chooseButton.dataset.logoSelect = "true"'));
   assert.ok(source.includes('item.classList.toggle("is-selected", selected)'));
