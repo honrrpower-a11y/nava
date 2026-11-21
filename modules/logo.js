@@ -865,12 +865,14 @@ export async function handleLogoRoute({ request, env, origin, corsOrigin }) {
       (/aborted|timeout/i.test(String(error?.message || "")) ? "MODEL_TIMEOUT" : "LOGO_VALIDATION_FAILED");
     console.error("[NAVA LOGO] design failure:", JSON.stringify({
       diagnosticCode,
+      errorName: String(error?.name || "Error").slice(0, 80),
       httpStatus: error?.httpStatus || null,
       finishReason: error?.finishReason || null,
       outputLength: error?.outputLength || null,
-      validationStage: error?.validationStage || null,
+      validationStage: error?.validationStage || "unclassified-design-pipeline",
       conceptIndex: error?.conceptIndex || null,
-      message: String(error?.message || error).slice(0, 220)
+      message: String(error?.message || error).slice(0, 320),
+      stack: String(error?.stack || "").slice(0, 1800)
     }));
     const messages = {
       MODEL_TIMEOUT: "زمان طراحی لوگو تمام شد؛ فرصت آزمایشی آزاد شد. بعداً دوباره تلاش کن.",
@@ -903,6 +905,8 @@ export async function handleLogoRoute({ request, env, origin, corsOrigin }) {
     };
     return fail(messages[diagnosticCode] || messages.LOGO_VALIDATION_FAILED, 502, corsOrigin, {
       code: diagnosticCode,
+      stage: error?.validationStage || "unclassified-design-pipeline",
+      conceptIndex: error?.conceptIndex || null,
       retryable: ["MODEL_TIMEOUT", "MODEL_RATE_LIMIT", "MODEL_SERVICE_ERROR", "MODEL_EMPTY_RESPONSE"].includes(diagnosticCode)
     });
   }
