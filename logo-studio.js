@@ -376,6 +376,7 @@
         centralThesis: concept.centralThesis,
         symbolConstruction: concept.symbolConstruction,
         briefElements: concept.briefElements,
+        briefAlignment: concept.briefAlignment,
         visualAnchors: concept.visualAnchors,
         anchorMap: concept.anchorMap,
         html: concept.html,
