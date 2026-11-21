@@ -10,7 +10,7 @@
   let scenes=[],musicUrl="",musicElement=null,audioContext=null,audioSource=null,audioDestination=null,musicGain=null,previewFrame=0,recorder=null,chunks=[],recording=false,startedAt=0,previewing=false,outputUrl="";
   const totalDuration=()=>Number(durationInput.value);
   const say=m=>{status.textContent=m;};
-  function dimensions(){return formatInput.value==="landscape"?[1920,1080]:[1080,1920];}
+  function dimensions(){return formatInput.value==="landscape"?[1280,720]:[720,1280];}
   function resize(){const [w,h]=dimensions();canvas.width=w;canvas.height=h;const wrap=root.querySelector(".nava-video-canvas-wrap");if(wrap)wrap.style.aspectRatio=w+" / "+h;}
   function renderSceneList(){
     if(!scenes.length){sceneList.textContent="هنوز عکسی انتخاب نشده است.";return;}
@@ -70,7 +70,7 @@
       stopPreview();resize();drawFrame(0);
       const mime=["video/webm;codecs=vp9,opus","video/webm;codecs=vp8,opus","video/webm"].find(t=>MediaRecorder.isTypeSupported(t));
       if(!mime){say("کدک سازگار پیدا نشد.");return;}
-      const stream=canvas.captureStream(30);
+      const stream=canvas.captureStream(20);
       if(musicElement){
         if(!audioContext){audioContext=new (window.AudioContext||window.webkitAudioContext)();audioSource=audioContext.createMediaElementSource(musicElement);audioDestination=audioContext.createMediaStreamDestination();musicGain=audioContext.createGain();audioSource.connect(musicGain);musicGain.connect(audioDestination);}
         await audioContext.resume();
@@ -80,7 +80,7 @@
         await musicElement.play();
       }
       chunks=[];recording=true;renderBtn.disabled=true;previewBtn.disabled=true;progress.style.width="0%";
-      recorder=new MediaRecorder(stream,{mimeType:mime,videoBitsPerSecond:5000000});
+      recorder=new MediaRecorder(stream,{mimeType:mime,videoBitsPerSecond:2200000});
       recorder.ondataavailable=e=>{if(e.data&&e.data.size)chunks.push(e.data);};
       recorder.onerror=()=>{
         stream.getTracks().forEach(t=>t.stop());if(musicElement)musicElement.pause();
@@ -116,7 +116,7 @@
         progress.style.width=Math.min(100,t/duration*100)+"%";
         if(t>=duration){finishRender();return;}
       };
-      say("در حال ساخت ویدئو؛ لطفاً صفحه را باز و روشن نگه دار.");
+      say("در حال ساخت ویدئو با تنظیمات سازگار با گوشی؛ لطفاً صفحه را باز و روشن نگه دار.");
       tick();
       renderTimer=setInterval(tick,33);
       renderWatchdog=setTimeout(()=>{if(recording)finishRender("ساخت ویدئو بیش از زمان مجاز طول کشید؛ دوباره با عکس‌های کم‌حجم‌تر امتحان کن.");},(duration+20)*1000);
