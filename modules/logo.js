@@ -781,7 +781,12 @@ async function refineLogoConcepts(data, conceptsInput, apiKey) {
         };
       }
     });
-    return { concepts: refined, refinedCount, reviewedCount: concepts.length };
+    const rejectionReasons = refined
+      .map((concept, index) => concept.visualReview === "original-preserved"
+        ? { index: index + 1, code: concept.visualReviewIssue || "LOGO_REVIEW_REJECTED" }
+        : null)
+      .filter(Boolean);
+    return { concepts: refined, refinedCount, reviewedCount: concepts.length, rejectionReasons };
   } finally {
     clearTimeout(timer);
   }
@@ -835,7 +840,12 @@ export async function handleLogoRoute({ request, env, origin, corsOrigin }) {
       const review = await refineLogoConcepts(data, input.concepts, env.GEMINI_API_KEY);
       return json({
         success: true,
-        visualReview: { method: "render-review-refine", reviewedCount: review.reviewedCount, refinedCount: review.refinedCount },
+        visualReview: {
+          method: "render-review-refine",
+          reviewedCount: review.reviewedCount,
+          refinedCount: review.refinedCount,
+          rejectionReasons: review.rejectionReasons
+        },
         concepts: review.concepts
       }, 200, corsOrigin);
     } catch (error) {
