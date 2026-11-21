@@ -398,7 +398,7 @@
     const result = await response.json();
     if (!response.ok || !result.success ||
         !Array.isArray(result.concepts) || result.concepts.length !== concepts.length) {
-      throw new Error(result.error || "بازبینی و اصلاح بصری لوگو کامل نشد.");
+      throw new Error((result.error || "بازبینی و اصلاح بصری لوگو کامل نشد.") + (result.code ? " [" + result.code + "]" : ""));
     }
     return result;
   }
