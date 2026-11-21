@@ -172,8 +172,9 @@ function validateSymbolStructure(html, css, conceptIndex) {
   const heightPx = Number(heightValue?.match(/^\s*([\d.]+)px\s*$/i)?.[1] || 0);
   const proportions = !(widthPx > 0 && heightPx > 0) || heightPx / widthPx >= 0.22;
   const detailPattern = /\b(?:position|inset|top|right|bottom|left|width|height|background(?:-color|-image)?|border(?:-[a-z-]+)?|border-radius|clip-path|transform|mask(?:-image)?)\s*:/i;
-  const detail = styledLayers.some(layer => detailPattern.test(layer.body)) ||
-    pseudoLayers.some(layer => detailPattern.test(layer.body));
+  // The outer symbol contour can be the complete design; child layers are optional.
+  const detail = hasShape || styledLayers.some(layer => detailPattern.test(layer.body)) ||
+    pseudoLayers.some(rule => detailPattern.test(rule.body));
   if (!hasWidth || !hasHeight || !hasSurface || !hasShape || !hasFilledSilhouette || !proportions || !detail) {
     const missing = [
       !hasWidth || !hasHeight ? "ابعاد مستقل و معتبر" : "",
