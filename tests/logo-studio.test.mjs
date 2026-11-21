@@ -591,24 +591,21 @@ test("NAVI categorizes Gemini quota errors without exposing provider error text"
   }
 });
 
-test("PNG export rasterizes the rendered HTML/CSS DOM without SVG foreignObject or tainted image input", () => {
+test("PNG export uses the browser-native HTML renderer so Persian shaping and bidi survive rasterization", () => {
   const source = readFileSync(new URL("../logo-renderer.js", import.meta.url), "utf8");
-  const start = source.indexOf("async function exportPngFromFrame");
+  const start = source.indexOf("async function renderFrameCanvas");
   const end = source.indexOf("global.NavaLogoRenderer=", start);
   const exporter = source.slice(start, end);
   assert.ok(start >= 0 && end > start);
-  assert.ok(exporter.includes("copyComputedTree(root,document)"), "iframe computed styles and pseudo-elements must be copied into the parent document");
-  assert.ok(exporter.includes("global.html2canvas(clone"), "rasterization must target the same-document cloned artboard");
-  assert.ok(exporter.includes("stage.appendChild(clone)"), "the cloned artboard must be mounted in the visible staging layer");
-  assert.ok(source.includes("appendPseudo(\"::before\")") && source.includes("appendPseudo(\"::after\")"));
-  assert.match(exporter, /allowTaint:false/);
-  assert.match(exporter, /useCORS:false/);
-  assert.match(exporter, /foreignObjectRendering:false/);
+  assert.ok(exporter.includes("const built=await buildSvg(frame"), "PNG must rasterize the browser-rendered artboard rather than re-layout each glyph through html2canvas");
+  assert.ok(exporter.includes("new Blob([built.svg]"), "the browser-native HTML/SVG package is rendered before PNG encoding");
+  assert.ok(exporter.includes("img.src=url"));
   assert.ok(exporter.includes("canvas.toBlob"));
   assert.ok(exporter.includes("getImageData"), "empty raster output must be rejected instead of downloaded as a blank PNG");
-  assert.ok(!exporter.includes("<foreignObject") && !exporter.includes("image.src"));
-  assert.ok(source.includes("global.NavaLogoRenderer={downloadBlob,exportPngFromFrame}"), "the public renderer exposes PNG only, not SVG export");
-  assert.ok(!source.includes("global.NavaLogoRenderer={buildSvg"), "SVG is not available as a user-facing export");
+  assert.ok(exporter.includes("capturePreviewDataUrl"), "the same native renderer supplies screenshots for visual review");
+  assert.ok(exporter.includes("Persian/Arabic contextual shaping") || source.includes("Persian/Arabic contextual shaping"));
+  assert.ok(source.includes("global.NavaLogoRenderer={downloadBlob,exportPngFromFrame,capturePreviewDataUrl}"));
+  assert.ok(!exporter.includes("global.html2canvas"), "html2canvas is not used for Persian text export");
 });
 test("Logo Studio waits for a measurable sandboxed preview before PNG export", () => {
   const source = readFileSync(new URL("../logo-studio.js", import.meta.url), "utf8");
@@ -786,6 +783,74 @@ test("NAVI accepts a transparent symbol wrapper when nested layers create the ac
     assert.equal(result.success, true);
     assert.ok(result.concepts.some(concept => concept.title === "موج پیوند"));
     assert.equal(db.visitorUsed, 1);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+
+test("Logo Studio performs a rendered-image review pass before presenting final concepts", () => {
+  const ui = readFileSync(new URL("../logo-studio.js", import.meta.url), "utf8");
+  const backend = readFileSync(new URL("../modules/logo.js", import.meta.url), "utf8");
+  assert.ok(ui.includes("capturePreviewDataUrl(frame, 640)"));
+  assert.ok(ui.includes('action: "visual-refine"'));
+  assert.ok(ui.includes("await Promise.all(activeFrames.map(waitForFrame))"));
+  assert.ok(backend.includes("async function refineLogoConcepts"));
+  assert.ok(backend.includes("inlineData: { mimeType: \"image/png\", data: image }"));
+  assert.ok(backend.includes("actual browser-rendered PNG preview"));
+  assert.ok(backend.includes('input?.action === "visual-refine"'));
+  assert.ok(backend.includes('method: "render-review-refine"'));
+});
+
+test("NAVI visual refinement reviews real PNGs, validates revised HTML/CSS, and does not consume another trial", async () => {
+  const originalFetch = globalThis.fetch;
+  const db = new FakeD1();
+  const html = '<div class="mark"><div class="navi-symbol" data-logo-role="symbol"><span class="wave"></span><span class="orbit"></span></div><strong><span data-logo-role="brand">نوا</span></strong><small><span data-logo-role="slogan">صدای ایده‌های تازه</span></small></div>';
+  const css = '.logo-art-root{display:grid;place-items:center;width:100%;height:100%;background:var(--logo-background)}.mark{display:grid;gap:20px;justify-items:center;text-align:center}.navi-symbol{position:relative;width:240px;height:240px;background:radial-gradient(circle at center,#263b59,var(--logo-background));border:2px solid var(--logo-primary);border-radius:42%;box-shadow:0 10px 24px rgba(0,0,0,.2)}.wave{position:absolute;left:20%;top:40%;width:60%;height:20%;background:var(--logo-primary);border-radius:50%}.orbit{position:absolute;inset:12%;border:3px solid var(--logo-primary);border-radius:50%}';
+  let sentPayload;
+  globalThis.fetch = async (_url, options) => {
+    sentPayload = JSON.parse(options.body);
+    return new Response(JSON.stringify({
+      candidates: [{
+        content: { parts: [{ text: JSON.stringify({
+          concepts: [{ index: 1, html, css, visualRevisionNotes: "سیلوئت نشان منسجم‌تر شد و لایه‌های اصلی عمق و فاصله دقیق‌تری گرفتند." }]
+        }) }] }
+      }]
+    }), { status: 200, headers: { "Content-Type": "application/json" } });
+  };
+  try {
+    const concept = {
+      title: "موج پیوند",
+      centralThesis: "پیوند دو مسیر صوتی به یک نشانه پیوسته و باز تبدیل می‌شود",
+      symbolConstruction: "دو مسیر منحنی در مرکز به هم می‌رسند و یک شکاف پیوسته در دل فرم می‌سازند",
+      briefAlignment: "این فرم اتصال صدا و خلاقیت را در هویت استودیوی موسیقی نشان می‌دهد",
+      briefElements: ["موج صوتی", "اتصال دو مسیر"],
+      visualAnchors: [
+        { id: "wave", description: "موج صوتی", relationship: "درون ساختار نشان به صورت لایه اصلی قرار می‌گیرد" },
+        { id: "orbit", description: "مسیر مکمل", relationship: "دور و پشت فرم موج قرار می‌گیرد" }
+      ],
+      anchorMap: [
+        { anchorId: "wave", layerClass: "wave", visualRole: "فرم موجی پرشده در مرکز نشان" },
+        { anchorId: "orbit", layerClass: "orbit", visualRole: "حلقه هندسی پیرامون فرم مرکزی" }
+      ],
+      html, css, previewImage: "data:image/png;base64,aGVsbG8="
+    };
+    const response = await handleLogoRoute({
+      request: makeRequest({ ...INPUT, action: "visual-refine", concepts: [concept] }),
+      env: { NAVA_DB: db, NAVI_SESSION_SECRET: "test-secret-key", GEMINI_API_KEY: "test-gemini-key" },
+      origin: ORIGIN,
+      corsOrigin: ORIGIN
+    });
+    const result = await response.json();
+    assert.equal(response.status, 200, JSON.stringify(result));
+    assert.equal(result.success, true);
+    assert.equal(result.visualReview.method, "render-review-refine");
+    assert.equal(result.visualReview.refinedCount, 1);
+    assert.equal(result.concepts[0].visualReview, "refined");
+    assert.match(result.concepts[0].html, /data-logo-role="brand"/);
+    assert.match(result.concepts[0].html, /نوا/);
+    assert.ok(sentPayload.contents[0].parts.some(part => part.inlineData?.mimeType === "image/png"));
+    assert.equal(db.visitorUsed, 0, "visual review must not reserve or consume another guest trial");
   } finally {
     globalThis.fetch = originalFetch;
   }
