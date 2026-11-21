@@ -255,7 +255,8 @@
       ["عناصر اصلی بریف", Array.isArray(concept.briefElements) ? concept.briefElements.join("، ") : ""],
       ["منطق شکل‌گیری", concept.mechanism],
       ["ویژگی متمایز", concept.expressionMove],
-      ["تفاوت این مسیر", concept.differsBy]
+      ["تفاوت این مسیر", concept.differsBy],
+      ["بازبینی و اصلاح بصری", concept.visualRevisionNotes]
     ];
     strategyRows.forEach(([label, value]) => {
       if (!value) return;
@@ -359,6 +360,47 @@
     return { token, visitorId };
   }
 
+  async function visuallyRefineConcepts(concepts, brief, reviewToken, headers) {
+    if (!reviewToken || !window.NavaLogoRenderer?.capturePreviewDataUrl) {
+      throw new Error("مجوز یا ابزار ثبت تصویر برای بازبینی بصری آماده نیست.");
+    }
+    const activeFrames = frames.slice(0, concepts.length);
+    const renderedConcepts = await Promise.all(concepts.map(async (concept, index) => {
+      const frame = activeFrames[index];
+      if (!frame) throw new Error("یکی از قاب‌های لوگو برای بازبینی پیدا نشد.");
+      await waitForFrame(frame);
+      const previewImage = await window.NavaLogoRenderer.capturePreviewDataUrl(frame, 640);
+      return {
+        title: concept.title,
+        centralThesis: concept.centralThesis,
+        symbolConstruction: concept.symbolConstruction,
+        briefElements: concept.briefElements,
+        visualAnchors: concept.visualAnchors,
+        anchorMap: concept.anchorMap,
+        html: concept.html,
+        css: concept.css,
+        previewImage
+      };
+    }));
+    const response = await fetch("https://nava-music-api.honrrpower.workers.dev/logo/generate", {
+      method: "POST",
+      headers,
+      cache: "no-store",
+      body: JSON.stringify({
+        ...brief,
+        action: "visual-refine",
+        reviewToken,
+        concepts: renderedConcepts
+      })
+    });
+    const result = await response.json();
+    if (!response.ok || !result.success ||
+        !Array.isArray(result.concepts) || result.concepts.length !== concepts.length) {
+      throw new Error(result.error || "بازبینی و اصلاح بصری لوگو کامل نشد.");
+    }
+    return result;
+  }
+
   async function generate(event) {
     event?.preventDefault();
     const brief = readBrief();
@@ -394,10 +436,25 @@
       if (!Array.isArray(result.concepts) || result.concepts.length < 1 || result.concepts.length > 3) {
         throw new Error("پاسخ موتور طراحی معتبر نیست؛ طرح قابل‌قبولی دریافت نشد.");
       }
-      const finalConcepts = result.concepts;
+      let finalConcepts = result.concepts;
       mountConcepts(finalConcepts, brief, result.planning);
       empty.hidden = true;
-      status.textContent = "سه طرح HTML/CSS ساخته شدند؛ همان طرح‌های اولیه بدون بازطراحی خودکار نمایش داده شدند.";
+      status.textContent = "طرح‌های اولیه ساخته شدند؛ نوا در حال مشاهده تصویر واقعی هر لوگو و اصلاح ایرادهای بصری است.";
+      submit.textContent = "در حال بازبینی بصری…";
+      try {
+        const visualReview = await visuallyRefineConcepts(
+          finalConcepts, brief, result.reviewToken, headers
+        );
+        finalConcepts = visualReview.concepts;
+        mountConcepts(finalConcepts, brief, result.planning);
+        const refinedCount = Number(visualReview.visualReview?.refinedCount || 0);
+        status.textContent = refinedCount > 0
+          ? "بازبینی تصویری انجام شد؛ " + refinedCount + " طرح پس از مشاهده رندر واقعی اصلاح شدند."
+          : "بازبینی تصویری انجام شد؛ طرح‌های اولیه بدون تغییر حفظ شدند چون اصلاح معتبر تأیید نشد.";
+      } catch (reviewError) {
+        status.textContent = "بازبینی تصویری کامل نشد؛ طرح‌های اولیه حفظ شدند. " +
+          (reviewError?.message || "خطای نامشخص در بازبینی.");
+      }
       results.scrollIntoView({ behavior: "smooth", block: "start" });
     } catch (error) {
       status.textContent = error?.message || "ارتباط با موتور طراحی برقرار نشد.";

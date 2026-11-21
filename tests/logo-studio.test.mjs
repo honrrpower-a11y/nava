@@ -906,12 +906,15 @@ test("NAVI accepts a transparent symbol wrapper when nested layers create the ac
 });
 
 
-test("Logo Studio preserves initial concepts without an automatic visual redesign", () => {
+test("Logo Studio captures real renders and runs validated automatic visual refinement", () => {
   const ui = readFileSync(new URL("../logo-studio.js", import.meta.url), "utf8");
-  assert.ok(ui.includes("const finalConcepts = result.concepts"));
-  assert.ok(ui.includes("بدون بازطراحی خودکار"));
-  assert.ok(!ui.includes('action: "visual-refine"'));
-  assert.ok(!ui.includes("capturePreviewDataUrl(frame, 640)"));
+  assert.ok(ui.includes("async function visuallyRefineConcepts"));
+  assert.ok(ui.includes('action: "visual-refine"'));
+  assert.ok(ui.includes("capturePreviewDataUrl(frame, 640)"));
+  assert.ok(ui.includes("result.reviewToken"));
+  assert.ok(ui.includes("finalConcepts = visualReview.concepts"));
+  assert.ok(ui.includes("طرح‌های اولیه حفظ شدند"));
+  assert.ok(ui.includes("بازبینی و اصلاح بصری"));
 });
 
 test("NAVI visual refinement reviews real PNGs, validates revised HTML/CSS, and does not consume another trial", async () => {
