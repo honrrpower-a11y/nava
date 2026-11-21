@@ -397,7 +397,7 @@
         })));
         const reviewResponse = await fetch("https://nava-music-api.honrrpower.workers.dev/logo/generate", {
           method: "POST", headers, cache: "no-store",
-          body: JSON.stringify({ ...brief, action: "visual-refine", concepts: conceptsForReview })
+          body: JSON.stringify({ ...brief, action: "visual-refine", reviewToken: result.reviewToken, concepts: conceptsForReview })
         });
         const review = await reviewResponse.json();
         if (!reviewResponse.ok || !review.success ||
