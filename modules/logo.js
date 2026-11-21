@@ -458,8 +458,14 @@ async function designLogos(data, apiKey) {
       throw error;
     }
     const planningCandidate = planningPayload?.candidates?.[0];
-    const planningFinish = String(planningCandidate?.finishReason || "");
-    if (!planningCandidate || (planningFinish && !["STOP", "FINISH_REASON_UNSPECIFIED"].includes(planningFinish))) {
+    if (!planningCandidate) {
+      const error = new Error("Gemini returned no candidate during concept planning.");
+      error.diagnosticCode = "MODEL_EMPTY_RESPONSE";
+      error.stage = "concept-planning";
+      throw error;
+    }
+    const planningFinish = String(planningCandidate.finishReason || "");
+    if (planningFinish && !["STOP", "FINISH_REASON_UNSPECIFIED"].includes(planningFinish)) {
       const error = new Error("Gemini did not complete concept planning: " + (planningFinish || "EMPTY"));
       error.diagnosticCode = planningFinish === "MAX_TOKENS" ? "MODEL_OUTPUT_TRUNCATED" : "MODEL_PLANNING_INCOMPLETE";
       error.stage = "concept-planning";
