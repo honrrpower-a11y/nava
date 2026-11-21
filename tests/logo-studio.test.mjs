@@ -594,6 +594,7 @@ test("NAVI categorizes Gemini quota errors without exposing provider error text"
 test("Persian text is painted with the browser canvas text shaper after DOM rasterization", () => {
  const source=readFileSync(new URL("../logo-renderer.js",import.meta.url),"utf8");
  assert.ok(source.includes("function paintNativeText"));
+ assert.doesNotThrow(() => new Function(source), "logo-renderer.js must remain valid JavaScript");
  assert.ok(source.includes("ctx.direction=style.direction"));
  assert.ok(source.includes("ctx.fillText(line.text"));
  assert.ok(source.includes("hideCloneText(clone)"));
