@@ -18,6 +18,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" defer></script>
   <script src="logo-renderer.js?v=logo-persian-native-text-20261121-1" defer></script>
   <script src="logo-studio.js?v=logo-per-concept-visual-review-20261121-1" defer></script>
+  <link rel="stylesheet" href="video-studio.css?v=image-motion-browser-20261122-1">
 </head>
 <body>
 
@@ -576,6 +577,32 @@
           <div class="studio-output-placeholder"><span aria-hidden="true">✦</span><strong>فضای خروجی پروژه</strong><p>نتیجه‌ها و فایل‌های این استودیو پس از تکمیل ابزار تخصصی در این قسمت نمایش داده می‌شوند.</p></div>
         </aside>
       </div>
+      <section class="nava-video-engine" id="navaVideoEngine" aria-labelledby="navaVideoEngineTitle">
+        <span class="studio-step">IMAGE TO MOTION / BROWSER RENDER</span>
+        <h2 id="navaVideoEngineTitle">تبدیل تصویر به ویدئو</h2>
+        <p>تصویر خودت را بارگذاری کن؛ حرکت سینمایی دوربین، نورپردازی نرم و نوشته‌های دلخواه را اضافه کن و خروجی ویدئویی بگیر. پردازش روی همین دستگاه انجام می‌شود و تصویرت به سرور ارسال نمی‌شود.</p>
+        <div class="nava-video-grid">
+          <div class="nava-video-controls">
+            <div><label for="navaVideoImage">۱. انتخاب تصویر (حداکثر ۲۰ مگابایت)</label><input id="navaVideoImage" type="file" accept="image/*"></div>
+            <div><label for="navaVideoTitle">۲. تیتر روی ویدئو (اختیاری)</label><input id="navaVideoTitle" type="text" maxlength="70" placeholder="گاهی، فقط باید مکث کرد"></div>
+            <div><label for="navaVideoSubtitle">زیرتیتر (اختیاری)</label><input id="navaVideoSubtitle" type="text" maxlength="110" placeholder="یک تصویر؛ با حرکت دوربین و حس سینمایی"></div>
+            <div><label for="navaVideoFormat">۳. نسبت تصویر</label><select id="navaVideoFormat"><option value="portrait">عمودی ۹:۱۶ — استوری و ریلز</option><option value="landscape">افقی ۱۶:۹ — ویدئوی عریض</option></select></div>
+            <div><label for="navaVideoDuration">مدت ویدئو</label><select id="navaVideoDuration"><option value="6">۶ ثانیه</option><option value="8" selected>۸ ثانیه</option><option value="10">۱۰ ثانیه</option><option value="12">۱۲ ثانیه</option></select></div>
+            <div><label for="navaVideoMotion">شدت حرکت دوربین</label><select id="navaVideoMotion"><option value="cinematic" selected>سینمایی — زوم و حرکت آرام</option><option value="subtle">ملایم — حرکت ظریف</option></select></div>
+            <div class="nava-video-actions"><button class="nava-video-secondary" id="navaVideoPreview" type="button" disabled>پیش‌نمایش متحرک</button><button class="nava-video-primary" id="navaVideoRender" type="button" disabled>ساخت ویدئو</button></div>
+            <p class="nava-video-hint">خروجی فعلی WebM است؛ این نسخه تصویر را واقعاً درون‌سازی و حرکت دوربین ایجاد می‌کند، اما هنوز اشیای داخل عکس را با هوش مصنوعی متحرک نمی‌کند. برای ساخت MP4 و انیمیشن مولد، موتور سروری جداگانه در مرحله بعد اضافه می‌شود.</p>
+          </div>
+          <div class="nava-video-preview">
+            <div class="nava-video-canvas-wrap"><canvas id="navaVideoCanvas" width="1080" height="1920" aria-label="پیش‌نمایش تصویر ویدئو"></canvas></div>
+            <div class="nava-video-status" id="navaVideoStatus" role="status" aria-live="polite">یک تصویر بارگذاری کن.</div>
+            <div class="nava-video-progress" aria-label="پیشرفت ساخت ویدئو"><span id="navaVideoProgress"></span></div>
+            <div class="nava-video-result" id="navaVideoResult" hidden>
+              <h3>ویدئوی ساخته‌شده</h3><video id="navaVideoOutput" controls playsinline></video>
+              <div class="nava-video-actions"><a class="nava-video-primary" id="navaVideoDownload" hidden download="nava-image-motion.webm">دریافت ویدئو</a></div>
+            </div>
+          </div>
+        </div>
+      </section>
     </div>
   </section>
   <section class="page nava-studio-page" id="seoPage" data-studio-service="سئو">
@@ -1475,5 +1502,6 @@
   <script src="office-file-tools.js?v=office-followup-sync-20261118-1" defer></script>
   <script src="office-edit-tools.js?v=office-pptx-edit-persistence-preview-20261119-6" defer></script>
   <script src="office-preview.js?v=office-preview-rollback-20261119-2" defer></script>
+  <script src="video-studio.js?v=image-motion-browser-20261122-1" defer></script>
 </body>
 </html>
