@@ -18,3 +18,19 @@
 .nava-video-result{margin-top:16px;padding:12px;border-radius:14px;background:rgba(27,44,67,.65)}
 .nava-video-result video{width:100%;max-height:420px;border-radius:12px;background:#050912}
 @media(max-width:760px){.nava-video-grid{grid-template-columns:1fr}.nava-video-engine{padding:16px}.nava-video-canvas-wrap{max-width:280px}}
+
+/* Multi-step video studio tabs and media timeline */
+.nava-video-tabs{display:flex;gap:8px;overflow-x:auto;padding:5px 0 14px;margin:18px 0;border-bottom:1px solid rgba(145,170,210,.2)}
+.nava-video-tab{flex:0 0 auto;border:1px solid rgba(145,170,210,.24);border-radius:12px;padding:11px 14px;background:#101b2d;color:#dce7f8;font-weight:700;cursor:pointer}
+.nava-video-tab.is-active{background:#e5bd62;color:#151a22;border-color:#e5bd62}
+.nava-video-panel{padding:12px 0}.nava-video-panel[hidden]{display:none}
+.nava-video-panel textarea{width:100%;box-sizing:border-box;border:1px solid rgba(145,170,210,.24);border-radius:12px;padding:12px;background:#101b2d;color:#f4f7ff;line-height:1.8}
+.nava-video-scene-list{display:grid;gap:8px;margin-top:12px}
+.nava-video-scene{display:grid;grid-template-columns:48px minmax(0,1fr) 32px 32px 32px;align-items:center;gap:7px;padding:7px;border:1px solid rgba(145,170,210,.2);border-radius:12px;background:rgba(16,27,45,.7);min-width:0}
+.nava-video-scene img{width:48px;height:48px;object-fit:cover;border-radius:8px}
+.nava-video-scene span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.85rem}
+.nava-video-scene button{border:0;border-radius:8px;padding:7px;background:#24334b;color:#fff}
+.nava-video-scene button:disabled{opacity:.3}
+.nava-video-navi-result{margin-top:14px;padding:14px;border-radius:12px;background:rgba(27,44,67,.65);line-height:1.8}
+.nava-video-actions a{display:inline-flex;align-items:center;text-decoration:none}
+@media(max-width:760px){.nava-video-tabs{margin-inline:-4px}.nava-video-tab{font-size:.82rem;padding:10px}.nava-video-scene{grid-template-columns:40px minmax(0,1fr) 28px 28px 28px}.nava-video-scene img{width:40px;height:40px}}
