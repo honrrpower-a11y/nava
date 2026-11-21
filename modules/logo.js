@@ -768,7 +768,7 @@ async function refineLogoConcepts(data, conceptsInput, apiKey) {
     parts.push({ inlineData: { mimeType: "image/png", data: image } });
   });
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 90000);
+  const timer = setTimeout(() => controller.abort(), 120000);
   try {
     const response = await fetchGeminiWithRetry(
       "https://generativelanguage.googleapis.com/v1beta/models/" + GEMINI_MODEL + ":generateContent",
@@ -910,7 +910,7 @@ export async function handleLogoRoute({ request, env, origin, corsOrigin }) {
         concepts: review.concepts
       }, 200, corsOrigin);
     } catch (error) {
-      const diagnosticCode = error?.diagnosticCode || "LOGO_VISUAL_REVIEW_FAILED";
+      const diagnosticCode = error?.diagnosticCode || (error?.name === "AbortError" ? "MODEL_TIMEOUT" : "LOGO_VISUAL_REVIEW_FAILED");
       console.error("[NAVA LOGO] visual review failure:", JSON.stringify({
         diagnosticCode,
         httpStatus: error?.httpStatus || null,

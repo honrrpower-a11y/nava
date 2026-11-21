@@ -908,6 +908,7 @@ test("NAVI accepts a transparent symbol wrapper when nested layers create the ac
 
 test("Logo Studio captures real renders and runs validated automatic visual refinement", () => {
   const ui = readFileSync(new URL("../logo-studio.js", import.meta.url), "utf8");
+  const backend = readFileSync(new URL("../modules/logo.js", import.meta.url), "utf8");
   assert.ok(ui.includes("async function visuallyRefineConcepts"));
   assert.ok(ui.includes('action: "visual-refine"'));
   assert.ok(ui.includes("capturePreviewDataUrl(frame, 640)"));
@@ -915,6 +916,9 @@ test("Logo Studio captures real renders and runs validated automatic visual refi
   assert.ok(ui.includes("result.reviewToken"));
   assert.ok(ui.includes("finalConcepts = visualReview.concepts"));
   assert.ok(ui.includes("طرح‌های اولیه حفظ شدند"));
+  assert.ok(ui.includes("result.code"), "visual-review failures must expose their diagnostic code");
+  assert.ok(backend.includes("error?.name === \"AbortError\" ? \"MODEL_TIMEOUT\""), "review timeouts must be classified as retryable model timeouts");
+  assert.ok(backend.includes("controller.abort(), 120000"), "visual review must have a 120-second deadline");
   assert.ok(ui.includes("بازبینی و اصلاح بصری"));
 });
 
