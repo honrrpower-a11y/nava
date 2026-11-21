@@ -1018,6 +1018,9 @@ test("NAVI prioritizes the actual brief and only uses layers when the idea needs
   assert.ok(backend.includes("NON-NEGOTIABLE REVISION STANDARD"));
   assert.ok(backend.includes("Change the actual silhouette"));
   assert.ok(backend.includes("PHASE 6B — PROFESSIONAL LOGO FINISH"));
+  assert.ok(backend.includes("PHASE 6C — SEMANTIC RECOGNITION AND INTEGRATION"));
+  assert.ok(backend.includes("A music reference must be more specific than three vertical bars"));
+  assert.ok(backend.includes("redesign the silhouette"));
   assert.ok(backend.includes("Treat negative space as designed geometry"));
   assert.ok(backend.includes("optical centering and the mark-to-wordmark relationship"));
   assert.ok(backend.includes("LOGO_REVIEW_NO_MATERIAL_CHANGE"));
