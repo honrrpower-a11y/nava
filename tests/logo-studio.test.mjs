@@ -144,6 +144,14 @@ test("NAVI writes an English brief and three sanitized HTML/CSS logo designs in 
     geminiCalls += 1;
     sentPrompt = JSON.stringify(JSON.parse(options.body));
     sentPrompts.push(sentPrompt);
+    if (geminiCalls === 1) {
+      const generated = await makeGeminiResponse();
+      const payload = await generated.json();
+      const planned = JSON.parse(payload.candidates[0].content.parts[0].text);
+      return new Response(JSON.stringify({
+        candidates: [{ content: { parts: [{ text: JSON.stringify({ blueprints: planned.concepts }) }] } }]
+      }), { status: 200, headers: { "Content-Type": "application/json" } });
+    }
     return makeGeminiResponse();
   };
   try {
@@ -160,6 +168,8 @@ test("NAVI writes an English brief and three sanitized HTML/CSS logo designs in 
     assert.equal(geminiCalls, 2, "NAVI first plans visual construction, then builds the HTML/CSS designs");
     assert.match(sentPrompts[0], /senior identity concept architect/i);
     assert.match(sentPrompts[0], /geometryRecipe/i);
+    assert.match(sentPrompts[0], /exactly 3 objects/i);
+    assert.match(sentPrompts[0], /Do not rename the concepts key/i);
     assert.match(sentPrompts[0], /Do not write HTML, CSS, SVG/i);
     assert.match(sentPrompts[0], /at least two diagnostic visual cues/i);
     assert.match(sentPrompt, /APPROVED VISUAL CONSTRUCTION BLUEPRINT/i);
