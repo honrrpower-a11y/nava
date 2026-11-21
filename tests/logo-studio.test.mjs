@@ -908,6 +908,7 @@ test("NAVI accepts a transparent symbol wrapper when nested layers create the ac
 
 test("Logo Studio captures real renders and runs validated automatic visual refinement", () => {
   const ui = readFileSync(new URL("../logo-studio.js", import.meta.url), "utf8");
+  const backend = readFileSync(new URL("../modules/logo.js", import.meta.url), "utf8");
   assert.ok(ui.includes("async function visuallyRefineConcepts"));
   assert.ok(ui.includes('action: "visual-refine"'));
   assert.ok(ui.includes("capturePreviewDataUrl(frame, 640)"));
