@@ -193,11 +193,11 @@ function validateSymbolStructure(html, css, conceptIndex) {
   // The outer symbol contour can be the complete design; child layers are optional.
   // A lone shaped silhouette is valid only when no empty child layers pretend to construct it.
   const hasDistinctOuterSilhouette = symbolRules.some(rule => {
-    if (/::?(?:before|after)\\b/i.test(rule.selector)) return false;
-    const radius = rule.body.match(/\\bborder-radius\\s*:\\s*([^;]+)/i)?.[1]?.trim() || "";
-    const clipPath = rule.body.match(/\\bclip-path\\s*:\\s*([^;]+)/i)?.[1]?.trim() || "";
+    if (/::?(?:before|after)\b/i.test(rule.selector)) return false;
+    const radius = rule.body.match(/\bborder-radius\s*:\s*([^;]+)/i)?.[1]?.trim() || "";
+    const clipPath = rule.body.match(/\bclip-path\s*:\s*([^;]+)/i)?.[1]?.trim() || "";
     return Boolean(clipPath && !/^none$/i.test(clipPath)) ||
-      Boolean(radius && !/^50%(?:\\s+50%)?$/i.test(radius) && !/^0(?:px|%|rem)?(?:\\s|$)/i.test(radius));
+      Boolean(radius && !/^50%(?:\s+50%)?$/i.test(radius) && !/^0(?:px|%|rem)?(?:\s|$)/i.test(radius));
   });
   // A generic circular badge plus empty child spans is not a complete mark.
   // A custom outer contour (e.g. clip-path) may stand alone; otherwise require
