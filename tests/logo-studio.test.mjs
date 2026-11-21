@@ -1063,3 +1063,14 @@ test("NAVI retries a transient Gemini service failure once before returning a lo
     globalThis.fetch = originalFetch;
   }
 });
+
+
+test("NAVI exposes per-concept visual refinement rejection diagnostics to Logo Studio", () => {
+  const backend = readFileSync(new URL("../modules/logo.js", import.meta.url), "utf8");
+  const ui = readFileSync(new URL("../logo-studio.js", import.meta.url), "utf8");
+  assert.ok(backend.includes("rejectionReasons: review.rejectionReasons"));
+  assert.ok(backend.includes('code: concept.visualReviewIssue || "LOGO_REVIEW_REJECTED"'));
+  assert.ok(ui.includes('item.code'));
+  assert.ok(ui.includes("علت دقیق:"));
+  assert.ok(ui.includes('["علت رد اصلاح", concept.visualReviewIssue]'));
+});

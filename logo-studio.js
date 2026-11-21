@@ -256,7 +256,8 @@
       ["منطق شکل‌گیری", concept.mechanism],
       ["ویژگی متمایز", concept.expressionMove],
       ["تفاوت این مسیر", concept.differsBy],
-      ["بازبینی و اصلاح بصری", concept.visualRevisionNotes]
+      ["بازبینی و اصلاح بصری", concept.visualRevisionNotes],
+      ["علت رد اصلاح", concept.visualReviewIssue]
     ];
     strategyRows.forEach(([label, value]) => {
       if (!value) return;
@@ -448,9 +449,16 @@
         finalConcepts = visualReview.concepts;
         mountConcepts(finalConcepts, brief, result.planning);
         const refinedCount = Number(visualReview.visualReview?.refinedCount || 0);
+        const rejectionDetails = Array.isArray(visualReview.visualReview?.rejectionReasons)
+          ? visualReview.visualReview.rejectionReasons
+              .map(item => "طرح " + item.index + ": " + item.code)
+              .join("؛ ")
+          : "";
         status.textContent = refinedCount > 0
-          ? "بازبینی تصویری انجام شد؛ " + refinedCount + " طرح پس از مشاهده رندر واقعی اصلاح شدند."
-          : "بازبینی تصویری انجام شد؛ طرح‌های اولیه بدون تغییر حفظ شدند چون اصلاح معتبر تأیید نشد.";
+          ? "بازبینی تصویری انجام شد؛ " + refinedCount + " طرح پس از مشاهده رندر واقعی اصلاح شدند." +
+            (rejectionDetails ? " موارد ردشده: " + rejectionDetails : "")
+          : "بازبینی تصویری انجام شد؛ اصلاح معتبر تأیید نشد." +
+            (rejectionDetails ? " علت دقیق: " + rejectionDetails : " کد علت در دسترس نیست.");
       } catch (reviewError) {
         status.textContent = "بازبینی تصویری کامل نشد؛ طرح‌های اولیه حفظ شدند. " +
           (reviewError?.message || "خطای نامشخص در بازبینی.");
