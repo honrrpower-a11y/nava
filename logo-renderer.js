@@ -36,6 +36,7 @@ function downloadBlob(blob, filename) {
       if (!content || content === "none" || content === "normal" || content === "''" || content === '""') return;
       const generated = targetDocument.createElement("span");
       generated.setAttribute("aria-hidden", "true");
+      generated.setAttribute("data-render-pseudo", "true");
       for (let i = 0; i < pseudoStyle.length; i += 1) {
         const property = pseudoStyle[i];
         if (!property || property === "content" || property.startsWith("--")) continue;
@@ -72,7 +73,7 @@ function extractNativeText(source,clone,rootRect,runs){
   clone.nodeValue="";return;
  }
  if(source.nodeType!==1||clone.nodeType!==1)return;
- const a=Array.from(source.childNodes||[]),b=Array.from(clone.childNodes||[]);
+ const a=Array.from(source.childNodes||[]),b=Array.from(clone.childNodes||[]).filter(child=>!(child.nodeType===1&&child.hasAttribute("data-render-pseudo")));
  for(let i=0;i<Math.min(a.length,b.length);i++)extractNativeText(a[i],b[i],rootRect,runs);
 }
 function paintNativeText(canvas,runs,scale){
