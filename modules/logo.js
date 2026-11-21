@@ -422,6 +422,7 @@ async function designLogos(data, apiKey) {
       "CUSTOM BRIEF: preserve exact named objects, requested letterforms and relationships. Creative freedom is limited to professional execution, not replacing the idea. NAVI BRIEF: derive a distinctive idea from brand, industry, audience and personality.",
       "Create exactly " + conceptCount + " distinct construction routes. In custom mode all routes must express the same requested core idea but use genuinely different geometry. Do not vary only color, layout or decoration.",
       "The NAVA HTML/CSS lab is a craft benchmark only. Do not copy its N mark, orbit rings, badge, palette or composition.",
+      "Return exactly this JSON shape: {\"concepts\":[{\"title\":\"...\",\"centralThesis\":\"...\",\"briefElements\":[\"...\"],\"symbolConstruction\":\"...\",\"briefAlignment\":\"...\",\"silhouette\":\"...\",\"objectCues\":[\"...\",\"...\"],\"spatialRelationship\":\"...\",\"negativeSpace\":\"...\",\"geometryRecipe\":\"...\",\"firstRead\":\"...\",\"mustAvoid\":[\"...\"]}]}. The concepts array must contain exactly " + conceptCount + " objects. Do not rename the concepts key or wrap the JSON in another object.",
       "Do not write HTML, CSS, SVG, markup, paths or code. Do not expose chain-of-thought. Return concise final design decisions only as valid JSON."
     ].join("\n");
     const planningResponse = await fetchGeminiWithRetry(
@@ -481,10 +482,14 @@ async function designLogos(data, apiKey) {
       error.stage = "concept-planning";
       throw error;
     }
-    if (!Array.isArray(blueprint.concepts) || blueprint.concepts.length !== conceptCount) {
+    const plannedConcepts = Array.isArray(blueprint) ? blueprint :
+      (Array.isArray(blueprint.concepts) ? blueprint.concepts :
+      (Array.isArray(blueprint.blueprints) ? blueprint.blueprints :
+      (Array.isArray(blueprint.visualBlueprints) ? blueprint.visualBlueprints : null)));
+    if (!plannedConcepts || plannedConcepts.length !== conceptCount) {
       throw validationError("LOGO_BLUEPRINT_COUNT", "NAVI did not return the requested number of visual construction blueprints.", "concept-planning");
     }
-    const designBlueprints = blueprint.concepts.map((item, index) => {
+    const designBlueprints = plannedConcepts.map((item, index) => {
       const normalized = {
         index: index + 1,
         title: safeText(item?.title, 120),
