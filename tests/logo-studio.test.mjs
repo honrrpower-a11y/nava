@@ -98,6 +98,12 @@ function makeRequest(body = INPUT) {
 
 function makeGeminiResponse(plan = makeDesign()) {
   for (const concept of plan.concepts || []) {
+    concept.silhouette ||= concept.symbolConstruction || concept.centralThesis;
+    concept.objectCues ||= (concept.briefElements || []).slice(0, 2);
+    concept.spatialRelationship ||= concept.briefAlignment || concept.symbolConstruction;
+    concept.negativeSpace ||= concept.symbolConstruction;
+    concept.geometryRecipe ||= concept.symbolConstruction;
+    concept.firstRead ||= concept.centralThesis;
     const html = String(concept.html || "");
     const symbolStart = html.indexOf('class="navi-symbol');
     const symbolOpenEnd = symbolStart >= 0 ? html.indexOf(">", symbolStart) : -1;
@@ -154,6 +160,7 @@ test("NAVI writes an English brief and three sanitized HTML/CSS logo designs in 
     assert.match(sentPrompts[0], /senior identity concept architect/i);
     assert.match(sentPrompts[0], /geometryRecipe/i);
     assert.match(sentPrompts[0], /Do not write HTML, CSS, SVG/i);
+    assert.match(sentPrompts[0], /at least two diagnostic visual cues/i);
     assert.match(sentPrompt, /APPROVED VISUAL CONSTRUCTION BLUEPRINT/i);
     assert.match(sentPrompt, /diagnostic object cues, spatial relationships, negative space and geometry recipe/i);
     assert.match(sentPrompt, /CRAFT BENCHMARK — STUDY THE HAND-BUILT NAVA HTML\/CSS LAB AS A CRAFT REFERENCE ONLY/i);
