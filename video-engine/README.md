@@ -18,9 +18,9 @@ Requirements: Node.js 22+, FFmpeg, and an available Chromium installation (the C
 From this directory:
 
 ```bash
-npx --yes hyperframes@0.9.78 doctor
-npx --yes hyperframes@0.9.78 lint
-npx --yes hyperframes@0.9.78 render --output nava-first-render.mp4 --fps 30 --quality draft --workers 1
+npx --yes hyperframes@0.9.72 doctor
+npx --yes hyperframes@0.9.72 lint
+npx --yes hyperframes@0.9.72 render --output nava-first-render.mp4 --fps 30 --quality draft --workers 1
 ```
 
 ## CI output
