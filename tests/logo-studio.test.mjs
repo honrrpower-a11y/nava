@@ -521,7 +521,7 @@ test("NAVI reports truncated model output and refunds the reserved trial without
   globalThis.fetch = async (_url, options) => {
     calls += 1;
     const body = JSON.parse(options.body);
-    assert.equal(body.generationConfig.thinkingConfig.thinkingLevel, "MEDIUM");
+    assert.equal(body.generationConfig.thinkingConfig.thinkingLevel, "HIGH");
     assert.equal(body.generationConfig.maxOutputTokens, 32768);
     assert.equal("temperature" in body.generationConfig, false);
     return new Response(JSON.stringify({
@@ -645,7 +645,10 @@ test("Logo Studio offers explicit concept selection and a standalone editable HT
   assert.ok(source.includes("function downloadHtml(concept, brief, index, feedback, button)"));
   assert.ok(source.includes('type: "text/html;charset=utf-8"'));
   assert.ok(source.includes("previewDocument(concept, brief)"));
-  assert.ok(source.includes("function showExportLink(feedback, message, link)"), "successful exports must keep the same feedback node reusable for later downloads");
+  assert.ok(source.includes("function showExportLink(feedback, message, link, filename)"), "successful exports must keep the same feedback node reusable for later downloads");
+  assert.ok(source.includes("anchor.download = filename || \"nava-logo.png\""), "the visible fallback link must trigger an actual PNG download on mobile");
+  assert.ok(source.includes('anchor.textContent = "دانلود PNG"'), "the user must have an explicit save link after rendering");
+  assert.ok(source.includes("open.textContent = \" · بازکردن تصویر\""), "opening the rendered image remains available when the browser ignores download attributes");
   assert.ok(source.includes('anchor.download = safeName(brief.brandName)'));
   assert.ok(source.includes('chooseButton.dataset.logoSelect = "true"'));
   assert.ok(source.includes('item.classList.toggle("is-selected", selected)'));
@@ -855,3 +858,14 @@ test("NAVI visual refinement reviews real PNGs, validates revised HTML/CSS, and 
     globalThis.fetch = originalFetch;
   }
 });
+
+test("NAVI uses a geometry-first blueprint and demands substantive visual revisions", () => {
+  const backend = readFileSync(new URL("../modules/logo.js", import.meta.url), "utf8");
+  assert.ok(backend.includes("PHASE 5B — GEOMETRY BLUEPRINT"));
+  assert.ok(backend.includes("bounding box on the 0–100% symbol grid"));
+  assert.ok(backend.includes("dedicated named HTML layer and a direct CSS rule"));
+  assert.ok(backend.includes("Do not make cosmetic-only edits."));
+  assert.ok(backend.includes("redesign the actual symbol geometry and composition"));
+  assert.ok(backend.includes('thinkingLevel: "HIGH"'));
+});
+
