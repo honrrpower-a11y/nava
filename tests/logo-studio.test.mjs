@@ -915,6 +915,9 @@ test("Logo Studio captures real renders and runs validated automatic visual refi
   assert.ok(ui.includes("result.reviewToken"));
   assert.ok(ui.includes("finalConcepts = visualReview.concepts"));
   assert.ok(ui.includes("طرح‌های اولیه حفظ شدند"));
+  assert.ok(ui.includes("result.code"), "visual-review failures must expose their diagnostic code");
+  assert.ok(backend.includes("error?.name === \"AbortError\" ? \"MODEL_TIMEOUT\""), "review timeouts must be classified as retryable model timeouts");
+  assert.ok(backend.includes("controller.abort(), 120000"), "visual review must have a 120-second deadline");
   assert.ok(ui.includes("بازبینی و اصلاح بصری"));
 });
 
