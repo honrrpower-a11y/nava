@@ -307,7 +307,7 @@ function validateVisualAnchorMap(html, css, item, conceptIndex, format) {
           entry.visualRole.length < 8) continue;
       // A unified silhouette is a valid construction layer; no filler child is required.
       const isOuterSymbol = entry.layerClass === "navi-symbol";
-      const classPattern = new RegExp('class="[^"]*\b' + entry.layerClass + '\b[^"]*"');
+      const classPattern = new RegExp('class="[^"]*\\b' + entry.layerClass + '\\b[^"]*"');
       const appearsInSymbol = isOuterSymbol || classPattern.test(symbol.inner);
       const selectorPattern = new RegExp("\\." + entry.layerClass + "(?=[\\s.:#\\[,{>\\{])");
       if (appearsInSymbol && selectorPattern.test(css)) mapped.add(entry.anchorId);
