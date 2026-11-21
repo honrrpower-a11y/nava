@@ -710,6 +710,7 @@ async function designLogos(data, apiKey) {
       designIdea: safeText(plan.designIdea, 320) || safeText(plan.brandCore, 300) || safeText(plan.strategy, 320),
       strategy: safeText(plan.strategy, 500),
       designBriefEnglish,
+      visualBlueprints: designBlueprints,
       concepts,
       rejectedConcepts
     };
@@ -1052,13 +1053,14 @@ export async function handleLogoRoute({ request, env, origin, corsOrigin }) {
       reviewToken,
       remaining: quota.remaining ?? null,
       planning: {
-        method: "navi-english-brief-html-css-design",
+        method: "navi-visual-blueprint-then-html-css-build",
         brandCore: plan.brandCore,
         designIdea: plan.designIdea,
         strategy: plan.strategy,
         designBriefEnglish: plan.designBriefEnglish,
-        extraModelCalls: 0,
-        note: "NAVI authored the English design brief and the accepted HTML/CSS logo designs in one request."
+        extraModelCalls: 1,
+        visualBlueprints: plan.visualBlueprints,
+        note: "NAVI first commits to explicit visual construction blueprints, then builds and validates the final HTML/CSS logo designs."
       },
       concepts: plan.concepts,
       rejectedConcepts: plan.rejectedConcepts || []
