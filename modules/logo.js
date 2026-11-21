@@ -9,6 +9,24 @@ function fail(message, status, corsOrigin, extra = {}) {
   return json({ success: false, error: message, ...extra }, status, corsOrigin);
 }
 
+// Retry transient Gemini overloads once; keep the same request and abort deadline.
+async function fetchGeminiWithRetry(url, options) {
+  const retryableStatuses = new Set([429, 500, 502, 503, 504]);
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    let response;
+    try {
+      response = await fetch(url, options);
+    } catch (error) {
+      if (attempt === 1) throw error;
+      await new Promise(resolve => setTimeout(resolve, 800));
+      continue;
+    }
+    if (!retryableStatuses.has(response.status) || attempt === 1) return response;
+    await new Promise(resolve => setTimeout(resolve, 800));
+  }
+  throw new Error("Gemini request failed after retry.");
+}
+
 function extractJsonObject(raw) {
   const text = String(raw || "").trim();
   try { return JSON.parse(text); } catch (_) {}
@@ -174,7 +192,18 @@ function validateSymbolStructure(html, css, conceptIndex) {
   const detailPattern = /\b(?:position|inset|top|right|bottom|left|width|height|background(?:-color|-image)?|border(?:-[a-z-]+)?|border-radius|clip-path|transform|mask(?:-image)?)\s*:/i;
   // The outer symbol contour can be the complete design; child layers are optional.
   // A lone shaped silhouette is valid only when no empty child layers pretend to construct it.
-  const detail = (layerClasses.length === 0 && hasShape) || styledLayers.some(layer => detailPattern.test(layer.body)) ||
+  const hasDistinctOuterSilhouette = symbolRules.some(rule => {
+    if (/::?(?:before|after)\b/i.test(rule.selector)) return false;
+    const radius = rule.body.match(/\bborder-radius\s*:\s*([^;]+)/i)?.[1]?.trim() || "";
+    const clipPath = rule.body.match(/\bclip-path\s*:\s*([^;]+)/i)?.[1]?.trim() || "";
+    return Boolean(clipPath && !/^none$/i.test(clipPath)) ||
+      Boolean(radius && !/^50%(?:\s+50%)?$/i.test(radius) && !/^0(?:px|%|rem)?(?:\s|$)/i.test(radius));
+  });
+  // A generic circular badge plus empty child spans is not a complete mark.
+  // A custom outer contour (e.g. clip-path) may stand alone; otherwise require
+  // an actually styled construction layer or pseudo-element.
+  const detail = (hasFilledSilhouette && hasDistinctOuterSilhouette) ||
+    styledLayers.some(layer => detailPattern.test(layer.body)) ||
     pseudoLayers.some(rule => detailPattern.test(rule.body));
   if (!hasWidth || !hasHeight || !hasSurface || !hasShape || !hasFilledSilhouette || !proportions || !detail) {
     const missing = [
@@ -326,7 +355,7 @@ async function designLogos(data, apiKey) {
     "PHASE 4 — CONCEPT EXPLORATION: internally explore 8–12 genuinely different one-sentence design theses. In client mode, keep the client's core subject, requested objects and their relationships invariant across all explorations; explore different professional executions of that same idea, not alternative ideas that replace it. In NAVI mode, explore distinct brand-specific ideas. Score each for brief fidelity first, then idea clarity, distinction, simplicity, relevance and small-size strength. Do not expose private chain-of-thought. For three concepts, return the strongest structurally different routes—not recolors or layout variations. For one, return the single strongest route.",
     "PHASE 4A — IDENTITY COHESION: choose 2–4 decision axes that matter to this specific brief (for example classic–contemporary, quiet–expressive, technical–human, premium–accessible). Place every concept on those axes using concise labels, and make the three routes visibly different on at least two axes. For each concept write exactly one mechanism sentence explaining how its central idea generates the symbol, typography and color direction together, plus one expression move: the single most distinctive visual decision. The mark, type and palette must feel like one identity, not separately selected decorations.",
     "PHASE 4B — ANTI-DEFAULT REFLEX: challenge familiar AI/logo defaults for this sector (generic circles/orbits, gradients, gold-on-cream, generic geometric sans, initials inside badges, stock industry icons). At least one concept must avoid the usual defaults entirely. If any concept uses a familiar choice, state the specific reason from the brief in defaultsUsed; otherwise return an empty array. Do not claim a choice is distinctive without explaining what makes it specific to this brand.",
-    "PHASE 4C — BRIEF TRACEABILITY: before drawing, convert the supplied request into explicit visual anchors. For every concept return centralThesis (one precise sentence describing the actual design idea), briefElements (1–6 concrete requested or brand-derived elements), symbolConstruction (describe exactly how those elements are physically encoded in the symbol silhouette, geometry, overlap, cut-out or negative space), and briefAlignment (explain the direct connection to the user request or, in NAVI mode, to the brand name and business). These are not decorative explanations: the HTML/CSS symbol itself MUST visibly implement the stated construction. In client mode preserve every essential requested relationship; do not substitute an unrelated symbol. For a requested Persian/Arabic or Latin letter, do not merely typeset the glyph or mention it in the rationale: study its recognizable skeleton and rebuild that skeleton from coordinated HTML layers and CSS geometry (clip-path polygons, carefully controlled border-radius, pseudo-elements and negative-space cutouts). For ظ specifically, preserve the visual relationship of the ط-like body/stem and its distinctive dot above; the dot must be deliberately integrated and positioned, not an unrelated floating ornament. For Z specifically, preserve a clear top horizontal, diagonal connecting stroke and bottom horizontal, but customize their terminals, joins, proportions or negative-space cut so it becomes a designed monogram rather than a typed font glyph. The letter may be abstracted, but should remain discoverable in the silhouette or negative space. In NAVI mode derive anchors from brand name + industry + audience, not generic industry clip art. Do not claim an element is present unless it is visibly built into the mark. If the brief is ambiguous, make a restrained defensible interpretation rather than inventing a different brief.",
+    "PHASE 4C — BRIEF TRACEABILITY: before drawing, convert the supplied request into explicit visual anchors. For every concept return centralThesis (one precise sentence describing the actual design idea), briefElements (1–6 concrete requested or brand-derived elements), symbolConstruction (describe exactly how those elements are physically encoded in the symbol silhouette, geometry, overlap, cut-out or negative space), and briefAlignment (explain the direct connection to the user request or, in NAVI mode, to the brand name and business). These are not decorative explanations: the HTML/CSS symbol itself MUST visibly implement the stated construction. In client mode preserve every essential requested relationship; do not substitute an unrelated symbol. For a requested Persian/Arabic or Latin letter, preserve its recognizable skeleton in the visible mark; build it as one carefully shaped silhouette when that is sufficient, and use coordinated HTML layers or negative-space cutouts only when the letterform genuinely requires them. Never add layers just to satisfy a construction quota. For ظ specifically, preserve the visual relationship of the ط-like body/stem and its distinctive dot above; the dot must be deliberately integrated and positioned, not an unrelated floating ornament. For Z specifically, preserve a clear top horizontal, diagonal connecting stroke and bottom horizontal, but customize their terminals, joins, proportions or negative-space cut so it becomes a designed monogram rather than a typed font glyph. The letter may be abstracted, but should remain discoverable in the silhouette or negative space. In NAVI mode derive anchors from brand name + industry + audience, not generic industry clip art. Do not claim an element is present unless it is visibly built into the mark. If the brief is ambiguous, make a restrained defensible interpretation rather than inventing a different brief.",
     "PHASE 4D — CLIENT BRIEF DOMINANCE (HIGHEST CREATIVE PRIORITY): treat userBrief.briefPriority.sourceOfTruth and userBrief.designPrompt as the controlling design specification whenever designMode is custom. First identify the 2–5 most important visual anchors and the exact relationships between them (for example: object A becomes/contains/intersects object B; a letter is formed by a specific object; one shape surrounds, cuts through or emerges from another). Preserve those anchors and relationships in every concept. Do not turn a specific request into a generic symbol, do not replace named objects with vague metaphors, and do not let premium-style instructions, industry conventions, anti-default rules or concept diversity override the brief. In custom mode, all three concepts must remain recognizably different executions of the SAME requested core idea; vary geometry, silhouette, negative space, proportion and construction—not the subject or meaning. For every concept, map each essential anchor to a visible part of the actual .navi-symbol; if an anchor is only described in rationale or briefElements but cannot be pointed to in the HTML/CSS construction, it is missing. Prioritize in this order: (1) exact client idea and relationships, (2) recognizable symbol built from that idea, (3) professional geometry and craft, (4) stylistic novelty. Before returning, compare the rendered-intent of each symbol against the original brief sentence by sentence and redesign any concept that would still look essentially the same if the client brief were replaced with a different brand brief. In NAVI mode, use the same anchor-to-form discipline for the idea NAVI derives from the brand context.",
     "PHASE 4E — ANCHOR-TO-FORM GUIDANCE: return 1–5 visualAnchors only for meaningful ingredients or relationships in the brief, not as a checklist. Return an anchorMap explaining where each important idea is visibly expressed. A map may point to the main .navi-symbol silhouette itself or to a real styled child layer. One unified silhouette may express the whole idea; multiple layers are appropriate only when the idea genuinely contains distinct objects, cut-outs or overlaps. Never create extra spans, lines, dots or geometry just to satisfy a mapping count. The visible symbol must communicate the client's actual idea; the map is a concise explanation, not a construction quota.",
     "PHASE 4G — OBJECT IDENTITY: when the client names a concrete object, preserve its recognizable identity. Identify the few structural cues that make it read as that object and keep them visible in the final silhouette. Never replace a named object with a different object for stylistic convenience. Prefer a simple faithful shape over an elaborate but ambiguous substitute.",
@@ -347,7 +376,7 @@ async function designLogos(data, apiKey) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 90000);
   try {
-    const response = await fetch(
+    const response = await fetchGeminiWithRetry(
       "https://generativelanguage.googleapis.com/v1beta/models/" + GEMINI_MODEL + ":generateContent",
       {
         method: "POST",
@@ -650,7 +679,7 @@ async function refineLogoConcepts(data, conceptsInput, apiKey) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 90000);
   try {
-    const response = await fetch(
+    const response = await fetchGeminiWithRetry(
       "https://generativelanguage.googleapis.com/v1beta/models/" + GEMINI_MODEL + ":generateContent",
       {
         method: "POST",
