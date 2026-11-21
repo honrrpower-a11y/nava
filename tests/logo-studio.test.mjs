@@ -108,7 +108,7 @@ function makeGeminiResponse(plan = makeDesign()) {
       .filter(name => name && name !== "navi-symbol");
     const styledClasses = [...new Set(innerClasses)].filter(name =>
       new RegExp("\\." + name + "(?=[\\s.:#\\[,{>\\{])").test(concept.css || ""));
-    const elements = Array.isArray(concept.briefElements) && concept.briefElements.length >= 2
+    const elements = Array.isArray(concept.briefElements) && concept.briefElements.length >= 1
       ? concept.briefElements.slice(0, 5)
       : ["عنصر اصلی بریف", "رابطه هندسی اصلی"];
     concept.visualAnchors = elements.map((description, index) => ({
@@ -156,15 +156,15 @@ test("NAVI writes an English brief and three sanitized HTML/CSS logo designs in 
     assert.match(sentPrompt, /PHASE 4B — ANTI-DEFAULT REFLEX/i);
     assert.match(sentPrompt, /PHASE 4C — BRIEF TRACEABILITY/i);
     assert.match(sentPrompt, /PHASE 4D — CLIENT BRIEF DOMINANCE/i);
-    assert.match(sentPrompt, /PHASE 4E — ANCHOR-TO-LAYER CONTRACT/i);
+    assert.match(sentPrompt, /PHASE 4E — ANCHOR-TO-FORM CONTRACT/i);
     assert.match(sentPrompt, /PHASE 4F — SPATIAL COMPOSITION, DEPTH AND OCCLUSION/i);
     assert.match(sentPrompt, /Distinguish true overlap\/occlusion from mere adjacency/i);
     assert.match(sentPrompt, /give each relevant layer a deliberate position, scale, transform and stacking order/i);
     assert.match(sentPrompt, /the sun is a rear layer, its lower arc is occluded by the book/i);
     assert.match(sentPrompt, /never hardcode this example as the default logo idea/i);
-    assert.match(sentPrompt, /silhouette, component geometry, spatial placement, overlap\/occlusion, depth order/i);
+    assert.match(sentPrompt, /Start with the strongest recognizable shape in monochrome/i);
     assert.match(sentPrompt, /anchorMap with exactly one object per visualAnchor/i);
-    assert.match(sentPrompt, /real nested HTML element inside the single \.navi-symbol/i);
+    assert.match(sentPrompt, /real styled HTML element inside \.navi-symbol/i);
     assert.match(sentPrompt, /exact client idea and relationships/i);
     assert.match(sentPrompt, /brief fidelity first/i);
     assert.match(sentPrompt, /actual \.navi-symbol/i);
@@ -182,11 +182,11 @@ test("NAVI writes an English brief and three sanitized HTML/CSS logo designs in 
     assert.match(sentPrompt, /artboard\/canvas background must be white or a light neutral/i);
     assert.match(sentPrompt, /Never assign the root a fixed 1000px width or height/i);
     assert.match(sentPrompt, /320×320 mobile preview/i);
-    assert.match(sentPrompt, /Never submit two stray diagonal strokes/i);
-    assert.match(sentPrompt, /navi-symbol__detail/i);
+    assert.match(sentPrompt, /crooked stray strokes/i);
+    assert.match(sentPrompt, /Add named child layers only where needed to construct the idea/i);
     assert.match(sentPrompt, /SVG and all SVG-derived tags or attributes are forbidden/i);
     assert.match(sentPrompt, /CSS clip-path polygons/i);
-    assert.match(sentPrompt, /A thin border or line alone is not an acceptable symbol/i);
+    assert.match(sentPrompt, /A line-based mark is acceptable only when its strokes form a complete, recognizable and intentional symbol/i);
     assert.match(sentPrompt, /Navy or blue may still be used as an intentional brand-mark/i);
     assert.match(sentPrompt, /{{BRAND_NAME}}/i);
     assert.match(sentPrompt, /one valid JSON object/i);
@@ -205,7 +205,7 @@ test("NAVI writes an English brief and three sanitized HTML/CSS logo designs in 
     assert.ok(result.concepts.every(item => item.html.includes("<div")));
     assert.ok(result.concepts.every(item => !Object.prototype.hasOwnProperty.call(item, "svg")), "SVG is never returned as a separate export field");
     assert.ok(result.concepts.every(item => item.css.length > 0));
-    assert.ok(result.concepts.every(item => item.visualAnchors.length >= 2));
+    assert.ok(result.concepts.every(item => item.visualAnchors.length >= 1));
     assert.ok(result.concepts.every(item => item.anchorMap.length === item.visualAnchors.length));
     assert.equal(result.concepts[0].centralThesis, "پیوند دو مسیر صوتی به یک نشانه پیوسته و باز تبدیل می‌شود");
     assert.equal(result.concepts[0].symbolConstruction, "دو مسیر منحنی در مرکز به هم می‌رسند و یک شکاف پیوسته در دل فرم می‌سازند");
@@ -743,6 +743,54 @@ test("NAVI quality gate accepts responsive min/max dimensions while requiring a 
     assert.equal(result.success, true);
     assert.ok(result.concepts.some(concept => concept.title === "موج پیوند"));
     assert.equal(db.visitorUsed, 1);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test("NAVI accepts a clean solid silhouette without forcing decorative CSS effects or extra layers", async () => {
+  const originalFetch = globalThis.fetch;
+  const db = new FakeD1();
+  const clean = makeDesign();
+  clean.concepts[0].briefElements = ["یک فرم یکپارچه"];
+  clean.concepts[0].html = '<div class="mark"><div class="navi-symbol" data-logo-role="symbol"><span class="wave"></span></div><strong>{{BRAND_NAME}}</strong></div>';
+  clean.concepts[0].css = '.logo-art-root{display:grid;place-items:center;width:100%;height:100%}.mark{display:grid;justify-items:center;gap:20px}.navi-symbol{width:240px;height:240px;background:var(--logo-primary);border-radius:38% 62% 55% 45%}.wave{display:block;width:50%;height:30%;border:8px solid var(--logo-background);border-radius:50%}';
+  globalThis.fetch = async () => makeGeminiResponse(clean);
+  try {
+    const response = await handleLogoRoute({
+      request: makeRequest(),
+      env: { NAVA_DB: db, NAVI_SESSION_SECRET: "test-secret-key", GEMINI_API_KEY: "test-gemini-key" },
+      origin: ORIGIN,
+      corsOrigin: ORIGIN
+    });
+    const result = await response.json();
+    assert.equal(response.status, 200, JSON.stringify(result));
+    assert.equal(result.success, true);
+    assert.equal(result.concepts[0].visualAnchors.length, 1);
+    assert.equal(result.concepts[0].anchorMap.length, 1);
+    assert.equal(db.visitorUsed, 1);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test("NAVI rejects stray line strokes that do not form a filled logo silhouette", async () => {
+  const originalFetch = globalThis.fetch;
+  const db = new FakeD1();
+  const linesOnly = makeDesign();
+  linesOnly.concepts[0].css = '.logo-art-root{display:grid;place-items:center;width:100%;height:100%}.mark{display:grid;justify-items:center}.navi-symbol{position:relative;width:240px;height:240px;background:var(--logo-primary);border:2px solid var(--logo-primary)}.wave{position:absolute;left:10%;top:48%;width:80%;height:4px;background:var(--logo-background);transform:rotate(35deg)}.orbit{position:absolute;left:10%;top:48%;width:80%;height:4px;background:var(--logo-background);transform:rotate(-35deg)}';
+  globalThis.fetch = async () => makeGeminiResponse(linesOnly);
+  try {
+    const response = await handleLogoRoute({
+      request: makeRequest(),
+      env: { NAVA_DB: db, NAVI_SESSION_SECRET: "test-secret-key", GEMINI_API_KEY: "test-gemini-key" },
+      origin: ORIGIN,
+      corsOrigin: ORIGIN
+    });
+    const result = await response.json();
+    assert.equal(response.status, 200, JSON.stringify(result));
+    assert.equal(result.success, true);
+    assert.ok(result.rejectedConcepts.some(item => item.index === 1 && item.code === "LOGO_SYMBOL_UNDERBUILT"));
   } finally {
     globalThis.fetch = originalFetch;
   }
