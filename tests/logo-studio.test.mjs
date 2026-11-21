@@ -157,11 +157,11 @@ test("NAVI writes an English brief and three sanitized HTML/CSS logo designs in 
     assert.match(sentPrompt, /PHASE 4C — BRIEF TRACEABILITY/i);
     assert.match(sentPrompt, /PHASE 4D — CLIENT BRIEF DOMINANCE/i);
     assert.match(sentPrompt, /PHASE 4E — ANCHOR-TO-FORM GUIDANCE/i);
-    assert.match(sentPrompt, /PHASE 4F — SPATIAL COMPOSITION, DEPTH AND OCCLUSION/i);
+    assert.match(sentPrompt, /PHASE 4F — SPATIAL RELATIONSHIPS/i);
     assert.match(sentPrompt, /Distinguish true overlap\/occlusion from mere adjacency/i);
-    assert.match(sentPrompt, /give each relevant layer a deliberate position, scale, transform and stacking order/i);
-    assert.match(sentPrompt, /the sun is a rear layer, its lower arc is occluded by the book/i);
-    assert.match(sentPrompt, /never hardcode this example as the default logo idea/i);
+    assert.match(sentPrompt, /Use actual placement, overlap, clipping and stacking only where the idea needs them/i);
+    assert.doesNotMatch(sentPrompt, /the sun is a rear layer, its lower arc is occluded by the book/i);
+    assert.match(sentPrompt, /If the brief is naturally flat or unified, do not invent depth or separate layers/i);
     assert.match(sentPrompt, /Start with the strongest recognizable shape in monochrome/i);
     assert.match(sentPrompt, /anchorMap explaining where each important idea is visibly expressed/i);
     assert.match(sentPrompt, /real styled HTML element inside \.navi-symbol/i);
