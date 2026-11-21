@@ -157,17 +157,29 @@ function validateSymbolStructure(html, css, conceptIndex) {
       Boolean(radius && !/^0(?:px|%|rem)?(?:\s|$)/i.test(radius)) ||
       Boolean(border && !/^0(?:px|%|rem)?(?:\s|$)/i.test(border));
   });
+  // Require one actual filled silhouette: fill and contour must coexist on
+  // the same layer, so scattered strokes cannot masquerade as a logo mark.
+  const hasFilledSilhouette = allGeometryCss.some(ruleBody => {
+    const fill = ruleBody.match(/\bbackground(?:-color|-image)?\s*:\s*([^;]+)/i)?.[1]?.trim() || "";
+    const radius = ruleBody.match(/\bborder-radius\s*:\s*([^;]+)/i)?.[1]?.trim() || "";
+    const clipPath = ruleBody.match(/\bclip-path\s*:\s*([^;]+)/i)?.[1]?.trim() || "";
+    const visibleFill = fill && !/^(?:transparent|none)$/i.test(fill);
+    const contour = (radius && !/^0(?:px|%|rem)?(?:\s|$)/i.test(radius)) ||
+      (clipPath && !/^none$/i.test(clipPath));
+    return Boolean(visibleFill && contour);
+  });
   const widthPx = Number(widthValue?.match(/^\s*([\d.]+)px\s*$/i)?.[1] || 0);
   const heightPx = Number(heightValue?.match(/^\s*([\d.]+)px\s*$/i)?.[1] || 0);
   const proportions = !(widthPx > 0 && heightPx > 0) || heightPx / widthPx >= 0.22;
   const detailPattern = /\b(?:position|inset|top|right|bottom|left|width|height|background(?:-color|-image)?|border(?:-[a-z-]+)?|border-radius|clip-path|transform|mask(?:-image)?)\s*:/i;
   const detail = styledLayers.some(layer => detailPattern.test(layer.body)) ||
     pseudoLayers.some(layer => detailPattern.test(layer.body));
-  if (!hasWidth || !hasHeight || !hasSurface || !hasShape || !proportions || !detail) {
+  if (!hasWidth || !hasHeight || !hasSurface || !hasShape || !hasFilledSilhouette || !proportions || !detail) {
     const missing = [
       !hasWidth || !hasHeight ? "ابعاد مستقل و معتبر" : "",
       !hasSurface ? "سطح پرشده در بدنه یا لایه‌های نشان" : "",
       !hasShape ? "مرز یا برش هندسی در ساختار نشان" : "",
+      !hasFilledSilhouette ? "حداقل یک فرم توپر با مرز هندسی مشخص" : "",
       !proportions ? "تناسب قابل‌قبول" : "",
       !detail ? "لایه سازنده مستقل با هندسه قابل‌مشاهده" : ""
     ].filter(Boolean).join("، ");
@@ -465,28 +477,12 @@ async function designLogos(data, apiKey) {
         (needsSloganFallback && html.includes('class="navi-slogan-lockup"') ? "\n" + sloganFallbackCss : "");
       const visualElementCount = (html.match(/<\s*(?:div|span|p|strong|em|b|i|small|br)\b/gi) || []).length;
       const cssRuleCount = (css.match(/[^{}]+\{[^{}]*\}/g) || []).length;
-      // Score independent design disciplines, not raw keyword frequency.
-      // A strong typographic/geometric concept should not fail merely because
-      // it uses borders and layout instead of gradients or pseudo-elements.
-      const craftGroups = [
-        /::before|::after/i,
-        /linear-gradient|radial-gradient|conic-gradient/i,
-        /box-shadow\s*:[^;]*inset|inset\s+[^;]*box-shadow/i,
-        /box-shadow\s*:/i,
-        /border(?:-[a-z-]+)?\s*:/i,
-        /transform\s*:/i,
-        /clip-path\s*:|mask(?:-image)?\s*:/i,
-        /display\s*:\s*(?:grid|flex)/i,
-        /position\s*:/i,
-        /font-(?:size|weight|family)\s*:|letter-spacing\s*:/i
-      ];
-      const craftScore = craftGroups.reduce((score, pattern) => score + (pattern.test(css) ? 1 : 0), 0);
-      // The structural symbol validator is the primary quality gate. This score
-      // is a secondary craft signal and must not reject clean flat/geometric work.
-      const minimumCraftScore = data.format === "wordmark" ? 3 : 4;
-      const minimumCssRules = data.format === "wordmark" ? 2 : 3;
-      if (craftScore < minimumCraftScore || cssRuleCount < minimumCssRules) {
-        throw validationError("LOGO_CRAFT_TOO_WEAK", "ساختار بصری لوگو به اندازه کافی پرداخت نشده است؛ طرح خام و کم‌جزئیات تحویل داده نمی‌شود.", "craft-quality", index + 1);
+      // Do not grade design quality by counting CSS effects. Technique quotas
+      // encouraged unrelated strokes, borders and layers just to reach a score.
+      // Structural geometry and the filled-silhouette check are the quality gate.
+      const minimumCssRules = 2;
+      if (cssRuleCount < minimumCssRules) {
+        throw validationError("LOGO_CSS_INCOMPLETE", "ساختار CSS لوگو ناقص است.", "composition-completeness", index + 1);
       }
       // Reject visibly underbuilt sketches before they reach the user. The
       // threshold checks independent CSS craft techniques, not token count.
