@@ -906,12 +906,15 @@ test("NAVI accepts a transparent symbol wrapper when nested layers create the ac
 });
 
 
-test("Logo Studio preserves initial concepts without an automatic visual redesign", () => {
+test("Logo Studio captures real renders and runs validated automatic visual refinement", () => {
   const ui = readFileSync(new URL("../logo-studio.js", import.meta.url), "utf8");
-  assert.ok(ui.includes("const finalConcepts = result.concepts"));
-  assert.ok(ui.includes("بدون بازطراحی خودکار"));
-  assert.ok(!ui.includes('action: "visual-refine"'));
-  assert.ok(!ui.includes("capturePreviewDataUrl(frame, 640)"));
+  assert.ok(ui.includes("async function visuallyRefineConcepts"));
+  assert.ok(ui.includes('action: "visual-refine"'));
+  assert.ok(ui.includes("capturePreviewDataUrl(frame, 640)"));
+  assert.ok(ui.includes("result.reviewToken"));
+  assert.ok(ui.includes("finalConcepts = visualReview.concepts"));
+  assert.ok(ui.includes("طرح‌های اولیه حفظ شدند"));
+  assert.ok(ui.includes("بازبینی و اصلاح بصری"));
 });
 
 test("NAVI visual refinement reviews real PNGs, validates revised HTML/CSS, and does not consume another trial", async () => {
@@ -1059,14 +1062,4 @@ test("NAVI retries a transient Gemini service failure once before returning a lo
   } finally {
     globalThis.fetch = originalFetch;
   }
-});
-
-test("Logo Studio captures real HTML/CSS renders and invokes the backend visual-refinement pass", () => {
-  const source = readFileSync(new URL("../logo-studio.js", import.meta.url), "utf8");
-  assert.match(source, /capturePreviewDataUrl\(frame, 640\)/);
-  assert.match(source, /action:\s*"visual-refine"/);
-  assert.match(source, /reviewToken/);
-  assert.match(source, /visualReview\.visualReview\?\.refinedCount/);
-  assert.match(source, /طرح‌های اولیه حفظ شدند/);
-  assert.doesNotMatch(source, /بدون بازطراحی خودکار نمایش داده شدند/);
 });
