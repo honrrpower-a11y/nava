@@ -559,6 +559,40 @@ async function designLogos(data, apiKey) {
 }
 
 
+async function createLogoReviewToken(secret, brandName) {
+  if (!secret || !globalThis.crypto?.subtle) return "";
+  const timestamp = String(Date.now());
+  const message = timestamp + "." + brandName;
+  const key = await crypto.subtle.importKey(
+    "raw", new TextEncoder().encode(secret),
+    { name: "HMAC", hash: "SHA-256" }, false, ["sign"]
+  );
+  const signature = new Uint8Array(await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(message)));
+  const encoded = btoa(String.fromCharCode(...signature)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
+  return timestamp + "." + encoded;
+}
+
+async function verifyLogoReviewToken(secret, brandName, token) {
+  if (!secret || !globalThis.crypto?.subtle || typeof token !== "string") return false;
+  const [timestamp, encoded, extra] = token.split(".");
+  const issuedAt = Number(timestamp);
+  if (!timestamp || !encoded || extra || !Number.isFinite(issuedAt) ||
+      issuedAt > Date.now() + 30000 || Date.now() - issuedAt > 5 * 60 * 1000) return false;
+  try {
+    const base64 = encoded.replace(/-/g, "+").replace(/_/g, "/");
+    const signature = Uint8Array.from(atob(base64), character => character.charCodeAt(0));
+    const key = await crypto.subtle.importKey(
+      "raw", new TextEncoder().encode(secret),
+      { name: "HMAC", hash: "SHA-256" }, false, ["verify"]
+    );
+    return await crypto.subtle.verify(
+      "HMAC", key, signature, new TextEncoder().encode(timestamp + "." + brandName)
+    );
+  } catch {
+    return false;
+  }
+}
+
 async function refineLogoConcepts(data, conceptsInput, apiKey) {
   if (!apiKey) throw new Error("NAVI design service is not configured.");
   if (!Array.isArray(conceptsInput) || conceptsInput.length < 1 || conceptsInput.length > 3) {
@@ -733,6 +767,10 @@ export async function handleLogoRoute({ request, env, origin, corsOrigin }) {
   }
 
   if (input?.action === "visual-refine") {
+    const reviewAuthorized = await verifyLogoReviewToken(
+      env.NAVI_SESSION_SECRET, data.brandName, input.reviewToken
+    );
+    if (!reviewAuthorized) return fail("مجوز بازبینی بصری معتبر نیست یا زمان آن پایان یافته است؛ دوباره طرح را تولید کن.", 403, corsOrigin);
     try {
       const review = await refineLogoConcepts(data, input.concepts, env.GEMINI_API_KEY);
       return json({
@@ -774,9 +812,11 @@ export async function handleLogoRoute({ request, env, origin, corsOrigin }) {
 
   try {
     const plan = await designLogos(data, env.GEMINI_API_KEY);
+    const reviewToken = await createLogoReviewToken(env.NAVI_SESSION_SECRET, data.brandName);
     return json({
       success: true,
       brandName: data.brandName,
+      reviewToken,
       remaining: quota.remaining ?? null,
       planning: {
         method: "navi-english-brief-html-css-design",
