@@ -591,21 +591,20 @@ test("NAVI categorizes Gemini quota errors without exposing provider error text"
   }
 });
 
-test("PNG export uses the browser-native HTML renderer so Persian shaping and bidi survive rasterization", () => {
+test("PNG export rasterizes the live HTML/CSS DOM directly with no SVG pipeline", () => {
   const source = readFileSync(new URL("../logo-renderer.js", import.meta.url), "utf8");
   const start = source.indexOf("async function renderFrameCanvas");
-  const end = source.indexOf("global.NavaLogoRenderer=", start);
+  const end = source.indexOf("global.NavaLogoRenderer", start);
   const exporter = source.slice(start, end);
   assert.ok(start >= 0 && end > start);
-  assert.ok(exporter.includes("const built=await buildSvg(frame"), "PNG must rasterize the browser-rendered artboard rather than re-layout each glyph through html2canvas");
-  assert.ok(exporter.includes("new Blob([built.svg]"), "the browser-native HTML/SVG package is rendered before PNG encoding");
-  assert.ok(exporter.includes("img.src=url"));
-  assert.ok(exporter.includes("canvas.toBlob"));
-  assert.ok(exporter.includes("getImageData"), "empty raster output must be rejected instead of downloaded as a blank PNG");
-  assert.ok(exporter.includes("capturePreviewDataUrl"), "the same native renderer supplies screenshots for visual review");
-  assert.ok(exporter.includes("Persian/Arabic contextual shaping") || source.includes("Persian/Arabic contextual shaping"));
-  assert.ok(source.includes("global.NavaLogoRenderer={downloadBlob,exportPngFromFrame,capturePreviewDataUrl}"));
-  assert.ok(!exporter.includes("global.html2canvas"), "html2canvas is not used for Persian text export");
+  assert.ok(exporter.includes("global.html2canvas(clone"));
+  assert.ok(exporter.includes("copyComputedTree(root,document)"));
+  assert.ok(source.includes("canvas.toBlob"));
+  assert.ok(exporter.includes("getImageData"));
+  assert.ok(exporter.includes("stage.remove()"));
+  assert.ok(!source.includes("buildSvg"));
+  assert.ok(!source.includes("createElementNS"));
+  assert.ok(!source.includes("image/svg+xml"));
 });
 test("Logo Studio waits for a measurable sandboxed preview before PNG export", () => {
   const source = readFileSync(new URL("../logo-studio.js", import.meta.url), "utf8");
@@ -792,17 +791,12 @@ test("NAVI accepts a transparent symbol wrapper when nested layers create the ac
 });
 
 
-test("Logo Studio performs a rendered-image review pass before presenting final concepts", () => {
+test("Logo Studio preserves initial concepts without an automatic visual redesign", () => {
   const ui = readFileSync(new URL("../logo-studio.js", import.meta.url), "utf8");
-  const backend = readFileSync(new URL("../modules/logo.js", import.meta.url), "utf8");
-  assert.ok(ui.includes("capturePreviewDataUrl(frame, 640)"));
-  assert.ok(ui.includes('action: "visual-refine"'));
-  assert.ok(ui.includes("await Promise.all(activeFrames.map(waitForFrame))"));
-  assert.ok(backend.includes("async function refineLogoConcepts"));
-  assert.ok(backend.includes("inlineData: { mimeType: \"image/png\", data: image }"));
-  assert.ok(backend.includes("actual browser-rendered PNG preview"));
-  assert.ok(backend.includes('input?.action === "visual-refine"'));
-  assert.ok(backend.includes('method: "render-review-refine"'));
+  assert.ok(ui.includes("const finalConcepts = result.concepts"));
+  assert.ok(ui.includes("بدون بازطراحی خودکار"));
+  assert.ok(!ui.includes('action: "visual-refine"'));
+  assert.ok(!ui.includes("capturePreviewDataUrl(frame, 640)"));
 });
 
 test("NAVI visual refinement reviews real PNGs, validates revised HTML/CSS, and does not consume another trial", async () => {
