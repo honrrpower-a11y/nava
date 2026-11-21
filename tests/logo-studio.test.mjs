@@ -98,6 +98,13 @@ function makeRequest(body = INPUT) {
 
 function makeGeminiResponse(plan = makeDesign()) {
   for (const concept of plan.concepts || []) {
+    concept.silhouette ||= concept.symbolConstruction || concept.centralThesis;
+    concept.objectCues ||= (concept.briefElements || []).slice(0, 2);
+    while (concept.objectCues.length < 2) concept.objectCues.push("ویژگی تشخیصی فرم");
+    concept.spatialRelationship ||= concept.briefAlignment || concept.symbolConstruction;
+    concept.negativeSpace ||= concept.symbolConstruction;
+    concept.geometryRecipe ||= concept.symbolConstruction;
+    concept.firstRead ||= concept.centralThesis;
     const html = String(concept.html || "");
     const symbolStart = html.indexOf('class="navi-symbol');
     const symbolOpenEnd = symbolStart >= 0 ? html.indexOf(">", symbolStart) : -1;
@@ -108,7 +115,7 @@ function makeGeminiResponse(plan = makeDesign()) {
       .filter(name => name && name !== "navi-symbol");
     const styledClasses = [...new Set(innerClasses)].filter(name =>
       new RegExp("\\." + name + "(?=[\\s.:#\\[,{>\\{])").test(concept.css || ""));
-    const elements = Array.isArray(concept.briefElements) && concept.briefElements.length >= 2
+    const elements = Array.isArray(concept.briefElements) && concept.briefElements.length >= 1
       ? concept.briefElements.slice(0, 5)
       : ["عنصر اصلی بریف", "رابطه هندسی اصلی"];
     concept.visualAnchors = elements.map((description, index) => ({
@@ -118,7 +125,7 @@ function makeGeminiResponse(plan = makeDesign()) {
     }));
     concept.anchorMap = concept.visualAnchors.map((anchor, index) => ({
       anchorId: anchor.id,
-      layerClass: styledClasses[index % Math.max(1, styledClasses.length)] || "",
+      layerClass: styledClasses[index % Math.max(1, styledClasses.length)] || "navi-symbol",
       visualRole: "این لایه هندسه قابل مشاهده جزء مربوط را در نشان می‌سازد"
     })).filter(entry => entry.layerClass);
   }
@@ -132,9 +139,19 @@ test("NAVI writes an English brief and three sanitized HTML/CSS logo designs in 
   const db = new FakeD1();
   let geminiCalls = 0;
   let sentPrompt = "";
+  const sentPrompts = [];
   globalThis.fetch = async (_url, options) => {
     geminiCalls += 1;
     sentPrompt = JSON.stringify(JSON.parse(options.body));
+    sentPrompts.push(sentPrompt);
+    if (geminiCalls === 1) {
+      const generated = await makeGeminiResponse();
+      const payload = await generated.json();
+      const planned = JSON.parse(payload.candidates[0].content.parts[0].text);
+      return new Response(JSON.stringify({
+        candidates: [{ content: { parts: [{ text: JSON.stringify({ blueprints: planned.concepts }) }] } }]
+      }), { status: 200, headers: { "Content-Type": "application/json" } });
+    }
     return makeGeminiResponse();
   };
   try {
@@ -148,7 +165,17 @@ test("NAVI writes an English brief and three sanitized HTML/CSS logo designs in 
     assert.equal(response.status, 200);
     assert.equal(result.success, true);
     assert.equal(result.concepts.length, 3);
-    assert.equal(geminiCalls, 1, "one Gemini call creates the English brief and all three logo designs");
+    assert.equal(geminiCalls, 2, "NAVI first plans visual construction, then builds the HTML/CSS designs");
+    assert.match(sentPrompts[0], /senior identity concept architect/i);
+    assert.match(sentPrompts[0], /geometryRecipe/i);
+    assert.match(sentPrompts[0], /exactly 3 objects/i);
+    assert.match(sentPrompts[0], /Do not rename the concepts key/i);
+    assert.match(sentPrompts[0], /Do not write HTML, CSS, SVG/i);
+    assert.match(sentPrompts[0], /at least two diagnostic visual cues/i);
+    assert.match(sentPrompt, /APPROVED VISUAL CONSTRUCTION BLUEPRINT/i);
+    assert.match(sentPrompt, /diagnostic object cues, spatial relationships, negative space and geometry recipe/i);
+    assert.match(sentPrompt, /CRAFT BENCHMARK — STUDY THE HAND-BUILT NAVA HTML\/CSS LAB AS A CRAFT REFERENCE ONLY/i);
+    assert.match(sentPrompt, /DESIGN BEFORE DECORATION/i);
     assert.match(sentPrompt, /PHASE 1 — DISCOVERY/i);
     assert.match(sentPrompt, /PHASE 2 — CATEGORY RESEARCH/i);
     assert.match(sentPrompt, /PHASE 4A — IDENTITY COHESION/i);
@@ -156,9 +183,12 @@ test("NAVI writes an English brief and three sanitized HTML/CSS logo designs in 
     assert.match(sentPrompt, /PHASE 4B — ANTI-DEFAULT REFLEX/i);
     assert.match(sentPrompt, /PHASE 4C — BRIEF TRACEABILITY/i);
     assert.match(sentPrompt, /PHASE 4D — CLIENT BRIEF DOMINANCE/i);
-    assert.match(sentPrompt, /PHASE 4E — ANCHOR-TO-LAYER CONTRACT/i);
-    assert.match(sentPrompt, /anchorMap with exactly one object per visualAnchor/i);
-    assert.match(sentPrompt, /real nested HTML element inside the single \.navi-symbol/i);
+    assert.match(sentPrompt, /PHASE 4E — ANCHOR-TO-FORM GUIDANCE/i);
+    assert.match(sentPrompt, /PHASE 4F — SPATIAL RELATIONSHIPS/i);
+    assert.match(sentPrompt, /Use actual placement, overlap, clipping and stacking only where the idea needs them/i);
+    assert.match(sentPrompt, /first solve the recognizable idea and outer silhouette in monochrome/i);
+    assert.match(sentPrompt, /anchorMap explaining where each important idea is visibly expressed/i);
+    assert.match(sentPrompt, /main \.navi-symbol silhouette itself or to a real styled child layer/i);
     assert.match(sentPrompt, /exact client idea and relationships/i);
     assert.match(sentPrompt, /brief fidelity first/i);
     assert.match(sentPrompt, /actual \.navi-symbol/i);
@@ -171,20 +201,23 @@ test("NAVI writes an English brief and three sanitized HTML/CSS logo designs in 
     assert.match(sentPrompt, /16 px/i);
     assert.match(sentPrompt, /HTML and CSS are the only design and rendering medium/i);
     assert.match(sentPrompt, /HTML and CSS are the only design and rendering medium/i);
-    assert.match(sentPrompt, /coordinated HTML layers and CSS geometry/i);
+    assert.match(sentPrompt, /one carefully shaped silhouette when that is sufficient/i);
     assert.match(sentPrompt, /For Z specifically, preserve a clear top horizontal/i);
     assert.match(sentPrompt, /artboard\/canvas background must be white or a light neutral/i);
     assert.match(sentPrompt, /Never assign the root a fixed 1000px width or height/i);
     assert.match(sentPrompt, /320×320 mobile preview/i);
-    assert.match(sentPrompt, /Never submit two stray diagonal strokes/i);
-    assert.match(sentPrompt, /navi-symbol__detail/i);
+    assert.match(sentPrompt, /crooked stray strokes/i);
+    assert.match(sentPrompt, /Add named child layers only where needed to construct the idea/i);
     assert.match(sentPrompt, /SVG and all SVG-derived tags or attributes are forbidden/i);
     assert.match(sentPrompt, /CSS clip-path polygons/i);
-    assert.match(sentPrompt, /A thin border or line alone is not an acceptable symbol/i);
+    assert.match(sentPrompt, /A line-based mark is acceptable only when its strokes form a complete, recognizable and intentional symbol/i);
     assert.match(sentPrompt, /Navy or blue may still be used as an intentional brand-mark/i);
     assert.match(sentPrompt, /{{BRAND_NAME}}/i);
     assert.match(sentPrompt, /one valid JSON object/i);
-    assert.equal(result.planning.method, "navi-english-brief-html-css-design");
+    assert.equal(result.planning.method, "navi-visual-blueprint-then-html-css-build");
+    assert.equal(result.planning.extraModelCalls, 1);
+    assert.equal(result.planning.visualBlueprints.length, 3);
+    assert.ok(result.planning.visualBlueprints.every(item => item.geometryRecipe && item.silhouette && item.objectCues.length >= 2));
     assert.match(result.planning.designBriefEnglish, /distinctive Persian creative-studio identity/i);
     assert.ok(result.concepts.every(item => item.html.includes("نوا")));
     assert.ok(result.concepts.every(item => item.html.includes('data-logo-role="brand"')));
@@ -199,7 +232,7 @@ test("NAVI writes an English brief and three sanitized HTML/CSS logo designs in 
     assert.ok(result.concepts.every(item => item.html.includes("<div")));
     assert.ok(result.concepts.every(item => !Object.prototype.hasOwnProperty.call(item, "svg")), "SVG is never returned as a separate export field");
     assert.ok(result.concepts.every(item => item.css.length > 0));
-    assert.ok(result.concepts.every(item => item.visualAnchors.length >= 2));
+    assert.ok(result.concepts.every(item => item.visualAnchors.length >= 1));
     assert.ok(result.concepts.every(item => item.anchorMap.length === item.visualAnchors.length));
     assert.equal(result.concepts[0].centralThesis, "پیوند دو مسیر صوتی به یک نشانه پیوسته و باز تبدیل می‌شود");
     assert.equal(result.concepts[0].symbolConstruction, "دو مسیر منحنی در مرکز به هم می‌رسند و یک شکاف پیوسته در دل فرم می‌سازند");
@@ -219,21 +252,50 @@ test("NAVI writes an English brief and three sanitized HTML/CSS logo designs in 
 });
 
 
-test("NAVI builds symbols with CSS-only geometry and strips SVG markup", async () => {
+
+test("Logo Studio recovers omitted visual-anchor arrays from the validated brief and real CSS symbol", async () => {
+  const originalFetch = globalThis.fetch;
+  const db = new FakeD1();
+  const design = makeDesign();
+  design.concepts = [design.concepts[0]];
+  delete design.concepts[0].visualAnchors;
+  delete design.concepts[0].anchorMap;
+  design.concepts[0].html = '<div class="mark"><div class="navi-symbol" data-logo-role="symbol"><span class="wave"></span></div><strong>{{BRAND_NAME}}</strong></div>';
+  design.concepts[0].css = '.logo-art-root{display:grid;place-items:center;width:100%;height:100%}.mark{display:grid;justify-items:center;gap:20px}.navi-symbol{width:240px;height:240px;background:var(--logo-primary);border-radius:38% 62% 55% 45%}.wave{display:block;width:50%;height:30%;border:8px solid var(--logo-background);border-radius:50%}';
+  globalThis.fetch = async () => makeGeminiResponse(design);
+  try {
+    const response = await handleLogoRoute({
+      request: makeRequest({ ...INPUT, singleConcept: true }),
+      env: { NAVA_DB: db, NAVI_SESSION_SECRET: "test-secret-key", GEMINI_API_KEY: "test-gemini-key" },
+      origin: ORIGIN,
+      corsOrigin: ORIGIN
+    });
+    const result = await response.json();
+    assert.equal(response.status, 200, JSON.stringify(result));
+    assert.equal(result.success, true);
+    assert.equal(result.concepts.length, 1);
+    assert.equal(result.concepts[0].visualAnchors.length, 2);
+    assert.equal(result.concepts[0].anchorMap.length, 2);
+    assert.ok(result.concepts[0].anchorMap.every(entry => ["wave", "navi-symbol"].includes(entry.layerClass)));
+    assert.equal(db.visitorUsed, 1);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test("NAVI rejects SVG-based artwork instead of silently stripping it and showing CSS fallback geometry", async () => {
   const originalFetch = globalThis.fetch, db = new FakeD1(), design = makeDesign();
   design.concepts[0].html = '<div class="mark"><div class="navi-symbol" data-logo-role="symbol"><span class="navi-symbol__detail"></span><span class="navi-symbol__part"></span></div><strong>{{BRAND_NAME}}</strong></div>';
   design.concepts[0].css = '.logo-art-root{display:grid;place-items:center;width:100%;height:100%}.mark{display:grid;gap:20px;justify-items:center}.navi-symbol{position:relative;width:220px;height:220px;background:var(--logo-primary);clip-path:polygon(50% 0,94% 26%,82% 82%,50% 100%,18% 82%,6% 26%)}.navi-symbol__detail{position:absolute;inset:22%;border:10px solid var(--logo-background);border-radius:50%}.navi-symbol__part{position:absolute;width:32%;height:18%;right:12%;top:38%;background:var(--logo-background);transform:rotate(-28deg);border-radius:50%}.mark strong{font-size:48px;font-weight:900}';
   design.concepts[1].html = '<div class="mark"><div class="navi-symbol" data-logo-role="symbol"><svg viewBox="0 0 200 200"><path d="M20 20 H180 V180 H20 Z"/></svg><span class="navi-symbol__detail"></span></div><strong>{{BRAND_NAME}}</strong></div>';
-  design.concepts[1].css += ".navi-symbol__detail{display:block;width:45%;height:45%;border:8px solid var(--logo-primary);border-radius:38%}";
   globalThis.fetch = async () => makeGeminiResponse(design);
   try {
     const response = await handleLogoRoute({request:makeRequest(),env:{NAVA_DB:db,NAVI_SESSION_SECRET:"test-secret-key",GEMINI_API_KEY:"test-gemini-key"},origin:ORIGIN,corsOrigin:ORIGIN});
     const result = await response.json();
-    assert.equal(response.status,200); assert.equal(result.success,true);
-    assert.equal(result.concepts.length,3,JSON.stringify(result.rejectedConcepts));
-    assert.doesNotMatch(result.concepts[0].html, /<(?:svg|path|circle|ellipse|rect|polygon|polyline|line)\b/i);
-    assert.doesNotMatch(result.concepts[1].html, /<(?:svg|path|circle|ellipse|rect|polygon|polyline|line)\b/i);
-    assert.match(result.concepts[0].html,/navi-symbol__detail/); assert.equal(db.visitorUsed,1);
+    assert.equal(response.status,502);
+    assert.equal(result.code,"LOGO_SVG_SOURCE_FORBIDDEN");
+    assert.equal(result.stage,"svg-source");
+    assert.equal(db.visitorUsed,0);
   } finally {globalThis.fetch=originalFetch;}
 });
 
@@ -242,7 +304,7 @@ test("NAVI rejects SVG-only artwork when no CSS-built symbol remains", async () 
   design.concepts[0].html='<div class="mark"><div class="navi-symbol" data-logo-role="symbol"><svg viewBox="0 0 200 200"><path d="M20 20 H180 V180 H20 Z"/></svg></div><strong>{{BRAND_NAME}}</strong></div>';
   design.concepts[0].css='.logo-art-root{display:grid;place-items:center;width:100%;height:100%}.mark{display:grid}.navi-symbol{width:220px;height:220px}';
   globalThis.fetch=async()=>makeGeminiResponse(design);
-  try {const response=await handleLogoRoute({request:makeRequest(),env:{NAVA_DB:db,NAVI_SESSION_SECRET:"test-secret-key",GEMINI_API_KEY:"test-gemini-key"},origin:ORIGIN,corsOrigin:ORIGIN});const result=await response.json();assert.equal(response.status,200);assert.equal(result.concepts.length,2);assert.equal(result.rejectedConcepts[0].code,"LOGO_SYMBOL_UNDERBUILT");}
+  try {const response=await handleLogoRoute({request:makeRequest(),env:{NAVA_DB:db,NAVI_SESSION_SECRET:"test-secret-key",GEMINI_API_KEY:"test-gemini-key"},origin:ORIGIN,corsOrigin:ORIGIN});const result=await response.json();assert.equal(response.status,502);assert.equal(result.code,"LOGO_SVG_SOURCE_FORBIDDEN");assert.equal(result.stage,"svg-source");assert.equal(db.visitorUsed,0);}
   finally {globalThis.fetch=originalFetch;}
 });
 
@@ -339,7 +401,11 @@ test("NAVI rejects a concept with no traceable connection to the brief", async (
     delete item.briefAlignment;
     delete item.briefElements;
   });
-  globalThis.fetch = async () => makeGeminiResponse(untraceable);
+  let untraceCalls = 0;
+  globalThis.fetch = async () => {
+    untraceCalls += 1;
+    return makeGeminiResponse(untraceCalls === 1 ? makeDesign() : untraceable);
+  };
   try {
     const response = await handleLogoRoute({
       request: makeRequest(),
@@ -515,9 +581,10 @@ test("NAVI reports truncated model output and refunds the reserved trial without
   globalThis.fetch = async (_url, options) => {
     calls += 1;
     const body = JSON.parse(options.body);
-    assert.equal(body.generationConfig.thinkingConfig.thinkingLevel, "MEDIUM");
-    assert.equal(body.generationConfig.maxOutputTokens, 32768);
+    assert.equal(body.generationConfig.thinkingConfig.thinkingLevel, "HIGH");
     assert.equal("temperature" in body.generationConfig, false);
+    if (body.generationConfig.maxOutputTokens === 8192) return makeGeminiResponse();
+    assert.equal(body.generationConfig.maxOutputTokens, 32768);
     return new Response(JSON.stringify({
       candidates: [{ finishReason: "MAX_TOKENS", content: { parts: [{ text: '{"concepts":' }] } }],
       usageMetadata: { candidatesTokenCount: 32768 }
@@ -534,7 +601,7 @@ test("NAVI reports truncated model output and refunds the reserved trial without
     assert.equal(response.status, 502);
     assert.equal(result.code, "MODEL_OUTPUT_TRUNCATED");
     assert.match(result.error, /پاسخ طراحی ناقص/);
-    assert.equal(calls, 1, "diagnostics must not trigger a second paid model request");
+    assert.equal(calls, 2, "the planner succeeds once; the truncated builder response is not retried as another stage");
     assert.equal(db.visitorUsed, 0);
     assert.equal([...db.reservations.values()][0].status, "refunded");
   } finally {
@@ -585,24 +652,29 @@ test("NAVI categorizes Gemini quota errors without exposing provider error text"
   }
 });
 
-test("PNG export rasterizes the rendered HTML/CSS DOM without SVG foreignObject or tainted image input", () => {
+test("Persian text is painted with the browser canvas text shaper after DOM rasterization", () => {
+ const source=readFileSync(new URL("../logo-renderer.js",import.meta.url),"utf8");
+ assert.ok(source.includes("function paintNativeText"));
+ assert.doesNotThrow(() => new Function(source), "logo-renderer.js must remain valid JavaScript");
+ assert.ok(source.includes("ctx.direction=style.direction"));
+ assert.ok(source.includes("ctx.fillText(line.text"));
+ assert.ok(source.includes("hideCloneText(clone)"));
+ assert.ok(source.includes("paintNativeText(canvas,root,rect"));
+});
+test("PNG export rasterizes the live HTML/CSS DOM directly with no SVG pipeline", () => {
   const source = readFileSync(new URL("../logo-renderer.js", import.meta.url), "utf8");
-  const start = source.indexOf("async function exportPngFromFrame");
-  const end = source.indexOf("global.NavaLogoRenderer=", start);
+  const start = source.indexOf("async function renderFrameCanvas");
+  const end = source.indexOf("global.NavaLogoRenderer", start);
   const exporter = source.slice(start, end);
   assert.ok(start >= 0 && end > start);
-  assert.ok(exporter.includes("copyComputedTree(root,document)"), "iframe computed styles and pseudo-elements must be copied into the parent document");
-  assert.ok(exporter.includes("global.html2canvas(clone"), "rasterization must target the same-document cloned artboard");
-  assert.ok(exporter.includes("stage.appendChild(clone)"), "the cloned artboard must be mounted in the visible staging layer");
-  assert.ok(source.includes("appendPseudo(\"::before\")") && source.includes("appendPseudo(\"::after\")"));
-  assert.match(exporter, /allowTaint:false/);
-  assert.match(exporter, /useCORS:false/);
-  assert.match(exporter, /foreignObjectRendering:false/);
-  assert.ok(exporter.includes("canvas.toBlob"));
-  assert.ok(exporter.includes("getImageData"), "empty raster output must be rejected instead of downloaded as a blank PNG");
-  assert.ok(!exporter.includes("<foreignObject") && !exporter.includes("image.src"));
-  assert.ok(source.includes("global.NavaLogoRenderer={downloadBlob,exportPngFromFrame}"), "the public renderer exposes PNG only, not SVG export");
-  assert.ok(!source.includes("global.NavaLogoRenderer={buildSvg"), "SVG is not available as a user-facing export");
+  assert.ok(exporter.includes("global.html2canvas(clone"));
+  assert.ok(exporter.includes("copyComputedTree(root,document)"));
+  assert.ok(source.includes("canvas.toBlob"));
+  assert.ok(exporter.includes("getImageData"));
+  assert.ok(exporter.includes("stage.remove()"));
+  assert.ok(!source.includes("buildSvg"));
+  assert.ok(!source.includes("createElementNS"));
+  assert.ok(!source.includes("image/svg+xml"));
 });
 test("Logo Studio waits for a measurable sandboxed preview before PNG export", () => {
   const source = readFileSync(new URL("../logo-studio.js", import.meta.url), "utf8");
@@ -642,7 +714,10 @@ test("Logo Studio offers explicit concept selection and a standalone editable HT
   assert.ok(source.includes("function downloadHtml(concept, brief, index, feedback, button)"));
   assert.ok(source.includes('type: "text/html;charset=utf-8"'));
   assert.ok(source.includes("previewDocument(concept, brief)"));
-  assert.ok(source.includes("function showExportLink(feedback, message, link)"), "successful exports must keep the same feedback node reusable for later downloads");
+  assert.ok(source.includes("function showExportLink(feedback, message, link, filename)"), "successful exports must keep the same feedback node reusable for later downloads");
+  assert.ok(source.includes("anchor.download = filename || \"nava-logo.png\""), "the visible fallback link must trigger an actual PNG download on mobile");
+  assert.ok(source.includes('anchor.textContent = "دانلود PNG"'), "the user must have an explicit save link after rendering");
+  assert.ok(source.includes("open.textContent = \" · بازکردن تصویر\""), "opening the rendered image remains available when the browser ignores download attributes");
   assert.ok(source.includes('anchor.download = safeName(brief.brandName)'));
   assert.ok(source.includes('chooseButton.dataset.logoSelect = "true"'));
   assert.ok(source.includes('item.classList.toggle("is-selected", selected)'));
@@ -734,6 +809,82 @@ test("NAVI quality gate accepts responsive min/max dimensions while requiring a 
   }
 });
 
+test("NAVI accepts a clean solid silhouette without forcing decorative CSS effects or extra layers", async () => {
+  const originalFetch = globalThis.fetch;
+  const db = new FakeD1();
+  const clean = makeDesign();
+  clean.concepts[0].briefElements = ["یک فرم یکپارچه"];
+  clean.concepts[0].html = '<div class="mark"><div class="navi-symbol" data-logo-role="symbol"><span class="wave"></span></div><strong>{{BRAND_NAME}}</strong></div>';
+  clean.concepts[0].css = '.logo-art-root{display:grid;place-items:center;width:100%;height:100%}.mark{display:grid;justify-items:center;gap:20px}.navi-symbol{width:240px;height:240px;background:var(--logo-primary);border-radius:38% 62% 55% 45%}.wave{display:block;width:50%;height:30%;border:8px solid var(--logo-background);border-radius:50%}';
+  globalThis.fetch = async () => makeGeminiResponse(clean);
+  try {
+    const response = await handleLogoRoute({
+      request: makeRequest(),
+      env: { NAVA_DB: db, NAVI_SESSION_SECRET: "test-secret-key", GEMINI_API_KEY: "test-gemini-key" },
+      origin: ORIGIN,
+      corsOrigin: ORIGIN
+    });
+    const result = await response.json();
+    assert.equal(response.status, 200, JSON.stringify(result));
+    assert.equal(result.success, true);
+    assert.equal(result.concepts[0].visualAnchors.length, 1);
+    assert.equal(result.concepts[0].anchorMap.length, 1);
+    assert.equal(db.visitorUsed, 1);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+
+
+test("NAVI accepts a single unified symbol silhouette without artificial child layers", async () => {
+  const originalFetch = globalThis.fetch;
+  const db = new FakeD1();
+  const unified = makeDesign();
+  unified.concepts[0].briefElements = ["یک نشان یکپارچه"];
+  unified.concepts[0].html = '<div class="mark"><div class="navi-symbol" data-logo-role="symbol"></div><strong>{{BRAND_NAME}}</strong></div>';
+  unified.concepts[0].css = '.logo-art-root{display:grid;place-items:center;width:100%;height:100%}.mark{display:grid;justify-items:center;gap:20px}.navi-symbol{width:240px;height:240px;background:var(--logo-primary);border-radius:18% 52% 24% 58%;clip-path:polygon(50% 0,100% 40%,72% 100%,0 78%,12% 28%)}';
+  globalThis.fetch = async () => makeGeminiResponse(unified);
+  try {
+    const response = await handleLogoRoute({
+      request: makeRequest(),
+      env: { NAVA_DB: db, NAVI_SESSION_SECRET: "test-secret-key", GEMINI_API_KEY: "test-gemini-key" },
+      origin: ORIGIN,
+      corsOrigin: ORIGIN
+    });
+    const result = await response.json();
+    assert.equal(response.status, 200, JSON.stringify(result));
+    assert.equal(result.success, true);
+    assert.equal(result.concepts[0].visualAnchors.length, 1);
+    assert.equal(result.concepts[0].anchorMap[0].layerClass, "navi-symbol");
+    assert.equal(db.visitorUsed, 1);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test("NAVI rejects stray line strokes that do not form a filled logo silhouette", async () => {
+  const originalFetch = globalThis.fetch;
+  const db = new FakeD1();
+  const linesOnly = makeDesign();
+  linesOnly.concepts[0].css = '.logo-art-root{display:grid;place-items:center;width:100%;height:100%}.mark{display:grid;justify-items:center}.navi-symbol{position:relative;width:240px;height:240px;background:var(--logo-primary);border:2px solid var(--logo-primary)}.wave{position:absolute;left:10%;top:48%;width:80%;height:4px;background:var(--logo-background);transform:rotate(35deg)}.orbit{position:absolute;left:10%;top:48%;width:80%;height:4px;background:var(--logo-background);transform:rotate(-35deg)}';
+  globalThis.fetch = async () => makeGeminiResponse(linesOnly);
+  try {
+    const response = await handleLogoRoute({
+      request: makeRequest(),
+      env: { NAVA_DB: db, NAVI_SESSION_SECRET: "test-secret-key", GEMINI_API_KEY: "test-gemini-key" },
+      origin: ORIGIN,
+      corsOrigin: ORIGIN
+    });
+    const result = await response.json();
+    assert.equal(response.status, 200, JSON.stringify(result));
+    assert.equal(result.success, true);
+    assert.ok(result.rejectedConcepts.some(item => item.index === 1 && item.code === "LOGO_SYMBOL_UNDERBUILT"));
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
 test("NAVI quality gate does not count an empty named layer as geometric construction", async () => {
   const originalFetch = globalThis.fetch;
   const db = new FakeD1();
@@ -783,4 +934,217 @@ test("NAVI accepts a transparent symbol wrapper when nested layers create the ac
   } finally {
     globalThis.fetch = originalFetch;
   }
+});
+
+
+test("Logo Studio captures real renders and runs validated automatic visual refinement", () => {
+  const ui = readFileSync(new URL("../logo-studio.js", import.meta.url), "utf8");
+  const backend = readFileSync(new URL("../modules/logo.js", import.meta.url), "utf8");
+  assert.ok(ui.includes("async function visuallyRefineConcepts"));
+  assert.ok(ui.includes('action: "visual-refine"'));
+  assert.ok(ui.includes("capturePreviewDataUrl(frame, 640)"));
+  assert.ok(ui.includes("briefAlignment: concept.briefAlignment"), "visual review must retain the original concept brief traceability fields");
+  assert.ok(ui.includes("result.reviewToken"));
+  assert.ok(ui.includes("finalConcepts = visualReview.concepts"));
+  assert.ok(ui.includes("طرح‌های اولیه حفظ شدند"));
+  assert.ok(ui.includes("result.code"), "visual-review failures must expose their diagnostic code");
+  assert.ok(backend.includes("error?.name === \"AbortError\" ? \"MODEL_TIMEOUT\""), "review timeouts must be classified as retryable model timeouts");
+  assert.ok(backend.includes("controller.abort(), 120000"), "visual review must have a 120-second deadline");
+  assert.ok(ui.includes("بازبینی و اصلاح بصری"));
+});
+
+test("NAVI visual refinement reviews real PNGs, validates revised HTML/CSS, and does not consume another trial", async () => {
+  const originalFetch = globalThis.fetch;
+  const db = new FakeD1();
+  let sentPayload;
+  try {
+    globalThis.fetch = async () => makeGeminiResponse();
+    const initialResponse = await handleLogoRoute({
+      request: makeRequest(),
+      env: { NAVA_DB: db, NAVI_SESSION_SECRET: "test-secret-key", GEMINI_API_KEY: "test-gemini-key" },
+      origin: ORIGIN,
+      corsOrigin: ORIGIN
+    });
+    const initial = await initialResponse.json();
+    assert.equal(initialResponse.status, 200, JSON.stringify(initial));
+    assert.ok(initial.reviewToken, "initial design must issue a short-lived signed visual-review token");
+    assert.equal(db.visitorUsed, 1);
+
+    const original = initial.concepts[0];
+    const html = '<div class="mark"><div class="navi-symbol seal" data-logo-role="symbol"><span class="wave"></span><span class="orbit"></span></div><strong><span data-logo-role="brand">نوا</span></strong><small><span data-logo-role="slogan">صدای ایده‌های تازه</span></small></div>';
+    const css = original.css.replace("border-radius:50%", "border-radius:34% 66% 42% 58%;clip-path:polygon(50% 0,100% 42%,72% 100%,0 78%,12% 28%)");
+    globalThis.fetch = async (_url, options) => {
+      sentPayload = JSON.parse(options.body);
+      return new Response(JSON.stringify({
+        candidates: [{
+          content: { parts: [{ text: JSON.stringify({
+            concepts: [{ index: 1, html, css, visualRevisionNotes: "تناسب نشان و جای‌گیری لایه‌ها پس از مشاهده رندر واقعی اصلاح شد." }]
+          }) }] }
+        }]
+      }), { status: 200, headers: { "Content-Type": "application/json" } });
+    };
+    const concept = { ...original, html, previewImage: "data:image/png;base64,aGVsbG8=" };
+    const response = await handleLogoRoute({
+      request: makeRequest({
+        ...INPUT, action: "visual-refine", reviewToken: initial.reviewToken, concepts: [concept]
+      }),
+      env: { NAVA_DB: db, NAVI_SESSION_SECRET: "test-secret-key", GEMINI_API_KEY: "test-gemini-key" },
+      origin: ORIGIN,
+      corsOrigin: ORIGIN
+    });
+    const result = await response.json();
+    assert.equal(response.status, 200, JSON.stringify(result));
+    assert.equal(result.success, true);
+    assert.equal(result.visualReview.method, "render-review-refine");
+    assert.equal(result.visualReview.refinedCount, 1);
+    assert.equal(result.concepts[0].visualReview, "refined");
+    assert.match(result.concepts[0].html, /data-logo-role="brand"/);
+    assert.match(result.concepts[0].html, /نوا/);
+    assert.ok(sentPayload.contents[0].parts.some(part => part.inlineData?.mimeType === "image/png"));
+    assert.ok(sentPayload.contents[0].parts.some(part => part.text?.includes(original.briefAlignment)));
+    assert.equal(db.visitorUsed, 1, "visual review must not reserve or consume another guest trial");
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test("NAVI rejects cosmetic-only visual revisions that leave the logo symbol geometry unchanged", async () => {
+  const originalFetch = globalThis.fetch;
+  const db = new FakeD1();
+  try {
+    globalThis.fetch = async () => makeGeminiResponse();
+    const initialResponse = await handleLogoRoute({
+      request: makeRequest(),
+      env: { NAVA_DB: db, NAVI_SESSION_SECRET: "test-secret-key", GEMINI_API_KEY: "test-gemini-key" },
+      origin: ORIGIN,
+      corsOrigin: ORIGIN
+    });
+    const initial = await initialResponse.json();
+    const original = initial.concepts[0];
+    globalThis.fetch = async () => new Response(JSON.stringify({
+      candidates: [{ content: { parts: [{ text: JSON.stringify({
+        concepts: [{ index: 1, html: original.html, css: original.css + ".mark{transform:scale(1.02)}", visualRevisionNotes: "اندازه قاب کمی تغییر کرد." }]
+      }) }] } }]
+    }), { status: 200, headers: { "Content-Type": "application/json" } });
+    const response = await handleLogoRoute({
+      request: makeRequest({ ...INPUT, action: "visual-refine", reviewToken: initial.reviewToken, concepts: [{ ...original, previewImage: "data:image/png;base64,aGVsbG8=" }] }),
+      env: { NAVA_DB: db, NAVI_SESSION_SECRET: "test-secret-key", GEMINI_API_KEY: "test-gemini-key" },
+      origin: ORIGIN,
+      corsOrigin: ORIGIN
+    });
+    const result = await response.json();
+    assert.equal(response.status, 200);
+    assert.equal(result.visualReview.refinedCount, 0);
+    assert.equal(result.concepts[0].visualReviewIssue, "LOGO_REVIEW_NO_MATERIAL_CHANGE");
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test("NAVI prioritizes the actual brief and only uses layers when the idea needs them", () => {
+  const backend = readFileSync(new URL("../modules/logo.js", import.meta.url), "utf8");
+  assert.ok(!backend.includes("PHASE 5B — GEOMETRY BLUEPRINT"));
+  assert.ok(backend.includes("Use as few or as many HTML/CSS layers as the idea genuinely needs"));
+  assert.ok(backend.includes("child layers are optional"));
+  assert.ok(backend.includes("NON-NEGOTIABLE REVISION STANDARD"));
+  assert.ok(backend.includes("Change the actual silhouette"));
+  assert.ok(backend.includes("PHASE 6B — PROFESSIONAL LOGO FINISH"));
+  assert.ok(backend.includes("PHASE 6C — SEMANTIC RECOGNITION AND INTEGRATION"));
+  assert.ok(backend.includes("A music reference must be more specific than three vertical bars"));
+  assert.ok(backend.includes("redesign the silhouette"));
+  assert.ok(backend.includes("Treat negative space as designed geometry"));
+  assert.ok(backend.includes("optical centering and the mark-to-wordmark relationship"));
+  assert.ok(backend.includes("LOGO_REVIEW_NO_MATERIAL_CHANGE"));
+  assert.ok(backend.includes('thinkingLevel: "HIGH"'));
+});
+
+
+
+test("NAVI accepts valid logo geometry when CSS selectors are scoped beneath the artboard", async () => {
+  const originalFetch = globalThis.fetch;
+  const db = new FakeD1();
+  const scoped = makeDesign();
+  scoped.concepts[0].html = '<div class="mark"><div class="navi-symbol" data-logo-role="symbol"><span class="wave"></span><span class="orbit"></span></div><strong>{{BRAND_NAME}}</strong><small>{{SLOGAN}}</small></div>';
+  scoped.concepts[0].css = '.logo-art-root{display:grid;place-items:center;width:100%;height:100%}.logo-art-root .mark{display:grid;gap:24px;justify-items:center}.logo-art-root .navi-symbol{position:relative;width:240px;height:240px;background:var(--logo-primary);border-radius:42%;display:grid;place-items:center}.logo-art-root .wave{display:block;width:70%;height:24%;border:8px solid var(--logo-background);border-radius:50%;transform:rotate(-18deg)}.logo-art-root .orbit{position:absolute;inset:12%;border:3px solid var(--logo-background);border-radius:50%}';
+  globalThis.fetch = async () => makeGeminiResponse(scoped);
+  try {
+    const response = await handleLogoRoute({
+      request: makeRequest(),
+      env: { NAVA_DB: db, NAVI_SESSION_SECRET: "test-secret-key", GEMINI_API_KEY: "test-gemini-key" },
+      origin: ORIGIN,
+      corsOrigin: ORIGIN
+    });
+    const result = await response.json();
+    assert.equal(response.status, 200);
+    assert.equal(result.success, true);
+    assert.equal(result.concepts.length, 3, JSON.stringify(result.rejectedConcepts));
+    assert.ok(!result.rejectedConcepts.some(item => item.index === 1));
+    assert.equal(db.visitorUsed, 1);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+
+test("NAVI accepts a complete unified silhouette even when an optional child node has no styling", async () => {
+  const originalFetch = globalThis.fetch;
+  const db = new FakeD1();
+  const unified = makeDesign();
+  unified.concepts = [unified.concepts[0]];
+  unified.concepts[0].html = '<div class="mark"><div class="navi-symbol" data-logo-role="symbol"><span class="unused-detail"></span></div><strong>{{BRAND_NAME}}</strong><small>{{SLOGAN}}</small></div>';
+  unified.concepts[0].css = '.logo-art-root{display:grid;place-items:center;width:100%;height:100%}.mark{display:grid;justify-items:center;gap:20px}.navi-symbol{width:240px;height:240px;background:var(--logo-primary);border-radius:18% 52% 24% 58%;clip-path:polygon(50% 0,100% 40%,72% 100%,0 78%,12% 28%)}';
+  globalThis.fetch = async () => makeGeminiResponse(unified);
+  try {
+    const response = await handleLogoRoute({
+      request: makeRequest({ ...INPUT, singleConcept: true }),
+      env: { NAVA_DB: db, NAVI_SESSION_SECRET: "test-secret-key", GEMINI_API_KEY: "test-gemini-key" },
+      origin: ORIGIN,
+      corsOrigin: ORIGIN
+    });
+    const result = await response.json();
+    assert.equal(response.status, 200, JSON.stringify(result));
+    assert.equal(result.success, true);
+    assert.equal(result.concepts.length, 1);
+    assert.equal(result.concepts[0].anchorMap[0].layerClass, "navi-symbol");
+    assert.equal(db.visitorUsed, 1);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test("NAVI retries a transient Gemini service failure once before returning a logo result", async () => {
+  const originalFetch = globalThis.fetch;
+  const db = new FakeD1();
+  let calls = 0;
+  globalThis.fetch = async () => {
+    calls += 1;
+    if (calls === 1) return new Response(JSON.stringify({ error: { message: "temporary overload" } }), { status: 503 });
+    return makeGeminiResponse();
+  };
+  try {
+    const response = await handleLogoRoute({
+      request: makeRequest(),
+      env: { NAVA_DB: db, NAVI_SESSION_SECRET: "test-secret-key", GEMINI_API_KEY: "test-gemini-key" },
+      origin: ORIGIN,
+      corsOrigin: ORIGIN
+    });
+    const result = await response.json();
+    assert.equal(response.status, 200, JSON.stringify(result));
+    assert.equal(result.success, true);
+    assert.equal(calls, 3, "planner retry plus one successful planner/build sequence");
+    assert.equal(db.visitorUsed, 1);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+
+test("NAVI exposes per-concept visual refinement rejection diagnostics to Logo Studio", () => {
+  const backend = readFileSync(new URL("../modules/logo.js", import.meta.url), "utf8");
+  const ui = readFileSync(new URL("../logo-studio.js", import.meta.url), "utf8");
+  assert.ok(backend.includes("rejectionReasons: review.rejectionReasons"));
+  assert.ok(backend.includes('code: concept.visualReviewIssue || "LOGO_REVIEW_REJECTED"'));
+  assert.ok(ui.includes('item.code'));
+  assert.ok(ui.includes("علت دقیق:"));
+  assert.ok(ui.includes('["علت رد اصلاح", concept.visualReviewIssue]'));
 });
