@@ -489,8 +489,13 @@ async function designLogos(data, apiKey) {
       let html;
       let css;
       try {
-        html = sanitizeHtmlFragment(item?.html);
-      } catch {
+        const rawHtml = String(item?.html || "");
+        if (/<\s*\/?\s*(?:svg|path|circle|ellipse|rect|polygon|polyline|line|defs|g|use|symbol|mask|clipPath|linearGradient|radialGradient|stop|foreignObject)\b/i.test(rawHtml)) {
+          throw validationError("LOGO_SVG_SOURCE_FORBIDDEN", "NAVI returned SVG-based artwork. The concept was rejected instead of silently stripping its artwork; regenerate using native HTML/CSS geometry only.", "svg-source", index + 1);
+        }
+        html = sanitizeHtmlFragment(rawHtml);
+      } catch (error) {
+        if (error?.diagnosticCode) throw error;
         throw validationError("LOGO_HTML_UNSAFE", "HTML safety validation failed.", "html-safety", index + 1);
       }
       try {
@@ -584,7 +589,7 @@ async function designLogos(data, apiKey) {
       } catch (error) {
         // Unsafe markup/resources invalidate the whole response, not just one
         // concept: never return a partially accepted batch after a security hit.
-        if (["LOGO_HTML_UNSAFE", "LOGO_CSS_UNSAFE"].includes(error?.diagnosticCode)) throw error;
+        if (["LOGO_HTML_UNSAFE", "LOGO_CSS_UNSAFE", "LOGO_SVG_SOURCE_FORBIDDEN"].includes(error?.diagnosticCode)) throw error;
         rejectedConcepts.push({
           index: index + 1,
           code: error?.diagnosticCode || "LOGO_CONCEPT_REJECTED",
