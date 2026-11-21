@@ -222,6 +222,39 @@ test("NAVI writes an English brief and three sanitized HTML/CSS logo designs in 
 });
 
 
+
+test("Logo Studio recovers omitted visual-anchor arrays from the validated brief and real CSS symbol", async () => {
+  const originalFetch = globalThis.fetch;
+  const db = new FakeD1();
+  const design = makeDesign();
+  design.concepts = [design.concepts[0]];
+  delete design.concepts[0].visualAnchors;
+  delete design.concepts[0].anchorMap;
+  design.concepts[0].html = '<div class="mark"><div class="navi-symbol" data-logo-role="symbol"><span class="wave"></span></div><strong>{{BRAND_NAME}}</strong></div>';
+  design.concepts[0].css = '.logo-art-root{display:grid;place-items:center;width:100%;height:100%}.mark{display:grid;justify-items:center;gap:20px}.navi-symbol{width:240px;height:240px;background:var(--logo-primary);border-radius:38% 62% 55% 45%}.wave{display:block;width:50%;height:30%;border:8px solid var(--logo-background);border-radius:50%}';
+  globalThis.fetch = async () => new Response(JSON.stringify({
+    candidates: [{ content: { parts: [{ text: JSON.stringify(design) }] } }]
+  }), { status: 200, headers: { "Content-Type": "application/json" } });
+  try {
+    const response = await handleLogoRoute({
+      request: makeRequest({ ...INPUT, singleConcept: true }),
+      env: { NAVA_DB: db, NAVI_SESSION_SECRET: "test-secret-key", GEMINI_API_KEY: "test-gemini-key" },
+      origin: ORIGIN,
+      corsOrigin: ORIGIN
+    });
+    const result = await response.json();
+    assert.equal(response.status, 200, JSON.stringify(result));
+    assert.equal(result.success, true);
+    assert.equal(result.concepts.length, 1);
+    assert.equal(result.concepts[0].visualAnchors.length, 2);
+    assert.equal(result.concepts[0].anchorMap.length, 2);
+    assert.ok(result.concepts[0].anchorMap.every(entry => ["wave", "navi-symbol"].includes(entry.layerClass)));
+    assert.equal(db.visitorUsed, 1);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
 test("NAVI builds symbols with CSS-only geometry and strips SVG markup", async () => {
   const originalFetch = globalThis.fetch, db = new FakeD1(), design = makeDesign();
   design.concepts[0].html = '<div class="mark"><div class="navi-symbol" data-logo-role="symbol"><span class="navi-symbol__detail"></span><span class="navi-symbol__part"></span></div><strong>{{BRAND_NAME}}</strong></div>';

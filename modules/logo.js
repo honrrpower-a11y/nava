@@ -242,20 +242,52 @@ function validateConceptTraceability(item, conceptIndex) {
   return { centralThesis, symbolConstruction, briefAlignment, briefElements };
 }
 function validateVisualAnchorMap(html, css, item, conceptIndex, format) {
-  const visualAnchors = Array.isArray(item?.visualAnchors)
+  // Gemini may provide the design anchors in briefElements/symbolConstruction
+  // but omit the redundant visualAnchors/anchorMap JSON fields. Recover that
+  // contract deterministically from the already-validated design rationale and
+  // actual HTML/CSS layers; do not weaken the symbol or safety checks.
+  const briefElements = Array.isArray(item?.briefElements)
+    ? item.briefElements.slice(0, 5).map(value => safeText(value, 100)).filter(Boolean)
+    : [];
+  const construction = safeText(item?.symbolConstruction, 320) ||
+    safeText(item?.briefAlignment, 320);
+  const suppliedAnchors = Array.isArray(item?.visualAnchors)
     ? item.visualAnchors.slice(0, 5).map(anchor => ({
       id: safeText(anchor?.id, 40).toLowerCase(),
       description: safeText(anchor?.description, 120),
       relationship: safeText(anchor?.relationship, 180)
     }))
     : [];
-  const anchorMap = Array.isArray(item?.anchorMap)
+  const visualAnchors = suppliedAnchors.length
+    ? suppliedAnchors
+    : briefElements.map((description, index) => ({
+      id: "anchor-" + (index + 1),
+      description,
+      relationship: construction || "این جزء در سیلوئت اصلی نشان به‌صورت یکپارچه بازنمایی می‌شود"
+    }));
+  const suppliedMap = Array.isArray(item?.anchorMap)
     ? item.anchorMap.slice(0, 5).map(entry => ({
       anchorId: safeText(entry?.anchorId, 40).toLowerCase(),
       layerClass: safeText(entry?.layerClass, 64),
       visualRole: safeText(entry?.visualRole, 180)
     }))
     : [];
+  const symbolForMapping = findSymbolElement(html);
+  const childClasses = symbolForMapping
+    ? [...new Set([...symbolForMapping.inner.matchAll(/<(?:div|span|em|i)\b[^>]*class="([^"]+)"/gi)]
+      .flatMap(match => match[1].split(/\s+/))
+      .filter(name => name && name !== "navi-symbol" &&
+        cssRuleBodiesForClass(css, name).length > 0))]
+    : [];
+  const anchorMap = suppliedMap.length
+    ? suppliedMap
+    : visualAnchors.map((anchor, index) => ({
+      anchorId: anchor.id,
+      layerClass: childClasses[index] || "navi-symbol",
+      visualRole: childClasses[index]
+        ? "این لایه استایل‌شده جزء مشخص‌شده را در ساختار نشان می‌سازد"
+        : "این جزء در سیلوئت یکپارچه و استایل‌شده نشان بازنمایی می‌شود"
+    }));
   if (visualAnchors.length < 1 || visualAnchors.length > 5 ||
       visualAnchors.some(anchor => !/^[a-z][a-z0-9-]{1,31}$/.test(anchor.id) ||
         anchor.description.length < 3 || anchor.relationship.length < 8)) {
@@ -357,7 +389,7 @@ async function designLogos(data, apiKey) {
     "PHASE 4B — ANTI-DEFAULT REFLEX: challenge familiar AI/logo defaults for this sector (generic circles/orbits, gradients, gold-on-cream, generic geometric sans, initials inside badges, stock industry icons). At least one concept must avoid the usual defaults entirely. If any concept uses a familiar choice, state the specific reason from the brief in defaultsUsed; otherwise return an empty array. Do not claim a choice is distinctive without explaining what makes it specific to this brand.",
     "PHASE 4C — BRIEF TRACEABILITY: before drawing, convert the supplied request into explicit visual anchors. For every concept return centralThesis (one precise sentence describing the actual design idea), briefElements (1–6 concrete requested or brand-derived elements), symbolConstruction (describe exactly how those elements are physically encoded in the symbol silhouette, geometry, overlap, cut-out or negative space), and briefAlignment (explain the direct connection to the user request or, in NAVI mode, to the brand name and business). These are not decorative explanations: the HTML/CSS symbol itself MUST visibly implement the stated construction. In client mode preserve every essential requested relationship; do not substitute an unrelated symbol. For a requested Persian/Arabic or Latin letter, preserve its recognizable skeleton in the visible mark; build it as one carefully shaped silhouette when that is sufficient, and use coordinated HTML layers or negative-space cutouts only when the letterform genuinely requires them. Never add layers just to satisfy a construction quota. For ظ specifically, preserve the visual relationship of the ط-like body/stem and its distinctive dot above; the dot must be deliberately integrated and positioned, not an unrelated floating ornament. For Z specifically, preserve a clear top horizontal, diagonal connecting stroke and bottom horizontal, but customize their terminals, joins, proportions or negative-space cut so it becomes a designed monogram rather than a typed font glyph. The letter may be abstracted, but should remain discoverable in the silhouette or negative space. In NAVI mode derive anchors from brand name + industry + audience, not generic industry clip art. Do not claim an element is present unless it is visibly built into the mark. If the brief is ambiguous, make a restrained defensible interpretation rather than inventing a different brief.",
     "PHASE 4D — CLIENT BRIEF DOMINANCE (HIGHEST CREATIVE PRIORITY): treat userBrief.briefPriority.sourceOfTruth and userBrief.designPrompt as the controlling design specification whenever designMode is custom. First identify the 2–5 most important visual anchors and the exact relationships between them (for example: object A becomes/contains/intersects object B; a letter is formed by a specific object; one shape surrounds, cuts through or emerges from another). Preserve those anchors and relationships in every concept. Do not turn a specific request into a generic symbol, do not replace named objects with vague metaphors, and do not let premium-style instructions, industry conventions, anti-default rules or concept diversity override the brief. In custom mode, all three concepts must remain recognizably different executions of the SAME requested core idea; vary geometry, silhouette, negative space, proportion and construction—not the subject or meaning. For every concept, map each essential anchor to a visible part of the actual .navi-symbol; if an anchor is only described in rationale or briefElements but cannot be pointed to in the HTML/CSS construction, it is missing. Prioritize in this order: (1) exact client idea and relationships, (2) recognizable symbol built from that idea, (3) professional geometry and craft, (4) stylistic novelty. Before returning, compare the rendered-intent of each symbol against the original brief sentence by sentence and redesign any concept that would still look essentially the same if the client brief were replaced with a different brand brief. In NAVI mode, use the same anchor-to-form discipline for the idea NAVI derives from the brand context.",
-    "PHASE 4E — ANCHOR-TO-FORM GUIDANCE: return 1–5 visualAnchors only for meaningful ingredients or relationships in the brief, not as a checklist. Return an anchorMap explaining where each important idea is visibly expressed. A map may point to the main .navi-symbol silhouette itself or to a real styled child layer. One unified silhouette may express the whole idea; multiple layers are appropriate only when the idea genuinely contains distinct objects, cut-outs or overlaps. Never create extra spans, lines, dots or geometry just to satisfy a mapping count. The visible symbol must communicate the client's actual idea; the map is a concise explanation, not a construction quota.",
+    "PHASE 4E — ANCHOR-TO-FORM GUIDANCE: return 1–5 visualAnchors only for meaningful ingredients or relationships in the brief, not as a checklist. Return an anchorMap explaining where each important idea is visibly expressed. Each visualAnchors item MUST contain id (lowercase kebab-case, e.g. anchor-1), description and relationship; each anchorMap item MUST contain anchorId, layerClass and visualRole. A map may point to the main .navi-symbol silhouette itself or to a real styled child layer. One unified silhouette may express the whole idea; multiple layers are appropriate only when the idea genuinely contains distinct objects, cut-outs or overlaps. Never create extra spans, lines, dots or geometry just to satisfy a mapping count. The visible symbol must communicate the client's actual idea; the map is a concise explanation, not a construction quota. If you cannot provide the two arrays, ensure briefElements and symbolConstruction are complete and precise because the server will derive the traceability map from those fields and the actual HTML/CSS structure.",
     "PHASE 4G — OBJECT IDENTITY: when the client names a concrete object, preserve its recognizable identity. Identify the few structural cues that make it read as that object and keep them visible in the final silhouette. Never replace a named object with a different object for stylistic convenience. Prefer a simple faithful shape over an elaborate but ambiguous substitute.",
     "PHASE 4F — SPATIAL RELATIONSHIPS: when the brief depends on relationships such as behind, emerging, overlapping, containing or cutting through, make that relationship visually clear in the composition. Use actual placement, overlap, clipping and stacking only where the idea needs them. If the brief is naturally flat or unified, do not invent depth or separate layers.",
     "PHASE 5 — DESIGN BUILD: first solve the recognizable idea and outer silhouette in monochrome. Choose the construction that best serves the brief: solid pictorial form, custom letterform, monogram, negative-space mark, abstract symbol or wordmark-led identity. Use as few or as many HTML/CSS layers as the idea genuinely needs. Every part must improve recognition, meaning, spatial relationship or optical balance. Do not add empty layers, parallel strokes or floating accents. Use CSS geometry, clip-path, border-radius, backgrounds, pseudo-elements and negative space only when they make the idea clearer. The symbol should read as one intentional compact design before effects and colour.",
