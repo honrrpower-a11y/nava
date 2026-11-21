@@ -183,7 +183,7 @@ test("NAVI writes an English brief and three sanitized HTML/CSS logo designs in 
     assert.match(sentPrompt, /Never assign the root a fixed 1000px width or height/i);
     assert.match(sentPrompt, /320×320 mobile preview/i);
     assert.match(sentPrompt, /crooked stray strokes/i);
-    assert.match(sentPrompt, /navi-symbol__detail/i);
+    assert.match(sentPrompt, /Add named child layers only where needed to construct the idea/i);
     assert.match(sentPrompt, /SVG and all SVG-derived tags or attributes are forbidden/i);
     assert.match(sentPrompt, /CSS clip-path polygons/i);
     assert.match(sentPrompt, /A line-based mark is acceptable only when its strokes form a complete, recognizable and intentional symbol/i);
