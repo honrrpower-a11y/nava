@@ -805,38 +805,38 @@ test("Logo Studio performs a rendered-image review pass before presenting final 
 test("NAVI visual refinement reviews real PNGs, validates revised HTML/CSS, and does not consume another trial", async () => {
   const originalFetch = globalThis.fetch;
   const db = new FakeD1();
-  const html = '<div class="mark"><div class="navi-symbol" data-logo-role="symbol"><span class="wave"></span><span class="orbit"></span></div><strong><span data-logo-role="brand">نوا</span></strong><small><span data-logo-role="slogan">صدای ایده‌های تازه</span></small></div>';
-  const css = '.logo-art-root{display:grid;place-items:center;width:100%;height:100%;background:var(--logo-background)}.mark{display:grid;gap:20px;justify-items:center;text-align:center}.navi-symbol{position:relative;width:240px;height:240px;background:radial-gradient(circle at center,#263b59,var(--logo-background));border:2px solid var(--logo-primary);border-radius:42%;box-shadow:0 10px 24px rgba(0,0,0,.2)}.wave{position:absolute;left:20%;top:40%;width:60%;height:20%;background:var(--logo-primary);border-radius:50%}.orbit{position:absolute;inset:12%;border:3px solid var(--logo-primary);border-radius:50%}';
   let sentPayload;
-  globalThis.fetch = async (_url, options) => {
-    sentPayload = JSON.parse(options.body);
-    return new Response(JSON.stringify({
-      candidates: [{
-        content: { parts: [{ text: JSON.stringify({
-          concepts: [{ index: 1, html, css, visualRevisionNotes: "سیلوئت نشان منسجم‌تر شد و لایه‌های اصلی عمق و فاصله دقیق‌تری گرفتند." }]
-        }) }] }
-      }]
-    }), { status: 200, headers: { "Content-Type": "application/json" } });
-  };
   try {
-    const concept = {
-      title: "موج پیوند",
-      centralThesis: "پیوند دو مسیر صوتی به یک نشانه پیوسته و باز تبدیل می‌شود",
-      symbolConstruction: "دو مسیر منحنی در مرکز به هم می‌رسند و یک شکاف پیوسته در دل فرم می‌سازند",
-      briefAlignment: "این فرم اتصال صدا و خلاقیت را در هویت استودیوی موسیقی نشان می‌دهد",
-      briefElements: ["موج صوتی", "اتصال دو مسیر"],
-      visualAnchors: [
-        { id: "wave", description: "موج صوتی", relationship: "درون ساختار نشان به صورت لایه اصلی قرار می‌گیرد" },
-        { id: "orbit", description: "مسیر مکمل", relationship: "دور و پشت فرم موج قرار می‌گیرد" }
-      ],
-      anchorMap: [
-        { anchorId: "wave", layerClass: "wave", visualRole: "فرم موجی پرشده در مرکز نشان" },
-        { anchorId: "orbit", layerClass: "orbit", visualRole: "حلقه هندسی پیرامون فرم مرکزی" }
-      ],
-      html, css, previewImage: "data:image/png;base64,aGVsbG8="
+    globalThis.fetch = async () => makeGeminiResponse();
+    const initialResponse = await handleLogoRoute({
+      request: makeRequest(),
+      env: { NAVA_DB: db, NAVI_SESSION_SECRET: "test-secret-key", GEMINI_API_KEY: "test-gemini-key" },
+      origin: ORIGIN,
+      corsOrigin: ORIGIN
+    });
+    const initial = await initialResponse.json();
+    assert.equal(initialResponse.status, 200, JSON.stringify(initial));
+    assert.ok(initial.reviewToken, "initial design must issue a short-lived signed visual-review token");
+    assert.equal(db.visitorUsed, 1);
+
+    const original = initial.concepts[0];
+    const html = '<div class="mark"><div class="navi-symbol seal" data-logo-role="symbol"><span class="wave"></span><span class="orbit"></span></div><strong><span data-logo-role="brand">نوا</span></strong><small><span data-logo-role="slogan">صدای ایده‌های تازه</span></small></div>';
+    const css = original.css + '.mark{transform:scale(1.02)}';
+    globalThis.fetch = async (_url, options) => {
+      sentPayload = JSON.parse(options.body);
+      return new Response(JSON.stringify({
+        candidates: [{
+          content: { parts: [{ text: JSON.stringify({
+            concepts: [{ index: 1, html, css, visualRevisionNotes: "تناسب نشان و جای‌گیری لایه‌ها پس از مشاهده رندر واقعی اصلاح شد." }]
+          }) }] }
+        }]
+      }), { status: 200, headers: { "Content-Type": "application/json" } });
     };
+    const concept = { ...original, html, previewImage: "data:image/png;base64,aGVsbG8=" };
     const response = await handleLogoRoute({
-      request: makeRequest({ ...INPUT, action: "visual-refine", concepts: [concept] }),
+      request: makeRequest({
+        ...INPUT, action: "visual-refine", reviewToken: initial.reviewToken, concepts: [concept]
+      }),
       env: { NAVA_DB: db, NAVI_SESSION_SECRET: "test-secret-key", GEMINI_API_KEY: "test-gemini-key" },
       origin: ORIGIN,
       corsOrigin: ORIGIN
@@ -850,7 +850,7 @@ test("NAVI visual refinement reviews real PNGs, validates revised HTML/CSS, and 
     assert.match(result.concepts[0].html, /data-logo-role="brand"/);
     assert.match(result.concepts[0].html, /نوا/);
     assert.ok(sentPayload.contents[0].parts.some(part => part.inlineData?.mimeType === "image/png"));
-    assert.equal(db.visitorUsed, 0, "visual review must not reserve or consume another guest trial");
+    assert.equal(db.visitorUsed, 1, "visual review must not reserve or consume another guest trial");
   } finally {
     globalThis.fetch = originalFetch;
   }
