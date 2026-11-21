@@ -421,7 +421,7 @@
         }
         reviewed.push(concept);
       } catch (error) {
-        const match = String(error?.message || "").match(/\\[([A-Z0-9_]+)\\]/);
+        const match = String(error?.message || "").match(/\[([A-Z0-9_]+)\]/);
         const code = match?.[1] || "LOGO_REVIEW_NETWORK_ERROR";
         rejectionReasons.push({ index: index + 1, code });
         reviewed.push({ ...source, visualReview: "original-preserved", visualReviewIssue: code });
