@@ -149,6 +149,8 @@ test("NAVI writes an English brief and three sanitized HTML/CSS logo designs in 
     assert.equal(result.success, true);
     assert.equal(result.concepts.length, 3);
     assert.equal(geminiCalls, 1, "one Gemini call creates the English brief and all three logo designs");
+    assert.match(sentPrompt, /CRAFT BENCHMARK — STUDY THE HAND-BUILT NAVA HTML\/CSS LAB AS A CRAFT REFERENCE ONLY/i);
+    assert.match(sentPrompt, /DESIGN BEFORE DECORATION/i);
     assert.match(sentPrompt, /PHASE 1 — DISCOVERY/i);
     assert.match(sentPrompt, /PHASE 2 — CATEGORY RESEARCH/i);
     assert.match(sentPrompt, /PHASE 4A — IDENTITY COHESION/i);

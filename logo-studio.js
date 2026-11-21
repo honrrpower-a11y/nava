@@ -384,23 +384,54 @@
         previewImage
       };
     }));
-    const response = await fetch("https://nava-music-api.honrrpower.workers.dev/logo/generate", {
-      method: "POST",
-      headers,
-      cache: "no-store",
-      body: JSON.stringify({
-        ...brief,
-        action: "visual-refine",
-        reviewToken,
-        concepts: renderedConcepts
-      })
-    });
-    const result = await response.json();
-    if (!response.ok || !result.success ||
-        !Array.isArray(result.concepts) || result.concepts.length !== concepts.length) {
-      throw new Error((result.error || "بازبینی و اصلاح بصری لوگو کامل نشد.") + (result.code ? " [" + result.code + "]" : ""));
+    // Review one rendered concept per request. A single oversized or malformed
+    // batch must not cancel the visual review of every other concept.
+    const reviewed = [];
+    const rejectionReasons = [];
+    let refinedCount = 0;
+    for (let index = 0; index < renderedConcepts.length; index += 1) {
+      const source = concepts[index];
+      try {
+        const response = await fetch("https://nava-music-api.honrrpower.workers.dev/logo/generate", {
+          method: "POST",
+          headers,
+          cache: "no-store",
+          body: JSON.stringify({
+            ...brief,
+            action: "visual-refine",
+            reviewToken,
+            concepts: [renderedConcepts[index]]
+          })
+        });
+        const result = await response.json();
+        if (!response.ok || !result.success ||
+            !Array.isArray(result.concepts) || result.concepts.length !== 1) {
+          const code = result.code || ("HTTP_" + response.status);
+          rejectionReasons.push({ index: index + 1, code });
+          reviewed.push({ ...source, visualReview: "original-preserved", visualReviewIssue: code });
+          continue;
+        }
+        const concept = result.concepts[0];
+        if (concept.visualReview === "refined") refinedCount += 1;
+        if (concept.visualReview === "original-preserved") {
+          rejectionReasons.push({
+            index: index + 1,
+            code: concept.visualReviewIssue || "LOGO_REVIEW_REJECTED"
+          });
+        }
+        reviewed.push(concept);
+      } catch (error) {
+        const match = String(error?.message || "").match(/\[([A-Z0-9_]+)\]/);
+        const code = match?.[1] || "LOGO_REVIEW_NETWORK_ERROR";
+        rejectionReasons.push({ index: index + 1, code });
+        reviewed.push({ ...source, visualReview: "original-preserved", visualReviewIssue: code });
+      }
     }
-    return result;
+    return {
+      success: true,
+      visualReview: { method: "render-review-refine-per-concept", reviewedCount: reviewed.length, refinedCount, rejectionReasons },
+      concepts: reviewed
+    };
   }
 
   async function generate(event) {
