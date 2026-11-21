@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=1080,height=1920">
+  <meta name="theme-color" content="#080d19">
+  <title>NAVA Video Engine Smoke Test</title>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+  <style>
+    * { box-sizing: border-box; }
+    html, body { width: 1080px; height: 1920px; margin: 0; overflow: hidden; background: #080d19; }
+    body { font-family: "Noto Sans Arabic", "Noto Naskh Arabic", sans-serif; color: #fff; }
+    #stage {
+      position: relative; width: 1080px; height: 1920px; overflow: hidden;
+      background:
+        radial-gradient(ellipse at 50% 42%, rgba(27,105,164,.42), transparent 48%),
+        linear-gradient(155deg, #101c32 0%, #080d19 56%, #111a2a 100%);
+    }
+    .glow { position: absolute; width: 700px; height: 700px; border-radius: 50%; filter: blur(4px); border: 2px solid rgba(105,190,255,.16); }
+    .glow.one { top: 370px; left: 190px; }
+    .glow.two { top: 450px; left: 260px; width: 560px; height: 560px; border-color: rgba(242,190,91,.17); }
+    .clip { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; visibility: hidden; }
+    .eyebrow { color: #f2be5b; font-size: 30px; letter-spacing: 5px; font-weight: 700; }
+    .hero { flex-direction: column; text-align: center; padding: 90px; }
+    h1 { margin: 35px 0 22px; font-size: 88px; line-height: 1.5; font-weight: 800; opacity: 0; transform: translateY(55px); }
+    .subtitle { max-width: 850px; color: #c6d5e8; font-size: 42px; line-height: 1.9; opacity: 0; transform: translateY(35px); }
+    .mark { position: absolute; top: 150px; left: 0; right: 0; text-align: center; font-size: 34px; font-weight: 800; letter-spacing: 12px; color: #e9f4ff; opacity: 0; }
+    .rule { width: 160px; height: 5px; margin: 45px auto 0; border-radius: 99px; background: linear-gradient(90deg,#f2be5b,#7cc8ff); transform: scaleX(0); }
+    .footer { position: absolute; bottom: 150px; left: 0; right: 0; text-align: center; color: #8ea4bd; font-size: 25px; letter-spacing: 4px; opacity: 0; }
+  </style>
+</head>
+<body>
+  <main id="stage" data-composition-id="nava-first-render" data-start="0" data-width="1080" data-height="1920">
+    <div class="glow one"></div><div class="glow two"></div>
+    <div id="brand" class="clip" data-start="0" data-duration="8" data-track-index="1"><div class="mark">NAVA</div></div>
+    <section id="hero" class="clip" data-start="0.4" data-duration="7.6" data-track-index="2">
+      <div class="hero">
+        <div class="eyebrow">NAVA CREATIVE STUDIO</div>
+        <h1>ایده،<br>به واقعیت می‌رسد</h1>
+        <p class="subtitle">از یک فکر ساده تا یک خروجی تصویری واقعی؛ این اولین آزمایش موتور ویدئوساز نواست.</p>
+        <div class="rule"></div>
+      </div>
+    </section>
+    <div id="footer" class="clip" data-start="5.5" data-duration="2.5" data-track-index="3"><div class="footer">CREATE · DESIGN · GROW</div></div>
+  </main>
+  <script>
+    const timeline = gsap.timeline({ paused: true });
+    timeline.fromTo(".glow.one", { scale: .82, opacity: .25 }, { scale: 1.08, opacity: .9, duration: 4, ease: "sine.inOut" }, 0);
+    timeline.fromTo(".glow.two", { scale: 1.12, opacity: .15 }, { scale: .92, opacity: .75, duration: 4.5, ease: "sine.inOut" }, .3);
+    timeline.to(".mark", { opacity: 1, duration: .8, ease: "power2.out" }, .3);
+    timeline.to("#hero h1", { opacity: 1, y: 0, duration: 1, ease: "power3.out" }, 1.1);
+    timeline.to("#hero .subtitle", { opacity: 1, y: 0, duration: .9, ease: "power2.out" }, 2.1);
+    timeline.to("#hero .rule", { scaleX: 1, duration: .8, ease: "power2.out" }, 3.2);
+    timeline.to(".footer", { opacity: 1, duration: .8 }, 5.7);
+    timeline.to({}, { duration: 8 }, 0);
+    window.__timelines = window.__timelines || {};
+    window.__timelines["nava-first-render"] = timeline;
+  </script>
+</body>
+</html>
