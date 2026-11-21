@@ -113,33 +113,40 @@ function hasPositiveCssDimension(value) {
     /(?:[1-9]\d*(?:\.\d+)?|\.\d+)(?:px|%|rem|em|vw|vh|cqw|cqh)\b/i.test(dimension);
 }
 
+function cssRuleBodiesForClass(css, className) {
+  const safeClass = String(className || "").replace(/[^a-zA-Z0-9_-]/g, "");
+  if (!safeClass) return [];
+  const selectorPattern = new RegExp("(^|[^a-zA-Z0-9_-])\\." + safeClass + "(?=$|[\\s.#:[,>+~])", "i");
+  const bodies = [];
+  for (const match of String(css || "").matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
+    if (selectorPattern.test(match[1])) bodies.push({ selector: match[1].trim(), body: match[2] });
+  }
+  return bodies;
+}
+
 function validateSymbolStructure(html, css, conceptIndex) {
   const symbol = findSymbolElement(html);
   if (!symbol) throw validationError("LOGO_SYMBOL_MISSING", "نشان اصلی لوگو به‌صورت یک ساختار مشخص و مستقل ساخته نشده است.", "symbol-structure", conceptIndex);
-  const rule = css.match(/\.navi-symbol\s*\{([^}]*)\}/i);
-  if (!rule) throw validationError("LOGO_SYMBOL_UNSTYLED", "برای نشان اصلی لوگو هندسه و استایل مستقل تعریف نشده است.", "symbol-structure", conceptIndex);
-  const body = rule[1];
+  // NAVI is instructed to scope styles under .logo-art-root. Accept scoped
+  // selectors as well as bare classes; exact-selector matching caused false
+  // "underbuilt" failures for valid CSS such as .logo-art-root .navi-symbol.
+  const symbolRules = cssRuleBodiesForClass(css, "navi-symbol");
+  const baseRules = symbolRules.filter(rule => !/::?(?:before|after)\b/i.test(rule.selector));
+  if (!baseRules.length) throw validationError("LOGO_SYMBOL_UNSTYLED", "برای نشان اصلی لوگو هندسه و استایل مستقل تعریف نشده است.", "symbol-structure", conceptIndex);
+  const body = baseRules.map(rule => rule.body).join(";");
   const widthValue = body.match(/\bwidth\s*:\s*([^;]+)/i)?.[1];
   const heightValue = body.match(/\bheight\s*:\s*([^;]+)/i)?.[1];
   const hasWidth = hasPositiveCssDimension(widthValue);
   const hasHeight = hasPositiveCssDimension(heightValue);
-
-  // The wrapper is a coordinate system, not necessarily the visible mass.
-  // In layered marks the filled silhouette and its geometry often live on
-  // nested parts, so validate the whole symbol construction rather than
-  // requiring background/border/clip-path on .navi-symbol itself.
   const innerMarkup = symbol.inner;
   const layerClasses = [...innerMarkup.matchAll(/<(?:div|span|em|i)\b[^>]*class="([^"]+)"[^>]*>/gi)]
     .flatMap(match => match[1].split(/\s+/))
     .filter(name => name && name !== "navi-symbol");
-  const styledLayers = [...new Set(layerClasses)].flatMap(name => {
-    const escaped = name.replace(/[.*+?^\${}()|[\]\\]/g, "\\$&");
-    const selector = new RegExp("(?:^|})\\s*\\." + escaped + "\\s*\\{([^}]*)\\}", "i");
-    const layerRule = css.match(selector);
-    if (!layerRule) return [];
-    return [{ name, body: layerRule[1] }];
-  });
-  const allGeometryCss = [body, ...styledLayers.map(layer => layer.body)];
+  const styledLayers = [...new Set(layerClasses)].flatMap(name =>
+    cssRuleBodiesForClass(css, name).map(rule => ({ name, body: rule.body }))
+  );
+  const pseudoLayers = symbolRules.filter(rule => /::?(?:before|after)\b/i.test(rule.selector));
+  const allGeometryCss = [body, ...styledLayers.map(layer => layer.body), ...pseudoLayers.map(layer => layer.body)];
   const hasSurface = allGeometryCss.some(ruleBody =>
     /\bbackground(?:-color|-image)?\s*:\s*(?!transparent\b|none\b)[^;]+/i.test(ruleBody));
   const hasShape = allGeometryCss.some(ruleBody => {
@@ -153,14 +160,9 @@ function validateSymbolStructure(html, css, conceptIndex) {
   const widthPx = Number(widthValue?.match(/^\s*([\d.]+)px\s*$/i)?.[1] || 0);
   const heightPx = Number(heightValue?.match(/^\s*([\d.]+)px\s*$/i)?.[1] || 0);
   const proportions = !(widthPx > 0 && heightPx > 0) || heightPx / widthPx >= 0.22;
-
-  const pseudoRule = css.match(/\.navi-symbol(?:::|:)(?:before|after)\s*\{([^}]*)\}/i);
-  const pseudoLayer = Boolean(pseudoRule &&
-    /\b(?:position|inset|width|height|background|border|clip-path|transform)\s*:/i.test(pseudoRule[1]));
-  const detail = styledLayers.some(layer =>
-    /\b(?:position|inset|top|right|bottom|left|width|height|background(?:-color|-image)?|border(?:-[a-z-]+)?|border-radius|clip-path|transform|mask(?:-image)?)\s*:/i.test(layer.body)
-  ) || pseudoLayer;
-
+  const detailPattern = /\b(?:position|inset|top|right|bottom|left|width|height|background(?:-color|-image)?|border(?:-[a-z-]+)?|border-radius|clip-path|transform|mask(?:-image)?)\s*:/i;
+  const detail = styledLayers.some(layer => detailPattern.test(layer.body)) ||
+    pseudoLayers.some(layer => detailPattern.test(layer.body));
   if (!hasWidth || !hasHeight || !hasSurface || !hasShape || !proportions || !detail) {
     const missing = [
       !hasWidth || !hasHeight ? "ابعاد مستقل و معتبر" : "",
@@ -169,12 +171,9 @@ function validateSymbolStructure(html, css, conceptIndex) {
       !proportions ? "تناسب قابل‌قبول" : "",
       !detail ? "لایه سازنده مستقل با هندسه قابل‌مشاهده" : ""
     ].filter(Boolean).join("، ");
-    throw validationError(
-      "LOGO_SYMBOL_UNDERBUILT",
+    throw validationError("LOGO_SYMBOL_UNDERBUILT",
       "نشان اصلی هنوز ساختار هندسی کامل ندارد؛ بخش ناقص: " + missing + ".",
-      "symbol-craft",
-      conceptIndex
-    );
+      "symbol-craft", conceptIndex);
   }
 }
 function normalizeConceptText(value) {
