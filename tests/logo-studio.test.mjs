@@ -100,6 +100,7 @@ function makeGeminiResponse(plan = makeDesign()) {
   for (const concept of plan.concepts || []) {
     concept.silhouette ||= concept.symbolConstruction || concept.centralThesis;
     concept.objectCues ||= (concept.briefElements || []).slice(0, 2);
+    while (concept.objectCues.length < 2) concept.objectCues.push("ویژگی تشخیصی فرم");
     concept.spatialRelationship ||= concept.briefAlignment || concept.symbolConstruction;
     concept.negativeSpace ||= concept.symbolConstruction;
     concept.geometryRecipe ||= concept.symbolConstruction;
@@ -251,9 +252,7 @@ test("Logo Studio recovers omitted visual-anchor arrays from the validated brief
   delete design.concepts[0].anchorMap;
   design.concepts[0].html = '<div class="mark"><div class="navi-symbol" data-logo-role="symbol"><span class="wave"></span></div><strong>{{BRAND_NAME}}</strong></div>';
   design.concepts[0].css = '.logo-art-root{display:grid;place-items:center;width:100%;height:100%}.mark{display:grid;justify-items:center;gap:20px}.navi-symbol{width:240px;height:240px;background:var(--logo-primary);border-radius:38% 62% 55% 45%}.wave{display:block;width:50%;height:30%;border:8px solid var(--logo-background);border-radius:50%}';
-  globalThis.fetch = async () => new Response(JSON.stringify({
-    candidates: [{ content: { parts: [{ text: JSON.stringify(design) }] } }]
-  }), { status: 200, headers: { "Content-Type": "application/json" } });
+  globalThis.fetch = async () => makeGeminiResponse(design);
   try {
     const response = await handleLogoRoute({
       request: makeRequest({ ...INPUT, singleConcept: true }),
@@ -392,7 +391,11 @@ test("NAVI rejects a concept with no traceable connection to the brief", async (
     delete item.briefAlignment;
     delete item.briefElements;
   });
-  globalThis.fetch = async () => makeGeminiResponse(untraceable);
+  let untraceCalls = 0;
+  globalThis.fetch = async () => {
+    untraceCalls += 1;
+    return makeGeminiResponse(untraceCalls === 1 ? makeDesign() : untraceable);
+  };
   try {
     const response = await handleLogoRoute({
       request: makeRequest(),
