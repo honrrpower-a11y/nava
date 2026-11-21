@@ -971,3 +971,56 @@ test("NAVI accepts valid logo geometry when CSS selectors are scoped beneath the
     globalThis.fetch = originalFetch;
   }
 });
+
+
+test("NAVI accepts a complete unified silhouette even when an optional child node has no styling", async () => {
+  const originalFetch = globalThis.fetch;
+  const db = new FakeD1();
+  const unified = makeDesign();
+  unified.concepts = [unified.concepts[0]];
+  unified.concepts[0].html = '<div class="mark"><div class="navi-symbol" data-logo-role="symbol"><span class="unused-detail"></span></div><strong>{{BRAND_NAME}}</strong><small>{{SLOGAN}}</small></div>';
+  unified.concepts[0].css = '.logo-art-root{display:grid;place-items:center;width:100%;height:100%}.mark{display:grid;justify-items:center;gap:20px}.navi-symbol{width:240px;height:240px;background:var(--logo-primary);border-radius:18% 52% 24% 58%;clip-path:polygon(50% 0,100% 40%,72% 100%,0 78%,12% 28%)}';
+  globalThis.fetch = async () => makeGeminiResponse(unified);
+  try {
+    const response = await handleLogoRoute({
+      request: makeRequest({ ...INPUT, singleConcept: true }),
+      env: { NAVA_DB: db, NAVI_SESSION_SECRET: "test-secret-key", GEMINI_API_KEY: "test-gemini-key" },
+      origin: ORIGIN,
+      corsOrigin: ORIGIN
+    });
+    const result = await response.json();
+    assert.equal(response.status, 200, JSON.stringify(result));
+    assert.equal(result.success, true);
+    assert.equal(result.concepts.length, 1);
+    assert.equal(result.concepts[0].anchorMap[0].layerClass, "navi-symbol");
+    assert.equal(db.visitorUsed, 1);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test("NAVI retries a transient Gemini service failure once before returning a logo result", async () => {
+  const originalFetch = globalThis.fetch;
+  const db = new FakeD1();
+  let calls = 0;
+  globalThis.fetch = async () => {
+    calls += 1;
+    if (calls === 1) return new Response(JSON.stringify({ error: { message: "temporary overload" } }), { status: 503 });
+    return makeGeminiResponse();
+  };
+  try {
+    const response = await handleLogoRoute({
+      request: makeRequest(),
+      env: { NAVA_DB: db, NAVI_SESSION_SECRET: "test-secret-key", GEMINI_API_KEY: "test-gemini-key" },
+      origin: ORIGIN,
+      corsOrigin: ORIGIN
+    });
+    const result = await response.json();
+    assert.equal(response.status, 200, JSON.stringify(result));
+    assert.equal(result.success, true);
+    assert.equal(calls, 2);
+    assert.equal(db.visitorUsed, 1);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
