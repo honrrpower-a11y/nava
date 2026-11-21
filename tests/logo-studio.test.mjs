@@ -872,3 +872,29 @@ test("NAVI uses a geometry-first blueprint and demands substantive visual revisi
   assert.ok(backend.includes('thinkingLevel: "HIGH"'));
 });
 
+
+
+test("NAVI accepts valid logo geometry when CSS selectors are scoped beneath the artboard", async () => {
+  const originalFetch = globalThis.fetch;
+  const db = new FakeD1();
+  const scoped = makeDesign();
+  scoped.concepts[0].html = '<div class="mark"><div class="navi-symbol" data-logo-role="symbol"><span class="wave"></span><span class="orbit"></span></div><strong>{{BRAND_NAME}}</strong><small>{{SLOGAN}}</small></div>';
+  scoped.concepts[0].css = '.logo-art-root{display:grid;place-items:center;width:100%;height:100%}.logo-art-root .mark{display:grid;gap:24px;justify-items:center}.logo-art-root .navi-symbol{position:relative;width:240px;height:240px;background:var(--logo-primary);border-radius:42%;display:grid;place-items:center}.logo-art-root .wave{display:block;width:70%;height:24%;border:8px solid var(--logo-background);border-radius:50%;transform:rotate(-18deg)}.logo-art-root .orbit{position:absolute;inset:12%;border:3px solid var(--logo-background);border-radius:50%}';
+  globalThis.fetch = async () => makeGeminiResponse(scoped);
+  try {
+    const response = await handleLogoRoute({
+      request: makeRequest(),
+      env: { NAVA_DB: db, NAVI_SESSION_SECRET: "test-secret-key", GEMINI_API_KEY: "test-gemini-key" },
+      origin: ORIGIN,
+      corsOrigin: ORIGIN
+    });
+    const result = await response.json();
+    assert.equal(response.status, 200);
+    assert.equal(result.success, true);
+    assert.equal(result.concepts.length, 3, JSON.stringify(result.rejectedConcepts));
+    assert.ok(!result.rejectedConcepts.some(item => item.index === 1));
+    assert.equal(db.visitorUsed, 1);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
