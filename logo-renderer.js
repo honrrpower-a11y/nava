@@ -628,71 +628,56 @@
     return clone;
   }
 
-  async function exportPngFromFrame(frame,filename,size) {
+  async function renderFrameCanvas(frame,size) {
     const doc=frame && frame.contentDocument;
     const root=doc && doc.querySelector(".logo-art-root");
-    if(!root)throw new Error("بوم پیش‌نمایش برای ساخت PNG پیدا نشد.");
+    if(!root)throw new Error("بوم پیش‌نمایش برای ساخت تصویر پیدا نشد.");
     if(doc.fonts && doc.fonts.ready) await doc.fonts.ready;
     const rect=root.getBoundingClientRect();
     if(!rect.width||!rect.height||Math.abs(rect.width-rect.height)>Math.max(rect.width,rect.height)*0.01) {
-      throw new Error("ابعاد بوم پیش‌نمایش برای ساخت PNG معتبر نیست.");
+      throw new Error("ابعاد بوم پیش‌نمایش برای ساخت تصویر معتبر نیست.");
     }
-    if(typeof global.html2canvas!=="function") {
-      throw new Error("موتور رندر PNG بارگذاری نشده است؛ صفحه را تازه‌سازی کن و دوباره تلاش کن.");
-    }
-    const outputSize=Math.max(1200,Math.min(3200,Math.round(Number(size)||2400)));
-    const stage=document.createElement("div");
-    stage.setAttribute("aria-hidden","true");
-    // Keep the temporary capture stage inside the actual viewport. Several
-    // Android WebViews return a transparent canvas when html2canvas is asked
-    // to rasterize a fixed element positioned far outside the viewport.
-    stage.style.cssText="position:fixed;left:0;top:0;width:"+rect.width+"px;height:"+rect.height+"px;overflow:hidden;margin:0;padding:0;pointer-events:none;z-index:2147483647;background:transparent;";
-    const clone=copyComputedTree(root,document);
-    // Preserve the generated artboard background exactly as seen in the iframe preview.
-    clone.style.setProperty("width",rect.width+"px","important");
-    clone.style.setProperty("height",rect.height+"px","important");
-    clone.style.setProperty("min-width",rect.width+"px","important");
-    clone.style.setProperty("min-height",rect.height+"px","important");
-    clone.style.setProperty("max-width","none","important");
-    clone.style.setProperty("max-height","none","important");
-    clone.style.setProperty("transform","none","important");
-    stage.appendChild(clone);
-    document.body.appendChild(stage);
-    let canvas;
+    const outputSize=Math.max(600,Math.min(3200,Math.round(Number(size)||2400)));
+    // Use Chromium's native SVG+foreignObject renderer, not html2canvas.
+    // Native browser text layout preserves Persian/Arabic contextual shaping,
+    // ligatures, bidi order and connected glyphs in the exported bitmap.
+    const built=await buildSvg(frame,{width:outputSize,height:outputSize});
+    const blob=new Blob([built.svg],{type:"image/svg+xml;charset=utf-8"});
+    const url=URL.createObjectURL(blob);
     try {
-      canvas=await global.html2canvas(clone,{
-        backgroundColor:null,
-        scale:outputSize/rect.width,
-        width:rect.width,
-        height:rect.height,
-        windowWidth:Math.max(document.documentElement.clientWidth,Math.ceil(rect.width)),
-        windowHeight:Math.max(document.documentElement.clientHeight,Math.ceil(rect.height)),
-        scrollX:0,
-        scrollY:0,
-        useCORS:false,
-        allowTaint:false,
-        imageTimeout:0,
-        logging:false,
-        removeContainer:true,
-        foreignObjectRendering:false
+      const img=new Image();
+      await new Promise((resolve,reject)=>{
+        img.onload=resolve;
+        img.onerror=()=>reject(new Error("رندر بومی طرح برای خروجی تصویر ناموفق بود."));
+        img.src=url;
       });
+      const canvas=document.createElement("canvas");
+      canvas.width=outputSize;canvas.height=outputSize;
+      const ctx=canvas.getContext("2d");
+      if(!ctx)throw new Error("ساخت تصویر در این مرورگر پشتیبانی نمی‌شود.");
+      ctx.drawImage(img,0,0,outputSize,outputSize);
+      const pixels=ctx.getImageData(0,0,canvas.width,canvas.height).data;
+      let visiblePixels=0;
+      for(let i=3;i<pixels.length;i+=4)if(pixels[i]>8&&++visiblePixels>=24)break;
+      if(visiblePixels<24)throw new Error("طرح واقعی در تصویر نهایی دیده نشد؛ فایل خالی ذخیره نشد.");
+      return canvas;
     } finally {
-      stage.remove();
+      URL.revokeObjectURL(url);
     }
-    if(!canvas || !canvas.width || !canvas.height) {
-      throw new Error("موتور رندر، تصویر معتبر برای خروجی PNG تولید نکرد.");
-    }
-    const pixelContext=canvas.getContext("2d",{willReadFrequently:true});
-    if(!pixelContext)throw new Error("خواندن تصویر نهایی PNG در این مرورگر ممکن نیست.");
-    const pixels=pixelContext.getImageData(0,0,canvas.width,canvas.height).data;
-    let visiblePixels=0;
-    for(let i=3;i<pixels.length;i+=4)if(pixels[i]>8&&++visiblePixels>=24)break;
-    if(visiblePixels<24)throw new Error("طرح واقعی در خروجی PNG دیده نشد؛ فایل خالی ذخیره نشد.");
+  }
+  async function exportPngFromFrame(frame,filename,size) {
+    const outputSize=Math.max(1200,Math.min(3200,Math.round(Number(size)||2400)));
+    const canvas=await renderFrameCanvas(frame,outputSize);
     const png=await new Promise((resolve,reject)=>canvas.toBlob(blob=>blob?resolve(blob):reject(new Error("ساخت فایل PNG ناموفق بود.")),"image/png"));
     if(!png)throw new Error("ساخت فایل PNG ناموفق بود.");
     return downloadBlob(png,filename);
   }
+  async function capturePreviewDataUrl(frame,size) {
+    const canvas=await renderFrameCanvas(frame,Math.max(600,Math.min(1000,Math.round(Number(size)||768))));
+    return canvas.toDataURL("image/png");
+  }
+
   // SVG reconstruction is intentionally not exposed as a user export.
   // PNG is captured directly from the browser-rendered HTML/CSS artboard.
-  global.NavaLogoRenderer={downloadBlob,exportPngFromFrame};
+  global.NavaLogoRenderer={downloadBlob,exportPngFromFrame,capturePreviewDataUrl};
 })(window);
