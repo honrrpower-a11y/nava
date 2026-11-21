@@ -580,7 +580,8 @@ async function verifyLogoReviewToken(secret, brandName, token) {
       issuedAt > Date.now() + 30000 || Date.now() - issuedAt > 5 * 60 * 1000) return false;
   try {
     const base64 = encoded.replace(/-/g, "+").replace(/_/g, "/");
-    const signature = Uint8Array.from(atob(base64), character => character.charCodeAt(0));
+    const paddedBase64 = base64 + "=".repeat((4 - base64.length % 4) % 4);
+    const signature = Uint8Array.from(atob(paddedBase64), character => character.charCodeAt(0));
     const key = await crypto.subtle.importKey(
       "raw", new TextEncoder().encode(secret),
       { name: "HMAC", hash: "SHA-256" }, false, ["verify"]
