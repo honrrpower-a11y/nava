@@ -601,6 +601,9 @@ test("PNG export rasterizes the live HTML/CSS DOM directly with no SVG pipeline"
   assert.ok(exporter.includes("copyComputedTree(root,document)"));
   assert.ok(source.includes("canvas.toBlob"));
   assert.ok(exporter.includes("getImageData"));
+  assert.ok(source.includes("extractNativeText"), "text must be removed from html2canvas output and captured separately");
+  assert.ok(source.includes("paintNativeText"), "Persian/Arabic text must be painted with native Canvas 2D shaping");
+  assert.ok(source.includes("Intl.Segmenter"), "grapheme clusters must not be split while capturing text");
   assert.ok(exporter.includes("stage.remove()"));
   assert.ok(!source.includes("buildSvg"));
   assert.ok(!source.includes("createElementNS"));
@@ -790,6 +793,14 @@ test("NAVI accepts a transparent symbol wrapper when nested layers create the ac
   }
 });
 
+
+test("Logo design prompt locks named object identity and forbids substitutions", () => {
+ const backend = readFileSync(new URL("../modules/logo.js", import.meta.url), "utf8");
+ assert.ok(backend.includes("NAMED OBJECT IDENTITY LOCK"));
+ assert.ok(backend.includes("a book is not a cup"));
+ assert.ok(backend.includes("central spine/valley"));
+ assert.ok(backend.includes("same named object identities"));
+});
 
 test("Logo Studio preserves initial concepts without an automatic visual redesign", () => {
   const ui = readFileSync(new URL("../logo-studio.js", import.meta.url), "utf8");
