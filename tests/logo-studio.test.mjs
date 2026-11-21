@@ -1115,7 +1115,7 @@ test("NAVI retries a transient Gemini service failure once before returning a lo
     const result = await response.json();
     assert.equal(response.status, 200, JSON.stringify(result));
     assert.equal(result.success, true);
-    assert.equal(calls, 2);
+    assert.equal(calls, 3, "planner retry plus one successful planner/build sequence");
     assert.equal(db.visitorUsed, 1);
   } finally {
     globalThis.fetch = originalFetch;
