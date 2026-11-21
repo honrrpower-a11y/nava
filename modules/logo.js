@@ -486,16 +486,16 @@ async function designLogos(data, apiKey) {
         briefElements: Array.isArray(item?.briefElements) ? item.briefElements.slice(0, 6).map(value => safeText(value, 180)).filter(Boolean) : [],
         symbolConstruction: safeText(item?.symbolConstruction, 700),
         briefAlignment: safeText(item?.briefAlignment, 500),
-        silhouette: safeText(item?.silhouette || item?.symbolConstruction, 700),
+        silhouette: safeText(item?.silhouette, 700),
         objectCues: Array.isArray(item?.objectCues) ? item.objectCues.slice(0, 6).map(value => safeText(value, 180)).filter(Boolean) : [],
-        spatialRelationship: safeText(item?.spatialRelationship || item?.briefAlignment, 500),
-        negativeSpace: safeText(item?.negativeSpace || item?.symbolConstruction, 500),
-        geometryRecipe: safeText(item?.geometryRecipe || item?.symbolConstruction, 900),
-        firstRead: safeText(item?.firstRead || item?.centralThesis, 400),
+        spatialRelationship: safeText(item?.spatialRelationship, 500),
+        negativeSpace: safeText(item?.negativeSpace, 500),
+        geometryRecipe: safeText(item?.geometryRecipe, 900),
+        firstRead: safeText(item?.firstRead, 400),
         mustAvoid: Array.isArray(item?.mustAvoid) ? item.mustAvoid.slice(0, 8).map(value => safeText(value, 120)).filter(Boolean) : []
       };
-      if (!normalized.centralThesis || !normalized.symbolConstruction || !normalized.briefAlignment || !normalized.briefElements.length) {
-        throw validationError("LOGO_BLUEPRINT_INCOMPLETE", "یکی از نقشه‌های ساخت بصری نوا ناقص است.", "concept-planning", index + 1);
+      if (!normalized.centralThesis || !normalized.symbolConstruction || !normalized.briefAlignment || !normalized.briefElements.length || !normalized.silhouette || normalized.objectCues.length < 2 || !normalized.spatialRelationship || !normalized.negativeSpace || !normalized.geometryRecipe || !normalized.firstRead) {
+        throw validationError("LOGO_BLUEPRINT_INCOMPLETE", "نقشه ساخت بصری باید سیلوئت، نشانه‌های تشخیصی، رابطه فضایی، فضای منفی و دستور ساخت دقیق داشته باشد.", "concept-planning", index + 1);
       }
       return normalized;
     });
