@@ -159,7 +159,7 @@ test("NAVI writes an English brief and three sanitized HTML/CSS logo designs in 
     assert.match(sentPrompt, /PHASE 4E — ANCHOR-TO-FORM GUIDANCE/i);
     assert.match(sentPrompt, /PHASE 4F — SPATIAL RELATIONSHIPS/i);
     assert.match(sentPrompt, /Use actual placement, overlap, clipping and stacking only where the idea needs them/i);
-    assert.match(sentPrompt, /Start with the strongest recognizable shape in monochrome/i);
+    assert.match(sentPrompt, /first solve the recognizable idea and outer silhouette in monochrome/i);
     assert.match(sentPrompt, /anchorMap explaining where each important idea is visibly expressed/i);
     assert.match(sentPrompt, /main \.navi-symbol silhouette itself or to a real styled child layer/i);
     assert.match(sentPrompt, /exact client idea and relationships/i);
@@ -935,11 +935,11 @@ test("NAVI visual refinement reviews real PNGs, validates revised HTML/CSS, and 
   }
 });
 
-test("NAVI uses a geometry-first blueprint and demands substantive visual revisions", () => {
+test("NAVI prioritizes the actual brief and only uses layers when the idea needs them", () => {
   const backend = readFileSync(new URL("../modules/logo.js", import.meta.url), "utf8");
-  assert.ok(backend.includes("PHASE 5B — GEOMETRY BLUEPRINT"));
-  assert.ok(backend.includes("bounding box on the 0–100% symbol grid"));
-  assert.ok(backend.includes("dedicated named HTML layer and a direct CSS rule"));
+  assert.ok(!backend.includes("PHASE 5B — GEOMETRY BLUEPRINT"));
+  assert.ok(backend.includes("Use as few or as many HTML/CSS layers as the idea genuinely needs"));
+  assert.ok(backend.includes("child layers are optional"));
   assert.ok(backend.includes("Do not make cosmetic-only edits."));
   assert.ok(backend.includes("redesign the actual symbol geometry and composition"));
   assert.ok(backend.includes('thinkingLevel: "HIGH"'));
