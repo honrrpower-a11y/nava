@@ -975,6 +975,9 @@ test("NAVI prioritizes the actual brief and only uses layers when the idea needs
   assert.ok(backend.includes("child layers are optional"));
   assert.ok(backend.includes("Do not make cosmetic-only edits."));
   assert.ok(backend.includes("redesign the actual symbol geometry and composition"));
+  assert.ok(backend.includes("PHASE 6B — PROFESSIONAL LOGO FINISH"));
+  assert.ok(backend.includes("Treat negative space as designed geometry"));
+  assert.ok(backend.includes("optical centering and the mark-to-wordmark relationship"));
   assert.ok(backend.includes('thinkingLevel: "HIGH"'));
 });
 
