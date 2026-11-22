@@ -7,6 +7,7 @@
   const previewBtn=$("navaVideoPreview"),renderBtn=$("navaVideoRender"),status=$("navaVideoStatus"),progress=$("navaVideoProgress"),result=$("navaVideoResult");
   const titleInput=$("navaVideoTitle"),subtitleInput=$("navaVideoSubtitle"),durationInput=$("navaVideoDuration"),formatInput=$("navaVideoFormat"),motionInput=$("navaVideoMotion"),layoutInput=$("navaVideoLayout"),textInput=$("navaVideoText");
   const sceneList=$("navaVideoSceneList"),musicVolume=$("navaVideoMusicVolume"),fadeInput=$("navaVideoFade");
+  const wordMotionInput=$("navaVideoWordMotion"),wordSpeedInput=$("navaVideoWordSpeed");
   let scenes=[],musicUrl="",musicElement=null,audioContext=null,audioSource=null,audioDestination=null,musicGain=null,previewFrame=0,recorder=null,chunks=[],recording=false,startedAt=0,previewing=false,outputUrl="";
   const totalDuration=()=>Number(durationInput.value);
   const say=m=>{status.textContent=m;};
@@ -40,7 +41,25 @@
     const sf=w/1080;ctx.textAlign="center";ctx.direction="rtl";ctx.shadowColor="rgba(0,0,0,.65)";ctx.shadowBlur=16*sf;
     if(titleInput.value.trim()){ctx.font="700 "+Math.round(54*sf)+"px sans-serif";ctx.fillStyle="#fff";ctx.fillText(titleInput.value.trim(),w/2,h*.79,w*.84);}
     if(subtitleInput.value.trim()){ctx.font="400 "+Math.round(27*sf)+"px sans-serif";ctx.fillStyle="#fff";ctx.fillText(subtitleInput.value.trim(),w/2,h*.84,w*.82);}
-    const body=(textInput?.value||"").trim();if(body){ctx.shadowBlur=10*sf;ctx.font="500 "+Math.round(34*sf)+"px sans-serif";ctx.fillStyle="#fff";const words=body.split(/\\s+/);let line="",lines=[];for(const word of words){const test=line?line+" "+word:word;if(ctx.measureText(test).width>w*.82&&line){lines.push(line);line=word;}else line=test;}if(line)lines.push(line);const shown=lines.slice(0,5),lineH=43*sf,startY=h*.55-(shown.length-1)*lineH/2;shown.forEach((ln,i)=>ctx.fillText(ln,w/2,startY+i*lineH,w*.84));}
+    const body=(textInput?.value||"").trim();if(body){
+      const effect=wordMotionInput?.value||"rise",speed=Number(wordSpeedInput?.value||1),words=body.split(/\s+/).filter(Boolean);
+      const fontSize=Math.round(34*sf),lineH=43*sf,maxWidth=w*.84,space=ctx.measureText(" ").width;
+      ctx.font="500 "+fontSize+"px sans-serif";ctx.fillStyle="#fff";ctx.shadowBlur=10*sf;
+      const lines=[];let line=[],lineWidth=0;
+      for(const word of words){const ww=ctx.measureText(word).width,extra=line.length?space:0;if(line.length&&lineWidth+extra+ww>maxWidth){lines.push({words:line,width:lineWidth});line=[];lineWidth=0;}lineWidth+=(line.length?space:0)+ww;line.push(word);}
+      if(line.length)lines.push({words:line,width:lineWidth});
+      const shown=lines.slice(0,5),lineHeight=43*sf,startY=h*.55-(shown.length-1)*lineHeight/2;
+      let wordIndex=0;const totalWords=shown.reduce((n,l)=>n+l.words.length,0),stagger=(0.34/speed),entryDuration=0.42/speed;
+      shown.forEach((ln,li)=>{let x=w/2+ln.width/2;ln.words.forEach(word=>{
+        const ww=ctx.measureText(word).width,idx=wordIndex++,delay=idx*stagger;
+        let p=effect==="none"?1:Math.max(0,Math.min(1,(seconds-delay)/entryDuration));
+        if(p>0){ctx.save();ctx.globalAlpha=effect==="fade"||effect==="type"?p:1;
+          let dx=0,dy=0;if(effect==="rise")dy=(1-p)*22*sf;else if(effect==="slide")dx=(1-p)*Math.min(55*sf,ww*.55);
+          if(effect==="type"&&p<1){ctx.beginPath();ctx.rect(x-ww, startY+li*lineHeight-fontSize, ww*p, fontSize*1.5);ctx.clip();}
+          ctx.translate(dx,dy);ctx.fillText(word,x-ww/2,startY+li*lineHeight);ctx.restore();}
+        x-=ww+space;
+      });});
+    }
     ctx.restore();
   }
   function stopPreview(){if(previewFrame)cancelAnimationFrame(previewFrame);previewFrame=0;previewing=false;}
@@ -55,7 +74,7 @@
     Promise.all(files.map(file=>new Promise((resolve,reject)=>{const url=URL.createObjectURL(file),img=new Image();img.onload=()=>resolve({file,url,image:img});img.onerror=()=>{URL.revokeObjectURL(url);reject(new Error("خواندن یکی از تصاویر ناموفق بود."));};img.src=url;}))).then(items=>{scenes=items;resize();renderSceneList();drawFrame(0);updateReady();}).catch(e=>say(e.message));
   });
   musicInput.addEventListener("change",()=>{const file=musicInput.files&&musicInput.files[0];if(!file)return;if(!file.type.startsWith("audio/")){say("فایل صوتی معتبر انتخاب کن.");musicInput.value="";return;}if(musicUrl)URL.revokeObjectURL(musicUrl);musicUrl=URL.createObjectURL(file);if(!musicElement){musicElement=new Audio();musicElement.preload="auto";musicElement.loop=false;}musicElement.src=musicUrl;say("موسیقی آماده است.");});
-  [titleInput,subtitleInput,formatInput,motionInput,layoutInput,textInput].filter(Boolean).forEach(el=>el.addEventListener("input",()=>{resize();drawFrame(0);updateReady();}));
+  [titleInput,subtitleInput,formatInput,motionInput,layoutInput,textInput,wordMotionInput,wordSpeedInput].filter(Boolean).forEach(el=>el.addEventListener("input",()=>{resize();drawFrame(0);updateReady();}));
   previewBtn.addEventListener("click",preview);
   root.querySelectorAll("[data-video-tab]").forEach(btn=>btn.addEventListener("click",()=>{root.querySelectorAll("[data-video-tab]").forEach(b=>{const active=b===btn;b.classList.toggle("is-active",active);b.setAttribute("aria-selected",String(active));});root.querySelectorAll(".nava-video-panel").forEach(p=>{const active=p.id===btn.getAttribute("aria-controls");p.hidden=!active;p.classList.toggle("is-active",active);});}));
   $("navaVideoAutoOrder").addEventListener("click",()=>{if(!scenes.length){$("navaVideoNaviResult").textContent="ابتدا عکس‌ها را در تب رسانه‌ها انتخاب کن.";return;}scenes.sort((a,b)=>a.file.name.localeCompare(b.file.name,"fa"));renderSceneList();drawFrame(0);$("navaVideoNaviResult").textContent="تصاویر بر اساس نام فایل مرتب شدند. برای ترتیب خلاقانه و معنایی، بریف را به NAVI بفرست." ;});
