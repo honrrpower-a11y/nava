@@ -58,7 +58,7 @@
       const name=document.createElement("span");name.textContent=(i+1)+". "+scene.file.name;
       const up=document.createElement("button");up.type="button";up.textContent="↑";up.disabled=i===0;up.setAttribute("aria-label","انتقال به بالا");up.addEventListener("click",()=>moveScene(i,-1));
       const down=document.createElement("button");down.type="button";down.textContent="↓";down.disabled=i===scenes.length-1;down.setAttribute("aria-label","انتقال به پایین");down.addEventListener("click",()=>moveScene(i,1));
-      const remove=document.createElement("button");remove.type="button";remove.textContent="×";remove.setAttribute("aria-label","حذف تصویر");remove.addEventListener("click",()=>{URL.revokeObjectURL(scene.url);scenes.splice(i,1);renderSceneList();updateReady();drawFrame(0);});
+      const remove=document.createElement("button");remove.type="button";remove.textContent="×";remove.setAttribute("aria-label","حذف تصویر");remove.addEventListener("click",()=>{URL.revokeObjectURL(scene.url);scenes.splice(i,1);renderSceneList();refreshScenePhotoOptions();updateReady();drawFrame(0);});
       row.append(thumb,name,up,down,remove);sceneList.append(row);
     });
   }
@@ -139,7 +139,7 @@
   if(storyList){
     const refreshStory=()=>{storyCards().forEach((card,i)=>{card.querySelector(".nava-video-story-card-head strong").textContent="صحنه "+(i+1);card.querySelector("[data-remove-story]").disabled=storyCards().length===1;});resize();drawFrame(0);updateReady();};
     addStoryBtn?.addEventListener("click",()=>{const card=document.createElement("article");card.className="nava-video-story-card";card.setAttribute("data-story-scene","");card.innerHTML='<div class="nava-video-story-card-head"><strong></strong><button type="button" data-remove-story>حذف</button></div><label>متن این صحنه<textarea data-story-text rows="3" maxlength="420" placeholder="جمله یا پیام این صحنه را بنویس..."></textarea></label><label>عکس این صحنه<select data-story-image><option value="-1">بدون عکس</option></select></label><div class="nava-video-story-fields"><label>مدت نمایش<select data-story-duration><option value="2">۲ ثانیه</option><option value="3">۳ ثانیه</option><option value="4" selected>۴ ثانیه</option><option value="5">۵ ثانیه</option><option value="6">۶ ثانیه</option><option value="8">۸ ثانیه</option></select></label><label>حرکت نوشته<select data-story-motion><option value="cinematic" selected>حرکت سینمایی چندلایه</option><option value="rise">ورود از پایین</option><option value="fade">محو و ظاهر شدن</option><option value="slide">ورود از راست</option><option value="type">نمایش مرحله‌ای</option><option value="none">بدون حرکت</option></select></label></div>';storyList.append(card);refreshScenePhotoOptions();refreshStory();card.querySelector("[data-story-text]").focus();});
-    storyList.addEventListener("input",refreshStory);storyList.addEventListener("change",refreshStory);
+    storyList.addEventListener("input",refreshStory);storyList.addEventListener("change",refreshStory);$("navaVideoTextPersistence")?.addEventListener("change",()=>drawFrame(0));
     storyList.addEventListener("click",e=>{const btn=e.target.closest("[data-remove-story]");if(btn&&storyCards().length>1){btn.closest("[data-story-scene]").remove();refreshStory();}});
   }
   const sharedOutput=root.querySelector(".nava-video-shared-output");
