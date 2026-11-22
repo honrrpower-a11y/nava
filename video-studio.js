@@ -11,7 +11,7 @@
   let scenes=[],musicUrl="",musicElement=null,audioContext=null,audioSource=null,audioDestination=null,musicGain=null,previewFrame=0,recorder=null,chunks=[],recording=false,startedAt=0,previewing=false,outputUrl="";
   const storyList=$("navaVideoStoryList"),addStoryBtn=$("navaVideoAddScene");
   const storyCards=()=>storyList?Array.from(storyList.querySelectorAll("[data-story-scene]")):[];
-  const storyData=()=>storyCards().map(card=>({text:card.querySelector("[data-story-text]").value.trim(),duration:Number(card.querySelector("[data-story-duration]").value)||3,motion:card.querySelector("[data-story-motion]").value})).filter(s=>s.text);
+  const storyData=()=>storyCards().map(card=>({text:card.querySelector("[data-story-text]").value.trim(),duration:Number(card.querySelector("[data-story-duration]").value)||4,motion:card.querySelector("[data-story-motion]").value})).filter(s=>s.text);
   const storyTotal=()=>storyData().reduce((sum,s)=>sum+s.duration,0);
   const totalDuration=()=>storyTotal()||Number(durationInput?.value)||8;
   const say=m=>{status.textContent=m;};
@@ -30,9 +30,9 @@
     });
   }
   function moveScene(i,delta){const j=i+delta;if(j<0||j>=scenes.length)return;[scenes[i],scenes[j]]=[scenes[j],scenes[i]];renderSceneList();drawFrame(0);}
-  function drawFrame(seconds,storyOverride){
+  function drawFrame(seconds,storyOverride,durationOverride){
     const [w,h]=dimensions();if(canvas.width!==w||canvas.height!==h)resize();
-    const duration=totalDuration(),hasImages=scenes.length>0,per=hasImages?duration/scenes.length:duration,index=hasImages?Math.min(scenes.length-1,Math.floor(Math.min(seconds,duration-.001)/per)):0,local=hasImages?(seconds-index*per)/per:seconds/duration;
+    const duration=Number(durationOverride)||totalDuration(),hasImages=scenes.length>0,per=hasImages?duration/scenes.length:duration,index=hasImages?Math.min(scenes.length-1,Math.floor(Math.min(seconds,duration-.001)/per)):0,local=hasImages?(seconds-index*per)/per:seconds/duration;
     const story=Array.isArray(storyOverride)?storyOverride:storyData();let activeStory=null,storyLocal=seconds;
     if(story.length){let cursor=0;for(const item of story){if(seconds<cursor+item.duration){activeStory=item;storyLocal=seconds-cursor;break;}cursor+=item.duration;}if(!activeStory){activeStory=story[story.length-1];storyLocal=activeStory.duration;}}
     ctx.fillStyle="#050912";ctx.fillRect(0,0,w,h);
@@ -41,7 +41,7 @@
       const count=layout==="triptych"?3:4,cols=layout==="triptych"?3:2,rows=layout==="triptych"?1:2,gap=Math.max(8,Math.round(w*.012)),cellW=(w-gap*(cols+1))/cols,cellH=(h*.56-gap*(rows+1))/rows,top=h*.13;
       for(let k=0;k<count;k++){const img=scenes[k%scenes.length].image,x=gap+(k%cols)*(cellW+gap),y=top+gap+Math.floor(k/cols)*(cellH+gap);drawImageCover(img,x,y,cellW,cellH,local);}
     }else drawImageCover(scenes[index].image,0,0,w,h,local);
-    }else{const gradient=ctx.createLinearGradient(0,0,w,h);gradient.addColorStop(0,"#18243b");gradient.addColorStop(.55,"#263b55");gradient.addColorStop(1,"#080d18");ctx.fillStyle=gradient;ctx.fillRect(0,0,w,h);ctx.globalAlpha=.18;for(let i=0;i<7;i++){ctx.beginPath();ctx.arc(w*(.12+i*.13),h*(.18+(i%3)*.23),w*(.06+(i%2)*.025),0,Math.PI*2);ctx.fillStyle="#a9c7e8";ctx.fill();}ctx.globalAlpha=1;}
+    }else{const gradient=ctx.createLinearGradient(0,0,w,h);gradient.addColorStop(0,"#18243b");gradient.addColorStop(.58,"#202f47");gradient.addColorStop(1,"#080d18");ctx.fillStyle=gradient;ctx.fillRect(0,0,w,h);}
     ctx.save();ctx.beginPath();ctx.rect(0,0,w,h);ctx.clip();
     const shade=ctx.createLinearGradient(0,0,0,h);shade.addColorStop(0,"rgba(2,8,18,.12)");shade.addColorStop(.55,"rgba(2,8,18,.02)");shade.addColorStop(1,"rgba(2,8,18,.72)");ctx.fillStyle=shade;ctx.fillRect(0,0,w,h);
     const sf=w/1080;ctx.textAlign="center";ctx.direction="rtl";ctx.shadowColor="rgba(0,0,0,.65)";ctx.shadowBlur=16*sf;
@@ -105,7 +105,7 @@
   previewBtn.addEventListener("click",preview);
   if(storyList){
     const refreshStory=()=>{storyCards().forEach((card,i)=>{card.querySelector(".nava-video-story-card-head strong").textContent="صحنه "+(i+1);card.querySelector("[data-remove-story]").disabled=storyCards().length===1;});resize();drawFrame(0);updateReady();};
-    addStoryBtn?.addEventListener("click",()=>{const card=document.createElement("article");card.className="nava-video-story-card";card.setAttribute("data-story-scene","");card.innerHTML='<div class="nava-video-story-card-head"><strong></strong><button type="button" data-remove-story>حذف</button></div><label>متن این صحنه<textarea data-story-text rows="3" maxlength="420" placeholder="جمله یا پیام این صحنه را بنویس..."></textarea></label><div class="nava-video-story-fields"><label>مدت نمایش<select data-story-duration><option value="2">۲ ثانیه</option><option value="3" selected>۳ ثانیه</option><option value="4">۴ ثانیه</option><option value="5">۵ ثانیه</option><option value="6">۶ ثانیه</option><option value="8">۸ ثانیه</option></select></label><label>حرکت نوشته<select data-story-motion><option value="cinematic" selected>حرکت سینمایی چندلایه</option><option value="rise">ورود از پایین</option><option value="fade">محو و ظاهر شدن</option><option value="slide">ورود از راست</option><option value="type">نمایش مرحله‌ای</option><option value="none">بدون حرکت</option></select></label></div>';storyList.append(card);refreshStory();card.querySelector("[data-story-text]").focus();});
+    addStoryBtn?.addEventListener("click",()=>{const card=document.createElement("article");card.className="nava-video-story-card";card.setAttribute("data-story-scene","");card.innerHTML='<div class="nava-video-story-card-head"><strong></strong><button type="button" data-remove-story>حذف</button></div><label>متن این صحنه<textarea data-story-text rows="3" maxlength="420" placeholder="جمله یا پیام این صحنه را بنویس..."></textarea></label><div class="nava-video-story-fields"><label>مدت نمایش<select data-story-duration><option value="2">۲ ثانیه</option><option value="3">۳ ثانیه</option><option value="4" selected>۴ ثانیه</option><option value="5">۵ ثانیه</option><option value="6">۶ ثانیه</option><option value="8">۸ ثانیه</option></select></label><label>حرکت نوشته<select data-story-motion><option value="cinematic" selected>حرکت سینمایی چندلایه</option><option value="rise">ورود از پایین</option><option value="fade">محو و ظاهر شدن</option><option value="slide">ورود از راست</option><option value="type">نمایش مرحله‌ای</option><option value="none">بدون حرکت</option></select></label></div>';storyList.append(card);refreshStory();card.querySelector("[data-story-text]").focus();});
     storyList.addEventListener("input",refreshStory);storyList.addEventListener("change",refreshStory);
     storyList.addEventListener("click",e=>{const btn=e.target.closest("[data-remove-story]");if(btn&&storyCards().length>1){btn.closest("[data-story-scene]").remove();refreshStory();}});
   }
@@ -127,7 +127,7 @@
       const renderStory=storyData();
       const renderDuration=renderStory.length?renderStory.reduce((sum,s)=>sum+s.duration,0):(Number(durationInput?.value)||8);
       if(renderStory.length>1) say("در حال ساخت "+renderStory.length+" صحنه متوالی…");
-      resize();drawFrame(0,renderStory);
+      resize();drawFrame(0,renderStory,renderDuration);
       const mime=["video/webm;codecs=vp9,opus","video/webm;codecs=vp8,opus","video/webm"].find(t=>MediaRecorder.isTypeSupported(t));
       if(!mime){say("کدک سازگار پیدا نشد.");return;}
       const stream=canvas.captureStream(20);
@@ -167,7 +167,7 @@
       const tick=()=>{
         if(!recording)return;
         const t=Math.min((performance.now()-start)/1000,duration);
-        drawFrame(t,renderStory);
+        drawFrame(t,renderStory,duration);
         if(musicElement&&musicGain){
           const remaining=duration-t;
           const factor=fade>0?Math.max(0,Math.min(1,t/fade,remaining/fade)):1;
