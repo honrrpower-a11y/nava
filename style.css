@@ -2811,3 +2811,13 @@ body:has(> .nava-access-panel.is-gate-active){overflow:hidden}
  #navaVideoEngine .nava-video-story-card{padding:9px}
  #navaVideoEngine .nava-video-photo-gallery{grid-template-columns:repeat(4,minmax(0,1fr));max-height:150px}
 }
+
+#navaVideoEngine .nava-video-photo-settings{grid-column:1/-1;margin-top:4px;border:1px solid var(--border);border-radius:10px;background:color-mix(in srgb,var(--panel) 88%,var(--bg))}
+#navaVideoEngine .nava-video-photo-settings>summary{padding:9px 11px;color:var(--muted);font-size:11px;font-weight:700;cursor:pointer;list-style:none}
+#navaVideoEngine .nava-video-photo-settings>summary::-webkit-details-marker{display:none}
+#navaVideoEngine .nava-video-photo-settings>summary:after{content:"＋";float:left}
+#navaVideoEngine .nava-video-photo-settings[open]>summary:after{content:"−"}
+#navaVideoEngine .nava-video-photo-setting-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;padding:0 10px 10px}
+#navaVideoEngine .nava-video-photo-setting-grid label{display:grid;gap:4px;font-size:10px}
+#navaVideoEngine .nava-video-photo-setting-grid select{min-width:0;width:100%;min-height:36px;padding:6px;font-size:11px}
+@media(max-width:600px){#navaVideoEngine .nava-video-photo-setting-grid{grid-template-columns:1fr}}
