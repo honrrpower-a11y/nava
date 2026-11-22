@@ -316,3 +316,12 @@ body.light #avPage [data-story-duration]{
   color:var(--text);
   font-weight:700;
 }
+
+/* Optional per-layer underline controls */
+.nava-video-underline-tools{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin-top:10px;padding-top:10px;border-top:1px solid var(--border,rgba(145,170,210,.18))}
+.nava-video-underline-tools label{display:grid;gap:5px;color:var(--text,#dce7f8);font-size:.86rem}
+.nava-video-underline-tools select{width:100%;box-sizing:border-box;border:1px solid var(--border,rgba(145,170,210,.24));border-radius:9px;padding:9px;background:var(--bg,#101b2d);color:var(--text,#f4f7ff);font:inherit}
+.nava-video-underline-tools .nava-video-underline-toggle{display:flex;align-items:center;gap:8px;grid-column:1/-1}
+.nava-video-underline-toggle input{width:18px;height:18px;accent-color:var(--accent,#c99b48)}
+body.light .nava-video-underline-tools label{color:#526176}body.light .nava-video-underline-tools select{background:#fffdf8;color:#263a56;border-color:rgba(193,127,37,.3)}
+@media(max-width:560px){.nava-video-underline-tools{grid-template-columns:1fr}}
