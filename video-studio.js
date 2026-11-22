@@ -16,30 +16,76 @@
   const setupMode=()=>setupRadios.find(r=>r.checked)?.value||"brief";
   const toLayerMotion=value=>({"slide-right":"from-right","slide-left":"from-left",rise:"from-bottom",cinematic:"from-bottom",type:"fade"}[value]||value);
   function applyBrief(){
-    const brief=(briefInput?.value||"").trim();if(!brief){$("navaVideoNaviResult").textContent="ابتدا شرح درخواست را بنویس.";return;}
-    let motion=null;
-    if(/محو|fade|شفاف|آرام ظاهر/.test(brief))motion="fade";
-    if(/از پایین|بالا بیاید|rise/.test(brief))motion="rise";
-    if(/از (سمت )?راست|از راست به چپ|از سمت راست وارد|ورود از راست|slide.?right/i.test(brief))motion="slide-right";
-    if(/از (سمت )?چپ|از چپ به راست|از سمت چپ وارد|slide.?left/i.test(brief))motion="slide-left";
-    if(/مرحله.?ای|کلمه.?به.?کلمه|حرف.?به.?حرف|تایپ|typewriter/i.test(brief))motion="type";
-    if(/سینمایی|cinematic/.test(brief))motion="cinematic";
-    if(/بدون حرکت|ثابت بماند|بدون افکت/.test(brief))motion="none";
-    let font=null;
-    if(/وزیر|vazir/i.test(brief))font="'Vazirmatn',sans-serif";
-    else if(/شکسته|shekasteh|dima/i.test(brief))font="'Dima Shekasteh',serif";
-    else if(/نستعلیق|nastaliq|ایران.?نستعلیق/i.test(brief))font="'IranNastaliq',serif";
-    else if(/گلزار|gulzar/i.test(brief))font="'Gulzar',serif";
-    else if(/نسخ|naskh|noto/i.test(brief))font="'Noto Naskh Arabic',serif";
-    else if(/ایران.?سن.?س|iransans/i.test(brief))font="Tahoma,sans-serif";
-    else if(/تاهوما|tahoma/i.test(brief))font="Tahoma,sans-serif";
-    else if(/آریال|arial/i.test(brief))font="Arial,sans-serif";
-    if(motion)storyCards().forEach(card=>card.querySelectorAll("[data-layer-motion]").forEach(el=>el.value=toLayerMotion(motion)));
-    if(font&&fontInput){fontInput.value=font;activateFont(font);}
-    const direction=/چپ به راست|از چپ به راست|چپ.?چین|left.?to.?right|ltr/i.test(brief)?"ltr":/راست به چپ|راست.?چین|right.?to.?left|rtl/i.test(brief)?"rtl":null;
-    if(direction)textDirection=direction;
-    $("navaVideoNaviResult").textContent=(motion||font||direction)?"دستورهای قابل‌تشخیص اعمال شدند؛ پیش‌نمایش را بررسی کن. اگر بخشی از شرح شامل ویژگی پشتیبانی‌نشده باشد، هنوز خودکار اجرا نمی‌شود.":"دستور مشخصی از موارد فعلی شناسایی نشد؛ می‌توانی تنظیمات را دستی انتخاب کنی.";
-    resize();drawFrame(0);updateReady();
+    const brief=(briefInput?.value||"").trim();
+    const result=$("navaVideoNaviResult");
+    if(!brief){result.textContent="ابتدا شرح درخواست را بنویس.";return;}
+    const cards=storyCards();
+    if(!cards.length){result.textContent="ابتدا حداقل یک صحنه بساز؛ سپس دستورها را اعمال کن.";return;}
+    const norm=brief.replace(/[يى]/g,"ی").replace(/ك/g,"ک").replace(/[۰-۹]/g,d=>"۰۱۲۳۴۵۶۷۸۹".indexOf(d)).toLowerCase();
+    const has=(...terms)=>terms.some(t=>norm.includes(t));
+    const choose=(el,value)=>{if(!el)return false;const opt=Array.from(el.options||[]).find(o=>o.value===String(value));if(!opt)return false;el.value=String(value);return true;};
+    const motionRules=[
+      [/محو|fade|شفاف|آرام ظاهر/,"fade"],
+      [/از پایین|پایین وارد|بالا بیاید|rise/,"from-bottom"],
+      [/از بالا|بالا وارد/,"from-top"],
+      [/از (سمت )?راست|از راست به چپ|سمت راست وارد|ورود از راست|slide.?right/,"from-right"],
+      [/از (سمت )?چپ|از چپ به راست|سمت چپ وارد|ورود از چپ|slide.?left/,"from-left"],
+      [/ثابت|بدون حرکت|بدون افکت/,"none"]
+    ];
+    const findMotion=text=>{for(const [re,val] of motionRules)if(re.test(text))return val;return null;};
+    const fontRules=[
+      [/وزیر|vazir/,"'Vazirmatn',sans-serif"],[/شکسته|shekasteh|dima/,"'Dima Shekasteh',serif"],
+      [/نستعلیق|nastaliq|ایران.?نستعلیق|گلزار|gulzar/,"'Gulzar',serif"],
+      [/نسخ|naskh|noto/,"'Noto Naskh Arabic',serif"],[/تاهوما|tahoma|ایران.?سن.?س|iransans/,"Tahoma, sans-serif"],
+      [/آریال|arial/,"Arial, sans-serif"],[/جورجیا|georgia/,"Georgia, serif"]
+    ];
+    let applied=[],unsupported=[];
+    let font=null;for(const [re,val] of fontRules)if(re.test(norm)){font=val;break;}
+    if(font&&fontInput){fontInput.value=font;activateFont(font);applied.push("فونت");}
+    const direction=/چپ.?چین|چپ به راست|left.?to.?right|\bltr\b/.test(norm)?"ltr":/راست.?چین|راست به چپ|right.?to.?left|\brtl\b/.test(norm)?"rtl":null;
+    if(direction){textDirection=direction;applied.push("جهت و تراز نوشتار");}
+    if(has("فقط متن صحنه جاری","جایگزین","جایگزینی متن","متن قبلی حذف","متن قبلی نماند","فقط متن جدید")){choose($("navaVideoTextPersistence"),"replace");applied.push("جایگزینی متن صحنه‌ها");}
+    else if(has("متن‌های قبلی باقی","متن قبلی بماند","همه متن‌ها بمانند")){choose($("navaVideoTextPersistence"),"keep");applied.push("ماندن متن صحنه‌های قبلی");}
+    let layerCount=0;
+    cards.forEach((card,ci)=>{
+      const layers=Array.from(card.querySelectorAll("[data-story-layer]"));
+      layers.forEach((layer,li)=>{
+        const text=layer.querySelector("[data-layer-text]")?.value||"";
+        const scope=norm;
+        const specific=new RegExp("(متن|لایه)\\s*(اول|اولی|1|یکم|دوم|دومی|2|سوم|سومی|3)");
+        let scoped=scope;
+        const named=li===0?/(متن|لایه)\s*(اول|اولی|1|یکم)/:li===1?/(متن|لایه)\s*(دوم|دومی|2)/:li===2?/(متن|لایه)\s*(سوم|سومی|3)/:null;
+        if(named){const m=scope.match(named);if(m){const pos=m.index;scoped=scope.slice(pos,Math.min(scope.length,pos+180));}}
+        const motion=findMotion(scoped)||(!named?findMotion(scope):null);
+        if(motion){choose(layer.querySelector("[data-layer-motion]"),motion);layerCount++;}
+        const delayMatch=scoped.match(/(?:با|به)?\s*(?:تاخیر|تأخیر)\s*(\d+(?:\.\d+)?)\s*(?:ثانیه|ثانیه‌ای)?/);
+        if(delayMatch){const v=String(Math.min(6,Math.max(0,Number(delayMatch[1]))));if(choose(layer.querySelector("[data-layer-delay]"),v))layerCount++;}
+        else if(has("با تاخیر یک ثانیه","با تأخیر یک ثانیه")&&li===1){if(choose(layer.querySelector("[data-layer-delay]"),"1"))layerCount++;}
+        const exit= /(?:حذف|ناپدید|محو|خارج|بیرون).{0,35}(?:متن قبلی|متن اول|این متن|کادر)/.test(scoped)||/(?:متن قبلی|متن اول).{0,35}(?:حذف|ناپدید|محو|خارج)/.test(scoped);
+        if(exit){const v=/به سمت راست|به راست|از راست خارج/.test(scoped)?"right":/به سمت چپ|به چپ|از چپ خارج/.test(scoped)?"left":/به بالا|از بالا خارج/.test(scoped)?"top":/به پایین|از پایین خارج/.test(scoped)?"bottom":"fade";if(choose(layer.querySelector("[data-layer-exit]"),v))layerCount++;}
+        if(has("زیرش خط","خط زیر","زیر متن خط","underline")){const cb=layer.querySelector("[data-layer-underline]");if(cb){cb.checked=true;layerCount++;}}
+        if(/وسط.?چین|وسط تصویر/.test(scoped)){choose(layer.querySelector("[data-layer-align]"),"center");layerCount++;}
+        else if(/راست.?چین/.test(scoped)){choose(layer.querySelector("[data-layer-align]"),"right");layerCount++;}
+        else if(/چپ.?چین/.test(scoped)){choose(layer.querySelector("[data-layer-align]"),"left");layerCount++;}
+        if(/بالای تصویر|بالا قرار/.test(scoped)){choose(layer.querySelector("[data-layer-position]"),"top");layerCount++;}
+        else if(/وسط تصویر|وسط قرار/.test(scoped)){choose(layer.querySelector("[data-layer-position]"),"center");layerCount++;}
+        if(/عمودی/.test(scoped)){choose(layer.querySelector("[data-layer-orientation]"),"vertical");layerCount++;}
+        else if(/افقی/.test(scoped)){choose(layer.querySelector("[data-layer-orientation]"),"horizontal");layerCount++;}
+        if(/اریب|کج/.test(scoped)){choose(layer.querySelector("[data-layer-style]"),"italic");layerCount++;}
+      });
+      const duration=norm.match(/(?:مدت|زمان)\s*(?:نمایش\s*)?(\d+)\s*ثانیه/);
+      if(duration){if(choose(card.querySelector("[data-story-duration]"),String(Math.min(8,Math.max(2,Number(duration[1]))))))layerCount++;}
+      const bg=card.querySelector("[data-scene-background]");
+      if(bg){const v=/پس.?زمینه.{0,20}(?:مشکی|سیاه)/.test(norm)?"black":/پس.?زمینه.{0,20}(?:روشن|سفید)/.test(norm)?"light":/پس.?زمینه.{0,20}(?:گرم|خاکستری گرم)/.test(norm)?"warm":null;if(v&&choose(bg,v))layerCount++;}
+      const frame=card.querySelector("[data-scene-frame]");
+      if(frame&&has("قاب","کادر ظریف")){frame.checked=true;layerCount++;}
+    });
+    if(layerCount)applied.push(layerCount+" تنظیم صحنه/متن");
+    if(!applied.length)unsupported.push("از این درخواست دستور مشخصی که در کنترل‌های فعلی پشتیبانی شود تشخیص داده نشد.");
+    const recognized=applied.length>0;
+    result.textContent=recognized?"اعمال شد: "+applied.join("، ")+". پیش‌نمایش به‌روزرسانی شد."+ (unsupported.length?" "+unsupported.join(" "):""):"دستور قابل‌اجرایی شناسایی نشد. این موتور هنوز همه درخواست‌های آزاد را نمی‌فهمد؛ از عبارت‌های مشخص مثل «متن اول از راست وارد شود»، «متن دوم با تأخیر ۲ ثانیه بیاید»، «متن قبلی محو شود»، «فونت وزیر» یا «قاب ظریف» استفاده کن.";
+    if(!recognized)return;
+    refreshStory();resize();drawFrame(0);updateReady();
   }
   let activeFont=fontInput?.value||"sans-serif",textDirection="rtl",fontLoadToken=0;
   async function activateFont(font){activeFont=font||"sans-serif";const token=++fontLoadToken;try{if(document.fonts?.load){await document.fonts.load("650 42px "+activeFont);await document.fonts.ready;}}catch(_){}if(token===fontLoadToken){resize();drawFrame(0);}}
