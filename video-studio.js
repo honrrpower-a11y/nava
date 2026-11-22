@@ -30,10 +30,10 @@
     });
   }
   function moveScene(i,delta){const j=i+delta;if(j<0||j>=scenes.length)return;[scenes[i],scenes[j]]=[scenes[j],scenes[i]];renderSceneList();drawFrame(0);}
-  function drawFrame(seconds){
+  function drawFrame(seconds,storyOverride){
     const [w,h]=dimensions();if(canvas.width!==w||canvas.height!==h)resize();
     const duration=totalDuration(),hasImages=scenes.length>0,per=hasImages?duration/scenes.length:duration,index=hasImages?Math.min(scenes.length-1,Math.floor(Math.min(seconds,duration-.001)/per)):0,local=hasImages?(seconds-index*per)/per:seconds/duration;
-    const story=storyData();let activeStory=null,storyLocal=seconds;
+    const story=Array.isArray(storyOverride)?storyOverride:storyData();let activeStory=null,storyLocal=seconds;
     if(story.length){let cursor=0;for(const item of story){if(seconds<cursor+item.duration){activeStory=item;storyLocal=seconds-cursor;break;}cursor+=item.duration;}if(!activeStory){activeStory=story[story.length-1];storyLocal=activeStory.duration;}}
     ctx.fillStyle="#050912";ctx.fillRect(0,0,w,h);
     const drawImageCover=(img,x,y,bw,bh,progress=local)=>{const iw=img.naturalWidth,ih=img.naturalHeight,scale=Math.max(bw/iw,bh/ih)*(1+(motionInput.value==="subtle"?.012:.035)*progress),dw=iw*scale,dh=ih*scale;ctx.save();ctx.beginPath();ctx.rect(x,y,bw,bh);ctx.clip();ctx.drawImage(img,x+(bw-dw)/2,y+(bh-dh)/2,dw,dh);ctx.restore();};
@@ -58,24 +58,30 @@
       const elapsed=story.length?storyLocal:seconds;
       const sceneDuration=activeStory?activeStory.duration:duration;
       const easeOut=t=>1-Math.pow(1-t,3);
-      const fadeOut=Math.max(0,Math.min(1,(sceneDuration-elapsed)/.34));
+      const easeBack=t=>{const k=1.45;return 1+(k+1)*Math.pow(t-1,3)+k*Math.pow(t-1,2);};
+      const fadeOut=Math.max(0,Math.min(1,(sceneDuration-elapsed)/.42));
       shown.forEach((ln,li)=>{
-        const delay=li*.10,enter=.48;
+        const cinematic=effect==="cinematic";
+        const delay=li*(cinematic?.20:.10),enter=cinematic?1.05:.48;
         const raw=Math.max(0,Math.min(1,(elapsed-delay)/enter));
-        const p=easeOut(raw);
+        const p=cinematic?Math.max(0,Math.min(1.08,easeBack(raw))):easeOut(raw);
         if(p<=0)return;
-        const alpha=Math.min(1,p,fadeOut);
-        const lift=(1-p)*Math.min(26*sf,lineHeight*.48);
-        const drift=effect==="slide"?(1-p)*Math.min(42*sf,w*.07):0;
+        const alpha=Math.min(1,Math.max(0,cinematic?raw*1.35:p),fadeOut);
         const y=startY+li*lineHeight;
         ctx.save();ctx.globalAlpha=effect==="none"?fadeOut:alpha;
         if(effect==="type"){
-          const reveal=Math.max(0,Math.min(1,(elapsed-delay)/Math.max(.55,Math.min(1.1,sceneDuration*.48))));
-          
+          const reveal=Math.max(0,Math.min(1,(elapsed-delay)/Math.max(.7,Math.min(1.5,sceneDuration*.52))));
           ctx.beginPath();ctx.rect(w/2+ln.width/2-ln.width*reveal,y-fontSize,ln.width*reveal,fontSize*1.65);ctx.clip();
+        }else if(effect==="rise"){ctx.translate(0,(1-p)*Math.min(26*sf,lineHeight*.48));}
+        else if(effect==="slide"){ctx.translate((1-p)*Math.min(42*sf,w*.07),0);}
+        else if(cinematic){
+          const lift=(1-p)*Math.min(125*sf,lineHeight*1.9);
+          ctx.translate(0,lift);
+          ctx.rotate((1-p)*-.075);
+          const scale=.76+.24*Math.min(1,p);
+          ctx.translate(w/2,y);ctx.scale(scale,scale);ctx.translate(-w/2,-y);
+          ctx.shadowBlur=(18+22*(1-p))*sf;
         }else if(effect==="fade"){ctx.globalAlpha=alpha;}
-        else if(effect==="rise"){ctx.translate(0,lift);}
-        else if(effect==="slide"){ctx.translate(drift,0);}
         const x=w/2+ln.width/2,space=ctx.measureText(" ").width;let cursor=x;
         for(const word of ln.words){const ww=ctx.measureText(word).width;ctx.fillText(word,cursor-ww/2,y);cursor-=ww+space;}
         ctx.restore();
@@ -99,7 +105,7 @@
   previewBtn.addEventListener("click",preview);
   if(storyList){
     const refreshStory=()=>{storyCards().forEach((card,i)=>{card.querySelector(".nava-video-story-card-head strong").textContent="صحنه "+(i+1);card.querySelector("[data-remove-story]").disabled=storyCards().length===1;});resize();drawFrame(0);updateReady();};
-    addStoryBtn?.addEventListener("click",()=>{const card=document.createElement("article");card.className="nava-video-story-card";card.setAttribute("data-story-scene","");card.innerHTML='<div class="nava-video-story-card-head"><strong></strong><button type="button" data-remove-story>حذف</button></div><label>متن این صحنه<textarea data-story-text rows="3" maxlength="420" placeholder="جمله یا پیام این صحنه را بنویس..."></textarea></label><div class="nava-video-story-fields"><label>مدت نمایش<select data-story-duration><option value="2">۲ ثانیه</option><option value="3" selected>۳ ثانیه</option><option value="4">۴ ثانیه</option><option value="5">۵ ثانیه</option><option value="6">۶ ثانیه</option><option value="8">۸ ثانیه</option></select></label><label>حرکت نوشته<select data-story-motion><option value="rise">ورود از پایین</option><option value="fade">محو و ظاهر شدن</option><option value="slide">ورود از راست</option><option value="type">نمایش مرحله‌ای</option><option value="none">بدون حرکت</option></select></label></div>';storyList.append(card);refreshStory();card.querySelector("[data-story-text]").focus();});
+    addStoryBtn?.addEventListener("click",()=>{const card=document.createElement("article");card.className="nava-video-story-card";card.setAttribute("data-story-scene","");card.innerHTML='<div class="nava-video-story-card-head"><strong></strong><button type="button" data-remove-story>حذف</button></div><label>متن این صحنه<textarea data-story-text rows="3" maxlength="420" placeholder="جمله یا پیام این صحنه را بنویس..."></textarea></label><div class="nava-video-story-fields"><label>مدت نمایش<select data-story-duration><option value="2">۲ ثانیه</option><option value="3" selected>۳ ثانیه</option><option value="4">۴ ثانیه</option><option value="5">۵ ثانیه</option><option value="6">۶ ثانیه</option><option value="8">۸ ثانیه</option></select></label><label>حرکت نوشته<select data-story-motion><option value="cinematic" selected>حرکت سینمایی چندلایه</option><option value="rise">ورود از پایین</option><option value="fade">محو و ظاهر شدن</option><option value="slide">ورود از راست</option><option value="type">نمایش مرحله‌ای</option><option value="none">بدون حرکت</option></select></label></div>';storyList.append(card);refreshStory();card.querySelector("[data-story-text]").focus();});
     storyList.addEventListener("input",refreshStory);storyList.addEventListener("change",refreshStory);
     storyList.addEventListener("click",e=>{const btn=e.target.closest("[data-remove-story]");if(btn&&storyCards().length>1){btn.closest("[data-story-scene]").remove();refreshStory();}});
   }
@@ -117,7 +123,11 @@
     if((!scenes.length&&!storyData().length&&!titleInput.value.trim()&&!subtitleInput.value.trim()&&!textInput?.value.trim())||recording)return;
     if(!window.MediaRecorder||!canvas.captureStream){say("این مرورگر ضبط ویدئو را پشتیبانی نمی‌کند.");return;}
     try{
-      stopPreview();resize();drawFrame(0);
+      stopPreview();
+      const renderStory=storyData();
+      const renderDuration=renderStory.length?renderStory.reduce((sum,s)=>sum+s.duration,0):(Number(durationInput?.value)||8);
+      if(renderStory.length>1) say("در حال ساخت "+renderStory.length+" صحنه متوالی…");
+      resize();drawFrame(0,renderStory);
       const mime=["video/webm;codecs=vp9,opus","video/webm;codecs=vp8,opus","video/webm"].find(t=>MediaRecorder.isTypeSupported(t));
       if(!mime){say("کدک سازگار پیدا نشد.");return;}
       const stream=canvas.captureStream(20);
@@ -153,11 +163,11 @@
         say("ویدئو آماده شد؛ از همین تب می‌توانی آن را پخش یا دریافت کنی.");
       };
       recorder.start(250);
-      const start=performance.now(),duration=totalDuration(),fade=Number(fadeInput.value),baseVolume=Math.max(0,Number(musicVolume.value)/100);
+      const start=performance.now(),duration=renderDuration,fade=Number(fadeInput.value),baseVolume=Math.max(0,Number(musicVolume.value)/100);
       const tick=()=>{
         if(!recording)return;
         const t=Math.min((performance.now()-start)/1000,duration);
-        drawFrame(t);
+        drawFrame(t,renderStory);
         if(musicElement&&musicGain){
           const remaining=duration-t;
           const factor=fade>0?Math.max(0,Math.min(1,t/fade,remaining/fade)):1;
