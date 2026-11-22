@@ -2722,3 +2722,18 @@ body:has(> .nava-access-panel.is-gate-active){overflow:hidden}
   .navi-widget-panel.is-inline .navi-workspace-tabs{gap:4px;overflow-x:auto}
   .navi-widget-panel.is-inline .navi-workspace-tab{white-space:nowrap}
 }
+
+/* Video studio: compact, progressive text-layer controls */
+.nava-video-layer-settings{margin-top:10px;border:1px solid var(--border);border-radius:10px;background:rgba(8,13,25,.18);}
+.nava-video-layer-settings>summary{cursor:pointer;list-style:none;padding:10px 12px;color:var(--gold);font-size:12px;font-weight:700;}
+.nava-video-layer-settings>summary::-webkit-details-marker{display:none}
+.nava-video-layer-settings>summary:after{content:"＋";float:left;opacity:.75}
+.nava-video-layer-settings[open]>summary:after{content:"−"}
+.nava-video-layer-settings .nava-video-layer-fields{padding:0 10px 10px;}
+.nava-video-text-layer>label{display:block;margin-top:8px}
+.nava-video-layer-fields{gap:8px!important}
+.nava-video-layer-fields label{font-size:12px}
+.nava-video-layer-fields select,.nava-video-layer-fields input[type=text]{min-height:36px;padding:7px 9px}
+.nava-video-layer-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.nava-video-layer-head button{font-size:11px;padding:6px 9px}
+@media(max-width:600px){.nava-video-layer-fields{grid-template-columns:repeat(2,minmax(0,1fr))!important}.nava-video-layer-settings>summary{padding:9px 10px}}
