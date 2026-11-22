@@ -18,7 +18,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" defer></script>
   <script src="logo-renderer.js?v=logo-persian-native-text-20261121-1" defer></script>
   <script src="logo-studio.js?v=logo-per-concept-visual-review-20261121-1" defer></script>
-  <link rel="stylesheet" href="video-studio.css?v=video-tabs-story-builder-20261122-1">
+  <link rel="stylesheet" href="video-studio.css?v=video-tabs-cinematic-text-scenes-20261122-2">
 </head>
 <body>
 
@@ -565,6 +565,7 @@
           <button type="button" class="nava-video-tab" role="tab" aria-selected="false" aria-controls="navaVideoPanelText" data-video-tab="text">ساخت ویدئوی متنی</button>
           <button type="button" class="nava-video-tab" role="tab" aria-selected="false" aria-controls="navaVideoPanelPhoto" data-video-tab="photo">ساخت با عکس</button>
           <button type="button" class="nava-video-tab" role="tab" aria-selected="false" aria-controls="navaVideoPanelVideo" data-video-tab="video">تدوین ویدئو · به‌زودی</button>
+          <button type="button" class="nava-video-tab" role="tab" aria-selected="false" aria-controls="navaVideoPanelOutput" data-video-tab="output">خروجی</button>
         </div>
         <section class="nava-video-panel is-active" id="navaVideoPanelGuide" role="tabpanel">
           <h3>راهنمایی و برنامه‌ریزی با NAVI</h3>
@@ -611,13 +612,17 @@
         </section>
         <section class="nava-video-panel" id="navaVideoPanelVideo" role="tabpanel" hidden><div class="nava-video-coming-soon"><span aria-hidden="true">▶</span><h3>تدوین ویدئوی ورودی</h3><p>برش، اتصال چند ویدئو، انتقال بین صحنه‌ها و تایم‌لاین کامل در مرحله بعد اضافه می‌شود.</p><strong>به‌زودی</strong></div></section>
 
-        <div class="nava-video-work-actions">
-          <div class="nava-video-actions"><button class="nava-video-secondary" id="navaVideoPreview" type="button" disabled hidden>پیش‌نمایش</button><button class="nava-video-primary" id="navaVideoRender" type="button" disabled>ساخت خروجی</button></div>
-          <div class="nava-video-status" id="navaVideoStatus" role="status" aria-live="polite">برای شروع، متن یا عکس انتخاب کن.</div>
-          <div class="nava-video-progress" aria-label="پیشرفت ساخت"><span id="navaVideoProgress"></span></div>
-          <div class="nava-video-result" id="navaVideoResult" hidden><video id="navaVideoOutput" controls playsinline hidden></video><div class="nava-video-actions"><a class="nava-video-primary" id="navaVideoDownload" hidden download="nava-video.webm">دریافت خروجی</a></div></div>
-          <p class="nava-video-hint">خروجی فعلی WebM است. فایل‌ها روی همین گوشی و در مرورگر پردازش می‌شوند.</p>
-        </div>
+        <section class="nava-video-panel" id="navaVideoPanelOutput" role="tabpanel" hidden>
+          <h3>ساخت و دریافت خروجی</h3>
+          <p>پس از آماده‌کردن متن یا عکس‌ها، از اینجا ویدئو را بساز و دریافت کن.</p>
+          <div class="nava-video-work-actions">
+            <div class="nava-video-actions"><button class="nava-video-secondary" id="navaVideoPreview" type="button" disabled hidden>پیش‌نمایش</button><button class="nava-video-primary" id="navaVideoRender" type="button" disabled>ساخت ویدئو</button></div>
+            <div class="nava-video-status" id="navaVideoStatus" role="status" aria-live="polite">ابتدا متن یا عکس‌ها را آماده کن.</div>
+            <div class="nava-video-progress" aria-label="پیشرفت ساخت"><span id="navaVideoProgress"></span></div>
+            <div class="nava-video-result" id="navaVideoResult" hidden><video id="navaVideoOutput" controls playsinline></video><div class="nava-video-actions"><a class="nava-video-primary" id="navaVideoDownload" hidden download="nava-video.webm">دریافت خروجی</a></div></div>
+            <p class="nava-video-hint">خروجی WebM است. فایل‌ها روی همین گوشی و در مرورگر پردازش می‌شوند.</p>
+          </div>
+        </section>
       </section>
     </div>
   </section>
