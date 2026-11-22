@@ -2773,3 +2773,41 @@ body:has(> .nava-access-panel.is-gate-active){overflow:hidden}
 #navaVideoEngine .nava-video-work-actions .nava-video-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 #navaVideoEngine button:focus-visible,#navaVideoEngine select:focus-visible,#navaVideoEngine textarea:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
 @media(max-width:640px){#navaVideoEngine{padding:12px;border-radius:17px}#navaVideoEngine .nava-video-scene-media{grid-template-columns:1fr}#navaVideoEngine .nava-video-work-actions .nava-video-actions{grid-template-columns:1fr}}
+
+
+/* Video studio UX refinement: compact scene cards and progressive controls */
+#navaVideoEngine .nava-video-story-card{padding:12px;margin:10px 0;border-radius:14px}
+#navaVideoEngine .nava-video-story-card-head{margin-bottom:8px}
+#navaVideoEngine .nava-video-text-layer{padding:10px;margin:7px 0;border-radius:11px}
+#navaVideoEngine .nava-video-layer-head{margin-bottom:5px}
+#navaVideoEngine .nava-video-text-layer>label{margin-top:5px}
+#navaVideoEngine .nava-video-text-layer textarea[data-layer-text]{min-height:76px;max-height:150px}
+#navaVideoEngine .nava-video-layer-settings{margin-top:8px;border:1px solid var(--border);border-radius:10px;background:color-mix(in srgb,var(--panel) 88%,var(--bg))}
+#navaVideoEngine .nava-video-layer-settings>summary{padding:9px 11px;color:var(--muted);font-size:11px}
+#navaVideoEngine .nava-video-layer-settings:not([open]){margin-bottom:0}
+#navaVideoEngine .nava-video-layer-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px!important;padding:0 10px 10px}
+#navaVideoEngine .nava-video-layer-fields>label{min-width:0;margin:0;font-size:11px;line-height:1.6}
+#navaVideoEngine .nava-video-layer-fields select,
+#navaVideoEngine .nava-video-layer-fields input[type=text]{width:100%;min-width:0;min-height:38px;padding:7px 8px;font-size:12px}
+#navaVideoEngine .nava-video-frame-tools,
+#navaVideoEngine .nava-video-underline-tools{grid-column:1/-1;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+#navaVideoEngine .nava-video-scene-media{grid-template-columns:minmax(0,1fr);gap:8px;margin:9px 0}
+#navaVideoEngine .nava-video-scene-media label{gap:5px;font-size:11px}
+#navaVideoEngine .nava-video-scene-media select{min-height:40px;padding:7px 10px}
+#navaVideoEngine .nava-video-photo-gallery{grid-template-columns:repeat(auto-fill,minmax(68px,1fr));gap:6px;max-height:170px}
+#navaVideoEngine .nava-video-photo-tile{padding:4px;gap:3px;border-radius:9px}
+#navaVideoEngine .nava-video-photo-tile img{height:58px;border-radius:6px}
+#navaVideoEngine .nava-video-photo-tile span{font-size:9px}
+#navaVideoEngine .nava-video-story-fields{margin-top:7px}
+#navaVideoEngine .nava-video-story-fields label{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:11px}
+#navaVideoEngine .nava-video-story-fields select{width:auto;min-width:120px;min-height:38px;padding:6px 9px}
+#navaVideoEngine .nava-video-add-layer{min-height:38px;margin:7px 0;font-size:12px}
+#navaVideoEngine .nava-video-hint{font-size:11px;line-height:1.8;margin:10px 0}
+@media(max-width:600px){
+ #navaVideoEngine{padding:10px}
+ #navaVideoEngine .nava-video-layer-fields{grid-template-columns:repeat(2,minmax(0,1fr))}
+ #navaVideoEngine .nava-video-frame-tools,
+ #navaVideoEngine .nava-video-underline-tools{grid-template-columns:1fr}
+ #navaVideoEngine .nava-video-story-card{padding:9px}
+ #navaVideoEngine .nava-video-photo-gallery{grid-template-columns:repeat(4,minmax(0,1fr));max-height:150px}
+}
