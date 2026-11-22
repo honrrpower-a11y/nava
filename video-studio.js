@@ -51,7 +51,7 @@
       const effect=activeStory?activeStory.motion:(wordMotionInput?.value||"rise");
       const fontSize=Math.round(36*sf),lineH=47*sf,maxWidth=w*.84;
       ctx.font="600 "+fontSize+"px sans-serif";ctx.fillStyle="#fff";ctx.shadowBlur=12*sf;
-      const words=body.split(/\\s+/).filter(Boolean),lines=[];let line=[],lineWidth=0;
+      const words=body.split(/\s+/).filter(Boolean),lines=[];let line=[],lineWidth=0;
       for(const word of words){const ww=ctx.measureText(word).width,space=line.length?ctx.measureText(" ").width:0;if(line.length&&lineWidth+space+ww>maxWidth){lines.push({words:line,width:lineWidth});line=[];lineWidth=0;}lineWidth+=(line.length?ctx.measureText(" ").width:0)+ww;line.push(word);}
       if(line.length)lines.push({words:line,width:lineWidth});
       const shown=lines.slice(0,6),lineHeight=Math.min(lineH,h*.075),startY=h*.56-(shown.length-1)*lineHeight/2;
@@ -67,12 +67,12 @@
         const alpha=Math.min(1,p,fadeOut);
         const lift=(1-p)*Math.min(26*sf,lineHeight*.48);
         const drift=effect==="slide"?(1-p)*Math.min(42*sf,w*.07):0;
-        const y=startY+li*lineHeight+lift;
+        const y=startY+li*lineHeight;
         ctx.save();ctx.globalAlpha=effect==="none"?fadeOut:alpha;
         if(effect==="type"){
           const reveal=Math.max(0,Math.min(1,(elapsed-delay)/Math.max(.55,Math.min(1.1,sceneDuration*.48))));
-          const fullText=ln.words.join(" ");const metrics=ctx.measureText(fullText);
-          ctx.beginPath();ctx.rect(w/2-ln.width/2,y-fontSize,ln.width*reveal,fontSize*1.65);ctx.clip();
+          
+          ctx.beginPath();ctx.rect(w/2+ln.width/2-ln.width*reveal,y-fontSize,ln.width*reveal,fontSize*1.65);ctx.clip();
         }else if(effect==="fade"){ctx.globalAlpha=alpha;}
         else if(effect==="rise"){ctx.translate(0,lift);}
         else if(effect==="slide"){ctx.translate(drift,0);}
