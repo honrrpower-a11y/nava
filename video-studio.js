@@ -19,6 +19,7 @@
     let motion=null;
     if(/محو|fade|شفاف|آرام ظاهر/.test(brief))motion="fade";
     if(/از پایین|بالا بیاید|rise/.test(brief))motion="rise";
+    if(/از (سمت )?راست|از راست به چپ|از سمت راست وارد|ورود از راست|slide.?right/i.test(brief))motion="slide-right";
     if(/از (سمت )?چپ|از چپ به راست|از سمت چپ وارد|slide.?left/i.test(brief))motion="slide-left";
     if(/مرحله.?ای|کلمه.?به.?کلمه|حرف.?به.?حرف|تایپ|typewriter/i.test(brief))motion="type";
     if(/سینمایی|cinematic/.test(brief))motion="cinematic";
@@ -42,7 +43,8 @@
   fontInput?.addEventListener("change",()=>{activeFont=fontInput.value;drawFrame(0);});
 
   const storyCards=()=>storyList?Array.from(storyList.querySelectorAll("[data-story-scene]")):[];
-  const storyData=()=>storyCards().map(card=>({text:card.querySelector("[data-story-text]").value.trim(),duration:Number(card.querySelector("[data-story-duration]").value)||4,motion:card.querySelector("[data-story-motion]").value,imageIndex:-1})).filter(s=>s.text);
+  const refreshScenePhotoOptions=()=>storyCards().forEach(card=>{const select=card.querySelector("[data-story-image]");if(!select)return;const previous=select.value;select.innerHTML="";const none=document.createElement("option");none.value="-1";none.textContent="بدون عکس";select.append(none);scenes.forEach((scene,i)=>{const option=document.createElement("option");option.value=String(i);option.textContent="عکس "+(i+1)+" — "+scene.file.name;select.append(option);});select.value=[...select.options].some(o=>o.value===previous)?previous:"-1";});
+  const storyData=()=>storyCards().map(card=>({text:card.querySelector("[data-story-text]").value.trim(),duration:Number(card.querySelector("[data-story-duration]").value)||4,motion:card.querySelector("[data-story-motion]").value,imageIndex:Number(card.querySelector("[data-story-image]")?.value??-1)})).filter(s=>s.text||s.imageIndex>=0);
   const storyTotal=()=>storyData().reduce((sum,s)=>sum+s.duration,0);
   const totalDuration=()=>storyTotal()||Number(durationInput?.value)||8;
   const say=m=>{status.textContent=m;};
@@ -56,7 +58,7 @@
       const name=document.createElement("span");name.textContent=(i+1)+". "+scene.file.name;
       const up=document.createElement("button");up.type="button";up.textContent="↑";up.disabled=i===0;up.setAttribute("aria-label","انتقال به بالا");up.addEventListener("click",()=>moveScene(i,-1));
       const down=document.createElement("button");down.type="button";down.textContent="↓";down.disabled=i===scenes.length-1;down.setAttribute("aria-label","انتقال به پایین");down.addEventListener("click",()=>moveScene(i,1));
-      const remove=document.createElement("button");remove.type="button";remove.textContent="×";remove.setAttribute("aria-label","حذف تصویر");remove.addEventListener("click",()=>{URL.revokeObjectURL(scene.url);scenes.splice(i,1);renderSceneList();updateReady();drawFrame(0);});
+      const remove=document.createElement("button");remove.type="button";remove.textContent="×";remove.setAttribute("aria-label","حذف تصویر");remove.addEventListener("click",()=>{URL.revokeObjectURL(scene.url);scenes.splice(i,1);renderSceneList();refreshScenePhotoOptions();updateReady();drawFrame(0);});
       row.append(thumb,name,up,down,remove);sceneList.append(row);
     });
   }
@@ -64,21 +66,21 @@
   function drawFrame(seconds,storyOverride,durationOverride){
     const [w,h]=dimensions();if(canvas.width!==w||canvas.height!==h)resize();
     const duration=Number(durationOverride)||totalDuration(),hasImages=scenes.length>0,per=hasImages?duration/scenes.length:duration,index=hasImages?Math.min(scenes.length-1,Math.floor(Math.min(seconds,duration-.001)/per)):0,local=hasImages?(seconds-index*per)/per:seconds/duration;
-    const story=Array.isArray(storyOverride)?storyOverride:storyData();let activeStory=null,storyLocal=seconds;
-    if(story.length){let cursor=0;for(const item of story){if(seconds<cursor+item.duration){activeStory=item;storyLocal=seconds-cursor;break;}cursor+=item.duration;}if(!activeStory){activeStory=story[story.length-1];storyLocal=activeStory.duration;}}
+    const story=Array.isArray(storyOverride)?storyOverride:storyData();let activeStory=null,activeStoryIndex=-1,storyLocal=seconds;
+    if(story.length){let cursor=0;for(let i=0;i<story.length;i++){const item=story[i];if(seconds<cursor+item.duration){activeStory=item;activeStoryIndex=i;storyLocal=seconds-cursor;break;}cursor+=item.duration;}if(!activeStory){activeStory=story[story.length-1];activeStoryIndex=story.length-1;storyLocal=activeStory.duration;}}
+    const activeImage=story.length?(activeStory&&activeStory.imageIndex>=0?scenes[activeStory.imageIndex]:null):(hasImages?scenes[index]:null);
     ctx.fillStyle="#050912";ctx.fillRect(0,0,w,h);
     const drawImageCover=(img,x,y,bw,bh,progress=local)=>{const iw=img.naturalWidth,ih=img.naturalHeight,scale=Math.max(bw/iw,bh/ih)*(1+(motionInput.value==="subtle"?.012:.035)*progress),dw=iw*scale,dh=ih*scale;ctx.save();ctx.beginPath();ctx.rect(x,y,bw,bh);ctx.clip();ctx.drawImage(img,x+(bw-dw)/2,y+(bh-dh)/2,dw,dh);ctx.restore();};
-    if(hasImages){const layout=layoutInput?.value||"sequence";if(layout==="triptych"||layout==="grid"){
-      const count=layout==="triptych"?3:4,cols=layout==="triptych"?3:2,rows=layout==="triptych"?1:2,gap=Math.max(8,Math.round(w*.012)),cellW=(w-gap*(cols+1))/cols,cellH=(h*.56-gap*(rows+1))/rows,top=h*.13;
-      for(let k=0;k<count;k++){const img=scenes[k%scenes.length].image,x=gap+(k%cols)*(cellW+gap),y=top+gap+Math.floor(k/cols)*(cellH+gap);drawImageCover(img,x,y,cellW,cellH,local);}
-    }else drawImageCover(scenes[index].image,0,0,w,h,local);
+    if(activeImage){
+      if(!story.length&&(layoutInput?.value==="triptych"||layoutInput?.value==="grid")){const layout=layoutInput.value,count=layout==="triptych"?3:4,cols=layout==="triptych"?3:2,rows=layout==="triptych"?1:2,gap=Math.max(8,Math.round(w*.012)),cellW=(w-gap*(cols+1))/cols,cellH=(h*.56-gap*(rows+1))/rows,top=h*.13;for(let k=0;k<count;k++){const img=scenes[k%scenes.length].image,x=gap+(k%cols)*(cellW+gap),y=top+gap+Math.floor(k/cols)*(cellH+gap);drawImageCover(img,x,y,cellW,cellH,local);}}
+      else drawImageCover(activeImage.image,0,0,w,h,local);
     }else{const gradient=ctx.createLinearGradient(0,0,w,h);gradient.addColorStop(0,"#18243b");gradient.addColorStop(.58,"#202f47");gradient.addColorStop(1,"#080d18");ctx.fillStyle=gradient;ctx.fillRect(0,0,w,h);}
     ctx.save();ctx.beginPath();ctx.rect(0,0,w,h);ctx.clip();
     const shade=ctx.createLinearGradient(0,0,0,h);shade.addColorStop(0,"rgba(2,8,18,.12)");shade.addColorStop(.55,"rgba(2,8,18,.02)");shade.addColorStop(1,"rgba(2,8,18,.72)");ctx.fillStyle=shade;ctx.fillRect(0,0,w,h);
     const sf=w/1080;ctx.textAlign=textDirection==="ltr"?"left":"center";ctx.direction=textDirection;ctx.shadowColor="rgba(0,0,0,.65)";ctx.shadowBlur=16*sf;
     if(titleInput.value.trim()){ctx.font="700 "+Math.round(54*sf)+"px sans-serif";ctx.fillStyle="#fff";ctx.fillText(titleInput.value.trim(),w/2,h*.79,w*.84);}
     if(subtitleInput.value.trim()){ctx.font="400 "+Math.round(27*sf)+"px sans-serif";ctx.fillStyle="#fff";ctx.fillText(subtitleInput.value.trim(),w/2,h*.84,w*.82);}
-    const body=activeStory?activeStory.text:(textInput?.value||"").trim();if(body){
+    const persistence=$("navaVideoTextPersistence")?.value||"keep";const body=activeStory?(persistence==="keep"?story.slice(0,activeStoryIndex+1).map(item=>item.text).filter(Boolean).join("\n"):activeStory.text):(textInput?.value||"").trim();if(body){
       const effect=activeStory?activeStory.motion:(wordMotionInput?.value||"rise");
       const fontSize=Math.round(36*sf),lineH=47*sf,maxWidth=w*.84;
       ctx.font="600 "+fontSize+"px "+activeFont;ctx.fillStyle="#fff";ctx.shadowBlur=12*sf;
@@ -93,7 +95,7 @@
       const fadeOut=Math.max(0,Math.min(1,(sceneDuration-elapsed)/.42));
       shown.forEach((ln,li)=>{
         const cinematic=effect==="cinematic";
-        const delay=li*(cinematic?.20:.10),enter=cinematic?1.05:.48;
+        const delay=li*(cinematic?.20:.10),enter=effect==="slide-right"?1.15:(cinematic?1.05:.48);
         const raw=Math.max(0,Math.min(1,(elapsed-delay)/enter));
         const p=cinematic?Math.max(0,Math.min(1.08,easeBack(raw))):easeOut(raw);
         if(p<=0)return;
@@ -104,7 +106,7 @@
           const reveal=Math.max(0,Math.min(1,(elapsed-delay)/Math.max(.7,Math.min(1.5,sceneDuration*.52))));
           ctx.beginPath();ctx.rect(w/2+ln.width/2-ln.width*reveal,y-fontSize,ln.width*reveal,fontSize*1.65);ctx.clip();
         }else if(effect==="rise"){ctx.translate(0,(1-p)*Math.min(26*sf,lineHeight*.48));}
-        else if(effect==="slide"){ctx.translate((1-p)*Math.min(42*sf,w*.07),0);}else if(effect==="slide-left"){ctx.translate(-(1-p)*Math.min(42*sf,w*.07),0);}
+        else if(effect==="slide-right"){ctx.translate((1-p)*(w*.92+ln.width*.65),0);}else if(effect==="slide"){ctx.translate((1-p)*Math.min(42*sf,w*.07),0);}else if(effect==="slide-left"){ctx.translate(-(1-p)*Math.min(42*sf,w*.07),0);}
         else if(cinematic){
           const lift=(1-p)*Math.min(125*sf,lineHeight*1.9);
           ctx.translate(0,lift);
@@ -129,21 +131,21 @@
     if(files.length>20){say("حداکثر ۲۰ عکس می‌توانی انتخاب کنی.");imageInput.value="";return;}
     const invalid=files.find(f=>!f.type.startsWith("image/")||f.size>20*1024*1024);if(invalid){say("هر فایل باید تصویر و حداکثر ۲۰ مگابایت باشد.");imageInput.value="";return;}
     scenes.forEach(s=>URL.revokeObjectURL(s.url));scenes=[];stopPreview();
-    Promise.all(files.map(file=>new Promise((resolve,reject)=>{const url=URL.createObjectURL(file),img=new Image();img.onload=()=>resolve({file,url,image:img});img.onerror=()=>{URL.revokeObjectURL(url);reject(new Error("خواندن یکی از تصاویر ناموفق بود."));};img.src=url;}))).then(items=>{scenes=items;resize();renderSceneList();drawFrame(0);updateReady();}).catch(e=>say(e.message));
+    Promise.all(files.map(file=>new Promise((resolve,reject)=>{const url=URL.createObjectURL(file),img=new Image();img.onload=()=>resolve({file,url,image:img});img.onerror=()=>{URL.revokeObjectURL(url);reject(new Error("خواندن یکی از تصاویر ناموفق بود."));};img.src=url;}))).then(items=>{scenes=items;resize();renderSceneList();refreshScenePhotoOptions();drawFrame(0);updateReady();}).catch(e=>say(e.message));
   });
   musicInput.addEventListener("change",()=>{const file=musicInput.files&&musicInput.files[0];if(!file)return;if(!file.type.startsWith("audio/")){say("فایل صوتی معتبر انتخاب کن.");musicInput.value="";return;}if(musicUrl)URL.revokeObjectURL(musicUrl);musicUrl=URL.createObjectURL(file);if(!musicElement){musicElement=new Audio();musicElement.preload="auto";musicElement.loop=false;}musicElement.src=musicUrl;say("موسیقی آماده است.");});
   [titleInput,subtitleInput,formatInput,motionInput,layoutInput,textInput,wordMotionInput,wordSpeedInput,durationInput].filter(Boolean).forEach(el=>el.addEventListener("input",()=>{resize();drawFrame(0);updateReady();}));
   previewBtn.addEventListener("click",preview);
   if(storyList){
     const refreshStory=()=>{storyCards().forEach((card,i)=>{card.querySelector(".nava-video-story-card-head strong").textContent="صحنه "+(i+1);card.querySelector("[data-remove-story]").disabled=storyCards().length===1;});resize();drawFrame(0);updateReady();};
-    addStoryBtn?.addEventListener("click",()=>{const card=document.createElement("article");card.className="nava-video-story-card";card.setAttribute("data-story-scene","");card.innerHTML='<div class="nava-video-story-card-head"><strong></strong><button type="button" data-remove-story>حذف</button></div><label>متن این صحنه<textarea data-story-text rows="3" maxlength="420" placeholder="جمله یا پیام این صحنه را بنویس..."></textarea></label><div class="nava-video-story-fields"><label>مدت نمایش<select data-story-duration><option value="2">۲ ثانیه</option><option value="3">۳ ثانیه</option><option value="4" selected>۴ ثانیه</option><option value="5">۵ ثانیه</option><option value="6">۶ ثانیه</option><option value="8">۸ ثانیه</option></select></label><label>حرکت نوشته<select data-story-motion><option value="cinematic" selected>حرکت سینمایی چندلایه</option><option value="rise">ورود از پایین</option><option value="fade">محو و ظاهر شدن</option><option value="slide">ورود از راست</option><option value="type">نمایش مرحله‌ای</option><option value="none">بدون حرکت</option></select></label></div>';storyList.append(card);refreshStory();card.querySelector("[data-story-text]").focus();});
-    storyList.addEventListener("input",refreshStory);storyList.addEventListener("change",refreshStory);
+    addStoryBtn?.addEventListener("click",()=>{const card=document.createElement("article");card.className="nava-video-story-card";card.setAttribute("data-story-scene","");card.innerHTML='<div class="nava-video-story-card-head"><strong></strong><button type="button" data-remove-story>حذف</button></div><label>متن این صحنه<textarea data-story-text rows="3" maxlength="420" placeholder="جمله یا پیام این صحنه را بنویس..."></textarea></label><label>عکس این صحنه<select data-story-image><option value="-1">بدون عکس</option></select></label><div class="nava-video-story-fields"><label>مدت نمایش<select data-story-duration><option value="2">۲ ثانیه</option><option value="3">۳ ثانیه</option><option value="4" selected>۴ ثانیه</option><option value="5">۵ ثانیه</option><option value="6">۶ ثانیه</option><option value="8">۸ ثانیه</option></select></label><label>حرکت نوشته<select data-story-motion><option value="cinematic" selected>حرکت سینمایی چندلایه</option><option value="rise">ورود از پایین</option><option value="fade">محو و ظاهر شدن</option><option value="slide-right">ورود از راست</option><option value="type">نمایش مرحله‌ای</option><option value="none">بدون حرکت</option></select></label></div>';storyList.append(card);refreshScenePhotoOptions();refreshStory();card.querySelector("[data-story-text]").focus();});
+    storyList.addEventListener("input",refreshStory);storyList.addEventListener("change",refreshStory);$("navaVideoTextPersistence")?.addEventListener("change",()=>drawFrame(0));
     storyList.addEventListener("click",e=>{const btn=e.target.closest("[data-remove-story]");if(btn&&storyCards().length>1){btn.closest("[data-story-scene]").remove();refreshStory();}});
   }
   const sharedOutput=root.querySelector(".nava-video-shared-output");
   root.querySelectorAll("[data-video-tab]").forEach(btn=>btn.addEventListener("click",()=>{root.querySelectorAll("[data-video-tab]").forEach(b=>{const active=b===btn;b.classList.toggle("is-active",active);b.setAttribute("aria-selected",String(active));});root.querySelectorAll(".nava-video-panel").forEach(p=>{const active=p.id===btn.getAttribute("aria-controls");p.hidden=!active;p.classList.toggle("is-active",active);});if(sharedOutput&&btn.dataset.videoTab==="text")root.querySelector("#navaVideoPanelText").append(sharedOutput);}));
 
-  $("navaVideoAskNavi").addEventListener("click",()=>{const brief=$("navaVideoBrief").value.trim();const names=scenes.map((s,i)=>(i+1)+". "+s.file.name).join("\n");const prompt="برای این پروژه نقش کارگردان خلاق و تدوینگر ویدئو را بر عهده بگیر. موضوع و هدف: "+(brief||"بر اساس تصاویر انتخاب‌شده یک روایت مناسب پیشنهاد بده.")+"\nتعداد تصاویر: "+scenes.length+"\nفهرست فایل‌ها:\n"+(names||"هنوز تصویری انتخاب نشده")+"\nموسیقی: "+(musicElement?"بارگذاری شده":"هنوز انتخاب نشده")+"\nلطفاً سناریوی صحنه‌به‌صحنه، ترتیب پیشنهادی تصاویر، مدت هر صحنه، متن روی تصویر، ریتم هماهنگ با موسیقی، نوع انتقال و حرکت دوربین را پیشنهاد بده. توضیح بده کدام تصمیم‌ها نیازمند تأیید من هستند.";const result=$("navaVideoNaviResult");result.textContent="بریف برای NAVI ارسال شد. امکانات واقعی این استودیو: ساخت ویدئو از صحنه‌های متنی و عکس، بارگذاری حداکثر ۲۰ تصویر، انتخاب مدت و افکت هر صحنه، فونت‌های موجود، قالب عمودی/افقی، موسیقی پس‌زمینه، تنظیم بلندی و محوشدن موسیقی، پیش‌نمایش و خروجی WebM. تدوین ویدئوی ورودی هنوز آماده نیست. لطفاً فقط دستورهای قابل‌اجرا را در بریف مشخص کن.";if(typeof window.openNaviAssistant==="function"){window.openNaviAssistant({service:"ویدئو و صدا",message:prompt+"\n\nامکانات واقعی سایت: ساخت ویدئو از صحنه‌های متنی و عکس؛ بارگذاری حداکثر ۲۰ عکس؛ تنظیم مدت و حرکت نوشته؛ انتخاب فونت موجود؛ قالب عمودی یا افقی؛ موسیقی پس‌زمینه با کنترل بلندی و محوشدن؛ پیش‌نمایش و خروجی WebM. تدوین ویدئوی ورودی هنوز آماده نیست. لطفاً فقط قابلیت‌های موجود را پیشنهاد بده و بریف را با دستورهای دقیق و قابل‌اجرا بنویس.",context:{studio:"ویدئو و صدا",brief,images:names,music:musicElement?"بارگذاری شده":"بارگذاری نشده",capabilities:["text scenes","photo upload","music","font selection","text motion","preview","webm export"],unavailable:["source video editing"]}});}else{result.textContent="همراه NAVI در دسترس نیست؛ از دکمه شناور NAVI استفاده کن.";}});
+  $("navaVideoAskNavi").addEventListener("click",()=>{const brief=$("navaVideoBrief").value.trim();const names=scenes.map((s,i)=>(i+1)+". "+s.file.name).join("\n");const prompt="برای این پروژه نقش کارگردان خلاق و تدوینگر ویدئو را بر عهده بگیر. موضوع و هدف: "+(brief||"بر اساس تصاویر انتخاب‌شده یک روایت مناسب پیشنهاد بده.")+"\nتعداد تصاویر: "+scenes.length+"\nفهرست فایل‌ها:\n"+(names||"هنوز تصویری انتخاب نشده")+"\nموسیقی: "+(musicElement?"بارگذاری شده":"هنوز انتخاب نشده")+"\nلطفاً سناریوی صحنه‌به‌صحنه، ترتیب پیشنهادی تصاویر، مدت هر صحنه، متن روی تصویر، ریتم هماهنگ با موسیقی، نوع انتقال و حرکت دوربین را پیشنهاد بده. توضیح بده کدام تصمیم‌ها نیازمند تأیید من هستند.";const result=$("navaVideoNaviResult");result.textContent="بریف برای NAVI ارسال شد. امکانات واقعی این استودیو: ساخت ویدئو از صحنه‌های مستقل؛ انتخاب عکس جداگانه برای هر صحنه (یا بدون عکس)، باقی‌ماندن متن صحنه‌های قبلی یا جایگزینی آن‌ها، ورود واقعی متن از بیرون کادر راست، بارگذاری حداکثر ۲۰ تصویر، انتخاب مدت و افکت هر صحنه، فونت‌های موجود، قالب عمودی/افقی، موسیقی پس‌زمینه، تنظیم بلندی و محوشدن موسیقی، پیش‌نمایش و خروجی WebM. تدوین ویدئوی ورودی هنوز آماده نیست. لطفاً فقط دستورهای قابل‌اجرا را در بریف مشخص کن.";if(typeof window.openNaviAssistant==="function"){window.openNaviAssistant({service:"ویدئو و صدا",message:prompt+"\n\nامکانات واقعی سایت: ساخت ویدئو از صحنه‌های متنی و عکس؛ بارگذاری حداکثر ۲۰ عکس؛ تنظیم مدت و حرکت نوشته؛ انتخاب فونت موجود؛ قالب عمودی یا افقی؛ موسیقی پس‌زمینه با کنترل بلندی و محوشدن؛ پیش‌نمایش و خروجی WebM. تدوین ویدئوی ورودی هنوز آماده نیست. لطفاً فقط قابلیت‌های موجود را پیشنهاد بده و بریف را با دستورهای دقیق و قابل‌اجرا بنویس.",context:{studio:"ویدئو و صدا",brief,images:names,music:musicElement?"بارگذاری شده":"بارگذاری نشده",capabilities:["text scenes","photo upload","music","font selection","text motion","preview","webm export"],unavailable:["source video editing"]}});}else{result.textContent="همراه NAVI در دسترس نیست؛ از دکمه شناور NAVI استفاده کن.";}});
   let renderTimer=0,renderWatchdog=0;
   function finishRender(message){
     if(renderTimer){clearInterval(renderTimer);renderTimer=0;}
