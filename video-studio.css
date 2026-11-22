@@ -120,3 +120,13 @@ body.light .nava-video-engine input:focus,body.light .nava-video-engine select:f
 body.light #avPage .nava-video-engine {
   background: #fffdf8 !important;
 }
+
+/* Explicit brief-driven and manual video setup modes */
+.nava-video-setup{margin:18px 0;padding:15px;border:1px solid var(--border,rgba(145,170,210,.24));border-radius:14px;background:var(--surface,rgba(16,27,45,.45))}
+.nava-video-mode-options{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0}
+.nava-video-mode-options label{display:flex;align-items:flex-start;gap:9px;padding:12px;border:1px solid var(--border,rgba(145,170,210,.24));border-radius:11px;cursor:pointer}
+.nava-video-mode-options label span{display:grid;gap:5px}.nava-video-mode-options small{color:var(--muted,#aab8ce);line-height:1.6}
+.nava-video-brief-settings textarea{width:100%;box-sizing:border-box;margin:8px 0;padding:11px;border:1px solid var(--border,rgba(145,170,210,.24));border-radius:10px;background:var(--bg,#101b2d);color:var(--text,#f4f7ff);font:inherit;line-height:1.8}
+.nava-video-photo-tools{margin:18px 0;padding:14px;border:1px solid var(--border,rgba(145,170,210,.2));border-radius:13px}
+.nava-video-photo-tools h3{margin-top:0}
+@media(max-width:560px){.nava-video-mode-options{grid-template-columns:1fr}}
