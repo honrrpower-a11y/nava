@@ -48,23 +48,38 @@
     if(titleInput.value.trim()){ctx.font="700 "+Math.round(54*sf)+"px sans-serif";ctx.fillStyle="#fff";ctx.fillText(titleInput.value.trim(),w/2,h*.79,w*.84);}
     if(subtitleInput.value.trim()){ctx.font="400 "+Math.round(27*sf)+"px sans-serif";ctx.fillStyle="#fff";ctx.fillText(subtitleInput.value.trim(),w/2,h*.84,w*.82);}
     const body=activeStory?activeStory.text:(textInput?.value||"").trim();if(body){
-      const effect=activeStory?activeStory.motion:(wordMotionInput?.value||"rise"),speed=1,words=body.split(/\s+/).filter(Boolean);
-      const fontSize=Math.round(34*sf),lineH=43*sf,maxWidth=w*.84,space=ctx.measureText(" ").width;
-      ctx.font="500 "+fontSize+"px sans-serif";ctx.fillStyle="#fff";ctx.shadowBlur=10*sf;
-      const lines=[];let line=[],lineWidth=0;
-      for(const word of words){const ww=ctx.measureText(word).width,extra=line.length?space:0;if(line.length&&lineWidth+extra+ww>maxWidth){lines.push({words:line,width:lineWidth});line=[];lineWidth=0;}lineWidth+=(line.length?space:0)+ww;line.push(word);}
+      const effect=activeStory?activeStory.motion:(wordMotionInput?.value||"rise");
+      const fontSize=Math.round(36*sf),lineH=47*sf,maxWidth=w*.84;
+      ctx.font="600 "+fontSize+"px sans-serif";ctx.fillStyle="#fff";ctx.shadowBlur=12*sf;
+      const words=body.split(/\\s+/).filter(Boolean),lines=[];let line=[],lineWidth=0;
+      for(const word of words){const ww=ctx.measureText(word).width,space=line.length?ctx.measureText(" ").width:0;if(line.length&&lineWidth+space+ww>maxWidth){lines.push({words:line,width:lineWidth});line=[];lineWidth=0;}lineWidth+=(line.length?ctx.measureText(" ").width:0)+ww;line.push(word);}
       if(line.length)lines.push({words:line,width:lineWidth});
-      const shown=lines.slice(0,5),lineHeight=43*sf,startY=h*.55-(shown.length-1)*lineHeight/2;
-      let wordIndex=0;const totalWords=shown.reduce((n,l)=>n+l.words.length,0),stagger=(0.34/speed),entryDuration=0.42/speed;
-      shown.forEach((ln,li)=>{let x=w/2+ln.width/2;ln.words.forEach(word=>{
-        const ww=ctx.measureText(word).width,idx=wordIndex++,delay=idx*stagger;
-        let p=effect==="none"?1:Math.max(0,Math.min(1,((story.length?storyLocal:seconds)-delay)/entryDuration));
-        if(p>0){ctx.save();ctx.globalAlpha=effect==="fade"||effect==="type"?p:1;
-          let dx=0,dy=0;if(effect==="rise")dy=(1-p)*22*sf;else if(effect==="slide")dx=(1-p)*Math.min(55*sf,ww*.55);
-          if(effect==="type"&&p<1){ctx.beginPath();ctx.rect(x-ww, startY+li*lineHeight-fontSize, ww*p, fontSize*1.5);ctx.clip();}
-          ctx.translate(dx,dy);ctx.fillText(word,x-ww/2,startY+li*lineHeight);ctx.restore();}
-        x-=ww+space;
-      });});
+      const shown=lines.slice(0,6),lineHeight=Math.min(lineH,h*.075),startY=h*.56-(shown.length-1)*lineHeight/2;
+      const elapsed=story.length?storyLocal:seconds;
+      const sceneDuration=activeStory?activeStory.duration:duration;
+      const easeOut=t=>1-Math.pow(1-t,3);
+      const fadeOut=Math.max(0,Math.min(1,(sceneDuration-elapsed)/.34));
+      shown.forEach((ln,li)=>{
+        const delay=li*.10,enter=.48;
+        const raw=Math.max(0,Math.min(1,(elapsed-delay)/enter));
+        const p=easeOut(raw);
+        if(p<=0)return;
+        const alpha=Math.min(1,p,fadeOut);
+        const lift=(1-p)*Math.min(26*sf,lineHeight*.48);
+        const drift=effect==="slide"?(1-p)*Math.min(42*sf,w*.07):0;
+        const y=startY+li*lineHeight+lift;
+        ctx.save();ctx.globalAlpha=effect==="none"?fadeOut:alpha;
+        if(effect==="type"){
+          const reveal=Math.max(0,Math.min(1,(elapsed-delay)/Math.max(.55,Math.min(1.1,sceneDuration*.48))));
+          const fullText=ln.words.join(" ");const metrics=ctx.measureText(fullText);
+          ctx.beginPath();ctx.rect(w/2-ln.width/2,y-fontSize,ln.width*reveal,fontSize*1.65);ctx.clip();
+        }else if(effect==="fade"){ctx.globalAlpha=alpha;}
+        else if(effect==="rise"){ctx.translate(0,lift);}
+        else if(effect==="slide"){ctx.translate(drift,0);}
+        const x=w/2+ln.width/2,space=ctx.measureText(" ").width;let cursor=x;
+        for(const word of ln.words){const ww=ctx.measureText(word).width;ctx.fillText(word,cursor-ww/2,y);cursor-=ww+space;}
+        ctx.restore();
+      });
     }
     ctx.restore();
   }
@@ -135,7 +150,7 @@
         const video=$("navaVideoOutput");video.src=outputUrl;
         const link=$("navaVideoDownload");link.href=outputUrl;link.download="nava-multiphoto-video.webm";link.hidden=false;
         result.hidden=false;progress.style.width="100%";
-        say("ویدئوی چندعکسی "+(musicElement?"همراه موسیقی ":"")+"آماده شد. برای مشاهده به تب خروجی برو.");
+        say("ویدئو آماده شد؛ از همین تب می‌توانی آن را پخش یا دریافت کنی.");
       };
       recorder.start(250);
       const start=performance.now(),duration=totalDuration(),fade=Number(fadeInput.value),baseVolume=Math.max(0,Number(musicVolume.value)/100);
