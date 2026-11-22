@@ -89,3 +89,8 @@ body.light .nava-video-engine input:focus,body.light .nava-video-engine select:f
 .nava-video-story-card textarea,.nava-video-story-fields select{width:100%;box-sizing:border-box;border:1px solid var(--border,rgba(145,170,210,.24));border-radius:10px;padding:10px;background:var(--bg,#101b2d);color:var(--text,#f4f7ff);font:inherit;line-height:1.8}
 .nava-video-story-fields{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:10px}
 @media(max-width:560px){.nava-video-story-head{align-items:flex-start;flex-direction:column}.nava-video-story-fields{grid-template-columns:1fr}}
+
+/* Output has its own tab; cinematic multi-line text animation */
+.nava-video-panel#navaVideoPanelOutput .nava-video-work-actions{margin-top:14px}
+.nava-video-panel#navaVideoPanelOutput .nava-video-result video{display:block;width:100%;max-height:560px;object-fit:contain}
+.nava-video-story-card textarea{min-height:90px}
