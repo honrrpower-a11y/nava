@@ -84,12 +84,12 @@
     const persistence=$("navaVideoTextPersistence")?.value||"keep";
     const visibleScenes=activeStory?(persistence==="keep"?story.slice(0,activeStoryIndex+1):[activeStory]):[];
     const layersToDraw=[];
-    visibleScenes.forEach((scene,i)=>{(scene.layers||[]).forEach(layer=>layersToDraw.push({layer,elapsed:i===visibleScenes.length-1?storyLocal:scene.duration,sceneDuration:scene.duration}));});
+    visibleScenes.forEach((scene,i)=>{(scene.layers||[]).forEach(layer=>layersToDraw.push({layer,elapsed:i===visibleScenes.length-1?storyLocal:scene.duration,sceneDuration:scene.duration,isCurrent:i===visibleScenes.length-1}));});
     if(!story.length&&textInput?.value.trim())layersToDraw.push({layer:{text:textInput.value.trim(),position:"bottom",align:"center",motion:wordMotionInput?.value||"rise",size:42},elapsed:seconds,sceneDuration:duration});
-    const sf=w/1080,margin=w*.09;
-    layersToDraw.forEach(({layer,elapsed,sceneDuration})=>{
+    const textScale=w/1080,margin=w*.09;
+    layersToDraw.forEach(({layer,elapsed,sceneDuration,isCurrent=true})=>{
       const body=String(layer.text||"").trim();if(!body)return;
-      const fontSize=Math.round((layer.size||42)*sf),lineH=fontSize*1.32,maxWidth=w*.82;
+      const fontSize=Math.round((layer.size||42)*textScale),lineH=fontSize*1.32,maxWidth=w*.82;
       ctx.save();ctx.font="650 "+fontSize+"px "+activeFont;ctx.fillStyle="#fff";ctx.textAlign="left";ctx.direction=textDirection;ctx.shadowColor="rgba(0,0,0,.72)";ctx.shadowBlur=18*sf;
       const words=body.split(/\\s+/).filter(Boolean),lines=[];let line="";
       words.forEach(word=>{const candidate=line?line+" "+word:word;if(line&&ctx.measureText(candidate).width>maxWidth){lines.push(line);line=word;}else line=candidate;});if(line)lines.push(line);
@@ -101,7 +101,7 @@
       const alpha=motion==="fade"?p:1;
       const dx=motion==="from-right"?(1-ease)*(w+maxWidth):motion==="from-left"?-(1-ease)*(w+maxWidth):0;
       const dy=motion==="from-top"?-(1-ease)*(h*.35+blockHeight):motion==="from-bottom"?(1-ease)*(h*.35+blockHeight):0;
-      const fadeOut=Math.max(0,Math.min(1,(sceneDuration-elapsed)/.28));
+      const fadeOut=isCurrent?Math.max(0,Math.min(1,(sceneDuration-elapsed)/.28)):1;
       ctx.globalAlpha=Math.min(alpha,fadeOut);ctx.translate(dx,dy);
       shown.forEach((text,i)=>ctx.fillText(text,anchorX,baseY+i*lineH,maxWidth));
       ctx.restore();
