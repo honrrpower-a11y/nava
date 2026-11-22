@@ -45,8 +45,8 @@
 
   const storyCards=()=>storyList?Array.from(storyList.querySelectorAll("[data-story-scene]")):[];
   const refreshScenePhotoOptions=()=>storyCards().forEach(card=>{const select=card.querySelector("[data-story-image]");if(!select)return;const previous=select.value;select.innerHTML="";const none=document.createElement("option");none.value="-1";none.textContent="بدون عکس";select.append(none);scenes.forEach((scene,i)=>{const option=document.createElement("option");option.value=String(i);option.textContent="عکس "+(i+1)+" — "+scene.file.name;select.append(option);});select.value=[...select.options].some(o=>o.value===previous)?previous:"-1";});
-  const storyData=()=>storyCards().map(card=>({layers:Array.from(card.querySelectorAll("[data-story-layer]")).map(layer=>({text:layer.querySelector("[data-layer-text]").value.trim(),position:layer.querySelector("[data-layer-position]").value,align:layer.querySelector("[data-layer-align]").value,motion:layer.querySelector("[data-layer-motion]").value,size:Number(layer.querySelector("[data-layer-size]").value)||42})).filter(layer=>layer.text),duration:Number(card.querySelector("[data-story-duration]").value)||4,imageIndex:Number(card.querySelector("[data-story-image]")?.value??-1)})).filter(s=>s.layers.length||s.imageIndex>=0);
-  const layerMarkup=(index=1)=>'<div class="nava-video-text-layer" data-story-layer><div class="nava-video-layer-head"><strong>لایه متن '+index+'</strong><button type="button" data-remove-layer>حذف لایه</button></div><label>متن<textarea data-layer-text rows="2" maxlength="420" placeholder="متن این لایه را بنویس..."></textarea></label><div class="nava-video-layer-fields"><label>جای متن<select data-layer-position><option value="top">بالای تصویر</option><option value="center">وسط تصویر</option><option value="bottom" selected>پایین تصویر</option></select></label><label>تراز<select data-layer-align><option value="right" selected>راست‌چین</option><option value="center">وسط‌چین</option><option value="left">چپ‌چین</option></select></label><label>ورود متن<select data-layer-motion><option value="from-right" selected>از بیرون کادر راست</option><option value="from-left">از بیرون کادر چپ</option><option value="from-top">از بیرون کادر بالا</option><option value="from-bottom">از بیرون کادر پایین</option><option value="fade">محو و ظاهر شدن</option><option value="none">ثابت</option></select></label><label>اندازه نوشته<select data-layer-size><option value="30">کوچک</option><option value="42" selected>متوسط</option><option value="56">بزرگ</option><option value="68">خیلی بزرگ</option></select></label></div></div>';
+  const storyData=()=>storyCards().map(card=>({layers:Array.from(card.querySelectorAll("[data-story-layer]")).map(layer=>({text:layer.querySelector("[data-layer-text]").value.trim(),position:layer.querySelector("[data-layer-position]").value,align:layer.querySelector("[data-layer-align]").value,motion:layer.querySelector("[data-layer-motion]").value,size:Number(layer.querySelector("[data-layer-size]").value)||42,delay:Number(layer.querySelector("[data-layer-delay]")?.value)||0,exit:layer.querySelector("[data-layer-exit]")?.value||"stay"})).filter(layer=>layer.text),duration:Number(card.querySelector("[data-story-duration]").value)||4,imageIndex:Number(card.querySelector("[data-story-image]")?.value??-1)})).filter(s=>s.layers.length||s.imageIndex>=0);
+  const layerMarkup=(index=1)=>'<div class="nava-video-text-layer" data-story-layer><div class="nava-video-layer-head"><strong>لایه متن '+index+'</strong><button type="button" data-remove-layer>حذف لایه</button></div><label>متن<textarea data-layer-text rows="2" maxlength="420" placeholder="متن این لایه را بنویس..."></textarea></label><div class="nava-video-layer-fields"><label>جای متن<select data-layer-position><option value="top">بالای تصویر</option><option value="center">وسط تصویر</option><option value="bottom" selected>پایین تصویر</option></select></label><label>تراز<select data-layer-align><option value="right" selected>راست‌چین</option><option value="center">وسط‌چین</option><option value="left">چپ‌چین</option></select></label><label>ورود متن<select data-layer-motion><option value="from-right" selected>از بیرون کادر راست</option><option value="from-left">از بیرون کادر چپ</option><option value="from-top">از بیرون کادر بالا</option><option value="from-bottom">از بیرون کادر پایین</option><option value="fade">محو و ظاهر شدن</option><option value="none">ثابت</option></select></label><label>تأخیر شروع<select data-layer-delay><option value="0">بدون تأخیر</option><option value="0.5">نیم ثانیه</option><option value="1">۱ ثانیه</option><option value="1.5">۱٫۵ ثانیه</option><option value="2">۲ ثانیه</option><option value="2.5">۲٫۵ ثانیه</option><option value="3">۳ ثانیه</option><option value="4">۴ ثانیه</option><option value="5">۵ ثانیه</option><option value="6">۶ ثانیه</option></select></label><label>خروج هنگام ورود متن بعدی<select data-layer-exit><option value="stay" selected>باقی بماند</option><option value="fade">محو شود</option><option value="right">حرکت به بیرون راست</option><option value="left">حرکت به بیرون چپ</option><option value="top">حرکت به بیرون بالا</option><option value="bottom">حرکت به بیرون پایین</option></select></label><label>اندازه نوشته<select data-layer-size><option value="30">کوچک</option><option value="42" selected>متوسط</option><option value="56">بزرگ</option><option value="68">خیلی بزرگ</option></select></label></div></div>';
   const storyTotal=()=>storyData().reduce((sum,s)=>sum+s.duration,0);
   const totalDuration=()=>storyTotal()||Number(durationInput?.value)||8;
   const say=m=>{status.textContent=m;};
@@ -85,10 +85,10 @@
     const persistence=$("navaVideoTextPersistence")?.value||"keep";
     const visibleScenes=activeStory?(persistence==="keep"?story.slice(0,activeStoryIndex+1):[activeStory]):[];
     const layersToDraw=[];
-    visibleScenes.forEach((scene,i)=>{(scene.layers||[]).forEach(layer=>layersToDraw.push({layer,elapsed:i===visibleScenes.length-1?storyLocal:scene.duration,sceneDuration:scene.duration,isCurrent:i===visibleScenes.length-1}));});
+    visibleScenes.forEach((scene,i)=>{(scene.layers||[]).forEach((layer,layerIndex)=>{const elapsed=i===visibleScenes.length-1?storyLocal:scene.duration,nextLayer=(scene.layers||[])[layerIndex+1],exitAt=nextLayer?Math.max(0,Number(nextLayer.delay)||0):scene.duration;layersToDraw.push({layer,elapsed,sceneDuration:scene.duration,isCurrent:i===visibleScenes.length-1,exitAt});});});
     if(!story.length&&textInput?.value.trim())layersToDraw.push({layer:{text:textInput.value.trim(),position:"bottom",align:"center",motion:wordMotionInput?.value||"rise",size:42},elapsed:seconds,sceneDuration:duration});
     const textScale=w/1080,margin=w*.09;
-    layersToDraw.forEach(({layer,elapsed,sceneDuration,isCurrent=true})=>{
+    layersToDraw.forEach(({layer,elapsed,sceneDuration,isCurrent=true,exitAt=sceneDuration})=>{
       const body=String(layer.text||"").trim();if(!body)return;
       const fontSize=Math.round((layer.size||42)*textScale),lineH=fontSize*1.32,maxWidth=w*.82;
       ctx.save();ctx.font="650 "+fontSize+"px "+activeFont;ctx.fillStyle="#fff";ctx.textAlign="left";ctx.direction=textDirection;ctx.shadowColor="rgba(0,0,0,.72)";ctx.shadowBlur=18*sf;
@@ -98,12 +98,17 @@
       const baseY=position==="top"?h*.15+fontSize:position==="center"?(h-blockHeight)/2+fontSize:h*.84-blockHeight+fontSize;
       const anchorX=align==="right"?w-margin:align==="left"?margin:w/2;
       ctx.textAlign=align;ctx.textBaseline="alphabetic";
-      const motion=layer.motion||"from-right",p=Math.max(0,Math.min(1,elapsed/.9)),ease=1-Math.pow(1-p,3);
-      const alpha=motion==="fade"?p:1;
-      const dx=motion==="from-right"?(1-ease)*(w+maxWidth):motion==="from-left"?-(1-ease)*(w+maxWidth):0;
-      const dy=motion==="from-top"?-(1-ease)*(h*.35+blockHeight):motion==="from-bottom"?(1-ease)*(h*.35+blockHeight):0;
+      const motion=layer.motion||"from-right",layerElapsed=elapsed-(Number(layer.delay)||0),p=Math.max(0,Math.min(1,layerElapsed/.9)),ease=1-Math.pow(1-p,3);
+      if(layerElapsed<0)return;
+      const enterAlpha=motion==="fade"?p:1;
+      const enterDx=motion==="from-right"?(1-ease)*(w+maxWidth):motion==="from-left"?-(1-ease)*(w+maxWidth):0;
+      const enterDy=motion==="from-top"?-(1-ease)*(h*.35+blockHeight):motion==="from-bottom"?(1-ease)*(h*.35+blockHeight):0;
+      const exitMode=layer.exit||"stay",exitElapsed=elapsed-exitAt,exitProgress=exitMode==="stay"?0:Math.max(0,Math.min(1,exitElapsed/.7)),exitEase=1-Math.pow(1-exitProgress,3);
+      const exitDx=exitMode==="right"?exitEase*(w+maxWidth):exitMode==="left"?-exitEase*(w+maxWidth):0;
+      const exitDy=exitMode==="top"?-exitEase*(h*.45+blockHeight):exitMode==="bottom"?exitEase*(h*.45+blockHeight):0;
+      const exitAlpha=exitMode==="fade"?1-exitProgress:1;
       const fadeOut=isCurrent?Math.max(0,Math.min(1,(sceneDuration-elapsed)/.28)):1;
-      ctx.globalAlpha=Math.min(alpha,fadeOut);ctx.translate(dx,dy);
+      ctx.globalAlpha=Math.min(enterAlpha,exitAlpha,fadeOut);ctx.translate(enterDx+exitDx,enterDy+exitDy);
       shown.forEach((text,i)=>ctx.fillText(text,anchorX,baseY+i*lineH,maxWidth));
       ctx.restore();
     });
