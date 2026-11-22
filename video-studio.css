@@ -328,3 +328,13 @@ body.light #avPage [data-story-duration]{
 .nava-video-underline-toggle input{width:18px;height:18px;accent-color:var(--accent,#c99b48)}
 body.light .nava-video-underline-tools label{color:#526176}body.light .nava-video-underline-tools select{background:#fffdf8;color:#263a56;border-color:rgba(193,127,37,.3)}
 @media(max-width:560px){.nava-video-underline-tools{grid-template-columns:1fr}}
+
+/* Text styling: color, italic/vertical writing and a fine editorial frame */
+.nava-video-layer-fields input[type=color],.nava-video-frame-tools input[type=text]{width:100%;min-height:42px;box-sizing:border-box;border:1px solid var(--border);border-radius:9px;padding:6px;background:var(--bg);color:var(--text);font:inherit}
+.nava-video-layer-fields input[type=color]{padding:4px;cursor:pointer}
+.nava-video-frame-tools{display:grid;grid-template-columns:1fr 1fr;gap:9px;grid-column:1/-1;padding:10px;border:1px solid var(--border);border-radius:10px;background:var(--surface)}
+.nava-video-frame-tools label{display:grid;gap:6px;color:var(--text);font-size:.86rem}
+.nava-video-frame-tools label:first-child{display:flex;align-items:center;gap:8px}
+.nava-video-frame-tools input[type=checkbox]{width:18px;height:18px;accent-color:var(--accent)}
+body.light .nava-video-frame-tools{background:#fffdf8}
+@media(max-width:560px){.nava-video-frame-tools{grid-template-columns:1fr}}
