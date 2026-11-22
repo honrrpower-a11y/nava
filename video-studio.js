@@ -19,7 +19,7 @@
     let motion=null;
     if(/محو|fade|شفاف|آرام ظاهر/.test(brief))motion="fade";
     if(/از پایین|بالا بیاید|rise/.test(brief))motion="rise";
-    if(/از (سمت )?چپ|از چپ به راست|از سمت چپ وارد|slide.?left/i.test(brief))motion="slide";
+    if(/از (سمت )?چپ|از چپ به راست|از سمت چپ وارد|slide.?left/i.test(brief))motion="slide-left";
     if(/مرحله.?ای|کلمه.?به.?کلمه|حرف.?به.?حرف|تایپ|typewriter/i.test(brief))motion="type";
     if(/سینمایی|cinematic/.test(brief))motion="cinematic";
     if(/بدون حرکت|ثابت بماند|بدون افکت/.test(brief))motion="none";
@@ -104,7 +104,7 @@
           const reveal=Math.max(0,Math.min(1,(elapsed-delay)/Math.max(.7,Math.min(1.5,sceneDuration*.52))));
           ctx.beginPath();ctx.rect(w/2+ln.width/2-ln.width*reveal,y-fontSize,ln.width*reveal,fontSize*1.65);ctx.clip();
         }else if(effect==="rise"){ctx.translate(0,(1-p)*Math.min(26*sf,lineHeight*.48));}
-        else if(effect==="slide"){ctx.translate((1-p)*Math.min(42*sf,w*.07),0);}
+        else if(effect==="slide"){ctx.translate((1-p)*Math.min(42*sf,w*.07),0);}else if(effect==="slide-left"){ctx.translate(-(1-p)*Math.min(42*sf,w*.07),0);}
         else if(cinematic){
           const lift=(1-p)*Math.min(125*sf,lineHeight*1.9);
           ctx.translate(0,lift);
