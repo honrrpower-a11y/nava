@@ -49,3 +49,32 @@
 .nava-video-coming-soon strong{display:inline-block;margin-top:8px;padding:7px 16px;border-radius:20px;background:rgba(229,189,98,.14);color:#e5bd62}
 .nava-video-panel textarea{min-height:110px}
 @media(max-width:760px){.nava-video-work-actions{padding:12px}.nava-video-coming-soon{min-height:190px;padding:18px}}
+
+
+/* Keep the video studio fully aligned with the site's day/night theme. */
+.nava-video-engine,.nava-video-work-actions,.nava-video-coming-soon,.nava-video-result,.nava-video-navi-result,.nava-video-scene{background:var(--panel,rgba(18,29,49,.96));color:var(--text,#eef4ff);border-color:var(--border,rgba(125,160,210,.24))}
+.nava-video-engine{background:var(--panel,linear-gradient(145deg,#121d31,#090f1c));color:var(--text,#eef4ff)}
+.nava-video-engine p,.nava-video-hint{color:var(--muted,#aab8ce)}
+.nava-video-controls label,.nava-video-panel>label{color:var(--text,#dce7f8)}
+.nava-video-controls input[type=file],.nava-video-controls input[type=text],.nava-video-controls select,.nava-video-panel textarea,.nava-video-panel input[type=text]{background:var(--bg,#101b2d);color:var(--text,#f4f7ff);border-color:var(--border,rgba(145,170,210,.24));color-scheme:dark}
+.nava-video-tab{background:var(--panel,#101b2d);color:var(--text,#dce7f8);border-color:var(--border,rgba(145,170,210,.24))}
+.nava-video-tab.is-active{background:var(--accent,#e5bd62);color:#151a22;border-color:var(--accent,#e5bd62)}
+.nava-video-scene button,.nava-video-secondary{background:var(--surface-2,#24334b);color:var(--text,#edf4ff)}
+.nava-video-status{color:var(--text,#d8e3f3)}
+.nava-video-progress{background:var(--surface-2,#1d2a40)}
+.nava-video-canvas-wrap{background:#050912}
+body.light .nava-video-engine{background:linear-gradient(145deg,#fffefa,#fff5e9 62%,#edf5fc);color:#263a56;border-color:rgba(193,127,37,.28);box-shadow:0 8px 24px rgba(42,49,68,.07)}
+body.light .nava-video-engine p,body.light .nava-video-hint{color:#687487}
+body.light .nava-video-work-actions,body.light .nava-video-coming-soon,body.light .nava-video-result,body.light .nava-video-navi-result{background:linear-gradient(145deg,#fffdf8,#fff7ec 65%,#eef6ff);color:#263a56;border-color:rgba(193,127,37,.28);box-shadow:0 5px 18px rgba(42,49,68,.045)}
+body.light .nava-video-tab{background:#fffdf8;color:#526176;border-color:rgba(193,127,37,.28)}
+body.light .nava-video-tab.is-active{background:linear-gradient(110deg,#f6c34f,#f18a3e 55%,#e95c4b);color:#fff;border-color:#e88b43}
+body.light .nava-video-controls label,body.light .nava-video-panel>label{color:#87571e}
+body.light .nava-video-controls input[type=file],body.light .nava-video-controls input[type=text],body.light .nava-video-controls select,body.light .nava-video-panel textarea,body.light .nava-video-panel input[type=text]{background:#fffdf8;color:#263a56;border-color:rgba(193,127,37,.30);color-scheme:light}
+body.light .nava-video-controls input[type=file]::file-selector-button{background:linear-gradient(135deg,#fff1d5,#edf5ff);color:#895c19;border:1px solid rgba(193,127,37,.35);border-radius:8px;padding:7px 10px}
+body.light .nava-video-scene{background:#fffdf8;color:#263a56;border-color:rgba(193,127,37,.24)}
+body.light .nava-video-scene button,body.light .nava-video-secondary{background:linear-gradient(120deg,#fff0d5,#eaf3ff);color:#34516f;border:1px solid rgba(193,127,37,.25)}
+body.light .nava-video-status{color:#526176}
+body.light .nava-video-progress{background:#e8e1d6}
+body.light .nava-video-coming-soon strong{background:rgba(193,127,37,.12);color:#9a651f}
+body.light .nava-video-tabs{border-bottom-color:rgba(193,127,37,.22)}
+body.light .nava-video-engine input:focus,body.light .nava-video-engine select:focus,body.light .nava-video-engine textarea:focus{outline:2px solid rgba(232,139,67,.28);outline-offset:1px}
