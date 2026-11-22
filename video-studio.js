@@ -14,6 +14,7 @@
   const briefInput=$("navaVideoBrief"),applyBriefBtn=$("navaVideoApplyBrief");
   const setupRadios=Array.from(root.querySelectorAll('input[name="navaVideoSetupMode"]'));
   const setupMode=()=>setupRadios.find(r=>r.checked)?.value||"brief";
+  const toLayerMotion=value=>({"slide-right":"from-right","slide-left":"from-left",rise:"from-bottom",cinematic:"from-bottom",type:"fade"}[value]||value);
   function applyBrief(){
     const brief=(briefInput?.value||"").trim();if(!brief){$("navaVideoNaviResult").textContent="ابتدا شرح درخواست را بنویس.";return;}
     let motion=null;
@@ -29,7 +30,7 @@
     else if(/ایران.?سن.?س|iransans/i.test(brief))font="'IRANSans',Tahoma,sans-serif";
     else if(/تاهوما|tahoma/i.test(brief))font="Tahoma,sans-serif";
     else if(/آریال|arial/i.test(brief))font="Arial,sans-serif";
-    if(motion)storyCards().forEach(card=>card.querySelectorAll("[data-layer-motion]").forEach(el=>el.value=motion==="slide-right"?"from-right":motion==="slide-left"?"from-left":motion==="rise"?"from-bottom":motion));
+    if(motion)storyCards().forEach(card=>card.querySelectorAll("[data-layer-motion]").forEach(el=>el.value=toLayerMotion(motion)));
     if(font&&fontInput){fontInput.value=font;activeFont=font;}
     const direction=/چپ به راست|از چپ به راست|چپ.?چین|left.?to.?right|ltr/i.test(brief)?"ltr":/راست به چپ|راست.?چین|right.?to.?left|rtl/i.test(brief)?"rtl":null;
     if(direction)textDirection=direction;
@@ -37,7 +38,7 @@
     resize();drawFrame(0);updateReady();
   }
   let activeFont=fontInput?.value||"sans-serif",textDirection="rtl";
-  setupRadios.forEach(r=>r.addEventListener("change",()=>{const briefMode=setupMode()==="brief";$("navaVideoBriefSettings").hidden=!briefMode;$("navaVideoManualSettings").hidden=briefMode;if(!briefMode){activeFont=fontInput?.value||"sans-serif";textDirection="rtl";storyCards().forEach(card=>card.querySelectorAll("[data-layer-motion]").forEach(el=>{if(manualMotionInput)el.value=manualMotionInput.value==="slide-right"?"from-right":manualMotionInput.value==="slide-left"?"from-left":manualMotionInput.value==="rise"?"from-bottom":manualMotionInput.value;}));}resize();drawFrame(0);}));
+  setupRadios.forEach(r=>r.addEventListener("change",()=>{const briefMode=setupMode()==="brief";$("navaVideoBriefSettings").hidden=!briefMode;$("navaVideoManualSettings").hidden=briefMode;if(!briefMode){activeFont=fontInput?.value||"sans-serif";textDirection="rtl";storyCards().forEach(card=>card.querySelectorAll("[data-layer-motion]").forEach(el=>{if(manualMotionInput)el.value=toLayerMotion(manualMotionInput.value);}));}resize();drawFrame(0);}));
   applyBriefBtn?.addEventListener("click",applyBrief);
   manualMotionInput?.addEventListener("change",()=>{if(setupMode()==="manual")storyCards().forEach(card=>card.querySelectorAll("[data-layer-motion]").forEach(el=>{el.value=manualMotionInput.value==="slide-right"?"from-right":manualMotionInput.value==="slide-left"?"from-left":manualMotionInput.value==="rise"?"from-bottom":manualMotionInput.value;}));drawFrame(0);});
   fontInput?.addEventListener("change",()=>{activeFont=fontInput.value;drawFrame(0);});
