@@ -9,7 +9,11 @@
   const sceneList=$("navaVideoSceneList"),musicVolume=$("navaVideoMusicVolume"),fadeInput=$("navaVideoFade");
   const wordMotionInput=$("navaVideoWordMotion"),wordSpeedInput=$("navaVideoWordSpeed");
   let scenes=[],musicUrl="",musicElement=null,audioContext=null,audioSource=null,audioDestination=null,musicGain=null,previewFrame=0,recorder=null,chunks=[],recording=false,startedAt=0,previewing=false,outputUrl="";
-  const totalDuration=()=>Number(durationInput.value);
+  const storyList=$("navaVideoStoryList"),addStoryBtn=$("navaVideoAddScene");
+  const storyCards=()=>storyList?Array.from(storyList.querySelectorAll("[data-story-scene]")):[];
+  const storyData=()=>storyCards().map(card=>({text:card.querySelector("[data-story-text]").value.trim(),duration:Number(card.querySelector("[data-story-duration]").value)||3,motion:card.querySelector("[data-story-motion]").value})).filter(s=>s.text);
+  const storyTotal=()=>storyData().reduce((sum,s)=>sum+s.duration,0);
+  const totalDuration=()=>Math.max(Number(durationInput.value)||8,storyTotal());
   const say=m=>{status.textContent=m;};
   function dimensions(){return formatInput.value==="landscape"?[1280,720]:[720,1280];}
   function resize(){const [w,h]=dimensions();canvas.width=w;canvas.height=h;const wrap=root.querySelector(".nava-video-canvas-wrap");if(wrap)wrap.style.aspectRatio=w+" / "+h;}
@@ -29,6 +33,8 @@
   function drawFrame(seconds){
     const [w,h]=dimensions();if(canvas.width!==w||canvas.height!==h)resize();
     const duration=totalDuration(),hasImages=scenes.length>0,per=hasImages?duration/scenes.length:duration,index=hasImages?Math.min(scenes.length-1,Math.floor(Math.min(seconds,duration-.001)/per)):0,local=hasImages?(seconds-index*per)/per:seconds/duration;
+    const story=storyData();let activeStory=null,storyLocal=seconds;
+    if(story.length){let cursor=0;for(const item of story){if(seconds<cursor+item.duration){activeStory=item;storyLocal=seconds-cursor;break;}cursor+=item.duration;}if(!activeStory){activeStory=story[story.length-1];storyLocal=activeStory.duration;}}
     ctx.fillStyle="#050912";ctx.fillRect(0,0,w,h);
     const drawImageCover=(img,x,y,bw,bh,progress=local)=>{const iw=img.naturalWidth,ih=img.naturalHeight,scale=Math.max(bw/iw,bh/ih)*(1+(motionInput.value==="subtle"?.012:.035)*progress),dw=iw*scale,dh=ih*scale;ctx.save();ctx.beginPath();ctx.rect(x,y,bw,bh);ctx.clip();ctx.drawImage(img,x+(bw-dw)/2,y+(bh-dh)/2,dw,dh);ctx.restore();};
     if(hasImages){const layout=layoutInput?.value||"sequence";if(layout==="triptych"||layout==="grid"){
@@ -41,8 +47,8 @@
     const sf=w/1080;ctx.textAlign="center";ctx.direction="rtl";ctx.shadowColor="rgba(0,0,0,.65)";ctx.shadowBlur=16*sf;
     if(titleInput.value.trim()){ctx.font="700 "+Math.round(54*sf)+"px sans-serif";ctx.fillStyle="#fff";ctx.fillText(titleInput.value.trim(),w/2,h*.79,w*.84);}
     if(subtitleInput.value.trim()){ctx.font="400 "+Math.round(27*sf)+"px sans-serif";ctx.fillStyle="#fff";ctx.fillText(subtitleInput.value.trim(),w/2,h*.84,w*.82);}
-    const body=(textInput?.value||"").trim();if(body){
-      const effect=wordMotionInput?.value||"rise",speed=Number(wordSpeedInput?.value||1),words=body.split(/\s+/).filter(Boolean);
+    const body=activeStory?activeStory.text:(textInput?.value||"").trim();if(body){
+      const effect=activeStory?activeStory.motion:(wordMotionInput?.value||"rise"),speed=1,words=body.split(/\s+/).filter(Boolean);
       const fontSize=Math.round(34*sf),lineH=43*sf,maxWidth=w*.84,space=ctx.measureText(" ").width;
       ctx.font="500 "+fontSize+"px sans-serif";ctx.fillStyle="#fff";ctx.shadowBlur=10*sf;
       const lines=[];let line=[],lineWidth=0;
@@ -52,7 +58,7 @@
       let wordIndex=0;const totalWords=shown.reduce((n,l)=>n+l.words.length,0),stagger=(0.34/speed),entryDuration=0.42/speed;
       shown.forEach((ln,li)=>{let x=w/2+ln.width/2;ln.words.forEach(word=>{
         const ww=ctx.measureText(word).width,idx=wordIndex++,delay=idx*stagger;
-        let p=effect==="none"?1:Math.max(0,Math.min(1,(seconds-delay)/entryDuration));
+        let p=effect==="none"?1:Math.max(0,Math.min(1,((story.length?storyLocal:seconds)-delay)/entryDuration));
         if(p>0){ctx.save();ctx.globalAlpha=effect==="fade"||effect==="type"?p:1;
           let dx=0,dy=0;if(effect==="rise")dy=(1-p)*22*sf;else if(effect==="slide")dx=(1-p)*Math.min(55*sf,ww*.55);
           if(effect==="type"&&p<1){ctx.beginPath();ctx.rect(x-ww, startY+li*lineHeight-fontSize, ww*p, fontSize*1.5);ctx.clip();}
@@ -74,8 +80,14 @@
     Promise.all(files.map(file=>new Promise((resolve,reject)=>{const url=URL.createObjectURL(file),img=new Image();img.onload=()=>resolve({file,url,image:img});img.onerror=()=>{URL.revokeObjectURL(url);reject(new Error("خواندن یکی از تصاویر ناموفق بود."));};img.src=url;}))).then(items=>{scenes=items;resize();renderSceneList();drawFrame(0);updateReady();}).catch(e=>say(e.message));
   });
   musicInput.addEventListener("change",()=>{const file=musicInput.files&&musicInput.files[0];if(!file)return;if(!file.type.startsWith("audio/")){say("فایل صوتی معتبر انتخاب کن.");musicInput.value="";return;}if(musicUrl)URL.revokeObjectURL(musicUrl);musicUrl=URL.createObjectURL(file);if(!musicElement){musicElement=new Audio();musicElement.preload="auto";musicElement.loop=false;}musicElement.src=musicUrl;say("موسیقی آماده است.");});
-  [titleInput,subtitleInput,formatInput,motionInput,layoutInput,textInput,wordMotionInput,wordSpeedInput].filter(Boolean).forEach(el=>el.addEventListener("input",()=>{resize();drawFrame(0);updateReady();}));
+  [titleInput,subtitleInput,formatInput,motionInput,layoutInput,textInput,wordMotionInput,wordSpeedInput,durationInput].filter(Boolean).forEach(el=>el.addEventListener("input",()=>{resize();drawFrame(0);updateReady();}));
   previewBtn.addEventListener("click",preview);
+  if(storyList){
+    const refreshStory=()=>{storyCards().forEach((card,i)=>{card.querySelector(".nava-video-story-card-head strong").textContent="صحنه "+(i+1);card.querySelector("[data-remove-story]").disabled=storyCards().length===1;});resize();drawFrame(0);updateReady();};
+    addStoryBtn?.addEventListener("click",()=>{const card=document.createElement("article");card.className="nava-video-story-card";card.setAttribute("data-story-scene","");card.innerHTML='<div class="nava-video-story-card-head"><strong></strong><button type="button" data-remove-story>حذف</button></div><label>متن این صحنه<textarea data-story-text rows="3" maxlength="420" placeholder="جمله یا پیام این صحنه را بنویس..."></textarea></label><div class="nava-video-story-fields"><label>مدت نمایش<select data-story-duration><option value="2">۲ ثانیه</option><option value="3" selected>۳ ثانیه</option><option value="4">۴ ثانیه</option><option value="5">۵ ثانیه</option><option value="6">۶ ثانیه</option><option value="8">۸ ثانیه</option></select></label><label>حرکت نوشته<select data-story-motion><option value="rise">ورود از پایین</option><option value="fade">محو و ظاهر شدن</option><option value="slide">ورود از راست</option><option value="type">نمایش مرحله‌ای</option><option value="none">بدون حرکت</option></select></label></div>';storyList.append(card);refreshStory();card.querySelector("[data-story-text]").focus();});
+    storyList.addEventListener("input",refreshStory);storyList.addEventListener("change",refreshStory);
+    storyList.addEventListener("click",e=>{const btn=e.target.closest("[data-remove-story]");if(btn&&storyCards().length>1){btn.closest("[data-story-scene]").remove();refreshStory();}});
+  }
   root.querySelectorAll("[data-video-tab]").forEach(btn=>btn.addEventListener("click",()=>{root.querySelectorAll("[data-video-tab]").forEach(b=>{const active=b===btn;b.classList.toggle("is-active",active);b.setAttribute("aria-selected",String(active));});root.querySelectorAll(".nava-video-panel").forEach(p=>{const active=p.id===btn.getAttribute("aria-controls");p.hidden=!active;p.classList.toggle("is-active",active);});}));
   $("navaVideoAutoOrder").addEventListener("click",()=>{if(!scenes.length){$("navaVideoNaviResult").textContent="ابتدا عکس‌ها را در همین صفحه انتخاب کن.";return;}scenes.sort((a,b)=>a.file.name.localeCompare(b.file.name,"fa"));renderSceneList();drawFrame(0);$("navaVideoNaviResult").textContent="تصاویر بر اساس نام فایل مرتب شدند. برای ترتیب خلاقانه و معنایی، بریف را به NAVI بفرست." ;});
   $("navaVideoAskNavi").addEventListener("click",()=>{const brief=$("navaVideoBrief").value.trim();const names=scenes.map((s,i)=>(i+1)+". "+s.file.name).join("\n");const prompt="برای این پروژه نقش کارگردان خلاق و تدوینگر ویدئو را بر عهده بگیر. موضوع و هدف: "+(brief||"بر اساس تصاویر انتخاب‌شده یک روایت مناسب پیشنهاد بده.")+"\nتعداد تصاویر: "+scenes.length+"\nفهرست فایل‌ها:\n"+(names||"هنوز تصویری انتخاب نشده")+"\nموسیقی: "+(musicElement?"بارگذاری شده":"هنوز انتخاب نشده")+"\nلطفاً سناریوی صحنه‌به‌صحنه، ترتیب پیشنهادی تصاویر، مدت هر صحنه، متن روی تصویر، ریتم هماهنگ با موسیقی، نوع انتقال و حرکت دوربین را پیشنهاد بده. توضیح بده کدام تصمیم‌ها نیازمند تأیید من هستند.";const result=$("navaVideoNaviResult");result.textContent="بریف برای NAVI ارسال شد.";if(typeof window.openNaviAssistant==="function"){window.openNaviAssistant({service:"ویدئو و صدا",message:prompt,context:{studio:"ویدئو و صدا",brief,images:names,music:musicElement?"بارگذاری شده":"بارگذاری نشده"}});}else{result.textContent="همراه NAVI در دسترس نیست؛ از دکمه شناور NAVI استفاده کن.";}});
@@ -150,5 +162,5 @@
       say("ساخت ویدئو ناموفق بود: "+(e.message||"خطای ناشناخته"));
     }
   });
-  resize();say("چند عکس را انتخاب کن تا تدوین را شروع کنیم.");
+  resize();say("چند عکس یا صحنه متنی اضافه کن تا ساخت ویدئو را شروع کنیم.");
 })();
