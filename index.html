@@ -18,7 +18,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" defer></script>
   <script src="logo-renderer.js?v=logo-persian-native-text-20261121-1" defer></script>
   <script src="logo-studio.js?v=logo-per-concept-visual-review-20261121-1" defer></script>
-  <link rel="stylesheet" href="video-studio.css?v=image-motion-browser-20261122-1">
+  <link rel="stylesheet" href="video-studio.css?v=video-tabs-story-builder-20261122-1">
 </head>
 <body>
 
@@ -560,6 +560,12 @@
         <span class="studio-step">NAVA VIDEO WORKSPACE</span>
         <h2 id="navaVideoEngineTitle">استودیوی ساخت و تدوین ویدئو</h2>
         <p>چند عکس و موسیقی خودت را وارد کن؛ NAVI سناریو و ترتیب پیشنهادی را طراحی می‌کند و موتور تدوین، پیش‌نمایش و خروجی را می‌سازد.</p>
+<div class="nava-video-tabs" role="tablist" aria-label="بخش‌های استودیوی ویدئو">
+          <button type="button" class="nava-video-tab is-active" role="tab" aria-selected="true" aria-controls="navaVideoPanelGuide" data-video-tab="guide">راهنمایی</button>
+          <button type="button" class="nava-video-tab" role="tab" aria-selected="false" aria-controls="navaVideoPanelText" data-video-tab="text">ساخت ویدئوی متنی</button>
+          <button type="button" class="nava-video-tab" role="tab" aria-selected="false" aria-controls="navaVideoPanelPhoto" data-video-tab="photo">ساخت با عکس</button>
+          <button type="button" class="nava-video-tab" role="tab" aria-selected="false" aria-controls="navaVideoPanelVideo" data-video-tab="video">تدوین ویدئو · به‌زودی</button>
+        </div>
         <section class="nava-video-panel is-active" id="navaVideoPanelGuide" role="tabpanel">
           <h3>راهنمایی و برنامه‌ریزی با NAVI</h3>
           <p>NAVI به انتخاب مسیر مناسب، نوشتن سناریو، متن و ترتیب محتوای پروژه کمک می‌کند.</p>
@@ -569,22 +575,25 @@
           <div class="nava-video-navi-result" id="navaVideoNaviResult" aria-live="polite">موضوع و خواسته‌ات را بنویس؛ سپس بریف را از طریق فرم NAVI همین استودیو ارسال کن.</div>
           <p class="nava-video-hint">NAVI می‌تواند سناریو، متن پیشنهادی، ترتیب تصاویر، مدت هر بخش و جهت هنری را پیشنهاد دهد.</p>
         </section>
-        <section class="nava-video-panel is-active" id="navaVideoPanelText" role="region">
-          <h3>ساخت محتوای متنی و نوشته‌های متحرک</h3>
-          <p>عنوان، زیرعنوان و متن اصلی را وارد کن. این بخش برای ویدئوی متن‌محور نیز قابل استفاده است و به عکس نیاز ندارد.</p>
+        <section class="nava-video-panel" id="navaVideoPanelText" role="tabpanel" hidden>
+          <h3>ساخت ویدئو از چند صحنه متنی</h3>
+          <p>ویدئو را صحنه‌به‌صحنه بساز؛ برای هر صحنه متن، مدت نمایش و حرکت جداگانه تعیین کن.</p>
           <div class="nava-video-controls">
-            <div><label for="navaVideoTitle">عنوان اصلی</label><input id="navaVideoTitle" type="text" maxlength="70" placeholder="عنوان ویدئو"></div>
-            <div><label for="navaVideoSubtitle">زیرعنوان</label><input id="navaVideoSubtitle" type="text" maxlength="110" placeholder="توضیح کوتاه"></div>
-            <div><label for="navaVideoText">متن اصلی</label><textarea id="navaVideoText" rows="5" maxlength="500" placeholder="متن یا پیام اصلی؛ هر جمله را در خط جداگانه هم می‌توانی بنویسی."></textarea></div>
-            <div><label for="navaVideoMotion">حرکت تصویر و نوشته</label><select id="navaVideoMotion"><option value="cinematic" selected>سینمایی — حرکت و زوم آرام</option><option value="subtle">ملایم — حرکت ظریف</option></select></div>
-            <div><label for="navaVideoWordMotion">حرکت کلمه‌ها</label><select id="navaVideoWordMotion"><option value="rise" selected>ورود کلمه‌به‌کلمه از پایین</option><option value="fade">ظاهر شدن تدریجی کلمه‌ها</option><option value="slide">حرکت کلمه‌ها از راست</option><option value="type">نمایش مرحله‌ای کلمه‌ها</option><option value="none">بدون حرکت کلمه‌ها</option></select></div>
-            <div><label for="navaVideoWordSpeed">سرعت حرکت کلمه‌ها</label><select id="navaVideoWordSpeed"><option value="0.65">آرام</option><option value="1" selected>معمولی</option><option value="1.6">سریع</option></select></div>
+            <div><label for="navaVideoTitle">عنوان ثابت ویدئو (اختیاری)</label><input id="navaVideoTitle" type="text" maxlength="70" placeholder="عنوان یا نام برند"></div>
+            <div><label for="navaVideoSubtitle">زیرعنوان ثابت (اختیاری)</label><input id="navaVideoSubtitle" type="text" maxlength="110" placeholder="شعار یا توضیح کوتاه"></div>
             <div><label for="navaVideoFormat">قالب خروجی</label><select id="navaVideoFormat"><option value="portrait">عمودی ۹:۱۶ — ریلز و استوری</option><option value="landscape">افقی ۱۶:۹ — ویدئوی عریض</option></select></div>
-            <div><label for="navaVideoDuration">مدت خروجی</label><select id="navaVideoDuration"><option value="6">۶ ثانیه</option><option value="8" selected>۸ ثانیه</option><option value="10">۱۰ ثانیه</option><option value="15">۱۵ ثانیه</option><option value="20">۲۰ ثانیه</option><option value="30">۳۰ ثانیه</option></select></div>
           </div>
-          <p class="nava-video-hint">کلمه‌ها می‌توانند جداگانه وارد شوند. اتصال حروف فارسی داخل هر کلمه حفظ می‌شود و ترتیب نمایش از راست به چپ است.</p>
+          <div class="nava-video-story-head"><div><strong>سناریو و صحنه‌ها</strong><span>هر کارت یک بخش از روایت ویدئو است.</span></div><button class="nava-video-secondary" id="navaVideoAddScene" type="button">＋ افزودن صحنه</button></div>
+          <div class="nava-video-story-list" id="navaVideoStoryList">
+            <article class="nava-video-story-card" data-story-scene>
+              <div class="nava-video-story-card-head"><strong>صحنه ۱</strong><button type="button" data-remove-story disabled>حذف</button></div>
+              <label>متن این صحنه<textarea data-story-text rows="3" maxlength="420" placeholder="جمله یا پیام صحنه اول را بنویس..."></textarea></label>
+              <div class="nava-video-story-fields"><label>مدت نمایش<select data-story-duration><option value="2">۲ ثانیه</option><option value="3" selected>۳ ثانیه</option><option value="4">۴ ثانیه</option><option value="5">۵ ثانیه</option><option value="6">۶ ثانیه</option><option value="8">۸ ثانیه</option></select></label><label>حرکت نوشته<select data-story-motion><option value="rise">ورود از پایین</option><option value="fade">محو و ظاهر شدن</option><option value="slide">ورود از راست</option><option value="type">نمایش مرحله‌ای</option><option value="none">بدون حرکت</option></select></label></div>
+            </article>
+          </div>
+          <p class="nava-video-hint">ترتیب کارت‌ها، ترتیب پخش صحنه‌هاست. مدت نهایی ویدئو از جمع زمان صحنه‌ها محاسبه می‌شود؛ زمان هر صحنه را جداگانه انتخاب کن.</p>
         </section>
-        <section class="nava-video-panel is-active" id="navaVideoPanelPhoto" role="region">
+        <section class="nava-video-panel" id="navaVideoPanelPhoto" role="tabpanel" hidden>
           <h3>ساخت با عکس‌ها</h3>
           <p>تا ۲۰ عکس انتخاب کن، چیدمان دلخواهت را مشخص کن و در صورت تمایل موسیقی پس‌زمینه اضافه کن.</p>
           <div class="nava-video-grid">
@@ -600,6 +609,8 @@
           </div>
           <p class="nava-video-hint">فایل‌ها فقط در همین مرورگر پردازش می‌شوند. برای شروع پیش‌نمایش و ساخت، از نوار عملیات زیر تب‌ها استفاده کن.</p>
         </section>
+        <section class="nava-video-panel" id="navaVideoPanelVideo" role="tabpanel" hidden><div class="nava-video-coming-soon"><span aria-hidden="true">▶</span><h3>تدوین ویدئوی ورودی</h3><p>برش، اتصال چند ویدئو، انتقال بین صحنه‌ها و تایم‌لاین کامل در مرحله بعد اضافه می‌شود.</p><strong>به‌زودی</strong></div></section>
+
         <div class="nava-video-work-actions">
           <div class="nava-video-actions"><button class="nava-video-secondary" id="navaVideoPreview" type="button" disabled hidden>پیش‌نمایش</button><button class="nava-video-primary" id="navaVideoRender" type="button" disabled>ساخت خروجی</button></div>
           <div class="nava-video-status" id="navaVideoStatus" role="status" aria-live="polite">برای شروع، متن یا عکس انتخاب کن.</div>
@@ -1507,6 +1518,6 @@
   <script src="office-file-tools.js?v=office-followup-sync-20261118-1" defer></script>
   <script src="office-edit-tools.js?v=office-pptx-edit-persistence-preview-20261119-6" defer></script>
   <script src="office-preview.js?v=office-preview-rollback-20261119-2" defer></script>
-  <script src="video-studio.js?v=image-motion-browser-20261122-1" defer></script>
+  <script src="video-studio.js?v=video-tabs-story-builder-20261122-1" defer></script>
 </body>
 </html>
