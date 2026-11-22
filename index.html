@@ -604,10 +604,12 @@
             <div><label for="navaVideoSubtitle">زیرعنوان</label><input id="navaVideoSubtitle" type="text" maxlength="110" placeholder="توضیح کوتاه"></div>
             <div><label for="navaVideoText">متن اصلی</label><textarea id="navaVideoText" rows="5" maxlength="500" placeholder="متن یا پیام اصلی؛ هر جمله را در خط جداگانه هم می‌توانی بنویسی."></textarea></div>
             <div><label for="navaVideoMotion">حرکت تصویر و نوشته</label><select id="navaVideoMotion"><option value="cinematic" selected>سینمایی — حرکت و زوم آرام</option><option value="subtle">ملایم — حرکت ظریف</option></select></div>
+            <div><label for="navaVideoWordMotion">حرکت کلمه‌ها</label><select id="navaVideoWordMotion"><option value="rise" selected>ورود کلمه‌به‌کلمه از پایین</option><option value="fade">ظاهر شدن تدریجی کلمه‌ها</option><option value="slide">حرکت کلمه‌ها از راست</option><option value="type">نمایش مرحله‌ای کلمه‌ها</option><option value="none">بدون حرکت کلمه‌ها</option></select></div>
+            <div><label for="navaVideoWordSpeed">سرعت حرکت کلمه‌ها</label><select id="navaVideoWordSpeed"><option value="0.65">آرام</option><option value="1" selected>معمولی</option><option value="1.6">سریع</option></select></div>
             <div><label for="navaVideoFormat">قالب خروجی</label><select id="navaVideoFormat"><option value="portrait">عمودی ۹:۱۶ — ریلز و استوری</option><option value="landscape">افقی ۱۶:۹ — ویدئوی عریض</option></select></div>
             <div><label for="navaVideoDuration">مدت خروجی</label><select id="navaVideoDuration"><option value="6">۶ ثانیه</option><option value="8" selected>۸ ثانیه</option><option value="10">۱۰ ثانیه</option><option value="15">۱۵ ثانیه</option><option value="20">۲۰ ثانیه</option><option value="30">۳۰ ثانیه</option></select></div>
           </div>
-          <p class="nava-video-hint">جلوه‌های حرکتی پیشرفته کلمات و تایپوگرافی مرحله بعدی توسعه این بخش هستند؛ فعلاً متن در خروجی نمایش داده می‌شود.</p>
+          <p class="nava-video-hint">کلمه‌ها می‌توانند جداگانه وارد شوند. اتصال حروف فارسی داخل هر کلمه حفظ می‌شود و ترتیب نمایش از راست به چپ است.</p>
         </section>
         <section class="nava-video-panel" id="navaVideoPanelPhoto" role="tabpanel" hidden>
           <h3>ساخت با عکس‌ها</h3>
