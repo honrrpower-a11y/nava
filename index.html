@@ -594,9 +594,11 @@
               <div><label for="navaVideoMusic">افزودن موسیقی پس‌زمینه (اختیاری)</label><input id="navaVideoMusic" type="file" accept="audio/*"></div>
               <div><label for="navaVideoTitle">عنوان اصلی (اختیاری)</label><input id="navaVideoTitle" type="text" maxlength="70" placeholder="عنوان ویدئو"></div>
               <div><label for="navaVideoSubtitle">زیرعنوان (اختیاری)</label><input id="navaVideoSubtitle" type="text" maxlength="110" placeholder="توضیح کوتاه"></div>
+              <div><label for="navaVideoText">متن اصلی ویدئو (برای ساخت بدون عکس هم قابل استفاده است)</label><textarea id="navaVideoText" rows="3" maxlength="500" placeholder="متن یا پیام اصلی ویدئو"></textarea></div>
+              <div><label for="navaVideoLayout">چیدمان عکس‌ها</label><select id="navaVideoLayout"><option value="sequence" selected>نمایش پشت‌سرهم عکس‌ها</option><option value="triptych">سه عکس در یک قاب</option><option value="grid">چهار قاب هم‌زمان</option></select></div>
               <div><label for="navaVideoFormat">قالب ویدئو</label><select id="navaVideoFormat"><option value="portrait">عمودی ۹:۱۶ — ریلز و استوری</option><option value="landscape">افقی ۱۶:۹ — ویدئوی عریض</option></select></div>
               <div><label for="navaVideoDuration">مدت کل ویدئو</label><select id="navaVideoDuration"><option value="6">۶ ثانیه</option><option value="8" selected>۸ ثانیه</option><option value="10">۱۰ ثانیه</option><option value="15">۱۵ ثانیه</option><option value="20">۲۰ ثانیه</option><option value="30">۳۰ ثانیه</option></select></div>
-              <p class="nava-video-hint">فایل‌های انتخابی فقط در همین مرورگر پردازش می‌شوند و به سرور ارسال نمی‌شوند.</p>
+              <p class="nava-video-hint">می‌توانی عکس‌ها را پشت‌سرهم یا در قاب سه‌تایی/چهارتایی نمایش بدهی؛ حتی بدون عکس و فقط با متن هم ویدئو بساز. فایل‌ها فقط در همین مرورگر پردازش می‌شوند.</p>
               <div class="nava-video-scene-list" id="navaVideoSceneList" aria-live="polite">هنوز عکسی انتخاب نشده است.</div>
             </div>
             <div class="nava-video-preview"><div class="nava-video-canvas-wrap"><canvas id="navaVideoCanvas" width="1080" height="1920" aria-label="پیش‌نمایش ویدئو"></canvas></div></div>
