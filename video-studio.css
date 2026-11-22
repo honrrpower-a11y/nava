@@ -130,3 +130,15 @@ body.light #avPage .nava-video-engine {
 .nava-video-photo-tools{margin:18px 0;padding:14px;border:1px solid var(--border,rgba(145,170,210,.2));border-radius:13px}
 .nava-video-photo-tools h3{margin-top:0}
 @media(max-width:560px){.nava-video-mode-options{grid-template-columns:1fr}}
+
+.nava-video-text-layers{display:grid;gap:10px;margin:10px 0}.nava-video-text-layer{padding:12px;border:1px solid var(--border,rgba(145,170,210,.24));border-radius:12px;background:var(--surface,rgba(16,27,45,.48))}
+.nava-video-layer-head{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px;color:var(--text,#eef4ff)}
+.nava-video-layer-head button,.nava-video-add-layer{border:1px solid var(--border,rgba(145,170,210,.25));border-radius:9px;padding:7px 11px;background:var(--surface-2,rgba(36,51,75,.75));color:var(--text,#eef4ff);font:inherit;cursor:pointer}
+.nava-video-layer-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin-top:9px}
+.nava-video-layer-fields label,.nava-video-text-layer>label{display:grid;gap:5px;color:var(--text,#dce7f8);font-size:.88rem}
+.nava-video-layer-fields select,.nava-video-text-layer textarea{width:100%;box-sizing:border-box;border:1px solid var(--border,rgba(145,170,210,.24));border-radius:9px;padding:9px;background:var(--bg,#101b2d);color:var(--text,#f4f7ff);font:inherit}
+.nava-video-add-layer{margin:0 0 12px}
+body.light .nava-video-text-layer{background:#fffdf8}body.light .nava-video-layer-head,body.light .nava-video-layer-fields label,body.light .nava-video-text-layer>label{color:#526176}
+body.light .nava-video-layer-head button,body.light .nava-video-add-layer{background:linear-gradient(120deg,#fff0d5,#eaf3ff);color:#34516f;border-color:rgba(193,127,37,.25)}
+body.light .nava-video-layer-fields select,body.light .nava-video-text-layer textarea{background:#fffdf8;color:#263a56;border-color:rgba(193,127,37,.3)}
+@media(max-width:560px){.nava-video-layer-fields{grid-template-columns:1fr}}
