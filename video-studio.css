@@ -251,3 +251,68 @@ body.light .nava-video-accordion>summary{color:#263a56}
   #avPage .nava-video-photo-tools .nava-video-controls{grid-template-columns:1fr}
   #avPage .nava-video-photo-tools .nava-video-controls>div{padding:11px}
 }
+
+
+/* Final theme alignment: video accordions and every select use NAVA palette */
+#avPage .nava-video-accordion{
+  background:var(--panel);
+  border:1px solid var(--border);
+  color:var(--text);
+  box-shadow:0 8px 24px rgba(0,0,0,.06);
+}
+#avPage .nava-video-accordion>summary{
+  color:var(--text);
+  background:var(--panel2);
+  transition:background .18s ease;
+}
+#avPage .nava-video-accordion>summary:hover{
+  background:var(--panel);
+}
+#avPage .nava-video-accordion[open]>summary{
+  border-bottom:1px solid var(--border);
+}
+#avPage .nava-video-accordion-body{
+  background:var(--panel);
+  color:var(--text);
+}
+#avPage select,
+#avPage .nava-video-text-persistence select,
+#avPage .nava-video-layer-fields select,
+#avPage .nava-video-text-layer select,
+#avPage [data-story-image],
+#avPage [data-story-duration]{
+  width:100%;
+  min-height:44px;
+  box-sizing:border-box;
+  padding:10px 38px 10px 12px;
+  border:1px solid var(--border);
+  border-radius:10px;
+  background-color:var(--panel2);
+  color:var(--text);
+  font:inherit;
+  line-height:1.5;
+  color-scheme:dark;
+}
+body.light #avPage select,
+body.light #avPage .nava-video-text-persistence select,
+body.light #avPage .nava-video-layer-fields select,
+body.light #avPage .nava-video-text-layer select,
+body.light #avPage [data-story-image],
+body.light #avPage [data-story-duration]{
+  color-scheme:light;
+}
+#avPage select:focus-visible{
+  outline:2px solid var(--gold);
+  outline-offset:2px;
+}
+#avPage select option{
+  background:var(--panel);
+  color:var(--text);
+}
+#avPage .nava-video-text-persistence{
+  display:grid;
+  gap:7px;
+  margin:14px 0;
+  color:var(--text);
+  font-weight:700;
+}
