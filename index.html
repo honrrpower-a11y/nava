@@ -604,10 +604,12 @@
             <div><label for="navaVideoFormat">قالب خروجی</label><select id="navaVideoFormat"><option value="portrait">عمودی ۹:۱۶ — ریلز و استوری</option><option value="landscape">افقی ۱۶:۹ — ویدئوی عریض</option></select></div>
           </div>
           <div class="nava-video-story-head"><div><strong>سناریو و صحنه‌ها</strong><span>هر کارت یک بخش از روایت ویدئو است.</span></div><button class="nava-video-secondary" id="navaVideoAddScene" type="button">＋ افزودن صحنه</button></div>
+          <label class="nava-video-text-persistence">نمایش متن صحنه‌های قبلی<select id="navaVideoTextPersistence"><option value="keep" selected>متن‌های قبلی باقی بمانند</option><option value="replace">فقط متن صحنه جاری نمایش داده شود</option></select></label>
           <div class="nava-video-story-list" id="navaVideoStoryList">
             <article class="nava-video-story-card" data-story-scene>
               <div class="nava-video-story-card-head"><strong>صحنه ۱</strong><button type="button" data-remove-story disabled>حذف</button></div>
               <label>متن این صحنه<textarea data-story-text rows="3" maxlength="420" placeholder="جمله یا پیام صحنه اول را بنویس..."></textarea></label>
+              <label>عکس این صحنه<select data-story-image><option value="-1">بدون عکس</option></select></label>
               <div class="nava-video-story-fields"><label>مدت نمایش<select data-story-duration><option value="2">۲ ثانیه</option><option value="3">۳ ثانیه</option><option value="4" selected>۴ ثانیه</option><option value="5">۵ ثانیه</option><option value="6">۶ ثانیه</option><option value="8">۸ ثانیه</option></select></label><label>حرکت نوشته<select data-story-motion><option value="cinematic" selected>حرکت سینمایی چندلایه</option><option value="rise">ورود از پایین</option><option value="fade">محو و ظاهر شدن</option><option value="slide">ورود از راست</option><option value="type">نمایش مرحله‌ای</option><option value="none">بدون حرکت</option></select></label></div>
             </article>
           </div>
