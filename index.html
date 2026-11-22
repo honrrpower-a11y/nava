@@ -556,37 +556,10 @@
         <div><span class="studio-kicker">NAVA WORKSPACE / STUDIO</span><h1>استودیوی ویدئو و صدا</h1><p>برای طراحی سناریو، تدوین طرح تولید، متن گویندگی و برنامه‌ریزی پروژه‌های صوتی‌تصویری.</p></div>
         <button class="btn-secondary" type="button" onclick="showPage('homePage')">بازگشت به استودیوها</button>
       </div>
-      <div class="studio-workspace-grid">
-        <form class="studio-brief-card" onsubmit="event.preventDefault(); chooseService('ویدئو و صدا');">
-          <span class="studio-step">شروع کار</span><h2>بریف پروژه</h2>
-          <p>اطلاعات اولیه را وارد کن تا NAVI بتواند درخواست را دقیق‌تر دنبال کند.</p>
-          <label for="studioTask-av">نوع پروژه صوتی یا تصویری</label>
-          <select id="studioTask-av" class="studio-control">
-            <option>پیشنهاد مناسب را NAVI انتخاب کند</option><option>ایده‌پردازی و برنامه‌ریزی</option><option>تولید پیش‌نویس</option><option>بازبینی و بهبود</option><option>راهنمای مرحله‌به‌مرحله</option>
-          </select>
-          <label for="studioAudience-av">مخاطب نهایی</label>
-          <input id="studioAudience-av" class="studio-control" type="text" maxlength="180" placeholder="مخاطب یا استفاده‌کننده را مشخص کن">
-          <label for="studioBrief-av">شرح درخواست و جزئیات</label>
-          <textarea id="studioBrief-av" class="studio-control studio-brief-input" maxlength="3000" placeholder="موضوع، مدت، پلتفرم، لحن و امکانات در دسترس"></textarea>
-          <div class="studio-brief-actions"><button class="btn-primary" type="submit">ادامه با NAVI</button><button class="btn-secondary" type="reset">پاک کردن فرم</button></div>
-          <p class="studio-note">این صفحه فعلاً قالب کاری و بریف پروژه است؛ تولید تخصصی فایل یا خروجی نهایی تا زمان اتصال ابزار مربوطه فعال محسوب نمی‌شود.</p>
-        </form>
-        <aside class="studio-output-card">
-          <span class="studio-step">فضای پروژه</span><h2>مراحل انجام کار</h2>
-          <ol><li>ثبت بریف و هدف پروژه</li><li>بررسی نیازها با NAVI</li><li>تدوین پیش‌نویس و اصلاح آن</li><li>آماده‌سازی خروجی پس از فعال‌شدن ابزار تخصصی</li></ol>
-          <div class="studio-output-placeholder"><span aria-hidden="true">✦</span><strong>فضای خروجی پروژه</strong><p>نتیجه‌ها و فایل‌های این استودیو پس از تکمیل ابزار تخصصی در این قسمت نمایش داده می‌شوند.</p></div>
-        </aside>
-      </div>
       <section class="nava-video-engine" id="navaVideoEngine" aria-labelledby="navaVideoEngineTitle">
         <span class="studio-step">NAVA VIDEO WORKSPACE</span>
         <h2 id="navaVideoEngineTitle">استودیوی ساخت و تدوین ویدئو</h2>
         <p>چند عکس و موسیقی خودت را وارد کن؛ NAVI سناریو و ترتیب پیشنهادی را طراحی می‌کند و موتور تدوین، پیش‌نمایش و خروجی را می‌سازد.</p>
-        <div class="nava-video-tabs" role="tablist" aria-label="بخش‌های استودیوی ویدئو">
-          <button type="button" class="nava-video-tab is-active" role="tab" aria-selected="true" aria-controls="navaVideoPanelGuide" data-video-tab="guide">راهنمایی</button>
-          <button type="button" class="nava-video-tab" role="tab" aria-selected="false" aria-controls="navaVideoPanelText" data-video-tab="text">کارهای متنی</button>
-          <button type="button" class="nava-video-tab" role="tab" aria-selected="false" aria-controls="navaVideoPanelPhoto" data-video-tab="photo">عکس</button>
-          <button type="button" class="nava-video-tab" role="tab" aria-selected="false" aria-controls="navaVideoPanelVideo" data-video-tab="video">ویدیو · به‌زودی</button>
-        </div>
         <section class="nava-video-panel is-active" id="navaVideoPanelGuide" role="tabpanel">
           <h3>راهنمایی و برنامه‌ریزی با NAVI</h3>
           <p>NAVI به انتخاب مسیر مناسب، نوشتن سناریو، متن و ترتیب محتوای پروژه کمک می‌کند.</p>
@@ -596,7 +569,7 @@
           <div class="nava-video-navi-result" id="navaVideoNaviResult" aria-live="polite">موضوع و خواسته‌ات را بنویس؛ سپس بریف را از طریق فرم NAVI همین استودیو ارسال کن.</div>
           <p class="nava-video-hint">NAVI می‌تواند سناریو، متن پیشنهادی، ترتیب تصاویر، مدت هر بخش و جهت هنری را پیشنهاد دهد.</p>
         </section>
-        <section class="nava-video-panel" id="navaVideoPanelText" role="tabpanel" hidden>
+        <section class="nava-video-panel" id="navaVideoPanelText" role="region">
           <h3>ساخت محتوای متنی و نوشته‌های متحرک</h3>
           <p>عنوان، زیرعنوان و متن اصلی را وارد کن. این بخش برای ویدئوی متن‌محور نیز قابل استفاده است و به عکس نیاز ندارد.</p>
           <div class="nava-video-controls">
@@ -611,7 +584,7 @@
           </div>
           <p class="nava-video-hint">کلمه‌ها می‌توانند جداگانه وارد شوند. اتصال حروف فارسی داخل هر کلمه حفظ می‌شود و ترتیب نمایش از راست به چپ است.</p>
         </section>
-        <section class="nava-video-panel" id="navaVideoPanelPhoto" role="tabpanel" hidden>
+        <section class="nava-video-panel" id="navaVideoPanelPhoto" role="region">
           <h3>ساخت با عکس‌ها</h3>
           <p>تا ۲۰ عکس انتخاب کن، چیدمان دلخواهت را مشخص کن و در صورت تمایل موسیقی پس‌زمینه اضافه کن.</p>
           <div class="nava-video-grid">
@@ -623,18 +596,15 @@
               <div><label for="navaVideoFade">محو شدن ابتدا و انتهای موسیقی</label><select id="navaVideoFade"><option value="1.5">۱.۵ ثانیه</option><option value="2.5" selected>۲.۵ ثانیه</option><option value="0">بدون محو شدن</option></select></div>
               <div class="nava-video-scene-list" id="navaVideoSceneList" aria-live="polite">هنوز عکسی انتخاب نشده است.</div>
             </div>
-            <div class="nava-video-preview"><div class="nava-video-canvas-wrap"><canvas id="navaVideoCanvas" width="720" height="1280" aria-label="پیش‌نمایش ترکیب عکس و متن"></canvas></div></div>
+            <div class="nava-video-preview"><div class="nava-video-canvas-wrap" hidden><canvas id="navaVideoCanvas" width="720" height="1280" aria-label="پیش‌نمایش ترکیب عکس و متن"></canvas></div></div>
           </div>
           <p class="nava-video-hint">فایل‌ها فقط در همین مرورگر پردازش می‌شوند. برای شروع پیش‌نمایش و ساخت، از نوار عملیات زیر تب‌ها استفاده کن.</p>
         </section>
-        <section class="nava-video-panel" id="navaVideoPanelVideo" role="tabpanel" hidden>
-          <div class="nava-video-coming-soon"><span aria-hidden="true">▶</span><h3>استودیوی ویدئوی کامل</h3><p>این بخش در مرحله بعد راه‌اندازی می‌شود؛ امکاناتی مانند تدوین ویدئوهای ورودی، برش، اتصال صحنه‌ها، انتقال‌ها و کنترل دقیق تایم‌لاین در اینجا قرار می‌گیرند.</p><strong>به‌زودی</strong></div>
-        </section>
         <div class="nava-video-work-actions">
-          <div class="nava-video-actions"><button class="nava-video-secondary" id="navaVideoPreview" type="button" disabled>پیش‌نمایش</button><button class="nava-video-primary" id="navaVideoRender" type="button" disabled>ساخت خروجی</button></div>
+          <div class="nava-video-actions"><button class="nava-video-secondary" id="navaVideoPreview" type="button" disabled hidden>پیش‌نمایش</button><button class="nava-video-primary" id="navaVideoRender" type="button" disabled>ساخت خروجی</button></div>
           <div class="nava-video-status" id="navaVideoStatus" role="status" aria-live="polite">برای شروع، متن یا عکس انتخاب کن.</div>
           <div class="nava-video-progress" aria-label="پیشرفت ساخت"><span id="navaVideoProgress"></span></div>
-          <div class="nava-video-result" id="navaVideoResult" hidden><video id="navaVideoOutput" controls playsinline></video><div class="nava-video-actions"><a class="nava-video-primary" id="navaVideoDownload" hidden download="nava-video.webm">دریافت خروجی</a></div></div>
+          <div class="nava-video-result" id="navaVideoResult" hidden><video id="navaVideoOutput" controls playsinline hidden></video><div class="nava-video-actions"><a class="nava-video-primary" id="navaVideoDownload" hidden download="nava-video.webm">دریافت خروجی</a></div></div>
           <p class="nava-video-hint">خروجی فعلی WebM است. فایل‌ها روی همین گوشی و در مرورگر پردازش می‌شوند.</p>
         </div>
       </section>
