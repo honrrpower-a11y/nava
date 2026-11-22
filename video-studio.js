@@ -27,21 +27,27 @@
     if(/بدون حرکت|ثابت بماند|بدون افکت/.test(brief))motion="none";
     let font=null;
     if(/وزیر|vazir/i.test(brief))font="'Vazirmatn',Tahoma,sans-serif";
-    else if(/ایران.?سن.?س|iransans/i.test(brief))font="'IRANSans',Tahoma,sans-serif";
+    else if(/شکسته|shekasteh|dima/i.test(brief))font="'Dima Shekasteh',serif";
+    else if(/نستعلیق|nastaliq|ایران.?نستعلیق/i.test(brief))font="'IranNastaliq',serif";
+    else if(/گلزار|gulzar/i.test(brief))font="'Gulzar',serif";
+    else if(/نسخ|naskh|noto/i.test(brief))font="'Noto Naskh Arabic',serif";
+    else if(/وزیر|vazir/i.test(brief))font="'Vazirmatn',sans-serif";
+    else if(/ایران.?سن.?س|iransans/i.test(brief))font="Tahoma,sans-serif";
     else if(/تاهوما|tahoma/i.test(brief))font="Tahoma,sans-serif";
     else if(/آریال|arial/i.test(brief))font="Arial,sans-serif";
     if(motion)storyCards().forEach(card=>card.querySelectorAll("[data-layer-motion]").forEach(el=>el.value=toLayerMotion(motion)));
-    if(font&&fontInput){fontInput.value=font;activeFont=font;}
+    if(font&&fontInput){fontInput.value=font;activateFont(font);}
     const direction=/چپ به راست|از چپ به راست|چپ.?چین|left.?to.?right|ltr/i.test(brief)?"ltr":/راست به چپ|راست.?چین|right.?to.?left|rtl/i.test(brief)?"rtl":null;
     if(direction)textDirection=direction;
     $("navaVideoNaviResult").textContent=(motion||font||direction)?"دستورهای قابل‌تشخیص اعمال شدند؛ پیش‌نمایش را بررسی کن. اگر بخشی از شرح شامل ویژگی پشتیبانی‌نشده باشد، هنوز خودکار اجرا نمی‌شود.":"دستور مشخصی از موارد فعلی شناسایی نشد؛ می‌توانی تنظیمات را دستی انتخاب کنی.";
     resize();drawFrame(0);updateReady();
   }
-  let activeFont=fontInput?.value||"sans-serif",textDirection="rtl";
-  setupRadios.forEach(r=>r.addEventListener("change",()=>{const briefMode=setupMode()==="brief";$("navaVideoBriefSettings").hidden=!briefMode;$("navaVideoManualSettings").hidden=briefMode;if(!briefMode){activeFont=fontInput?.value||"sans-serif";textDirection="rtl";storyCards().forEach(card=>card.querySelectorAll("[data-layer-motion]").forEach(el=>{if(manualMotionInput)el.value=toLayerMotion(manualMotionInput.value);}));}resize();drawFrame(0);}));
+  let activeFont=fontInput?.value||"sans-serif",textDirection="rtl",fontLoadToken=0;
+  async function activateFont(font){activeFont=font||"sans-serif";const token=++fontLoadToken;try{if(document.fonts?.load){await document.fonts.load("650 42px "+activeFont);await document.fonts.ready;}}catch(_){}if(token===fontLoadToken){resize();drawFrame(0);}}
+  setupRadios.forEach(r=>r.addEventListener("change",()=>{const briefMode=setupMode()==="brief";$("navaVideoBriefSettings").hidden=!briefMode;$("navaVideoManualSettings").hidden=briefMode;if(!briefMode){activateFont(fontInput?.value||"sans-serif");textDirection="rtl";storyCards().forEach(card=>card.querySelectorAll("[data-layer-motion]").forEach(el=>{if(manualMotionInput)el.value=toLayerMotion(manualMotionInput.value);}));}resize();drawFrame(0);}));
   applyBriefBtn?.addEventListener("click",applyBrief);
   manualMotionInput?.addEventListener("change",()=>{if(setupMode()==="manual")storyCards().forEach(card=>card.querySelectorAll("[data-layer-motion]").forEach(el=>{el.value=manualMotionInput.value==="slide-right"?"from-right":manualMotionInput.value==="slide-left"?"from-left":manualMotionInput.value==="rise"?"from-bottom":manualMotionInput.value;}));drawFrame(0);});
-  fontInput?.addEventListener("change",()=>{activeFont=fontInput.value;drawFrame(0);});
+  fontInput?.addEventListener("change",()=>activateFont(fontInput.value));
 
   const storyCards=()=>storyList?Array.from(storyList.querySelectorAll("[data-story-scene]")):[];
   const refreshScenePhotoOptions=()=>storyCards().forEach(card=>{const select=card.querySelector("[data-story-image]");if(!select)return;const previous=select.value;select.innerHTML="";const none=document.createElement("option");none.value="-1";none.textContent="بدون عکس";select.append(none);scenes.forEach((scene,i)=>{const option=document.createElement("option");option.value=String(i);option.textContent="عکس "+(i+1)+" — "+scene.file.name;select.append(option);});select.value=[...select.options].some(o=>o.value===previous)?previous:"-1";});
