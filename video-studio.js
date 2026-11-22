@@ -10,8 +10,39 @@
   const wordMotionInput=$("navaVideoWordMotion"),wordSpeedInput=$("navaVideoWordSpeed");
   let scenes=[],musicUrl="",musicElement=null,audioContext=null,audioSource=null,audioDestination=null,musicGain=null,previewFrame=0,recorder=null,chunks=[],recording=false,startedAt=0,previewing=false,outputUrl="";
   const storyList=$("navaVideoStoryList"),addStoryBtn=$("navaVideoAddScene");
+  const fontInput=$("navaVideoFont"),manualMotionInput=$("navaVideoManualMotion");
+  const briefInput=$("navaVideoBrief"),applyBriefBtn=$("navaVideoApplyBrief");
+  const setupRadios=Array.from(root.querySelectorAll('input[name="navaVideoSetupMode"]'));
+  const setupMode=()=>setupRadios.find(r=>r.checked)?.value||"brief";
+  function applyBrief(){
+    const brief=(briefInput?.value||"").trim();if(!brief){$("navaVideoNaviResult").textContent="ابتدا شرح درخواست را بنویس.";return;}
+    let motion=null;
+    if(/محو|fade|شفاف|آرام ظاهر/.test(brief))motion="fade";
+    if(/از پایین|بالا بیاید|rise/.test(brief))motion="rise";
+    if(/از (سمت )?چپ|از چپ به راست|از سمت چپ وارد|slide.?left/i.test(brief))motion="slide-left";
+    if(/مرحله.?ای|کلمه.?به.?کلمه|حرف.?به.?حرف|تایپ|typewriter/i.test(brief))motion="type";
+    if(/سینمایی|cinematic/.test(brief))motion="cinematic";
+    if(/بدون حرکت|ثابت بماند|بدون افکت/.test(brief))motion="none";
+    let font=null;
+    if(/وزیر|vazir/i.test(brief))font="'Vazirmatn',Tahoma,sans-serif";
+    else if(/ایران.?سن.?س|iransans/i.test(brief))font="'IRANSans',Tahoma,sans-serif";
+    else if(/تاهوما|tahoma/i.test(brief))font="Tahoma,sans-serif";
+    else if(/آریال|arial/i.test(brief))font="Arial,sans-serif";
+    if(motion)storyCards().forEach(card=>{const el=card.querySelector("[data-story-motion]");if(el)el.value=motion;});
+    if(font&&fontInput){fontInput.value=font;activeFont=font;}
+    const direction=/چپ به راست|از چپ به راست|چپ.?چین|left.?to.?right|ltr/i.test(brief)?"ltr":/راست به چپ|راست.?چین|right.?to.?left|rtl/i.test(brief)?"rtl":null;
+    if(direction)textDirection=direction;
+    $("navaVideoNaviResult").textContent=(motion||font||direction)?"دستورهای قابل‌تشخیص اعمال شدند؛ پیش‌نمایش را بررسی کن. اگر بخشی از شرح شامل ویژگی پشتیبانی‌نشده باشد، هنوز خودکار اجرا نمی‌شود.":"دستور مشخصی از موارد فعلی شناسایی نشد؛ می‌توانی تنظیمات را دستی انتخاب کنی.";
+    resize();drawFrame(0);updateReady();
+  }
+  let activeFont=fontInput?.value||"sans-serif",textDirection="rtl";
+  setupRadios.forEach(r=>r.addEventListener("change",()=>{const briefMode=setupMode()==="brief";$("navaVideoBriefSettings").hidden=!briefMode;$("navaVideoManualSettings").hidden=briefMode;if(!briefMode){activeFont=fontInput?.value||"sans-serif";textDirection="rtl";storyCards().forEach(card=>{const el=card.querySelector("[data-story-motion]");if(el&&manualMotionInput)el.value=manualMotionInput.value;});}resize();drawFrame(0);}));
+  applyBriefBtn?.addEventListener("click",applyBrief);
+  manualMotionInput?.addEventListener("change",()=>{if(setupMode()==="manual")storyCards().forEach(card=>{const el=card.querySelector("[data-story-motion]");if(el)el.value=manualMotionInput.value;});drawFrame(0);});
+  fontInput?.addEventListener("change",()=>{activeFont=fontInput.value;drawFrame(0);});
+
   const storyCards=()=>storyList?Array.from(storyList.querySelectorAll("[data-story-scene]")):[];
-  const storyData=()=>storyCards().map(card=>({text:card.querySelector("[data-story-text]").value.trim(),duration:Number(card.querySelector("[data-story-duration]").value)||4,motion:card.querySelector("[data-story-motion]").value})).filter(s=>s.text);
+  const storyData=()=>storyCards().map(card=>({text:card.querySelector("[data-story-text]").value.trim(),duration:Number(card.querySelector("[data-story-duration]").value)||4,motion:card.querySelector("[data-story-motion]").value,imageIndex:-1})).filter(s=>s.text);
   const storyTotal=()=>storyData().reduce((sum,s)=>sum+s.duration,0);
   const totalDuration=()=>storyTotal()||Number(durationInput?.value)||8;
   const say=m=>{status.textContent=m;};
@@ -44,13 +75,13 @@
     }else{const gradient=ctx.createLinearGradient(0,0,w,h);gradient.addColorStop(0,"#18243b");gradient.addColorStop(.58,"#202f47");gradient.addColorStop(1,"#080d18");ctx.fillStyle=gradient;ctx.fillRect(0,0,w,h);}
     ctx.save();ctx.beginPath();ctx.rect(0,0,w,h);ctx.clip();
     const shade=ctx.createLinearGradient(0,0,0,h);shade.addColorStop(0,"rgba(2,8,18,.12)");shade.addColorStop(.55,"rgba(2,8,18,.02)");shade.addColorStop(1,"rgba(2,8,18,.72)");ctx.fillStyle=shade;ctx.fillRect(0,0,w,h);
-    const sf=w/1080;ctx.textAlign="center";ctx.direction="rtl";ctx.shadowColor="rgba(0,0,0,.65)";ctx.shadowBlur=16*sf;
+    const sf=w/1080;ctx.textAlign=textDirection==="ltr"?"left":"center";ctx.direction=textDirection;ctx.shadowColor="rgba(0,0,0,.65)";ctx.shadowBlur=16*sf;
     if(titleInput.value.trim()){ctx.font="700 "+Math.round(54*sf)+"px sans-serif";ctx.fillStyle="#fff";ctx.fillText(titleInput.value.trim(),w/2,h*.79,w*.84);}
     if(subtitleInput.value.trim()){ctx.font="400 "+Math.round(27*sf)+"px sans-serif";ctx.fillStyle="#fff";ctx.fillText(subtitleInput.value.trim(),w/2,h*.84,w*.82);}
     const body=activeStory?activeStory.text:(textInput?.value||"").trim();if(body){
       const effect=activeStory?activeStory.motion:(wordMotionInput?.value||"rise");
       const fontSize=Math.round(36*sf),lineH=47*sf,maxWidth=w*.84;
-      ctx.font="600 "+fontSize+"px sans-serif";ctx.fillStyle="#fff";ctx.shadowBlur=12*sf;
+      ctx.font="600 "+fontSize+"px "+activeFont;ctx.fillStyle="#fff";ctx.shadowBlur=12*sf;
       const words=body.split(/\s+/).filter(Boolean),lines=[];let line=[],lineWidth=0;
       for(const word of words){const ww=ctx.measureText(word).width,space=line.length?ctx.measureText(" ").width:0;if(line.length&&lineWidth+space+ww>maxWidth){lines.push({words:line,width:lineWidth});line=[];lineWidth=0;}lineWidth+=(line.length?ctx.measureText(" ").width:0)+ww;line.push(word);}
       if(line.length)lines.push({words:line,width:lineWidth});
@@ -73,7 +104,7 @@
           const reveal=Math.max(0,Math.min(1,(elapsed-delay)/Math.max(.7,Math.min(1.5,sceneDuration*.52))));
           ctx.beginPath();ctx.rect(w/2+ln.width/2-ln.width*reveal,y-fontSize,ln.width*reveal,fontSize*1.65);ctx.clip();
         }else if(effect==="rise"){ctx.translate(0,(1-p)*Math.min(26*sf,lineHeight*.48));}
-        else if(effect==="slide"){ctx.translate((1-p)*Math.min(42*sf,w*.07),0);}
+        else if(effect==="slide"){ctx.translate((1-p)*Math.min(42*sf,w*.07),0);}else if(effect==="slide-left"){ctx.translate(-(1-p)*Math.min(42*sf,w*.07),0);}
         else if(cinematic){
           const lift=(1-p)*Math.min(125*sf,lineHeight*1.9);
           ctx.translate(0,lift);
@@ -110,9 +141,9 @@
     storyList.addEventListener("click",e=>{const btn=e.target.closest("[data-remove-story]");if(btn&&storyCards().length>1){btn.closest("[data-story-scene]").remove();refreshStory();}});
   }
   const sharedOutput=root.querySelector(".nava-video-shared-output");
-  root.querySelectorAll("[data-video-tab]").forEach(btn=>btn.addEventListener("click",()=>{root.querySelectorAll("[data-video-tab]").forEach(b=>{const active=b===btn;b.classList.toggle("is-active",active);b.setAttribute("aria-selected",String(active));});root.querySelectorAll(".nava-video-panel").forEach(p=>{const active=p.id===btn.getAttribute("aria-controls");p.hidden=!active;p.classList.toggle("is-active",active);});if(sharedOutput&&(btn.dataset.videoTab==="text"||btn.dataset.videoTab==="photo"))root.querySelector("#navaVideoPanel"+(btn.dataset.videoTab==="text"?"Text":"Photo")).append(sharedOutput);}));
-  $("navaVideoAutoOrder").addEventListener("click",()=>{if(!scenes.length){$("navaVideoNaviResult").textContent="ابتدا عکس‌ها را در همین صفحه انتخاب کن.";return;}scenes.sort((a,b)=>a.file.name.localeCompare(b.file.name,"fa"));renderSceneList();drawFrame(0);$("navaVideoNaviResult").textContent="تصاویر بر اساس نام فایل مرتب شدند. برای ترتیب خلاقانه و معنایی، بریف را به NAVI بفرست." ;});
-  $("navaVideoAskNavi").addEventListener("click",()=>{const brief=$("navaVideoBrief").value.trim();const names=scenes.map((s,i)=>(i+1)+". "+s.file.name).join("\n");const prompt="برای این پروژه نقش کارگردان خلاق و تدوینگر ویدئو را بر عهده بگیر. موضوع و هدف: "+(brief||"بر اساس تصاویر انتخاب‌شده یک روایت مناسب پیشنهاد بده.")+"\nتعداد تصاویر: "+scenes.length+"\nفهرست فایل‌ها:\n"+(names||"هنوز تصویری انتخاب نشده")+"\nموسیقی: "+(musicElement?"بارگذاری شده":"هنوز انتخاب نشده")+"\nلطفاً سناریوی صحنه‌به‌صحنه، ترتیب پیشنهادی تصاویر، مدت هر صحنه، متن روی تصویر، ریتم هماهنگ با موسیقی، نوع انتقال و حرکت دوربین را پیشنهاد بده. توضیح بده کدام تصمیم‌ها نیازمند تأیید من هستند.";const result=$("navaVideoNaviResult");result.textContent="بریف برای NAVI ارسال شد.";if(typeof window.openNaviAssistant==="function"){window.openNaviAssistant({service:"ویدئو و صدا",message:prompt,context:{studio:"ویدئو و صدا",brief,images:names,music:musicElement?"بارگذاری شده":"بارگذاری نشده"}});}else{result.textContent="همراه NAVI در دسترس نیست؛ از دکمه شناور NAVI استفاده کن.";}});
+  root.querySelectorAll("[data-video-tab]").forEach(btn=>btn.addEventListener("click",()=>{root.querySelectorAll("[data-video-tab]").forEach(b=>{const active=b===btn;b.classList.toggle("is-active",active);b.setAttribute("aria-selected",String(active));});root.querySelectorAll(".nava-video-panel").forEach(p=>{const active=p.id===btn.getAttribute("aria-controls");p.hidden=!active;p.classList.toggle("is-active",active);});if(sharedOutput&&btn.dataset.videoTab==="text")root.querySelector("#navaVideoPanelText").append(sharedOutput);}));
+
+  $("navaVideoAskNavi").addEventListener("click",()=>{const brief=$("navaVideoBrief").value.trim();const names=scenes.map((s,i)=>(i+1)+". "+s.file.name).join("\n");const prompt="برای این پروژه نقش کارگردان خلاق و تدوینگر ویدئو را بر عهده بگیر. موضوع و هدف: "+(brief||"بر اساس تصاویر انتخاب‌شده یک روایت مناسب پیشنهاد بده.")+"\nتعداد تصاویر: "+scenes.length+"\nفهرست فایل‌ها:\n"+(names||"هنوز تصویری انتخاب نشده")+"\nموسیقی: "+(musicElement?"بارگذاری شده":"هنوز انتخاب نشده")+"\nلطفاً سناریوی صحنه‌به‌صحنه، ترتیب پیشنهادی تصاویر، مدت هر صحنه، متن روی تصویر، ریتم هماهنگ با موسیقی، نوع انتقال و حرکت دوربین را پیشنهاد بده. توضیح بده کدام تصمیم‌ها نیازمند تأیید من هستند.";const result=$("navaVideoNaviResult");result.textContent="بریف برای NAVI ارسال شد. امکانات واقعی این استودیو: ساخت ویدئو از صحنه‌های متنی و عکس، بارگذاری حداکثر ۲۰ تصویر، انتخاب مدت و افکت هر صحنه، فونت‌های موجود، قالب عمودی/افقی، موسیقی پس‌زمینه، تنظیم بلندی و محوشدن موسیقی، پیش‌نمایش و خروجی WebM. تدوین ویدئوی ورودی هنوز آماده نیست. لطفاً فقط دستورهای قابل‌اجرا را در بریف مشخص کن.";if(typeof window.openNaviAssistant==="function"){window.openNaviAssistant({service:"ویدئو و صدا",message:prompt+"\n\nامکانات واقعی سایت: ساخت ویدئو از صحنه‌های متنی و عکس؛ بارگذاری حداکثر ۲۰ عکس؛ تنظیم مدت و حرکت نوشته؛ انتخاب فونت موجود؛ قالب عمودی یا افقی؛ موسیقی پس‌زمینه با کنترل بلندی و محوشدن؛ پیش‌نمایش و خروجی WebM. تدوین ویدئوی ورودی هنوز آماده نیست. لطفاً فقط قابلیت‌های موجود را پیشنهاد بده و بریف را با دستورهای دقیق و قابل‌اجرا بنویس.",context:{studio:"ویدئو و صدا",brief,images:names,music:musicElement?"بارگذاری شده":"بارگذاری نشده",capabilities:["text scenes","photo upload","music","font selection","text motion","preview","webm export"],unavailable:["source video editing"]}});}else{result.textContent="همراه NAVI در دسترس نیست؛ از دکمه شناور NAVI استفاده کن.";}});
   let renderTimer=0,renderWatchdog=0;
   function finishRender(message){
     if(renderTimer){clearInterval(renderTimer);renderTimer=0;}
