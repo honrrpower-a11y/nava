@@ -92,7 +92,7 @@
       const body=String(layer.text||"").trim();if(!body)return;
       const fontSize=Math.round((layer.size||42)*textScale),lineH=fontSize*1.32,maxWidth=w*.82;
       ctx.save();ctx.font="650 "+fontSize+"px "+activeFont;ctx.fillStyle="#fff";ctx.textAlign="left";ctx.direction=textDirection;ctx.shadowColor="rgba(0,0,0,.72)";ctx.shadowBlur=18*sf;
-      const words=body.split(/\\s+/).filter(Boolean),lines=[];let line="";
+      const words=body.split(/\s+/).filter(Boolean),lines=[];let line="";
       words.forEach(word=>{const candidate=line?line+" "+word:word;if(line&&ctx.measureText(candidate).width>maxWidth){lines.push(line);line=word;}else line=candidate;});if(line)lines.push(line);
       const shown=lines.slice(0,6),blockHeight=shown.length*lineH,position=layer.position||"bottom",align=layer.align||"center";
       const baseY=position==="top"?h*.15+fontSize:position==="center"?(h-blockHeight)/2+fontSize:h*.84-blockHeight+fontSize;
