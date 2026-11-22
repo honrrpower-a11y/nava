@@ -141,9 +141,20 @@
   imageInput.addEventListener("change",()=>{
     const files=Array.from(imageInput.files||[]);if(!files.length)return;
     if(files.length>20){say("حداکثر ۲۰ عکس می‌توانی انتخاب کنی.");imageInput.value="";return;}
-    const invalid=files.find(f=>!f.type.startsWith("image/")||f.size>20*1024*1024);if(invalid){say("هر فایل باید تصویر و حداکثر ۲۰ مگابایت باشد.");imageInput.value="";return;}
+    const imageExtension=/\.(avif|bmp|gif|heic|heif|jpe?g|png|svg|webp)$/i;
+    const invalid=files.find(f=>(!(f.type||"").toLowerCase().startsWith("image/")&&!imageExtension.test(f.name||""))||f.size>20*1024*1024);
+    if(invalid){say("هر فایل باید تصویر معتبر و حداکثر ۲۰ مگابایت باشد: "+invalid.name);imageInput.value="";return;}
     scenes.forEach(s=>URL.revokeObjectURL(s.url));scenes=[];stopPreview();
-    Promise.all(files.map(file=>new Promise((resolve,reject)=>{const url=URL.createObjectURL(file),img=new Image();img.decoding="async";img.onload=async()=>{try{if(typeof img.decode==="function")await img.decode();}catch(_){}resolve({file,url,image:img});};img.onerror=()=>{URL.revokeObjectURL(url);reject(new Error("خواندن یکی از تصاویر ناموفق بود."));};img.src=url;}))).then(items=>{scenes=items;resize();renderSceneList();refreshScenePhotoOptions();drawFrame(0);updateReady();}).catch(e=>say(e.message));
+    sceneList.textContent="در حال بارگذاری "+files.length+" عکس…";
+    say("در حال خواندن عکس‌های انتخاب‌شده…");
+    Promise.all(files.map(file=>new Promise((resolve,reject)=>{
+      const url=URL.createObjectURL(file),img=new Image();img.onload=()=>{if(img.naturalWidth>0&&img.naturalHeight>0)resolve({file,url,image:img});else{URL.revokeObjectURL(url);reject(new Error("تصویر قابل‌خواندن نیست: "+file.name));}};
+      img.onerror=()=>{URL.revokeObjectURL(url);reject(new Error("خواندن تصویر ناموفق بود: "+file.name));};
+      img.src=url;
+    }))).then(items=>{
+      scenes=items;resize();renderSceneList();refreshScenePhotoOptions();drawFrame(0);updateReady();
+      say(items.length+" عکس با موفقیت بارگذاری شد؛ حالا می‌توانی آن‌ها را به صحنه‌ها اضافه کنی.");
+    }).catch(e=>{sceneList.textContent="بارگذاری عکس ناموفق بود؛ دوباره انتخاب کن.";say(e.message||"خواندن عکس‌ها ناموفق بود.");});
   });
   musicInput.addEventListener("change",()=>{const file=musicInput.files&&musicInput.files[0];if(!file)return;if(!file.type.startsWith("audio/")){say("فایل صوتی معتبر انتخاب کن.");musicInput.value="";return;}if(musicUrl)URL.revokeObjectURL(musicUrl);musicUrl=URL.createObjectURL(file);if(!musicElement){musicElement=new Audio();musicElement.preload="auto";musicElement.loop=false;}musicElement.src=musicUrl;say("موسیقی آماده است.");});
   [titleInput,subtitleInput,formatInput,motionInput,textInput,wordMotionInput,wordSpeedInput,durationInput].filter(Boolean).forEach(el=>el.addEventListener("input",()=>{resize();drawFrame(0);updateReady();}));
