@@ -13,7 +13,7 @@
   const storyCards=()=>storyList?Array.from(storyList.querySelectorAll("[data-story-scene]")):[];
   const storyData=()=>storyCards().map(card=>({text:card.querySelector("[data-story-text]").value.trim(),duration:Number(card.querySelector("[data-story-duration]").value)||3,motion:card.querySelector("[data-story-motion]").value})).filter(s=>s.text);
   const storyTotal=()=>storyData().reduce((sum,s)=>sum+s.duration,0);
-  const totalDuration=()=>storyTotal()||Number(durationInput.value)||8;
+  const totalDuration=()=>storyTotal()||Number(durationInput?.value)||8;
   const say=m=>{status.textContent=m;};
   function dimensions(){return formatInput.value==="landscape"?[1280,720]:[720,1280];}
   function resize(){const [w,h]=dimensions();canvas.width=w;canvas.height=h;const wrap=root.querySelector(".nava-video-canvas-wrap");if(wrap)wrap.style.aspectRatio=w+" / "+h;}
