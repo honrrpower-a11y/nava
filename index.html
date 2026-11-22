@@ -582,7 +582,6 @@
             <div><label for="navaVideoTitle">عنوان ثابت ویدئو (اختیاری)</label><input id="navaVideoTitle" type="text" maxlength="70" placeholder="عنوان یا نام برند"></div>
             <div><label for="navaVideoSubtitle">زیرعنوان ثابت (اختیاری)</label><input id="navaVideoSubtitle" type="text" maxlength="110" placeholder="شعار یا توضیح کوتاه"></div>
             <div><label for="navaVideoFormat">قالب خروجی</label><select id="navaVideoFormat"><option value="portrait">عمودی ۹:۱۶ — ریلز و استوری</option><option value="landscape">افقی ۱۶:۹ — ویدئوی عریض</option></select></div>
-            <div><label for="navaVideoDuration">مدت کل ویدئو</label><select id="navaVideoDuration"><option value="6">۶ ثانیه</option><option value="8">۸ ثانیه</option><option value="10">۱۰ ثانیه</option><option value="15" selected>۱۵ ثانیه</option><option value="20">۲۰ ثانیه</option><option value="30">۳۰ ثانیه</option><option value="45">۴۵ ثانیه</option><option value="60">۶۰ ثانیه</option></select></div>
           </div>
           <div class="nava-video-story-head"><div><strong>سناریو و صحنه‌ها</strong><span>هر کارت یک بخش از روایت ویدئو است.</span></div><button class="nava-video-secondary" id="navaVideoAddScene" type="button">＋ افزودن صحنه</button></div>
           <div class="nava-video-story-list" id="navaVideoStoryList">
@@ -592,7 +591,7 @@
               <div class="nava-video-story-fields"><label>مدت نمایش<select data-story-duration><option value="2">۲ ثانیه</option><option value="3" selected>۳ ثانیه</option><option value="4">۴ ثانیه</option><option value="5">۵ ثانیه</option><option value="6">۶ ثانیه</option><option value="8">۸ ثانیه</option></select></label><label>حرکت نوشته<select data-story-motion><option value="rise">ورود از پایین</option><option value="fade">محو و ظاهر شدن</option><option value="slide">ورود از راست</option><option value="type">نمایش مرحله‌ای</option><option value="none">بدون حرکت</option></select></label></div>
             </article>
           </div>
-          <p class="nava-video-hint">ترتیب کارت‌ها، ترتیب پخش صحنه‌هاست. اگر مجموع زمان صحنه‌ها از مدت کل بیشتر باشد، زمان ویدئو با مجموع صحنه‌ها هماهنگ می‌شود.</p>
+          <p class="nava-video-hint">ترتیب کارت‌ها، ترتیب پخش صحنه‌هاست. مدت نهایی ویدئو از جمع زمان صحنه‌ها محاسبه می‌شود؛ زمان هر صحنه را جداگانه انتخاب کن.</p>
         </section>
         <section class="nava-video-panel" id="navaVideoPanelPhoto" role="tabpanel" hidden>
           <h3>ساخت با عکس‌ها</h3>
