@@ -2737,3 +2737,33 @@ body:has(> .nava-access-panel.is-gate-active){overflow:hidden}
 .nava-video-layer-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
 .nava-video-layer-head button{font-size:11px;padding:6px 9px}
 @media(max-width:600px){.nava-video-layer-fields{grid-template-columns:repeat(2,minmax(0,1fr))!important}.nava-video-layer-settings>summary{padding:9px 10px}}
+
+/* NAVA video studio workspace redesign */
+#navaVideoEngine{max-width:1120px;margin:0 auto;padding:clamp(14px,2.5vw,28px);border:1px solid var(--border);border-radius:24px;background:linear-gradient(145deg,color-mix(in srgb,var(--panel) 96%,#16314a),var(--panel));box-shadow:var(--shadow)}
+#navaVideoEngine>h2{font-size:clamp(22px,3vw,30px);margin:8px 0;color:var(--gold)}
+#navaVideoEngine>p{line-height:2;color:var(--muted);font-size:13px;max-width:850px}
+#navaVideoEngine .nava-video-tabs{display:flex;gap:9px;flex-wrap:wrap;margin:20px 0;padding:6px;border:1px solid var(--border);border-radius:15px;background:var(--bg)}
+#navaVideoEngine .nava-video-tab{flex:1;min-width:130px;border:0;border-radius:11px;padding:12px;color:var(--muted);background:transparent;font-weight:700}
+#navaVideoEngine .nava-video-tab.is-active{color:#17120a;background:linear-gradient(110deg,var(--gold2),var(--gold),var(--blue));box-shadow:0 5px 18px #0002}
+#navaVideoEngine .nava-video-accordion{margin:12px 0;border:1px solid var(--border);border-radius:17px;background:color-mix(in srgb,var(--panel2) 55%,var(--panel));overflow:hidden}
+#navaVideoEngine .nava-video-accordion>summary{display:flex;align-items:center;gap:12px;padding:15px;cursor:pointer;list-style:none}
+#navaVideoEngine .nava-video-accordion>summary::-webkit-details-marker{display:none}
+#navaVideoEngine .nava-video-accordion[open]>summary{border-bottom:1px solid var(--border);background:linear-gradient(90deg,#e5b85e12,#25caff0b)}
+#navaVideoEngine .nava-video-accordion-body{padding:clamp(12px,2vw,20px)}
+#navaVideoEngine .nava-video-scene-media{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(150px,.8fr);gap:12px;margin:12px 0}
+#navaVideoEngine .nava-video-scene-media label{display:grid;gap:7px;min-width:0;font-size:12px;font-weight:700}
+#navaVideoEngine .nava-video-scene-media small{color:var(--muted);font-weight:400}
+#navaVideoEngine .nava-video-scene-media select{width:100%;min-width:0;min-height:48px;padding:10px;border-radius:11px;border:1px solid var(--border);background:var(--bg);color:var(--text)}
+#navaVideoEngine .nava-video-scene-media select[multiple]{min-height:116px}
+#navaVideoEngine .nava-video-story-card{padding:clamp(12px,2vw,18px);border:1px solid var(--border);border-radius:17px;background:var(--panel);margin:12px 0}
+#navaVideoEngine .nava-video-story-card-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:12px}
+#navaVideoEngine .nava-video-text-layer{border:1px solid var(--border);border-radius:13px;padding:12px;margin:10px 0;background:color-mix(in srgb,var(--bg) 55%,transparent)}
+#navaVideoEngine .nava-video-layer-settings{margin-top:10px;border-top:1px solid var(--border);padding-top:9px}
+#navaVideoEngine .nava-video-layer-settings summary{color:var(--blue);font-size:12px;font-weight:700;cursor:pointer;padding:5px}
+#navaVideoEngine .nava-video-shared-output{margin-top:22px;padding:clamp(12px,2vw,20px);border:1px solid var(--border);border-radius:18px;background:var(--bg)}
+#navaVideoEngine .nava-video-canvas-wrap{width:min(100%,520px);margin:12px auto;border-radius:14px;overflow:hidden;box-shadow:0 16px 42px #0005;background:#050912}
+#navaVideoEngine .nava-video-canvas-wrap canvas{display:block;width:100%;height:auto}
+#navaVideoEngine .nava-video-work-actions{display:grid;gap:10px}
+#navaVideoEngine .nava-video-work-actions .nava-video-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+#navaVideoEngine button:focus-visible,#navaVideoEngine select:focus-visible,#navaVideoEngine textarea:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+@media(max-width:640px){#navaVideoEngine{padding:12px;border-radius:17px}#navaVideoEngine .nava-video-scene-media{grid-template-columns:1fr}#navaVideoEngine .nava-video-work-actions .nava-video-actions{grid-template-columns:1fr}}
