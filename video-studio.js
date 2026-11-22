@@ -26,12 +26,11 @@
     if(/سینمایی|cinematic/.test(brief))motion="cinematic";
     if(/بدون حرکت|ثابت بماند|بدون افکت/.test(brief))motion="none";
     let font=null;
-    if(/وزیر|vazir/i.test(brief))font="'Vazirmatn',Tahoma,sans-serif";
+    if(/وزیر|vazir/i.test(brief))font="'Vazirmatn',sans-serif";
     else if(/شکسته|shekasteh|dima/i.test(brief))font="'Dima Shekasteh',serif";
     else if(/نستعلیق|nastaliq|ایران.?نستعلیق/i.test(brief))font="'IranNastaliq',serif";
     else if(/گلزار|gulzar/i.test(brief))font="'Gulzar',serif";
     else if(/نسخ|naskh|noto/i.test(brief))font="'Noto Naskh Arabic',serif";
-    else if(/وزیر|vazir/i.test(brief))font="'Vazirmatn',sans-serif";
     else if(/ایران.?سن.?س|iransans/i.test(brief))font="Tahoma,sans-serif";
     else if(/تاهوما|tahoma/i.test(brief))font="Tahoma,sans-serif";
     else if(/آریال|arial/i.test(brief))font="Arial,sans-serif";
