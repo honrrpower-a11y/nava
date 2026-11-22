@@ -164,3 +164,90 @@ body.light .nava-video-layer-fields select,body.light .nava-video-text-layer tex
 body.light .nava-video-accordion{background:#fffdf8;border-color:rgba(95,117,145,.22)}
 body.light .nava-video-accordion>summary{color:#263a56}
 @media(max-width:600px){.nava-video-accordion>summary{padding:12px}.nava-video-accordion-body{padding:0 10px 12px}}
+
+
+/* NAVA-native photo and music controls: match the global day/night palette */
+#avPage .nava-video-photo-tools{
+  color:var(--text);
+}
+#avPage .nava-video-photo-tools h3{
+  color:var(--gold);
+  font-size:1.02rem;
+  margin:2px 0 6px;
+}
+#avPage .nava-video-photo-tools>p{
+  color:var(--muted);
+  font-size:.88rem;
+  margin:0 0 14px;
+}
+#avPage .nava-video-photo-tools .nava-video-controls{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:12px;
+}
+#avPage .nava-video-photo-tools .nava-video-controls>div{
+  min-width:0;
+  padding:13px;
+  border:1px solid var(--border);
+  border-radius:14px;
+  background:var(--panel2);
+}
+#avPage .nava-video-photo-tools .nava-video-controls label{
+  color:var(--text);
+  font-weight:700;
+  font-size:.86rem;
+  line-height:1.7;
+}
+#avPage .nava-video-photo-tools input[type=file],
+#avPage .nava-video-photo-tools select{
+  width:100%;
+  min-height:44px;
+  border:1px solid var(--border);
+  border-radius:10px;
+  padding:9px;
+  background:var(--panel);
+  color:var(--text);
+  font:inherit;
+  font-size:.85rem;
+}
+#avPage .nava-video-photo-tools input[type=file]::file-selector-button{
+  border:0;
+  border-radius:8px;
+  padding:8px 11px;
+  margin-inline-end:9px;
+  background:var(--gold);
+  color:#17243b;
+  font:inherit;
+  font-weight:700;
+  cursor:pointer;
+}
+#avPage .nava-video-photo-tools input[type=range]{
+  width:100%;
+  accent-color:var(--gold);
+  margin-top:9px;
+}
+#avPage .nava-video-photo-tools .nava-video-scene-list{
+  grid-column:1/-1;
+  margin:0;
+  padding:12px;
+  border:1px dashed var(--border);
+  border-radius:12px;
+  background:var(--panel);
+  color:var(--muted);
+  line-height:1.7;
+}
+#avPage .nava-video-photo-tools .nava-video-scene{
+  background:var(--panel);
+  border-color:var(--border);
+  color:var(--text);
+}
+#avPage .nava-video-photo-tools .nava-video-scene span{color:var(--text)}
+#avPage .nava-video-photo-tools .nava-video-scene button{
+  background:var(--panel2);
+  color:var(--text);
+  border:1px solid var(--border);
+}
+@media(max-width:560px){
+  #avPage .nava-video-photo-tools .nava-video-controls{grid-template-columns:1fr}
+  #avPage .nava-video-photo-tools .nava-video-controls>div{padding:11px}
+}
