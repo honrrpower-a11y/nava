@@ -94,3 +94,29 @@ body.light .nava-video-engine input:focus,body.light .nava-video-engine select:f
 .nava-video-panel#navaVideoPanelOutput .nava-video-work-actions{margin-top:14px}
 .nava-video-panel#navaVideoPanelOutput .nava-video-result video{display:block;width:100%;max-height:560px;object-fit:contain}
 .nava-video-story-card textarea{min-height:90px}
+
+
+/* Restore the clean, understated video-studio backdrop; remove decorative bubble layers. */
+#avPage,
+#avPage .studio-workspace,
+#avPage .nava-video-engine {
+  background-image: none !important;
+}
+#avPage::before,
+#avPage::after,
+#avPage .studio-workspace::before,
+#avPage .studio-workspace::after,
+#avPage .nava-video-engine::before,
+#avPage .nava-video-engine::after {
+  content: none !important;
+  display: none !important;
+}
+#avPage {
+  background-color: transparent !important;
+}
+#avPage .nava-video-engine {
+  background: var(--panel, #101b2d) !important;
+}
+body.light #avPage .nava-video-engine {
+  background: #fffdf8 !important;
+}
