@@ -223,6 +223,19 @@ document.addEventListener("click", event => {
 
 const navButtons = document.querySelectorAll(".nav-btn");
 const pages = document.querySelectorAll(".page");
+const NAVA_ACTIVE_PAGE_KEY = "nava_active_page_v1";
+function saveNavaActivePage(pageId) {
+  if (!pages || !Array.from(pages).some(page => page.id === pageId)) return;
+  try { localStorage.setItem(NAVA_ACTIVE_PAGE_KEY, pageId); } catch (_) {}
+}
+function restoreNavaActivePage() {
+  let pageId = "homePage";
+  try {
+    const saved = localStorage.getItem(NAVA_ACTIVE_PAGE_KEY);
+    if (saved && Array.from(pages).some(page => page.id === saved)) pageId = saved;
+  } catch (_) {}
+  if (pageId !== "homePage") showPage(pageId);
+}
 
 function collectNaviStudioContext(pageId) {
   const value = id => document.getElementById(id)?.value?.trim() || "";
@@ -390,7 +403,9 @@ function syncNaviWidgetPlacement(pageId) {
 }
 
 function showPage(pageId) {
+  if (!Array.from(pages).some(page => page.id === pageId)) return;
   if (navaAccessGateActive && pageId !== "homePage") return;
+  saveNavaActivePage(pageId);
   if (naviWidgetPanel && !naviWidgetPanel.hidden && document.querySelector(".page.active")?.id !== "officePage") setNaviWidgetOpen(false);
   pages.forEach(page => page.classList.toggle("active", page.id === pageId));
   syncNaviWidgetPlacement(pageId);
@@ -1363,6 +1378,7 @@ document.querySelectorAll("#naviWorkspaceTabs [data-navi-tab]").forEach(button =
 
 function showNaviChat() {
   setNavaAccessGate(false);
+  restoreNavaActivePage();
   document.querySelector(".nava-access-panel")?.classList.add("is-dismissed");
   naviLoginPanel.hidden = true;
   naviChatArea.hidden = false;
@@ -4177,6 +4193,7 @@ copyStory.addEventListener("click", async () => {
     document.querySelector(".nava-access-panel")?.classList.add("is-dismissed");
     setNaviWidgetOpen(false);
     if (naviWelcomeBubble) naviWelcomeBubble.hidden = true;
+    restoreNavaActivePage();
     const firstStudio = document.querySelector(".nava-orbit-button");
     if (firstStudio) firstStudio.focus({ preventScroll: true });
   });
