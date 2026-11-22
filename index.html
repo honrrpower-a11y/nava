@@ -567,45 +567,57 @@
         <section class="nava-video-panel is-active" id="navaVideoPanelText" role="tabpanel">
           <h3>ساخت ویدئو از چند صحنه متنی</h3>
           <p>هر صحنه می‌تواند چند لایه مستقل متن داشته باشد؛ جایگاه، تراز، اندازه و مسیر ورود هر لایه جداگانه تنظیم می‌شود.</p>
-          <details class="nava-video-accordion" open><summary><span class="nava-video-step-number">۱</span><span><strong>تنظیم و طراحی با NAVI</strong><small>شرح ویدئو یا تنظیمات دستی</small></span></summary><div class="nava-video-accordion-body">          <section class="nava-video-setup" aria-labelledby="navaVideoSetupTitle">
-            <h3 id="navaVideoSetupTitle">روش تنظیم ویدئو</h3>
-            <div class="nava-video-mode-options">
-              <label><input type="radio" name="navaVideoSetupMode" value="brief" checked><span><strong>تنظیم با درخواست متنی</strong><small>شرح یا بریف را بنویس؛ NAVI و موتور ویدئو دستورهای قابل‌اجرا را اعمال می‌کنند.</small></span></label>
-              <label><input type="radio" name="navaVideoSetupMode" value="manual"><span><strong>تنظیم با گزینه‌های موجود</strong><small>فونت و حرکت نوشته را خودت از کنترل‌ها انتخاب کن.</small></span></label>
+          <details class="nava-video-accordion" open>
+            <summary><span class="nava-video-step-number">۱</span><span><strong>تنظیم و طراحی با NAVI</strong><small>شرح ویدئو یا تنظیمات دستی</small></span></summary>
+            <div class="nava-video-accordion-body">
+              <section class="nava-video-setup" aria-labelledby="navaVideoSetupTitle">
+                <h3 id="navaVideoSetupTitle">روش تنظیم ویدئو</h3>
+                <div class="nava-video-mode-options">
+                  <label><input type="radio" name="navaVideoSetupMode" value="brief" checked><span><strong>تنظیم با درخواست متنی</strong><small>شرح یا بریف را بنویس؛ NAVI و موتور ویدئو دستورهای قابل‌اجرا را اعمال می‌کنند.</small></span></label>
+                  <label><input type="radio" name="navaVideoSetupMode" value="manual"><span><strong>تنظیم با گزینه‌های موجود</strong><small>فونت و حرکت نوشته را خودت از کنترل‌ها انتخاب کن.</small></span></label>
+                </div>
+                <div id="navaVideoBriefSettings" class="nava-video-brief-settings">
+                  <label for="navaVideoBrief">شرح درخواست یا بریف طراحی</label>
+                  <textarea id="navaVideoBrief" rows="4" maxlength="2400" placeholder="مثلاً متن اول از سمت چپ وارد شود، متن دوم محو ظاهر شود و از فونت وزیر بولد استفاده شود..."></textarea>
+                  <div class="nava-video-actions"><button class="nava-video-primary" id="navaVideoApplyBrief" type="button">اعمال دستورهای متن</button><button class="nava-video-secondary" id="navaVideoAskNavi" type="button">گرفتن بریف از NAVI</button></div>
+                  <div class="nava-video-navi-result" id="navaVideoNaviResult" aria-live="polite">دستورهای نوشتاری را اینجا وارد کن یا برای گرفتن بریف از NAVI از دکمه شناور استفاده کن.</div>
+                </div>
+                <div id="navaVideoManualSettings" class="nava-video-manual-settings" hidden>
+                  <div class="nava-video-controls">
+                    <div><label for="navaVideoManualMotion">حرکت پیش‌فرض نوشته</label><select id="navaVideoManualMotion"><option value="cinematic">حرکت سینمایی چندلایه</option><option value="rise">ورود از پایین</option><option value="fade">محو و ظاهر شدن</option><option value="slide-right">ورود از راست</option><option value="slide-left">ورود از چپ</option><option value="type">نمایش مرحله‌ای</option><option value="none">بدون حرکت</option></select></div>
+                    <div><label for="navaVideoFont">فونت نوشته</label><select id="navaVideoFont"><option value="sans-serif">پیش‌فرض دستگاه</option><option value="Arial, sans-serif">Arial</option><option value="Tahoma, sans-serif">Tahoma</option><option value="Georgia, serif">Georgia</option><option value="'Courier New', monospace">Courier New</option><option value="system-ui, sans-serif">System UI</option><option value="'Vazirmatn',Tahoma,sans-serif">Vazirmatn (اگر روی دستگاه نصب باشد)</option><option value="'IRANSans',Tahoma,sans-serif">IRANSans (اگر روی دستگاه نصب باشد)</option></select></div>
+                  </div>
+                </div>
+              </section>
             </div>
-            <div id="navaVideoBriefSettings" class="nava-video-brief-settings">
-              <label for="navaVideoBrief">شرح درخواست یا بریف طراحی</label>
-              <textarea id="navaVideoBrief" rows="4" maxlength="2400" placeholder="مثلاً متن اول از سمت چپ وارد شود، متن دوم محو ظاهر شود و از فونت وزیر بولد استفاده شود..."></textarea>
-              <div class="nava-video-actions"><button class="nava-video-primary" id="navaVideoApplyBrief" type="button">اعمال دستورهای متن</button><button class="nava-video-secondary" id="navaVideoAskNavi" type="button">گرفتن بریف از NAVI</button></div>
-              <div class="nava-video-navi-result" id="navaVideoNaviResult" aria-live="polite">دستورهای نوشتاری را اینجا وارد کن یا برای گرفتن بریف از NAVI از دکمه شناور استفاده کن.</div>
-            </div>
-            <div id="navaVideoManualSettings" class="nava-video-manual-settings" hidden>
-              <details class="nava-video-accordion"><summary><span class="nava-video-step-number">۳</span><span><strong>عنوان و قالب خروجی</strong><small>همه موارد این بخش اختیاری‌اند</small></span></summary><div class="nava-video-accordion-body">          <div class="nava-video-controls">
-                <div><label for="navaVideoManualMotion">حرکت پیش‌فرض نوشته</label><select id="navaVideoManualMotion"><option value="cinematic">حرکت سینمایی چندلایه</option><option value="rise">ورود از پایین</option><option value="fade">محو و ظاهر شدن</option><option value="slide-right">ورود از راست</option><option value="slide-left">ورود از چپ</option><option value="type">نمایش مرحله‌ای</option><option value="none">بدون حرکت</option></select></div>
-                <div><label for="navaVideoFont">فونت نوشته</label><select id="navaVideoFont"><option value="sans-serif">پیش‌فرض دستگاه</option><option value="Arial, sans-serif">Arial</option><option value="Tahoma, sans-serif">Tahoma</option><option value="Georgia, serif">Georgia</option><option value="'Courier New', monospace">Courier New</option><option value="system-ui, sans-serif">System UI</option><option value="'Vazirmatn',Tahoma,sans-serif">Vazirmatn (اگر روی دستگاه نصب باشد)</option><option value="'IRANSans',Tahoma,sans-serif">IRANSans (اگر روی دستگاه نصب باشد)</option></select></div>
+          </details>
+          <details class="nava-video-accordion">
+            <summary><span class="nava-video-step-number">۲</span><span><strong>عکس و موسیقی</strong><small>افزودن تصویر و صدای پس‌زمینه (اختیاری)</small></span></summary>
+            <div class="nava-video-accordion-body">
+              <div class="nava-video-photo-tools">
+                <h3>عکس و موسیقی</h3>
+                <p>می‌توانی برای ویدئو عکس و موسیقی اضافه کنی؛ هر صحنه می‌تواند متن، عکس یا هر دو را داشته باشد.</p>
+                <div class="nava-video-controls">
+                  <div><label for="navaVideoImage">افزودن عکس‌ها (حداکثر ۲۰ مگابایت برای هر عکس)</label><input id="navaVideoImage" type="file" accept="image/*" multiple></div>
+                  <div><label for="navaVideoMusic">افزودن موسیقی پس‌زمینه (اختیاری)</label><input id="navaVideoMusic" type="file" accept="audio/*"></div>
+                  <div><label for="navaVideoLayout">چیدمان عکس‌ها</label><select id="navaVideoLayout"><option value="sequence" selected>نمایش پشت‌سرهم عکس‌ها</option><option value="triptych">سه عکس در یک قاب</option><option value="grid">چهار قاب هم‌زمان</option></select></div>
+                  <div><label for="navaVideoMusicVolume">بلندی موسیقی</label><input id="navaVideoMusicVolume" type="range" min="0" max="100" value="75"></div>
+                  <div><label for="navaVideoFade">محو شدن ابتدا و انتهای موسیقی</label><select id="navaVideoFade"><option value="1.5">۱.۵ ثانیه</option><option value="2.5" selected>۲.۵ ثانیه</option><option value="0">بدون محو شدن</option></select></div>
+                  <div class="nava-video-scene-list" id="navaVideoSceneList" aria-live="polite">هنوز عکسی انتخاب نشده است.</div>
+                </div>
               </div>
             </div>
-          </section>
-</div></details>
-          <details class="nava-video-accordion"><summary><span class="nava-video-step-number">۲</span><span><strong>عکس و موسیقی</strong><small>افزودن تصویر و صدای پس‌زمینه (اختیاری)</small></span></summary><div class="nava-video-accordion-body">          <div class="nava-video-photo-tools">
-            <h3>عکس و موسیقی</h3>
-            <p>می‌توانی برای ویدئو عکس و موسیقی اضافه کنی؛ هر صحنه می‌تواند متن، عکس یا هر دو را داشته باشد.</p>
-  </div></details>
-          <div class="nava-video-controls">
-              <div><label for="navaVideoImage">افزودن عکس‌ها (حداکثر ۲۰ مگابایت برای هر عکس)</label><input id="navaVideoImage" type="file" accept="image/*" multiple></div>
-              <div><label for="navaVideoMusic">افزودن موسیقی پس‌زمینه (اختیاری)</label><input id="navaVideoMusic" type="file" accept="audio/*"></div>
-              <div><label for="navaVideoLayout">چیدمان عکس‌ها</label><select id="navaVideoLayout"><option value="sequence" selected>نمایش پشت‌سرهم عکس‌ها</option><option value="triptych">سه عکس در یک قاب</option><option value="grid">چهار قاب هم‌زمان</option></select></div>
-              <div><label for="navaVideoMusicVolume">بلندی موسیقی</label><input id="navaVideoMusicVolume" type="range" min="0" max="100" value="75"></div>
-              <div><label for="navaVideoFade">محو شدن ابتدا و انتهای موسیقی</label><select id="navaVideoFade"><option value="1.5">۱.۵ ثانیه</option><option value="2.5" selected>۲.۵ ثانیه</option><option value="0">بدون محو شدن</option></select></div>
-              <div class="nava-video-scene-list" id="navaVideoSceneList" aria-live="polite">هنوز عکسی انتخاب نشده است.</div>
+          </details>
+          <details class="nava-video-accordion">
+            <summary><span class="nava-video-step-number">۳</span><span><strong>عنوان و قالب خروجی</strong><small>همه موارد این بخش اختیاری‌اند</small></span></summary>
+            <div class="nava-video-accordion-body">
+              <div class="nava-video-controls">
+                <div><label for="navaVideoTitle">عنوان ثابت ویدئو (اختیاری)</label><input id="navaVideoTitle" type="text" maxlength="70" placeholder="عنوان یا نام برند"></div>
+                <div><label for="navaVideoSubtitle">زیرعنوان ثابت (اختیاری)</label><input id="navaVideoSubtitle" type="text" maxlength="110" placeholder="شعار یا توضیح کوتاه"></div>
+                <div><label for="navaVideoFormat">قالب خروجی</label><select id="navaVideoFormat"><option value="portrait">عمودی ۹:۱۶ — ریلز و استوری</option><option value="landscape">افقی ۱۶:۹ — ویدئوی عریض</option></select></div>
+              </div>
             </div>
-          </div>
-          <div class="nava-video-controls">
-            <div><label for="navaVideoTitle">عنوان ثابت ویدئو (اختیاری)</label><input id="navaVideoTitle" type="text" maxlength="70" placeholder="عنوان یا نام برند"></div>
-            <div><label for="navaVideoSubtitle">زیرعنوان ثابت (اختیاری)</label><input id="navaVideoSubtitle" type="text" maxlength="110" placeholder="شعار یا توضیح کوتاه"></div>
-            <div><label for="navaVideoFormat">قالب خروجی</label><select id="navaVideoFormat"><option value="portrait">عمودی ۹:۱۶ — ریلز و استوری</option><option value="landscape">افقی ۱۶:۹ — ویدئوی عریض</option></select></div>
-          </div>
-</div></details>
+          </details>
           <div class="nava-video-story-head"><div><span class="nava-video-step-number">۴</span><strong>سناریو و صحنه‌ها</strong><span>متن و تصویر را در هر صحنه بچین؛ ترتیب کارت‌ها، ترتیب پخش است.</span></div><button class="nava-video-secondary" id="navaVideoAddScene" type="button">＋ افزودن صحنه</button></div>
           <label class="nava-video-text-persistence">نمایش متن صحنه‌های قبلی<select id="navaVideoTextPersistence"><option value="keep" selected>متن‌های قبلی باقی بمانند</option><option value="replace">فقط متن صحنه جاری نمایش داده شود</option></select></label>
           <div class="nava-video-story-list" id="navaVideoStoryList">
