@@ -137,6 +137,17 @@ body.light #avPage .nava-video-engine {
 .nava-video-text-layers{display:grid;gap:10px;margin:10px 0}.nava-video-text-layer{padding:12px;border:1px solid var(--border,rgba(145,170,210,.24));border-radius:12px;background:var(--surface,rgba(16,27,45,.48))}
 .nava-video-layer-head{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px;color:var(--text,#eef4ff)}
 .nava-video-layer-head button,.nava-video-add-layer{border:1px solid var(--border,rgba(145,170,210,.25));border-radius:9px;padding:7px 11px;background:var(--surface-2,rgba(36,51,75,.75));color:var(--text,#eef4ff);font:inherit;cursor:pointer}
+
+.nava-video-scene-design{margin:0 0 13px;border:1px solid var(--border,rgba(145,170,210,.24));border-radius:11px;padding:9px 11px;background:var(--surface,rgba(16,27,45,.35))}
+.nava-video-scene-design>summary{cursor:pointer;color:var(--text,#e8efff);font-weight:650}
+.nava-video-scene-design-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:11px}
+.nava-video-scene-design-grid label{display:grid;gap:5px;color:var(--text,#dce7f8);font-size:.88rem}
+.nava-video-scene-design-grid select,.nava-video-scene-design-grid input[type="text"]{width:100%;box-sizing:border-box;border:1px solid var(--border,rgba(145,170,210,.24));border-radius:9px;padding:9px;background:var(--bg,#101b2d);color:var(--text,#f4f7ff);font:inherit}
+.nava-video-scene-design-grid input[type="color"]{width:100%;height:38px;border:1px solid var(--border,rgba(145,170,210,.24));border-radius:9px;background:var(--bg,#101b2d);padding:3px}
+.nava-video-scene-design-grid .nava-video-scene-frame-toggle{display:flex;align-items:center;gap:8px}
+body.light .nava-video-scene-design>summary,body.light .nava-video-scene-design-grid label{color:#526176}
+body.light .nava-video-scene-design-grid select,body.light .nava-video-scene-design-grid input[type="text"]{background:#fffdf8;color:#263a56}
+@media(max-width:520px){.nava-video-scene-design-grid{grid-template-columns:1fr}}
 .nava-video-layer-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin-top:9px}
 .nava-video-layer-fields label,.nava-video-text-layer>label{display:grid;gap:5px;color:var(--text,#dce7f8);font-size:.88rem}
 .nava-video-layer-fields select,.nava-video-text-layer textarea{width:100%;box-sizing:border-box;border:1px solid var(--border,rgba(145,170,210,.24));border-radius:9px;padding:9px;background:var(--bg,#101b2d);color:var(--text,#f4f7ff);font:inherit}
