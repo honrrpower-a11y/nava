@@ -29,7 +29,7 @@
     else if(/ایران.?سن.?س|iransans/i.test(brief))font="'IRANSans',Tahoma,sans-serif";
     else if(/تاهوما|tahoma/i.test(brief))font="Tahoma,sans-serif";
     else if(/آریال|arial/i.test(brief))font="Arial,sans-serif";
-    if(motion)storyCards().forEach(card=>{const el=card.querySelector("[data-story-motion]");if(el)el.value=motion;});
+    if(motion)storyCards().forEach(card=>card.querySelectorAll("[data-layer-motion]").forEach(el=>el.value=motion==="slide-right"?"from-right":motion==="slide-left"?"from-left":motion==="rise"?"from-bottom":motion));
     if(font&&fontInput){fontInput.value=font;activeFont=font;}
     const direction=/چپ به راست|از چپ به راست|چپ.?چین|left.?to.?right|ltr/i.test(brief)?"ltr":/راست به چپ|راست.?چین|right.?to.?left|rtl/i.test(brief)?"rtl":null;
     if(direction)textDirection=direction;
@@ -37,9 +37,9 @@
     resize();drawFrame(0);updateReady();
   }
   let activeFont=fontInput?.value||"sans-serif",textDirection="rtl";
-  setupRadios.forEach(r=>r.addEventListener("change",()=>{const briefMode=setupMode()==="brief";$("navaVideoBriefSettings").hidden=!briefMode;$("navaVideoManualSettings").hidden=briefMode;if(!briefMode){activeFont=fontInput?.value||"sans-serif";textDirection="rtl";storyCards().forEach(card=>{const el=card.querySelector("[data-story-motion]");if(el&&manualMotionInput)el.value=manualMotionInput.value;});}resize();drawFrame(0);}));
+  setupRadios.forEach(r=>r.addEventListener("change",()=>{const briefMode=setupMode()==="brief";$("navaVideoBriefSettings").hidden=!briefMode;$("navaVideoManualSettings").hidden=briefMode;if(!briefMode){activeFont=fontInput?.value||"sans-serif";textDirection="rtl";storyCards().forEach(card=>card.querySelectorAll("[data-layer-motion]").forEach(el=>{if(manualMotionInput)el.value=manualMotionInput.value==="slide-right"?"from-right":manualMotionInput.value==="slide-left"?"from-left":manualMotionInput.value==="rise"?"from-bottom":manualMotionInput.value;}));}resize();drawFrame(0);}));
   applyBriefBtn?.addEventListener("click",applyBrief);
-  manualMotionInput?.addEventListener("change",()=>{if(setupMode()==="manual")storyCards().forEach(card=>{const el=card.querySelector("[data-story-motion]");if(el)el.value=manualMotionInput.value;});drawFrame(0);});
+  manualMotionInput?.addEventListener("change",()=>{if(setupMode()==="manual")storyCards().forEach(card=>{const el=card.querySelector("[data-story-motion]");if(el)el.value=manualMotionInput.value==="slide-right"?"from-right":manualMotionInput.value==="slide-left"?"from-left":manualMotionInput.value==="rise"?"from-bottom":manualMotionInput.value;});drawFrame(0);});
   fontInput?.addEventListener("change",()=>{activeFont=fontInput.value;drawFrame(0);});
 
   const storyCards=()=>storyList?Array.from(storyList.querySelectorAll("[data-story-scene]")):[];
