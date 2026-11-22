@@ -581,54 +581,60 @@
         <span class="studio-step">NAVA VIDEO WORKSPACE</span>
         <h2 id="navaVideoEngineTitle">استودیوی ساخت و تدوین ویدئو</h2>
         <p>چند عکس و موسیقی خودت را وارد کن؛ NAVI سناریو و ترتیب پیشنهادی را طراحی می‌کند و موتور تدوین، پیش‌نمایش و خروجی را می‌سازد.</p>
-        <div class="nava-video-tabs" role="tablist" aria-label="مراحل ساخت ویدئو">
-          <button type="button" class="nava-video-tab is-active" role="tab" aria-selected="true" aria-controls="navaVideoPanelMedia" data-video-tab="media">۱. رسانه‌ها</button>
-          <button type="button" class="nava-video-tab" role="tab" aria-selected="false" aria-controls="navaVideoPanelNavi" data-video-tab="navi">۲. کارگردانی NAVI</button>
-          <button type="button" class="nava-video-tab" role="tab" aria-selected="false" aria-controls="navaVideoPanelEdit" data-video-tab="edit">۳. تدوین و پیش‌نمایش</button>
-          <button type="button" class="nava-video-tab" role="tab" aria-selected="false" aria-controls="navaVideoPanelExport" data-video-tab="export">۴. خروجی</button>
+        <div class="nava-video-tabs" role="tablist" aria-label="بخش‌های استودیوی ویدئو">
+          <button type="button" class="nava-video-tab is-active" role="tab" aria-selected="true" aria-controls="navaVideoPanelGuide" data-video-tab="guide">راهنمایی</button>
+          <button type="button" class="nava-video-tab" role="tab" aria-selected="false" aria-controls="navaVideoPanelText" data-video-tab="text">کارهای متنی</button>
+          <button type="button" class="nava-video-tab" role="tab" aria-selected="false" aria-controls="navaVideoPanelPhoto" data-video-tab="photo">عکس</button>
+          <button type="button" class="nava-video-tab" role="tab" aria-selected="false" aria-controls="navaVideoPanelVideo" data-video-tab="video">ویدیو · به‌زودی</button>
         </div>
-        <section class="nava-video-panel is-active" id="navaVideoPanelMedia" role="tabpanel">
+        <section class="nava-video-panel is-active" id="navaVideoPanelGuide" role="tabpanel">
+          <h3>راهنمایی و برنامه‌ریزی با NAVI</h3>
+          <p>NAVI به انتخاب مسیر مناسب، نوشتن سناریو، متن و ترتیب محتوای پروژه کمک می‌کند.</p>
+          <label for="navaVideoBrief">موضوع یا هدف پروژه</label>
+          <textarea id="navaVideoBrief" rows="4" maxlength="1200" placeholder="مثلاً معرفی محصول، ساخت محتوای شبکه اجتماعی، روایت یک داستان یا طراحی نوشته متحرک..."></textarea>
+          <div class="nava-video-actions"><button class="nava-video-primary" id="navaVideoAskNavi" type="button">ارسال بریف به NAVI</button><button class="nava-video-secondary" id="navaVideoAutoOrder" type="button">چینش پیشنهادی تصاویر</button></div>
+          <div class="nava-video-navi-result" id="navaVideoNaviResult" aria-live="polite">موضوع و خواسته‌ات را بنویس؛ سپس بریف را از طریق فرم NAVI همین استودیو ارسال کن.</div>
+          <p class="nava-video-hint">NAVI می‌تواند سناریو، متن پیشنهادی، ترتیب تصاویر، مدت هر بخش و جهت هنری را پیشنهاد دهد.</p>
+        </section>
+        <section class="nava-video-panel" id="navaVideoPanelText" role="tabpanel" hidden>
+          <h3>ساخت محتوای متنی و نوشته‌های متحرک</h3>
+          <p>عنوان، زیرعنوان و متن اصلی را وارد کن. این بخش برای ویدئوی متن‌محور نیز قابل استفاده است و به عکس نیاز ندارد.</p>
+          <div class="nava-video-controls">
+            <div><label for="navaVideoTitle">عنوان اصلی</label><input id="navaVideoTitle" type="text" maxlength="70" placeholder="عنوان ویدئو"></div>
+            <div><label for="navaVideoSubtitle">زیرعنوان</label><input id="navaVideoSubtitle" type="text" maxlength="110" placeholder="توضیح کوتاه"></div>
+            <div><label for="navaVideoText">متن اصلی</label><textarea id="navaVideoText" rows="5" maxlength="500" placeholder="متن یا پیام اصلی؛ هر جمله را در خط جداگانه هم می‌توانی بنویسی."></textarea></div>
+            <div><label for="navaVideoMotion">حرکت تصویر و نوشته</label><select id="navaVideoMotion"><option value="cinematic" selected>سینمایی — حرکت و زوم آرام</option><option value="subtle">ملایم — حرکت ظریف</option></select></div>
+            <div><label for="navaVideoFormat">قالب خروجی</label><select id="navaVideoFormat"><option value="portrait">عمودی ۹:۱۶ — ریلز و استوری</option><option value="landscape">افقی ۱۶:۹ — ویدئوی عریض</option></select></div>
+            <div><label for="navaVideoDuration">مدت خروجی</label><select id="navaVideoDuration"><option value="6">۶ ثانیه</option><option value="8" selected>۸ ثانیه</option><option value="10">۱۰ ثانیه</option><option value="15">۱۵ ثانیه</option><option value="20">۲۰ ثانیه</option><option value="30">۳۰ ثانیه</option></select></div>
+          </div>
+          <p class="nava-video-hint">جلوه‌های حرکتی پیشرفته کلمات و تایپوگرافی مرحله بعدی توسعه این بخش هستند؛ فعلاً متن در خروجی نمایش داده می‌شود.</p>
+        </section>
+        <section class="nava-video-panel" id="navaVideoPanelPhoto" role="tabpanel" hidden>
+          <h3>ساخت با عکس‌ها</h3>
+          <p>تا ۲۰ عکس انتخاب کن، چیدمان دلخواهت را مشخص کن و در صورت تمایل موسیقی پس‌زمینه اضافه کن.</p>
           <div class="nava-video-grid">
             <div class="nava-video-controls">
               <div><label for="navaVideoImage">افزودن عکس‌ها (حداکثر ۲۰ مگابایت برای هر عکس)</label><input id="navaVideoImage" type="file" accept="image/*" multiple></div>
               <div><label for="navaVideoMusic">افزودن موسیقی پس‌زمینه (اختیاری)</label><input id="navaVideoMusic" type="file" accept="audio/*"></div>
-              <div><label for="navaVideoTitle">عنوان اصلی (اختیاری)</label><input id="navaVideoTitle" type="text" maxlength="70" placeholder="عنوان ویدئو"></div>
-              <div><label for="navaVideoSubtitle">زیرعنوان (اختیاری)</label><input id="navaVideoSubtitle" type="text" maxlength="110" placeholder="توضیح کوتاه"></div>
-              <div><label for="navaVideoText">متن اصلی ویدئو (برای ساخت بدون عکس هم قابل استفاده است)</label><textarea id="navaVideoText" rows="3" maxlength="500" placeholder="متن یا پیام اصلی ویدئو"></textarea></div>
               <div><label for="navaVideoLayout">چیدمان عکس‌ها</label><select id="navaVideoLayout"><option value="sequence" selected>نمایش پشت‌سرهم عکس‌ها</option><option value="triptych">سه عکس در یک قاب</option><option value="grid">چهار قاب هم‌زمان</option></select></div>
-              <div><label for="navaVideoFormat">قالب ویدئو</label><select id="navaVideoFormat"><option value="portrait">عمودی ۹:۱۶ — ریلز و استوری</option><option value="landscape">افقی ۱۶:۹ — ویدئوی عریض</option></select></div>
-              <div><label for="navaVideoDuration">مدت کل ویدئو</label><select id="navaVideoDuration"><option value="6">۶ ثانیه</option><option value="8" selected>۸ ثانیه</option><option value="10">۱۰ ثانیه</option><option value="15">۱۵ ثانیه</option><option value="20">۲۰ ثانیه</option><option value="30">۳۰ ثانیه</option></select></div>
-              <p class="nava-video-hint">می‌توانی عکس‌ها را پشت‌سرهم یا در قاب سه‌تایی/چهارتایی نمایش بدهی؛ حتی بدون عکس و فقط با متن هم ویدئو بساز. فایل‌ها فقط در همین مرورگر پردازش می‌شوند.</p>
-              <div class="nava-video-scene-list" id="navaVideoSceneList" aria-live="polite">هنوز عکسی انتخاب نشده است.</div>
-            </div>
-            <div class="nava-video-preview"><div class="nava-video-canvas-wrap"><canvas id="navaVideoCanvas" width="1080" height="1920" aria-label="پیش‌نمایش ویدئو"></canvas></div></div>
-          </div>
-        </section>
-        <section class="nava-video-panel" id="navaVideoPanelNavi" role="tabpanel" hidden>
-          <h3>کارگردانی خلاق با NAVI</h3>
-          <p>NAVI با دریافت بریف و فهرست نام عکس‌ها، سناریو و پیشنهادهای تدوین را آماده می‌کند. برای تحلیل محتوای خود عکس‌ها، لازم است تصاویر جداگانه در گفت‌وگوی NAVI بارگذاری شوند.</p>
-          <label for="navaVideoBrief">هدف یا داستان ویدئو</label>
-          <textarea id="navaVideoBrief" rows="4" maxlength="1200" placeholder="مثلاً معرفی محصول، روایت سفر، ویدئوی تبلیغاتی یا خاطره‌ای..."></textarea>
-          <div class="nava-video-actions"><button class="nava-video-primary" id="navaVideoAskNavi" type="button">ارسال بریف به NAVI</button><button class="nava-video-secondary" id="navaVideoAutoOrder" type="button">چینش پیشنهادی تصاویر</button></div>
-          <div class="nava-video-navi-result" id="navaVideoNaviResult" aria-live="polite">بریف و فهرست عکس‌ها را آماده کن؛ سپس از فرم اصلی بالای استودیو با دکمه «ادامه با NAVI» آن را ارسال کن.</div>
-          <p class="nava-video-hint">تحلیل معنایی تصاویر و تصمیم‌های خلاقانه با NAVI انجام می‌شود؛ این بخش بریف و فایل‌های انتخابی را به گفت‌وگوی همین استودیو می‌فرستد و موتور تدوین بر اساس تنظیمات تأییدشده رندر می‌گیرد.</p>
-        </section>
-        <section class="nava-video-panel" id="navaVideoPanelEdit" role="tabpanel" hidden>
-          <div class="nava-video-grid">
-            <div class="nava-video-controls">
-              <div><label for="navaVideoMotion">حرکت دوربین</label><select id="navaVideoMotion"><option value="cinematic" selected>سینمایی — زوم و حرکت آرام</option><option value="subtle">ملایم — حرکت ظریف</option></select></div>
               <div><label for="navaVideoMusicVolume">بلندی موسیقی</label><input id="navaVideoMusicVolume" type="range" min="0" max="100" value="75"></div>
               <div><label for="navaVideoFade">محو شدن ابتدا و انتهای موسیقی</label><select id="navaVideoFade"><option value="1.5">۱.۵ ثانیه</option><option value="2.5" selected>۲.۵ ثانیه</option><option value="0">بدون محو شدن</option></select></div>
-              <div class="nava-video-actions"><button class="nava-video-secondary" id="navaVideoPreview" type="button" disabled>پیش‌نمایش</button><button class="nava-video-primary" id="navaVideoRender" type="button" disabled>ساخت ویدئو</button></div>
+              <div class="nava-video-scene-list" id="navaVideoSceneList" aria-live="polite">هنوز عکسی انتخاب نشده است.</div>
             </div>
-            <div class="nava-video-preview"><div class="nava-video-status" id="navaVideoStatus" role="status" aria-live="polite">ابتدا عکس‌ها را در تب رسانه‌ها انتخاب کن.</div><div class="nava-video-progress" aria-label="پیشرفت ساخت ویدئو"><span id="navaVideoProgress"></span></div></div>
+            <div class="nava-video-preview"><div class="nava-video-canvas-wrap"><canvas id="navaVideoCanvas" width="720" height="1280" aria-label="پیش‌نمایش ترکیب عکس و متن"></canvas></div></div>
           </div>
+          <p class="nava-video-hint">فایل‌ها فقط در همین مرورگر پردازش می‌شوند. برای شروع پیش‌نمایش و ساخت، از نوار عملیات زیر تب‌ها استفاده کن.</p>
         </section>
-        <section class="nava-video-panel" id="navaVideoPanelExport" role="tabpanel" hidden>
-          <h3>پیش‌نمایش و دریافت</h3>
-          <div class="nava-video-result" id="navaVideoResult" hidden><video id="navaVideoOutput" controls playsinline></video><div class="nava-video-actions"><a class="nava-video-primary" id="navaVideoDownload" hidden download="nava-video.webm">دریافت ویدئو</a></div></div>
-          <p class="nava-video-hint">خروجی فعلی این مرحله WebM است. برای MP4 استاندارد و رندر قابل‌اعتماد روی همه دستگاه‌ها، سرویس رندر جداگانه لازم است؛ این نسخه آن را MP4 جا نمی‌زند.</p>
+        <section class="nava-video-panel" id="navaVideoPanelVideo" role="tabpanel" hidden>
+          <div class="nava-video-coming-soon"><span aria-hidden="true">▶</span><h3>استودیوی ویدئوی کامل</h3><p>این بخش در مرحله بعد راه‌اندازی می‌شود؛ امکاناتی مانند تدوین ویدئوهای ورودی، برش، اتصال صحنه‌ها، انتقال‌ها و کنترل دقیق تایم‌لاین در اینجا قرار می‌گیرند.</p><strong>به‌زودی</strong></div>
         </section>
+        <div class="nava-video-work-actions">
+          <div class="nava-video-actions"><button class="nava-video-secondary" id="navaVideoPreview" type="button" disabled>پیش‌نمایش</button><button class="nava-video-primary" id="navaVideoRender" type="button" disabled>ساخت خروجی</button></div>
+          <div class="nava-video-status" id="navaVideoStatus" role="status" aria-live="polite">برای شروع، متن یا عکس انتخاب کن.</div>
+          <div class="nava-video-progress" aria-label="پیشرفت ساخت"><span id="navaVideoProgress"></span></div>
+          <div class="nava-video-result" id="navaVideoResult" hidden><video id="navaVideoOutput" controls playsinline></video><div class="nava-video-actions"><a class="nava-video-primary" id="navaVideoDownload" hidden download="nava-video.webm">دریافت خروجی</a></div></div>
+          <p class="nava-video-hint">خروجی فعلی WebM است. فایل‌ها روی همین گوشی و در مرورگر پردازش می‌شوند.</p>
+        </div>
       </section>
     </div>
   </section>
