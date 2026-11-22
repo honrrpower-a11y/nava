@@ -141,7 +141,7 @@
   imageInput.addEventListener("change",()=>{
     const files=Array.from(imageInput.files||[]);if(!files.length)return;
     if(files.length>20){say("حداکثر ۲۰ عکس می‌توانی انتخاب کنی.");imageInput.value="";return;}
-    const imageExtension=/\\.(avif|bmp|gif|heic|heif|jpe?g|png|svg|webp)$/i;
+    const imageExtension=/\.(avif|bmp|gif|heic|heif|jpe?g|png|svg|webp)$/i;
     const invalid=files.find(f=>(!(f.type||"").toLowerCase().startsWith("image/")&&!imageExtension.test(f.name||""))||f.size>20*1024*1024);
     if(invalid){say("هر فایل باید تصویر معتبر و حداکثر ۲۰ مگابایت باشد: "+invalid.name);imageInput.value="";return;}
     scenes.forEach(s=>URL.revokeObjectURL(s.url));scenes=[];stopPreview();
