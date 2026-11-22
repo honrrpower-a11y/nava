@@ -49,7 +49,6 @@
   fontInput?.addEventListener("change",()=>activateFont(fontInput.value));
 
   const storyCards=()=>storyList?Array.from(storyList.querySelectorAll("[data-story-scene]")):[];
-  syncSetupMode();
   let nextPhotoId=1;
   const photoId=scene=>scene.id||(scene.id="photo-"+(nextPhotoId++));
   const refreshScenePhotoOptions=()=>storyCards().forEach(card=>{const gallery=card.querySelector("[data-story-image-gallery]");if(!gallery)return;const selected=new Set((gallery.dataset.selectedIds||"").split(",").filter(Boolean));gallery.innerHTML="";scenes.forEach((scene,i)=>{const id=photoId(scene),tile=document.createElement("button");tile.type="button";tile.className="nava-video-photo-tile";tile.dataset.photoId=id;tile.setAttribute("aria-pressed",String(selected.has(id)));const img=document.createElement("img");img.src=scene.url;img.alt="";const name=document.createElement("span");name.textContent=(i+1)+". "+scene.file.name;const mark=document.createElement("b");mark.textContent=selected.has(id)?"✓":"+";tile.append(img,name,mark);gallery.append(tile);});gallery.dataset.selectedIds=Array.from(selected).filter(id=>scenes.some(scene=>photoId(scene)===id)).join(",");});
@@ -244,5 +243,6 @@
       say("ساخت ویدئو ناموفق بود: "+(e.message||"خطای ناشناخته"));
     }
   });
-  resize();say("چند عکس یا صحنه متنی اضافه کن تا ساخت ویدئو را شروع کنیم.");
+  syncSetupMode();
+  say("چند عکس یا صحنه متنی اضافه کن تا ساخت ویدئو را شروع کنیم.");
 })();
