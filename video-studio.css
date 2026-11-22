@@ -1,3 +1,6 @@
+/* Persian display fonts for the Video Studio. Dima Shekasteh Free is GPL-2.0; IranNastaliq is SIL OFL 1.1. */
+@font-face{font-family:"IranNastaliq";src:url("https://cdn.jsdelivr.net/gh/font-store/font-IranNastaliq@master/WebFonts/IranNastaliq-Web.woff2") format("woff2");font-display:swap;font-style:normal;font-weight:400}
+@font-face{font-family:"Dima Shekasteh";src:url("https://cdn.jsdelivr.net/gh/whyzgeek/persian-calligraphy-skill@main/fonts/DimaShekastehFree.ttf") format("truetype");font-display:swap;font-style:normal;font-weight:400}
 /* NAVA browser-side image-to-video studio */
 .nava-video-engine{margin-top:24px;padding:22px;border:1px solid rgba(125,160,210,.2);border-radius:22px;background:linear-gradient(145deg,rgba(18,29,49,.96),rgba(9,15,28,.98));color:#eef4ff}
 .nava-video-engine h2,.nava-video-engine h3{margin:0 0 8px}.nava-video-engine p{color:#aab8ce;line-height:1.8}
