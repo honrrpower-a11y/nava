@@ -49,6 +49,7 @@ jobs:
           assert.match(js, /window\.addEventListener\(["']nava:navi-reply["']/, "NAVI reply handler must be present");
           assert.match(js, /schema===["']nava\.video\.scene-plan\.v1["']/, "NAVI scene plan must be schema-validated");
           assert.match(js, /buildNaviScenePlan\(reply\)/, "NAVI replies must be applied through the structured scene-plan executor");
+          assert.match(js, /while\(storyCards\(\)\.length<plan\.scenes\.length\)/, "NAVI plan must dynamically create the requested scene cards");
           const replyStart = js.indexOf('window.addEventListener("nava:navi-reply"');
           const replyHandler = js.slice(replyStart, replyStart + 1400);
           assert.doesNotMatch(replyHandler, /applyBrief\(\)/, "NAVI output must not be interpreted by manual keyword rules");
