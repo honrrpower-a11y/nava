@@ -148,8 +148,7 @@
     }
     if(!plan){resultStatusNavi("طرح ساختاریافته ناوی دریافت نشد؛ برای جلوگیری از اجرای حدسی، ویدئو ساخته نشد. دوباره درخواست طراحی را ارسال کن.");return false;}
     if(!plan.scenes.length||plan.scenes.length>6){resultStatusNavi("تعداد صحنه‌های طرح ناوی معتبر نیست؛ طرح باید بین ۱ تا ۶ صحنه داشته باشد.");return false;}
-    const cards=storyCards();
-    while(cards.length<plan.scenes.length)addStoryBtn?.click();
+    while(storyCards().length<plan.scenes.length)addStoryBtn?.click();
     while(storyCards().length>plan.scenes.length){const last=storyCards().at(-1);last?.querySelector("[data-remove-story]")?.click();}
     const activeCards=storyCards();
     const allowed={layout:["single","diagonal","triptych","grid","stagger","hero-stack","polaroid","free"],photoMotion:["","slow-zoom","slow-pull","pan-left","pan-right","pan-up","pan-down","diagonal-in","diagonal-out","none"],position:["top","center","bottom"],align:["right","center","left"],motion:["auto","from-right","from-left","from-top","from-bottom","fade","none","from-bottom-left","from-top-right","scale-in"],exit:["stay","fade","right","left","top","bottom"],font:["auto","Tahoma, sans-serif","IranNastaliq, serif","Dima Shekasteh, serif"],background:["default","black","light","warm"],frameShape:["landscape","portrait","square"],contentMode:["text","image","mixed"],style:["normal","italic"],orientation:["horizontal","vertical"]};
