@@ -5,6 +5,7 @@ on:
     paths:
       - "video-engine/**"
       - "video-studio.js"
+      - "app.js"
       - "video-studio.css"
       - "index.html"
       - ".github/workflows/video-engine-smoke.yml"
@@ -39,12 +40,21 @@ jobs:
           import assert from "node:assert/strict";
           const js = fs.readFileSync("video-studio.js", "utf8");
           const html = fs.readFileSync("index.html", "utf8");
+          const app = fs.readFileSync("app.js", "utf8");
           const askHandlerCount = js.split('$("navaVideoAskNavi")').length - 1;
           assert.equal(askHandlerCount, 1, "NAVI build button must have exactly one click handler");
           assert.ok(js.includes('$("navaVideoNaviChoosePhotos")?.addEventListener("click",()=>imageInput?.click())'), "NAVI photo button must open the real image picker");
           assert.ok(js.includes('$("navaVideoNaviChooseMusic")?.addEventListener("click",()=>musicInput?.click())'), "NAVI music button must open the real music picker");
           assert.match(js, /selectedMedia:\{images:imageNames,music:musicInfo\}/, "NAVI context must include selected media metadata");
           assert.match(js, /window\.addEventListener\(["']nava:navi-reply["']/, "NAVI reply handler must be present");
+          assert.match(js, /schema===["']nava\.video\.scene-plan\.v1["']/, "NAVI scene plan must be schema-validated");
+          assert.match(js, /buildNaviScenePlan\(reply\)/, "NAVI replies must be applied through the structured scene-plan executor");
+          assert.match(js, /while\(storyCards\(\)\.length<plan\.scenes\.length\)/, "NAVI plan must dynamically create the requested scene cards");
+          const replyStart = js.indexOf('window.addEventListener("nava:navi-reply"');
+          const replyHandler = js.slice(replyStart, replyStart + 1400);
+          assert.doesNotMatch(replyHandler, /applyBrief\(\)/, "NAVI output must not be interpreted by manual keyword rules");
+          assert.match(js, /فقط یک شیء JSON معتبر/, "NAVI prompt must request machine-readable creative direction");
+          assert.match(app, /nava\.video\.scene-plan\.v1/, "Chat-level video instruction must require the same structured schema");
           assert.match(js, /if\(smartAutoBuild\)[\s\S]{0,220}renderBtn\.click\(\)/, "NAVI reply must trigger automatic render");
           for (const id of ["navaVideoNaviChoosePhotos", "navaVideoNaviChooseMusic", "navaVideoBrief", "navaVideoAskNavi"]) {
             assert.ok(html.includes('id="' + id + '"'), "Missing NAVI UI control: " + id);
@@ -52,10 +62,11 @@ jobs:
           console.log("NAVI media selection, context, single request and auto-render wiring verified.");
           NODE
 
-      - name: Install FFmpeg and Persian fonts
+      - name: Ensure FFmpeg is available
         run: |
-          sudo apt-get update
-          sudo apt-get install -y ffmpeg fonts-noto-core fonts-noto-extra fonts-noto-ui-core
+          if ! command -v ffmpeg >/dev/null || ! command -v ffprobe >/dev/null; then
+            sudo apt-get install -y --no-install-recommends ffmpeg
+          fi
           ffmpeg -version
           ffprobe -version
 
