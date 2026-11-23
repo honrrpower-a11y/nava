@@ -532,7 +532,7 @@
   async function tryMediabunnyMp4(renderStory,renderDuration){
     const MB=window.Mediabunny;
     if(!MB||!MB.Output||!MB.CanvasSource||!MB.Mp4OutputFormat||!MB.BufferTarget)return false;
-    let output=null,videoSource=null,audioSource=null;
+    let output=null,videoSource=null,audioSource=null,audioEncodedPackets=0;
     try{
       const fps=20,[width,height]=dimensions();
       const quality=new MB.Quality({bitrate:2200000});
@@ -580,7 +580,12 @@
       videoSource=new MB.CanvasSource(canvas,{codec:videoCodec,quality,latencyMode:"quality",hardwareAcceleration:"prefer-hardware"});
       output.addVideoTrack(videoSource,{frameRate:fps});
       if(audioBuffer){
-        audioSource=new MB.AudioBufferSource({codec:audioCodec,quality:new MB.Quality({bitrate:128000})});
+        audioSource=new MB.AudioBufferSource({
+          codec:audioCodec,
+          quality:new MB.Quality({bitrate:128000}),
+          transform:{numberOfChannels:2,sampleRate:48000},
+          onEncodedPacket:()=>{audioEncodedPackets++;}
+        });
         output.addAudioTrack(audioSource);
       }
       await output.start();
@@ -602,6 +607,15 @@
       const buffer=output.target.buffer;
       if(!buffer||!buffer.byteLength)throw new Error("empty-render-output");
       let finalBlob=new Blob([buffer],{type:isMp4?"video/mp4":"video/webm"});
+      if(audioBuffer){
+        if(audioEncodedPackets<1)throw new Error("music-audio-encoder-produced-no-packets");
+        if(!MB.Input||!MB.BlobSource||!MB.ALL_FORMATS)throw new Error("music-track-validation-unavailable");
+        const checkInput=new MB.Input({source:new MB.BlobSource(finalBlob),formats:MB.ALL_FORMATS});
+        try{
+          const encodedAudioTrack=await checkInput.getPrimaryAudioTrack();
+          if(!encodedAudioTrack)throw new Error("music-track-missing-from-rendered-file");
+        }finally{try{checkInput.dispose();}catch(_){}}
+      }
       let extension=isMp4?"mp4":"webm";
       if(!isMp4){
         say("ویدئو با زمان‌بندی دقیق ساخته شد؛ در حال تبدیل به MP4…");
