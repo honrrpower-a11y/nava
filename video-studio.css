@@ -349,3 +349,5 @@ body.light .nava-video-underline-tools label{color:#526176}body.light .nava-vide
 .nava-video-frame-tools input[type=checkbox]{width:18px;height:18px;accent-color:var(--accent)}
 body.light .nava-video-frame-tools{background:#fffdf8}
 @media(max-width:560px){.nava-video-frame-tools{grid-template-columns:1fr}}
+
+.nava-video-scene-content-tools{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin:12px 0;padding:12px;border:1px solid rgba(125,168,255,.2);border-radius:12px;background:rgba(18,29,48,.35)}.nava-video-scene-content-tools label{display:flex;flex-direction:column;gap:7px;font-size:.92rem}.nava-video-scene-content-tools output{font-weight:700}.nava-video-scene-content-tools input[type=range]{width:100%;accent-color:#69c7bd}.nava-video-photo-tile:disabled{opacity:.35;filter:grayscale(1);cursor:not-allowed}
