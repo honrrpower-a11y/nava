@@ -671,8 +671,20 @@
       resize();drawFrame(0,renderStory,renderDuration);
       const stream=canvas.captureStream(lowPowerRender?15:20);
       if(musicElement){
-        if(!audioContext){audioContext=new (window.AudioContext||window.webkitAudioContext)();audioSource=audioContext.createMediaElementSource(musicElement);audioDestination=audioContext.createMediaStreamDestination();musicGain=audioContext.createGain();audioSource.connect(musicGain);musicGain.connect(audioDestination);}
+        const AudioContextClass=window.AudioContext||window.webkitAudioContext;
+        if(!AudioContextClass)throw new Error("مرورگر از پردازش صدای موسیقی پشتیبانی نمی‌کند.");
+        if(!audioContext||audioContext.state==="closed")audioContext=new AudioContextClass();
+        // AudioContext ممکن است در تلاش قبلی MP4 ساخته شده باشد؛ وجود آن به معنی
+        // آماده بودن گراف صدای MediaRecorder نیست. هر گره را مستقل بررسی می‌کنیم.
+        if(!musicGain){
+          audioSource=audioContext.createMediaElementSource(musicElement);
+          musicGain=audioContext.createGain();
+          audioDestination=audioContext.createMediaStreamDestination();
+          audioSource.connect(musicGain);
+          musicGain.connect(audioDestination);
+        }
         await audioContext.resume();
+        if(!musicGain||!musicGain.gain||!audioDestination)throw new Error("اتصال صدای موسیقی آماده نشد.");
         musicGain.gain.value=Math.max(0,Number(musicVolume.value)/100);
         audioDestination.stream.getAudioTracks().forEach(t=>stream.addTrack(t));
         musicElement.currentTime=0;
