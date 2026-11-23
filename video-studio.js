@@ -111,7 +111,7 @@
     if(event.detail?.service!=="ویدئو و صدا")return;
     const reply=String(event.detail.reply||"").trim();
     if(!reply)return;
-    const marker=/دستورهای اجرایی استودیو\\s*[:：]?/i;
+    const marker=/دستورهای اجرایی استودیو\s*[:：]?/i;
     const markerMatch=reply.match(marker);
     const commands=markerMatch?reply.slice(markerMatch.index+markerMatch[0].length).trim():"";
     const originalBrief=briefInput?.value||"";
