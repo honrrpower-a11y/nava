@@ -31,6 +31,7 @@ jobs:
       - name: Validate browser renderer syntax
         run: node --check video-studio.js
 
+      # Regression coverage for the NAVI-only build flow.
       - name: Verify NAVI media controls and one-shot request wiring
         run: |
           node --input-type=module <<'NODE'
