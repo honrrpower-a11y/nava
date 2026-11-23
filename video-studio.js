@@ -135,9 +135,16 @@
     blocks.push(raw);
     let plan=null;
     for(const candidate of blocks){
-      const first=candidate.indexOf("{"),last=candidate.lastIndexOf("}");
-      if(first<0||last<=first)continue;
-      try{const parsed=JSON.parse(candidate.slice(first,last+1));if(parsed?.schema==="nava.video.scene-plan.v1"&&Array.isArray(parsed.scenes)){plan=parsed;break;}}catch(_){}
+      const first=candidate.indexOf("{");if(first<0)continue;
+      let depth=0,inString=false,escaped=false;
+      for(let i=first;i<candidate.length;i++){
+        const ch=candidate[i];
+        if(inString){if(escaped)escaped=false;else if(ch==="\\\\")escaped=true;else if(ch==='"')inString=false;continue;}
+        if(ch==='"'){inString=true;continue;}
+        if(ch==="{")depth++;else if(ch==="}")depth--;
+        if(depth===0){try{const parsed=JSON.parse(candidate.slice(first,i+1));if(parsed?.schema==="nava.video.scene-plan.v1"&&Array.isArray(parsed.scenes)){plan=parsed;break;}}catch(_){}break;}
+      }
+      if(plan)break;
     }
     if(!plan){resultStatusNavi("طرح ساختاریافته ناوی دریافت نشد؛ برای جلوگیری از اجرای حدسی، ویدئو ساخته نشد. دوباره درخواست طراحی را ارسال کن.");return false;}
     if(!plan.scenes.length||plan.scenes.length>6){resultStatusNavi("تعداد صحنه‌های طرح ناوی معتبر نیست؛ طرح باید بین ۱ تا ۶ صحنه داشته باشد.");return false;}
