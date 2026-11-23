@@ -458,8 +458,16 @@
       const renderDuration=renderStory.length?renderStory.reduce((sum,s)=>sum+s.duration,0):(Number(durationInput?.value)||8);
       if(renderStory.length>1) say("در حال ساخت "+renderStory.length+" صحنه متوالی…");
       resize();drawFrame(0,renderStory,renderDuration);
-      const mime=["video/webm;codecs=vp9,opus","video/webm;codecs=vp8,opus","video/webm"].find(t=>MediaRecorder.isTypeSupported(t));
-      if(!mime){say("کدک سازگار پیدا نشد.");return;}
+      // Prefer broadly compatible MP4/H.264 + AAC when this browser can record it.
+      // Keep WebM as a truthful fallback; never rename a WebM blob to .mp4.
+      const mimeCandidates=[
+        'video/mp4;codecs="avc1.42E01E,mp4a.40.2"',
+        'video/mp4;codecs=avc1.42E01E',
+        "video/mp4",
+        "video/webm;codecs=vp9,opus",
+        "video/webm;codecs=vp8,opus",
+        "video/webm"
+      ].filter(type=>{try{return MediaRecorder.isTypeSupported(type);}catch(_){return false;}});
       const stream=canvas.captureStream(20);
       if(musicElement){
         if(!audioContext){audioContext=new (window.AudioContext||window.webkitAudioContext)();audioSource=audioContext.createMediaElementSource(musicElement);audioDestination=audioContext.createMediaStreamDestination();musicGain=audioContext.createGain();audioSource.connect(musicGain);musicGain.connect(audioDestination);}
@@ -470,7 +478,21 @@
         await musicElement.play();
       }
       chunks=[];recording=true;renderBtn.disabled=true;previewBtn.disabled=true;progress.style.width="0%";
-      recorder=new MediaRecorder(stream,{mimeType:mime,videoBitsPerSecond:2200000});
+      let mime="";
+      recorder=null;
+      for(const candidate of mimeCandidates){
+        try{
+          recorder=new MediaRecorder(stream,{mimeType:candidate,videoBitsPerSecond:2200000});
+          mime=recorder.mimeType||candidate;
+          break;
+        }catch(_){recorder=null;}
+      }
+      if(!recorder){
+        stream.getTracks().forEach(t=>t.stop());
+        recording=false;renderBtn.disabled=false;previewBtn.disabled=false;
+        say("این مرورگر ضبط MP4 یا WebM سازگار را پشتیبانی نمی‌کند.");
+        return;
+      }
       recorder.ondataavailable=e=>{if(e.data&&e.data.size)chunks.push(e.data);};
       recorder.onerror=()=>{
         stream.getTracks().forEach(t=>t.stop());if(musicElement)musicElement.pause();
@@ -484,13 +506,15 @@
         if(renderWatchdog){clearTimeout(renderWatchdog);renderWatchdog=0;}
         stream.getTracks().forEach(t=>t.stop());if(musicElement)musicElement.pause();
         recording=false;renderBtn.disabled=false;previewBtn.disabled=false;
-        const blob=new Blob(chunks,{type:mime});
+        const actualMime=recorder?.mimeType||mime;
+        const blob=new Blob(chunks,{type:actualMime});
         if(!blob.size){say("فایل ویدئو خالی ساخته شد؛ لطفاً دوباره تلاش کن.");return;}
         if(outputUrl)URL.revokeObjectURL(outputUrl);outputUrl=URL.createObjectURL(blob);
         const video=$("navaVideoOutput");video.src=outputUrl;
-        const link=$("navaVideoDownload");link.href=outputUrl;link.download="nava-multiphoto-video.webm";link.hidden=false;
+        const extension=actualMime.toLowerCase().startsWith("video/mp4")?"mp4":"webm";
+        const link=$("navaVideoDownload");link.href=outputUrl;link.download="nava-multiphoto-video."+extension;link.hidden=false;
         result.hidden=false;progress.style.width="100%";
-        say("ویدئو آماده شد؛ از همین تب می‌توانی آن را پخش یا دریافت کنی.");
+        say(extension==="mp4"?"ویدئوی MP4 آماده شد؛ می‌توانی آن را پخش یا دریافت کنی.":"این مرورگر ضبط MP4 را پشتیبانی نکرد؛ ویدئو با فرمت WebM ساخته شد.");
       };
       recorder.start(250);
       const start=performance.now(),duration=renderDuration,fade=Number(fadeInput.value),baseVolume=Math.max(0,Number(musicVolume.value)/100);
