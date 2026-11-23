@@ -506,7 +506,7 @@
         navaFfmpegInstance=await navaFfmpegLoadPromise;
       }
       ffmpeg=navaFfmpegInstance;
-      progressHandler=({progress})=>{if(Number.isFinite(progress))progressBar.style.width=Math.min(99,Math.max(0,progress*100))+"%";};
+      progressHandler=({progress})=>{if(Number.isFinite(progress))progress.style.width=Math.min(99,Math.max(0,progress*100))+"%";};
       ffmpeg.on("progress",progressHandler);
       const input=new Uint8Array(await webmBlob.arrayBuffer());
       await ffmpeg.writeFile("nava-input.webm",input);
@@ -518,6 +518,7 @@
       try{await ffmpeg.deleteFile("nava-input.webm");await ffmpeg.deleteFile("nava-output.mp4");}catch(_){}
       return new Blob([data],{type:"video/mp4"});
     }catch(error){
+      if(!navaFfmpegInstance)navaFfmpegLoadPromise=null;
       console.warn("NAVA WebM to MP4 conversion:",error);
       say("تبدیل MP4 روی این گوشی در دسترس نشد؛ فایل WebM سالم نگه داشته می‌شود.");
       return null;
