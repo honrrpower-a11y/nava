@@ -352,7 +352,7 @@
   function scheduleSoundEffects(story,destination,startAt){
     if(!audioContext||!destination)return;
     let cursor=0;const events=[];
-    (Array.isArray(story)?story:[]).forEach(scene=>{(scene.layers||[]).forEach(layer=>{if(layer.sound&&layer.sound!=="none")events.push({type:layer.sound,time:cursor+(Number(layer.delay)||0),length:String(layer.text||"").length,reveal:layer.reveal||"none"});});cursor+=Number(scene.duration)||0;});
+    (Array.isArray(story)?story:[]).forEach(scene=>{(scene.layers||[]).forEach(layer=>{if(layer.sound&&layer.sound!=="none")events.push({type:layer.sound,time:cursor+(Number(layer.delay)||0),length:String(layer.text||"").length,wordCount:String(layer.text||"").trim().split(/\\s+/).filter(Boolean).length,reveal:layer.reveal||"none"});});cursor+=Number(scene.duration)||0;});
     events.slice(0,48).forEach(event=>{
       const at=startAt+Math.max(0,event.time);
       const makeTone=(frequency,endFrequency,offset,duration,volume,wave="sine")=>{
@@ -601,7 +601,7 @@
         const addSample=(index,value)=>{if(index<0||index>=frameCount)return;audioBuffer.getChannelData(0)[index]+=value;audioBuffer.getChannelData(1)[index]+=value*.94;};
         soundEvents.slice(0,48).forEach(event=>{
           const start=Math.max(0,Math.floor(event.time*sampleRate));if(start>=frameCount)return;
-          const duration=event.type==="whoosh"?.72:event.type==="sparkle"?.62:event.type==="impact"?.42:.48;
+          const typeCount=event.reveal==="word"?Math.max(1,event.wordCount||1):Math.max(1,event.length||1);const duration=event.type==="whoosh"?.72:event.type==="sparkle"?.62:event.type==="impact"?.42:event.type==="type"?(event.reveal==="word"?typeCount/1.8:event.reveal==="char"?typeCount/8:.64):.48;
           const count=Math.min(frameCount-start,Math.ceil(duration*sampleRate));
           for(let n=0;n<count;n++){
             const t=n/sampleRate,p=n/count;let sample=0;
