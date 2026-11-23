@@ -506,7 +506,7 @@
         navaFfmpegInstance=await navaFfmpegLoadPromise;
       }
       ffmpeg=navaFfmpegInstance;
-      progressHandler=({progress})=>{if(Number.isFinite(progress))progress.style.width=Math.min(99,Math.max(0,progress*100))+"%";};
+      progressHandler=({progress:ratio})=>{if(Number.isFinite(ratio))progress.style.width=Math.min(99,Math.max(0,ratio*100))+"%";};
       ffmpeg.on("progress",progressHandler);
       const input=new Uint8Array(await webmBlob.arrayBuffer());
       await ffmpeg.writeFile("nava-input.webm",input);
