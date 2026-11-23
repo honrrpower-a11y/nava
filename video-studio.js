@@ -12,7 +12,7 @@
   const storyList=$("navaVideoStoryList"),addStoryBtn=$("navaVideoAddScene");
   const fontInput=$("navaVideoFont"),manualMotionInput=$("navaVideoManualMotion");
   const briefInput=$("navaVideoBrief"),manualBriefInput=$("navaVideoManualBrief"),applyBriefBtn=$("navaVideoApplyBrief");
-  let smartAutoBuild=false,smartAutoBuildMode=null,quickModePending=false,naviPlanRetryCount=0;
+  let smartAutoBuild=false,smartAutoBuildMode=null,naviPlanRetryCount=0;
   const activeBuildMode=()=>root.querySelector("[data-build-mode].is-active")?.dataset.buildMode||"navi";
   const setupMode=()=>activeBuildMode();
   // Keep each creation tab's media, brief, and scene editor completely separate.
@@ -26,10 +26,8 @@
       sceneMarkup:sceneList?.innerHTML||initialSceneListMarkup,
       naviBrief:briefInput?.value||"",
       manualBrief:manualBriefInput?.value||"",
-      quickPrompt:$("navaVideoQuickPrompt")?.value||"",
       naviPhotosLabel:$("navaVideoNaviPhotosLabel")?.textContent||"هنوز عکسی انتخاب نشده است.",
-      naviMusicLabel:$("navaVideoNaviMusicLabel")?.textContent||"موسیقی اختیاری است.",
-      quickFileLabel:$("navaVideoQuickFile")?.textContent||"هنوز عکسی انتخاب نشده است."
+      naviMusicLabel:$("navaVideoNaviMusicLabel")?.textContent||"موسیقی اختیاری است."
     };
   }
   function restoreModeState(mode){
@@ -41,10 +39,8 @@
     if(sceneList)sceneList.innerHTML=state?.sceneMarkup||initialSceneListMarkup;
     if(briefInput)briefInput.value=state?.naviBrief||"";
     if(manualBriefInput)manualBriefInput.value=state?.manualBrief||"";
-    const quickPrompt=$("navaVideoQuickPrompt");if(quickPrompt)quickPrompt.value=state?.quickPrompt||"";
     const photosLabel=$("navaVideoNaviPhotosLabel");if(photosLabel)photosLabel.textContent=state?.naviPhotosLabel||"هنوز عکسی انتخاب نشده است.";
     const musicLabel=$("navaVideoNaviMusicLabel");if(musicLabel)musicLabel.textContent=state?.naviMusicLabel||"موسیقی اختیاری است.";
-    const quickFile=$("navaVideoQuickFile");if(quickFile)quickFile.textContent=state?.quickFileLabel||"هنوز عکسی انتخاب نشده است.";
     if(imageInput)imageInput.value="";
     if(musicInput)musicInput.value="";
     if(musicElement)musicElement.src=musicUrl||"";
@@ -126,8 +122,7 @@
   }
   let activeFont=fontInput?.value||"sans-serif",textDirection="rtl",fontLoadToken=0;
   async function activateFont(font){activeFont=font||"sans-serif";const token=++fontLoadToken;try{if(document.fonts?.load){await document.fonts.load("650 42px "+activeFont);await document.fonts.ready;}}catch(_){}if(token===fontLoadToken){resize();drawFrame(0);}}
-  const syncSetupMode=()=>{const mode=setupMode();root.classList.toggle("navi-build-active",mode==="navi");root.dataset.buildModeActive=mode;root.querySelectorAll("[data-build-mode]").forEach(tab=>{const active=tab.dataset.buildMode===mode;tab.classList.toggle("is-active",active);tab.setAttribute("aria-selected",String(active));});root.querySelectorAll("[data-build-panel]").forEach(panel=>{panel.hidden=panel.dataset.buildPanel!==mode;});if(mode==="manual"){if(fontInput)activateFont(fontInput.value||"sans-serif");textDirection="rtl";storyCards().forEach(card=>card.querySelectorAll("[data-layer-motion]").forEach(el=>{if(manualMotionInput)el.value=toLayerMotion(manualMotionInput.value);}));}resize();drawFrame(0);};root.querySelectorAll("[data-build-mode]").forEach(tab=>tab.addEventListener("click",()=>activateBuildMode(tab.dataset.buildMode)));$("navaVideoQuickChoosePhoto")?.addEventListener("click",()=>{quickModePending=true;imageInput?.click();});$("navaVideoNaviChoosePhotos")?.addEventListener("click",()=>imageInput?.click());$("navaVideoNaviChooseMusic")?.addEventListener("click",()=>musicInput?.click());$("navaVideoQuickCreate")?.addEventListener("click",()=>{const prompt=($("navaVideoQuickPrompt")?.value||"").trim();if(!scenes.length){$("navaVideoQuickStatus").textContent="ابتدا با دکمه انتخاب عکس، یک عکس بارگذاری کن.";return;}if(!prompt){$("navaVideoQuickStatus").textContent="خواسته‌ات را درباره عکس بنویس.";return;}const first=storyCards()[0];if(first){const q=prompt.match(/[«“"]([^»”"]+)[»”"]/);const layer=first.querySelector("[data-layer-text]");if(layer)layer.value=q?q[1]:prompt;const mode=first.querySelector("[data-scene-content-mode]");if(mode)mode.value="mixed";}smartAutoBuild=true;smartAutoBuildMode="quick";$("navaVideoQuickStatus").textContent="ناوی در حال طراحی و ساخت ویدئو است…";const ok=window.navaVideoNaviRequest?.({message:"یک ویدئوی کوتاه بر اساس عکس بارگذاری‌شده بساز. متن و خواسته کاربر: "+prompt+" . از عکس انتخاب‌شده در صحنه اول استفاده کن. تنظیمات و زمان‌بندی مناسب را خودت انتخاب کن. در پایان بخش «دستورهای اجرایی استودیو» را با فرمان‌های دقیق و قابل‌اعمال بنویس."});if(!ok){smartAutoBuild=false;$("navaVideoQuickStatus").textContent="ارتباط با ناوی برقرار نشد؛ ورود به حساب را بررسی کن.";}});
-  applyBriefBtn?.addEventListener("click",applyBrief);
+  const syncSetupMode=()=>{const mode=setupMode();root.classList.toggle("navi-build-active",mode==="navi");root.dataset.buildModeActive=mode;root.querySelectorAll("[data-build-mode]").forEach(tab=>{const active=tab.dataset.buildMode===mode;tab.classList.toggle("is-active",active);tab.setAttribute("aria-selected",String(active));});root.querySelectorAll("[data-build-panel]").forEach(panel=>{panel.hidden=panel.dataset.buildPanel!==mode;});if(mode==="manual"){if(fontInput)activateFont(fontInput.value||"sans-serif");textDirection="rtl";storyCards().forEach(card=>card.querySelectorAll("[data-layer-motion]").forEach(el=>{if(manualMotionInput)el.value=toLayerMotion(manualMotionInput.value);}));}resize();drawFrame(0);};root.querySelectorAll("[data-build-mode]").forEach(tab=>tab.addEventListener("click",()=>activateBuildMode(tab.dataset.buildMode)));$("navaVideoNaviChoosePhotos")?.addEventListener("click",()=>imageInput?.click());$("navaVideoNaviChooseMusic")?.addEventListener("click",()=>musicInput?.click());applyBriefBtn?.addEventListener("click",applyBrief);
 
   function buildNaviScenePlan(reply){
     const raw=String(reply||"");
@@ -403,7 +398,7 @@
       img.onerror=()=>{URL.revokeObjectURL(url);reject(new Error("خواندن تصویر ناموفق بود: "+file.name));};
       img.src=url;
     }))).then(items=>{
-      scenes=items;resize();renderSceneList();refreshScenePhotoOptions();if(activeBuildMode()==="navi"&&storyCards().length){const card=storyCards()[0],gallery=card.querySelector("[data-story-image-gallery]");if(gallery)gallery.dataset.selectedIds=scenes.map(photoId).join(",");const mode=card.querySelector("[data-scene-content-mode]");if(mode)mode.value=card.querySelector("[data-layer-text]")?.value.trim()?"mixed":"image";refreshScenePhotoOptions();const label=$("navaVideoNaviPhotosLabel");if(label)label.textContent=scenes.length+" عکس انتخاب شد.";}if(quickModePending&&storyCards().length){const card=storyCards()[0],gallery=card.querySelector("[data-story-image-gallery]");if(gallery)gallery.dataset.selectedIds=photoId(scenes[0]);const mode=card.querySelector("[data-scene-content-mode]");if(mode)mode.value="mixed";const textArea=card.querySelector("[data-layer-text]");if(textArea&&$("navaVideoQuickPrompt")?.value){const q=$("navaVideoQuickPrompt").value;const quoted=q.match(/[«“"]([^»”"]+)[»”"]/);textArea.value=quoted?quoted[1]:q;}refreshScenePhotoOptions();$("navaVideoQuickFile").textContent="عکس انتخاب شد: "+scenes[0].file.name;quickModePending=false;}drawFrame(0);updateReady();
+      scenes=items;resize();renderSceneList();refreshScenePhotoOptions();if(activeBuildMode()==="navi"&&storyCards().length){const card=storyCards()[0],gallery=card.querySelector("[data-story-image-gallery]");if(gallery)gallery.dataset.selectedIds=scenes.map(photoId).join(",");const mode=card.querySelector("[data-scene-content-mode]");if(mode)mode.value=card.querySelector("[data-layer-text]")?.value.trim()?"mixed":"image";refreshScenePhotoOptions();const label=$("navaVideoNaviPhotosLabel");if(label)label.textContent=scenes.length+" عکس انتخاب شد.";}drawFrame(0);updateReady();
       saveModeState(activeBuildMode());say(items.length+" عکس با موفقیت بارگذاری شد؛ حالا می‌توانی آن‌ها را به صحنه‌ها اضافه کنی.");
     }).catch(e=>{sceneList.textContent="بارگذاری عکس ناموفق بود؛ دوباره انتخاب کن.";say(e.message||"خواندن عکس‌ها ناموفق بود.");});
   });
