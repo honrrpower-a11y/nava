@@ -110,17 +110,23 @@
   window.addEventListener("nava:navi-reply",event=>{
     if(event.detail?.service!=="ویدئو و صدا")return;
     const reply=String(event.detail.reply||"").trim();
-    const marker=/دستورهای اجرایی استودیو\s*[:：]?/i;
-    if(!marker.test(reply))return;
-    const commands=reply.split(marker).pop().trim();
-    if(!commands)return;
-    const originalBrief=briefInput?.value||"",priorMode=activeBuildMode();
+    if(!reply)return;
+    const marker=/دستورهای اجرایی استودیو\\s*[:：]?/i;
+    const markerMatch=reply.match(marker);
+    const commands=markerMatch?reply.slice(markerMatch.index+markerMatch[0].length).trim():"";
+    const originalBrief=briefInput?.value||"";
     buildNaviScenePlan(reply,originalBrief);
-    if(briefInput)briefInput.value=commands;
-    if(manualBriefInput)manualBriefInput.value=commands;
-    applyBrief();
-    if(briefInput)briefInput.value=originalBrief;
-    if(smartAutoBuild){smartAutoBuild=false;resultStatusNavi("دستورهای ناوی اعمال شد؛ رندر ویدئو آغاز می‌شود.");setTimeout(()=>{if(!renderBtn.disabled)renderBtn.click();else say("دستورهای ناوی اعمال شد، اما هنوز محتوای قابل‌رندر ساخته نشده است.");},250);}
+    if(commands){
+      if(briefInput)briefInput.value=commands;
+      if(manualBriefInput)manualBriefInput.value=commands;
+      applyBrief();
+      if(briefInput)briefInput.value=originalBrief;
+    }
+    if(smartAutoBuild){
+      smartAutoBuild=false;
+      resultStatusNavi(commands?"دستورهای ناوی اعمال شد؛ رندر ویدئو آغاز می‌شود.":"سناریوی ناوی دریافت شد؛ ساخت ویدئو آغاز می‌شود.");
+      setTimeout(()=>{if(!renderBtn.disabled)renderBtn.click();else say("پاسخ ناوی دریافت شد، اما هنوز محتوای قابل‌رندر آماده نیست.");},250);
+    }
   });
   manualMotionInput?.addEventListener("change",()=>{if(setupMode()==="manual")storyCards().forEach(card=>card.querySelectorAll("[data-layer-motion]").forEach(el=>{el.value=manualMotionInput.value==="slide-right"?"from-right":manualMotionInput.value==="slide-left"?"from-left":manualMotionInput.value==="rise"?"from-bottom":manualMotionInput.value;}));drawFrame(0);});
   fontInput?.addEventListener("change",()=>activateFont(fontInput.value));
@@ -265,9 +271,12 @@
       "\nموسیقی انتخاب‌شده: "+musicInfo+
       "\nاز تصاویر انتخاب‌شده واقعاً در تدوین استفاده کن؛ ترتیب، تقسیم تصاویر میان صحنه‌ها، متن‌های روی تصویر، تعداد صحنه‌ها، مدت، چیدمان، حرکت و افکت را خودت متناسب با بریف تعیین کن. موسیقی انتخاب‌شده را به‌عنوان صدای پس‌زمینه خروجی به کار ببر.\n"+
       "پاسخ را با یک سناریوی کوتاه و روشن شروع کن. سپس بخش مستقل «دستورهای اجرایی استودیو» را بنویس. فرمان‌ها باید فقط از قابلیت‌های واقعی موتور استفاده کنند، هر فرمان در یک خط و با نام صحنه/لایه مشخص باشد. برای هر صحنه متن دقیق قابل‌نمایش را با قالب «متن صحنه ۱ لایه ۱: ...» بنویس؛ اگر چند لایه دارد شماره لایه را افزایش بده. عکس‌ها را با قالب «عکس صحنه ۱: ۱،۲» و مدت را با قالب «مدت صحنه ۱: ۵ ثانیه» مشخص کن. شماره صحنه‌ها را از ۱ و شماره لایه‌ها را از ۱ شروع کن. اگر بریف متن مشخصی ندارد، متن تبلیغاتی یا روایی مناسب خودت بنویس. فرمان‌های مبهم یا صرفاً توصیفی ننویس.";
-    if(typeof window.openNaviAssistant==="function"){
+    if(typeof window.openNaviAssistant==="function"&&typeof window.navaVideoNaviRequest==="function"){
       window.openNaviAssistant({service:"ویدئو و صدا",message:prompt,context:{studio:"ویدئو و صدا",brief,images:imageNames,imageCount:scenes.length,music:musicInfo,selectedMedia:{images:imageNames,music:musicInfo},mode:"navi-auto-build",capabilities:["multi-scene text and image composition","photo selection and ordering","per-layer text motion and delay","scene duration and background","photo layout and motion","background music","video render and export"]}});
-    }else{smartAutoBuild=false;result.textContent="همراه NAVI در دسترس نیست؛ از دکمه شناور NAVI استفاده کن.";}
+      const submitted=window.navaVideoNaviRequest({message:prompt});
+      if(!submitted){smartAutoBuild=false;result.textContent="درخواست به ناوی ارسال نشد؛ نشست ورود را بررسی کن.";}
+    }else{smartAutoBuild=false;result.textContent="ارسال خودکار به NAVI در دسترس نیست؛ صفحه را به‌روزرسانی کن.";}
+
   });
   let renderTimer=0,renderWatchdog=0;
   function finishRender(message){
