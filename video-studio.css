@@ -361,3 +361,8 @@ body.light .nava-video-frame-tools{background:#fffdf8}
 #avPage .nava-video-navi-media{display:grid;gap:10px;margin:14px 0}
 #avPage .nava-video-navi-media>div{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px;border:1px solid var(--border);border-radius:12px;background:var(--panel2)}
 #avPage .nava-video-navi-media span{color:var(--muted);font-size:.85rem;overflow-wrap:anywhere}
+
+
+/* NAVA typography reveal and per-layer sound controls */
+#avPage [data-layer-reveal],#avPage [data-layer-sound]{min-height:42px;width:100%;box-sizing:border-box;padding:9px 34px 9px 10px;border:1px solid var(--border);border-radius:10px;background:var(--panel2);color:var(--text);font:inherit}
+#avPage [data-layer-reveal]:focus-visible,#avPage [data-layer-sound]:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
