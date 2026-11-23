@@ -524,6 +524,7 @@
       return null;
     }finally{
       if(ffmpeg&&progressHandler)try{ffmpeg.off("progress",progressHandler);}catch(_){}
+      if(ffmpeg){try{ffmpeg.terminate();}catch(_){}if(navaFfmpegInstance===ffmpeg)navaFfmpegInstance=null;navaFfmpegLoadPromise=null;}
       if(coreUrl)URL.revokeObjectURL(coreUrl);
       if(wasmUrl)URL.revokeObjectURL(wasmUrl);
     }
