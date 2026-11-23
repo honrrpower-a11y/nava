@@ -152,6 +152,22 @@
     while(storyCards().length>plan.scenes.length){const last=storyCards().at(-1);last?.querySelector("[data-remove-story]")?.click();}
     const activeCards=storyCards();
     const allowed={layout:["single","diagonal","triptych","grid","stagger","hero-stack","polaroid","free"],photoMotion:["","slow-zoom","slow-pull","pan-left","pan-right","pan-up","pan-down","diagonal-in","diagonal-out","none"],position:["top","center","bottom"],align:["right","center","left"],motion:["auto","from-right","from-left","from-top","from-bottom","fade","none","from-bottom-left","from-top-right","scale-in"],exit:["stay","fade","right","left","top","bottom"],font:["auto","Tahoma, sans-serif","IranNastaliq, serif","Dima Shekasteh, serif"],background:["default","black","light","warm"],frameShape:["landscape","portrait","square"],contentMode:["text","image","mixed"],style:["normal","italic"],orientation:["horizontal","vertical"]};
+    const maxImages={single:1,diagonal:3,triptych:3,grid:4,stagger:4,"hero-stack":4,polaroid:4,free:4};
+    const invalidScene=plan.scenes.findIndex(scene=>{
+      if(!scene||!Number.isFinite(Number(scene.duration))||Number(scene.duration)<2||Number(scene.duration)>8)return true;
+      if(!Array.isArray(scene.images)||scene.images.some(n=>!Number.isInteger(Number(n))||Number(n)<1||Number(n)>scenes.length))return true;
+      if(!allowed.contentMode.includes(scene.contentMode)||!allowed.layout.includes(scene.layout)||!allowed.photoMotion.includes(scene.photoMotion)||!allowed.background.includes(scene.background))return true;
+      if(scene.images.length>maxImages[scene.layout])return true;
+      if(!scene.frame||typeof scene.frame.enabled!=="boolean"||!allowed.frameShape.includes(scene.frame.shape))return true;
+      if(!Array.isArray(scene.layers)||scene.layers.length>6)return true;
+      const hasText=scene.layers.some(layer=>String(layer?.text||"").trim());
+      if(scene.contentMode==="image"&&hasText)return true;
+      if(scene.contentMode==="text"&&scene.images.length)return true;
+      if(!scene.images.length&&!hasText&&!scene.frame.enabled&&scene.background==="default")return true;
+      return scene.layers.some(layer=>!layer||typeof layer.text!=="string"||!allowed.position.includes(layer.position)||!allowed.align.includes(layer.align)||!allowed.motion.includes(layer.motion)||!allowed.exit.includes(layer.exit)||!allowed.font.includes(layer.font)||!allowed.style.includes(layer.style)||!allowed.orientation.includes(layer.orientation)||!Number.isFinite(Number(layer.delay))||Number(layer.delay)<0||Number(layer.delay)>6||!Number.isFinite(Number(layer.size))||Number(layer.size)<24||Number(layer.size)>68||!/^#[0-9a-f]{6}$/i.test(String(layer.color||"")));
+    });
+    if(invalidScene>=0){resultStatusNavi("طرح ناوی در صحنه "+(invalidScene+1)+" با محدودیت‌های اجرایی موتور سازگار نیست؛ هیچ تنظیمی اعمال نشد. طرح را دوباره تولید کن.");return false;}
+    if(!["portrait","landscape"].includes(plan.format)||!["keep","replace"].includes(plan.textPersistence)){resultStatusNavi("تنظیمات کلی طرح ناوی معتبر نیست؛ هیچ تغییری اعمال نشد.");return false;}
     const set=(el,value,list)=>{if(!el||!list.includes(value))return false;const option=Array.from(el.options||[]).find(o=>o.value===String(value));if(!option)return false;el.value=String(value);return true;};
     const setNumber=(el,value,min,max)=>{if(!el||!Number.isFinite(Number(value)))return;const wanted=Math.max(min,Math.min(max,Number(value))),options=Array.from(el.options||[]);if(options.length){const closest=options.reduce((best,o)=>Math.abs(Number(o.value)-wanted)<Math.abs(Number(best.value)-wanted)?o:best,options[0]);el.value=closest.value;}else el.value=String(wanted);};
     const usedPhotos=new Set();
