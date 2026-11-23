@@ -366,3 +366,8 @@ body.light .nava-video-frame-tools{background:#fffdf8}
 /* NAVA typography reveal and per-layer sound controls */
 #avPage [data-layer-reveal],#avPage [data-layer-sound]{min-height:42px;width:100%;box-sizing:border-box;padding:9px 34px 9px 10px;border:1px solid var(--border);border-radius:10px;background:var(--panel2);color:var(--text);font:inherit}
 #avPage [data-layer-reveal]:focus-visible,#avPage [data-layer-sound]:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+
+
+/* Preview mute control */
+#avPage #navaVideoPreviewMute{min-width:96px;white-space:nowrap}
+#avPage #navaVideoPreviewMute[aria-pressed="true"]{border-color:var(--gold);color:var(--gold)}
