@@ -72,7 +72,7 @@ jobs:
           assert.match(js, /revealMode==="word"\?body\.split/, "Renderer must reveal text word by word");
           assert.match(js, /scheduleSoundEffects\(previewStory,audioContext\.destination/, "Preview must schedule selected sound effects");
           assert.match(js, /const soundEvents=\[\];let soundCursor=0/, "Final render must collect per-scene sound events");
-          assert.match(js, /audioBuffer\.createBuffer\(2,frameCount,sampleRate\)/, "Sound-only projects must still create an audio track");
+          assert.match(js, /audioBuffer=audioContext\.createBuffer\(2,frameCount,sampleRate\)/, "Sound-only projects must still create an audio track");
           assert.match(app, /reveal را از بین none\/word\/char و sound را از بین none\/type\/impact\/whoosh\/sparkle/, "NAVI must be instructed to choose text reveal and sound effects");
           console.log("NAVI media flow, text reveal, procedural sound effects, preview and render wiring verified.");
           NODE
