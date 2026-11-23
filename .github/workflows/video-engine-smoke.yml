@@ -52,7 +52,7 @@ jobs:
           const replyStart = js.indexOf('window.addEventListener("nava:navi-reply"');
           const replyHandler = js.slice(replyStart, replyStart + 1400);
           assert.doesNotMatch(replyHandler, /applyBrief\(\)/, "NAVI output must not be interpreted by manual keyword rules");
-          assert.match(js, /خروجی را فقط به شکل یک شیء JSON معتبر/, "NAVI prompt must request machine-readable creative direction");
+          assert.match(js, /فقط یک شیء JSON معتبر/, "NAVI prompt must request machine-readable creative direction");
           assert.match(app, /nava\.video\.scene-plan\.v1/, "Chat-level video instruction must require the same structured schema");
           assert.match(js, /if\(smartAutoBuild\)[\s\S]{0,220}renderBtn\.click\(\)/, "NAVI reply must trigger automatic render");
           for (const id of ["navaVideoNaviChoosePhotos", "navaVideoNaviChooseMusic", "navaVideoBrief", "navaVideoAskNavi"]) {
