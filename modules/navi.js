@@ -2720,6 +2720,12 @@ async function handleNaviPendingMemoryConfirmation(db, message, threadId, corsOr
   }, corsOrigin);
 }
 
+// Video scene planning is a self-contained structured task. Keep it isolated
+// from unrelated platform knowledge, memories and conversation search results.
+export function shouldUseNaviVideoPlanContext(input, page) {
+  return input?.videoPlan === true && page === "avPage";
+}
+
 // ======================================
 // CHAT
 // ======================================
@@ -2811,7 +2817,16 @@ async function handleChat({
     : "";
   // Never trust client-supplied page text. Only server-authored knowledge is
   // injected into the model context; client identifiers merely select entries.
-  const pageContext = buildNaviPlatformKnowledge(page, pageTab);
+  const isVideoPlanRequest = shouldUseNaviVideoPlanContext(input, page);
+  const pageContext = isVideoPlanRequest
+    ? [
+        "صفحه فعال: استودیوی ویدئو و صدا.",
+        "این درخواست فقط برای تبدیل بریف و رسانه‌های انتخاب‌شده به طرح اجرایی صحنه‌های ویدئو است.",
+        "بریف، نام عکس‌ها و موسیقی در پیام جاری کاربر آمده‌اند؛ آن‌ها را مرجع اصلی طراحی بدان.",
+        "خروجی باید دقیقاً از قرارداد JSON و enumهای تعریف‌شده در پیام جاری پیروی کند؛ متن اضافی ننویس.",
+        "از حافظه یا گفت‌وگوهای پروژه‌های دیگر استفاده نکن و اطلاعات رسانه‌ای را حدس نزن."
+      ].join("\n")
+    : buildNaviPlatformKnowledge(page, pageTab);
 
   let businessContext = "";
   if (input.businessId !== undefined && input.businessId !== null && input.businessId !== "") {
@@ -2861,47 +2876,48 @@ async function handleChat({
   try {
     await ensureNaviMainThread(env.NAVA_DB, userId);
 
-    const [
-      historyResult,
-      memoryResult
-    ] = await Promise.all([
-      getNaviDbHistory(env.NAVA_DB, 10, requestedThreadId, userId),
-      getNaviApprovedMemory(env.NAVA_DB, userId, activeProjectId)
-    ]);
+    if (!isVideoPlanRequest) {
+      const [
+        historyResult,
+        memoryResult
+      ] = await Promise.all([
+        getNaviDbHistory(env.NAVA_DB, 10, requestedThreadId, userId),
+        getNaviApprovedMemory(env.NAVA_DB, userId, activeProjectId)
+      ]);
 
-    dbHistory = Array.isArray(historyResult)
-      ? historyResult
-      : [];
+      dbHistory = Array.isArray(historyResult)
+        ? historyResult
+        : [];
 
-    // Fetch a wider window only when the user explicitly requests memory saving.
-    // Ordinary chat keeps the existing ten-message context and database cost.
-    memoryExtractionHistory = [];
-    if (input.saveToMemory === true) {
-      try {
-        memoryExtractionHistory = await getNaviDbHistory(
-          env.NAVA_DB, 40, requestedThreadId, userId
-        );
-      } catch (error) {
-        // Keep the save flow available with its existing recent history if
-        // the optional wider evidence read fails.
-        logError("Extended memory context loading failed", error);
-        memoryExtractionHistory = dbHistory;
+      // Fetch a wider window only when the user explicitly requests memory saving.
+      // Ordinary chat keeps the existing ten-message context and database cost.
+      memoryExtractionHistory = [];
+      if (input.saveToMemory === true) {
+        try {
+          memoryExtractionHistory = await getNaviDbHistory(
+            env.NAVA_DB, 40, requestedThreadId, userId
+          );
+        } catch (error) {
+          // Keep the save flow available with its existing recent history if
+          // the optional wider evidence read fails.
+          logError("Extended memory context loading failed", error);
+          memoryExtractionHistory = dbHistory;
+        }
       }
+
+      memoryFacts = Array.isArray(memoryResult)
+        ? memoryResult
+        : [];
+
+      // The public home-page chat is intentionally isolated from prior
+      // project conversations, including Office conversations in the same
+      // general project. Its own thread history remains available via dbHistory.
+      conversationMatches = input.isolatedContext === true
+        ? []
+        : await searchNaviConversationHistory(
+            env.NAVA_DB, message, 8, dbHistory, userId, activeProjectId
+          );
     }
-
-    memoryFacts = Array.isArray(memoryResult)
-      ? memoryResult
-      : [];
-
-    // The public home-page chat is intentionally isolated from prior
-    // project conversations, including Office conversations in the same
-    // general project. Its own thread history remains available via dbHistory.
-    conversationMatches = input.isolatedContext === true
-      ? []
-      : await searchNaviConversationHistory(
-          env.NAVA_DB, message, 8, dbHistory, userId, activeProjectId
-        );
-
   } catch (error) {
     logError("Context loading failed", error);
 

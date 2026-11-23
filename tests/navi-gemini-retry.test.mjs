@@ -5,6 +5,7 @@ import {
   classifyNaviGeminiError,
   requestGemini,
   shouldRetryNaviGeminiError,
+  shouldUseNaviVideoPlanContext,
   shouldUseNaviGeminiFallback
 } from "../modules/navi.js";
 
@@ -102,4 +103,12 @@ test("Gemini does not call the fallback model for a rejected request", async () 
     error => error.httpStatus === 400
   );
   assert.equal(urls.length, 1);
+});
+
+
+test("video scene-plan context is isolated only for explicit avPage requests", () => {
+  assert.equal(shouldUseNaviVideoPlanContext({ videoPlan: true }, "avPage"), true);
+  assert.equal(shouldUseNaviVideoPlanContext({ videoPlan: true }, "homePage"), false);
+  assert.equal(shouldUseNaviVideoPlanContext({ videoPlan: false }, "avPage"), false);
+  assert.equal(shouldUseNaviVideoPlanContext({}, "avPage"), false);
 });
