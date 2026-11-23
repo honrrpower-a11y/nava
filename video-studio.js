@@ -238,7 +238,7 @@
   const storyTotal=()=>storyData().reduce((sum,s)=>sum+s.duration,0);
   const totalDuration=()=>storyTotal()||Number(durationInput?.value)||8;
   const say=m=>{status.textContent=m;};
-  function dimensions(){return formatInput.value==="landscape"?[1280,720]:[720,1280];}
+  function dimensions(){const landscape=formatInput.value==="landscape";if(previewing&&!recording)return landscape?[960,540]:[540,960];return landscape?[1280,720]:[720,1280];}
   function resize(){const [w,h]=dimensions();canvas.width=w;canvas.height=h;const wrap=root.querySelector(".nava-video-canvas-wrap");if(wrap)wrap.style.aspectRatio=w+" / "+h;}
   function renderSceneList(){
     if(!scenes.length){sceneList.textContent="هنوز عکسی انتخاب نشده است.";return;}
@@ -348,8 +348,8 @@
     ctx.restore();
   }
   function stopPreview(){if(previewFrame)cancelAnimationFrame(previewFrame);previewFrame=0;previewing=false;}
-  function animate(now){if(!previewing)return;if(!startedAt)startedAt=now;const t=(previewOffset+(now-startedAt)/1000)%totalDuration();drawFrame(t);previewFrame=requestAnimationFrame(animate);}
-  function preview(){if(!scenes.length&&!storyData().length&&!titleInput.value.trim()&&!subtitleInput.value.trim()&&!textInput?.value.trim()){say("برای پیش‌نمایش، یک صحنه متنی یا عکس اضافه کن؛ عنوان و نام اختیاری‌اند.");return;}stopPreview();startedAt=0;previewing=true;previewFrame=requestAnimationFrame(animate);say(scenes.length?"پیش‌نمایش ویدئوی تصویری فعال است.":"پیش‌نمایش ویدئوی متن‌محور فعال است.");}
+  function animate(now){if(!previewing)return;if(!startedAt)startedAt=now;if(now-(animate.lastFrame||0)>=33){const t=(previewOffset+(now-startedAt)/1000)%totalDuration();drawFrame(t);animate.lastFrame=now;}previewFrame=requestAnimationFrame(animate);}
+  function preview(){if(!scenes.length&&!storyData().length&&!titleInput.value.trim()&&!subtitleInput.value.trim()&&!textInput?.value.trim()){say("برای پیش‌نمایش، یک صحنه متنی یا عکس اضافه کن؛ عنوان و نام اختیاری‌اند.");return;}stopPreview();startedAt=0;animate.lastFrame=0;previewing=true;resize();drawFrame(0);previewFrame=requestAnimationFrame(animate);say(scenes.length?"پیش‌نمایش سبک ویدئوی تصویری فعال است.":"پیش‌نمایش سبک ویدئوی متن‌محور فعال است.");}
   function updateReady(){const ready=scenes.length>0||storyData().length>0||!!(titleInput.value.trim()||subtitleInput.value.trim()||textInput?.value.trim());previewBtn.disabled=!ready;renderBtn.disabled=!ready||!window.MediaRecorder||!canvas.captureStream;say(scenes.length?scenes.length+" عکس آماده تدوین است.":ready?"ویدیوی متن‌محور آماده ساخت است.":"عکس یا متن ویدئو را وارد کن.");}
   imageInput.addEventListener("change",()=>{
     const files=Array.from(imageInput.files||[]);if(!files.length)return;
