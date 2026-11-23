@@ -8,13 +8,49 @@
   const titleInput=$("navaVideoTitle"),subtitleInput=$("navaVideoSubtitle"),durationInput=$("navaVideoDuration"),formatInput=$("navaVideoFormat"),motionInput=$("navaVideoMotion"),textInput=$("navaVideoText");
   const sceneList=$("navaVideoSceneList"),musicVolume=$("navaVideoMusicVolume"),fadeInput=$("navaVideoFade");
   const wordMotionInput=$("navaVideoWordMotion"),wordSpeedInput=$("navaVideoWordSpeed");
-  let scenes=[],musicUrl="",musicElement=null,audioContext=null,audioSource=null,audioDestination=null,musicGain=null,previewFrame=0,recorder=null,chunks=[],recording=false,startedAt=0,previewing=false,previewOffset=0,outputUrl="";
+  let scenes=[],musicUrl="",musicFile=null,musicElement=null,audioContext=null,audioSource=null,audioDestination=null,musicGain=null,previewFrame=0,recorder=null,chunks=[],recording=false,startedAt=0,previewing=false,previewOffset=0,outputUrl="";
   const storyList=$("navaVideoStoryList"),addStoryBtn=$("navaVideoAddScene");
   const fontInput=$("navaVideoFont"),manualMotionInput=$("navaVideoManualMotion");
   const briefInput=$("navaVideoBrief"),manualBriefInput=$("navaVideoManualBrief"),applyBriefBtn=$("navaVideoApplyBrief");
   let smartAutoBuild=false,quickModePending=false;
   const activeBuildMode=()=>root.querySelector("[data-build-mode].is-active")?.dataset.buildMode||"navi";
   const setupMode=()=>activeBuildMode();
+  // Keep each creation tab's media, brief, and scene editor completely separate.
+  const initialStoryMarkup=storyList?.innerHTML||"";
+  const initialSceneListMarkup=sceneList?.innerHTML||"";
+  const modeStates=Object.create(null);
+  function saveModeState(mode){
+    modeStates[mode]={
+      scenes,musicUrl,musicFile,
+      storyMarkup:storyList?.innerHTML||initialStoryMarkup,
+      sceneMarkup:sceneList?.innerHTML||initialSceneListMarkup,
+      naviBrief:briefInput?.value||"",
+      manualBrief:manualBriefInput?.value||"",
+      quickPrompt:$("navaVideoQuickPrompt")?.value||"",
+      naviPhotosLabel:$("navaVideoNaviPhotosLabel")?.textContent||"هنوز عکسی انتخاب نشده است.",
+      naviMusicLabel:$("navaVideoNaviMusicLabel")?.textContent||"موسیقی اختیاری است.",
+      quickFileLabel:$("navaVideoQuickFile")?.textContent||"هنوز عکسی انتخاب نشده است."
+    };
+  }
+  function restoreModeState(mode){
+    const state=modeStates[mode];
+    scenes=state?.scenes||[];
+    musicUrl=state?.musicUrl||"";
+    musicFile=state?.musicFile||null;
+    if(storyList)storyList.innerHTML=state?.storyMarkup||initialStoryMarkup;
+    if(sceneList)sceneList.innerHTML=state?.sceneMarkup||initialSceneListMarkup;
+    if(briefInput)briefInput.value=state?.naviBrief||"";
+    if(manualBriefInput)manualBriefInput.value=state?.manualBrief||"";
+    const quickPrompt=$("navaVideoQuickPrompt");if(quickPrompt)quickPrompt.value=state?.quickPrompt||"";
+    const photosLabel=$("navaVideoNaviPhotosLabel");if(photosLabel)photosLabel.textContent=state?.naviPhotosLabel||"هنوز عکسی انتخاب نشده است.";
+    const musicLabel=$("navaVideoNaviMusicLabel");if(musicLabel)musicLabel.textContent=state?.naviMusicLabel||"موسیقی اختیاری است.";
+    const quickFile=$("navaVideoQuickFile");if(quickFile)quickFile.textContent=state?.quickFileLabel||"هنوز عکسی انتخاب نشده است.";
+    if(imageInput)imageInput.value="";
+    if(musicInput)musicInput.value="";
+    if(musicElement)musicElement.src=musicUrl||"";
+    refreshScenePhotoOptions();renderSceneList();resize();drawFrame(0);updateReady();
+  }
+  saveModeState("navi");
   const toLayerMotion=value=>({"slide-right":"from-right","slide-left":"from-left",rise:"from-bottom",cinematic:"from-bottom",type:"fade"}[value]||value);
   function applyBrief(){
     const source=activeBuildMode()==="manual"?manualBriefInput:briefInput;
@@ -75,9 +111,9 @@
   }
   let activeFont=fontInput?.value||"sans-serif",textDirection="rtl",fontLoadToken=0;
   async function activateFont(font){activeFont=font||"sans-serif";const token=++fontLoadToken;try{if(document.fonts?.load){await document.fonts.load("650 42px "+activeFont);await document.fonts.ready;}}catch(_){}if(token===fontLoadToken){resize();drawFrame(0);}}
-  const syncSetupMode=()=>{const mode=setupMode();root.classList.toggle("navi-build-active",mode==="navi");root.dataset.buildModeActive=mode;root.querySelectorAll("[data-build-mode]").forEach(tab=>{const active=tab.dataset.buildMode===mode;tab.classList.toggle("is-active",active);tab.setAttribute("aria-selected",String(active));});root.querySelectorAll("[data-build-panel]").forEach(panel=>{panel.hidden=panel.dataset.buildPanel!==mode;});if(mode==="manual"){if(fontInput)activateFont(fontInput.value||"sans-serif");textDirection="rtl";storyCards().forEach(card=>card.querySelectorAll("[data-layer-motion]").forEach(el=>{if(manualMotionInput)el.value=toLayerMotion(manualMotionInput.value);}));}resize();drawFrame(0);};root.querySelectorAll("[data-build-mode]").forEach(tab=>tab.addEventListener("click",()=>{root.querySelectorAll("[data-build-mode]").forEach(t=>t.classList.remove("is-active"));tab.classList.add("is-active");syncSetupMode();}));$("navaVideoQuickChoosePhoto")?.addEventListener("click",()=>{quickModePending=true;imageInput?.click();});$("navaVideoNaviChoosePhotos")?.addEventListener("click",()=>imageInput?.click());$("navaVideoNaviChooseMusic")?.addEventListener("click",()=>musicInput?.click());$("navaVideoQuickCreate")?.addEventListener("click",()=>{const prompt=($("navaVideoQuickPrompt")?.value||"").trim();if(!scenes.length){$("navaVideoQuickStatus").textContent="ابتدا با دکمه انتخاب عکس، یک عکس بارگذاری کن.";return;}if(!prompt){$("navaVideoQuickStatus").textContent="خواسته‌ات را درباره عکس بنویس.";return;}const first=storyCards()[0];if(first){const q=prompt.match(/[«“"]([^»”"]+)[»”"]/);const layer=first.querySelector("[data-layer-text]");if(layer)layer.value=q?q[1]:prompt;const mode=first.querySelector("[data-scene-content-mode]");if(mode)mode.value="mixed";}smartAutoBuild=true;$("navaVideoQuickStatus").textContent="ناوی در حال طراحی و ساخت ویدئو است…";const ok=window.navaVideoNaviRequest?.({message:"یک ویدئوی کوتاه بر اساس عکس بارگذاری‌شده بساز. متن و خواسته کاربر: "+prompt+" . از عکس انتخاب‌شده در صحنه اول استفاده کن. تنظیمات و زمان‌بندی مناسب را خودت انتخاب کن. در پایان بخش «دستورهای اجرایی استودیو» را با فرمان‌های دقیق و قابل‌اعمال بنویس."});if(!ok){smartAutoBuild=false;$("navaVideoQuickStatus").textContent="ارتباط با ناوی برقرار نشد؛ ورود به حساب را بررسی کن.";}});
+  const syncSetupMode=()=>{const mode=setupMode();root.classList.toggle("navi-build-active",mode==="navi");root.dataset.buildModeActive=mode;root.querySelectorAll("[data-build-mode]").forEach(tab=>{const active=tab.dataset.buildMode===mode;tab.classList.toggle("is-active",active);tab.setAttribute("aria-selected",String(active));});root.querySelectorAll("[data-build-panel]").forEach(panel=>{panel.hidden=panel.dataset.buildPanel!==mode;});if(mode==="manual"){if(fontInput)activateFont(fontInput.value||"sans-serif");textDirection="rtl";storyCards().forEach(card=>card.querySelectorAll("[data-layer-motion]").forEach(el=>{if(manualMotionInput)el.value=toLayerMotion(manualMotionInput.value);}));}resize();drawFrame(0);};root.querySelectorAll("[data-build-mode]").forEach(tab=>tab.addEventListener("click",()=>{const previous=activeBuildMode(),next=tab.dataset.buildMode;if(previous===next)return;saveModeState(previous);root.querySelectorAll("[data-build-mode]").forEach(t=>t.classList.remove("is-active"));tab.classList.add("is-active");restoreModeState(next);syncSetupMode();}));$("navaVideoQuickChoosePhoto")?.addEventListener("click",()=>{quickModePending=true;imageInput?.click();});$("navaVideoNaviChoosePhotos")?.addEventListener("click",()=>imageInput?.click());$("navaVideoNaviChooseMusic")?.addEventListener("click",()=>musicInput?.click());$("navaVideoQuickCreate")?.addEventListener("click",()=>{const prompt=($("navaVideoQuickPrompt")?.value||"").trim();if(!scenes.length){$("navaVideoQuickStatus").textContent="ابتدا با دکمه انتخاب عکس، یک عکس بارگذاری کن.";return;}if(!prompt){$("navaVideoQuickStatus").textContent="خواسته‌ات را درباره عکس بنویس.";return;}const first=storyCards()[0];if(first){const q=prompt.match(/[«“"]([^»”"]+)[»”"]/);const layer=first.querySelector("[data-layer-text]");if(layer)layer.value=q?q[1]:prompt;const mode=first.querySelector("[data-scene-content-mode]");if(mode)mode.value="mixed";}smartAutoBuild=true;$("navaVideoQuickStatus").textContent="ناوی در حال طراحی و ساخت ویدئو است…";const ok=window.navaVideoNaviRequest?.({message:"یک ویدئوی کوتاه بر اساس عکس بارگذاری‌شده بساز. متن و خواسته کاربر: "+prompt+" . از عکس انتخاب‌شده در صحنه اول استفاده کن. تنظیمات و زمان‌بندی مناسب را خودت انتخاب کن. در پایان بخش «دستورهای اجرایی استودیو» را با فرمان‌های دقیق و قابل‌اعمال بنویس."});if(!ok){smartAutoBuild=false;$("navaVideoQuickStatus").textContent="ارتباط با ناوی برقرار نشد؛ ورود به حساب را بررسی کن.";}});
   applyBriefBtn?.addEventListener("click",applyBrief);
-  manualBriefInput?.addEventListener("input",()=>{if(activeBuildMode()==="manual")briefInput.value=manualBriefInput.value;});
+
   function buildNaviScenePlan(reply,originalBrief){
     const story=String(reply||"");
     const digit=value=>String(value||"").replace(/[۰-۹]/g,d=>"۰۱۲۳۴۵۶۷۸۹".indexOf(d));
@@ -138,7 +174,6 @@
     buildNaviScenePlan(reply,originalBrief);
     if(commands){
       if(briefInput)briefInput.value=commands;
-      if(manualBriefInput)manualBriefInput.value=commands;
       applyBrief();
       if(briefInput)briefInput.value=originalBrief;
     }
@@ -255,10 +290,10 @@
       img.src=url;
     }))).then(items=>{
       scenes=items;resize();renderSceneList();refreshScenePhotoOptions();if(activeBuildMode()==="navi"&&storyCards().length){const card=storyCards()[0],gallery=card.querySelector("[data-story-image-gallery]");if(gallery)gallery.dataset.selectedIds=scenes.map(photoId).join(",");const mode=card.querySelector("[data-scene-content-mode]");if(mode)mode.value=card.querySelector("[data-layer-text]")?.value.trim()?"mixed":"image";refreshScenePhotoOptions();const label=$("navaVideoNaviPhotosLabel");if(label)label.textContent=scenes.length+" عکس انتخاب شد.";}if(quickModePending&&storyCards().length){const card=storyCards()[0],gallery=card.querySelector("[data-story-image-gallery]");if(gallery)gallery.dataset.selectedIds=photoId(scenes[0]);const mode=card.querySelector("[data-scene-content-mode]");if(mode)mode.value="mixed";const textArea=card.querySelector("[data-layer-text]");if(textArea&&$("navaVideoQuickPrompt")?.value){const q=$("navaVideoQuickPrompt").value;const quoted=q.match(/[«“"]([^»”"]+)[»”"]/);textArea.value=quoted?quoted[1]:q;}refreshScenePhotoOptions();$("navaVideoQuickFile").textContent="عکس انتخاب شد: "+scenes[0].file.name;quickModePending=false;}drawFrame(0);updateReady();
-      say(items.length+" عکس با موفقیت بارگذاری شد؛ حالا می‌توانی آن‌ها را به صحنه‌ها اضافه کنی.");
+      saveModeState(activeBuildMode());say(items.length+" عکس با موفقیت بارگذاری شد؛ حالا می‌توانی آن‌ها را به صحنه‌ها اضافه کنی.");
     }).catch(e=>{sceneList.textContent="بارگذاری عکس ناموفق بود؛ دوباره انتخاب کن.";say(e.message||"خواندن عکس‌ها ناموفق بود.");});
   });
-  musicInput.addEventListener("change",()=>{const file=musicInput.files&&musicInput.files[0];if(!file)return;if(!file.type.startsWith("audio/")){say("فایل صوتی معتبر انتخاب کن.");musicInput.value="";return;}if(musicUrl)URL.revokeObjectURL(musicUrl);musicUrl=URL.createObjectURL(file);if(!musicElement){musicElement=new Audio();musicElement.preload="auto";musicElement.loop=false;}musicElement.src=musicUrl;if(activeBuildMode()==="navi"){const label=$("navaVideoNaviMusicLabel");if(label)label.textContent="موسیقی انتخاب شد: "+file.name;}say("موسیقی آماده است.");});
+  musicInput.addEventListener("change",()=>{const file=musicInput.files&&musicInput.files[0];if(!file)return;if(!file.type.startsWith("audio/")){say("فایل صوتی معتبر انتخاب کن.");musicInput.value="";return;}if(musicUrl)URL.revokeObjectURL(musicUrl);musicUrl=URL.createObjectURL(file);musicFile=file;if(!musicElement){musicElement=new Audio();musicElement.preload="auto";musicElement.loop=false;}musicElement.src=musicUrl;if(activeBuildMode()==="navi"){const label=$("navaVideoNaviMusicLabel");if(label)label.textContent="موسیقی انتخاب شد: "+file.name;}saveModeState(activeBuildMode());say("موسیقی آماده است.");});
   [titleInput,subtitleInput,formatInput,motionInput,textInput,wordMotionInput,wordSpeedInput,durationInput].filter(Boolean).forEach(el=>el.addEventListener("input",()=>{resize();drawFrame(0);updateReady();}));
   previewBtn.addEventListener("click",preview);
   if(storyList){
@@ -275,8 +310,8 @@
     if(!brief){result.textContent="ابتدا بریف ویدئو را بنویس.";return;}
     if(!scenes.length){result.textContent="برای ساخت با ناوی، ابتدا دست‌کم یک عکس انتخاب کن.";return;}
     const imageNames=scenes.map((scene,i)=>(i+1)+". "+scene.file.name);
-    const musicFile=musicInput?.files?.[0]||null;
-    const musicInfo=musicFile?musicFile.name+" ("+musicFile.type+")":"انتخاب نشده";
+    const selectedMusicFile=musicFile;
+    const musicInfo=selectedMusicFile?selectedMusicFile.name+" ("+selectedMusicFile.type+")":"انتخاب نشده";
     const quoted=brief.match(/[«“"]([^»”"]+)[»”"]/);
     if(quoted&&storyCards()[0]?.querySelector("[data-layer-text]"))storyCards()[0].querySelector("[data-layer-text]").value=quoted[1];
     const first=storyCards()[0],gallery=first?.querySelector("[data-story-image-gallery]");
