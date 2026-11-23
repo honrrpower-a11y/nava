@@ -3953,11 +3953,9 @@ async function sendMessageToNavi(options = {}) {
     }
 
     if (!response.ok || !data.success) {
-      throw new Error(
-        data.diagnostic ||
-        data.error ||
-        "ارتباط با ناوی با مشکل مواجه شد."
-      );
+      const message = data.error || data.diagnostic || "ارتباط با ناوی با مشکل مواجه شد.";
+      const tracking = data.requestId ? "\nکد پیگیری: " + data.requestId : "";
+      throw new Error(message + tracking);
     }
 
     if (options.officeDiagnostic) updateOfficeActionDiagnostic("پاسخ سرور دریافت شد", {
