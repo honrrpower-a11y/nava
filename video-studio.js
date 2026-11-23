@@ -583,7 +583,7 @@
       // Match drawing cadence to the 20 fps canvas capture stream. Drawing
       // at ~30 fps while captureStream samples at 20 fps wastes CPU and can
       // increase frame-time jitter on slower phones.
-      renderTimer=setInterval(tick,50);
+      renderTimer=setInterval(tick,lowPowerRender?66:50);
       renderWatchdog=setTimeout(()=>{if(recording)finishRender("ساخت ویدئو بیش از زمان مجاز طول کشید؛ دوباره با عکس‌های کم‌حجم‌تر امتحان کن.");},(duration+20)*1000);
     }catch(e){
       recording=false;
