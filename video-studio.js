@@ -255,7 +255,7 @@
     const layersToDraw=[];
     visibleScenes.forEach((scene,i)=>{(scene.layers||[]).forEach((layer,layerIndex)=>{const elapsed=i===visibleScenes.length-1?storyLocal:scene.duration,nextLayer=(scene.layers||[])[layerIndex+1],exitAt=nextLayer?Math.max(Number(layer.delay)||0,Number(nextLayer.delay)||0):scene.duration;layersToDraw.push({layer:{...layer,layerIndex},elapsed,sceneDuration:scene.duration,isCurrent:i===visibleScenes.length-1,exitAt});});});
     if(!story.length&&textInput?.value.trim())layersToDraw.push({layer:{text:textInput.value.trim(),position:"bottom",align:"center",motion:wordMotionInput?.value||"rise",size:42},elapsed:seconds,sceneDuration:duration});
-    const textScale=w/1080,margin=w*.09;
+    const textScale=w/1080,margin=w*.09,occupiedTextRegions=[];
     layersToDraw.forEach(({layer,elapsed,sceneDuration,isCurrent=true,exitAt=sceneDuration})=>{
       const body=String(layer.text||"").trim();if(!body)return;
       const fontSize=Math.round((layer.size||42)*textScale),lineH=fontSize*1.32,maxWidth=w*.82;
@@ -263,7 +263,16 @@
       const words=body.split(/\s+/).filter(Boolean),lines=[];let line="";
       words.forEach(word=>{const candidate=line?line+" "+word:word;if(line&&ctx.measureText(candidate).width>maxWidth){lines.push(line);line=word;}else line=candidate;});if(line)lines.push(line);
       const shown=lines.slice(0,6),blockHeight=shown.length*lineH,position=layer.position||"bottom",align=layer.align||"center";
-      const baseY=(position==="top"?h*.15+fontSize:position==="center"?(h-blockHeight)/2+fontSize:h*.84-blockHeight+fontSize)+h*(Number(layer.offset)||0)/100;
+      let baseY=(position==="top"?h*.15+fontSize:position==="center"?(h-blockHeight)/2+fontSize:h*.84-blockHeight+fontSize)+h*(Number(layer.offset)||0)/100;
+      // Resolve collisions across every visible layer, including text retained from previous scenes.
+      const regionAt=y=>({top:y-fontSize*.98,bottom:y+(shown.length-1)*lineH+fontSize*.38+(layer.underline?fontSize*.62:0)});
+      const desiredY=baseY,minY=h*.105+fontSize,maxY=h*.89-(shown.length-1)*lineH-fontSize*.38;
+      const candidates=[desiredY,...Array.from({length:9},(_,i)=>minY+(Math.max(0,maxY-minY)*i/8))].filter(y=>y>=minY&&y<=maxY).sort((a,b)=>Math.abs(a-desiredY)-Math.abs(b-desiredY));
+      const collides=box=>occupiedTextRegions.some(other=>box.top<other.bottom+h*.018&&box.bottom>other.top-h*.018);
+      const safeY=candidates.find(y=>!collides(regionAt(y)));
+      if(safeY!==undefined)baseY=safeY;
+      else if(candidates.length){baseY=candidates.reduce((best,y)=>{const box=regionAt(y),score=occupiedTextRegions.reduce((sum,other)=>sum+Math.max(0,Math.min(box.bottom,other.bottom)-Math.max(box.top,other.top)),0);return score<best.score?{y,score}:best;},{y:candidates[0],score:Infinity}).y;}
+      occupiedTextRegions.push(regionAt(baseY));
       const anchorX=align==="right"?w-margin:align==="left"?margin:w/2;
       ctx.textAlign=align;ctx.textBaseline="alphabetic";
       const motion=layer.motion||"from-right",layerElapsed=elapsed-(Number(layer.delay)||0),p=Math.max(0,Math.min(1,layerElapsed/.9)),ease=1-Math.pow(1-p,3);
