@@ -701,21 +701,26 @@
         if(renderWatchdog){clearTimeout(renderWatchdog);renderWatchdog=0;}
         say("ضبط ویدئو با خطا متوقف شد؛ دوباره تلاش کن.");
       };
-      recorder.onstop=()=>{
+      recorder.onstop=async()=>{
         if(renderTimer){clearInterval(renderTimer);renderTimer=0;}
         if(renderWatchdog){clearTimeout(renderWatchdog);renderWatchdog=0;}
         stream.getTracks().forEach(t=>t.stop());if(musicElement)musicElement.pause();
-        recording=false;renderBtn.disabled=false;previewBtn.disabled=false;
+        recording=false;renderBtn.disabled=true;previewBtn.disabled=true;
         lowPowerRender=false;resize();drawFrame(0);
         const actualMime=recorder?.mimeType||mime;
-        const blob=new Blob(chunks,{type:actualMime});
-        if(!blob.size){say("فایل ویدئو خالی ساخته شد؛ لطفاً دوباره تلاش کن.");return;}
+        let blob=new Blob(chunks,{type:actualMime});
+        if(!blob.size){renderBtn.disabled=false;previewBtn.disabled=false;say("فایل ویدئو خالی ساخته شد؛ لطفاً دوباره تلاش کن.");return;}
+        let extension=actualMime.toLowerCase().startsWith("video/mp4")?"mp4":"webm";
+        if(extension==="webm"){
+          const converted=await transcodeWebmToMp4(blob);
+          if(converted){blob=converted;extension="mp4";}
+        }
+        renderBtn.disabled=false;previewBtn.disabled=false;
         if(outputUrl)URL.revokeObjectURL(outputUrl);outputUrl=URL.createObjectURL(blob);
         const video=$("navaVideoOutput");video.src=outputUrl;
-        const extension=actualMime.toLowerCase().startsWith("video/mp4")?"mp4":"webm";
         const link=$("navaVideoDownload");link.href=outputUrl;link.download="nava-multiphoto-video."+extension;link.hidden=false;
         result.hidden=false;progress.style.width="100%";
-        say(extension==="mp4"?"ویدئوی MP4 آماده شد؛ می‌توانی آن را پخش یا دریافت کنی.":"این مرورگر ضبط MP4 را پشتیبانی نکرد؛ ویدئو با فرمت WebM ساخته شد.");
+        say(extension==="mp4"?"ویدئوی MP4 آماده شد؛ می‌توانی آن را پخش یا دریافت کنی.":"تبدیل MP4 روی این گوشی انجام نشد؛ فایل WebM آماده دریافت است.");
       };
       recorder.start(250);
       const start=performance.now(),duration=renderDuration,fade=Number(fadeInput.value),baseVolume=Math.max(0,Number(musicVolume.value)/100);
