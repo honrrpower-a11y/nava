@@ -62,10 +62,12 @@ jobs:
           console.log("NAVI media selection, context, single request and auto-render wiring verified.");
           NODE
 
-      - name: Install FFmpeg and Persian fonts
+      - name: Ensure FFmpeg and Persian fonts are available
         run: |
-          sudo apt-get update
-          sudo apt-get install -y ffmpeg fonts-noto-core fonts-noto-extra fonts-noto-ui-core
+          if ! command -v ffmpeg >/dev/null || ! command -v ffprobe >/dev/null || ! fc-list | grep -qi "Noto Sans Arabic"; then
+            sudo apt-get update
+            sudo apt-get install -y ffmpeg fonts-noto-core fonts-noto-extra fonts-noto-ui-core
+          fi
           ffmpeg -version
           ffprobe -version
 
