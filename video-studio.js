@@ -87,7 +87,7 @@
     if(!commands)return;
     if(briefInput)briefInput.value=commands;
     if(manualBriefInput)manualBriefInput.value=commands;
-    const priorMode=activeBuildMode();if(priorMode!=="manual")root.querySelector('[data-build-mode="manual"]')?.click();
+    const priorMode=activeBuildMode();
     applyBrief();
     if(smartAutoBuild){smartAutoBuild=false;setTimeout(()=>{if(!renderBtn.disabled)renderBtn.click();else say("دستورهای ناوی اعمال شد؛ صحنه‌ها را بررسی کن.");},250);if(priorMode==="quick")$("navaVideoQuickStatus").textContent="دستورهای ناوی اعمال شد؛ ویدئو در حال آماده‌سازی است.";}
   });
