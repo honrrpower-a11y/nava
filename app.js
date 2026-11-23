@@ -3841,15 +3841,19 @@ async function sendMessageToNavi(options = {}) {
   // previously active studio (especially Office) leak into a home request.
   const hasExplicitContextOverride = options.contextOverride &&
     typeof options.contextOverride === "object";
-  const requestContext = hasExplicitContextOverride
-    ? {
-        service: options.serviceOverride || "",
-        context: options.contextOverride
-      }
-    : isHomePage ? null : naviAssistantContext;
+  const requestContext = options.videoPlan === true || isHomePage
+    ? null
+    : hasExplicitContextOverride
+      ? {
+          service: options.serviceOverride || "",
+          context: options.contextOverride
+        }
+      : naviAssistantContext;
   const selectedService = options.serviceOverride ||
     (isHomePage ? "انتخاب نشده" : serviceSelect.value);
-  const saveThisMessageToMemory = Boolean(naviSaveComposerMessage?.checked);
+  const saveThisMessageToMemory = options.videoPlan === true
+    ? false
+    : Boolean(naviSaveComposerMessage?.checked);
   if (naviSaveComposerMessage) naviSaveComposerMessage.checked = false;
   // Home chat owns a separate persistent thread. It must never reuse the
   // dashboard/Office thread selected in the shared NAVI workspace state.
@@ -3921,11 +3925,12 @@ async function sendMessageToNavi(options = {}) {
       },
       body: JSON.stringify({
         message: finalMessage,
-        page: requestPage,
+        page: options.videoPlan === true ? "avPage" : requestPage,
+        videoPlan: options.videoPlan === true,
         pageTab: document.querySelector("#bizPage .biz-tab.is-active")?.dataset.bizTab || "",
         businessId: document.querySelector("#bizProfileSelect")?.value || "",
         threadId: requestThreadId,
-        isolatedContext: isHomePage,
+        isolatedContext: isHomePage || options.videoPlan === true,
         saveToMemory: saveThisMessageToMemory,
         history: isHomePage ? [] : naviHistory.slice(-NAVI_CONTEXT_MESSAGES)
       })
@@ -4115,7 +4120,7 @@ async function sendMessageToNavi(options = {}) {
 }
 
 sendRequest.addEventListener("click", sendMessageToNavi);
-window.navaVideoNaviRequest = function({ message } = {}) { const cleanMessage=String(message||"").trim(); if(!cleanMessage||!getNaviToken())return false; if(Array.from(serviceSelect.options).some(option=>option.value==="ویدئو و صدا"))serviceSelect.value="ویدئو و صدا"; return sendMessageToNavi({messageOverride:cleanMessage,serviceOverride:"ویدئو و صدا"}); };
+window.navaVideoNaviRequest = function({ message, videoPlan = false } = {}) { const cleanMessage=String(message||"").trim(); if(!cleanMessage||!getNaviToken())return false; if(Array.from(serviceSelect.options).some(option=>option.value==="ویدئو و صدا"))serviceSelect.value="ویدئو و صدا"; return sendMessageToNavi({messageOverride:cleanMessage,serviceOverride:"ویدئو و صدا",videoPlan:videoPlan===true}); };
 
 userRequest.addEventListener("keydown", event => {
   if (event.key === "Enter" && (event.ctrlKey || event.metaKey)) {
