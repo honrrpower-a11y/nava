@@ -79,16 +79,16 @@
   applyBriefBtn?.addEventListener("click",applyBrief);
   manualBriefInput?.addEventListener("input",()=>{if(activeBuildMode()==="manual")briefInput.value=manualBriefInput.value;});
   function buildNaviScenePlan(reply,originalBrief){
-    const marker=/دستورهای اجرایی استودیو\\s*[:：]?/i,story=reply.split(marker)[0];
+    const marker=/دستورهای اجرایی استودیو\s*[:：]?/i,story=reply.split(marker)[0];
     const digit=value=>String(value||"").replace(/[۰-۹]/g,d=>"۰۱۲۳۴۵۶۷۸۹".indexOf(d));
-    const entries=[],re=/متن\\s*صحنه\\s*([0-9۰-۹]+)\\s*لایه\\s*([0-9۰-۹]+)\\s*[:：]\\s*[«“"]([^»”"]+)[»”"]/g;
+    const entries=[],re=/متن\s*صحنه\s*([0-9۰-۹]+)\s*لایه\s*([0-9۰-۹]+)\s*[:：]\s*[«“"]([^»”"]+)[»”"]/g;
     let match;while((match=re.exec(story))&&entries.length<18)entries.push({scene:Math.max(1,Number(digit(match[1]))||1),layer:Math.max(1,Number(digit(match[2]))||1),text:match[3].trim()});
     if(!entries.length){const quoted=story.match(/[«“"]([^»”"]{2,180})[»”"]/);entries.push({scene:1,layer:1,text:quoted?.[1]||originalBrief.slice(0,420)});}
     const maxScene=Math.min(6,Math.max(1,...entries.map(x=>x.scene)));
     while(storyCards().length<maxScene)addStoryBtn?.click();
     const cards=storyCards(),photoGroups=new Map();
-    const photoRe=/عکس(?:‌های)?\\s*صحنه\\s*([0-9۰-۹]+)\\s*[:：]\\s*([0-9۰-۹،,\\s]+)/g;
-    while((match=photoRe.exec(story))){const n=Math.max(1,Number(digit(match[1]))||1),indexes=match[2].split(/[،,\\s]+/).filter(Boolean).map(v=>Number(digit(v))).filter(v=>v>=1&&v<=scenes.length);if(indexes.length)photoGroups.set(n,indexes);}
+    const photoRe=/عکس(?:‌های)?\s*صحنه\s*([0-9۰-۹]+)\s*[:：]\s*([0-9۰-۹،,\s]+)/g;
+    while((match=photoRe.exec(story))){const n=Math.max(1,Number(digit(match[1]))||1),indexes=match[2].split(/[،,\s]+/).filter(Boolean).map(v=>Number(digit(v))).filter(v=>v>=1&&v<=scenes.length);if(indexes.length)photoGroups.set(n,indexes);}
     for(let i=0;i<cards.length;i++){
       const card=cards[i],sceneNo=i+1,items=entries.filter(x=>x.scene===sceneNo);
       const holder=card.querySelector(".nava-video-text-layers");
@@ -264,7 +264,7 @@
       "\nرسانه‌های تصویری انتخاب‌شده به ترتیب:\n"+imageNames.join("\n")+
       "\nموسیقی انتخاب‌شده: "+musicInfo+
       "\nاز تصاویر انتخاب‌شده واقعاً در تدوین استفاده کن؛ ترتیب، تقسیم تصاویر میان صحنه‌ها، متن‌های روی تصویر، تعداد صحنه‌ها، مدت، چیدمان، حرکت و افکت را خودت متناسب با بریف تعیین کن. موسیقی انتخاب‌شده را به‌عنوان صدای پس‌زمینه خروجی به کار ببر.\n"+
-      "پاسخ را با یک سناریوی کوتاه و روشن شروع کن. سپس بخش مستقل «دستورهای اجرایی استودیو» را بنویس. فرمان‌ها باید فقط از قابلیت‌های واقعی موتور استفاده کنند، هر فرمان در یک خط و با نام صحنه/لایه مشخص باشد. برای هر صحنه متن دقیق قابل‌نمایش، عکس‌های مورد استفاده، مدت و حرکت متن را مشخص کن. اگر بریف متن مشخصی ندارد، متن تبلیغاتی یا روایی مناسب خودت بنویس. فرمان‌های مبهم یا صرفاً توصیفی ننویس.";
+      "پاسخ را با یک سناریوی کوتاه و روشن شروع کن. سپس بخش مستقل «دستورهای اجرایی استودیو» را بنویس. فرمان‌ها باید فقط از قابلیت‌های واقعی موتور استفاده کنند، هر فرمان در یک خط و با نام صحنه/لایه مشخص باشد. برای هر صحنه متن دقیق قابل‌نمایش را با قالب «متن صحنه ۱ لایه ۱: ...» بنویس؛ اگر چند لایه دارد شماره لایه را افزایش بده. عکس‌ها را با قالب «عکس صحنه ۱: ۱،۲» و مدت را با قالب «مدت صحنه ۱: ۵ ثانیه» مشخص کن. شماره صحنه‌ها را از ۱ و شماره لایه‌ها را از ۱ شروع کن. اگر بریف متن مشخصی ندارد، متن تبلیغاتی یا روایی مناسب خودت بنویس. فرمان‌های مبهم یا صرفاً توصیفی ننویس.";
     if(typeof window.openNaviAssistant==="function"){
       window.openNaviAssistant({service:"ویدئو و صدا",message:prompt,context:{studio:"ویدئو و صدا",brief,images:imageNames,imageCount:scenes.length,music:musicInfo,selectedMedia:{images:imageNames,music:musicInfo},mode:"navi-auto-build",capabilities:["multi-scene text and image composition","photo selection and ordering","per-layer text motion and delay","scene duration and background","photo layout and motion","background music","video render and export"]}});
     }else{smartAutoBuild=false;result.textContent="همراه NAVI در دسترس نیست؛ از دکمه شناور NAVI استفاده کن.";}
