@@ -4110,6 +4110,7 @@ async function sendMessageToNavi(options = {}) {
 }
 
 sendRequest.addEventListener("click", sendMessageToNavi);
+window.navaVideoNaviRequest = function({ message } = {}) { const cleanMessage=String(message||"").trim(); if(!cleanMessage||!getNaviToken())return false; if(Array.from(serviceSelect.options).some(option=>option.value==="ویدئو و صدا"))serviceSelect.value="ویدئو و صدا"; return sendMessageToNavi({messageOverride:cleanMessage,serviceOverride:"ویدئو و صدا"}); };
 
 userRequest.addEventListener("keydown", event => {
   if (event.key === "Enter" && (event.ctrlKey || event.metaKey)) {
