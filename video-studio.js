@@ -746,7 +746,7 @@
         const AudioContextClass=window.AudioContext||window.webkitAudioContext;
         if(!AudioContextClass)throw new Error("مرورگر از پردازش صدای موسیقی و افکت‌ها پشتیبانی نمی‌کند.");
         if(!audioContext||audioContext.state==="closed")audioContext=new AudioContextClass();
-        if(!audioDestination)audioDestination=audioContext.createMediaStreamDestination();
+        if(!audioDestination||audioDestination.stream.getAudioTracks().every(track=>track.readyState==="ended")){audioDestination=audioContext.createMediaStreamDestination();if(musicGain)musicGain.connect(audioDestination);}
         if(musicElement&&!musicGain){
           audioSource=audioContext.createMediaElementSource(musicElement);
           musicGain=audioContext.createGain();
