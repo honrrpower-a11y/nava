@@ -1450,10 +1450,14 @@ function normalizeNaviHistory(data) {
       }
 
       const messageId = Number(item.id);
+      const isInternalVideoPlan = role === "assistant" &&
+        /"schema"\s*:\s*"nava\.video\.scene-plan\.v1"/.test(content);
       return {
         id: Number.isSafeInteger(messageId) && messageId > 0 ? messageId : null,
         role,
-        content
+        content: isInternalVideoPlan
+          ? "طرح صحنه‌ها توسط ناوی دریافت شد؛ جزئیات طراحی به‌صورت داخلی پردازش شده است."
+          : content
       };
     })
     .filter(Boolean);
