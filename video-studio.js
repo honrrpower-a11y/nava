@@ -139,7 +139,7 @@
       let depth=0,inString=false,escaped=false;
       for(let i=first;i<candidate.length;i++){
         const ch=candidate[i];
-        if(inString){if(escaped)escaped=false;else if(ch==="\\\\")escaped=true;else if(ch==='"')inString=false;continue;}
+        if(inString){if(escaped)escaped=false;else if(ch==="\\")escaped=true;else if(ch==='"')inString=false;continue;}
         if(ch==='"'){inString=true;continue;}
         if(ch==="{")depth++;else if(ch==="}")depth--;
         if(depth===0){try{const parsed=JSON.parse(candidate.slice(first,i+1));if(parsed?.schema==="nava.video.scene-plan.v1"&&Array.isArray(parsed.scenes)){plan=parsed;break;}}catch(_){}break;}
