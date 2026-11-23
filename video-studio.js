@@ -79,7 +79,7 @@
   applyBriefBtn?.addEventListener("click",applyBrief);
   manualBriefInput?.addEventListener("input",()=>{if(activeBuildMode()==="manual")briefInput.value=manualBriefInput.value;});
   function buildNaviScenePlan(reply,originalBrief){
-    const marker=/دستورهای اجرایی استودیو\s*[:：]?/i,story=reply.split(marker)[0];
+    const story=reply;
     const digit=value=>String(value||"").replace(/[۰-۹]/g,d=>"۰۱۲۳۴۵۶۷۸۹".indexOf(d));
     const entries=[],re=/متن\s*صحنه\s*([0-9۰-۹]+)\s*لایه\s*([0-9۰-۹]+)\s*[:：]\s*[«“"]([^»”"]+)[»”"]/g;
     let match;while((match=re.exec(story))&&entries.length<18)entries.push({scene:Math.max(1,Number(digit(match[1]))||1),layer:Math.max(1,Number(digit(match[2]))||1),text:match[3].trim()});
