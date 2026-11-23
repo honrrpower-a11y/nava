@@ -79,16 +79,27 @@
   applyBriefBtn?.addEventListener("click",applyBrief);
   manualBriefInput?.addEventListener("input",()=>{if(activeBuildMode()==="manual")briefInput.value=manualBriefInput.value;});
   function buildNaviScenePlan(reply,originalBrief){
-    const story=reply;
+    const story=String(reply||"");
     const digit=value=>String(value||"").replace(/[۰-۹]/g,d=>"۰۱۲۳۴۵۶۷۸۹".indexOf(d));
-    const entries=[],re=/متن\s*صحنه\s*([0-9۰-۹]+)\s*لایه\s*([0-9۰-۹]+)\s*[:：]\s*[«“"]([^»”"]+)[»”"]/g;
-    let match;while((match=re.exec(story))&&entries.length<18)entries.push({scene:Math.max(1,Number(digit(match[1]))||1),layer:Math.max(1,Number(digit(match[2]))||1),text:match[3].trim()});
-    if(!entries.length){const quoted=story.match(/[«“"]([^»”"]{2,180})[»”"]/);entries.push({scene:1,layer:1,text:quoted?.[1]||originalBrief.slice(0,420)});}
-    const maxScene=Math.min(6,Math.max(1,...entries.map(x=>x.scene)));
+    const entries=[];
+    const textLine=/^\s*متن\s*صحنه\s*([0-9۰-۹]+)\s*لایه\s*([0-9۰-۹]+)\s*[:：]\s*(.*?)\s*$/;
+    story.split(/\r?\n/).forEach(line=>{
+      const m=line.match(textLine);if(!m)return;
+      const text=m[3].replace(/^[«“"']|[»”"']$/g,"").trim();
+      if(text)entries.push({scene:Math.max(1,Number(digit(m[1]))||1),layer:Math.max(1,Number(digit(m[2]))||1),text:text.slice(0,420)});
+    });
+    const explicitMax=entries.length?Math.max(...entries.map(x=>x.scene)):1;
+    const maxScene=Math.min(6,Math.max(1,explicitMax,Math.min(scenes.length,6)));
     while(storyCards().length<maxScene)addStoryBtn?.click();
     const cards=storyCards(),photoGroups=new Map();
     const photoRe=/عکس(?:‌های)?\s*صحنه\s*([0-9۰-۹]+)\s*[:：]\s*([0-9۰-۹،,\s]+)/g;
-    while((match=photoRe.exec(story))){const n=Math.max(1,Number(digit(match[1]))||1),indexes=match[2].split(/[،,\s]+/).filter(Boolean).map(v=>Number(digit(v))).filter(v=>v>=1&&v<=scenes.length);if(indexes.length)photoGroups.set(n,indexes);}
+    let match;
+    while((match=photoRe.exec(story))){
+      const n=Math.max(1,Number(digit(match[1]))||1);
+      const indexes=match[2].split(/[،,\s]+/).filter(Boolean).map(v=>Number(digit(v))).filter(v=>v>=1&&v<=scenes.length);
+      if(indexes.length)photoGroups.set(n,indexes);
+    }
+    const usedPhotos=new Set();
     for(let i=0;i<cards.length;i++){
       const card=cards[i],sceneNo=i+1,items=entries.filter(x=>x.scene===sceneNo);
       const holder=card.querySelector(".nava-video-text-layers");
@@ -96,31 +107,46 @@
       while(holder.querySelectorAll("[data-story-layer]").length<wanted)card.querySelector("[data-add-layer]")?.click();
       const layers=Array.from(card.querySelectorAll("[data-story-layer]"));
       items.forEach(item=>{const field=layers[item.layer-1]?.querySelector("[data-layer-text]");if(field)field.value=item.text;});
-      if(!items.length&&i===0&&!layers[0]?.querySelector("[data-layer-text]")?.value.trim())layers[0].querySelector("[data-layer-text]").value=originalBrief.slice(0,420);
-      const group=photoGroups.get(sceneNo)||(maxScene===1?scenes.map((_,index)=>index+1):scenes.map((_,index)=>index+1).filter(n=>Math.floor((n-1)*maxScene/Math.max(1,scenes.length))===i));
+      const group=photoGroups.get(sceneNo)||[];
+      const assigned=scenes[i]?[sceneNo]:group;
+      assigned.forEach(n=>usedPhotos.add(n));
       const gallery=card.querySelector("[data-story-image-gallery]");
-      if(gallery)gallery.dataset.selectedIds=group.map(n=>scenes[n-1]).filter(Boolean).map(photoId).join(",");
-      const mode=card.querySelector("[data-scene-content-mode]");if(mode)mode.value=group.length?(items.length?"mixed":"image"):(items.length?"text":"image");
+      if(gallery)gallery.dataset.selectedIds=assigned.map(n=>scenes[n-1]).filter(Boolean).map(photoId).join(",");
+      const mode=card.querySelector("[data-scene-content-mode]");
+      if(mode)mode.value=assigned.length?(items.length?"mixed":"image"):(items.length?"text":"image");
       const duration=story.match(new RegExp("مدت\\s*صحنه\\s*"+sceneNo+"\\s*[:：]\\s*([0-9۰-۹]+)\\s*ثانیه"));
       if(duration){const field=card.querySelector("[data-story-duration]");if(field){const val=String(Math.min(8,Math.max(2,Number(digit(duration[1]))||4)));if(Array.from(field.options).some(o=>o.value===val))field.value=val;}}
+      else {const field=card.querySelector("[data-story-duration]");if(field&&Array.from(field.options).some(o=>o.value==="4"))field.value="4";}
     }
+    const missingPhotos=scenes.map((_,i)=>i+1).filter(n=>!usedPhotos.has(n));
+    missingPhotos.forEach((photoIndex,index)=>{
+      const card=cards[index%cards.length],gallery=card.querySelector("[data-story-image-gallery]");
+      if(gallery){const selected=(gallery.dataset.selectedIds||"").split(",").filter(Boolean);const id=photoId(scenes[photoIndex-1]);if(!selected.includes(id))selected.push(id);gallery.dataset.selectedIds=selected.join(",");}
+      const mode=card.querySelector("[data-scene-content-mode]");if(mode&&mode.value==="text")mode.value="mixed";
+    });
     refreshScenePhotoOptions();resize();drawFrame(0);updateReady();
   }
   function resultStatusNavi(message){const el=$("navaVideoNaviResult");if(el)el.textContent=message;}
   window.addEventListener("nava:navi-reply",event=>{
     if(event.detail?.service!=="ویدئو و صدا")return;
     const reply=String(event.detail.reply||"").trim();
+    if(!reply)return;
     const marker=/دستورهای اجرایی استودیو\s*[:：]?/i;
-    if(!marker.test(reply))return;
-    const commands=reply.split(marker).pop().trim();
-    if(!commands)return;
-    const originalBrief=briefInput?.value||"",priorMode=activeBuildMode();
+    const markerMatch=reply.match(marker);
+    const commands=markerMatch?reply.slice(markerMatch.index+markerMatch[0].length).trim():"";
+    const originalBrief=briefInput?.value||"";
     buildNaviScenePlan(reply,originalBrief);
-    if(briefInput)briefInput.value=commands;
-    if(manualBriefInput)manualBriefInput.value=commands;
-    applyBrief();
-    if(briefInput)briefInput.value=originalBrief;
-    if(smartAutoBuild){smartAutoBuild=false;resultStatusNavi("دستورهای ناوی اعمال شد؛ رندر ویدئو آغاز می‌شود.");setTimeout(()=>{if(!renderBtn.disabled)renderBtn.click();else say("دستورهای ناوی اعمال شد، اما هنوز محتوای قابل‌رندر ساخته نشده است.");},250);}
+    if(commands){
+      if(briefInput)briefInput.value=commands;
+      if(manualBriefInput)manualBriefInput.value=commands;
+      applyBrief();
+      if(briefInput)briefInput.value=originalBrief;
+    }
+    if(smartAutoBuild){
+      smartAutoBuild=false;
+      resultStatusNavi(commands?"دستورهای ناوی اعمال شد؛ رندر ویدئو آغاز می‌شود.":"سناریوی ناوی دریافت شد؛ ساخت ویدئو آغاز می‌شود.");
+      setTimeout(()=>{if(!renderBtn.disabled)renderBtn.click();else say("پاسخ ناوی دریافت شد، اما هنوز محتوای قابل‌رندر آماده نیست.");},250);
+    }
   });
   manualMotionInput?.addEventListener("change",()=>{if(setupMode()==="manual")storyCards().forEach(card=>card.querySelectorAll("[data-layer-motion]").forEach(el=>{el.value=manualMotionInput.value==="slide-right"?"from-right":manualMotionInput.value==="slide-left"?"from-left":manualMotionInput.value==="rise"?"from-bottom":manualMotionInput.value;}));drawFrame(0);});
   fontInput?.addEventListener("change",()=>activateFont(fontInput.value));
@@ -263,11 +289,14 @@
     const prompt="تو کارگردان خلاق، طراح موشن و تدوینگر این ویدئو هستی. کاربر فقط بریف و رسانه‌ها را داده و تمام تصمیم‌های خلاقانه و اجرایی با توست.\nبریف دقیق کاربر:\n"+brief+
       "\nرسانه‌های تصویری انتخاب‌شده به ترتیب:\n"+imageNames.join("\n")+
       "\nموسیقی انتخاب‌شده: "+musicInfo+
-      "\nاز تصاویر انتخاب‌شده واقعاً در تدوین استفاده کن؛ ترتیب، تقسیم تصاویر میان صحنه‌ها، متن‌های روی تصویر، تعداد صحنه‌ها، مدت، چیدمان، حرکت و افکت را خودت متناسب با بریف تعیین کن. موسیقی انتخاب‌شده را به‌عنوان صدای پس‌زمینه خروجی به کار ببر.\n"+
+      "\nتمام عکس‌های انتخاب‌شده را حتماً در ویدئو به کار ببر؛ برای هر عکس دست‌کم یک صحنه تصویری مستقل بساز و هیچ عکسی را حذف نکن. تعداد صحنه‌ها باید دست‌کم برابر تعداد عکس‌ها باشد (تا سقف ۶ صحنه؛ اگر عکس بیشتر است، عکس‌های اضافه را میان صحنه‌ها تقسیم کن). متن فیلم را خودت از نو و متناسب با بریف بنویس؛ هرگز متن خام بریف را عیناً به‌عنوان متن روی فیلم کپی نکن. برای هر صحنه متن اختصاصی و متفاوت بنویس. زمان هر صحنه را متناسب با محتوا تعیین کن و زمان کل ویدئو باید مجموع زمان همه صحنه‌ها باشد، نه فقط ۴ ثانیه. موسیقی انتخاب‌شده را به‌عنوان صدای پس‌زمینه خروجی به کار ببر.\n"+
       "پاسخ را با یک سناریوی کوتاه و روشن شروع کن. سپس بخش مستقل «دستورهای اجرایی استودیو» را بنویس. فرمان‌ها باید فقط از قابلیت‌های واقعی موتور استفاده کنند، هر فرمان در یک خط و با نام صحنه/لایه مشخص باشد. برای هر صحنه متن دقیق قابل‌نمایش را با قالب «متن صحنه ۱ لایه ۱: ...» بنویس؛ اگر چند لایه دارد شماره لایه را افزایش بده. عکس‌ها را با قالب «عکس صحنه ۱: ۱،۲» و مدت را با قالب «مدت صحنه ۱: ۵ ثانیه» مشخص کن. شماره صحنه‌ها را از ۱ و شماره لایه‌ها را از ۱ شروع کن. اگر بریف متن مشخصی ندارد، متن تبلیغاتی یا روایی مناسب خودت بنویس. فرمان‌های مبهم یا صرفاً توصیفی ننویس.";
-    if(typeof window.openNaviAssistant==="function"){
+    if(typeof window.openNaviAssistant==="function"&&typeof window.navaVideoNaviRequest==="function"){
       window.openNaviAssistant({service:"ویدئو و صدا",message:prompt,context:{studio:"ویدئو و صدا",brief,images:imageNames,imageCount:scenes.length,music:musicInfo,selectedMedia:{images:imageNames,music:musicInfo},mode:"navi-auto-build",capabilities:["multi-scene text and image composition","photo selection and ordering","per-layer text motion and delay","scene duration and background","photo layout and motion","background music","video render and export"]}});
-    }else{smartAutoBuild=false;result.textContent="همراه NAVI در دسترس نیست؛ از دکمه شناور NAVI استفاده کن.";}
+      const submitted=window.navaVideoNaviRequest({message:prompt});
+      if(!submitted){smartAutoBuild=false;result.textContent="درخواست به ناوی ارسال نشد؛ نشست ورود را بررسی کن.";}
+    }else{smartAutoBuild=false;result.textContent="ارسال خودکار به NAVI در دسترس نیست؛ صفحه را به‌روزرسانی کن.";}
+
   });
   let renderTimer=0,renderWatchdog=0;
   function finishRender(message){
