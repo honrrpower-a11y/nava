@@ -338,7 +338,20 @@
     sceneList.textContent="در حال بارگذاری "+files.length+" عکس…";
     say("در حال خواندن عکس‌های انتخاب‌شده…");
     Promise.all(files.map(file=>new Promise((resolve,reject)=>{
-      const url=URL.createObjectURL(file),img=new Image();img.onload=()=>{if(img.naturalWidth>0&&img.naturalHeight>0)resolve({file,url,image:img});else{URL.revokeObjectURL(url);reject(new Error("تصویر قابل‌خواندن نیست: "+file.name));}};
+      const url=URL.createObjectURL(file),img=new Image();img.onload=()=>{
+        if(!(img.naturalWidth>0&&img.naturalHeight>0)){URL.revokeObjectURL(url);reject(new Error("تصویر قابل‌خواندن نیست: "+file.name));return;}
+        // Downsample oversized camera photos once at import. The editor and final
+        // render then reuse this decoded surface instead of repeatedly handling
+        // multi-megapixel originals on every frame.
+        const maxEdge=1920,scale=Math.min(1,maxEdge/Math.max(img.naturalWidth,img.naturalHeight));
+        if(scale<1){
+          const width=Math.max(1,Math.round(img.naturalWidth*scale)),height=Math.max(1,Math.round(img.naturalHeight*scale));
+          const optimized=document.createElement("canvas");optimized.width=width;optimized.height=height;
+          const optimizedCtx=optimized.getContext("2d",{alpha:false});
+          if(optimizedCtx){optimizedCtx.drawImage(img,0,0,width,height);optimized.naturalWidth=width;optimized.naturalHeight=height;optimized.complete=true;resolve({file,url,image:optimized});}
+          else resolve({file,url,image:img});
+        }else resolve({file,url,image:img});
+      };
       img.onerror=()=>{URL.revokeObjectURL(url);reject(new Error("خواندن تصویر ناموفق بود: "+file.name));};
       img.src=url;
     }))).then(items=>{
@@ -532,7 +545,10 @@
       };
       say("در حال ساخت ویدئو با تنظیمات سازگار با گوشی؛ لطفاً صفحه را باز و روشن نگه دار.");
       tick();
-      renderTimer=setInterval(tick,33);
+      // Match drawing cadence to the 20 fps canvas capture stream. Drawing
+      // at ~30 fps while captureStream samples at 20 fps wastes CPU and can
+      // increase frame-time jitter on slower phones.
+      renderTimer=setInterval(tick,50);
       renderWatchdog=setTimeout(()=>{if(recording)finishRender("ساخت ویدئو بیش از زمان مجاز طول کشید؛ دوباره با عکس‌های کم‌حجم‌تر امتحان کن.");},(duration+20)*1000);
     }catch(e){
       recording=false;
