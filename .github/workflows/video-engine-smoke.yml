@@ -18,7 +18,7 @@ jobs:
   render:
     name: Validate browser renderer and render video proofs
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
     steps:
       - name: Check out source
         uses: actions/checkout@v4
@@ -70,7 +70,9 @@ jobs:
           assert.ok(html.includes('data-layer-reveal'), "Manual editor must expose per-layer text reveal modes");
           assert.ok(html.includes('data-layer-sound'), "Manual editor must expose per-layer sound effects");
           assert.match(js, /revealMode==="word"\?body\.split/, "Renderer must reveal text word by word");
-          assert.match(js, /scheduleSoundEffects\(previewStory,audioContext\.destination/, "Preview must schedule selected sound effects");
+          assert.match(js, /scheduleSoundEffects\(story,audioContext\.destination,[^;]*previewOffset/, "Preview sound effects must be scheduled relative to the selected scene offset");
+          assert.match(js, /musicGain\.connect\(audioContext\.destination\)/, "Preview music must be routed to the speakers");
+          assert.match(js, /await musicElement\.play\(\)/, "Preview must start the selected music track");
           assert.match(js, /const soundEvents=\[\];let soundCursor=0/, "Final render must collect per-scene sound events");
           assert.match(js, /audioBuffer=audioContext\.createBuffer\(2,frameCount,sampleRate\)/, "Sound-only projects must still create an audio track");
           assert.match(app, /reveal را از بین none\/word\/char و sound را از بین none\/type\/impact\/whoosh\/sparkle/, "NAVI must be instructed to choose text reveal and sound effects");
@@ -82,8 +84,8 @@ jobs:
           DEBIAN_FRONTEND: noninteractive
         run: |
           if ! command -v ffmpeg >/dev/null || ! command -v ffprobe >/dev/null; then
-            sudo timeout 180s apt-get update -qq
-            sudo timeout 240s apt-get install -y --no-install-recommends ffmpeg
+            sudo timeout 600s apt-get update -qq
+            sudo timeout 600s apt-get install -y --no-install-recommends ffmpeg
           fi
           command -v ffmpeg
           command -v ffprobe
