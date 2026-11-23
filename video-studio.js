@@ -365,7 +365,7 @@
         for(let i=0;i<length;i++)data[i]=(Math.random()*2-1)*Math.sin(Math.PI*i/length);
         const src=audioContext.createBufferSource(),filter=audioContext.createBiquadFilter(),gain=audioContext.createGain();filter.type="highpass";filter.frequency.value=550;gain.gain.setValueAtTime(.0001,at);gain.gain.linearRampToValueAtTime(.2,at+.24);gain.gain.linearRampToValueAtTime(.0001,at+.7);src.buffer=buffer;src.connect(filter);filter.connect(gain);gain.connect(destination);src.start(at);src.stop(at+.72);previewSoundNodes.push(src);
       }else if(event.type==="type"){
-        const units=event.reveal==="word"?String(event.length? "x".repeat(event.length):"xxxxx").trim().split(/\s+/).length:Math.max(1,event.length||1);
+        const units=event.reveal==="word"?Math.max(1,event.wordCount||1):Math.max(1,event.length||1);
         const count=event.reveal==="none"?4:Math.min(80,units);
         const interval=event.reveal==="word"?1/1.8:event.reveal==="char"?1/8:.16;
         for(let i=0;i<count;i++)makeTone(1750,1380,i*interval,.022,.038,"square");
@@ -572,7 +572,7 @@
       (Array.isArray(renderStory)?renderStory:[]).forEach(scene=>{
         (scene.layers||[]).forEach(layer=>{
           const sound=layer.sound||"none";
-          if(sound!=="none")soundEvents.push({type:sound,time:soundCursor+(Number(layer.delay)||0),length:String(layer.text||"").length,reveal:layer.reveal||"none"});
+          if(sound!=="none")soundEvents.push({type:sound,time:soundCursor+(Number(layer.delay)||0),length:String(layer.text||"").length,wordCount:String(layer.text||"").trim().split(/\s+/).filter(Boolean).length,reveal:layer.reveal||"none"});
         });
         soundCursor+=Number(scene.duration)||0;
       });
