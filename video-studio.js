@@ -168,10 +168,12 @@
       return scene.layers.some(layer=>!layer||typeof layer.text!=="string"||!allowed.position.includes(layer.position)||!allowed.align.includes(layer.align)||!allowed.motion.includes(layer.motion)||!allowed.exit.includes(layer.exit)||!allowed.font.includes(layer.font)||!allowed.style.includes(layer.style)||!allowed.orientation.includes(layer.orientation)||!Number.isFinite(Number(layer.delay))||Number(layer.delay)<0||Number(layer.delay)>6||!Number.isFinite(Number(layer.size))||Number(layer.size)<24||Number(layer.size)>68||!/^#[0-9a-f]{6}$/i.test(String(layer.color||"")));
     });
     if(invalidScene>=0){resultStatusNavi("طرح ناوی در صحنه "+(invalidScene+1)+" با محدودیت‌های اجرایی موتور سازگار نیست؛ هیچ تنظیمی اعمال نشد. طرح را دوباره تولید کن.");return false;}
+    const plannedImages=new Set(plan.scenes.flatMap(scene=>Array.isArray(scene.images)?scene.images.map(Number):[]));
+    const unplannedImages=scenes.map((_,i)=>i+1).filter(n=>!plannedImages.has(n));
+    if(unplannedImages.length){resultStatusNavi("ناوی این عکس‌ها را در سناریو قرار نداده است: "+unplannedImages.join("، ")+"؛ هیچ عکس به‌صورت خودکار به صحنه‌ای اضافه نشد.");return false;}
     if(!["portrait","landscape"].includes(plan.format)||!["keep","replace"].includes(plan.textPersistence)){resultStatusNavi("تنظیمات کلی طرح ناوی معتبر نیست؛ هیچ تغییری اعمال نشد.");return false;}
     const set=(el,value,list)=>{if(!el||!list.includes(value))return false;const option=Array.from(el.options||[]).find(o=>o.value===String(value));if(!option)return false;el.value=String(value);return true;};
     const setNumber=(el,value,min,max)=>{if(!el||!Number.isFinite(Number(value)))return;const wanted=Math.max(min,Math.min(max,Number(value))),options=Array.from(el.options||[]);if(options.length){const closest=options.reduce((best,o)=>Math.abs(Number(o.value)-wanted)<Math.abs(Number(best.value)-wanted)?o:best,options[0]);el.value=closest.value;}else el.value=String(wanted);};
-    const usedPhotos=new Set();
     plan.scenes.forEach((scene,index)=>{
       const card=activeCards[index];if(!card)return;
       const layers=Array.isArray(scene.layers)?scene.layers.slice(0,6):[],holder=card.querySelector(".nava-video-text-layers");
@@ -186,7 +188,6 @@
         const underline=node.querySelector("[data-layer-underline]");if(underline)underline.checked=!!item.underline;
       });
       const imageIndexes=Array.isArray(scene.images)?[...new Set(scene.images.map(Number).filter(n=>Number.isInteger(n)&&n>=1&&n<=scenes.length))]:[];
-      imageIndexes.forEach(n=>usedPhotos.add(n));
       const gallery=card.querySelector("[data-story-image-gallery]");if(gallery)gallery.dataset.selectedIds=imageIndexes.map(n=>scenes[n-1]).filter(Boolean).map(photoId).join(",");
       const mode=card.querySelector("[data-scene-content-mode]"),hasText=layers.some(x=>String(x?.text||"").trim()),hasImages=imageIndexes.length>0;
       if(!set(mode,scene.contentMode,allowed.contentMode)&&mode)mode.value=hasImages?(hasText?"mixed":"image"):(hasText?"text":"image");
@@ -196,8 +197,6 @@
       const frameTitle=card.querySelector("[data-scene-frame-title]");if(frameTitle)frameTitle.value=String(frame.title||"").slice(0,32);
       const bgColor=card.querySelector("[data-scene-background-color]");if(bgColor&&/^#[0-9a-f]{6}$/i.test(String(scene.backgroundColor||"")))bgColor.value=scene.backgroundColor;
     });
-    const missing=scenes.map((_,i)=>i+1).filter(n=>!usedPhotos.has(n));
-    missing.forEach((n,i)=>{const card=activeCards[i%activeCards.length],gallery=card?.querySelector("[data-story-image-gallery]");if(gallery){const ids=(gallery.dataset.selectedIds||"").split(",").filter(Boolean),id=photoId(scenes[n-1]);if(!ids.includes(id))ids.push(id);gallery.dataset.selectedIds=ids.join(",");}const mode=card?.querySelector("[data-scene-content-mode]");if(mode&&mode.value==="text")mode.value="mixed";});
     const persistence=$("navaVideoTextPersistence");if(persistence&&["keep","replace"].includes(plan.textPersistence))persistence.value=plan.textPersistence;
     if(["portrait","landscape"].includes(plan.format))formatInput.value=plan.format;
     refreshScenePhotoOptions();resize();drawFrame(0);updateReady();resultStatusNavi("طرح اختصاصی ناوی اعمال شد: "+plan.scenes.length+" صحنه با تنظیمات مستقل.");return true;
