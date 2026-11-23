@@ -188,9 +188,10 @@
       if(briefInput)briefInput.value=originalBrief;
     }
     if(smartAutoBuild){
-      smartAutoBuild=false;smartAutoBuildMode=null;
-      resultStatusNavi(commands?"دستورهای ناوی اعمال شد؛ رندر ویدئو آغاز می‌شود.":"سناریوی ناوی دریافت شد؛ ساخت ویدئو آغاز می‌شود.");
+      smartAutoBuild=false;
       setTimeout(()=>{if(!renderBtn.disabled)renderBtn.click();else say("پاسخ ناوی دریافت شد، اما هنوز محتوای قابل‌رندر آماده نیست.");},250);
+      smartAutoBuildMode=null;
+      resultStatusNavi(commands?"دستورهای ناوی اعمال شد؛ رندر ویدئو آغاز می‌شود.":"سناریوی ناوی دریافت شد؛ ساخت ویدئو آغاز می‌شود.");
     }
   });
   manualMotionInput?.addEventListener("change",()=>{if(setupMode()==="manual")storyCards().forEach(card=>card.querySelectorAll("[data-layer-motion]").forEach(el=>{el.value=manualMotionInput.value==="slide-right"?"from-right":manualMotionInput.value==="slide-left"?"from-left":manualMotionInput.value==="rise"?"from-bottom":manualMotionInput.value;}));drawFrame(0);});
