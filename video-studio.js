@@ -313,7 +313,7 @@
       const body=String(layer.text||"").trim();if(!body)return;
       const fontSize=Math.round((layer.size||42)*textScale),lineH=fontSize*1.32,maxWidth=w*.82;
       ctx.save();const layerFont=layer.font&&layer.font!=="auto"?layer.font:(["Tahoma, sans-serif","IranNastaliq, serif","Dima Shekasteh, serif"][Math.max(0,layer.layerIndex||0)%3]);ctx.font=(layer.style==="italic"?"italic ":"")+"650 "+fontSize+"px "+layerFont;ctx.fillStyle=layer.color||"#ffffff";ctx.textAlign="left";ctx.direction=textDirection;ctx.shadowColor="rgba(0,0,0,.72)";ctx.shadowBlur=18*sf;
-      const layerElapsed=elapsed-(Number(layer.delay)||0);if(layerElapsed<0)return;const revealMode=layer.reveal||"none";let displayBody=body;if(revealMode!=="none"){const units=revealMode==="word"?body.split(/\s+/).filter(Boolean):Array.from(body);const rate=revealMode==="word"?2.4:15;const visible=Math.min(units.length,Math.ceil(Math.max(0,layerElapsed)*rate));if(visible<=0)return;displayBody=revealMode==="word"?units.slice(0,visible).join(" "):units.slice(0,visible).join("");}const words=displayBody.split(/\s+/).filter(Boolean),lines=[];let line="";
+      const layerElapsed=elapsed-(Number(layer.delay)||0);if(layerElapsed<0)return;const revealMode=layer.reveal||"none";let displayBody=body;if(revealMode!=="none"){const units=revealMode==="word"?body.split(/\s+/).filter(Boolean):Array.from(body);const rate=revealMode==="word"?1.8:8;const visible=Math.min(units.length,Math.ceil(Math.max(0,layerElapsed)*rate));if(visible<=0)return;displayBody=revealMode==="word"?units.slice(0,visible).join(" "):units.slice(0,visible).join("");}const words=displayBody.split(/\s+/).filter(Boolean),lines=[];let line="";
       words.forEach(word=>{const candidate=line?line+" "+word:word;if(line&&ctx.measureText(candidate).width>maxWidth){lines.push(line);line=word;}else line=candidate;});if(line)lines.push(line);
       const shown=lines.slice(0,6),blockHeight=shown.length*lineH,position=layer.position||"bottom",align=layer.align||"center";
       let baseY=(position==="top"?h*.15+fontSize:position==="center"?(h-blockHeight)/2+fontSize:h*.84-blockHeight+fontSize)+h*(Number(layer.offset)||0)/100;
@@ -352,7 +352,7 @@
   function scheduleSoundEffects(story,destination,startAt){
     if(!audioContext||!destination)return;
     let cursor=0;const events=[];
-    (Array.isArray(story)?story:[]).forEach(scene=>{(scene.layers||[]).forEach(layer=>{if(layer.sound&&layer.sound!=="none")events.push({type:layer.sound,time:cursor+(Number(layer.delay)||0),length:String(layer.text||"").length});});cursor+=Number(scene.duration)||0;});
+    (Array.isArray(story)?story:[]).forEach(scene=>{(scene.layers||[]).forEach(layer=>{if(layer.sound&&layer.sound!=="none")events.push({type:layer.sound,time:cursor+(Number(layer.delay)||0),length:String(layer.text||"").length,reveal:layer.reveal||"none"});});cursor+=Number(scene.duration)||0;});
     events.slice(0,48).forEach(event=>{
       const at=startAt+Math.max(0,event.time);
       const makeTone=(frequency,endFrequency,offset,duration,volume,wave="sine")=>{
@@ -365,8 +365,10 @@
         for(let i=0;i<length;i++)data[i]=(Math.random()*2-1)*Math.sin(Math.PI*i/length);
         const src=audioContext.createBufferSource(),filter=audioContext.createBiquadFilter(),gain=audioContext.createGain();filter.type="highpass";filter.frequency.value=550;gain.gain.setValueAtTime(.0001,at);gain.gain.linearRampToValueAtTime(.2,at+.24);gain.gain.linearRampToValueAtTime(.0001,at+.7);src.buffer=buffer;src.connect(filter);filter.connect(gain);gain.connect(destination);src.start(at);src.stop(at+.72);previewSoundNodes.push(src);
       }else if(event.type==="type"){
-        const count=Math.min(9,Math.max(3,Math.ceil((event.length||5)/5)));
-        for(let i=0;i<count;i++)makeTone(1850,1450,i*.075,.025,.055,"square");
+        const units=event.reveal==="word"?String(event.length? "x".repeat(event.length):"xxxxx").trim().split(/\s+/).length:Math.max(1,event.length||1);
+        const count=event.reveal==="none"?4:Math.min(80,units);
+        const interval=event.reveal==="word"?1/1.8:event.reveal==="char"?1/8:.16;
+        for(let i=0;i<count;i++)makeTone(1750,1380,i*interval,.022,.038,"square");
       }
     });
   }
@@ -570,7 +572,7 @@
       (Array.isArray(renderStory)?renderStory:[]).forEach(scene=>{
         (scene.layers||[]).forEach(layer=>{
           const sound=layer.sound||"none";
-          if(sound!=="none")soundEvents.push({type:sound,time:soundCursor+(Number(layer.delay)||0),length:String(layer.text||"").length});
+          if(sound!=="none")soundEvents.push({type:sound,time:soundCursor+(Number(layer.delay)||0),length:String(layer.text||"").length,reveal:layer.reveal||"none"});
         });
         soundCursor+=Number(scene.duration)||0;
       });
@@ -610,8 +612,9 @@
             }else if(event.type==="sparkle"){
               sample=(Math.sin(2*Math.PI*(1050+900*p)*t)+.55*Math.sin(2*Math.PI*(1680+700*p)*t))*Math.exp(-t*5)*.16;
             }else if(event.type==="type"){
-              const tick=t%Math.max(.07,.48/Math.min(10,Math.max(3,event.length||4)));
-              sample=tick<.016?Math.sin(2*Math.PI*1850*tick)*Math.exp(-tick*150)*.13:0;
+              const interval=event.reveal==="word"?1/1.8:event.reveal==="char"?1/8:.16;
+              const tick=t%interval;
+              sample=tick<.018?Math.sin(2*Math.PI*1750*tick)*Math.exp(-tick*125)*.075:0;
             }
             const envelope=Math.min(1,p*18)*(event.type==="whoosh"?Math.min(1,(1-p)*8):1);
             addSample(start+n,sample*envelope);
