@@ -21,7 +21,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" defer></script>
   <script src="logo-renderer.js?v=logo-persian-native-text-20261121-1" defer></script>
   <script src="logo-studio.js?v=logo-per-concept-visual-review-20261121-1" defer></script>
-  <link rel="stylesheet" href="video-studio.css?v=scene-content-blur-20261123-1">
+  <link rel="stylesheet" href="video-studio.css?v=three-video-build-modes-20261123-1">
 </head>
 <body>
 
@@ -573,25 +573,16 @@
           <details class="nava-video-accordion" open>
             <summary><span class="nava-video-step-number">۱</span><span><strong>تنظیم و طراحی با NAVI</strong><small>شرح ویدئو یا تنظیمات دستی</small></span></summary>
             <div class="nava-video-accordion-body">
-              <section class="nava-video-setup" aria-labelledby="navaVideoSetupTitle">
-                <h3 id="navaVideoSetupTitle">روش تنظیم ویدئو</h3>
-                <div class="nava-video-mode-options">
-                  <label><input type="radio" name="navaVideoSetupMode" value="brief" checked><span><strong>تنظیم با درخواست متنی</strong><small>شرح یا بریف را بنویس؛ NAVI و موتور ویدئو دستورهای قابل‌اجرا را اعمال می‌کنند.</small></span></label>
-                  <label><input type="radio" name="navaVideoSetupMode" value="manual"><span><strong>تنظیم با گزینه‌های موجود</strong><small>فونت و حرکت نوشته را خودت از کنترل‌ها انتخاب کن.</small></span></label>
-                </div>
-                <div id="navaVideoBriefSettings" class="nava-video-brief-settings">
-                  <label for="navaVideoBrief">شرح درخواست یا بریف طراحی</label>
-                  <textarea id="navaVideoBrief" rows="4" maxlength="2400" placeholder="مثلاً متن اول از سمت چپ وارد شود، متن دوم محو ظاهر شود و از فونت وزیر بولد استفاده شود..."></textarea>
-                  <div class="nava-video-actions"><button class="nava-video-primary" id="navaVideoApplyBrief" type="button">اعمال دستورهای متن</button><button class="nava-video-secondary" id="navaVideoAskNavi" type="button">گرفتن بریف از NAVI</button></div>
-                  <div class="nava-video-navi-result" id="navaVideoNaviResult" aria-live="polite">دستورهای نوشتاری را اینجا وارد کن یا برای گرفتن بریف از NAVI از دکمه شناور استفاده کن.</div>
-                </div>
-                <div id="navaVideoManualSettings" class="nava-video-manual-settings" hidden>
-                  <div class="nava-video-controls">
-                    <div><label for="navaVideoManualMotion">حرکت پیش‌فرض نوشته</label><select id="navaVideoManualMotion"><option value="cinematic">حرکت سینمایی چندلایه</option><option value="rise">ورود از پایین</option><option value="fade">محو و ظاهر شدن</option><option value="slide-right">ورود از راست</option><option value="slide-left">ورود از چپ</option><option value="type">نمایش مرحله‌ای</option><option value="none">بدون حرکت</option></select></div>
-                    <div><label for="navaVideoFont">فونت نوشته</label><select id="navaVideoFont"><option value="sans-serif">پیش‌فرض دستگاه</option><option value="Arial, sans-serif">Arial</option><option value="Tahoma, sans-serif">Tahoma</option><option value="Georgia, serif">Georgia</option><option value="'Courier New', monospace">Courier New</option><option value="system-ui, sans-serif">System UI</option><option value="'Vazirmatn',sans-serif">وزیرمتن — خوانا و مدرن</option><option value="'Noto Naskh Arabic',serif">نوتو نسخ — رسمی</option><option value="'Gulzar',serif">گلزار — نستعلیق</option><option value="'IranNastaliq',serif">ایران نستعلیق</option><option value="'Dima Shekasteh',serif">دیما شکسته — خوشنویسی</option></select></div>
-                  </div>
-                </div>
-              </section>
+              <section class="nava-video-setup" aria-label="روش ساخت ویدئو">
+<div class="nava-video-build-tabs" role="tablist" aria-label="روش ساخت">
+<button type="button" class="nava-video-build-tab is-active" role="tab" aria-selected="true" data-build-mode="navi">ساخت با ناوی</button>
+<button type="button" class="nava-video-build-tab" role="tab" aria-selected="false" data-build-mode="quick">ساخت سریع با عکس</button>
+<button type="button" class="nava-video-build-tab" role="tab" aria-selected="false" data-build-mode="manual">ساخت دستی</button>
+</div>
+<section class="nava-video-build-panel" data-build-panel="navi" role="tabpanel"><h3>ایده‌ات را به ناوی بگو</h3><p>شرح ویدئو را بنویس؛ ناوی سناریو و دستورهای اجرایی را آماده می‌کند و موتور ویدئو آن‌ها را روی صحنه‌ها اعمال می‌کند.</p><label for="navaVideoBrief">شرح و بریف ویدئو</label><textarea id="navaVideoBrief" rows="4" maxlength="2400" placeholder="مثلاً یک ویدئوی تبلیغاتی سینمایی با ورود تدریجی متن و حرکت آرام عکس‌ها بساز..."></textarea><div class="nava-video-actions"><button class="nava-video-primary" id="navaVideoAskNavi" type="button">طراحی و ساخت با ناوی</button></div><div class="nava-video-navi-result" id="navaVideoNaviResult" aria-live="polite">ناوی بریف را به دستورهای قابل‌اجرا تبدیل می‌کند؛ سپس پیش‌نمایش و خروجی در همین صفحه ساخته می‌شود.</div></section>
+<section class="nava-video-build-panel" data-build-panel="quick" role="tabpanel" hidden><h3>فقط عکس و متن درخواست</h3><p>یک عکس انتخاب کن و بگو چه ویدئویی می‌خواهی؛ تنظیمات صحنه را به ناوی بسپار.</p><button class="nava-video-secondary" id="navaVideoQuickChoosePhoto" type="button">＋ انتخاب عکس</button><div class="nava-video-quick-file" id="navaVideoQuickFile">هنوز عکسی انتخاب نشده است.</div><label for="navaVideoQuickPrompt">چه خروجی‌ای می‌خواهی؟</label><textarea id="navaVideoQuickPrompt" rows="3" maxlength="1200" placeholder="مثلاً این عکس پس‌زمینه باشد و متن «آینده از اینجا شروع می‌شود» با افکت سینمایی ظاهر شود."></textarea><div class="nava-video-actions"><button class="nava-video-primary" id="navaVideoQuickCreate" type="button">ساخت خودکار با ناوی</button></div><div class="nava-video-quick-status" id="navaVideoQuickStatus" role="status" aria-live="polite">فقط عکس و خواسته‌ات را وارد کن؛ بقیه کار با ناوی است.</div></section>
+<section class="nava-video-build-panel" data-build-panel="manual" role="tabpanel" hidden><h3>کنترل کامل ساخت ویدئو</h3><p>تنظیمات را خودت انتخاب کن؛ این مسیر کاملاً دستی است و ناوی تنظیمات را تغییر نمی‌دهد.</p><div id="navaVideoManualSettings" class="nava-video-manual-settings"><div class="nava-video-controls"><div><label for="navaVideoManualMotion">حرکت پیش‌فرض نوشته</label><select id="navaVideoManualMotion"><option value="cinematic">حرکت سینمایی چندلایه</option><option value="rise">ورود از پایین</option><option value="fade">محو و ظاهر شدن</option><option value="slide-right">ورود از راست</option><option value="slide-left">ورود از چپ</option><option value="type">نمایش مرحله‌ای</option><option value="none">بدون حرکت</option></select></div><div><label for="navaVideoFont">فونت نوشته</label><select id="navaVideoFont"><option value="sans-serif">پیش‌فرض دستگاه</option><option value="Arial, sans-serif">Arial</option><option value="Tahoma, sans-serif">Tahoma</option><option value="Georgia, serif">Georgia</option><option value="'Courier New', monospace">Courier New</option><option value="system-ui, sans-serif">System UI</option><option value="'Vazirmatn',sans-serif">وزیرمتن — خوانا و مدرن</option><option value="'Noto Naskh Arabic',serif">نوتو نسخ — رسمی</option><option value="'Gulzar',serif">گلزار — نستعلیق</option><option value="'IranNastaliq',serif">ایران نستعلیق</option><option value="'Dima Shekasteh',serif">دیما شکسته — خوشنویسی</option></select></div></div></div><label for="navaVideoManualBrief">دستورهای دستی (اختیاری)</label><textarea id="navaVideoManualBrief" rows="3" maxlength="1200" placeholder="فرمان‌های قابل‌اعمال را وارد کن..."></textarea><button class="nava-video-secondary" id="navaVideoApplyBrief" type="button">اعمال دستورهای دستی</button></section>
+</section>
             </div>
           </details>
           <details class="nava-video-accordion">
@@ -1540,6 +1531,6 @@
   <script src="office-file-tools.js?v=office-followup-sync-20261118-1" defer></script>
   <script src="office-edit-tools.js?v=office-pptx-edit-persistence-preview-20261119-6" defer></script>
   <script src="office-preview.js?v=office-preview-rollback-20261119-2" defer></script>
-  <script src="video-studio.js?v=scene-content-blur-20261123-1" defer></script>
+  <script src="video-studio.js?v=three-video-build-modes-20261123-1" defer></script>
 </body>
 </html>
