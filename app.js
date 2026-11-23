@@ -1450,10 +1450,14 @@ function normalizeNaviHistory(data) {
       }
 
       const messageId = Number(item.id);
+      const isInternalVideoPlan = role === "assistant" &&
+        /"schema"\s*:\s*"nava\.video\.scene-plan\.v1"/.test(content);
       return {
         id: Number.isSafeInteger(messageId) && messageId > 0 ? messageId : null,
         role,
-        content
+        content: isInternalVideoPlan
+          ? "طرح صحنه‌ها توسط ناوی دریافت شد؛ جزئیات طراحی به‌صورت داخلی پردازش شده است."
+          : content
       };
     })
     .filter(Boolean);
@@ -3998,11 +4002,14 @@ async function sendMessageToNavi(options = {}) {
     // Render the answer immediately. Secondary synchronization must not block chat.
     const threadBeforeNaming = isHomePage ? null : naviThreads.find(item => item.thread_id === naviActiveThreadId);
     const shouldNameThread = !isHomePage && threadBeforeNaming && Number(threadBeforeNaming.message_count || 0) === 0;
-    showNaviReply(reply);
     if (selectedService === "ویدئو و صدا") {
+      // The structured scene-plan is an internal NAVI-to-renderer contract, not user-facing chat.
+      showNaviReply("طرح صحنه‌ها توسط ناوی دریافت شد؛ در حال بررسی و اعمال تصمیم‌های خلاقانه…");
       window.dispatchEvent(new CustomEvent("nava:navi-reply", {
         detail: { service: selectedService, reply }
       }));
+    } else {
+      showNaviReply(reply);
     }
     try {
       renderNaviOfficeAction(data.officeAction, { target: options.officeTarget ? "office" : "chat" });

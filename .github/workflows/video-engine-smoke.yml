@@ -54,8 +54,16 @@ jobs:
           const replyHandler = js.slice(replyStart, replyStart + 1400);
           assert.doesNotMatch(replyHandler, /applyBrief\(\)/, "NAVI output must not be interpreted by manual keyword rules");
           assert.match(js, /فقط یک شیء JSON معتبر/, "NAVI prompt must request machine-readable creative direction");
+          assert.match(js, /naviPlanRetryCount<1/, "NAVI must get one chance to repair its own invalid plan");
+          assert.match(js, /photoY بین 0\.16 و 0\.40/, "NAVI prompt must include renderer numeric bounds");
+          const videoReplyStart = app.indexOf('if (selectedService === "ویدئو و صدا")');
+          const videoReplyBlock = app.slice(videoReplyStart, app.indexOf("} else {", videoReplyStart));
+          assert.match(videoReplyBlock, /showNaviReply\("طرح صحنه‌ها/, "Internal scene JSON must be replaced with a friendly status in chat");
+          assert.doesNotMatch(videoReplyBlock, /showNaviReply\(reply\)/, "Raw scene JSON must never be shown as a user-facing NAVI reply");
+          assert.match(app, /isInternalVideoPlan/, "Restored NAVI history must identify internal video plans");
+          assert.match(app, /جزئیات طراحی به‌صورت داخلی پردازش شده است/, "Restored history must show a friendly status instead of raw scene JSON");
           assert.match(app, /nava\.video\.scene-plan\.v1/, "Chat-level video instruction must require the same structured schema");
-          assert.match(js, /if\(smartAutoBuild\)[\s\S]{0,220}renderBtn\.click\(\)/, "NAVI reply must trigger automatic render");
+          assert.match(js, /if\(applied\)setTimeout\(\(\)=>\{if\(!renderBtn\.disabled\)renderBtn\.click\(\)/, "Valid NAVI scene plans must trigger automatic render");
           for (const id of ["navaVideoNaviChoosePhotos", "navaVideoNaviChooseMusic", "navaVideoBrief", "navaVideoAskNavi"]) {
             assert.ok(html.includes('id="' + id + '"'), "Missing NAVI UI control: " + id);
           }
@@ -63,10 +71,15 @@ jobs:
           NODE
 
       - name: Ensure FFmpeg is available
+        env:
+          DEBIAN_FRONTEND: noninteractive
         run: |
           if ! command -v ffmpeg >/dev/null || ! command -v ffprobe >/dev/null; then
-            sudo apt-get install -y --no-install-recommends ffmpeg
+            sudo timeout 180s apt-get update -qq
+            sudo timeout 240s apt-get install -y --no-install-recommends ffmpeg
           fi
+          command -v ffmpeg
+          command -v ffprobe
           ffmpeg -version
           ffprobe -version
 
