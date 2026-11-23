@@ -352,7 +352,7 @@
   function scheduleSoundEffects(story,destination,startAt){
     if(!audioContext||!destination)return;
     let cursor=0;const events=[];
-    (Array.isArray(story)?story:[]).forEach(scene=>{(scene.layers||[]).forEach(layer=>{if(layer.sound&&layer.sound!=="none")events.push({type:layer.sound,time:cursor+(Number(layer.delay)||0),length:String(layer.text||"").length,wordCount:String(layer.text||"").trim().split(/\\s+/).filter(Boolean).length,reveal:layer.reveal||"none"});});cursor+=Number(scene.duration)||0;});
+    (Array.isArray(story)?story:[]).forEach(scene=>{(scene.layers||[]).forEach(layer=>{if(layer.sound&&layer.sound!=="none")events.push({type:layer.sound,time:cursor+(Number(layer.delay)||0),length:String(layer.text||"").length,wordCount:String(layer.text||"").trim().split(/\s+/).filter(Boolean).length,reveal:layer.reveal||"none"});});cursor+=Number(scene.duration)||0;});
     events.slice(0,48).forEach(event=>{
       const at=startAt+Math.max(0,event.time);
       const makeTone=(frequency,endFrequency,offset,duration,volume,wave="sine")=>{
