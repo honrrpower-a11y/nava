@@ -479,6 +479,86 @@
 
   });
   let renderTimer=0,renderWatchdog=0;
+  async function tryMediabunnyMp4(renderStory,renderDuration){
+    const MB=window.Mediabunny;
+    if(!MB||!MB.Output||!MB.CanvasSource||!MB.Mp4OutputFormat||!MB.BufferTarget)return false;
+    let output=null,videoSource=null,audioSource=null;
+    try{
+      const fps=20,[width,height]=dimensions();
+      const quality=new MB.Quality({bitrate:2200000});
+      const videoCodec=await MB.getFirstEncodableVideoCodec(["avc"],{width,height,frameRate:fps,quality});
+      if(videoCodec!=="avc")return false;
+      let audioBuffer=null;
+      if(musicUrl||musicFile){
+        const AudioContextClass=window.AudioContext||window.webkitAudioContext;
+        if(!AudioContextClass)return false;
+        if(!audioContext)audioContext=new AudioContextClass();
+        await audioContext.resume();
+        let sourceBlob=musicFile;
+        if(!sourceBlob&&musicUrl){const response=await fetch(musicUrl);if(!response.ok)return false;sourceBlob=await response.blob();}
+        if(!sourceBlob)return false;
+        const decoded=await audioContext.decodeAudioData(await sourceBlob.arrayBuffer());
+        const sampleRate=decoded.sampleRate,channels=decoded.numberOfChannels;
+        const frameCount=Math.min(decoded.length,Math.ceil(renderDuration*sampleRate));
+        audioBuffer=audioContext.createBuffer(channels,frameCount,sampleRate);
+        const gain=Math.max(0,Number(musicVolume.value)/100),fade=Math.max(0,Number(fadeInput.value)||0);
+        for(let ch=0;ch<channels;ch++){
+          const input=decoded.getChannelData(ch),out=audioBuffer.getChannelData(ch);
+          for(let n=0;n<frameCount;n++){
+            const t=n/sampleRate,remaining=renderDuration-t;
+            const envelope=fade>0?Math.max(0,Math.min(1,t/fade,remaining/fade)):1;
+            out[n]=input[n]*gain*envelope;
+          }
+        }
+        let aacReady=await MB.canEncodeAudio("aac");
+        if(!aacReady&&window.MediabunnyAacEncoder?.registerAacEncoder){
+          window.MediabunnyAacEncoder.registerAacEncoder();
+          aacReady=await MB.canEncodeAudio("aac");
+        }
+        if(!aacReady)return false;
+      }
+      output=new MB.Output({format:new MB.Mp4OutputFormat(),target:new MB.BufferTarget()});
+      videoSource=new MB.CanvasSource(canvas,{codec:"avc",quality,latencyMode:"quality",hardwareAcceleration:"prefer-hardware"});
+      output.addVideoTrack(videoSource,{frameRate:fps});
+      if(audioBuffer){
+        audioSource=new MB.AudioBufferSource({codec:"aac",quality:new MB.Quality({bitrate:128000})});
+        output.addAudioTrack(audioSource);
+      }
+      await output.start();
+      if(audioBuffer)await audioSource.add(audioBuffer);
+      const totalFrames=Math.max(1,Math.ceil(renderDuration*fps));
+      for(let frame=0;frame<totalFrames;frame++){
+        if(!recording)throw new Error("render-cancelled");
+        const t=frame/fps;
+        drawFrame(t,renderStory,renderDuration);
+        await videoSource.add(t,1/fps,{keyFrame:frame===0});
+        if(frame%5===0){
+          progress.style.width=Math.min(99,(frame+1)/totalFrames*100)+"%";
+          if(frame%20===0)await new Promise(resolve=>setTimeout(resolve,0));
+        }
+      }
+      videoSource.close();videoSource=null;
+      if(audioSource){audioSource.close();audioSource=null;}
+      await output.finalize();
+      const buffer=output.target.buffer;
+      if(!buffer||!buffer.byteLength)throw new Error("empty-mp4");
+      const blob=new Blob([buffer],{type:"video/mp4"});
+      if(outputUrl)URL.revokeObjectURL(outputUrl);
+      outputUrl=URL.createObjectURL(blob);
+      const video=$("navaVideoOutput");video.src=outputUrl;
+      const link=$("navaVideoDownload");link.href=outputUrl;link.download="nava-multiphoto-video.mp4";link.hidden=false;
+      result.hidden=false;progress.style.width="100%";
+      resize();drawFrame(0);
+      say("ویدئوی MP4 با موتور رندر مستقیم آماده شد؛ می‌توانی آن را پخش یا دریافت کنی.");
+      return true;
+    }catch(error){
+      try{videoSource?.close();}catch(_){}
+      try{audioSource?.close();}catch(_){}
+      try{if(output&&output.state!=="finalized"&&output.state!=="canceled")await output.cancel();}catch(_){}
+      if(error?.message!=="render-cancelled")console.warn("NAVA Mediabunny MP4 path:",error);
+      return false;
+    }
+  }
   function finishRender(message){
     if(renderTimer){clearInterval(renderTimer);renderTimer=0;}
     if(renderWatchdog){clearTimeout(renderWatchdog);renderWatchdog=0;}
@@ -494,6 +574,15 @@
       const renderDuration=renderStory.length?renderStory.reduce((sum,s)=>sum+s.duration,0):(Number(durationInput?.value)||8);
       if(renderStory.length>1) say("در حال ساخت "+renderStory.length+" صحنه متوالی…");
       resize();drawFrame(0,renderStory,renderDuration);
+      if(window.Mediabunny){
+        recording=true;renderBtn.disabled=true;previewBtn.disabled=true;progress.style.width="0%";
+        say("در حال ساخت MP4 با موتور رندر مستقیم؛ لطفاً صفحه را باز و روشن نگه دار.");
+        const mp4Ready=await tryMediabunnyMp4(renderStory,renderDuration);
+        recording=false;renderBtn.disabled=false;previewBtn.disabled=false;
+        if(mp4Ready)return;
+        resize();drawFrame(0,renderStory,renderDuration);
+        say("این گوشی از رمزگذاری مستقیم MP4 پشتیبانی نکرد؛ مسیر سازگار مرورگر فعال می‌شود…");
+      }
       // Prefer broadly compatible MP4/H.264 + AAC when this browser can record it.
       // Keep WebM as a truthful fallback; never rename a WebM blob to .mp4.
       const isAndroid=/Android/i.test(navigator.userAgent||"");
