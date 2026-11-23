@@ -543,26 +543,60 @@
         if(videoCodec!=="vp9")return false;
       }
       let audioBuffer=null,audioCodec=isMp4?"aac":"opus";
-      if(musicUrl||musicFile){
+      const soundEvents=[];let soundCursor=0;
+      (Array.isArray(renderStory)?renderStory:[]).forEach(scene=>{
+        (scene.layers||[]).forEach(layer=>{
+          const sound=layer.sound||"none";
+          if(sound!=="none")soundEvents.push({type:sound,time:soundCursor+(Number(layer.delay)||0),length:String(layer.text||"").length});
+        });
+        soundCursor+=Number(scene.duration)||0;
+      });
+      if(musicUrl||musicFile||soundEvents.length){
         const AudioContextClass=window.AudioContext||window.webkitAudioContext;
         if(!AudioContextClass)return false;
         if(!audioContext)audioContext=new AudioContextClass();
         await audioContext.resume();
-        let sourceBlob=musicFile;
-        if(!sourceBlob&&musicUrl){const response=await fetch(musicUrl);if(!response.ok)return false;sourceBlob=await response.blob();}
-        if(!sourceBlob)return false;
-        const decoded=await audioContext.decodeAudioData(await sourceBlob.arrayBuffer());
-        const sampleRate=decoded.sampleRate,channels=decoded.numberOfChannels;
-        const frameCount=Math.min(decoded.length,Math.ceil(renderDuration*sampleRate));
-        audioBuffer=audioContext.createBuffer(channels,frameCount,sampleRate);
-        const gain=Math.max(0,Number(musicVolume.value)/100),fade=Math.max(0,Number(fadeInput.value)||0);
-        for(let ch=0;ch<channels;ch++){
-          const input=decoded.getChannelData(ch),out=audioBuffer.getChannelData(ch);
-          for(let n=0;n<frameCount;n++){
-            const t=n/sampleRate,remaining=renderDuration-t;
-            const envelope=fade>0?Math.max(0,Math.min(1,t/fade,remaining/fade)):1;
-            out[n]=input[n]*gain*envelope;
+        const sampleRate=48000,frameCount=Math.max(1,Math.ceil(renderDuration*sampleRate));
+        audioBuffer=audioContext.createBuffer(2,frameCount,sampleRate);
+        if(musicUrl||musicFile){
+          let sourceBlob=musicFile;
+          if(!sourceBlob&&musicUrl){const response=await fetch(musicUrl);if(!response.ok)return false;sourceBlob=await response.blob();}
+          if(!sourceBlob)return false;
+          const decoded=await audioContext.decodeAudioData(await sourceBlob.arrayBuffer());
+          const gain=Math.max(0,Number(musicVolume.value)/100),fade=Math.max(0,Number(fadeInput.value)||0);
+          for(let ch=0;ch<2;ch++){
+            const input=decoded.getChannelData(Math.min(ch,decoded.numberOfChannels-1)),out=audioBuffer.getChannelData(ch);
+            for(let n=0;n<frameCount;n++){
+              const t=n/sampleRate,remaining=renderDuration-t,sourceIndex=Math.min(input.length-1,Math.floor(t*decoded.sampleRate));
+              const envelope=fade>0?Math.max(0,Math.min(1,t/fade,remaining/fade)):1;
+              out[n]+=input[sourceIndex]*gain*envelope;
+            }
           }
+        }
+        const addSample=(index,value)=>{if(index<0||index>=frameCount)return;audioBuffer.getChannelData(0)[index]+=value;audioBuffer.getChannelData(1)[index]+=value*.94;};
+        soundEvents.slice(0,48).forEach(event=>{
+          const start=Math.max(0,Math.floor(event.time*sampleRate));if(start>=frameCount)return;
+          const duration=event.type==="whoosh"?.72:event.type==="sparkle"?.62:event.type==="impact"?.42:.48;
+          const count=Math.min(frameCount-start,Math.ceil(duration*sampleRate));
+          for(let n=0;n<count;n++){
+            const t=n/sampleRate,p=n/count;let sample=0;
+            if(event.type==="impact"){
+              sample=Math.sin(2*Math.PI*(105-58*p)*t)*Math.exp(-t*12)*.48+Math.sin(2*Math.PI*1450*t)*Math.exp(-t*95)*.12;
+            }else if(event.type==="whoosh"){
+              sample=Math.sin(n*12.9898)*Math.cos(n*4.1414)*Math.sin(Math.PI*p)*.2;
+            }else if(event.type==="sparkle"){
+              sample=(Math.sin(2*Math.PI*(1050+900*p)*t)+.55*Math.sin(2*Math.PI*(1680+700*p)*t))*Math.exp(-t*5)*.16;
+            }else if(event.type==="type"){
+              const tick=t%Math.max(.07,.48/Math.min(10,Math.max(3,event.length||4)));
+              sample=tick<.016?Math.sin(2*Math.PI*1850*tick)*Math.exp(-tick*150)*.13:0;
+            }
+            const envelope=Math.min(1,p*18)*(event.type==="whoosh"?Math.min(1,(1-p)*8):1);
+            addSample(start+n,sample*envelope);
+          }
+        });
+        for(let ch=0;ch<2;ch++){
+          const data=audioBuffer.getChannelData(ch);
+          for(let n=0;n<data.length;n++)data[n]=Math.max(-.96,Math.min(.96,data[n]));
         }
         let audioReady=await MB.canEncodeAudio(audioCodec);
         if(!audioReady&&audioCodec==="aac"&&window.MediabunnyAacEncoder?.registerAacEncoder){
