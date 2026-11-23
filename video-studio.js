@@ -479,6 +479,54 @@
 
   });
   let renderTimer=0,renderWatchdog=0;
+  let navaFfmpegInstance=null,navaFfmpegLoadPromise=null;
+  async function transcodeWebmToMp4(webmBlob){
+    if(!webmBlob||webmBlob.size>80000000)return null;
+    const loadScript=()=>new Promise((resolve,reject)=>{
+      if(window.FFmpegWASM?.FFmpeg){resolve(window.FFmpegWASM);return;}
+      const existing=document.querySelector('script[data-nava-ffmpeg]');
+      if(existing){existing.addEventListener("load",()=>resolve(window.FFmpegWASM),{once:true});existing.addEventListener("error",reject,{once:true});return;}
+      const script=document.createElement("script");script.src="https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.15/dist/umd/ffmpeg.js";script.async=true;script.dataset.navaFfmpeg="1";script.onload=()=>resolve(window.FFmpegWASM);script.onerror=()=>reject(new Error("FFmpeg loader unavailable"));document.head.appendChild(script);
+    });
+    let coreUrl="",wasmUrl="",ffmpeg=null,progressHandler=null;
+    try{
+      say("در حال آماده‌سازی مبدل MP4؛ دریافت موتور تبدیل ممکن است حدود ۳۰ مگابایت باشد…");
+      const api=await loadScript();
+      if(!api?.FFmpeg)throw new Error("FFmpeg API unavailable");
+      if(!navaFfmpegInstance){
+        if(!navaFfmpegLoadPromise)navaFfmpegLoadPromise=(async()=>{
+          const instance=new api.FFmpeg();
+          const base="https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.10/dist/umd";
+          const toBlob=async(url,type)=>{const response=await fetch(url);if(!response.ok)throw new Error("FFmpeg core download failed");return URL.createObjectURL(new Blob([await response.arrayBuffer()],{type}));};
+          coreUrl=await toBlob(base+"/ffmpeg-core.js","text/javascript");
+          wasmUrl=await toBlob(base+"/ffmpeg-core.wasm","application/wasm");
+          await instance.load({coreURL:coreUrl,wasmURL:wasmUrl});
+          return instance;
+        })();
+        navaFfmpegInstance=await navaFfmpegLoadPromise;
+      }
+      ffmpeg=navaFfmpegInstance;
+      progressHandler=({progress})=>{if(Number.isFinite(progress))progressBar.style.width=Math.min(99,Math.max(0,progress*100))+"%";};
+      ffmpeg.on("progress",progressHandler);
+      const input=new Uint8Array(await webmBlob.arrayBuffer());
+      await ffmpeg.writeFile("nava-input.webm",input);
+      say("در حال تبدیل ویدئو به MP4؛ در گوشی ممکن است کمی زمان ببرد…");
+      const exitCode=await ffmpeg.exec(["-i","nava-input.webm","-c:v","libx264","-preset","ultrafast","-crf","24","-pix_fmt","yuv420p","-c:a","aac","-b:a","128k","-movflags","+faststart","nava-output.mp4"]);
+      if(exitCode!==0)throw new Error("FFmpeg conversion failed");
+      const data=await ffmpeg.readFile("nava-output.mp4");
+      if(!data||!data.length)throw new Error("Empty MP4 output");
+      try{await ffmpeg.deleteFile("nava-input.webm");await ffmpeg.deleteFile("nava-output.mp4");}catch(_){}
+      return new Blob([data],{type:"video/mp4"});
+    }catch(error){
+      console.warn("NAVA WebM to MP4 conversion:",error);
+      say("تبدیل MP4 روی این گوشی در دسترس نشد؛ فایل WebM سالم نگه داشته می‌شود.");
+      return null;
+    }finally{
+      if(ffmpeg&&progressHandler)try{ffmpeg.off("progress",progressHandler);}catch(_){}
+      if(coreUrl)URL.revokeObjectURL(coreUrl);
+      if(wasmUrl)URL.revokeObjectURL(wasmUrl);
+    }
+  }
   async function tryMediabunnyMp4(renderStory,renderDuration){
     const MB=window.Mediabunny;
     if(!MB||!MB.Output||!MB.CanvasSource||!MB.Mp4OutputFormat||!MB.BufferTarget)return false;
@@ -486,9 +534,13 @@
     try{
       const fps=20,[width,height]=dimensions();
       const quality=new MB.Quality({bitrate:2200000});
-      const videoCodec=await MB.getFirstEncodableVideoCodec(["avc"],{width,height,frameRate:fps,quality});
-      if(videoCodec!=="avc")return false;
-      let audioBuffer=null;
+      let videoCodec=await MB.getFirstEncodableVideoCodec(["avc"],{width,height,frameRate:fps,quality});
+      let isMp4=videoCodec==="avc";
+      if(!isMp4){
+        videoCodec=await MB.getFirstEncodableVideoCodec(["vp9"],{width,height,frameRate:fps,quality});
+        if(videoCodec!=="vp9")return false;
+      }
+      let audioBuffer=null,audioCodec=isMp4?"aac":"opus";
       if(musicUrl||musicFile){
         const AudioContextClass=window.AudioContext||window.webkitAudioContext;
         if(!AudioContextClass)return false;
@@ -510,18 +562,23 @@
             out[n]=input[n]*gain*envelope;
           }
         }
-        let aacReady=await MB.canEncodeAudio("aac");
-        if(!aacReady&&window.MediabunnyAacEncoder?.registerAacEncoder){
+        let audioReady=await MB.canEncodeAudio(audioCodec);
+        if(!audioReady&&audioCodec==="aac"&&window.MediabunnyAacEncoder?.registerAacEncoder){
           window.MediabunnyAacEncoder.registerAacEncoder();
-          aacReady=await MB.canEncodeAudio("aac");
+          audioReady=await MB.canEncodeAudio("aac");
         }
-        if(!aacReady)return false;
+        if(!audioReady&&isMp4){
+          videoCodec=await MB.getFirstEncodableVideoCodec(["vp9"],{width,height,frameRate:fps,quality});
+          isMp4=false;audioCodec="opus";audioReady=videoCodec==="vp9"&&await MB.canEncodeAudio("opus");
+        }
+        if(!audioReady)return false;
       }
-      output=new MB.Output({format:new MB.Mp4OutputFormat(),target:new MB.BufferTarget()});
-      videoSource=new MB.CanvasSource(canvas,{codec:"avc",quality,latencyMode:"quality",hardwareAcceleration:"prefer-hardware"});
+      const outputFormat=isMp4?new MB.Mp4OutputFormat():new MB.WebMOutputFormat();
+      output=new MB.Output({format:outputFormat,target:new MB.BufferTarget()});
+      videoSource=new MB.CanvasSource(canvas,{codec:videoCodec,quality,latencyMode:"quality",hardwareAcceleration:"prefer-hardware"});
       output.addVideoTrack(videoSource,{frameRate:fps});
       if(audioBuffer){
-        audioSource=new MB.AudioBufferSource({codec:"aac",quality:new MB.Quality({bitrate:128000})});
+        audioSource=new MB.AudioBufferSource({codec:audioCodec,quality:new MB.Quality({bitrate:128000})});
         output.addAudioTrack(audioSource);
       }
       await output.start();
@@ -541,21 +598,27 @@
       if(audioSource){audioSource.close();audioSource=null;}
       await output.finalize();
       const buffer=output.target.buffer;
-      if(!buffer||!buffer.byteLength)throw new Error("empty-mp4");
-      const blob=new Blob([buffer],{type:"video/mp4"});
+      if(!buffer||!buffer.byteLength)throw new Error("empty-render-output");
+      let finalBlob=new Blob([buffer],{type:isMp4?"video/mp4":"video/webm"});
+      let extension=isMp4?"mp4":"webm";
+      if(!isMp4){
+        say("ویدئو با زمان‌بندی دقیق ساخته شد؛ در حال تبدیل به MP4…");
+        const converted=await transcodeWebmToMp4(finalBlob);
+        if(converted){finalBlob=converted;extension="mp4";}
+      }
       if(outputUrl)URL.revokeObjectURL(outputUrl);
-      outputUrl=URL.createObjectURL(blob);
+      outputUrl=URL.createObjectURL(finalBlob);
       const video=$("navaVideoOutput");video.src=outputUrl;
-      const link=$("navaVideoDownload");link.href=outputUrl;link.download="nava-multiphoto-video.mp4";link.hidden=false;
+      const link=$("navaVideoDownload");link.href=outputUrl;link.download="nava-multiphoto-video."+extension;link.hidden=false;
       result.hidden=false;progress.style.width="100%";
       resize();drawFrame(0);
-      say("ویدئوی MP4 با موتور رندر مستقیم آماده شد؛ می‌توانی آن را پخش یا دریافت کنی.");
+      say(extension==="mp4"?"ویدئوی MP4 آماده شد؛ می‌توانی آن را پخش یا دریافت کنی.":"ویدئوی روان با فرمت WebM آماده شد؛ این مرورگر تبدیل MP4 را پشتیبانی نکرد.");
       return true;
     }catch(error){
       try{videoSource?.close();}catch(_){}
       try{audioSource?.close();}catch(_){}
       try{if(output&&output.state!=="finalized"&&output.state!=="canceled")await output.cancel();}catch(_){}
-      if(error?.message!=="render-cancelled")console.warn("NAVA Mediabunny MP4 path:",error);
+      if(error?.message!=="render-cancelled")console.warn("NAVA Mediabunny render:",error);
       return false;
     }
   }
