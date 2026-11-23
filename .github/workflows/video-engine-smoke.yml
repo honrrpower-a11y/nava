@@ -69,10 +69,15 @@ jobs:
           NODE
 
       - name: Ensure FFmpeg is available
+        env:
+          DEBIAN_FRONTEND: noninteractive
         run: |
           if ! command -v ffmpeg >/dev/null || ! command -v ffprobe >/dev/null; then
-            sudo apt-get install -y --no-install-recommends ffmpeg
+            sudo timeout 180s apt-get update -qq
+            sudo timeout 240s apt-get install -y --no-install-recommends ffmpeg
           fi
+          command -v ffmpeg
+          command -v ffprobe
           ffmpeg -version
           ffprobe -version
 
