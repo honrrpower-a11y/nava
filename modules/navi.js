@@ -2978,7 +2978,12 @@ async function handleChat({
     console.error("[NAVI] Gemini request failed", {
       requestId,
       code: failure.code,
+      model: error.fallbackModel || GEMINI_MODEL,
+      primaryHttpStatus: Number(error.primaryHttpStatus) || null,
       httpStatus: Number(error.httpStatus) || null,
+      providerCode: safeNaviText(error.providerCode || "", 80),
+      providerMessage: safeNaviText(error.providerMessage || "", 300),
+      providerRequestId: safeNaviText(error.providerRequestId || "", 120),
       errorName: error.name || "Error"
     });
 
