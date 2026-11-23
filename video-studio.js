@@ -129,53 +129,54 @@
   const syncSetupMode=()=>{const mode=setupMode();root.classList.toggle("navi-build-active",mode==="navi");root.dataset.buildModeActive=mode;root.querySelectorAll("[data-build-mode]").forEach(tab=>{const active=tab.dataset.buildMode===mode;tab.classList.toggle("is-active",active);tab.setAttribute("aria-selected",String(active));});root.querySelectorAll("[data-build-panel]").forEach(panel=>{panel.hidden=panel.dataset.buildPanel!==mode;});if(mode==="manual"){if(fontInput)activateFont(fontInput.value||"sans-serif");textDirection="rtl";storyCards().forEach(card=>card.querySelectorAll("[data-layer-motion]").forEach(el=>{if(manualMotionInput)el.value=toLayerMotion(manualMotionInput.value);}));}resize();drawFrame(0);};root.querySelectorAll("[data-build-mode]").forEach(tab=>tab.addEventListener("click",()=>activateBuildMode(tab.dataset.buildMode)));$("navaVideoQuickChoosePhoto")?.addEventListener("click",()=>{quickModePending=true;imageInput?.click();});$("navaVideoNaviChoosePhotos")?.addEventListener("click",()=>imageInput?.click());$("navaVideoNaviChooseMusic")?.addEventListener("click",()=>musicInput?.click());$("navaVideoQuickCreate")?.addEventListener("click",()=>{const prompt=($("navaVideoQuickPrompt")?.value||"").trim();if(!scenes.length){$("navaVideoQuickStatus").textContent="ابتدا با دکمه انتخاب عکس، یک عکس بارگذاری کن.";return;}if(!prompt){$("navaVideoQuickStatus").textContent="خواسته‌ات را درباره عکس بنویس.";return;}const first=storyCards()[0];if(first){const q=prompt.match(/[«“"]([^»”"]+)[»”"]/);const layer=first.querySelector("[data-layer-text]");if(layer)layer.value=q?q[1]:prompt;const mode=first.querySelector("[data-scene-content-mode]");if(mode)mode.value="mixed";}smartAutoBuild=true;smartAutoBuildMode="quick";$("navaVideoQuickStatus").textContent="ناوی در حال طراحی و ساخت ویدئو است…";const ok=window.navaVideoNaviRequest?.({message:"یک ویدئوی کوتاه بر اساس عکس بارگذاری‌شده بساز. متن و خواسته کاربر: "+prompt+" . از عکس انتخاب‌شده در صحنه اول استفاده کن. تنظیمات و زمان‌بندی مناسب را خودت انتخاب کن. در پایان بخش «دستورهای اجرایی استودیو» را با فرمان‌های دقیق و قابل‌اعمال بنویس."});if(!ok){smartAutoBuild=false;$("navaVideoQuickStatus").textContent="ارتباط با ناوی برقرار نشد؛ ورود به حساب را بررسی کن.";}});
   applyBriefBtn?.addEventListener("click",applyBrief);
 
-  function buildNaviScenePlan(reply,originalBrief){
-    const story=String(reply||"");
-    const digit=value=>String(value||"").replace(/[۰-۹]/g,d=>"۰۱۲۳۴۵۶۷۸۹".indexOf(d));
-    const entries=[];
-    const textLine=/^\s*متن\s*صحنه\s*([0-9۰-۹]+)\s*لایه\s*([0-9۰-۹]+)\s*[:：]\s*(.*?)\s*$/;
-    story.split(/\r?\n/).forEach(line=>{
-      const m=line.match(textLine);if(!m)return;
-      const text=m[3].replace(/^[«“"']|[»”"']$/g,"").trim();
-      if(text)entries.push({scene:Math.max(1,Number(digit(m[1]))||1),layer:Math.max(1,Number(digit(m[2]))||1),text:text.slice(0,420)});
-    });
-    const explicitMax=entries.length?Math.max(...entries.map(x=>x.scene)):1;
-    const maxScene=Math.min(6,Math.max(1,explicitMax,Math.min(scenes.length,6)));
-    while(storyCards().length<maxScene)addStoryBtn?.click();
-    const cards=storyCards(),photoGroups=new Map();
-    const photoRe=/عکس(?:‌های)?\s*صحنه\s*([0-9۰-۹]+)\s*[:：]\s*([0-9۰-۹،,\s]+)/g;
-    let match;
-    while((match=photoRe.exec(story))){
-      const n=Math.max(1,Number(digit(match[1]))||1);
-      const indexes=match[2].split(/[،,\s]+/).filter(Boolean).map(v=>Number(digit(v))).filter(v=>v>=1&&v<=scenes.length);
-      if(indexes.length)photoGroups.set(n,indexes);
+  function buildNaviScenePlan(reply){
+    const raw=String(reply||"");
+    const blocks=[...raw.matchAll(/```(?:json)?\\s*([\\s\\S]*?)\\s*```/gi)].map(m=>m[1]);
+    blocks.push(raw);
+    let plan=null;
+    for(const candidate of blocks){
+      const first=candidate.indexOf("{"),last=candidate.lastIndexOf("}");
+      if(first<0||last<=first)continue;
+      try{const parsed=JSON.parse(candidate.slice(first,last+1));if(parsed?.schema==="nava.video.scene-plan.v1"&&Array.isArray(parsed.scenes)){plan=parsed;break;}}catch(_){}
     }
+    if(!plan){resultStatusNavi("طرح ساختاریافته ناوی دریافت نشد؛ برای جلوگیری از اجرای حدسی، ویدئو ساخته نشد. دوباره درخواست طراحی را ارسال کن.");return false;}
+    if(!plan.scenes.length||plan.scenes.length>6){resultStatusNavi("تعداد صحنه‌های طرح ناوی معتبر نیست؛ طرح باید بین ۱ تا ۶ صحنه داشته باشد.");return false;}
+    const cards=storyCards();
+    while(cards.length<plan.scenes.length)addStoryBtn?.click();
+    const activeCards=storyCards();
+    const allowed={layout:["single","diagonal","triptych","grid","stagger","hero-stack","polaroid","free"],photoMotion:["","slow-zoom","slow-pull","pan-left","pan-right","pan-up","pan-down","diagonal-in","diagonal-out","none"],position:["top","center","bottom"],align:["right","center","left"],motion:["auto","from-right","from-left","from-top","from-bottom","fade","none","from-bottom-left","from-top-right","scale-in"],exit:["stay","fade","right","left","top","bottom"],font:["auto","Tahoma, sans-serif","IranNastaliq, serif","Dima Shekasteh, serif"],background:["default","black","light","warm"],frameShape:["landscape","portrait","square"],contentMode:["text","image","mixed"],style:["normal","italic"],orientation:["horizontal","vertical"]};
+    const set=(el,value,list)=>{if(!el||!list.includes(value))return false;const option=Array.from(el.options||[]).find(o=>o.value===String(value));if(!option)return false;el.value=String(value);return true;};
+    const setNumber=(el,value,min,max)=>{if(!el||!Number.isFinite(Number(value)))return;const wanted=Math.max(min,Math.min(max,Number(value))),options=Array.from(el.options||[]);if(options.length){const closest=options.reduce((best,o)=>Math.abs(Number(o.value)-wanted)<Math.abs(Number(best.value)-wanted)?o:best,options[0]);el.value=closest.value;}else el.value=String(wanted);};
     const usedPhotos=new Set();
-    for(let i=0;i<cards.length;i++){
-      const card=cards[i],sceneNo=i+1,items=entries.filter(x=>x.scene===sceneNo);
-      const holder=card.querySelector(".nava-video-text-layers");
-      const wanted=Math.min(6,Math.max(1,...items.map(x=>x.layer)));
-      while(holder.querySelectorAll("[data-story-layer]").length<wanted)card.querySelector("[data-add-layer]")?.click();
-      const layers=Array.from(card.querySelectorAll("[data-story-layer]"));
-      items.forEach(item=>{const layer=layers[item.layer-1],field=layer?.querySelector("[data-layer-text]");if(field)field.value=item.text;if(layer&&items.length>1){const position=layer.querySelector("[data-layer-position]");if(position){const slots=items.length===2?["top","bottom"]:["top","center","bottom"];position.value=slots[(item.layer-1)%slots.length];}const font=layer.querySelector("[data-layer-font]");if(font)font.value=["Tahoma, sans-serif","IranNastaliq, serif","Dima Shekasteh, serif"][(item.layer-1)%3];const size=layer.querySelector("[data-layer-size]");if(size&&item.layer>1)size.value=item.layer===2?"42":"30";}});
-      const group=photoGroups.get(sceneNo)||[];
-      const assigned=photoGroups.has(sceneNo)?group:(scenes[i]?[sceneNo]:[]);
-      assigned.forEach(n=>usedPhotos.add(n));
-      const gallery=card.querySelector("[data-story-image-gallery]");
-      if(gallery)gallery.dataset.selectedIds=assigned.map(n=>scenes[n-1]).filter(Boolean).map(photoId).join(",");
-      const mode=card.querySelector("[data-scene-content-mode]");
-      if(mode)mode.value=assigned.length?(items.length?"mixed":"image"):(items.length?"text":"image");
-      const duration=story.match(new RegExp("مدت\\s*صحنه\\s*"+sceneNo+"\\s*[:：]\\s*([0-9۰-۹]+)\\s*ثانیه"));
-      if(duration){const field=card.querySelector("[data-story-duration]");if(field){const val=String(Math.min(8,Math.max(2,Number(digit(duration[1]))||4)));if(Array.from(field.options).some(o=>o.value===val))field.value=val;}}
-      else {const field=card.querySelector("[data-story-duration]");if(field&&Array.from(field.options).some(o=>o.value==="4"))field.value="4";}
-    }
-    const missingPhotos=scenes.map((_,i)=>i+1).filter(n=>!usedPhotos.has(n));
-    missingPhotos.forEach((photoIndex,index)=>{
-      const card=cards[index%cards.length],gallery=card.querySelector("[data-story-image-gallery]");
-      if(gallery){const selected=(gallery.dataset.selectedIds||"").split(",").filter(Boolean);const id=photoId(scenes[photoIndex-1]);if(!selected.includes(id))selected.push(id);gallery.dataset.selectedIds=selected.join(",");}
-      const mode=card.querySelector("[data-scene-content-mode]");if(mode&&mode.value==="text")mode.value="mixed";
+    plan.scenes.forEach((scene,index)=>{
+      const card=activeCards[index];if(!card)return;
+      const layers=Array.isArray(scene.layers)?scene.layers.slice(0,6):[],holder=card.querySelector(".nava-video-text-layers");
+      while(holder.querySelectorAll("[data-story-layer]").length<layers.length)card.querySelector("[data-add-layer]")?.click();
+      const layerNodes=Array.from(card.querySelectorAll("[data-story-layer]"));
+      layerNodes.forEach((node,li)=>{
+        const item=layers[li],field=node.querySelector("[data-layer-text]");
+        if(field)field.value=String(item?.text||"").slice(0,420);
+        if(!item)return;
+        set(node.querySelector("[data-layer-position]"),item.position,allowed.position);set(node.querySelector("[data-layer-align]"),item.align,allowed.align);set(node.querySelector("[data-layer-motion]"),item.motion,allowed.motion);setNumber(node.querySelector("[data-layer-delay]"),item.delay,0,6);set(node.querySelector("[data-layer-exit]"),item.exit,allowed.exit);set(node.querySelector("[data-layer-font]"),item.font,allowed.font);setNumber(node.querySelector("[data-layer-size]"),item.size,24,68);set(node.querySelector("[data-layer-style]"),item.style,allowed.style);set(node.querySelector("[data-layer-orientation]"),item.orientation,allowed.orientation);
+        const color=node.querySelector("[data-layer-color]");if(color&&/^#[0-9a-f]{6}$/i.test(String(item.color||"")))color.value=item.color;
+        const underline=node.querySelector("[data-layer-underline]");if(underline)underline.checked=!!item.underline;
+      });
+      const imageIndexes=Array.isArray(scene.images)?[...new Set(scene.images.map(Number).filter(n=>Number.isInteger(n)&&n>=1&&n<=scenes.length))]:[];
+      imageIndexes.forEach(n=>usedPhotos.add(n));
+      const gallery=card.querySelector("[data-story-image-gallery]");if(gallery)gallery.dataset.selectedIds=imageIndexes.map(n=>scenes[n-1]).filter(Boolean).map(photoId).join(",");
+      const mode=card.querySelector("[data-scene-content-mode]"),hasText=layers.some(x=>String(x?.text||"").trim()),hasImages=imageIndexes.length>0;
+      if(!set(mode,scene.contentMode,allowed.contentMode)&&mode)mode.value=hasImages?(hasText?"mixed":"image"):(hasText?"text":"image");
+      setNumber(card.querySelector("[data-story-duration]"),scene.duration,2,8);set(card.querySelector("[data-story-layout]"),scene.layout,allowed.layout);set(card.querySelector("[data-photo-motion]"),scene.photoMotion,allowed.photoMotion);setNumber(card.querySelector("[data-photo-scale]"),scene.photoScale,.82,1.16);setNumber(card.querySelector("[data-photo-y]"),scene.photoY,.16,.40);setNumber(card.querySelector("[data-photo-spread]"),scene.photoSpread,.7,1.3);set(card.querySelector("[data-scene-background]"),scene.background,allowed.background);
+      const frame=scene.frame&&typeof scene.frame==="object"?scene.frame:{},toggle=card.querySelector("[data-scene-frame]");if(toggle)toggle.checked=!!frame.enabled;
+      set(card.querySelector("[data-scene-frame-shape]"),frame.shape,allowed.frameShape);
+      const frameTitle=card.querySelector("[data-scene-frame-title]");if(frameTitle)frameTitle.value=String(frame.title||"").slice(0,32);
+      const bgColor=card.querySelector("[data-scene-background-color]");if(bgColor&&/^#[0-9a-f]{6}$/i.test(String(scene.backgroundColor||"")))bgColor.value=scene.backgroundColor;
     });
-    refreshScenePhotoOptions();resize();drawFrame(0);updateReady();
+    const missing=scenes.map((_,i)=>i+1).filter(n=>!usedPhotos.has(n));
+    missing.forEach((n,i)=>{const card=activeCards[i%activeCards.length],gallery=card?.querySelector("[data-story-image-gallery]");if(gallery){const ids=(gallery.dataset.selectedIds||"").split(",").filter(Boolean),id=photoId(scenes[n-1]);if(!ids.includes(id))ids.push(id);gallery.dataset.selectedIds=ids.join(",");}const mode=card?.querySelector("[data-scene-content-mode]");if(mode&&mode.value==="text")mode.value="mixed";});
+    const persistence=$("navaVideoTextPersistence");if(persistence&&["keep","replace"].includes(plan.textPersistence))persistence.value=plan.textPersistence;
+    if(["portrait","landscape"].includes(plan.format))formatInput.value=plan.format;
+    refreshScenePhotoOptions();resize();drawFrame(0);updateReady();resultStatusNavi("طرح اختصاصی ناوی اعمال شد: "+plan.scenes.length+" صحنه با تنظیمات مستقل.");return true;
   }
   function resultStatusNavi(message){const el=$("navaVideoNaviResult");if(el)el.textContent=message;}
   window.addEventListener("nava:navi-reply",event=>{
@@ -183,21 +184,12 @@
     if(smartAutoBuildMode&&activeBuildMode()!==smartAutoBuildMode)activateBuildMode(smartAutoBuildMode);
     const reply=String(event.detail.reply||"").trim();
     if(!reply)return;
-    const marker=/دستورهای اجرایی استودیو\s*[:：]?/i;
-    const markerMatch=reply.match(marker);
-    const commands=markerMatch?reply.slice(markerMatch.index+markerMatch[0].length).trim():"";
-    const originalBrief=briefInput?.value||"";
-    buildNaviScenePlan(reply,originalBrief);
-    if(commands){
-      if(briefInput)briefInput.value=commands;
-      applyBrief();
-      if(briefInput)briefInput.value=originalBrief;
-    }
+    const applied=buildNaviScenePlan(reply);
     if(smartAutoBuild){
       smartAutoBuild=false;
-      setTimeout(()=>{if(!renderBtn.disabled)renderBtn.click();else say("پاسخ ناوی دریافت شد، اما هنوز محتوای قابل‌رندر آماده نیست.");},250);
+      if(applied)setTimeout(()=>{if(!renderBtn.disabled)renderBtn.click();else say("طرح ناوی اعمال شد، اما هنوز محتوای قابل‌رندر آماده نیست.");},250);
       smartAutoBuildMode=null;
-      resultStatusNavi(commands?"دستورهای ناوی اعمال شد؛ رندر ویدئو آغاز می‌شود.":"سناریوی ناوی دریافت شد؛ ساخت ویدئو آغاز می‌شود.");
+      if(!applied)resultStatusNavi("طرح ناوی قابل‌اجرا نبود؛ هیچ تنظیمی به‌صورت حدسی اعمال نشد.");
     }
   });
   manualMotionInput?.addEventListener("change",()=>{if(setupMode()==="manual")storyCards().forEach(card=>card.querySelectorAll("[data-layer-motion]").forEach(el=>{el.value=manualMotionInput.value==="slide-right"?"from-right":manualMotionInput.value==="slide-left"?"from-left":manualMotionInput.value==="rise"?"from-bottom":manualMotionInput.value;}));drawFrame(0);});
