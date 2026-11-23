@@ -60,6 +60,8 @@ jobs:
           const videoReplyBlock = app.slice(videoReplyStart, app.indexOf("} else {", videoReplyStart));
           assert.match(videoReplyBlock, /showNaviReply\("طرح صحنه‌ها/, "Internal scene JSON must be replaced with a friendly status in chat");
           assert.doesNotMatch(videoReplyBlock, /showNaviReply\(reply\)/, "Raw scene JSON must never be shown as a user-facing NAVI reply");
+          assert.match(app, /isInternalVideoPlan/, "Restored NAVI history must identify internal video plans");
+          assert.match(app, /جزئیات طراحی به‌صورت داخلی پردازش شده است/, "Restored history must show a friendly status instead of raw scene JSON");
           assert.match(app, /nava\.video\.scene-plan\.v1/, "Chat-level video instruction must require the same structured schema");
           assert.match(js, /if\(applied\)setTimeout\(\(\)=>\{if\(!renderBtn\.disabled\)renderBtn\.click\(\)/, "Valid NAVI scene plans must trigger automatic render");
           for (const id of ["navaVideoNaviChoosePhotos", "navaVideoNaviChooseMusic", "navaVideoBrief", "navaVideoAskNavi"]) {
