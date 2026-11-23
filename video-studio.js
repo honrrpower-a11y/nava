@@ -108,7 +108,7 @@
       const layers=Array.from(card.querySelectorAll("[data-story-layer]"));
       items.forEach(item=>{const field=layers[item.layer-1]?.querySelector("[data-layer-text]");if(field)field.value=item.text;});
       const group=photoGroups.get(sceneNo)||[];
-      const assigned=group.length?group:[...(scenes[i]?[i+1]:[])];
+      const assigned=scenes[i]?[sceneNo]:group;
       assigned.forEach(n=>usedPhotos.add(n));
       const gallery=card.querySelector("[data-story-image-gallery]");
       if(gallery)gallery.dataset.selectedIds=assigned.map(n=>scenes[n-1]).filter(Boolean).map(photoId).join(",");
