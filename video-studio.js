@@ -507,10 +507,10 @@
         "video/webm;codecs=vp8,opus",
         "video/webm"
       ];
-      // Android browsers sometimes advertise MP4 support but fail to emit encoded
-      // chunks on canvas streams. Prefer the stable WebM encoder there; other
-      // platforms keep MP4 first for broad sharing compatibility.
-      const mimeCandidates=(isAndroid?[...webmCandidates,...mp4Candidates]:[...mp4Candidates,...webmCandidates])
+      // Prefer native MP4/H.264 on every platform for compatibility with
+      // gallery apps and social platforms. Use WebM only when this browser
+      // does not advertise a usable MP4 recording type.
+      const mimeCandidates=[...mp4Candidates,...webmCandidates]
         .filter(type=>{try{return MediaRecorder.isTypeSupported(type);}catch(_){return false;}});
       // WebM fallback uses a lighter render profile on mobile encoders.
       lowPowerRender=!!mimeCandidates[0]?.toLowerCase().startsWith("video/webm");
