@@ -12,7 +12,7 @@
   const storyList=$("navaVideoStoryList"),addStoryBtn=$("navaVideoAddScene");
   const fontInput=$("navaVideoFont"),manualMotionInput=$("navaVideoManualMotion");
   const briefInput=$("navaVideoBrief"),manualBriefInput=$("navaVideoManualBrief"),applyBriefBtn=$("navaVideoApplyBrief");
-  let smartAutoBuild=false,quickModePending=false;
+  let smartAutoBuild=false,smartAutoBuildMode=null,quickModePending=false;
   const activeBuildMode=()=>root.querySelector("[data-build-mode].is-active")?.dataset.buildMode||"navi";
   const setupMode=()=>activeBuildMode();
   // Keep each creation tab's media, brief, and scene editor completely separate.
@@ -51,6 +51,15 @@
     refreshScenePhotoOptions();renderSceneList();resize();drawFrame(0);updateReady();
   }
   saveModeState("navi");
+  function activateBuildMode(mode){
+    const previous=activeBuildMode();
+    if(previous===mode)return;
+    saveModeState(previous);
+    root.querySelectorAll("[data-build-mode]").forEach(tab=>tab.classList.toggle("is-active",tab.dataset.buildMode===mode));
+    syncSetupMode();
+    restoreModeState(mode);
+    syncSetupMode();
+  }
   const toLayerMotion=value=>({"slide-right":"from-right","slide-left":"from-left",rise:"from-bottom",cinematic:"from-bottom",type:"fade"}[value]||value);
   function applyBrief(){
     const source=activeBuildMode()==="manual"?manualBriefInput:briefInput;
@@ -111,7 +120,7 @@
   }
   let activeFont=fontInput?.value||"sans-serif",textDirection="rtl",fontLoadToken=0;
   async function activateFont(font){activeFont=font||"sans-serif";const token=++fontLoadToken;try{if(document.fonts?.load){await document.fonts.load("650 42px "+activeFont);await document.fonts.ready;}}catch(_){}if(token===fontLoadToken){resize();drawFrame(0);}}
-  const syncSetupMode=()=>{const mode=setupMode();root.classList.toggle("navi-build-active",mode==="navi");root.dataset.buildModeActive=mode;root.querySelectorAll("[data-build-mode]").forEach(tab=>{const active=tab.dataset.buildMode===mode;tab.classList.toggle("is-active",active);tab.setAttribute("aria-selected",String(active));});root.querySelectorAll("[data-build-panel]").forEach(panel=>{panel.hidden=panel.dataset.buildPanel!==mode;});if(mode==="manual"){if(fontInput)activateFont(fontInput.value||"sans-serif");textDirection="rtl";storyCards().forEach(card=>card.querySelectorAll("[data-layer-motion]").forEach(el=>{if(manualMotionInput)el.value=toLayerMotion(manualMotionInput.value);}));}resize();drawFrame(0);};root.querySelectorAll("[data-build-mode]").forEach(tab=>tab.addEventListener("click",()=>{const previous=activeBuildMode(),next=tab.dataset.buildMode;if(previous===next)return;saveModeState(previous);root.querySelectorAll("[data-build-mode]").forEach(t=>t.classList.remove("is-active"));tab.classList.add("is-active");restoreModeState(next);syncSetupMode();}));$("navaVideoQuickChoosePhoto")?.addEventListener("click",()=>{quickModePending=true;imageInput?.click();});$("navaVideoNaviChoosePhotos")?.addEventListener("click",()=>imageInput?.click());$("navaVideoNaviChooseMusic")?.addEventListener("click",()=>musicInput?.click());$("navaVideoQuickCreate")?.addEventListener("click",()=>{const prompt=($("navaVideoQuickPrompt")?.value||"").trim();if(!scenes.length){$("navaVideoQuickStatus").textContent="ابتدا با دکمه انتخاب عکس، یک عکس بارگذاری کن.";return;}if(!prompt){$("navaVideoQuickStatus").textContent="خواسته‌ات را درباره عکس بنویس.";return;}const first=storyCards()[0];if(first){const q=prompt.match(/[«“"]([^»”"]+)[»”"]/);const layer=first.querySelector("[data-layer-text]");if(layer)layer.value=q?q[1]:prompt;const mode=first.querySelector("[data-scene-content-mode]");if(mode)mode.value="mixed";}smartAutoBuild=true;$("navaVideoQuickStatus").textContent="ناوی در حال طراحی و ساخت ویدئو است…";const ok=window.navaVideoNaviRequest?.({message:"یک ویدئوی کوتاه بر اساس عکس بارگذاری‌شده بساز. متن و خواسته کاربر: "+prompt+" . از عکس انتخاب‌شده در صحنه اول استفاده کن. تنظیمات و زمان‌بندی مناسب را خودت انتخاب کن. در پایان بخش «دستورهای اجرایی استودیو» را با فرمان‌های دقیق و قابل‌اعمال بنویس."});if(!ok){smartAutoBuild=false;$("navaVideoQuickStatus").textContent="ارتباط با ناوی برقرار نشد؛ ورود به حساب را بررسی کن.";}});
+  const syncSetupMode=()=>{const mode=setupMode();root.classList.toggle("navi-build-active",mode==="navi");root.dataset.buildModeActive=mode;root.querySelectorAll("[data-build-mode]").forEach(tab=>{const active=tab.dataset.buildMode===mode;tab.classList.toggle("is-active",active);tab.setAttribute("aria-selected",String(active));});root.querySelectorAll("[data-build-panel]").forEach(panel=>{panel.hidden=panel.dataset.buildPanel!==mode;});if(mode==="manual"){if(fontInput)activateFont(fontInput.value||"sans-serif");textDirection="rtl";storyCards().forEach(card=>card.querySelectorAll("[data-layer-motion]").forEach(el=>{if(manualMotionInput)el.value=toLayerMotion(manualMotionInput.value);}));}resize();drawFrame(0);};root.querySelectorAll("[data-build-mode]").forEach(tab=>tab.addEventListener("click",()=>activateBuildMode(tab.dataset.buildMode)));$("navaVideoQuickChoosePhoto")?.addEventListener("click",()=>{quickModePending=true;imageInput?.click();});$("navaVideoNaviChoosePhotos")?.addEventListener("click",()=>imageInput?.click());$("navaVideoNaviChooseMusic")?.addEventListener("click",()=>musicInput?.click());$("navaVideoQuickCreate")?.addEventListener("click",()=>{const prompt=($("navaVideoQuickPrompt")?.value||"").trim();if(!scenes.length){$("navaVideoQuickStatus").textContent="ابتدا با دکمه انتخاب عکس، یک عکس بارگذاری کن.";return;}if(!prompt){$("navaVideoQuickStatus").textContent="خواسته‌ات را درباره عکس بنویس.";return;}const first=storyCards()[0];if(first){const q=prompt.match(/[«“"]([^»”"]+)[»”"]/);const layer=first.querySelector("[data-layer-text]");if(layer)layer.value=q?q[1]:prompt;const mode=first.querySelector("[data-scene-content-mode]");if(mode)mode.value="mixed";}smartAutoBuild=true;smartAutoBuildMode="quick";$("navaVideoQuickStatus").textContent="ناوی در حال طراحی و ساخت ویدئو است…";const ok=window.navaVideoNaviRequest?.({message:"یک ویدئوی کوتاه بر اساس عکس بارگذاری‌شده بساز. متن و خواسته کاربر: "+prompt+" . از عکس انتخاب‌شده در صحنه اول استفاده کن. تنظیمات و زمان‌بندی مناسب را خودت انتخاب کن. در پایان بخش «دستورهای اجرایی استودیو» را با فرمان‌های دقیق و قابل‌اعمال بنویس."});if(!ok){smartAutoBuild=false;$("navaVideoQuickStatus").textContent="ارتباط با ناوی برقرار نشد؛ ورود به حساب را بررسی کن.";}});
   applyBriefBtn?.addEventListener("click",applyBrief);
 
   function buildNaviScenePlan(reply,originalBrief){
@@ -165,6 +174,7 @@
   function resultStatusNavi(message){const el=$("navaVideoNaviResult");if(el)el.textContent=message;}
   window.addEventListener("nava:navi-reply",event=>{
     if(event.detail?.service!=="ویدئو و صدا")return;
+    if(smartAutoBuildMode&&activeBuildMode()!==smartAutoBuildMode)activateBuildMode(smartAutoBuildMode);
     const reply=String(event.detail.reply||"").trim();
     if(!reply)return;
     const marker=/دستورهای اجرایی استودیو\s*[:：]?/i;
@@ -178,7 +188,7 @@
       if(briefInput)briefInput.value=originalBrief;
     }
     if(smartAutoBuild){
-      smartAutoBuild=false;
+      smartAutoBuild=false;smartAutoBuildMode=null;
       resultStatusNavi(commands?"دستورهای ناوی اعمال شد؛ رندر ویدئو آغاز می‌شود.":"سناریوی ناوی دریافت شد؛ ساخت ویدئو آغاز می‌شود.");
       setTimeout(()=>{if(!renderBtn.disabled)renderBtn.click();else say("پاسخ ناوی دریافت شد، اما هنوز محتوای قابل‌رندر آماده نیست.");},250);
     }
@@ -319,7 +329,7 @@
     const contentMode=first?.querySelector("[data-scene-content-mode]");
     if(contentMode)contentMode.value=quoted?"mixed":"image";
     refreshScenePhotoOptions();
-    smartAutoBuild=true;
+    smartAutoBuild=true;smartAutoBuildMode="navi";
     result.textContent="ناوی در حال بررسی بریف، عکس‌ها و موسیقی و طراحی ویدئو است…";
     const prompt="تو کارگردان خلاق، طراح موشن و تدوینگر این ویدئو هستی. کاربر فقط بریف و رسانه‌ها را داده و تمام تصمیم‌های خلاقانه و اجرایی با توست.\nبریف دقیق کاربر:\n"+brief+
       "\nرسانه‌های تصویری انتخاب‌شده به ترتیب:\n"+imageNames.join("\n")+
