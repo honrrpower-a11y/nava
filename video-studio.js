@@ -29,7 +29,7 @@
     const fontRules=[[/وزیر|vazir/,"'Vazirmatn',sans-serif"],[/شکسته|shekasteh|dima/,"'Dima Shekasteh',serif"],[/نستعلیق|nastaliq|ایران.?نستعلیق|گلزار|gulzar/,"'Gulzar',serif"],[/نسخ|naskh|noto/,"'Noto Naskh Arabic',serif"],[/تاهوما|tahoma|ایران.?سن.?س|iransans/,"Tahoma, sans-serif"],[/آریال|arial/,"Arial, sans-serif"],[/جورجیا|georgia/,"Georgia, serif"]];
     let font=null;for(const [re,val] of fontRules)if(re.test(norm)){font=val;break;}
     if(font&&fontInput&&fontInput.value!==font){fontInput.value=font;activateFont(font);changes++;}
-    const direction=/چپ.?چین|چپ به راست|left.?to.?right|\b ltr\b/.test(norm)?"ltr":/راست.?چین|راست به چپ|right.?to.?left|\b rtl\b/.test(norm)?"rtl":null;
+    const direction=/چپ.?چین|چپ به راست|left.?to.?right|\bltr\b/.test(norm)?"ltr":/راست.?چین|راست به چپ|right.?to.?left|\brtl\b/.test(norm)?"rtl":null;
     if(direction&&textDirection!==direction){textDirection=direction;changes++;}
     const persistence=$("navaVideoTextPersistence");
     if(has("فقط متن صحنه جاری","جایگزین","جایگزینی متن","متن قبلی حذف","متن قبلی نماند","فقط متن جدید"))choose(persistence,"replace");
