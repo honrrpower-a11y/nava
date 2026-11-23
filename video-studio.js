@@ -347,9 +347,32 @@
     });
     ctx.restore();
   }
-  function stopPreview(){if(previewFrame)cancelAnimationFrame(previewFrame);previewFrame=0;previewing=false;}
+  const previewSoundNodes=[];
+  function stopSoundNodes(){while(previewSoundNodes.length){const node=previewSoundNodes.pop();try{node.stop(0);}catch(_){}}}
+  function scheduleSoundEffects(story,destination,startAt){
+    if(!audioContext||!destination)return;
+    let cursor=0;const events=[];
+    (Array.isArray(story)?story:[]).forEach(scene=>{(scene.layers||[]).forEach(layer=>{if(layer.sound&&layer.sound!=="none")events.push({type:layer.sound,time:cursor+(Number(layer.delay)||0),length:String(layer.text||"").length});});cursor+=Number(scene.duration)||0;});
+    events.slice(0,48).forEach(event=>{
+      const at=startAt+Math.max(0,event.time);
+      const makeTone=(frequency,endFrequency,offset,duration,volume,wave="sine")=>{
+        const osc=audioContext.createOscillator(),gain=audioContext.createGain();osc.type=wave;osc.frequency.setValueAtTime(frequency,at+offset);if(endFrequency)osc.frequency.exponentialRampToValueAtTime(Math.max(30,endFrequency),at+offset+duration);gain.gain.setValueAtTime(.0001,at+offset);gain.gain.exponentialRampToValueAtTime(volume,at+offset+.012);gain.gain.exponentialRampToValueAtTime(.0001,at+offset+duration);osc.connect(gain);gain.connect(destination);osc.start(at+offset);osc.stop(at+offset+duration+.03);previewSoundNodes.push(osc);
+      };
+      if(event.type==="impact")makeTone(125,48,0,.38,.42,"sine");
+      else if(event.type==="sparkle"){makeTone(1150,1950,0,.55,.13);makeTone(1720,2400,.06,.43,.08);}
+      else if(event.type==="whoosh"){
+        const length=Math.ceil(audioContext.sampleRate*.7),buffer=audioContext.createBuffer(1,length,audioContext.sampleRate),data=buffer.getChannelData(0);
+        for(let i=0;i<length;i++)data[i]=(Math.random()*2-1)*Math.sin(Math.PI*i/length);
+        const src=audioContext.createBufferSource(),filter=audioContext.createBiquadFilter(),gain=audioContext.createGain();filter.type="highpass";filter.frequency.value=550;gain.gain.setValueAtTime(.0001,at);gain.gain.linearRampToValueAtTime(.2,at+.24);gain.gain.linearRampToValueAtTime(.0001,at+.7);src.buffer=buffer;src.connect(filter);filter.connect(gain);gain.connect(destination);src.start(at);src.stop(at+.72);previewSoundNodes.push(src);
+      }else if(event.type==="type"){
+        const count=Math.min(9,Math.max(3,Math.ceil((event.length||5)/5)));
+        for(let i=0;i<count;i++)makeTone(1850,1450,i*.075,.025,.055,"square");
+      }
+    });
+  }
+  function stopPreview(){if(previewFrame)cancelAnimationFrame(previewFrame);previewFrame=0;previewing=false;stopSoundNodes();}
   function animate(now){if(!previewing)return;if(!startedAt)startedAt=now;if(now-(animate.lastFrame||0)>=33){const t=(previewOffset+(now-startedAt)/1000)%totalDuration();drawFrame(t);animate.lastFrame=now;}previewFrame=requestAnimationFrame(animate);}
-  function preview(){if(!scenes.length&&!storyData().length&&!titleInput.value.trim()&&!subtitleInput.value.trim()&&!textInput?.value.trim()){say("برای پیش‌نمایش، یک صحنه متنی یا عکس اضافه کن؛ عنوان و نام اختیاری‌اند.");return;}stopPreview();startedAt=0;animate.lastFrame=0;previewing=true;resize();drawFrame(0);previewFrame=requestAnimationFrame(animate);say(scenes.length?"پیش‌نمایش سبک ویدئوی تصویری فعال است.":"پیش‌نمایش سبک ویدئوی متن‌محور فعال است.");}
+  function preview(){if(!scenes.length&&!storyData().length&&!titleInput.value.trim()&&!subtitleInput.value.trim()&&!textInput?.value.trim()){say("برای پیش‌نمایش، یک صحنه متنی یا عکس اضافه کن؛ عنوان و نام اختیاری‌اند.");return;}stopPreview();startedAt=0;animate.lastFrame=0;previewing=true;resize();drawFrame(0);const previewStory=storyData();if(previewStory.some(scene=>scene.layers?.some(layer=>layer.sound&&layer.sound!=="none"))){const AudioContextClass=window.AudioContext||window.webkitAudioContext;if(AudioContextClass){if(!audioContext)audioContext=new AudioContextClass();audioContext.resume().then(()=>scheduleSoundEffects(previewStory,audioContext.destination,audioContext.currentTime+.08)).catch(()=>{});}}previewFrame=requestAnimationFrame(animate);say(scenes.length?"پیش‌نمایش سبک ویدئوی تصویری فعال است.":"پیش‌نمایش سبک ویدئوی متن‌محور فعال است.");}
   function updateReady(){const ready=scenes.length>0||storyData().length>0||!!(titleInput.value.trim()||subtitleInput.value.trim()||textInput?.value.trim());previewBtn.disabled=!ready;renderBtn.disabled=!ready||!window.MediaRecorder||!canvas.captureStream;say(scenes.length?scenes.length+" عکس آماده تدوین است.":ready?"ویدیوی متن‌محور آماده ساخت است.":"عکس یا متن ویدئو را وارد کن.");}
   imageInput.addEventListener("change",()=>{
     const files=Array.from(imageInput.files||[]);if(!files.length)return;
@@ -718,25 +741,23 @@
       lowPowerRender=!!mimeCandidates[0]?.toLowerCase().startsWith("video/webm");
       resize();drawFrame(0,renderStory,renderDuration);
       const stream=canvas.captureStream(lowPowerRender?15:20);
-      if(musicElement){
+      const renderStorySounds=renderStory.some(scene=>(scene.layers||[]).some(layer=>layer.sound&&layer.sound!=="none"));
+      if(musicElement||renderStorySounds){
         const AudioContextClass=window.AudioContext||window.webkitAudioContext;
-        if(!AudioContextClass)throw new Error("مرورگر از پردازش صدای موسیقی پشتیبانی نمی‌کند.");
+        if(!AudioContextClass)throw new Error("مرورگر از پردازش صدای موسیقی و افکت‌ها پشتیبانی نمی‌کند.");
         if(!audioContext||audioContext.state==="closed")audioContext=new AudioContextClass();
-        // AudioContext ممکن است در تلاش قبلی MP4 ساخته شده باشد؛ وجود آن به معنی
-        // آماده بودن گراف صدای MediaRecorder نیست. هر گره را مستقل بررسی می‌کنیم.
-        if(!musicGain){
+        if(!audioDestination)audioDestination=audioContext.createMediaStreamDestination();
+        if(musicElement&&!musicGain){
           audioSource=audioContext.createMediaElementSource(musicElement);
           musicGain=audioContext.createGain();
-          audioDestination=audioContext.createMediaStreamDestination();
-          audioSource.connect(musicGain);
-          musicGain.connect(audioDestination);
+          audioSource.connect(musicGain);musicGain.connect(audioDestination);
         }
         await audioContext.resume();
-        if(!musicGain||!musicGain.gain||!audioDestination)throw new Error("اتصال صدای موسیقی آماده نشد.");
-        musicGain.gain.value=Math.max(0,Number(musicVolume.value)/100);
+        if(!audioDestination)throw new Error("اتصال صدای خروجی آماده نشد.");
+        if(musicElement&&musicGain)musicGain.gain.value=Math.max(0,Number(musicVolume.value)/100);
         audioDestination.stream.getAudioTracks().forEach(t=>stream.addTrack(t));
-        musicElement.currentTime=0;
-        await musicElement.play();
+        if(musicElement){musicElement.currentTime=0;await musicElement.play();}
+        scheduleSoundEffects(renderStory,audioDestination,audioContext.currentTime+.08);
       }
       chunks=[];recording=true;renderBtn.disabled=true;previewBtn.disabled=true;progress.style.width="0%";
       let mime="";
