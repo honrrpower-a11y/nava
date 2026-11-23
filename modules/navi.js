@@ -2425,75 +2425,151 @@ You are NAVI: a useful, concise and trustworthy assistant.
 // GEMINI REQUEST
 // ======================================
 
+const NAVI_GEMINI_MAX_ATTEMPTS = 2;
+const NAVI_GEMINI_RETRYABLE_STATUSES = new Set([408, 425, 429, 500, 502, 503, 504]);
+
+export function shouldRetryNaviGeminiError(error) {
+  if (!error) return false;
+  if (error.name === "AbortError" || error instanceof TypeError) return true;
+  return NAVI_GEMINI_RETRYABLE_STATUSES.has(Number(error.httpStatus));
+}
+
+export function classifyNaviGeminiError(error) {
+  const status = Number(error?.httpStatus) || null;
+  if (error?.name === "AbortError") {
+    return {
+      code: "GEMINI_TIMEOUT",
+      message: "پاسخ‌گویی ناوی بیش از زمان مجاز طول کشید. لطفاً کمی بعد دوباره تلاش کن."
+    };
+  }
+  if (status === 429) {
+    return {
+      code: "GEMINI_RATE_LIMIT",
+      message: "درخواست‌های سرویس هوش مصنوعی موقتاً به سقف مجاز رسیده‌اند. چند لحظه صبر کن و دوباره تلاش کن."
+    };
+  }
+  if (status === 401 || status === 403) {
+    return {
+      code: "GEMINI_AUTH_CONFIG",
+      message: "اتصال امن NAVI به سرویس هوش مصنوعی نیاز به بررسی تنظیمات دارد."
+    };
+  }
+  if (status === 400 || status === 404) {
+    return {
+      code: "GEMINI_REQUEST_CONFIG",
+      message: "سرویس هوش مصنوعی درخواست NAVI را نپذیرفت. تنظیمات مدل یا درخواست باید بررسی شود."
+    };
+  }
+  if (status && status >= 500) {
+    return {
+      code: "GEMINI_PROVIDER_UNAVAILABLE",
+      message: "سرویس هوش مصنوعی موقتاً پاسخ‌گو نیست. لطفاً کمی بعد دوباره تلاش کن."
+    };
+  }
+  if (error instanceof TypeError) {
+    return {
+      code: "GEMINI_NETWORK_ERROR",
+      message: "ارتباط NAVI با سرویس هوش مصنوعی ناپایدار شد. لطفاً دوباره تلاش کن."
+    };
+  }
+  return {
+    code: "GEMINI_UPSTREAM_ERROR",
+    message: "NAVI از سرویس هوش مصنوعی پاسخ معتبر دریافت نکرد. لطفاً دوباره تلاش کن."
+  };
+}
+
 async function requestGemini({
   apiKey,
   systemInstruction,
   contents
 }) {
-  const controller = new AbortController();
+  let lastError = null;
 
-  const timeout = setTimeout(
-    () => controller.abort(),
-    NAVI_GEMINI_TIMEOUT
-  );
-
-  try {
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-goog-api-key": apiKey
-        },
-        body: JSON.stringify({
-          systemInstruction: {
-            parts: [{ text: systemInstruction }]
-          },
-          contents,
-          generationConfig: {
-            temperature: 0.65,
-            maxOutputTokens: 4096,
-            responseMimeType: "application/json"
-          }
-        }),
-        signal: controller.signal
-      }
+  for (let attempt = 1; attempt <= NAVI_GEMINI_MAX_ATTEMPTS; attempt += 1) {
+    const controller = new AbortController();
+    const timeout = setTimeout(
+      () => controller.abort(),
+      NAVI_GEMINI_TIMEOUT
     );
 
-    let data;
-
     try {
-      data = await response.json();
-    } catch {
-      throw new Error("Invalid Gemini response.");
-    }
-
-    if (!response.ok) {
-      const error = new Error(
-        data?.error?.message || "Gemini request failed."
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-goog-api-key": apiKey
+          },
+          body: JSON.stringify({
+            systemInstruction: {
+              parts: [{ text: systemInstruction }]
+            },
+            contents,
+            generationConfig: {
+              temperature: 0.65,
+              maxOutputTokens: 4096,
+              responseMimeType: "application/json"
+            }
+          }),
+          signal: controller.signal
+        }
       );
 
-      error.httpStatus = response.status;
-      throw error;
+      let data;
+      try {
+        data = await response.json();
+      } catch {
+        const error = new Error("Invalid Gemini response.");
+        error.retryable = true;
+        throw error;
+      }
+
+      if (!response.ok) {
+        const error = new Error("Gemini request failed.");
+        error.httpStatus = response.status;
+        error.retryAfter = response.headers.get("Retry-After") || "";
+        throw error;
+      }
+
+      const rawText = (
+        data.candidates?.[0]?.content?.parts || []
+      )
+        .map(part => part.text || "")
+        .join("")
+        .trim();
+
+      if (!rawText) {
+        const error = new Error("Gemini returned an empty response.");
+        error.retryable = true;
+        throw error;
+      }
+
+      return parseNaviGeminiResponse(rawText);
+    } catch (error) {
+      lastError = error;
+      const retryable = error.retryable === true || shouldRetryNaviGeminiError(error);
+      if (!retryable || attempt >= NAVI_GEMINI_MAX_ATTEMPTS) throw error;
+
+      const retryAfterSeconds = Number(error.retryAfter);
+      const retryDelay = Number.isFinite(retryAfterSeconds) && retryAfterSeconds > 0
+        ? Math.min(1200, retryAfterSeconds * 1000)
+        : 350 * attempt;
+
+      // Log only provider status and attempt number. Never log prompts,
+      // conversation contents, credentials or model response text.
+      console.warn("[NAVI] Retrying transient Gemini failure", {
+        attempt,
+        httpStatus: Number(error.httpStatus) || null,
+        errorName: error.name || "Error"
+      });
+      await new Promise(resolve => setTimeout(resolve, retryDelay));
+    } finally {
+      clearTimeout(timeout);
     }
-
-    const rawText = (
-      data.candidates?.[0]?.content?.parts || []
-    )
-      .map(part => part.text || "")
-      .join("")
-      .trim();
-
-    if (!rawText) {
-      throw new Error("Gemini returned an empty response.");
-    }
-
-    return parseNaviGeminiResponse(rawText);
-
-  } finally {
-    clearTimeout(timeout);
   }
+
+  throw lastError || new Error("Gemini request failed.");
 }
 
 // Short confirmations may affect only one uniquely pending memory proposal.
@@ -2832,16 +2908,25 @@ async function handleChat({
     });
 
   } catch (error) {
-    logError("Gemini request failed", error);
+    const requestId = crypto.randomUUID();
+    const failure = classifyNaviGeminiError(error);
+
+    // Keep diagnostics useful without logging user prompts, model output or secrets.
+    console.error("[NAVI] Gemini request failed", {
+      requestId,
+      code: failure.code,
+      httpStatus: Number(error.httpStatus) || null,
+      errorName: error.name || "Error"
+    });
 
     return errorResponse(
-      error.name === "AbortError"
-        ? "زمان پاسخ‌گویی ناوی تمام شد. دوباره تلاش کن."
-        : "NAVI نتوانست پاسخ دریافت کند. لطفاً دوباره تلاش کن.",
+      failure.message,
       502,
       corsOrigin,
       {
-        httpStatus: error.httpStatus || null
+        code: failure.code,
+        httpStatus: Number(error.httpStatus) || null,
+        requestId
       }
     );
   }
