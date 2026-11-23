@@ -344,12 +344,12 @@
   }
   const previewSoundNodes=[];
   function stopSoundNodes(){while(previewSoundNodes.length){const node=previewSoundNodes.pop();try{node.stop(0);}catch(_){}}}
-  function scheduleSoundEffects(story,destination,startAt){
+  function scheduleSoundEffects(story,destination,startAt,offset=0){
     if(!audioContext||!destination)return;
     let cursor=0;const events=[];
     (Array.isArray(story)?story:[]).forEach(scene=>{(scene.layers||[]).forEach(layer=>{if(layer.sound&&layer.sound!=="none")events.push({type:layer.sound,time:cursor+(Number(layer.delay)||0),length:String(layer.text||"").length,wordCount:String(layer.text||"").trim().split(/\s+/).filter(Boolean).length,reveal:layer.reveal||"none"});});cursor+=Number(scene.duration)||0;});
-    events.slice(0,48).forEach(event=>{
-      const at=startAt+Math.max(0,event.time);
+    events.filter(event=>event.time>=offset-.01).slice(0,48).forEach(event=>{
+      const at=startAt+Math.max(0,event.time-offset);
       const makeTone=(frequency,endFrequency,offset,duration,volume,wave="sine")=>{
         const osc=audioContext.createOscillator(),gain=audioContext.createGain();osc.type=wave;osc.frequency.setValueAtTime(frequency,at+offset);if(endFrequency)osc.frequency.exponentialRampToValueAtTime(Math.max(30,endFrequency),at+offset+duration);gain.gain.setValueAtTime(.0001,at+offset);gain.gain.exponentialRampToValueAtTime(volume,at+offset+.012);gain.gain.exponentialRampToValueAtTime(.0001,at+offset+duration);osc.connect(gain);gain.connect(destination);osc.start(at+offset);osc.stop(at+offset+duration+.03);previewSoundNodes.push(osc);
       };
@@ -367,9 +367,32 @@
       }
     });
   }
-  function stopPreview(){if(previewFrame)cancelAnimationFrame(previewFrame);previewFrame=0;previewing=false;stopSoundNodes();}
+  function stopPreview(){if(previewFrame)cancelAnimationFrame(previewFrame);previewFrame=0;previewing=false;stopSoundNodes();if(musicElement){musicElement.pause();musicElement.loop=false;}if(audioContext&&musicGain){try{musicGain.disconnect(audioContext.destination);}catch(_){}}}
   function animate(now){if(!previewing)return;if(!startedAt)startedAt=now;if(now-(animate.lastFrame||0)>=33){const t=(previewOffset+(now-startedAt)/1000)%totalDuration();drawFrame(t);animate.lastFrame=now;}previewFrame=requestAnimationFrame(animate);}
-  function preview(){if(!scenes.length&&!storyData().length&&!titleInput.value.trim()&&!subtitleInput.value.trim()&&!textInput?.value.trim()){say("برای پیش‌نمایش، یک صحنه متنی یا عکس اضافه کن؛ عنوان و نام اختیاری‌اند.");return;}stopPreview();startedAt=0;animate.lastFrame=0;previewing=true;resize();drawFrame(0);const previewStory=storyData();if(previewStory.some(scene=>scene.layers?.some(layer=>layer.sound&&layer.sound!=="none"))){const AudioContextClass=window.AudioContext||window.webkitAudioContext;if(AudioContextClass){if(!audioContext)audioContext=new AudioContextClass();audioContext.resume().then(()=>scheduleSoundEffects(previewStory,audioContext.destination,audioContext.currentTime+.08)).catch(()=>{});}}previewFrame=requestAnimationFrame(animate);say(scenes.length?"پیش‌نمایش سبک ویدئوی تصویری فعال است.":"پیش‌نمایش سبک ویدئوی متن‌محور فعال است.");}
+  async function startPreviewAudio(story){
+    const hasEffects=story.some(scene=>scene.layers?.some(layer=>layer.sound&&layer.sound!=="none"));
+    if(!musicElement&&!hasEffects)return;
+    const AudioContextClass=window.AudioContext||window.webkitAudioContext;
+    if(!AudioContextClass)return;
+    if(!audioContext||audioContext.state==="closed")audioContext=new AudioContextClass();
+    await audioContext.resume();
+    if(musicElement){
+      if(!audioSource||!musicGain){
+        audioSource=audioContext.createMediaElementSource(musicElement);
+        musicGain=audioContext.createGain();
+        audioSource.connect(musicGain);
+      }
+      musicGain.connect(audioContext.destination);
+      musicGain.gain.setValueAtTime(Math.max(0,Number(musicVolume.value)/100),audioContext.currentTime);
+      musicElement.loop=true;
+      const duration=Number(musicElement.duration);
+      const offset=Math.max(0,Number(previewOffset)||0);
+      try{musicElement.currentTime=Number.isFinite(duration)&&duration>0?offset%duration:offset;}catch(_){musicElement.currentTime=0;}
+      await musicElement.play();
+    }
+    if(hasEffects)scheduleSoundEffects(story,audioContext.destination,audioContext.currentTime+.1,previewOffset);
+  }
+  function preview(){if(!scenes.length&&!storyData().length&&!titleInput.value.trim()&&!subtitleInput.value.trim()&&!textInput?.value.trim()){say("برای پیش‌نمایش، یک صحنه متنی یا عکس اضافه کن؛ عنوان و نام اختیاری‌اند.");return;}stopPreview();startedAt=0;animate.lastFrame=0;previewing=true;resize();drawFrame(previewOffset);const previewStory=storyData();startPreviewAudio(previewStory).catch(error=>{console.warn("NAVA preview audio:",error);say("پیش‌نمایش تصویر فعال است؛ پخش موسیقی در این مرورگر ممکن نشد.");});previewFrame=requestAnimationFrame(animate);say(scenes.length?"پیش‌نمایش تصویر و صدای ویدئو فعال است.":"پیش‌نمایش تصویر و صدای ویدئوی متن‌محور فعال است.");}
   function updateReady(){const ready=scenes.length>0||storyData().length>0||!!(titleInput.value.trim()||subtitleInput.value.trim()||textInput?.value.trim());previewBtn.disabled=!ready;renderBtn.disabled=!ready||!window.MediaRecorder||!canvas.captureStream;say(scenes.length?scenes.length+" عکس آماده تدوین است.":ready?"ویدیوی متن‌محور آماده ساخت است.":"عکس یا متن ویدئو را وارد کن.");}
   imageInput.addEventListener("change",()=>{
     const files=Array.from(imageInput.files||[]);if(!files.length)return;
