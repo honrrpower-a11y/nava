@@ -18,7 +18,7 @@ jobs:
   render:
     name: Validate browser renderer and render video proofs
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
     steps:
       - name: Check out source
         uses: actions/checkout@v4
@@ -84,8 +84,8 @@ jobs:
           DEBIAN_FRONTEND: noninteractive
         run: |
           if ! command -v ffmpeg >/dev/null || ! command -v ffprobe >/dev/null; then
-            sudo timeout 180s apt-get update -qq
-            sudo timeout 240s apt-get install -y --no-install-recommends ffmpeg
+            sudo timeout 600s apt-get update -qq
+            sudo timeout 600s apt-get install -y --no-install-recommends ffmpeg
           fi
           command -v ffmpeg
           command -v ffprobe
