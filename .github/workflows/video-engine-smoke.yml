@@ -61,7 +61,7 @@ jobs:
           assert.match(videoReplyBlock, /showNaviReply\("طرح صحنه‌ها/, "Internal scene JSON must be replaced with a friendly status in chat");
           assert.doesNotMatch(videoReplyBlock, /showNaviReply\(reply\)/, "Raw scene JSON must never be shown as a user-facing NAVI reply");
           assert.match(app, /nava\.video\.scene-plan\.v1/, "Chat-level video instruction must require the same structured schema");
-          assert.match(js, /if\(smartAutoBuild\)[\s\S]{0,220}renderBtn\.click\(\)/, "NAVI reply must trigger automatic render");
+          assert.match(js, /if\(applied\)setTimeout\(\(\)=>\{if\(!renderBtn\.disabled\)renderBtn\.click\(\)/, "Valid NAVI scene plans must trigger automatic render");
           for (const id of ["navaVideoNaviChoosePhotos", "navaVideoNaviChooseMusic", "navaVideoBrief", "navaVideoAskNavi"]) {
             assert.ok(html.includes('id="' + id + '"'), "Missing NAVI UI control: " + id);
           }
