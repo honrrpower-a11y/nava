@@ -38,10 +38,10 @@ jobs:
           import assert from "node:assert/strict";
           const js = fs.readFileSync("video-studio.js", "utf8");
           const html = fs.readFileSync("index.html", "utf8");
-          const askHandlers = js.match(/navaVideoAskNavi["']?\)?\.addEventListener\(["']click["']/g) || [];
-          assert.equal(askHandlers.length, 1, "NAVI build button must have exactly one click handler");
-          assert.match(js, /navaVideoNaviChoosePhotos["']\)\?\.addEventListener\(["']click["'],\(\)=>imageInput\?\.click\(\)/, "NAVI photo button must open the real image picker");
-          assert.match(js, /navaVideoNaviChooseMusic["']\)\?\.addEventListener\(["']click["'],\(\)=>musicInput\?\.click\(\)/, "NAVI music button must open the real music picker");
+          const askHandlerCount = js.split('$("navaVideoAskNavi")').length - 1;
+          assert.equal(askHandlerCount, 1, "NAVI build button must have exactly one click handler");
+          assert.ok(js.includes('$("navaVideoNaviChoosePhotos")?.addEventListener("click",()=>imageInput?.click())'), "NAVI photo button must open the real image picker");
+          assert.ok(js.includes('$("navaVideoNaviChooseMusic")?.addEventListener("click",()=>musicInput?.click())'), "NAVI music button must open the real music picker");
           assert.match(js, /selectedMedia:\{images:imageNames,music:musicInfo\}/, "NAVI context must include selected media metadata");
           assert.match(js, /window\.addEventListener\(["']nava:navi-reply["']/, "NAVI reply handler must be present");
           assert.match(js, /if\(smartAutoBuild\)[\s\S]{0,220}renderBtn\.click\(\)/, "NAVI reply must trigger automatic render");
