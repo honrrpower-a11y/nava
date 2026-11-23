@@ -31,6 +31,26 @@ jobs:
       - name: Validate browser renderer syntax
         run: node --check video-studio.js
 
+      - name: Verify NAVI media controls and one-shot request wiring
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from "node:fs";
+          import assert from "node:assert/strict";
+          const js = fs.readFileSync("video-studio.js", "utf8");
+          const html = fs.readFileSync("index.html", "utf8");
+          const askHandlers = js.match(/navaVideoAskNavi["']?\)?\.addEventListener\(["']click["']/g) || [];
+          assert.equal(askHandlers.length, 1, "NAVI build button must have exactly one click handler");
+          assert.match(js, /navaVideoNaviChoosePhotos["']\)\?\.addEventListener\(["']click["'],\(\)=>imageInput\?\.click\(\)/, "NAVI photo button must open the real image picker");
+          assert.match(js, /navaVideoNaviChooseMusic["']\)\?\.addEventListener\(["']click["'],\(\)=>musicInput\?\.click\(\)/, "NAVI music button must open the real music picker");
+          assert.match(js, /selectedMedia:\{images:imageNames,music:musicInfo\}/, "NAVI context must include selected media metadata");
+          assert.match(js, /window\.addEventListener\(["']nava:navi-reply["']/, "NAVI reply handler must be present");
+          assert.match(js, /if\(smartAutoBuild\)[\s\S]{0,220}renderBtn\.click\(\)/, "NAVI reply must trigger automatic render");
+          for (const id of ["navaVideoNaviChoosePhotos", "navaVideoNaviChooseMusic", "navaVideoBrief", "navaVideoAskNavi"]) {
+            assert.ok(html.includes('id="' + id + '"'), "Missing NAVI UI control: " + id);
+          }
+          console.log("NAVI media selection, context, single request and auto-render wiring verified.");
+          NODE
+
       - name: Install FFmpeg and Persian fonts
         run: |
           sudo apt-get update
