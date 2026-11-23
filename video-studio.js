@@ -496,14 +496,22 @@
       resize();drawFrame(0,renderStory,renderDuration);
       // Prefer broadly compatible MP4/H.264 + AAC when this browser can record it.
       // Keep WebM as a truthful fallback; never rename a WebM blob to .mp4.
-      const mimeCandidates=[
+      const isAndroid=/Android/i.test(navigator.userAgent||"");
+      const mp4Candidates=[
         'video/mp4;codecs="avc1.42E01E,mp4a.40.2"',
         'video/mp4;codecs=avc1.42E01E',
-        "video/mp4",
+        "video/mp4"
+      ];
+      const webmCandidates=[
         "video/webm;codecs=vp9,opus",
         "video/webm;codecs=vp8,opus",
         "video/webm"
-      ].filter(type=>{try{return MediaRecorder.isTypeSupported(type);}catch(_){return false;}});
+      ];
+      // Android browsers sometimes advertise MP4 support but fail to emit encoded
+      // chunks on canvas streams. Prefer the stable WebM encoder there; other
+      // platforms keep MP4 first for broad sharing compatibility.
+      const mimeCandidates=(isAndroid?[...webmCandidates,...mp4Candidates]:[...mp4Candidates,...webmCandidates])
+        .filter(type=>{try{return MediaRecorder.isTypeSupported(type);}catch(_){return false;}});
       const stream=canvas.captureStream(20);
       if(musicElement){
         if(!audioContext){audioContext=new (window.AudioContext||window.webkitAudioContext)();audioSource=audioContext.createMediaElementSource(musicElement);audioDestination=audioContext.createMediaStreamDestination();musicGain=audioContext.createGain();audioSource.connect(musicGain);musicGain.connect(audioDestination);}
