@@ -57,7 +57,7 @@ jobs:
           assert.match(js, /naviPlanRetryCount<1/, "NAVI must get one chance to repair its own invalid plan");
           assert.match(js, /photoY بین 0\.16 و 0\.40/, "NAVI prompt must include renderer numeric bounds");
           const videoReplyStart = app.indexOf('if (selectedService === "ویدئو و صدا")');
-          const videoReplyBlock = app.slice(videoReplyStart, videoReplyStart + 650);
+          const videoReplyBlock = app.slice(videoReplyStart, app.indexOf("} else {", videoReplyStart));
           assert.match(videoReplyBlock, /showNaviReply\("طرح صحنه‌ها/, "Internal scene JSON must be replaced with a friendly status in chat");
           assert.doesNotMatch(videoReplyBlock, /showNaviReply\(reply\)/, "Raw scene JSON must never be shown as a user-facing NAVI reply");
           assert.match(app, /nava\.video\.scene-plan\.v1/, "Chat-level video instruction must require the same structured schema");
