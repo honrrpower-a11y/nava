@@ -131,7 +131,7 @@
 
   function buildNaviScenePlan(reply){
     const raw=String(reply||"");
-    const blocks=[...raw.matchAll(/```(?:json)?\\s*([\\s\\S]*?)\\s*```/gi)].map(m=>m[1]);
+    const blocks=[...raw.matchAll(/```(?:json)?\s*([\s\S]*?)\s*```/gi)].map(m=>m[1]);
     blocks.push(raw);
     let plan=null;
     for(const candidate of blocks){
