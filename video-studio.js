@@ -512,7 +512,10 @@
       // platforms keep MP4 first for broad sharing compatibility.
       const mimeCandidates=(isAndroid?[...webmCandidates,...mp4Candidates]:[...mp4Candidates,...webmCandidates])
         .filter(type=>{try{return MediaRecorder.isTypeSupported(type);}catch(_){return false;}});
-      const stream=canvas.captureStream(20);
+      // WebM fallback uses a lighter render profile on mobile encoders.
+      lowPowerRender=!!mimeCandidates[0]?.toLowerCase().startsWith("video/webm");
+      resize();drawFrame(0,renderStory,renderDuration);
+      const stream=canvas.captureStream(lowPowerRender?15:20);
       if(musicElement){
         if(!audioContext){audioContext=new (window.AudioContext||window.webkitAudioContext)();audioSource=audioContext.createMediaElementSource(musicElement);audioDestination=audioContext.createMediaStreamDestination();musicGain=audioContext.createGain();audioSource.connect(musicGain);musicGain.connect(audioDestination);}
         await audioContext.resume();
@@ -526,7 +529,7 @@
       recorder=null;
       for(const candidate of mimeCandidates){
         try{
-          recorder=new MediaRecorder(stream,{mimeType:candidate,videoBitsPerSecond:2200000});
+          recorder=new MediaRecorder(stream,{mimeType:candidate,videoBitsPerSecond:lowPowerRender?1100000:2200000});
           mime=recorder.mimeType||candidate;
           break;
         }catch(_){recorder=null;}
@@ -550,6 +553,7 @@
         if(renderWatchdog){clearTimeout(renderWatchdog);renderWatchdog=0;}
         stream.getTracks().forEach(t=>t.stop());if(musicElement)musicElement.pause();
         recording=false;renderBtn.disabled=false;previewBtn.disabled=false;
+        lowPowerRender=false;resize();drawFrame(0);
         const actualMime=recorder?.mimeType||mime;
         const blob=new Blob(chunks,{type:actualMime});
         if(!blob.size){say("فایل ویدئو خالی ساخته شد؛ لطفاً دوباره تلاش کن.");return;}
