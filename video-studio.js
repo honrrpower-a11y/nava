@@ -158,6 +158,7 @@
       if(!Array.isArray(scene.images)||scene.images.some(n=>!Number.isInteger(Number(n))||Number(n)<1||Number(n)>scenes.length))return true;
       if(!allowed.contentMode.includes(scene.contentMode)||!allowed.layout.includes(scene.layout)||!allowed.photoMotion.includes(scene.photoMotion)||!allowed.background.includes(scene.background))return true;
       if(scene.images.length>maxImages[scene.layout])return true;
+      if(!Number.isFinite(Number(scene.photoScale))||Number(scene.photoScale)<0.82||Number(scene.photoScale)>1.16||!Number.isFinite(Number(scene.photoY))||Number(scene.photoY)<0.16||Number(scene.photoY)>0.40||!Number.isFinite(Number(scene.photoSpread))||Number(scene.photoSpread)<0.7||Number(scene.photoSpread)>1.3||!/^#[0-9a-f]{6}$/i.test(String(scene.backgroundColor||"")))return true;
       if(!scene.frame||typeof scene.frame.enabled!=="boolean"||!allowed.frameShape.includes(scene.frame.shape))return true;
       if(!Array.isArray(scene.layers)||scene.layers.length>6)return true;
       const hasText=scene.layers.some(layer=>String(layer?.text||"").trim());
