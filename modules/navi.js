@@ -2478,14 +2478,23 @@ export function classifyNaviGeminiError(error) {
   };
 }
 
-async function requestGemini({
+const NAVI_GEMINI_FALLBACK_MODEL = "gemini-3.5-flash";
+
+export function shouldUseNaviGeminiFallback(error) {
+  return [500, 502, 503, 504].includes(Number(error?.httpStatus));
+}
+
+async function requestGeminiModel({
+  model,
   apiKey,
   systemInstruction,
-  contents
+  contents,
+  maxAttempts = NAVI_GEMINI_MAX_ATTEMPTS,
+  fetchImpl = fetch
 }) {
   let lastError = null;
 
-  for (let attempt = 1; attempt <= NAVI_GEMINI_MAX_ATTEMPTS; attempt += 1) {
+  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
     const controller = new AbortController();
     const timeout = setTimeout(
       () => controller.abort(),
@@ -2493,8 +2502,8 @@ async function requestGemini({
     );
 
     try {
-      const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`,
+      const response = await fetchImpl(
+        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
         {
           method: "POST",
           headers: {
@@ -2529,6 +2538,13 @@ async function requestGemini({
         const error = new Error("Gemini request failed.");
         error.httpStatus = response.status;
         error.retryAfter = response.headers.get("Retry-After") || "";
+        error.providerCode = safeNaviText(data?.error?.status || "", 80);
+        error.providerMessage = safeNaviText(data?.error?.message || "", 300);
+        error.providerRequestId = safeNaviText(
+          response.headers.get("x-goog-request-id") ||
+          response.headers.get("x-request-id") || "",
+          120
+        );
         throw error;
       }
 
@@ -2549,7 +2565,7 @@ async function requestGemini({
     } catch (error) {
       lastError = error;
       const retryable = error.retryable === true || shouldRetryNaviGeminiError(error);
-      if (!retryable || attempt >= NAVI_GEMINI_MAX_ATTEMPTS) throw error;
+      if (!retryable || attempt >= maxAttempts) throw error;
 
       const retryAfterSeconds = Number(error.retryAfter);
       const retryDelay = Number.isFinite(retryAfterSeconds) && retryAfterSeconds > 0
@@ -2559,6 +2575,7 @@ async function requestGemini({
       // Log only provider status and attempt number. Never log prompts,
       // conversation contents, credentials or model response text.
       console.warn("[NAVI] Retrying transient Gemini failure", {
+        model,
         attempt,
         httpStatus: Number(error.httpStatus) || null,
         errorName: error.name || "Error"
@@ -2570,6 +2587,52 @@ async function requestGemini({
   }
 
   throw lastError || new Error("Gemini request failed.");
+}
+
+export async function requestGemini({
+  apiKey,
+  systemInstruction,
+  contents,
+  fetchImpl = fetch
+}) {
+  try {
+    return await requestGeminiModel({
+      model: GEMINI_MODEL,
+      apiKey,
+      systemInstruction,
+      contents,
+      fetchImpl
+    });
+  } catch (primaryError) {
+    if (!shouldUseNaviGeminiFallback(primaryError)) throw primaryError;
+
+    console.warn("[NAVI] Primary Gemini model unavailable; trying free-tier fallback model", {
+      primaryModel: GEMINI_MODEL,
+      fallbackModel: NAVI_GEMINI_FALLBACK_MODEL,
+      httpStatus: Number(primaryError.httpStatus) || null,
+      providerCode: primaryError.providerCode || ""
+    });
+
+    try {
+      const result = await requestGeminiModel({
+        model: NAVI_GEMINI_FALLBACK_MODEL,
+        apiKey,
+        systemInstruction,
+        contents,
+        maxAttempts: 1,
+        fetchImpl
+      });
+      console.info("[NAVI] Gemini fallback model succeeded", {
+        primaryModel: GEMINI_MODEL,
+        fallbackModel: NAVI_GEMINI_FALLBACK_MODEL
+      });
+      return result;
+    } catch (fallbackError) {
+      fallbackError.primaryHttpStatus = Number(primaryError.httpStatus) || null;
+      fallbackError.fallbackModel = NAVI_GEMINI_FALLBACK_MODEL;
+      throw fallbackError;
+    }
+  }
 }
 
 // Short confirmations may affect only one uniquely pending memory proposal.
