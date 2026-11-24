@@ -23,7 +23,7 @@
   const storyList=$("navaVideoStoryList"),addStoryBtn=$("navaVideoAddScene");
   const fontInput=$("navaVideoFont"),manualMotionInput=$("navaVideoManualMotion");
   const briefInput=$("navaVideoBrief"),manualBriefInput=$("navaVideoManualBrief"),applyBriefBtn=$("navaVideoApplyBrief");
-  let smartAutoBuild=false,smartAutoBuildMode=null,naviPlanRetryCount=0,depthMotionModule=null,depthMotionModulePromise=null,naviVideoAnalysisReady=false,naviVisionImages=[];
+  let smartAutoBuild=false,smartAutoBuildMode=null,naviPlanRetryCount=0,depthMotionModule=null,depthMotionModulePromise=null,naviVideoAnalysisReady=false,naviVisionImages=[],naviAnalysisRun=0;
   const activeBuildMode=()=>root.querySelector("[data-build-mode].is-active")?.dataset.buildMode||"navi";
   const setupMode=()=>activeBuildMode();
   // Keep each creation tab's media, brief, and scene editor completely separate.
@@ -259,8 +259,8 @@
   const imageVisualCache=new WeakMap();
   function ensureNaviImageAnalysisPanel(){
     let panel=$("navaVideoImageAnalysis");if(panel)return panel;
-    const label=$("navaVideoNaviPhotosLabel");if(!label?.parentElement)return null;
-    panel=document.createElement("section");panel.id="navaVideoImageAnalysis";panel.className="nava-video-image-analysis";panel.hidden=true;panel.setAttribute("aria-live","polite");label.parentElement.after(panel);return panel;
+    const label=$("navaVideoNaviPhotosLabel");const media=label?.closest(".nava-video-navi-media");if(!media)return null;
+    panel=document.createElement("section");panel.id="navaVideoImageAnalysis";panel.className="nava-video-image-analysis";panel.hidden=true;panel.setAttribute("aria-live","polite");media.after(panel);return panel;
   }
   function renderNaviImageAnalysis(index,total,scene,analysis){
     const panel=ensureNaviImageAnalysisPanel();if(!panel)return;if(index===0)panel.replaceChildren();
@@ -272,12 +272,12 @@
     const progressText=document.createElement("small");progressText.textContent="تحلیل "+(index+1)+" از "+total+" کامل شد";card.append(progressText);panel.append(card);panel.hidden=false;
   }
   async function analyzeNaviVideoImages(items){
-    naviVideoAnalysisReady=false;naviVisionImages=[];const panel=ensureNaviImageAnalysisPanel();
+    const run=++naviAnalysisRun;naviVideoAnalysisReady=false;naviVisionImages=[];const panel=ensureNaviImageAnalysisPanel();
     if(panel){panel.hidden=false;panel.textContent="در حال تحلیل جداگانه عکس‌ها روی همین دستگاه…";}
     if(!items.length){naviVideoAnalysisReady=true;if(panel)panel.hidden=true;return;}
     if(items.length>6)throw new Error("برای ساخت با ناوی حداکثر ۶ عکس انتخاب کن تا همه عکس‌ها تحلیل شوند.");
     const engine=window.NaviLocalImageAnalysis;if(!engine?.analyze)throw new Error("موتور تحلیل محلی تصویر در دسترس نیست.");
-    for(let i=0;i<items.length;i++){const scene=items[i];try{const analysis=await engine.analyze(scene.file);if(!analysis||typeof analysis.report!=="string"||!analysis.visionImage?.data)throw new Error("نسخه فشرده تصویر برای تحلیل معنایی آماده نشد.");scene.analysis=analysis;naviVisionImages.push(analysis.visionImage);renderNaviImageAnalysis(i,items.length,scene,analysis);const label=$("navaVideoNaviPhotosLabel");if(label)label.textContent=items.length+" عکس انتخاب شد · تحلیل "+(i+1)+"/"+items.length;}catch(error){throw new Error("تحلیل عکس «"+(scene.file?.name||("شماره "+(i+1)))+"» ناموفق بود: "+(error?.message||"خطای نامشخص"));}}
+    for(let i=0;i<items.length;i++){const scene=items[i];try{const analysis=await engine.analyze(scene.file);if(run!==naviAnalysisRun)return;if(!analysis||typeof analysis.report!=="string"||!analysis.visionImage?.data)throw new Error("نسخه فشرده تصویر برای تحلیل معنایی آماده نشد.");scene.analysis=analysis;naviVisionImages.push(analysis.visionImage);renderNaviImageAnalysis(i,items.length,scene,analysis);const label=$("navaVideoNaviPhotosLabel");if(label)label.textContent=items.length+" عکس انتخاب شد · تحلیل "+(i+1)+"/"+items.length;}catch(error){if(run!==naviAnalysisRun)return;throw new Error("تحلیل عکس «"+(scene.file?.name||("شماره "+(i+1)))+"» ناموفق بود: "+(error?.message||"خطای نامشخص"));}}
     naviVideoAnalysisReady=true;const label=$("navaVideoNaviPhotosLabel");if(label)label.textContent=items.length+" عکس انتخاب شد · همه تحلیل شدند";
     if(panel){const note=document.createElement("p");note.className="nava-video-analysis-complete";note.textContent="تحلیل محلی و پالت رنگ همه عکس‌ها آماده است؛ تصاویر فشرده برای تحلیل معنایی گروهی به NAVI فرستاده می‌شوند.";panel.append(note);}
   }
