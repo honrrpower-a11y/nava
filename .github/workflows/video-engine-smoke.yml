@@ -68,7 +68,7 @@ jobs:
           assert.match(js, /renderDepthParallax/, "Canvas renderer must composite the depth-parallax frame");
           assert.match(depth, /onnx-community\/depth-anything-v2-small/, "Depth engine must use the small on-device depth model");
           assert.match(depth, /device:"webgpu",dtype:"fp16"/, "Depth engine must prefer WebGPU when available");
-          assert.match(depth, /device:"wasm",dtype:"q8"/, "Depth engine must retain a quantized WASM fallback");
+          assert.doesNotMatch(depth, /device:"wasm",dtype:"q8"/, "Avoid CPU-heavy WASM depth inference on mobile devices");
           assert.match(js, /resolveLayerTextColor/, "Automatic text color must be contrast-checked against the selected image");
           assert.match(js, /transitionCurrentCanvas/, "Scene transitions must be composited in the actual canvas renderer");
           assert.match(js, /type:"page-turn"/, "Page-turn transition must schedule its own sound effect");
