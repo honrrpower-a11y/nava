@@ -257,16 +257,51 @@
   storyCards().forEach(card=>{ensureSceneTransitionControl(card);ensureDepthMotionOption(card);card.querySelectorAll("[data-story-layer]").forEach(ensureLayerColorMode);});
   const imageVisualCache=new WeakMap();
   function imageVisualSummary(scene){
-    const img=scene?.image;if(!img?.complete||!img.naturalWidth)return "اطلاعات رنگی در دسترس نیست";
+    const img=scene?.image;if(!img?.complete||!img.naturalWidth)return "اطلاعات بصری در دسترس نیست";
     if(imageVisualCache.has(img))return imageVisualCache.get(img);
     let summary="تصویر";
     try{
-      const sample=document.createElement("canvas");sample.width=24;sample.height=24;
-      const sampleCtx=sample.getContext("2d",{willReadFrequently:true});sampleCtx.drawImage(img,0,0,24,24);
-      const pixels=sampleCtx.getImageData(0,0,24,24).data;let r=0,g=0,b=0,count=0;
-      for(let i=0;i<pixels.length;i+=4){if(pixels[i+3]<32)continue;r+=pixels[i];g+=pixels[i+1];b+=pixels[i+2];count++;}
-      if(count){r=Math.round(r/count);g=Math.round(g/count);b=Math.round(b/count);const hex="#"+[r,g,b].map(v=>v.toString(16).padStart(2,"0")).join("");const bright=(.2126*r+.7152*g+.0722*b)/255;const max=Math.max(r,g,b),min=Math.min(r,g,b);const tone=max-min<22?"خنثی":r>g*1.12&&r>b*1.08?"گرم":b>r*1.08?"سرد":"ترکیبی";summary="نسبت "+(img.naturalWidth/img.naturalHeight).toFixed(2)+"، رنگ میانگین "+hex+"، "+(bright>.58?"روشن":bright<.34?"تیره":"میانه")+"، طیف "+tone;}
-    }catch(_){summary="نسبت "+(img.naturalWidth/img.naturalHeight).toFixed(2)+"؛ نمونه‌برداری رنگ ممکن نشد";}
+      // A tiny local-only sample estimates visual focus and quiet text areas.
+      // 40x40 keeps the analysis cheap even on entry-level phones.
+      const size=40,sample=document.createElement("canvas");sample.width=size;sample.height=size;
+      const sampleCtx=sample.getContext("2d",{willReadFrequently:true});
+      sampleCtx.drawImage(img,0,0,size,size);
+      const pixels=sampleCtx.getImageData(0,0,size,size).data,gray=new Float32Array(size*size),sat=new Float32Array(size*size);
+      let r=0,g=0,b=0,count=0,brightness=0,brightnessSq=0;
+      for(let p=0,i=0;i<pixels.length;i+=4,p++){
+        if(pixels[i+3]<32)continue;
+        const pr=pixels[i],pg=pixels[i+1],pb=pixels[i+2],lum=(.2126*pr+.7152*pg+.0722*pb)/255;
+        gray[p]=lum;sat[p]=(Math.max(pr,pg,pb)-Math.min(pr,pg,pb))/255;
+        r+=pr;g+=pg;b+=pb;brightness+=lum;brightnessSq+=lum*lum;count++;
+      }
+      let total=0,focusX=0,focusY=0,topScore=0,bottomScore=0;
+      for(let y=1;y<size-1;y++)for(let x=1;x<size-1;x++){
+        const p=y*size+x,edge=Math.abs(gray[p+1]-gray[p-1])+Math.abs(gray[p+size]-gray[p-size]);
+        const weight=edge*.72+sat[p]*.22+Math.abs(gray[p]-.5)*.06;
+        total+=weight;focusX+=x*weight;focusY+=y*weight;
+        if(y<size*.3)topScore+=weight;
+        if(y>=size*.7)bottomScore+=weight;
+      }
+      if(count){
+        r=Math.round(r/count);g=Math.round(g/count);b=Math.round(b/count);
+        const hex="#"+[r,g,b].map(v=>v.toString(16).padStart(2,"0")).join("");
+        const bright=brightness/count,variance=Math.max(0,brightnessSq/count-bright*bright);
+        const max=Math.max(r,g,b),min=Math.min(r,g,b);
+        const tone=max-min<22?"خنثی":r>g*1.12&&r>b*1.08?"گرم":b>r*1.08?"سرد":"ترکیبی";
+        const fx=total?focusX/total/(size-1):.5,fy=total?focusY/total/(size-1):.5;
+        const horizontal=fx<.38?"چپ":fx>.62?"راست":"مرکز",vertical=fy<.38?"بالا":fy>.62?"پایین":"میانه";
+        const topMean=topScore/(size*size*.3),bottomMean=bottomScore/(size*size*.3),globalMean=total/(size*size);
+        const quietThreshold=globalMean*.78;
+        const safeZone=topMean<quietThreshold&&topMean<=bottomMean?"بالا":bottomMean<quietThreshold?"پایین":"فضای خلوت قطعی ندارد";
+        const detail=globalMean<.045?"کم":globalMean>.105?"زیاد":"متوسط";
+        const contrast=variance<.035?"کم":variance>.095?"زیاد":"متوسط";
+        summary="نسبت "+(img.naturalWidth/img.naturalHeight).toFixed(2)+
+          "، رنگ میانگین "+hex+"، "+(bright>.58?"روشن":bright<.34?"تیره":"میانه")+"، طیف "+tone+
+          "؛ کانون بصری تقریبی "+horizontal+"-"+vertical+
+          "؛ فضای مناسب متن "+safeZone+
+          "؛ جزئیات لبه‌ها "+detail+"؛ کنتراست "+contrast;
+      }
+    }catch(_){summary="نسبت "+(img.naturalWidth/img.naturalHeight).toFixed(2)+"؛ تحلیل بصری محدود بود";}
     imageVisualCache.set(img,summary);return summary;
   }
   let nextPhotoId=1;
@@ -605,12 +640,13 @@
       "- ابتدا پیام اصلی، مخاطب، حس غالب و نتیجه‌ای را که بیننده باید بگیرد از بریف استخراج کن. روایت باید شروعِ جلب‌توجه‌کننده، میانه معنادار و پایان هدفمند داشته باشد؛ حتی اگر ویدئو فقط ۲ یا ۳ صحنه دارد.",
       "- ترتیب عکس‌ها را بر اساس جریان روایت انتخاب کن، نه صرفاً ترتیب بارگذاری. هر عکس انتخاب‌شده باید حداقل یک بار در scenes استفاده شود؛ عکس را بی‌دلیل در چند صحنه تکرار نکن.",
       "- تعداد صحنه‌ها را متناسب با تعداد عکس‌ها و پیچیدگی پیام انتخاب کن؛ صحنه اضافه و بی‌دلیل نساز. هر صحنه باید یک وظیفه روایی روشن داشته باشد.",
-      "- نام فایل‌ها فقط سرنخ متنی هستند؛ محتوای بصری عکس را از روی نام فایل قطعی فرض نکن و جزئیات تصویری ساختگی نساز.",
+      "- نام فایل‌ها فقط سرنخ متنی هستند؛ محتوای بصری عکس را از روی نام فایل قطعی فرض نکن و جزئیات تصویری ساختگی نساز. تحلیل محلی فقط کانون تقریبی، تراکم جزئیات و فضای خلوت را تخمین می‌زند و تشخیص معنایی اشیا یا هویت سوژه نیست.",
       "",
       "۲) کارگردانی تصویر و حرکت:",
       "- برای هر صحنه جداگانه تصمیم بگیر: تک‌عکس یا ترکیب چندعکس، layout، photoMotion، transition، مقیاس و جایگاه عکس، رنگ پس‌زمینه و قاب. یک نسخه ثابت را برای همه صحنه‌ها تکرار نکن. انتقال هر صحنه از قبلی را با توجه به روایت انتخاب کن؛ page-turn فقط وقتی حس ورق‌زدن واقعاً به روایت کمک می‌کند. نکته مهم: اگر page-turn انتخاب می‌کنی، هر صحنه باید دقیقاً یک عکس و layout=single داشته باشد؛ عکس‌ها را آلبومی، شبکه‌ای، پلکانی یا چندتایی در یک صفحه نچین. برای نمایش همه عکس‌ها، صحنه‌های جدا بساز و هر عکس را مثل یک صفحه مستقل ورق بزن. عکس اول transition=cut و صفحات بعدی page-turn باشند.",
       "- حرکت عکس را آگاهانه انتخاب کن: slow-zoom یا pan فقط وقتی به تصویر جان می‌دهد؛ از حرکت‌های سریع، بی‌هدف یا لرزش‌مانند پرهیز کن. در صحنه‌های متوالی حرکت‌ها را متنوع اما هماهنگ انتخاب کن. اگر سوژه و پس‌زمینه عمق قابل‌تفکیک دارند، photoMotion=depth-parallax را برای ایجاد اختلاف حرکت لایه‌های نزدیک و دور انتخاب کن؛ این تحلیل روی دستگاه کاربر انجام می‌شود. برای عکس تخت یا وقتی عمق مطمئن نیست، زوم یا پن را ترجیح بده.",
-      "- عکس‌ها را بیش از حد کوچک نکن. ترکیب‌بندی باید در قاب عمودی موبایل خوانا باشد و فضای امن کافی برای متن داشته باشد. متن روی بخش مهم عکس قرار نگیرد. از خلاصه رنگ، روشنایی و نسبت کادر هر عکس که در ورودی آمده برای انتخاب رنگ و جایگاه متن استفاده کن.",
+      "- عکس‌ها را بیش از حد کوچک نکن. ترکیب‌بندی باید در قاب عمودی موبایل خوانا باشد. کانون بصری تقریبی هر عکس را از ورودی بخوان و متن را روی آن قرار نده؛ اگر فضای مناسب متن بالا یا پایین مشخص شده، همان ناحیه را ترجیح بده، و اگر فضای خلوت قطعی نیست متن را کوتاه‌تر کن و از ناحیه کم‌جزئیات‌تر/تیره‌سازی تدریجی کمک بگیر.",
+      "- حرکت را از روی کانون و کادر انتخاب کن: اگر سوژه نزدیک لبه است، پن آرام را طوری انتخاب کن که سوژه به مرکز امن نزدیک شود و از برش آن جلوگیری شود؛ اگر کانون مرکزی است slow-zoom ملایم یا slow-pull مناسب‌تر است. حرکت یکسان را پشت سر هم تکرار نکن و هیچ‌وقت لرزش، چرخش دوربین یا زوم تهاجمی نساز.",
       "- قاب تزئینی، چیدمان چندتایی و پس‌زمینه رنگی را فقط وقتی انتخاب کن که به روایت کمک کند؛ سادگی حرفه‌ای بهتر از تزئینات بی‌دلیل است.",
       "",
       "۳) تایپوگرافی و زمان‌بندی:",
@@ -618,7 +654,8 @@
       "- در هر صحنه سلسله‌مراتب مشخص بساز: در صورت نیاز یک تیتر اصلی و حداکثر یک عبارت مکمل. لایه‌های متعدد را روی هم انباشته نکن.",
       "- delay زمان شروع هر لایه از ابتدای همان صحنه است. ورود لایه‌ها را مرحله‌ای و با فاصله معنادار طراحی کن؛ دو متن مهم را هم‌زمان وارد نکن.",
       "- برای هر لایه motion و exit متناسب با معنا تعیین کن. اگر متن دوم باید جای متن اول را بگیرد، برای متن اول exit مناسب انتخاب کن؛ اگر متن باید باقی بماند از stay استفاده کن. زمان ورود و خروج باید داخل مدت همان صحنه جا شود.",
-      "- جایگاه و align را با راست‌به‌چپ بودن فارسی و فضای خالی عکس هماهنگ کن. اندازه متن باید روی صفحه موبایل خوانا باشد؛ از متن طولانی و فونت تزئینی برای متن‌های چندکلمه‌ای پرهیز کن. colorMode را معمولاً auto انتخاب کن تا موتور رنگ پیشنهادی تو را با روشنایی واقعی عکس تطبیق دهد؛ فقط در صورت نیاز واقعی manual باشد.",
+      "- جایگاه متن را بر اساس فضای مناسب متن هر عکس تعیین کن: فضای خلوت بالا یعنی position=top و فضای خلوت پایین یعنی position=bottom؛ اگر هیچ فضای خلوت قطعی نیست، متن را کوتاه و در ناحیه‌ای با کمترین تداخل قرار بده. جایگاه و align را با راست‌به‌چپ بودن فارسی هماهنگ کن. اندازه متن روی موبایل خوانا باشد. colorMode را معمولاً auto انتخاب کن.",
+      "- تایپوگرافی باید مثل تدوین روایت کارگردانی شود: در هر صحنه فقط یک پیام اصلی، ورود مرحله‌ای با delay معنادار، و در صورت جایگزینی پیام، exit متن قبلی پیش از ورود متن بعدی. حرکت متن باید با جهت حرکت تصویر تضاد آزاردهنده نداشته باشد؛ از انیمیشن‌های متنوع اما محدود و نرم استفاده کن.",
       "- زیرخط یا تأکید بصری را فقط در صورت نیاز استفاده کن؛ در غیر این صورت از رنگ و اندازه برای سلسله‌مراتب کمک بگیر.",
       "",
       "۴) ریتم و کیفیت نهایی:",
