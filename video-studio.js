@@ -761,11 +761,13 @@
     if(!MB||!MB.Output||!MB.CanvasSource||!MB.Mp4OutputFormat||!MB.BufferTarget)return false;
     let output=null,videoSource=null,audioSource=null,audioEncodedPackets=0;
     try{
-      const fps=20,[width,height]=dimensions();
-      const quality=new MB.Quality({bitrate:2200000});
+      const lowPower=isLowPowerDevice();
+      const fps=lowPower?15:20,[width,height]=dimensions();
+      const quality=new MB.Quality({bitrate:lowPower?900000:2200000});
       let videoCodec=await MB.getFirstEncodableVideoCodec(["avc"],{width,height,frameRate:fps,quality});
       let isMp4=videoCodec==="avc";
       if(!isMp4){
+        if(lowPower)return false;
         videoCodec=await MB.getFirstEncodableVideoCodec(["vp9"],{width,height,frameRate:fps,quality});
         if(videoCodec!=="vp9")return false;
       }
@@ -784,7 +786,7 @@
         if(!AudioContextClass)return false;
         if(!audioContext)audioContext=new AudioContextClass();
         await audioContext.resume();
-        const sampleRate=48000,frameCount=Math.max(1,Math.ceil(renderDuration*sampleRate));
+        const sampleRate=lowPower?32000:48000,frameCount=Math.max(1,Math.ceil(renderDuration*sampleRate));
         audioBuffer=audioContext.createBuffer(2,frameCount,sampleRate);
         if(musicUrl||musicFile){
           let sourceBlob=musicFile;
@@ -925,9 +927,9 @@
       // then captured with the same MediaRecorder stream as the preview sound path.
       // The direct Mediabunny PCM path has been unreliable for these short transient cues.
       const hasVisualTransitionAudio=renderStory.some(scene=>["cut","page-turn","slide-left","slide-right","zoom","fade"].includes(scene.transition));
-      if(window.Mediabunny&&!hasVisualTransitionAudio&&!isLowPowerDevice()){
+      if(window.Mediabunny&&(!hasVisualTransitionAudio||isLowPowerDevice())){
         recording=true;renderBtn.disabled=true;previewBtn.disabled=true;progress.style.width="0%";
-        say("در حال ساخت MP4 با موتور رندر مستقیم؛ لطفاً صفحه را باز و روشن نگه دار.");
+        say(isLowPowerDevice()?"در حال ساخت MP4 سبک با وضوح ۵۴۰p و ۱۵ فریم؛ لطفاً صفحه را باز و روشن نگه دار.":"در حال ساخت MP4 با موتور رندر مستقیم؛ لطفاً صفحه را باز و روشن نگه دار.");
         const mp4Ready=await tryMediabunnyMp4(renderStory,renderDuration);
         recording=false;renderBtn.disabled=false;previewBtn.disabled=false;
         if(mp4Ready)return;
@@ -1007,6 +1009,22 @@
         let blob=new Blob(chunks,{type:actualMime});
         if(!blob.size){renderBtn.disabled=false;previewBtn.disabled=false;say("فایل ویدئو خالی ساخته شد؛ لطفاً دوباره تلاش کن.");return;}
         let extension=actualMime.toLowerCase().startsWith("video/mp4")?"mp4":"webm";
+        const expectsAudio=!!(musicElement||renderStorySounds);
+        // Do not hand out a silent export: verify the captured audio track before publishing it.
+        if(expectsAudio&&window.Mediabunny?.Input&&window.Mediabunny?.BlobSource&&window.Mediabunny?.ALL_FORMATS){
+          let hasAudioTrack=false;
+          let checkInput=null;
+          try{
+            checkInput=new window.Mediabunny.Input({source:new window.Mediabunny.BlobSource(blob),formats:window.Mediabunny.ALL_FORMATS});
+            hasAudioTrack=!!(await checkInput.getPrimaryAudioTrack());
+          }catch(error){console.warn("NAVA export audio validation:",error);}
+          finally{try{checkInput?.dispose();}catch(_){}}
+          if(!hasAudioTrack){
+            renderBtn.disabled=false;previewBtn.disabled=false;
+            say("ترک صدای خروجی تأیید نشد؛ برای جلوگیری از تحویل ویدئوی بی‌صدا، فایل منتشر نشد. دوباره با صدای ورودی امتحان کن.");
+            return;
+          }
+        }
         if(extension==="webm"&&!isLowPowerDevice()){
           const converted=await transcodeWebmToMp4(blob);
           if(converted){blob=converted;extension="mp4";}

@@ -88,7 +88,7 @@ jobs:
           assert.match(js, /"page-turn":"page-turn","slide-left":"whoosh","slide-right":"whoosh",zoom:"impact",fade:"sparkle"/, "Page-turn and all other visual transitions must schedule their own sound effects");
           assert.match(js, /const hasEffects=story\.some\(scene=>\["cut","page-turn","slide-left","slide-right","zoom","fade"\]\.includes\(scene\.transition\)/, "Preview must activate its audio graph for every visual transition");
           assert.match(js, /const renderStorySounds=renderStory\.some\(scene=>\["cut","page-turn","slide-left","slide-right","zoom","fade"\]\.includes\(scene\.transition\)/, "Final render must create an audio track for every visual transition");
-          assert.match(js, /if\(window\.Mediabunny&&!hasVisualTransitionAudio&&!isLowPowerDevice\(\)\)/, "Image transition audio must use the live Web Audio capture path on non-low-power devices");
+          assert.match(js, /if\(window\.Mediabunny&&\(!hasVisualTransitionAudio\|\|isLowPowerDevice\(\)\)\)/, "Low-power devices may use direct MP4 while transition audio remains on the PCM mix path");
           assert.match(js, /scheduleSoundEffects\(renderStory,audioDestination,audioContext\.currentTime\+\.18\)/, "Final render must capture the same scheduled transition effects as preview");
           assert.match(js, /previewStoryForLoop=previewStory;previewLoopIndex=0/, "Preview audio must retain the story and restart its sound effects on each visual loop");
           assert.match(js, /scheduleSoundEffects\(previewStoryForLoop,previewMasterGain,audioContext\.currentTime\+\.08,0\)/, "Preview loop must reschedule photo and text effects from the beginning");
@@ -99,7 +99,14 @@ jobs:
           assert.match(js, /تحلیل سنگین عمق اجرا نشد/, "Low-power devices must skip heavy depth inference");
           assert.match(js, /lowPowerRender=isLowPowerDevice\(\)\|\|/, "Low-power profile must reduce frame rate and bitrate");
           assert.match(js, /extension==="webm"&&!isLowPowerDevice\(\)/, "Low-power devices must not run the large FFmpeg WASM converter");
-          assert.match(js, /!hasVisualTransitionAudio&&!isLowPowerDevice\(\)/, "Low-power devices must skip the heavier Mediabunny export path");
+          assert.match(js, /if\(!isMp4\)\{\s*if\(lowPower\)return false;/, "Low-power devices must skip VP9 and heavy WASM conversion when AVC is unavailable");
+          assert.match(js, /const lowPower=isLowPowerDevice\(\);\s*const fps=lowPower\?15:20/, "Low-power direct export must use 15 fps");
+          assert.match(js, /new MB\.Quality\(\{bitrate:lowPower\?900000:2200000\}\)/, "Low-power direct export must use a reduced bitrate");
+          assert.match(js, /if\(!isMp4\)\{\s*if\(lowPower\)return false;/, "Low-power devices must not fall back to VP9 plus a heavy WASM transcode");
+          assert.match(js, /const sampleRate=lowPower\?32000:48000/, "Low-power audio encoding must use a reduced sample rate");
+          assert.match(js, /window\.Mediabunny&&\(!hasVisualTransitionAudio\|\|isLowPowerDevice\(\)\)/, "Low-power devices may use the direct MP4 path with PCM-mixed transition audio");
+          assert.match(js, /hasAudioTrack=!!\(await checkInput\.getPrimaryAudioTrack\(\)\)/, "Recorder exports must be checked for a real audio track before delivery");
+          assert.match(js, /برای جلوگیری از تحویل ویدئوی بی‌صدا/, "An export with a missing audio track must not be published");
           assert.match(js, /پروژه کاملاً متن‌محور/, "NAVI must support text-only video projects");
           assert.match(js, /const size=40,sample=document\.createElement\("canvas"\)/, "Image visual analysis must stay at a small local sampling size");
           assert.match(js, /کانون بصری تقریبی/, "NAVI must receive a visual focus estimate for each photo");
