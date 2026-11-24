@@ -86,9 +86,9 @@ jobs:
           assert.match(js, /resolveLayerTextColor/, "Automatic text color must be contrast-checked against the selected image");
           assert.match(js, /transitionCurrentCanvas/, "Scene transitions must be composited in the actual canvas renderer");
           assert.match(js, /type:"page-turn"/, "Page-turn transition must schedule its own sound effect");
-          assert.match(js, /const pageTurnEvents=readyEvents\.filter\(event=>event\.type==="page-turn"\)/, "Page-turn effects must never be dropped by the regular effects cap");
-          assert.match(js, /const pageTurnEvents=soundEvents\.filter\(event=>event\.type==="page-turn"\)/, "Mediabunny export must retain every page-turn effect");
-          assert.match(js, /scene\.transition==="page-turn"/, "Page-turn audio must be included in final render audio");
+          assert.match(js, /const transitionEvents=readyEvents\.filter\(event=>event\.source==="transition"\)/, "All visual transition effects must bypass the regular effects cap");
+          assert.match(js, /const transitionEvents=soundEvents\.filter\(event=>event\.source==="transition"\)/, "Mediabunny export must retain every visual transition effect");
+          assert.match(js, /"page-turn":"page-turn","slide-left":"whoosh","slide-right":"whoosh",zoom:"impact",fade:"sparkle"/, "Every visual transition must map to a matching sound cue in preview and export");
           assert.match(js, /buildNaviScenePlan\(reply\)/, "NAVI replies must be applied through the structured scene-plan executor");
           assert.match(js, /while\(storyCards\(\)\.length<plan\.scenes\.length\)/, "NAVI plan must dynamically create the requested scene cards");
           const replyStart = js.indexOf('window.addEventListener("nava:navi-reply"');
