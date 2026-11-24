@@ -108,11 +108,11 @@ test("Gemini tries the second fallback model when the first fallback is also una
   assert.match(urls[3], /models\/gemini-3\.5-flash:generateContent$/);
 });
 
-test("Gemini fallback is limited to upstream 5xx failures", () => {
+test("Gemini fallback is limited to retryable upstream failures", () => {
   for (const status of [408, 425, 429, 500, 502, 503, 504]) {
     assert.equal(shouldUseNaviGeminiFallback({ httpStatus: status }), true);
   }
-  for (const status of [400, 401, 403, 404, 429]) {
+  for (const status of [400, 401, 403, 404]) {
     assert.equal(shouldUseNaviGeminiFallback({ httpStatus: status }), false);
   }
 });
