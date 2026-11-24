@@ -1012,11 +1012,18 @@
         const expectsAudio=!!(musicElement||renderStorySounds);
         // Do not hand out a silent export: verify the captured audio track before publishing it.
         if(expectsAudio&&window.Mediabunny?.Input&&window.Mediabunny?.BlobSource&&window.Mediabunny?.ALL_FORMATS){
-          const checkInput=new window.Mediabunny.Input({source:new window.Mediabunny.BlobSource(blob),formats:window.Mediabunny.ALL_FORMATS});
+          let hasAudioTrack=false;
+          let checkInput=null;
           try{
-            const audioTrack=await checkInput.getPrimaryAudioTrack();
-            if(!audioTrack)throw new Error("audio-track-missing-from-rendered-file");
-          }finally{try{checkInput.dispose();}catch(_){}}
+            checkInput=new window.Mediabunny.Input({source:new window.Mediabunny.BlobSource(blob),formats:window.Mediabunny.ALL_FORMATS});
+            hasAudioTrack=!!(await checkInput.getPrimaryAudioTrack());
+          }catch(error){console.warn("NAVA export audio validation:",error);}
+          finally{try{checkInput?.dispose();}catch(_){}}
+          if(!hasAudioTrack){
+            renderBtn.disabled=false;previewBtn.disabled=false;
+            say("ترک صدای خروجی تأیید نشد؛ برای جلوگیری از تحویل ویدئوی بی‌صدا، فایل منتشر نشد. دوباره با صدای ورودی امتحان کن.");
+            return;
+          }
         }
         if(extension==="webm"&&!isLowPowerDevice()){
           const converted=await transcodeWebmToMp4(blob);
