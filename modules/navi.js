@@ -6,7 +6,7 @@ import { json, safeNaviText } from "./shared.js";
 import { handleGuestTrial } from "./guest-trial.js";
 import { loadNaviBusinessContext } from "./business.js";
 import { buildNaviPlatformKnowledge } from "./navi-knowledge.js";
-import { normalizeNaviVisionImage } from "./navi-image.js";
+import { normalizeNaviVisionImage, normalizeNaviVisionImages } from "./navi-image.js";
 
 import {
   createNaviSession,
@@ -2824,9 +2824,12 @@ async function handleChat({
     );
   }
 
-  let visionImage = null;
+  let visionImages = [];
   try {
-    visionImage = normalizeNaviVisionImage(input.image);
+    visionImages = normalizeNaviVisionImages(input.images);
+    const singleVisionImage = normalizeNaviVisionImage(input.image);
+    if (singleVisionImage && visionImages.length) throw new Error("ارسال هم‌زمان تصویر تکی و آرایه چندتصویری مجاز نیست.");
+    if (singleVisionImage) visionImages = [singleVisionImage];
   } catch (imageError) {
     return errorResponse(imageError.message, 400, corsOrigin);
   }
@@ -2986,12 +2989,12 @@ async function handleChat({
 
   // Attach image bytes only to this transient Gemini request. The chat history,
   // D1 messages, memory extraction and project records contain text only.
-  if (visionImage) {
+  if (visionImages.length) {
     const currentUserContent = contents[contents.length - 1];
     if (!currentUserContent || currentUserContent.role !== "user") {
-      return errorResponse("پیوست تصویر به پیام جاری متصل نشد.", 400, corsOrigin);
+      return errorResponse("پیوست تصاویر به پیام جاری متصل نشد.", 400, corsOrigin);
     }
-    currentUserContent.parts.push(visionImage);
+    currentUserContent.parts.push(...visionImages);
   }
 
   const conversationContext = conversationMatches.map(item =>
