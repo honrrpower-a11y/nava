@@ -101,6 +101,10 @@ jobs:
           assert.match(js, /extension==="webm"&&!isLowPowerDevice\(\)/, "Low-power devices must not run the large FFmpeg WASM converter");
           assert.match(js, /!hasVisualTransitionAudio&&!isLowPowerDevice\(\)/, "Low-power devices must skip the heavier Mediabunny export path");
           assert.match(js, /پروژه کاملاً متن‌محور/, "NAVI must support text-only video projects");
+          assert.match(js, /const size=40,sample=document\.createElement\("canvas"\)/, "Image visual analysis must stay at a small local sampling size");
+          assert.match(js, /کانون بصری تقریبی/, "NAVI must receive a visual focus estimate for each photo");
+          assert.match(js, /فضای مناسب متن/, "NAVI must receive estimated quiet areas for typography placement");
+          assert.match(js, /حرکت را از روی کانون و کادر انتخاب کن/, "NAVI director prompt must adapt camera motion to image composition");
 
           assert.match(js, /Math\.sin\(n\*12\.9898\).*?\.42/, "Page-turn paper rustle must be audible in the final audio mix");
           assert.match(js, /const transitionEvents=readyEvents\.filter\(event=>event\.source==="transition"\)/, "All visual transition effects must bypass the regular effects cap");
