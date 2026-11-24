@@ -4004,9 +4004,16 @@ async function sendMessageToNavi(options = {}) {
 
     if (!response.ok || !data.success) {
       if (selectedImage && localImageContext) {
-        const reason = data.error || "سرویس تحلیل معنایی موقتاً در دسترس نیست.";
-        showNaviReply(localImageContext + "\n\nدرک معنایی تصویر از طریق Gemini انجام نشد (" + reason + "). تحلیل پایه بالا به‌صورت محلی و بدون API آماده شد.");
-        setNaviStatus("تحلیل محلی انجام شد؛ تحلیل معنایی فعلاً در دسترس نیست.");
+        const reason = String(data.error || "سرویس تحلیل معنایی موقتاً در دسترس نیست.").slice(0, 220);
+        const diagnostics = [
+          data.code ? "کد: " + String(data.code).slice(0, 80) : "",
+          Number(data.httpStatus) ? "HTTP سرویس: " + Number(data.httpStatus) : "",
+          data.requestId ? "کد پیگیری: " + String(data.requestId).slice(0, 80) : ""
+        ].filter(Boolean).join(" | ");
+        showNaviReply(localImageContext + "\n\nدرک معنایی تصویر از طریق Gemini انجام نشد: " + reason +
+          (diagnostics ? "\n" + diagnostics : "") +
+          "\nتحلیل پایه بالا به‌صورت محلی و بدون API آماده شد.");
+        setNaviStatus(diagnostics || "تحلیل محلی انجام شد؛ تحلیل معنایی فعلاً در دسترس نیست.");
         return;
       }
       const message = data.error || data.diagnostic || "ارتباط با ناوی با مشکل مواجه شد.";
@@ -4138,8 +4145,15 @@ async function sendMessageToNavi(options = {}) {
     if (naviSessionVersion !== requestVersion) return;
 
     if (selectedImage && localImageContext && getNaviToken()) {
-      showNaviReply(localImageContext + "\n\nارتباط با سرویس تحلیل معنایی برقرار نشد. تحلیل پایه تصویر در همین دستگاه انجام شده و بدون نیاز به API در دسترس است.");
-      setNaviStatus("تحلیل محلی انجام شد؛ سرویس تحلیل معنایی در دسترس نیست.");
+      const networkFailure = error instanceof TypeError;
+      const reason = networkFailure
+        ? "ارتباط شبکه مرورگر با سرور NAVI برقرار نشد."
+        : String(error?.message || "خطای نامشخص هنگام دریافت پاسخ سرور.").slice(0, 180);
+      const diagnosticCode = networkFailure ? "NAVI_IMAGE_NETWORK" : "NAVI_IMAGE_CLIENT";
+      showNaviReply(localImageContext + "\n\nتحلیل معنایی تصویر کامل نشد: " + reason +
+        "\nکد تشخیص: " + diagnosticCode +
+        "\nتحلیل پایه تصویر در همین دستگاه انجام شده و بدون نیاز به API در دسترس است.");
+      setNaviStatus("تحلیل محلی انجام شد؛ جزئیات خطای ارتباط در پاسخ نمایش داده شد.");
       return;
     }
 
