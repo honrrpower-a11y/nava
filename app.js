@@ -4137,6 +4137,12 @@ async function sendMessageToNavi(options = {}) {
   } catch (error) {
     if (naviSessionVersion !== requestVersion) return;
 
+    if (selectedImage && localImageContext && getNaviToken()) {
+      showNaviReply(localImageContext + "\n\nارتباط با سرویس تحلیل معنایی برقرار نشد. تحلیل پایه تصویر در همین دستگاه انجام شده و بدون نیاز به API در دسترس است.");
+      setNaviStatus("تحلیل محلی انجام شد؛ سرویس تحلیل معنایی در دسترس نیست.");
+      return;
+    }
+
     if (options.officeDiagnostic) updateOfficeActionDiagnostic("خطای ارسال یا پردازش", {
       error: error?.message || "unknown"
     });
