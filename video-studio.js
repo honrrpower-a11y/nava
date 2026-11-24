@@ -762,17 +762,17 @@
     let output=null,videoSource=null,audioSource=null,audioEncodedPackets=0;
     try{
       const lowPower=isLowPowerDevice();
-      let fps=lowPower?15:20;
+      let fps=20;
       let [width,height]=dimensions();
-      let quality=new MB.Quality({bitrate:lowPower?900000:2200000});
+      let quality=new MB.Quality({bitrate:lowPower?1200000:2200000});
       let videoCodec=await MB.getFirstEncodableVideoCodec(["avc"],{width,height,frameRate:fps,quality});
       let isMp4=videoCodec==="avc";
       // Older Android encoders may reject AVC at 540p/15fps but accept a
       // smaller hardware profile. Retry once before falling back to WebM.
       if(!isMp4&&lowPower){
         const landscape=formatInput.value==="landscape";
-        width=landscape?640:360;height=landscape?360:640;fps=12;
-        quality=new MB.Quality({bitrate:480000});
+        width=landscape?640:360;height=landscape?360:640;fps=15;
+        quality=new MB.Quality({bitrate:600000});
         try{
           videoCodec=await MB.getFirstEncodableVideoCodec(["avc"],{width,height,frameRate:fps,quality});
           isMp4=videoCodec==="avc";
@@ -946,7 +946,7 @@
       const hasVisualTransitionAudio=renderStory.some(scene=>["cut","page-turn","slide-left","slide-right","zoom","fade"].includes(scene.transition));
       if(window.Mediabunny&&(!hasVisualTransitionAudio||isLowPowerDevice())){
         recording=true;renderBtn.disabled=true;previewBtn.disabled=true;progress.style.width="0%";
-        say(isLowPowerDevice()?"در حال ساخت MP4 سبک با وضوح ۵۴۰p و ۱۵ فریم؛ لطفاً صفحه را باز و روشن نگه دار.":"در حال ساخت MP4 با موتور رندر مستقیم؛ لطفاً صفحه را باز و روشن نگه دار.");
+        say(isLowPowerDevice()?"در حال ساخت MP4 سبک با وضوح ۵۴۰p و ۲۰ فریم؛ لطفاً صفحه را باز و روشن نگه دار.":"در حال ساخت MP4 با موتور رندر مستقیم؛ لطفاً صفحه را باز و روشن نگه دار.");
         const mp4Ready=await tryMediabunnyMp4(renderStory,renderDuration);
         recording=false;renderBtn.disabled=false;previewBtn.disabled=false;
         if(mp4Ready)return;
@@ -974,7 +974,7 @@
       // WebM fallback uses a lighter render profile on mobile encoders.
       lowPowerRender=isLowPowerDevice()||!!mimeCandidates[0]?.toLowerCase().startsWith("video/webm");
       resize();drawFrame(0,renderStory,renderDuration);
-      const renderFps=lowPowerRender?15:deviceProfile.level==="high"?24:20;
+      const renderFps=lowPowerRender?20:deviceProfile.level==="high"?24:20;
       const stream=canvas.captureStream(renderFps);
       const renderStorySounds=renderStory.some(scene=>["cut","page-turn","slide-left","slide-right","zoom","fade"].includes(scene.transition)||(scene.layers||[]).some(layer=>layer.sound&&layer.sound!=="none"));
       if(musicElement||renderStorySounds){
@@ -997,7 +997,7 @@
       recorder=null;
       for(const candidate of mimeCandidates){
         try{
-          recorder=new MediaRecorder(stream,{mimeType:candidate,videoBitsPerSecond:lowPowerRender?900000:deviceProfile.level==="high"?3200000:2200000});
+          recorder=new MediaRecorder(stream,{mimeType:candidate,videoBitsPerSecond:lowPowerRender?1200000:deviceProfile.level==="high"?3200000:2200000});
           mime=recorder.mimeType||candidate;
           break;
         }catch(_){recorder=null;}
@@ -1076,7 +1076,7 @@
         progress.style.width=Math.min(100,t/duration*100)+"%";
         if(t>=duration){finishRender();return;}
       };
-      say(isLowPowerDevice()?"حالت سبک فعال است: خروجی کم‌حجم‌تر با ۱۵ فریم بر ثانیه برای جلوگیری از فشار به گوشی. صفحه را باز و روشن نگه دار.":"در حال ساخت ویدئو با تنظیمات متناسب با توان دستگاه؛ لطفاً صفحه را باز و روشن نگه دار.");
+      say(isLowPowerDevice()?"حالت سبک فعال است: خروجی ۵۴۰p با ۲۰ فریم بر ثانیه؛ صفحه را باز و روشن نگه دار.":"در حال ساخت ویدئو با تنظیمات متناسب با توان دستگاه؛ لطفاً صفحه را باز و روشن نگه دار.");
       tick();
       // Match drawing cadence to the actual capture rate; avoid wasted frames.
       renderTimer=setInterval(tick,Math.round(1000/renderFps));
