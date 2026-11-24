@@ -169,6 +169,9 @@ const naviStatus = document.getElementById("naviStatus");
 const requestResponse = document.getElementById("requestResponse");
 const serviceSelect = document.getElementById("serviceSelect");
 const userRequest = document.getElementById("userRequest");
+const naviImageInput = document.getElementById("naviImageInput");
+const naviImageStatus = document.getElementById("naviImageStatus");
+const naviImageClear = document.getElementById("naviImageClear");
 const sendRequest = document.getElementById("sendRequest");
 const naviSaveComposerMessage = document.getElementById("naviSaveComposerMessage");
 
@@ -3811,6 +3814,19 @@ async function ensureHomeNaviThread() {
   return created.thread.thread_id;
 }
 
+naviImageInput?.addEventListener("change", () => {
+  const file = naviImageInput.files?.[0];
+  if (naviImageStatus) naviImageStatus.textContent = file
+    ? "تصویر انتخاب شد؛ تحلیل پیکسلی روی دستگاه انجام می‌شود و نسخه فشرده فقط برای درک معنایی به NAVI فرستاده می‌شود."
+    : "تصویری انتخاب نشده است.";
+  if (naviImageClear) naviImageClear.hidden = !file;
+});
+naviImageClear?.addEventListener("click", () => {
+  if (naviImageInput) naviImageInput.value = "";
+  if (naviImageStatus) naviImageStatus.textContent = "تصویری انتخاب نشده است.";
+  if (naviImageClear) naviImageClear.hidden = true;
+});
+
 /* =========================================
    NAVI CHAT — AUTHENTICATED REQUEST
 ========================================= */
@@ -3824,9 +3840,31 @@ async function sendMessageToNavi(options = {}) {
     return;
   }
 
+  const selectedImage = options.videoPlan === true ? null : (naviImageInput?.files?.[0] || null);
+  let localImageContext = "";
+  let visionImage = null;
+  if (selectedImage) {
+    try {
+      if (naviImageStatus) naviImageStatus.textContent = "در حال تحلیل محلی و فشرده‌سازی تصویر…";
+      const analysis = await window.NaviLocalImageAnalysis?.analyze?.(selectedImage);
+      if (!analysis || typeof analysis.report !== "string") throw new Error("موتور تحلیل محلی تصویر در دسترس نیست.");
+      localImageContext = analysis.report;
+      visionImage = analysis.visionImage || null;
+      if (naviImageStatus) naviImageStatus.textContent = visionImage
+        ? "تحلیل محلی آماده است؛ نسخه فشرده تصویر فقط برای همین درخواست به NAVI فرستاده می‌شود."
+        : "تحلیل محلی آماده است؛ ارسال تصویر برای درک معنایی در این مرورگر پشتیبانی نشد.";
+    } catch (imageError) {
+      if (naviImageStatus) naviImageStatus.textContent = imageError.message || "تحلیل تصویر انجام نشد.";
+      showNaviReply(imageError.message || "تحلیل تصویر انجام نشد.");
+      return;
+    }
+  }
+
   const message = typeof options.messageOverride === "string"
     ? options.messageOverride.trim()
-    : userRequest.value.trim();
+    : userRequest.value.trim() || (selectedImage
+      ? "لطفاً تصویر پیوست‌شده را بررسی کن، محتوای واقعی آن را توضیح بده و بر اساس درخواست من پیشنهاد بده."
+      : "");
 
   if (!message) {
     showNaviReply("لطفاً ابتدا پیامت را بنویس.");
@@ -3899,6 +3937,8 @@ async function sendMessageToNavi(options = {}) {
     requestContext ? "محیط فعال: استودیوی " + requestContext.service : "",
     contextLines.length ? "اطلاعات زمینه‌ای این استودیو:\n" + contextLines.join("\n") : "",
     workbookSheetContext,
+    localImageContext ? "تحلیل بصری محلی (فقط ویژگی‌های پیکسلی):\n" + localImageContext : "",
+    visionImage ? "تصویر واقعی نیز به همین درخواست پیوست شده است؛ آن را مستقیماً مشاهده و تحلیل کن. گزارش پیکسلی محلی را با تشخیص معنایی اشتباه نگیر و فقط درباره مواردی که واقعاً در تصویر می‌بینی اظهارنظر کن." : "",
     requestContext ? "پاسخ را با توجه به همین محیط و اطلاعات زمینه‌ای ارائه کن؛ اگر اقدامی به ابزار استودیو نیاز دارد، قبل از ادعای انجام آن راهنمایی کن." : "",
     selectedService === "ویدئو و صدا" ? "راهنمای ویژه استودیوی ویدئو: تو خودت کارگردان و تصمیم‌گیرنده تمام جزئیات خلاقانه هستی. برای هر صحنه مستقل، طرح اجرایی ساختاریافته تولید کن؛ از تکرار یک حرکت یا چیدمان برای همه صحنه‌ها خودداری کن. چیدمان هر صحنه را مستقل و بر اساس روایت انتخاب کن؛ تک‌عکس پیش‌فرض نیست و باید در صورت تناسب از ترکیب‌های چندعکسی مثل triptych، grid، stagger، hero-stack، polaroid و free نیز استفاده کنی. اگر transition=page-turn انتخاب شد، فقط همان صحنه باید دقیقاً یک عکس و layout=single داشته باشد؛ این محدودیت به صحنه‌های دیگر سرایت نمی‌کند و برای آلبومی یا پلکانی کردن چند عکس از page-turn استفاده نکن. در صورت نیاز برای عکس‌های متعدد صحنه‌های جداگانه بساز (حداکثر ۲۰ صحنه). خروجی باید فقط یک شیء JSON معتبر با schema دقیق nava.video.scene-plan.v1 و آرایه scenes باشد؛ هر صحنه باید مدت، شماره عکس‌ها، contentMode، layout، photoMotion، تنظیمات جایگاه عکس، background، frame و آرایه layers را داشته باشد؛ هر لایه متن باید متن، position، align، motion، delay، exit، font، size، style، orientation، color و underline داشته باشد؛ همچنین reveal را از بین none/word/char و sound را از بین none/type/impact/whoosh/sparkle انتخاب کن؛ transition را از بین cut/fade/slide-left/slide-right/zoom/page-turn و colorMode را از بین auto/manual انتخاب کن. برای متن‌های نمایشی در صورت تناسب از word یا char استفاده کن و برای ورود عنوان یا لوگو افکت صوتی متناسب انتخاب کن؛ از افکت صوتی برای همه لایه‌ها بی‌دلیل استفاده نکن. فقط enumهای تعریف‌شده در راهنمای موتور را استفاده کن؛ توضیح یا فرمان متنی خارج از JSON ننویس. انتخاب‌ها را بر اساس محتوای واقعی بریف و عکس‌ها انجام بده، نه قواعد ثابت و شرط‌های کلمه‌ای.": "",
     officeRequestContext
@@ -3932,7 +3972,8 @@ async function sendMessageToNavi(options = {}) {
         threadId: requestThreadId,
         isolatedContext: isHomePage || options.videoPlan === true,
         saveToMemory: saveThisMessageToMemory,
-        history: isHomePage ? [] : naviHistory.slice(-NAVI_CONTEXT_MESSAGES)
+        history: isHomePage ? [] : naviHistory.slice(-NAVI_CONTEXT_MESSAGES),
+        image: visionImage
       })
     });
 
@@ -3962,6 +4003,12 @@ async function sendMessageToNavi(options = {}) {
     }
 
     if (!response.ok || !data.success) {
+      if (selectedImage && localImageContext) {
+        const reason = data.error || "سرویس تحلیل معنایی موقتاً در دسترس نیست.";
+        showNaviReply(localImageContext + "\n\nدرک معنایی تصویر از طریق Gemini انجام نشد (" + reason + "). تحلیل پایه بالا به‌صورت محلی و بدون API آماده شد.");
+        setNaviStatus("تحلیل محلی انجام شد؛ تحلیل معنایی فعلاً در دسترس نیست.");
+        return;
+      }
       const message = data.error || data.diagnostic || "ارتباط با ناوی با مشکل مواجه شد.";
       const tracking = data.requestId ? "\nکد پیگیری: " + data.requestId : "";
       throw new Error(message + tracking);
@@ -4089,6 +4136,12 @@ async function sendMessageToNavi(options = {}) {
 
   } catch (error) {
     if (naviSessionVersion !== requestVersion) return;
+
+    if (selectedImage && localImageContext && getNaviToken()) {
+      showNaviReply(localImageContext + "\n\nارتباط با سرویس تحلیل معنایی برقرار نشد. تحلیل پایه تصویر در همین دستگاه انجام شده و بدون نیاز به API در دسترس است.");
+      setNaviStatus("تحلیل محلی انجام شد؛ سرویس تحلیل معنایی در دسترس نیست.");
+      return;
+    }
 
     if (options.officeDiagnostic) updateOfficeActionDiagnostic("خطای ارسال یا پردازش", {
       error: error?.message || "unknown"

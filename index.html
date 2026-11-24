@@ -16,7 +16,8 @@
   <link rel="stylesheet" href="studio-workspaces.css?v=composition-staff-20261114-1">
   <link rel="stylesheet" href="office-navi-guide.css?v=office-two-tabs-20261118-1">
   <link rel="stylesheet" href="office-workspace.css?v=office-back-to-top-20261118-1">
-  <script src="app.js?v=restore-active-studio-20261122-1" defer></script>
+  <script src="navi-image-analysis.js?v=navi-hybrid-vision-20261124-1" defer></script>
+  <script src="app.js?v=navi-hybrid-vision-20261124-1" defer></script>
   <script src="office-navi-guide.js?v=office-back-to-top-20261118-1" defer></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" defer></script>
   <script src="logo-renderer.js?v=logo-persian-native-text-20261121-1" defer></script>
@@ -1409,6 +1410,12 @@
               <input type="checkbox" id="naviSaveComposerMessage">
               <span>ذخیره این پیام در پروفایل اطلاعاتی</span>
             </label>
+          </div>
+          <div class="navi-image-attach">
+            <label for="naviImageInput" class="navi-image-pick">＋ افزودن تصویر برای تحلیل NAVI</label>
+            <input id="naviImageInput" type="file" accept="image/jpeg,image/png,image/webp,image/gif" hidden>
+            <span id="naviImageStatus" class="navi-image-status" aria-live="polite">ویژگی‌های بصری روی گوشی تحلیل می‌شود؛ تصویر فشرده فقط برای همین درخواست ارسال و ذخیره نمی‌شود.</span>
+            <button id="naviImageClear" class="navi-image-clear" type="button" hidden>حذف تصویر</button>
           </div>
           <div class="navi-send-toolbar">
             <button class="btn-primary" id="sendRequest" type="button">ارسال پیام به ناوی</button>

@@ -2821,3 +2821,13 @@ body:has(> .nava-access-panel.is-gate-active){overflow:hidden}
 #navaVideoEngine .nava-video-photo-setting-grid label{display:grid;gap:4px;font-size:10px}
 #navaVideoEngine .nava-video-photo-setting-grid select{min-width:0;width:100%;min-height:36px;padding:6px;font-size:11px}
 @media(max-width:600px){#navaVideoEngine .nava-video-photo-setting-grid{grid-template-columns:1fr}}
+
+
+/* NAVI hybrid image analysis */
+.navi-image-attach{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:10px 0 14px;padding:12px 14px;border:1px solid var(--border);border-radius:12px;background:var(--panel)}
+.navi-image-pick{display:inline-flex;align-items:center;justify-content:center;min-height:38px;padding:8px 13px;border:1px solid var(--border);border-radius:9px;color:var(--gold);background:var(--panel2);font-size:12px;font-weight:700;cursor:pointer;touch-action:manipulation}
+.navi-image-pick:focus-within,.navi-image-pick:hover{border-color:var(--blue)}
+.navi-image-status{flex:1 1 220px;min-width:0;color:var(--muted);font-size:11px;line-height:1.9}
+.navi-image-clear{padding:7px 10px;border:1px solid var(--border);border-radius:8px;background:transparent;color:var(--muted);font-size:11px}
+.navi-image-clear[hidden]{display:none!important}
+@media(max-width:560px){.navi-image-attach{align-items:stretch}.navi-image-pick{width:100%}.navi-image-status{flex-basis:100%}.navi-image-clear{align-self:flex-start}}

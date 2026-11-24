@@ -6,6 +6,7 @@ import { json, safeNaviText } from "./shared.js";
 import { handleGuestTrial } from "./guest-trial.js";
 import { loadNaviBusinessContext } from "./business.js";
 import { buildNaviPlatformKnowledge } from "./navi-knowledge.js";
+import { normalizeNaviVisionImage } from "./navi-image.js";
 
 import {
   createNaviSession,
@@ -2823,6 +2824,13 @@ async function handleChat({
     );
   }
 
+  let visionImage = null;
+  try {
+    visionImage = normalizeNaviVisionImage(input.image);
+  } catch (imageError) {
+    return errorResponse(imageError.message, 400, corsOrigin);
+  }
+
   // The browser sends only the active page/tab identifiers. The actual
   // platform map is maintained server-side and selected from a strict allowlist.
   const requestedPage = safeNaviText(input.page || "homePage", 100);
@@ -2975,6 +2983,16 @@ async function handleChat({
     dbHistory,
     message
   );
+
+  // Attach image bytes only to this transient Gemini request. The chat history,
+  // D1 messages, memory extraction and project records contain text only.
+  if (visionImage) {
+    const currentUserContent = contents[contents.length - 1];
+    if (!currentUserContent || currentUserContent.role !== "user") {
+      return errorResponse("پیوست تصویر به پیام جاری متصل نشد.", 400, corsOrigin);
+    }
+    currentUserContent.parts.push(visionImage);
+  }
 
   const conversationContext = conversationMatches.map(item =>
     '[گفت‌وگو: ' + item.threadTitle +
