@@ -1,6 +1,13 @@
 "use strict";
 (function installNaviLocalImageAnalysis() {
   const MAX_FILE_BYTES = 20 * 1024 * 1024, SAMPLE_EDGE = 192, GRID = 3;
+  function paletteFromBins(bins) {
+    return [...bins.entries()].sort((a,b)=>b[1]-a[1]).slice(0,3).map(([key])=>
+      key.split("").map(bin=>{
+        const channel=Math.round(((Number(bin)+0.5)/4)*255);
+        return channel.toString(16).padStart(2,"0");
+      }).join("").toUpperCase());
+  }
   function toneLabel(h, s, b) {
     if (s < .16) return b < .28 ? "خاکستری تیره" : b > .78 ? "روشن و خنثی" : "خاکستری/خنثی";
     if (h < 18 || h >= 345) return "قرمز/گرم";
@@ -73,8 +80,7 @@
       }
       const mean=sumY/count,contrast=Math.sqrt(Math.max(0,sumY2/count-mean*mean)),sat=sumS/count;
       let hue=Math.atan2(sumHs,sumHc)*180/Math.PI;if(hue<0)hue+=360;
-      const palette=[...bins.entries()].sort((a,b)=>b[1]-a[1]).slice(0,3).map(([key])=>
-        key.split("").map(v=>Math.min(255,Math.round((Number(v)*4+2)*255/4)).toString(16).padStart(2,"0")).join("").toUpperCase());
+      const palette=paletteFromBins(bins);
       const names=["بالا-چپ","بالا-وسط","بالا-راست","وسط-چپ","مرکز","وسط-راست","پایین-چپ","پایین-وسط","پایین-راست"];
       const regions=cells.map((c,index)=>{const avg=c.y/Math.max(1,c.n),variance=Math.sqrt(Math.max(0,c.y2/Math.max(1,c.n)-avg*avg)),edge=c.edge/Math.max(1,c.n*2),penalty=avg<.12||avg>.92?.08:0;return{index,score:variance*.65+edge*.35+penalty};}).sort((a,b)=>a.score-b.score);
       const brightness=mean<.28?"تیره":mean>.72?"روشن":"متوسط";
@@ -130,5 +136,5 @@
       return { report, visionImage };
     } finally { bitmap.close?.(); }
   }
-  window.NaviLocalImageAnalysis=Object.freeze({analyze});
+  window.NaviLocalImageAnalysis=Object.freeze({analyze, paletteFromBins});
 })();
