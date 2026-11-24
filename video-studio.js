@@ -762,10 +762,27 @@
     let output=null,videoSource=null,audioSource=null,audioEncodedPackets=0;
     try{
       const lowPower=isLowPowerDevice();
-      const fps=lowPower?15:20,[width,height]=dimensions();
-      const quality=new MB.Quality({bitrate:lowPower?900000:2200000});
+      let fps=lowPower?15:20;
+      let [width,height]=dimensions();
+      let quality=new MB.Quality({bitrate:lowPower?900000:2200000});
       let videoCodec=await MB.getFirstEncodableVideoCodec(["avc"],{width,height,frameRate:fps,quality});
       let isMp4=videoCodec==="avc";
+      // Older Android encoders may reject AVC at 540p/15fps but accept a
+      // smaller hardware profile. Retry once before falling back to WebM.
+      if(!isMp4&&lowPower){
+        const landscape=formatInput.value==="landscape";
+        width=landscape?640:360;height=landscape?360:640;fps=12;
+        quality=new MB.Quality({bitrate:480000});
+        try{
+          videoCodec=await MB.getFirstEncodableVideoCodec(["avc"],{width,height,frameRate:fps,quality});
+          isMp4=videoCodec==="avc";
+        }catch(_){videoCodec=null;}
+        if(isMp4){
+          canvas.width=width;canvas.height=height;
+          const wrap=root.querySelector(".nava-video-canvas-wrap");
+          if(wrap)wrap.style.aspectRatio=width+" / "+height;
+        }
+      }
       if(!isMp4){
         if(lowPower)return false;
         videoCodec=await MB.getFirstEncodableVideoCodec(["vp9"],{width,height,frameRate:fps,quality});
@@ -852,7 +869,7 @@
         audioSource=new MB.AudioBufferSource({
           codec:audioCodec,
           quality:new MB.Quality({bitrate:128000}),
-          transform:{numberOfChannels:2,sampleRate:48000},
+          transform:{numberOfChannels:2,sampleRate:audioBuffer.sampleRate},
           onEncodedPacket:()=>{audioEncodedPackets++;}
         });
         output.addAudioTrack(audioSource);
