@@ -39,7 +39,8 @@ jobs:
       - name: Check NAVI and image analysis syntax
         run: |
           node --experimental-default-type=module --check modules/navi.js
+          node --experimental-default-type=module --check modules/navi-image.js
           node --check navi-image-analysis.js
           node --check app.js
       - name: Test Gemini resilience and local image analysis
-        run: node --experimental-default-type=module --test tests/navi-gemini-retry.test.mjs tests/navi-image-analysis.test.mjs
+        run: node --experimental-default-type=module --test tests/navi-gemini-retry.test.mjs tests/navi-image-analysis.test.mjs tests/navi-image-multi.test.mjs

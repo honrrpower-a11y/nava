@@ -23,7 +23,7 @@
   const storyList=$("navaVideoStoryList"),addStoryBtn=$("navaVideoAddScene");
   const fontInput=$("navaVideoFont"),manualMotionInput=$("navaVideoManualMotion");
   const briefInput=$("navaVideoBrief"),manualBriefInput=$("navaVideoManualBrief"),applyBriefBtn=$("navaVideoApplyBrief");
-  let smartAutoBuild=false,smartAutoBuildMode=null,naviPlanRetryCount=0,depthMotionModule=null,depthMotionModulePromise=null;
+  let smartAutoBuild=false,smartAutoBuildMode=null,naviPlanRetryCount=0,depthMotionModule=null,depthMotionModulePromise=null,naviVideoAnalysisReady=false,naviVisionImages=[],naviAnalysisRun=0;
   const activeBuildMode=()=>root.querySelector("[data-build-mode].is-active")?.dataset.buildMode||"navi";
   const setupMode=()=>activeBuildMode();
   // Keep each creation tab's media, brief, and scene editor completely separate.
@@ -210,6 +210,7 @@
     refreshScenePhotoOptions();resize();drawFrame(0);updateReady();resultStatusNavi("طرح اختصاصی ناوی اعمال شد: "+plan.scenes.length+" صحنه با تنظیمات مستقل.");return true;
   }
   function resultStatusNavi(message){const el=$("navaVideoNaviResult");if(el)el.textContent=message;}
+  window.addEventListener("nava:navi-error",event=>{if(!smartAutoBuild)return;smartAutoBuild=false;smartAutoBuildMode=null;naviPlanRetryCount=0;resultStatusNavi("ساخت طرح متوقف شد: "+String(event.detail?.message||"ارتباط با ناوی ناموفق بود.")+"؛ عکس‌ها و تحلیل آن‌ها حفظ شده‌اند و می‌توانی دوباره تلاش کنی.");});
   window.addEventListener("nava:navi-reply",event=>{
     if(event.detail?.service!=="ویدئو و صدا")return;
     if(smartAutoBuildMode&&activeBuildMode()!==smartAutoBuildMode)activateBuildMode(smartAutoBuildMode);
@@ -221,7 +222,7 @@
         naviPlanRetryCount++;
         resultStatusNavi("طرح اولیه یک یا چند مقدار نامعتبر داشت؛ ناوی در حال بازبینی و اصلاح طرح خودش است…");
         const repairPrompt="پاسخ JSON قبلی تو در استودیوی ویدئو از نظر اعتبارسنجی موتور نامعتبر بود. خودت طرح را بازبینی و اصلاح کن و فقط یک JSON کامل و معتبر با schema nava.video.scene-plan.v1 بفرست؛ هیچ توضیحی بیرون JSON ننویس. حداکثر ۲۰ صحنه مجاز است. فقط همان صحنه‌ای که transition=page-turn دارد باید دقیقاً یک عکس و layout=single داشته باشد؛ سایر صحنه‌ها را آزادانه و متناسب با بریف با چیدمان‌های چندعکسی طراحی کن. transition فقط cut/fade/slide-left/slide-right/zoom/page-turn، colorMode فقط auto/manual و photoMotion فقط مقادیر مجاز از جمله depth-parallax باشد؛ همه enumها دقیقاً مطابق راهنمای قبلی باشند. photoY باید بین 0.16 و 0.40، photoScale بین 0.82 و 1.16 و photoSpread بین 0.7 و 1.3 باشد. از تمام عکس‌های انتخاب‌شده استفاده کن. پاسخ نامعتبر قبلی برای اصلاح: "+reply;
-        if(window.navaVideoNaviRequest({message:repairPrompt,videoPlan:true}))return;
+        if(window.navaVideoNaviRequest({message:repairPrompt,videoPlan:true,images:naviVisionImages}))return;
       }
       smartAutoBuild=false;
       if(applied)setTimeout(()=>{if(!renderBtn.disabled)renderBtn.click();else say("طرح ناوی اعمال شد، اما هنوز محتوای قابل‌رندر آماده نیست.");},250);
@@ -256,6 +257,30 @@
   }
   storyCards().forEach(card=>{ensureSceneTransitionControl(card);ensureDepthMotionOption(card);card.querySelectorAll("[data-story-layer]").forEach(ensureLayerColorMode);});
   const imageVisualCache=new WeakMap();
+  function ensureNaviImageAnalysisPanel(){
+    let panel=$("navaVideoImageAnalysis");if(panel)return panel;
+    const label=$("navaVideoNaviPhotosLabel");const media=label?.closest(".nava-video-navi-media");if(!media)return null;
+    panel=document.createElement("section");panel.id="navaVideoImageAnalysis";panel.className="nava-video-image-analysis";panel.hidden=true;panel.setAttribute("aria-live","polite");media.after(panel);return panel;
+  }
+  function renderNaviImageAnalysis(index,total,scene,analysis){
+    const panel=ensureNaviImageAnalysisPanel();if(!panel)return;if(index===0)panel.replaceChildren();
+    const card=document.createElement("article");card.className="nava-video-analysis-card";
+    const heading=document.createElement("strong");heading.textContent=(index+1)+". "+scene.file.name;card.append(heading);
+    const report=document.createElement("p");report.textContent=analysis.report;card.append(report);
+    const paletteLine=analysis.report.match(/پالت تقریبی:\s*([^\n]+)/);
+    if(paletteLine){const palette=document.createElement("div");palette.className="nava-video-image-palette";palette.setAttribute("aria-label","پالت رنگ تصویر");paletteLine[1].split(/[،,]/).map(v=>v.trim()).filter(v=>/^#[0-9a-f]{6}$/i.test(v)).slice(0,3).forEach(hex=>{const swatch=document.createElement("span");swatch.className="nava-video-palette-swatch";swatch.style.backgroundColor=hex;swatch.title=hex;swatch.textContent=hex.toUpperCase();palette.append(swatch);});card.append(palette);}
+    const progressText=document.createElement("small");progressText.textContent="تحلیل "+(index+1)+" از "+total+" کامل شد";card.append(progressText);panel.append(card);panel.hidden=false;
+  }
+  async function analyzeNaviVideoImages(items){
+    const run=++naviAnalysisRun;naviVideoAnalysisReady=false;naviVisionImages=[];const panel=ensureNaviImageAnalysisPanel();
+    if(panel){panel.hidden=false;panel.textContent="در حال تحلیل جداگانه عکس‌ها روی همین دستگاه…";}
+    if(!items.length){naviVideoAnalysisReady=true;if(panel)panel.hidden=true;return;}
+    if(items.length>6)throw new Error("برای ساخت با ناوی حداکثر ۶ عکس انتخاب کن تا همه عکس‌ها تحلیل شوند.");
+    const engine=window.NaviLocalImageAnalysis;if(!engine?.analyze)throw new Error("موتور تحلیل محلی تصویر در دسترس نیست.");
+    for(let i=0;i<items.length;i++){const scene=items[i];try{const analysis=await engine.analyze(scene.file);if(run!==naviAnalysisRun)return;if(!analysis||typeof analysis.report!=="string"||!analysis.visionImage?.data)throw new Error("نسخه فشرده تصویر برای تحلیل معنایی آماده نشد.");scene.analysis=analysis;naviVisionImages.push(analysis.visionImage);renderNaviImageAnalysis(i,items.length,scene,analysis);const label=$("navaVideoNaviPhotosLabel");if(label)label.textContent=items.length+" عکس انتخاب شد · تحلیل "+(i+1)+"/"+items.length;}catch(error){if(run!==naviAnalysisRun)return;throw new Error("تحلیل عکس «"+(scene.file?.name||("شماره "+(i+1)))+"» ناموفق بود: "+(error?.message||"خطای نامشخص"));}}
+    naviVideoAnalysisReady=true;const label=$("navaVideoNaviPhotosLabel");if(label)label.textContent=items.length+" عکس انتخاب شد · همه تحلیل شدند";
+    if(panel){const note=document.createElement("p");note.className="nava-video-analysis-complete";note.textContent="تحلیل محلی و پالت رنگ همه عکس‌ها آماده است؛ تصاویر فشرده برای تحلیل معنایی گروهی به NAVI فرستاده می‌شوند.";panel.append(note);}
+  }
   function imageVisualSummary(scene){
     const img=scene?.image;if(!img?.complete||!img.naturalWidth)return "اطلاعات بصری در دسترس نیست";
     if(imageVisualCache.has(img))return imageVisualCache.get(img);
@@ -575,7 +600,8 @@
   async function preview(){if(!scenes.length&&!storyData().length&&!titleInput.value.trim()&&!subtitleInput.value.trim()&&!textInput?.value.trim()){say("برای پیش‌نمایش، یک صحنه متنی یا عکس اضافه کن؛ عنوان و نام اختیاری‌اند.");return;}stopPreview();const previewStory=storyData();await prepareDepthMotion(previewStory);previewStoryForLoop=previewStory;previewLoopIndex=0;startedAt=0;animate.lastFrame=0;previewing=true;resize();drawFrame(previewOffset,previewStory,totalDuration());startPreviewAudio(previewStory).catch(error=>{console.warn("NAVA preview audio:",error);say("پیش‌نمایش تصویر فعال است؛ پخش موسیقی در این مرورگر ممکن نشد.");});previewFrame=requestAnimationFrame(animate);say(scenes.length?"پیش‌نمایش تصویر و صدای ویدئو فعال است.":"پیش‌نمایش تصویر و صدای ویدئوی متن‌محور فعال است.");}
   function updateReady(){const ready=scenes.length>0||storyData().length>0||!!(titleInput.value.trim()||subtitleInput.value.trim()||textInput?.value.trim());previewBtn.disabled=!ready;renderBtn.disabled=!ready||!window.MediaRecorder||!canvas.captureStream;say(scenes.length?scenes.length+" عکس آماده تدوین است.":ready?"ویدیوی متن‌محور آماده ساخت است.":"عکس یا متن ویدئو را وارد کن.");}
   imageInput.addEventListener("change",()=>{
-    const files=Array.from(imageInput.files||[]);if(!files.length)return;
+    const files=Array.from(imageInput.files||[]);if(!files.length)return;imageInput.value="";
+    if(activeBuildMode()==="navi"&&files.length>6){say("برای ساخت با ناوی حداکثر ۶ عکس انتخاب کن تا همه آن‌ها تحلیل شوند.");imageInput.value="";return;}
     if(files.length>20){say("حداکثر ۲۰ عکس می‌توانی انتخاب کنی.");imageInput.value="";return;}
     const imageExtension=/\.(avif|bmp|gif|heic|heif|jpe?g|png|svg|webp)$/i;
     const invalid=files.find(f=>(!(f.type||"").toLowerCase().startsWith("image/")&&!imageExtension.test(f.name||""))||f.size>20*1024*1024);
@@ -603,6 +629,7 @@
     }))).then(items=>{
       scenes=items;resize();renderSceneList();refreshScenePhotoOptions();if(activeBuildMode()==="navi"&&storyCards().length){const card=storyCards()[0],gallery=card.querySelector("[data-story-image-gallery]");if(gallery)gallery.dataset.selectedIds=scenes.map(photoId).join(",");const mode=card.querySelector("[data-scene-content-mode]");if(mode)mode.value=card.querySelector("[data-layer-text]")?.value.trim()?"mixed":"image";refreshScenePhotoOptions();const label=$("navaVideoNaviPhotosLabel");if(label)label.textContent=scenes.length+" عکس انتخاب شد.";}drawFrame(0);updateReady();
       saveModeState(activeBuildMode());say(items.length+" عکس با موفقیت بارگذاری شد؛ حالا می‌توانی آن‌ها را به صحنه‌ها اضافه کنی.");
+      if(activeBuildMode()==="navi")analyzeNaviVideoImages(items).then(()=>{if(activeBuildMode()==="navi"&&scenes===items)saveModeState("navi");say(items.length+" عکس جداگانه تحلیل شد؛ گزارش و پالت رنگ هر عکس آماده است.");}).catch(error=>{naviVideoAnalysisReady=false;naviVisionImages=[];const panel=ensureNaviImageAnalysisPanel();if(panel){panel.hidden=false;const failure=document.createElement("p");failure.className="nava-video-analysis-error";failure.textContent=error.message+" عکس‌ها را دوباره انتخاب کن تا تحلیل تکرار شود.";panel.append(failure);}say(error.message||"تحلیل عکس‌ها ناموفق بود.");});
     }).catch(e=>{sceneList.textContent="بارگذاری عکس ناموفق بود؛ دوباره انتخاب کن.";say(e.message||"خواندن عکس‌ها ناموفق بود.");});
   });
   musicInput.addEventListener("change",()=>{const file=musicInput.files&&musicInput.files[0];if(!file)return;if(!file.type.startsWith("audio/")){say("فایل صوتی معتبر انتخاب کن.");musicInput.value="";return;}if(musicUrl)URL.revokeObjectURL(musicUrl);musicUrl=URL.createObjectURL(file);musicFile=file;if(!musicElement){musicElement=new Audio();musicElement.preload="auto";musicElement.loop=false;}musicElement.src=musicUrl;if(activeBuildMode()==="navi"){const label=$("navaVideoNaviMusicLabel");if(label)label.textContent="موسیقی انتخاب شد: "+file.name;}saveModeState(activeBuildMode());say("موسیقی آماده است.");});
@@ -620,7 +647,8 @@
   $("navaVideoAskNavi")?.addEventListener("click",()=>{
     const brief=(briefInput?.value||"").trim(),result=$("navaVideoNaviResult");
     if(!brief){result.textContent="ابتدا بریف ویدئو را بنویس.";return;}
-    const imageNames=scenes.map((scene,i)=>(i+1)+". "+scene.file.name+" | تحلیل رنگ و کادر: "+imageVisualSummary(scene));
+    if(scenes.length&&!naviVideoAnalysisReady){result.textContent="ابتدا صبر کن تحلیل همه عکس‌ها کامل شود؛ اگر تحلیلی ناموفق بود عکس مشخص‌شده را دوباره انتخاب کن.";return;}
+    const imageNames=scenes.map((scene,i)=>(i+1)+". "+scene.file.name+"\n"+(scene.analysis?.report||"تحلیل محلی در دسترس نیست."));
     const selectedMusicFile=musicFile;
     const musicInfo=selectedMusicFile?selectedMusicFile.name+" ("+selectedMusicFile.type+")":"انتخاب نشده";
     const quoted=brief.match(/[«“"]([^»”"]+)[»”"]/);
@@ -635,6 +663,7 @@
     const prompt = [
       "نقش تو: کارگردان خلاق، تدوین‌گر روایت و طراح موشن‌گرافیک حرفه‌ای برای ویدئوی کوتاه شبکه‌های اجتماعی.",
       "هدف: بریف خام کاربر را به یک نقشه اجرایی دقیق، خوش‌ریتم و قابل‌رندر تبدیل کن؛ خروجی نباید شبیه اسلایدشو یا مجموعه‌ای از عکس‌های ثابت با نوشته‌های تکراری باشد.",
+      "تحلیل چندتصویری الزامی: تصاویر واقعی پیوست‌شده را تک‌به‌تک مشاهده کن؛ برای هر عکس سوژه‌ها و اشیای قابل مشاهده، محیط، حال‌وهوا، ترکیب‌بندی و ارتباطش با عکس‌های دیگر را جداگانه توصیف کن. سپس همه عکس‌ها را مقایسه کن و روایت، ترتیب صحنه‌ها، نقش هر عکس و پیوستگی بصری را از محتوای واقعی استخراج کن. گزارش محلی و پالت رنگ فقط داده کمکی پیکسلی است و جای دیدن عکس را نمی‌گیرد. اگر محتوای عکسی مبهم است صریحاً نامطمئن بمان و چیزی نساز. از تمام عکس‌ها استفاده کن.",
       "",
       "۱) طراحی روایت:",
       "- ابتدا پیام اصلی، مخاطب، حس غالب و نتیجه‌ای را که بیننده باید بگیرد از بریف استخراج کن. روایت باید شروعِ جلب‌توجه‌کننده، میانه معنادار و پایان هدفمند داشته باشد؛ حتی اگر ویدئو فقط ۲ یا ۳ صحنه دارد.",
@@ -700,7 +729,7 @@
     ].join("\n");
     if(typeof window.openNaviAssistant==="function"&&typeof window.navaVideoNaviRequest==="function"){
       window.openNaviAssistant({service:"ویدئو و صدا",message:prompt,context:{studio:"ویدئو و صدا",brief,images:imageNames,imageCount:scenes.length,music:musicInfo,selectedMedia:{images:imageNames,music:musicInfo},mode:"navi-auto-build",capabilities:["multi-scene text and image composition","photo selection and ordering","per-layer text motion and delay","scene duration and background","photo layout and motion","depth-aware 2.5D image parallax","cinematic scene transitions","adaptive text color","background music","video render and export"]}});
-      const submitted=window.navaVideoNaviRequest({message:prompt,videoPlan:true});
+      const submitted=window.navaVideoNaviRequest({message:prompt,videoPlan:true,images:naviVisionImages});
       if(!submitted){smartAutoBuild=false;result.textContent="درخواست به ناوی ارسال نشد؛ نشست ورود را بررسی کن.";}
     }else{smartAutoBuild=false;result.textContent="ارسال خودکار به NAVI در دسترس نیست؛ صفحه را به‌روزرسانی کن.";}
 

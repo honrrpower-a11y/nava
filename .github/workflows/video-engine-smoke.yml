@@ -114,6 +114,12 @@ jobs:
           assert.match(js, /کانون بصری تقریبی/, "NAVI must receive a visual focus estimate for each photo");
           assert.match(js, /فضای مناسب متن/, "NAVI must receive estimated quiet areas for typography placement");
           assert.match(js, /حرکت را از روی کانون و کادر انتخاب کن/, "NAVI director prompt must adapt camera motion to image composition");
+          assert.match(js, /analyzeNaviVideoImages\(items\)/, "Every selected NAVI photo must be analyzed locally");
+          assert.match(js, /nava-video-image-palette/, "Each photo's extracted color palette must be visible in the video studio");
+          assert.match(js, /images:naviVisionImages/, "Compressed analyzed photos must be attached to the grouped NAVI request");
+          assert.match(js, /حداکثر ۶ عکس/, "The NAVI image count must be bounded for mobile and request-size safety");
+          assert.match(app, /images: options\.videoPlan === true \? visionImages : undefined/, "The authenticated NAVI request must forward the multi-image payload only for video plans");
+          assert.match(app, /nava:navi-error/, "Video planning failures must clear the pending status instead of leaving the studio stuck");
 
           assert.match(js, /Math\.sin\(n\*12\.9898\).*?\.42/, "Page-turn paper rustle must be audible in the final audio mix");
           assert.match(js, /const transitionEvents=readyEvents\.filter\(event=>event\.source==="transition"\)/, "All visual transition effects must bypass the regular effects cap");
