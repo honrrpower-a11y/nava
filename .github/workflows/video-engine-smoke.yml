@@ -100,6 +100,13 @@ jobs:
           assert.match(js, /lowPowerRender=isLowPowerDevice\(\)\|\|/, "Low-power profile must reduce frame rate and bitrate");
           assert.match(js, /extension==="webm"&&!isLowPowerDevice\(\)/, "Low-power devices must not run the large FFmpeg WASM converter");
           assert.match(js, /!hasVisualTransitionAudio&&!isLowPowerDevice\(\)/, "Low-power devices must skip the heavier Mediabunny export path");
+          assert.match(js, /const lowPower=isLowPowerDevice\(\);\s*const fps=lowPower\?15:20/, "Low-power direct export must use 15 fps");
+          assert.match(js, /new MB\.Quality\(\{bitrate:lowPower\?900000:2200000\}\)/, "Low-power direct export must use a reduced bitrate");
+          assert.match(js, /if\(!isMp4\)\{\s*if\(lowPower\)return false;/, "Low-power devices must not fall back to VP9 plus a heavy WASM transcode");
+          assert.match(js, /const sampleRate=lowPower\?32000:48000/, "Low-power audio encoding must use a reduced sample rate");
+          assert.match(js, /window\.Mediabunny&&\(!hasVisualTransitionAudio\|\|isLowPowerDevice\(\)\)/, "Low-power devices may use the direct MP4 path with PCM-mixed transition audio");
+          assert.match(js, /hasAudioTrack=!!\(await checkInput\.getPrimaryAudioTrack\(\)\)/, "Recorder exports must be checked for a real audio track before delivery");
+          assert.match(js, /برای جلوگیری از تحویل ویدئوی بی‌صدا/, "An export with a missing audio track must not be published");
           assert.match(js, /پروژه کاملاً متن‌محور/, "NAVI must support text-only video projects");
           assert.match(js, /const size=40,sample=document\.createElement\("canvas"\)/, "Image visual analysis must stay at a small local sampling size");
           assert.match(js, /کانون بصری تقریبی/, "NAVI must receive a visual focus estimate for each photo");
