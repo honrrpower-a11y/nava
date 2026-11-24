@@ -902,8 +902,6 @@
         if(!audioDestination)throw new Error("اتصال صدای خروجی آماده نشد.");
         if(musicElement&&musicGain)musicGain.gain.value=Math.max(0,Number(musicVolume.value)/100);
         audioDestination.stream.getAudioTracks().forEach(t=>stream.addTrack(t));
-        if(musicElement){musicElement.currentTime=0;await musicElement.play();}
-        scheduleSoundEffects(renderStory,audioDestination,audioContext.currentTime+.08);
       }
       chunks=[];recording=true;renderBtn.disabled=true;previewBtn.disabled=true;progress.style.width="0%";
       let mime="";
@@ -951,6 +949,12 @@
         say(extension==="mp4"?"ویدئوی MP4 آماده شد؛ می‌توانی آن را پخش یا دریافت کنی.":"تبدیل MP4 روی این گوشی انجام نشد؛ فایل WebM آماده دریافت است.");
       };
       recorder.start(250);
+      // Start captured audio only after MediaRecorder is running; otherwise short
+      // opening effects can finish before the recorder begins collecting samples.
+      if(musicElement){musicElement.currentTime=0;await musicElement.play();}
+      if(renderStorySounds&&audioDestination&&audioContext){
+        scheduleSoundEffects(renderStory,audioDestination,audioContext.currentTime+.18);
+      }
       const start=performance.now(),duration=renderDuration,fade=Number(fadeInput.value),baseVolume=Math.max(0,Number(musicVolume.value)/100);
       const tick=()=>{
         if(!recording)return;
