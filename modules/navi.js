@@ -2437,7 +2437,7 @@ export function shouldRetryNaviGeminiError(error) {
 
 export function classifyNaviGeminiError(error) {
   const status = Number(error?.httpStatus) || null;
-  if (error?.name === "AbortError") {
+  if (error?.name === "AbortError" || status === 408) {
     return {
       code: "GEMINI_TIMEOUT",
       message: "پاسخ‌گویی ناوی بیش از زمان مجاز طول کشید. ارتباط یا سرویس هوش مصنوعی کند است؛ لطفاً دوباره تلاش کن."
@@ -2646,6 +2646,7 @@ export async function requestGemini({
         if (!shouldUseNaviGeminiFallback(fallbackError)) {
           fallbackError.primaryHttpStatus = Number(primaryError.httpStatus) || null;
           fallbackError.fallbackModelsTried = fallbackErrors.length;
+          fallbackError.fallbackModel = fallbackModel;
           throw fallbackError;
         }
       }
@@ -3024,6 +3025,7 @@ async function handleChat({
       providerCode: safeNaviText(error.providerCode || "", 80),
       providerMessage: safeNaviText(error.providerMessage || "", 300),
       providerRequestId: safeNaviText(error.providerRequestId || "", 120),
+      fallbackModelsTried: Number(error.fallbackModelsTried) || 0,
       errorName: error.name || "Error"
     });
 
