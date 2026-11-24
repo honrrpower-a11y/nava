@@ -7,7 +7,7 @@ export function normalizeNaviVisionImages(values) {
   const normalized = values.map(normalizeNaviVisionImage);
   if (normalized.some(item => !item)) throw new Error("یکی از تصاویر ارسالی خالی یا نامعتبر است.");
   const totalBase64Chars = normalized.reduce((sum, item) => sum + item.inlineData.data.length, 0);
-  if (totalBase64Chars > 9000000) throw new Error("حجم مجموع تصاویر برای تحلیل هم‌زمان بیش از حد مجاز است؛ تصاویر کم‌حجم‌تری انتخاب کن.");
+  if (totalBase64Chars > 8500000) throw new Error("حجم مجموع تصاویر برای تحلیل هم‌زمان بیش از حد مجاز است؛ تصاویر کم‌حجم‌تری انتخاب کن.");
   return normalized;
 }
 
