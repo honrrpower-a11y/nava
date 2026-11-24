@@ -491,7 +491,7 @@
   function stopPreview(){if(previewFrame)cancelAnimationFrame(previewFrame);previewFrame=0;previewing=false;previewLoopIndex=0;previewStoryForLoop=[];stopSoundNodes();if(musicElement){musicElement.pause();musicElement.loop=false;}if(audioContext&&musicGain&&previewMasterGain){try{musicGain.disconnect(previewMasterGain);}catch(_){}}}
   function animate(now){if(!previewing)return;if(!startedAt)startedAt=now;const duration=Math.max(.01,totalDuration()),elapsed=Math.max(0,(now-startedAt)/1000),loopIndex=Math.floor((previewOffset+elapsed)/duration);if(loopIndex!==previewLoopIndex){previewLoopIndex=loopIndex;if(audioContext&&previewMasterGain&&previewStoryForLoop.length){stopSoundNodes();scheduleSoundEffects(previewStoryForLoop,previewMasterGain,audioContext.currentTime+.08,0);}}if(now-(animate.lastFrame||0)>=33){const t=(previewOffset+elapsed)%duration;drawFrame(t);animate.lastFrame=now;}previewFrame=requestAnimationFrame(animate); }
   async function startPreviewAudio(story){
-    const hasEffects=story.some(scene=>["page-turn","slide-left","slide-right","zoom","fade"].includes(scene.transition)||scene.layers?.some(layer=>layer.sound&&layer.sound!=="none"));
+    const hasEffects=story.some(scene=>["cut","page-turn","slide-left","slide-right","zoom","fade"].includes(scene.transition)||scene.layers?.some(layer=>layer.sound&&layer.sound!=="none"));
     if(!musicElement&&!hasEffects)return;
     const AudioContextClass=window.AudioContext||window.webkitAudioContext;
     if(!AudioContextClass)return;
@@ -865,7 +865,7 @@
       // Visual-transition cues are rendered through the live Web Audio graph below,
       // then captured with the same MediaRecorder stream as the preview sound path.
       // The direct Mediabunny PCM path has been unreliable for these short transient cues.
-      const hasVisualTransitionAudio=renderStory.some(scene=>["page-turn","slide-left","slide-right","zoom","fade"].includes(scene.transition));
+      const hasVisualTransitionAudio=renderStory.some(scene=>["cut","page-turn","slide-left","slide-right","zoom","fade"].includes(scene.transition));
       if(window.Mediabunny&&!hasVisualTransitionAudio){
         recording=true;renderBtn.disabled=true;previewBtn.disabled=true;progress.style.width="0%";
         say("در حال ساخت MP4 با موتور رندر مستقیم؛ لطفاً صفحه را باز و روشن نگه دار.");
@@ -897,7 +897,7 @@
       lowPowerRender=!!mimeCandidates[0]?.toLowerCase().startsWith("video/webm");
       resize();drawFrame(0,renderStory,renderDuration);
       const stream=canvas.captureStream(lowPowerRender?15:20);
-      const renderStorySounds=renderStory.some(scene=>["page-turn","slide-left","slide-right","zoom","fade"].includes(scene.transition)||(scene.layers||[]).some(layer=>layer.sound&&layer.sound!=="none"));
+      const renderStorySounds=renderStory.some(scene=>["cut","page-turn","slide-left","slide-right","zoom","fade"].includes(scene.transition)||(scene.layers||[]).some(layer=>layer.sound&&layer.sound!=="none"));
       if(musicElement||renderStorySounds){
         const AudioContextClass=window.AudioContext||window.webkitAudioContext;
         if(!AudioContextClass)throw new Error("مرورگر از پردازش صدای موسیقی و افکت‌ها پشتیبانی نمی‌کند.");
