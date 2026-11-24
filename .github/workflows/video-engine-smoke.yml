@@ -53,6 +53,14 @@ jobs:
           assert.match(js, /schema===["']nava\.video\.scene-plan\.v1["']/, "NAVI scene plan must be schema-validated");
           assert.match(js, /transition:\["cut","fade","slide-left","slide-right","zoom","page-turn"\]/, "NAVI must choose from supported scene transitions");
           assert.match(js, /depth-parallax/, "NAVI scene plans must support depth-aware photo motion");
+          assert.match(js, /plan.scenes.length>20/, "NAVI scene plan must allow a separate page for each of up to 20 photos");
+          assert.match(js, /activeStory\?\.transition==="page-turn"\?"single"/, "Page-turn scenes must render as a single photo page");
+          assert.match(js, /allUsableImages.slice\(0,1\)/, "Page-turn scenes must not become multi-photo collages");
+          assert.match(js, /requested.slice\(1\)/, "Depth inference must be limited to one photo per video for mobile performance");
+          assert.match(js, /strips=48/, "Page-turn must use a curved sheet transition rather than a flat shrinking panel");
+          assert.match(depth, /if\(!navigator\.gpu\)/, "Avoid CPU-heavy WASM depth inference on phones without WebGPU");
+          assert.match(depth, /448\/Math.max/, "Depth inference must use a reduced-resolution input on mobile");
+          assert.match(depth, /No oscillating X\/Y camera roll or orbit/, "Depth motion must not look like camera rotation");
           assert.match(js, /await prepareDepthMotion\(previewStory\)/, "Depth analysis must finish before preview starts");
           assert.match(js, /await prepareDepthMotion\(renderStory\)/, "Depth analysis must finish before final rendering");
           assert.match(js, /renderDepthParallax/, "Canvas renderer must composite the depth-parallax frame");
