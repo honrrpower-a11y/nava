@@ -7,15 +7,13 @@ const textureCache=new WeakMap();
 async function loadDepthPipeline(onProgress){
   if(depthPipelinePromise)return depthPipelinePromise;
   depthPipelinePromise=(async()=>{
+    // Avoid the heavy CPU/WASM fallback on phones; a gentle 2D move is better than freezing the editor.
+    if(!navigator.gpu)throw new Error("شتاب‌دهنده WebGPU در این دستگاه فعال نیست؛ حرکت عمقی برای حفظ روانی گوشی کنار گذاشته شد.");
     const {pipeline,env}=await import("https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.8.1");
     env.allowLocalModels=false;
     const model="onnx-community/depth-anything-v2-small";
     const progress_callback=info=>{if(typeof onProgress==="function")onProgress(info);};
-    if(navigator.gpu){
-      try{return await pipeline("depth-estimation",model,{device:"webgpu",dtype:"fp16",progress_callback});}
-      catch(error){console.warn("NAVA depth model WebGPU fallback:",error);}
-    }
-    return await pipeline("depth-estimation",model,{device:"wasm",dtype:"q8",progress_callback});
+    return await pipeline("depth-estimation",model,{device:"webgpu",dtype:"fp16",progress_callback});
   })().catch(error=>{depthPipelinePromise=null;throw error;});
   return depthPipelinePromise;
 }
@@ -23,7 +21,11 @@ async function loadDepthPipeline(onProgress){
 export async function estimateDepth(image,onProgress){
   if(!image||!image.naturalWidth)throw new Error("تصویر برای تحلیل عمق آماده نیست.");
   const estimator=await loadDepthPipeline(onProgress);
-  const output=await estimator(image);
+  // Downscale before inference; 448px is sufficient for broad foreground/background depth.
+  const scale=Math.min(1,448/Math.max(image.naturalWidth,image.naturalHeight));
+  const input=document.createElement("canvas");input.width=Math.max(2,Math.round(image.naturalWidth*scale));input.height=Math.max(2,Math.round(image.naturalHeight*scale));
+  input.getContext("2d",{alpha:false}).drawImage(image,0,0,input.width,input.height);
+  const output=await estimator(input);
   const raw=output?.depth;
   if(!raw?.data||!raw.width||!raw.height)throw new Error("مدل نقشه عمق معتبری تولید نکرد.");
   const width=raw.width,height=raw.height,source=raw.data,channels=raw.channels||1;
@@ -59,10 +61,11 @@ function createRenderer(){
     uniform float u_strength;
     void main(){
       float depth=texture2D(u_depth,v_uv).r;
-      float wave=sin(u_progress*6.2831853);
-      float drift=cos(u_progress*6.2831853);
-      vec2 offset=vec2((depth-0.5)*u_strength*wave,(depth-0.5)*u_strength*0.34*drift);
-      vec2 uv=clamp(v_uv+offset,vec2(0.002),vec2(0.998));
+      // Depth-dependent, one-way parallax: foreground and background drift at different rates.
+      // No oscillating X/Y camera roll or orbit.
+      float travel=smoothstep(0.0,1.0,u_progress)-0.5;
+      float displacement=(depth-0.5)*u_strength*travel;
+      vec2 uv=clamp(v_uv+vec2(displacement,displacement*0.06),vec2(0.002),vec2(0.998));
       gl_FragColor=texture2D(u_image,uv);
     }
   `);
@@ -108,7 +111,7 @@ export function renderDepthParallax(image,depthMap,progress=0){
     const gl=state.gl;state.canvas.width=cached.width;state.canvas.height=cached.height;gl.viewport(0,0,cached.width,cached.height);gl.useProgram(state.program);
     gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,cached.imageTexture);gl.uniform1i(state.imageLocation,0);
     gl.activeTexture(gl.TEXTURE1);gl.bindTexture(gl.TEXTURE_2D,cached.depthTexture);gl.uniform1i(state.depthLocation,1);
-    gl.uniform1f(state.progressLocation,Math.max(0,Math.min(1,Number(progress)||0)));gl.uniform1f(state.strengthLocation,.055);
+    gl.uniform1f(state.progressLocation,Math.max(0,Math.min(1,Number(progress)||0)));gl.uniform1f(state.strengthLocation,.026);
     gl.drawArrays(gl.TRIANGLE_STRIP,0,4);
     return state.canvas;
   }catch(error){console.warn("NAVA depth parallax frame:",error);return null;}
