@@ -54,6 +54,8 @@ jobs:
           assert.match(js, /transition:\["cut","fade","slide-left","slide-right","zoom","page-turn"\]/, "NAVI must choose from supported scene transitions");
           assert.match(js, /depth-parallax/, "NAVI scene plans must support depth-aware photo motion");
           assert.match(js, /plan.scenes.length>20/, "NAVI scene plan must allow a separate page for each of up to 20 photos");
+          assert.match(js, /pageTurnPlan&&plan\.scenes\.some\(scene=>scene\.layout!=="single"\|\|scene\.images\.length!==1\)/, "Any page-turn sequence must use one photo per scene");
+          assert.match(js, /const t=\(i\+\.5\)\/strips;/, "Page-turn curl must draw the full page before folding it");
           assert.match(js, /activeStory\?\.transition==="page-turn"\?"single"/, "Page-turn scenes must render as a single photo page");
           assert.match(js, /allUsableImages.slice\(0,1\)/, "Page-turn scenes must not become multi-photo collages");
           assert.match(js, /requested.slice\(1\)/, "Depth inference must be limited to one photo per video for mobile performance");
