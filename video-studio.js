@@ -10,6 +10,16 @@
   const wordMotionInput=$("navaVideoWordMotion"),wordSpeedInput=$("navaVideoWordSpeed");
   let scenes=[],musicUrl="",musicFile=null,musicElement=null,audioContext=null,audioSource=null,audioDestination=null,musicGain=null,previewMasterGain=null,previewMuted=false,previewFrame=0,recorder=null,chunks=[],recording=false,startedAt=0,previewing=false,previewOffset=0,outputUrl="",lowPowerRender=false;
   let previewLoopIndex=0,previewStoryForLoop=[];
+  // Conservative capability-based profiles keep weaker phones responsive.
+  const deviceProfile=(()=>{
+    const memory=Number(navigator.deviceMemory)||0,cores=Number(navigator.hardwareConcurrency)||0;
+    const connection=navigator.connection||navigator.mozConnection||navigator.webkitConnection;
+    const saveData=!!connection?.saveData,android=/Android/i.test(navigator.userAgent||"");
+    const low=saveData||memory>0&&memory<=2||memory>0&&memory<=4&&cores>0&&cores<=6||android&&cores>0&&cores<=4||!memory&&cores>0&&cores<=4;
+    const high=!low&&memory>=8&&cores>=8;
+    return {level:low?"low":high?"high":"balanced",memory,cores,saveData,android};
+  })();
+  const isLowPowerDevice=()=>deviceProfile.level==="low";
   const storyList=$("navaVideoStoryList"),addStoryBtn=$("navaVideoAddScene");
   const fontInput=$("navaVideoFont"),manualMotionInput=$("navaVideoManualMotion");
   const briefInput=$("navaVideoBrief"),manualBriefInput=$("navaVideoManualBrief"),applyBriefBtn=$("navaVideoApplyBrief");
@@ -273,6 +283,10 @@
   async function prepareDepthMotion(story){
     const requested=(Array.isArray(story)?story:[]).filter(scene=>scene.photoMotion==="depth-parallax");
     if(!requested.length)return;
+    if(isLowPowerDevice()){
+      say("برای روان ماندن گوشی، تحلیل سنگین عمق اجرا نشد؛ حرکت سینمایی سبک جایگزین می‌شود.");
+      return;
+    }
     // Prepare each distinct photo NAVI assigned to depth motion; keep work sequential on mobile.
     const targetIds=[...new Set(requested.flatMap(scene=>Array.isArray(scene.imageIds)?scene.imageIds:[]))].slice(0,4);
     const targets=targetIds.map(id=>scenes.find(scene=>photoId(scene)===id)).filter(Boolean);
@@ -294,7 +308,15 @@
       say("حرکت عمقی در این دستگاه آماده نشد ("+(error?.message||"خطای ناشناخته")+"). طرح ناوی حفظ شد و فقط در این اجرا زوم سینمایی جایگزین می‌شود.");
     }
   }
-  function dimensions(){const landscape=formatInput.value==="landscape";if(previewing&&!recording)return landscape?[960,540]:[540,960];return landscape?[1280,720]:[720,1280];}
+  function dimensions(){
+    const landscape=formatInput.value==="landscape";
+    if(previewing&&!recording){
+      if(isLowPowerDevice())return landscape?[640,360]:[360,640];
+      return landscape?[960,540]:[540,960];
+    }
+    if(isLowPowerDevice())return landscape?[960,540]:[540,960];
+    return landscape?[1280,720]:[720,1280];
+  }
   function resize(){const [w,h]=dimensions();canvas.width=w;canvas.height=h;const wrap=root.querySelector(".nava-video-canvas-wrap");if(wrap)wrap.style.aspectRatio=w+" / "+h;}
   function renderSceneList(){
     if(!scenes.length){sceneList.textContent="هنوز عکسی انتخاب نشده است.";return;}
@@ -532,7 +554,7 @@
         // Downsample oversized camera photos once at import. The editor and final
         // render then reuse this decoded surface instead of repeatedly handling
         // multi-megapixel originals on every frame.
-        const maxEdge=1920,scale=Math.min(1,maxEdge/Math.max(img.naturalWidth,img.naturalHeight));
+        const maxEdge=isLowPowerDevice()?1280:1920,scale=Math.min(1,maxEdge/Math.max(img.naturalWidth,img.naturalHeight));
         if(scale<1){
           const width=Math.max(1,Math.round(img.naturalWidth*scale)),height=Math.max(1,Math.round(img.naturalHeight*scale));
           const optimized=document.createElement("canvas");optimized.width=width;optimized.height=height;
@@ -563,7 +585,6 @@
   $("navaVideoAskNavi")?.addEventListener("click",()=>{
     const brief=(briefInput?.value||"").trim(),result=$("navaVideoNaviResult");
     if(!brief){result.textContent="ابتدا بریف ویدئو را بنویس.";return;}
-    if(!scenes.length){result.textContent="برای ساخت با ناوی، ابتدا دست‌کم یک عکس انتخاب کن.";return;}
     const imageNames=scenes.map((scene,i)=>(i+1)+". "+scene.file.name+" | تحلیل رنگ و کادر: "+imageVisualSummary(scene));
     const selectedMusicFile=musicFile;
     const musicInfo=selectedMusicFile?selectedMusicFile.name+" ("+selectedMusicFile.type+")":"انتخاب نشده";
@@ -572,7 +593,7 @@
     const first=storyCards()[0],gallery=first?.querySelector("[data-story-image-gallery]");
     if(gallery)gallery.dataset.selectedIds=scenes.map(photoId).join(",");
     const contentMode=first?.querySelector("[data-scene-content-mode]");
-    if(contentMode)contentMode.value=quoted?"mixed":"image";
+    if(contentMode)contentMode.value=!scenes.length?"text":quoted?"mixed":"image";
     refreshScenePhotoOptions();
     naviPlanRetryCount=0;smartAutoBuild=true;smartAutoBuildMode="navi";
     result.textContent="ناوی در حال بررسی بریف، عکس‌ها و موسیقی و طراحی ویدئو است…";
@@ -636,7 +657,8 @@
       "بریف کاربر:",
       brief,
       "عکس‌های انتخاب‌شده به ترتیب:",
-      imageNames.join(" | "),
+      imageNames.length?imageNames.join(" | "):"هیچ عکسی انتخاب نشده؛ پروژه کاملاً متن‌محور است.",
+      "در پروژه بدون عکس، همه صحنه‌ها باید contentMode=text و images=[] داشته باشند؛ از پس‌زمینه‌های گرافیکی ساده و تایپوگرافی متحرک استفاده کن.",
       "موسیقی انتخاب‌شده: " + musicInfo
     ].join("\n");
     if(typeof window.openNaviAssistant==="function"&&typeof window.navaVideoNaviRequest==="function"){
@@ -866,7 +888,7 @@
       // then captured with the same MediaRecorder stream as the preview sound path.
       // The direct Mediabunny PCM path has been unreliable for these short transient cues.
       const hasVisualTransitionAudio=renderStory.some(scene=>["cut","page-turn","slide-left","slide-right","zoom","fade"].includes(scene.transition));
-      if(window.Mediabunny&&!hasVisualTransitionAudio){
+      if(window.Mediabunny&&!hasVisualTransitionAudio&&!isLowPowerDevice()){
         recording=true;renderBtn.disabled=true;previewBtn.disabled=true;progress.style.width="0%";
         say("در حال ساخت MP4 با موتور رندر مستقیم؛ لطفاً صفحه را باز و روشن نگه دار.");
         const mp4Ready=await tryMediabunnyMp4(renderStory,renderDuration);
@@ -894,9 +916,10 @@
       const mimeCandidates=[...mp4Candidates,...webmCandidates]
         .filter(type=>{try{return MediaRecorder.isTypeSupported(type);}catch(_){return false;}});
       // WebM fallback uses a lighter render profile on mobile encoders.
-      lowPowerRender=!!mimeCandidates[0]?.toLowerCase().startsWith("video/webm");
+      lowPowerRender=isLowPowerDevice()||!!mimeCandidates[0]?.toLowerCase().startsWith("video/webm");
       resize();drawFrame(0,renderStory,renderDuration);
-      const stream=canvas.captureStream(lowPowerRender?15:20);
+      const renderFps=lowPowerRender?15:deviceProfile.level==="high"?24:20;
+      const stream=canvas.captureStream(renderFps);
       const renderStorySounds=renderStory.some(scene=>["cut","page-turn","slide-left","slide-right","zoom","fade"].includes(scene.transition)||(scene.layers||[]).some(layer=>layer.sound&&layer.sound!=="none"));
       if(musicElement||renderStorySounds){
         const AudioContextClass=window.AudioContext||window.webkitAudioContext;
@@ -918,7 +941,7 @@
       recorder=null;
       for(const candidate of mimeCandidates){
         try{
-          recorder=new MediaRecorder(stream,{mimeType:candidate,videoBitsPerSecond:lowPowerRender?1100000:2200000});
+          recorder=new MediaRecorder(stream,{mimeType:candidate,videoBitsPerSecond:lowPowerRender?900000:deviceProfile.level==="high"?3200000:2200000});
           mime=recorder.mimeType||candidate;
           break;
         }catch(_){recorder=null;}
@@ -947,7 +970,7 @@
         let blob=new Blob(chunks,{type:actualMime});
         if(!blob.size){renderBtn.disabled=false;previewBtn.disabled=false;say("فایل ویدئو خالی ساخته شد؛ لطفاً دوباره تلاش کن.");return;}
         let extension=actualMime.toLowerCase().startsWith("video/mp4")?"mp4":"webm";
-        if(extension==="webm"){
+        if(extension==="webm"&&!isLowPowerDevice()){
           const converted=await transcodeWebmToMp4(blob);
           if(converted){blob=converted;extension="mp4";}
         }
@@ -981,12 +1004,10 @@
         progress.style.width=Math.min(100,t/duration*100)+"%";
         if(t>=duration){finishRender();return;}
       };
-      say("در حال ساخت ویدئو با تنظیمات سازگار با گوشی؛ لطفاً صفحه را باز و روشن نگه دار.");
+      say(isLowPowerDevice()?"حالت سبک فعال است: خروجی کم‌حجم‌تر با ۱۵ فریم بر ثانیه برای جلوگیری از فشار به گوشی. صفحه را باز و روشن نگه دار.":"در حال ساخت ویدئو با تنظیمات متناسب با توان دستگاه؛ لطفاً صفحه را باز و روشن نگه دار.");
       tick();
-      // Match drawing cadence to the 20 fps canvas capture stream. Drawing
-      // at ~30 fps while captureStream samples at 20 fps wastes CPU and can
-      // increase frame-time jitter on slower phones.
-      renderTimer=setInterval(tick,lowPowerRender?66:50);
+      // Match drawing cadence to the actual capture rate; avoid wasted frames.
+      renderTimer=setInterval(tick,Math.round(1000/renderFps));
       renderWatchdog=setTimeout(()=>{if(recording)finishRender("ساخت ویدئو بیش از زمان مجاز طول کشید؛ دوباره با عکس‌های کم‌حجم‌تر امتحان کن.");},(duration+20)*1000);
     }catch(e){
       recording=false;
