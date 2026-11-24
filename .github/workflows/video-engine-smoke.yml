@@ -48,6 +48,11 @@ jobs:
           assert.match(js, /selectedMedia:\{images:imageNames,music:musicInfo\}/, "NAVI context must include selected media metadata");
           assert.match(js, /window\.addEventListener\(["']nava:navi-reply["']/, "NAVI reply handler must be present");
           assert.match(js, /schema===["']nava\.video\.scene-plan\.v1["']/, "NAVI scene plan must be schema-validated");
+          assert.match(js, /transition:\["cut","fade","slide-left","slide-right","zoom","page-turn"\]/, "NAVI must choose from supported scene transitions");
+          assert.match(js, /resolveLayerTextColor/, "Automatic text color must be contrast-checked against the selected image");
+          assert.match(js, /transitionCurrentCanvas/, "Scene transitions must be composited in the actual canvas renderer");
+          assert.match(js, /type:"page-turn"/, "Page-turn transition must schedule its own sound effect");
+          assert.match(js, /scene\.transition==="page-turn"/, "Page-turn audio must be included in final render audio");
           assert.match(js, /buildNaviScenePlan\(reply\)/, "NAVI replies must be applied through the structured scene-plan executor");
           assert.match(js, /while\(storyCards\(\)\.length<plan\.scenes\.length\)/, "NAVI plan must dynamically create the requested scene cards");
           const replyStart = js.indexOf('window.addEventListener("nava:navi-reply"');
