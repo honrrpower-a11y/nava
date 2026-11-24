@@ -460,11 +460,11 @@
   function scheduleSoundEffects(story,destination,startAt,offset=0){
     if(!audioContext||!destination)return;
     let cursor=0;const events=[];
-    (Array.isArray(story)?story:[]).forEach(scene=>{if(cursor>0&&scene.transition==="page-turn")events.push({type:"page-turn",time:cursor});(scene.layers||[]).forEach(layer=>{if(layer.sound&&layer.sound!=="none")events.push({type:layer.sound,time:cursor+(Number(layer.delay)||0),length:String(layer.text||"").length,wordCount:String(layer.text||"").trim().split(/\s+/).filter(Boolean).length,reveal:layer.reveal||"none"});});cursor+=Number(scene.duration)||0;});
+    (Array.isArray(story)?story:[]).forEach(scene=>{const transitionSound=({ "page-turn":"page-turn","slide-left":"whoosh","slide-right":"whoosh",zoom:"impact",fade:"sparkle" })[scene.transition];if(cursor>0&&transitionSound)events.push({type:transitionSound,time:cursor,source:"transition"});(scene.layers||[]).forEach(layer=>{if(layer.sound&&layer.sound!=="none")events.push({type:layer.sound,time:cursor+(Number(layer.delay)||0),length:String(layer.text||"").length,wordCount:String(layer.text||"").trim().split(/\s+/).filter(Boolean).length,reveal:layer.reveal||"none"});});cursor+=Number(scene.duration)||0;});
     const readyEvents=events.filter(event=>event.time>=offset-.01);
-    const pageTurnEvents=readyEvents.filter(event=>event.type==="page-turn");
-    const otherEvents=readyEvents.filter(event=>event.type!=="page-turn").slice(0,48);
-    [...pageTurnEvents,...otherEvents].sort((a,b)=>a.time-b.time).forEach(event=>{
+    const transitionEvents=readyEvents.filter(event=>event.source==="transition");
+    const otherEvents=readyEvents.filter(event=>event.source!=="transition").slice(0,48);
+    [...transitionEvents,...otherEvents].sort((a,b)=>a.time-b.time).forEach(event=>{
       const at=startAt+Math.max(0,event.time-offset);
       const makeTone=(frequency,endFrequency,offset,duration,volume,wave="sine")=>{
         const osc=audioContext.createOscillator(),gain=audioContext.createGain();osc.type=wave;osc.frequency.setValueAtTime(frequency,at+offset);if(endFrequency)osc.frequency.exponentialRampToValueAtTime(Math.max(30,endFrequency),at+offset+duration);gain.gain.setValueAtTime(.0001,at+offset);gain.gain.exponentialRampToValueAtTime(volume,at+offset+.012);gain.gain.exponentialRampToValueAtTime(.0001,at+offset+duration);osc.connect(gain);gain.connect(destination);osc.start(at+offset);osc.stop(at+offset+duration+.03);previewSoundNodes.push(osc);
@@ -712,7 +712,7 @@
       let audioBuffer=null,audioCodec=isMp4?"aac":"opus";
       const soundEvents=[];let soundCursor=0;
       (Array.isArray(renderStory)?renderStory:[]).forEach(scene=>{
-        if(soundCursor>0&&scene.transition==="page-turn")soundEvents.push({type:"page-turn",time:soundCursor});
+        const transitionSound=({ "page-turn":"page-turn","slide-left":"whoosh","slide-right":"whoosh",zoom:"impact",fade:"sparkle" })[scene.transition];if(soundCursor>0&&transitionSound)soundEvents.push({type:transitionSound,time:soundCursor,source:"transition"});
         (scene.layers||[]).forEach(layer=>{
           const sound=layer.sound||"none";
           if(sound!=="none")soundEvents.push({type:sound,time:soundCursor+(Number(layer.delay)||0),length:String(layer.text||"").length,wordCount:String(layer.text||"").trim().split(/\s+/).filter(Boolean).length,reveal:layer.reveal||"none"});
@@ -742,9 +742,9 @@
           }
         }
         const addSample=(index,value)=>{if(index<0||index>=frameCount)return;audioBuffer.getChannelData(0)[index]+=value;audioBuffer.getChannelData(1)[index]+=value*.94;};
-        const pageTurnEvents=soundEvents.filter(event=>event.type==="page-turn");
-        const otherSoundEvents=soundEvents.filter(event=>event.type!=="page-turn").slice(0,48);
-        [...pageTurnEvents,...otherSoundEvents].sort((a,b)=>a.time-b.time).forEach(event=>{
+        const transitionEvents=soundEvents.filter(event=>event.source==="transition");
+        const otherSoundEvents=soundEvents.filter(event=>event.source!=="transition").slice(0,48);
+        [...transitionEvents,...otherSoundEvents].sort((a,b)=>a.time-b.time).forEach(event=>{
           const start=Math.max(0,Math.floor(event.time*sampleRate));if(start>=frameCount)return;
           const typeCount=event.reveal==="word"?Math.max(1,event.wordCount||1):Math.max(1,event.length||1);const duration=event.type==="page-turn"?.72:event.type==="whoosh"?.72:event.type==="sparkle"?.62:event.type==="impact"?.42:event.type==="type"?(event.reveal==="word"?typeCount/1.8:event.reveal==="char"?typeCount/8:.64):.48;
           const count=Math.min(frameCount-start,Math.ceil(duration*sampleRate));
