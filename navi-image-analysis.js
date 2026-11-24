@@ -17,8 +17,31 @@
       throw new Error("فرمت تصویر پشتیبانی نمی‌شود؛ JPG، PNG یا WebP انتخاب کن.");
     if (file.size > MAX_FILE_BYTES) throw new Error("حجم تصویر باید کمتر از ۲۰ مگابایت باشد.");
     let bitmap;
-    try { bitmap = await createImageBitmap(file, { imageOrientation: "from-image" }); }
-    catch (_) { throw new Error("مرورگر نتوانست تصویر را باز کند."); }
+    try {
+      if (typeof createImageBitmap === "function") {
+        bitmap = await createImageBitmap(file, { imageOrientation: "from-image" });
+      } else {
+        const objectUrl = URL.createObjectURL(file);
+        const image = new Image();
+        try {
+          await new Promise((resolve, reject) => {
+            image.onload = resolve;
+            image.onerror = () => reject(new Error("تصویر قابل خواندن نیست."));
+            image.src = objectUrl;
+          });
+          bitmap = {
+            width: image.naturalWidth,
+            height: image.naturalHeight,
+            image,
+            close: () => URL.revokeObjectURL(objectUrl)
+          };
+        } catch (error) {
+          URL.revokeObjectURL(objectUrl);
+          throw error;
+        }
+      }
+    } catch (_) { throw new Error("مرورگر نتوانست تصویر را باز کند."); }
+    const imageSource = bitmap.image || bitmap;
     try {
       const width = bitmap.width, height = bitmap.height;
       if (!width || !height || width * height > 30000000) throw new Error("ابعاد تصویر برای پردازش ایمن روی این دستگاه بیش از حد بزرگ است.");
@@ -28,7 +51,7 @@
       canvas.height = Math.max(1, Math.round(height * scale));
       const ctx = canvas.getContext("2d", { willReadFrequently: true });
       if (!ctx) throw new Error("پردازش تصویر در این مرورگر ممکن نیست.");
-      ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+      ctx.drawImage(imageSource, 0, 0, canvas.width, canvas.height);
       const data = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
       let sumY=0,sumY2=0,sumS=0,sumHs=0,sumHc=0,count=0;
       const bins=new Map(), cells=Array.from({length:GRID*GRID},()=>({n:0,y:0,y2:0,edge:0}));
@@ -77,7 +100,7 @@
         visionCanvas.height = Math.max(1, Math.round(height * edge));
         const visionContext = visionCanvas.getContext("2d");
         if (visionContext) {
-          visionContext.drawImage(bitmap, 0, 0, visionCanvas.width, visionCanvas.height);
+          visionContext.drawImage(imageSource, 0, 0, visionCanvas.width, visionCanvas.height);
           let blob = await new Promise(resolve => visionCanvas.toBlob(resolve, "image/jpeg", 0.76));
           if (blob && blob.size > 1050000) {
             const smaller = document.createElement("canvas");
@@ -86,7 +109,7 @@
             smaller.height = Math.max(1, Math.round(height * Math.min(shrink, 1)));
             const smallerContext = smaller.getContext("2d");
             if (smallerContext) {
-              smallerContext.drawImage(bitmap, 0, 0, smaller.width, smaller.height);
+              smallerContext.drawImage(imageSource, 0, 0, smaller.width, smaller.height);
               blob = await new Promise(resolve => smaller.toBlob(resolve, "image/jpeg", 0.68));
             }
           }
