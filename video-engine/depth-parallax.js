@@ -30,9 +30,12 @@ export async function estimateDepth(image,onProgress){
   if(!raw?.data||!raw.width||!raw.height)throw new Error("مدل نقشه عمق معتبری تولید نکرد.");
   const width=raw.width,height=raw.height,source=raw.data,channels=raw.channels||1;
   const rgba=new Uint8ClampedArray(width*height*4);
+  let minValue=Infinity,maxValue=-Infinity;
+  for(let i=0;i<width*height;i++){const value=Number(source[i*channels]??0);if(Number.isFinite(value)){minValue=Math.min(minValue,value);maxValue=Math.max(maxValue,value);}}
+  const range=Math.max(1e-6,maxValue-minValue);
   for(let i=0;i<width*height;i++){
-    const value=source[i*channels]??0,at=i*4;
-    rgba[at]=value;rgba[at+1]=value;rgba[at+2]=value;rgba[at+3]=255;
+    const value=Number(source[i*channels]??minValue),normalized=Math.round(Math.max(0,Math.min(1,(value-minValue)/range))*255),at=i*4;
+    rgba[at]=normalized;rgba[at+1]=normalized;rgba[at+2]=normalized;rgba[at+3]=255;
   }
   return {width,height,data:rgba};
 }
@@ -111,7 +114,7 @@ export function renderDepthParallax(image,depthMap,progress=0){
     const gl=state.gl;state.canvas.width=cached.width;state.canvas.height=cached.height;gl.viewport(0,0,cached.width,cached.height);gl.useProgram(state.program);
     gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,cached.imageTexture);gl.uniform1i(state.imageLocation,0);
     gl.activeTexture(gl.TEXTURE1);gl.bindTexture(gl.TEXTURE_2D,cached.depthTexture);gl.uniform1i(state.depthLocation,1);
-    gl.uniform1f(state.progressLocation,Math.max(0,Math.min(1,Number(progress)||0)));gl.uniform1f(state.strengthLocation,.026);
+    gl.uniform1f(state.progressLocation,Math.max(0,Math.min(1,Number(progress)||0)));gl.uniform1f(state.strengthLocation,.075);
     gl.drawArrays(gl.TRIANGLE_STRIP,0,4);
     return state.canvas;
   }catch(error){console.warn("NAVA depth parallax frame:",error);return null;}
