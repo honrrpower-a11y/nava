@@ -478,7 +478,7 @@
       }else if(event.type==="page-turn"){
         const length=Math.ceil(audioContext.sampleRate*.72),buffer=audioContext.createBuffer(1,length,audioContext.sampleRate),data=buffer.getChannelData(0);
         for(let i=0;i<length;i++){const p=i/length;data[i]=(Math.random()*2-1)*Math.sin(Math.PI*p)*(.72-.25*p)+Math.sin(2*Math.PI*(180-95*p)*i/audioContext.sampleRate)*Math.sin(Math.PI*p)*.16;}
-        const src=audioContext.createBufferSource(),filter=audioContext.createBiquadFilter(),gain=audioContext.createGain();filter.type="bandpass";filter.frequency.value=760;filter.Q.value=.55;gain.gain.setValueAtTime(.0001,at);gain.gain.linearRampToValueAtTime(.36,at+.09);gain.gain.linearRampToValueAtTime(.0001,at+.72);src.buffer=buffer;src.connect(filter);filter.connect(gain);gain.connect(destination);src.start(at);src.stop(at+.74);previewSoundNodes.push(src);
+        const src=audioContext.createBufferSource(),filter=audioContext.createBiquadFilter(),gain=audioContext.createGain();filter.type="bandpass";filter.frequency.value=760;filter.Q.value=.55;gain.gain.setValueAtTime(.0001,at);gain.gain.linearRampToValueAtTime(.55,at+.09);gain.gain.linearRampToValueAtTime(.0001,at+.72);src.buffer=buffer;src.connect(filter);filter.connect(gain);gain.connect(destination);src.start(at);src.stop(at+.74);previewSoundNodes.push(src);
       }else if(event.type==="type"){
         const units=event.reveal==="word"?Math.max(1,event.wordCount||1):Math.max(1,event.length||1);
         const count=event.reveal==="none"?4:Math.min(80,units);
@@ -490,7 +490,7 @@
   function stopPreview(){if(previewFrame)cancelAnimationFrame(previewFrame);previewFrame=0;previewing=false;stopSoundNodes();if(musicElement){musicElement.pause();musicElement.loop=false;}if(audioContext&&musicGain&&previewMasterGain){try{musicGain.disconnect(previewMasterGain);}catch(_){}}}
   function animate(now){if(!previewing)return;if(!startedAt)startedAt=now;if(now-(animate.lastFrame||0)>=33){const t=(previewOffset+(now-startedAt)/1000)%totalDuration();drawFrame(t);animate.lastFrame=now;}previewFrame=requestAnimationFrame(animate);}
   async function startPreviewAudio(story){
-    const hasEffects=story.some(scene=>scene.transition==="page-turn"||scene.layers?.some(layer=>layer.sound&&layer.sound!=="none"));
+    const hasEffects=story.some(scene=>["page-turn","slide-left","slide-right","zoom","fade"].includes(scene.transition)||scene.layers?.some(layer=>layer.sound&&layer.sound!=="none"));
     if(!musicElement&&!hasEffects)return;
     const AudioContextClass=window.AudioContext||window.webkitAudioContext;
     if(!AudioContextClass)return;
@@ -757,7 +757,7 @@
             }else if(event.type==="sparkle"){
               sample=(Math.sin(2*Math.PI*(1050+900*p)*t)+.55*Math.sin(2*Math.PI*(1680+700*p)*t))*Math.exp(-t*5)*.16;
             }else if(event.type==="page-turn"){
-              sample=(Math.sin(n*12.9898)*Math.cos(n*4.1414)*Math.sin(Math.PI*p)*.23+Math.sin(2*Math.PI*(180-95*p)*t)*Math.sin(Math.PI*p)*.12);
+              sample=(Math.sin(n*12.9898)*Math.cos(n*4.1414)*Math.sin(Math.PI*p)*.42+Math.sin(2*Math.PI*(180-95*p)*t)*Math.sin(Math.PI*p)*.18);
             }else if(event.type==="type"){
               const interval=event.reveal==="word"?1/1.8:event.reveal==="char"?1/8:.16;
               const tick=t%interval;
@@ -892,7 +892,7 @@
       lowPowerRender=!!mimeCandidates[0]?.toLowerCase().startsWith("video/webm");
       resize();drawFrame(0,renderStory,renderDuration);
       const stream=canvas.captureStream(lowPowerRender?15:20);
-      const renderStorySounds=renderStory.some(scene=>scene.transition==="page-turn"||(scene.layers||[]).some(layer=>layer.sound&&layer.sound!=="none"));
+      const renderStorySounds=renderStory.some(scene=>["page-turn","slide-left","slide-right","zoom","fade"].includes(scene.transition)||(scene.layers||[]).some(layer=>layer.sound&&layer.sound!=="none"));
       if(musicElement||renderStorySounds){
         const AudioContextClass=window.AudioContext||window.webkitAudioContext;
         if(!AudioContextClass)throw new Error("مرورگر از پردازش صدای موسیقی و افکت‌ها پشتیبانی نمی‌کند.");
