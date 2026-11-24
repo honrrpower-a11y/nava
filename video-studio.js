@@ -9,6 +9,7 @@
   const sceneList=$("navaVideoSceneList"),musicVolume=$("navaVideoMusicVolume"),fadeInput=$("navaVideoFade");
   const wordMotionInput=$("navaVideoWordMotion"),wordSpeedInput=$("navaVideoWordSpeed");
   let scenes=[],musicUrl="",musicFile=null,musicElement=null,audioContext=null,audioSource=null,audioDestination=null,musicGain=null,previewMasterGain=null,previewMuted=false,previewFrame=0,recorder=null,chunks=[],recording=false,startedAt=0,previewing=false,previewOffset=0,outputUrl="",lowPowerRender=false;
+  let previewLoopIndex=0,previewStoryForLoop=[];
   const storyList=$("navaVideoStoryList"),addStoryBtn=$("navaVideoAddScene");
   const fontInput=$("navaVideoFont"),manualMotionInput=$("navaVideoManualMotion");
   const briefInput=$("navaVideoBrief"),manualBriefInput=$("navaVideoManualBrief"),applyBriefBtn=$("navaVideoApplyBrief");
@@ -460,7 +461,7 @@
   function scheduleSoundEffects(story,destination,startAt,offset=0){
     if(!audioContext||!destination)return;
     let cursor=0;const events=[];
-    (Array.isArray(story)?story:[]).forEach(scene=>{const transitionSound=({ "page-turn":"page-turn","slide-left":"whoosh","slide-right":"whoosh",zoom:"impact",fade:"sparkle" })[scene.transition];if(cursor>0&&transitionSound)events.push({type:transitionSound,time:cursor,source:"transition"});(scene.layers||[]).forEach(layer=>{if(layer.sound&&layer.sound!=="none")events.push({type:layer.sound,time:cursor+(Number(layer.delay)||0),length:String(layer.text||"").length,wordCount:String(layer.text||"").trim().split(/\s+/).filter(Boolean).length,reveal:layer.reveal||"none"});});cursor+=Number(scene.duration)||0;});
+    (Array.isArray(story)?story:[]).forEach(scene=>{const transitionSound=({cut:"sparkle","page-turn":"page-turn","slide-left":"whoosh","slide-right":"whoosh",zoom:"impact",fade:"sparkle"})[scene.transition];if(cursor>0&&transitionSound)events.push({type:transitionSound,time:cursor,source:"transition"});(scene.layers||[]).forEach(layer=>{if(layer.sound&&layer.sound!=="none")events.push({type:layer.sound,time:cursor+(Number(layer.delay)||0),length:String(layer.text||"").length,wordCount:String(layer.text||"").trim().split(/\s+/).filter(Boolean).length,reveal:layer.reveal||"none"});});cursor+=Number(scene.duration)||0;});
     const readyEvents=events.filter(event=>event.time>=offset-.01);
     const transitionEvents=readyEvents.filter(event=>event.source==="transition");
     const otherEvents=readyEvents.filter(event=>event.source!=="transition").slice(0,48);
@@ -487,8 +488,8 @@
       }
     });
   }
-  function stopPreview(){if(previewFrame)cancelAnimationFrame(previewFrame);previewFrame=0;previewing=false;stopSoundNodes();if(musicElement){musicElement.pause();musicElement.loop=false;}if(audioContext&&musicGain&&previewMasterGain){try{musicGain.disconnect(previewMasterGain);}catch(_){}}}
-  function animate(now){if(!previewing)return;if(!startedAt)startedAt=now;if(now-(animate.lastFrame||0)>=33){const t=(previewOffset+(now-startedAt)/1000)%totalDuration();drawFrame(t);animate.lastFrame=now;}previewFrame=requestAnimationFrame(animate);}
+  function stopPreview(){if(previewFrame)cancelAnimationFrame(previewFrame);previewFrame=0;previewing=false;previewLoopIndex=0;previewStoryForLoop=[];stopSoundNodes();if(musicElement){musicElement.pause();musicElement.loop=false;}if(audioContext&&musicGain&&previewMasterGain){try{musicGain.disconnect(previewMasterGain);}catch(_){}}}
+  function animate(now){if(!previewing)return;if(!startedAt)startedAt=now;const duration=Math.max(.01,totalDuration()),elapsed=Math.max(0,(now-startedAt)/1000),loopIndex=Math.floor((previewOffset+elapsed)/duration);if(loopIndex!==previewLoopIndex){previewLoopIndex=loopIndex;if(audioContext&&previewMasterGain&&previewStoryForLoop.length){stopSoundNodes();scheduleSoundEffects(previewStoryForLoop,previewMasterGain,audioContext.currentTime+.08,0);}}if(now-(animate.lastFrame||0)>=33){const t=(previewOffset+elapsed)%duration;drawFrame(t);animate.lastFrame=now;}previewFrame=requestAnimationFrame(animate); }
   async function startPreviewAudio(story){
     const hasEffects=story.some(scene=>["page-turn","slide-left","slide-right","zoom","fade"].includes(scene.transition)||scene.layers?.some(layer=>layer.sound&&layer.sound!=="none"));
     if(!musicElement&&!hasEffects)return;
@@ -514,7 +515,7 @@
     }
     if(hasEffects)scheduleSoundEffects(story,previewMasterGain,audioContext.currentTime+.1,previewOffset);
   }
-  async function preview(){if(!scenes.length&&!storyData().length&&!titleInput.value.trim()&&!subtitleInput.value.trim()&&!textInput?.value.trim()){say("برای پیش‌نمایش، یک صحنه متنی یا عکس اضافه کن؛ عنوان و نام اختیاری‌اند.");return;}stopPreview();const previewStory=storyData();await prepareDepthMotion(previewStory);startedAt=0;animate.lastFrame=0;previewing=true;resize();drawFrame(previewOffset,previewStory,totalDuration());startPreviewAudio(previewStory).catch(error=>{console.warn("NAVA preview audio:",error);say("پیش‌نمایش تصویر فعال است؛ پخش موسیقی در این مرورگر ممکن نشد.");});previewFrame=requestAnimationFrame(animate);say(scenes.length?"پیش‌نمایش تصویر و صدای ویدئو فعال است.":"پیش‌نمایش تصویر و صدای ویدئوی متن‌محور فعال است.");}
+  async function preview(){if(!scenes.length&&!storyData().length&&!titleInput.value.trim()&&!subtitleInput.value.trim()&&!textInput?.value.trim()){say("برای پیش‌نمایش، یک صحنه متنی یا عکس اضافه کن؛ عنوان و نام اختیاری‌اند.");return;}stopPreview();const previewStory=storyData();await prepareDepthMotion(previewStory);previewStoryForLoop=previewStory;previewLoopIndex=0;startedAt=0;animate.lastFrame=0;previewing=true;resize();drawFrame(previewOffset,previewStory,totalDuration());startPreviewAudio(previewStory).catch(error=>{console.warn("NAVA preview audio:",error);say("پیش‌نمایش تصویر فعال است؛ پخش موسیقی در این مرورگر ممکن نشد.");});previewFrame=requestAnimationFrame(animate);say(scenes.length?"پیش‌نمایش تصویر و صدای ویدئو فعال است.":"پیش‌نمایش تصویر و صدای ویدئوی متن‌محور فعال است.");}
   function updateReady(){const ready=scenes.length>0||storyData().length>0||!!(titleInput.value.trim()||subtitleInput.value.trim()||textInput?.value.trim());previewBtn.disabled=!ready;renderBtn.disabled=!ready||!window.MediaRecorder||!canvas.captureStream;say(scenes.length?scenes.length+" عکس آماده تدوین است.":ready?"ویدیوی متن‌محور آماده ساخت است.":"عکس یا متن ویدئو را وارد کن.");}
   imageInput.addEventListener("change",()=>{
     const files=Array.from(imageInput.files||[]);if(!files.length)return;
@@ -712,7 +713,7 @@
       let audioBuffer=null,audioCodec=isMp4?"aac":"opus";
       const soundEvents=[];let soundCursor=0;
       (Array.isArray(renderStory)?renderStory:[]).forEach(scene=>{
-        const transitionSound=({ "page-turn":"page-turn","slide-left":"whoosh","slide-right":"whoosh",zoom:"impact",fade:"sparkle" })[scene.transition];if(soundCursor>0&&transitionSound)soundEvents.push({type:transitionSound,time:soundCursor,source:"transition"});
+        const transitionSound=({cut:"sparkle","page-turn":"page-turn","slide-left":"whoosh","slide-right":"whoosh",zoom:"impact",fade:"sparkle"})[scene.transition];if(soundCursor>0&&transitionSound)soundEvents.push({type:transitionSound,time:soundCursor,source:"transition"});
         (scene.layers||[]).forEach(layer=>{
           const sound=layer.sound||"none";
           if(sound!=="none")soundEvents.push({type:sound,time:soundCursor+(Number(layer.delay)||0),length:String(layer.text||"").length,wordCount:String(layer.text||"").trim().split(/\s+/).filter(Boolean).length,reveal:layer.reveal||"none"});
