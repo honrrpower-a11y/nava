@@ -142,7 +142,7 @@
       if(plan)break;
     }
     if(!plan){resultStatusNavi("طرح ساختاریافته ناوی دریافت نشد؛ برای جلوگیری از اجرای حدسی، ویدئو ساخته نشد. دوباره درخواست طراحی را ارسال کن.");return false;}
-    if(!plan.scenes.length||plan.scenes.length>6){resultStatusNavi("تعداد صحنه‌های طرح ناوی معتبر نیست؛ طرح باید بین ۱ تا ۶ صحنه داشته باشد.");return false;}
+    if(!plan.scenes.length||plan.scenes.length>20){resultStatusNavi("تعداد صحنه‌های طرح ناوی معتبر نیست؛ طرح باید بین ۱ تا ۲۰ صحنه داشته باشد.");return false;}
     const allowed={transition:["cut","fade","slide-left","slide-right","zoom","page-turn"],colorMode:["auto","manual"],layout:["single","diagonal","triptych","grid","stagger","hero-stack","polaroid","free"],photoMotion:["","slow-zoom","slow-pull","pan-left","pan-right","pan-up","pan-down","diagonal-in","diagonal-out","depth-parallax","none"],position:["top","center","bottom"],align:["right","center","left"],motion:["auto","from-right","from-left","from-top","from-bottom","fade","none","from-bottom-left","from-top-right","scale-in"],reveal:["none","word","char"],sound:["none","type","impact","whoosh","sparkle"],exit:["stay","fade","right","left","top","bottom"],font:["auto","Tahoma, sans-serif","IranNastaliq, serif","Dima Shekasteh, serif"],background:["default","black","light","warm"],frameShape:["landscape","portrait","square"],contentMode:["text","image","mixed"],style:["normal","italic"],orientation:["horizontal","vertical"]};
     const maxImages={single:1,diagonal:3,triptych:3,grid:4,stagger:4,"hero-stack":4,polaroid:4,free:4};
     const invalidScene=plan.scenes.findIndex(scene=>{
@@ -208,7 +208,7 @@
       if(!applied&&naviPlanRetryCount<1&&typeof window.navaVideoNaviRequest==="function"){
         naviPlanRetryCount++;
         resultStatusNavi("طرح اولیه یک یا چند مقدار نامعتبر داشت؛ ناوی در حال بازبینی و اصلاح طرح خودش است…");
-        const repairPrompt="پاسخ JSON قبلی تو در استودیوی ویدئو از نظر اعتبارسنجی موتور نامعتبر بود. خودت طرح را بازبینی و اصلاح کن و فقط یک JSON کامل و معتبر با schema nava.video.scene-plan.v1 بفرست؛ هیچ توضیحی بیرون JSON ننویس. transition فقط cut/fade/slide-left/slide-right/zoom/page-turn، colorMode فقط auto/manual و photoMotion فقط مقادیر مجاز از جمله depth-parallax باشد؛ همه enumها دقیقاً مطابق راهنمای قبلی باشند. photoY باید بین 0.16 و 0.40، photoScale بین 0.82 و 1.16 و photoSpread بین 0.7 و 1.3 باشد. از تمام عکس‌های انتخاب‌شده استفاده کن. پاسخ نامعتبر قبلی برای اصلاح: "+reply;
+        const repairPrompt="پاسخ JSON قبلی تو در استودیوی ویدئو از نظر اعتبارسنجی موتور نامعتبر بود. خودت طرح را بازبینی و اصلاح کن و فقط یک JSON کامل و معتبر با schema nava.video.scene-plan.v1 بفرست؛ هیچ توضیحی بیرون JSON ننویس. حداکثر ۲۰ صحنه مجاز است. هر صحنه page-turn باید فقط یک عکس و layout=single داشته باشد. transition فقط cut/fade/slide-left/slide-right/zoom/page-turn، colorMode فقط auto/manual و photoMotion فقط مقادیر مجاز از جمله depth-parallax باشد؛ همه enumها دقیقاً مطابق راهنمای قبلی باشند. photoY باید بین 0.16 و 0.40، photoScale بین 0.82 و 1.16 و photoSpread بین 0.7 و 1.3 باشد. از تمام عکس‌های انتخاب‌شده استفاده کن. پاسخ نامعتبر قبلی برای اصلاح: "+reply;
         if(window.navaVideoNaviRequest({message:repairPrompt,videoPlan:true}))return;
       }
       smartAutoBuild=false;
@@ -271,7 +271,9 @@
   async function prepareDepthMotion(story){
     const requested=(Array.isArray(story)?story:[]).filter(scene=>scene.photoMotion==="depth-parallax");
     if(!requested.length)return;
-    const targetIds=new Set(requested.flatMap(scene=>scene.imageIds||[]));
+    // Analyze one representative photo per video to avoid sustained mobile CPU/GPU load.
+    requested.slice(1).forEach(scene=>{scene.photoMotion="slow-zoom";if(scene.cardRef?.querySelector("[data-photo-motion]"))scene.cardRef.querySelector("[data-photo-motion]").value="slow-zoom";});
+    const targetIds=new Set((requested[0].imageIds||[]).slice(0,1));
     const targets=scenes.filter(scene=>targetIds.has(photoId(scene)));
     if(!targets.length){requested.forEach(scene=>{scene.photoMotion="slow-zoom";if(scene.cardRef?.querySelector("[data-photo-motion]"))scene.cardRef.querySelector("[data-photo-motion]").value="slow-zoom";});say("برای حرکت عمقی، عکسی به این صحنه اختصاص داده نشده بود؛ حرکت زوم جایگزین شد.");return;}
     try{
@@ -356,9 +358,9 @@
     const activeImages=story.length?(activeStory?(activeStory.contentMode==="text"?[]:(activeStory.imageIds?.length?activeStory.imageIds.map(id=>scenes.find(scene=>photoId(scene)===id)).filter(Boolean):(activeStory.imageIndex>=0?[scenes[activeStory.imageIndex]].filter(Boolean):[]))):[]):(hasImages?[scenes[index]]:[]);
     ctx.fillStyle="#050912";ctx.fillRect(0,0,w,h);
     const drawImageCover=(img,x,y,bw,bh,progress=local,layerIndex=0,blur=0)=>{const iw=img.naturalWidth,ih=img.naturalHeight,modes=["slow-zoom","pan-left","pan-right","slow-pull","pan-up","pan-down","diagonal-in","diagonal-out","depth-parallax"],mode=story.length?(activeStory?.photoMotion||modes[(activeStoryIndex*3+layerIndex*2)%modes.length]):modes[(index*3+layerIndex*2)%modes.length],p=Math.max(0,Math.min(1,progress)),ease=p*p*(3-2*p),base=Math.max(bw/iw,bh/ih);let zoom=mode==="none"?1:mode==="slow-pull"?1.035:mode==="pan-left"||mode==="pan-right"?1.055:1.06;const scale=base*(mode==="slow-pull"?1.06-.06*ease:1+(zoom-1)*ease),dw=iw*scale,dh=ih*scale;let dx=0,dy=0;if(mode==="slow-zoom"||mode==="cinematic-depth"){dx=Math.sin(p*Math.PI*.5)*bw*.012;dy=-ease*bh*.018;}else if(mode==="pan-left"){dx=(.5-ease)*bw*.035;dy=-ease*bh*.008;}else if(mode==="pan-right"){dx=(ease-.5)*bw*.035;dy=ease*bh*.008;}else if(mode==="slow-pull"||mode==="ken-burns"){dx=(.5-p)*bw*.035;dy=(p-.5)*bh*.025;}else if(mode==="pan-up"){dx=Math.sin(p*Math.PI)*bw*.012;dy=(.5-ease)*bh*.055;}else if(mode==="pan-down"){dx=-Math.sin(p*Math.PI)*bw*.012;dy=(ease-.5)*bh*.055;}else if(mode==="diagonal-in"){dx=(.5-ease)*bw*.035;dy=(.5-ease)*bh*.035;}else if(mode==="diagonal-out"){dx=(ease-.5)*bw*.035;dy=(ease-.5)*bh*.035;}ctx.save();ctx.beginPath();ctx.rect(x,y,bw,bh);ctx.clip();ctx.filter=blur>0?"blur("+Math.min(24,blur)*sf+"px)":"none";const sourceScene=scenes.find(item=>item.image===img),depthFrame=mode==="depth-parallax"&&depthMotionModule&&sourceScene?.depthMap?depthMotionModule.renderDepthParallax(img,sourceScene.depthMap,p):null;ctx.drawImage(depthFrame||img,x+(bw-dw)/2+dx,y+(bh-dh)/2+dy,dw,dh);ctx.filter="none";ctx.restore();};
-    const usableImages=activeImages.map(item=>item?.image).filter(img=>img?.complete&&img.naturalWidth>0&&img.naturalHeight>0);
+    const allUsableImages=activeImages.map(item=>item?.image).filter(img=>img?.complete&&img.naturalWidth>0&&img.naturalHeight>0);const usableImages=story.length&&activeStory?.transition==="page-turn"?allUsableImages.slice(0,1):allUsableImages;
     if(usableImages.length){
-      const requestedLayout=story.length?(activeStory?.layout||"single"):"single";const sceneLayout=story.length&&requestedLayout==="single"?chooseAutoPhotoLayout(usableImages,activeStory?.autoLayoutSeed||String(activeStoryIndex)):requestedLayout;const photoScale=story.length?(activeStory?.photoScale||1):1,photoY=story.length?(activeStory?.photoY||.28):.28,photoSpread=story.length?(activeStory?.photoSpread||1):1;
+      const requestedLayout=story.length?(activeStory?.layout||"single"):"single";const sceneLayout=story.length&&activeStory?.transition==="page-turn"?"single":story.length&&requestedLayout==="single"?chooseAutoPhotoLayout(usableImages,activeStory?.autoLayoutSeed||String(activeStoryIndex)):requestedLayout;const photoScale=story.length?(activeStory?.photoScale||1):1,photoY=story.length?(activeStory?.photoY||.28):.28,photoSpread=story.length?(activeStory?.photoSpread||1):1;
       const photo=(img,x,y,bw,bh,angle=0)=>{ctx.save();ctx.translate(x+bw/2,y+bh/2);ctx.rotate(angle*Math.PI/180);ctx.shadowColor="rgba(0,0,0,.48)";ctx.shadowBlur=Math.max(12,w*.022);ctx.shadowOffsetY=Math.max(5,h*.009);ctx.fillStyle="#f7f4ed";ctx.fillRect(-bw/2-5,-bh/2-5,bw+10,bh+10);ctx.shadowColor="transparent";drawImageCover(img,-bw/2,-bh/2,bw,bh,story.length?storyLocal/Math.max(.1,activeStory.duration):local,usableImages.indexOf(img),story.length?(activeStory?.photoBlur||0):0);ctx.strokeStyle="rgba(255,255,255,.86)";ctx.lineWidth=Math.max(1,w*.002);ctx.strokeRect(-bw/2,-bh/2,bw,bh);ctx.restore();};
       if(usableImages.length===1&&sceneLayout==="single")drawImageCover(usableImages[0],0,0,w,h,story.length?storyLocal/Math.max(.1,activeStory.duration):local,0,story.length?(activeStory?.photoBlur||0):0);
       else if(sceneLayout==="grid"){const gap=w*.025*photoSpread,cw=(w-gap*3)/2*photoScale,ch=(h*.58-gap*3)/2*photoScale;usableImages.slice(0,4).forEach((img,k)=>photo(img,w/2+(k%2===0?-1:1)*(cw/2+gap/2),h*photoY+(Math.floor(k/2)-.5)*(ch+gap),cw,ch));}
@@ -434,10 +436,20 @@
         }else if(transition==="zoom"){
           ctx.drawImage(transitionPreviousCanvas,0,0,w,h);const scale=.84+.16*progress;ctx.globalAlpha=progress;ctx.drawImage(transitionCurrentCanvas,(w-w*scale)/2,(h-h*scale)/2,w*scale,h*scale);ctx.globalAlpha=1;
         }else if(transition==="page-turn"){
-          ctx.drawImage(transitionCurrentCanvas,0,0,w,h);const pageWidth=Math.max(0,w*(1-progress));
-          if(pageWidth>0){ctx.save();ctx.beginPath();ctx.rect(0,0,pageWidth,h);ctx.clip();ctx.scale(pageWidth/w,1);ctx.drawImage(transitionPreviousCanvas,0,0,w,h);ctx.restore();
-            const shadow=ctx.createLinearGradient(Math.max(0,pageWidth-26),0,pageWidth+22,0);shadow.addColorStop(0,"rgba(0,0,0,.32)");shadow.addColorStop(.55,"rgba(0,0,0,.16)");shadow.addColorStop(1,"rgba(255,255,255,.12)");ctx.fillStyle=shadow;ctx.fillRect(Math.max(0,pageWidth-26),0,48,h);
-            ctx.strokeStyle="rgba(255,255,255,.38)";ctx.lineWidth=Math.max(1,w*.0015);ctx.beginPath();ctx.moveTo(pageWidth,0);ctx.lineTo(pageWidth,h);ctx.stroke();
+          // A single-photo page: reveal the next page underneath while the previous sheet curls away.
+          ctx.drawImage(transitionCurrentCanvas,0,0,w,h);
+          const pageWidth=Math.max(0,w*(1-progress)),strips=48,stripWidth=w/strips;
+          if(pageWidth>0){
+            for(let i=0;i<strips;i++){
+              const t=(i+.5)/strips;if(t*w>=pageWidth)break;
+              const sourceX=i*stripWidth,sourceW=Math.min(stripWidth,w-sourceX),fold=1-progress;
+              const destX=sourceX*fold,destW=sourceW*fold;
+              const curl=Math.sin(t*Math.PI)*Math.sin(progress*Math.PI)*h*.035;
+              ctx.drawImage(transitionPreviousCanvas,sourceX,0,sourceW,h,destX,curl,destW,h);
+            }
+            const edge=pageWidth;
+            const shadow=ctx.createLinearGradient(Math.max(0,edge-42),0,Math.min(w,edge+34),0);shadow.addColorStop(0,"rgba(0,0,0,.02)");shadow.addColorStop(.48,"rgba(0,0,0,.38)");shadow.addColorStop(.78,"rgba(0,0,0,.16)");shadow.addColorStop(1,"rgba(255,255,255,.22)");ctx.fillStyle=shadow;ctx.fillRect(Math.max(0,edge-42),0,76,h);
+            ctx.strokeStyle="rgba(255,255,255,.58)";ctx.lineWidth=Math.max(1.5,w*.0022);ctx.beginPath();ctx.moveTo(edge,0);ctx.quadraticCurveTo(edge-18,h*.5,edge,h);ctx.stroke();
           }
         }
       }
@@ -571,7 +583,7 @@
       "- نام فایل‌ها فقط سرنخ متنی هستند؛ محتوای بصری عکس را از روی نام فایل قطعی فرض نکن و جزئیات تصویری ساختگی نساز.",
       "",
       "۲) کارگردانی تصویر و حرکت:",
-      "- برای هر صحنه جداگانه تصمیم بگیر: تک‌عکس یا ترکیب چندعکس، layout، photoMotion، transition، مقیاس و جایگاه عکس، رنگ پس‌زمینه و قاب. یک نسخه ثابت را برای همه صحنه‌ها تکرار نکن. انتقال هر صحنه از قبلی را با توجه به روایت انتخاب کن؛ page-turn فقط وقتی حس ورق‌زدن واقعاً به روایت کمک می‌کند.",
+      "- برای هر صحنه جداگانه تصمیم بگیر: تک‌عکس یا ترکیب چندعکس، layout، photoMotion، transition، مقیاس و جایگاه عکس، رنگ پس‌زمینه و قاب. یک نسخه ثابت را برای همه صحنه‌ها تکرار نکن. انتقال هر صحنه از قبلی را با توجه به روایت انتخاب کن؛ page-turn فقط وقتی حس ورق‌زدن واقعاً به روایت کمک می‌کند. نکته مهم: اگر page-turn انتخاب می‌کنی، هر صحنه باید دقیقاً یک عکس و layout=single داشته باشد؛ عکس‌ها را آلبومی، شبکه‌ای، پلکانی یا چندتایی در یک صفحه نچین. برای نمایش همه عکس‌ها، صحنه‌های جدا بساز و هر عکس را مثل یک صفحه مستقل ورق بزن. عکس اول transition=cut و صفحات بعدی page-turn باشند.",
       "- حرکت عکس را آگاهانه انتخاب کن: slow-zoom یا pan فقط وقتی به تصویر جان می‌دهد؛ از حرکت‌های سریع، بی‌هدف یا لرزش‌مانند پرهیز کن. در صحنه‌های متوالی حرکت‌ها را متنوع اما هماهنگ انتخاب کن. اگر سوژه و پس‌زمینه عمق قابل‌تفکیک دارند، photoMotion=depth-parallax را برای ایجاد اختلاف حرکت لایه‌های نزدیک و دور انتخاب کن؛ این تحلیل روی دستگاه کاربر انجام می‌شود. برای عکس تخت یا وقتی عمق مطمئن نیست، زوم یا پن را ترجیح بده.",
       "- عکس‌ها را بیش از حد کوچک نکن. ترکیب‌بندی باید در قاب عمودی موبایل خوانا باشد و فضای امن کافی برای متن داشته باشد. متن روی بخش مهم عکس قرار نگیرد. از خلاصه رنگ، روشنایی و نسبت کادر هر عکس که در ورودی آمده برای انتخاب رنگ و جایگاه متن استفاده کن.",
       "- قاب تزئینی، چیدمان چندتایی و پس‌زمینه رنگی را فقط وقتی انتخاب کن که به روایت کمک کند؛ سادگی حرفه‌ای بهتر از تزئینات بی‌دلیل است.",
@@ -612,7 +624,7 @@
       "}",
       "",
       "مقادیر مجاز: transition=cut|fade|slide-left|slide-right|zoom|page-turn (صحنه اول cut)؛ colorMode=auto|manual؛ photoMotion شامل slow-zoom|slow-pull|pan-left|pan-right|pan-up|pan-down|diagonal-in|diagonal-out|depth-parallax|none؛ format=portrait|landscape؛ textPersistence=keep|replace؛ contentMode=text|image|mixed؛ layout=single|diagonal|triptych|grid|stagger|hero-stack|polaroid|free؛ photoMotion=slow-zoom|slow-pull|pan-left|pan-right|pan-up|pan-down|diagonal-in|diagonal-out|none؛ background=default|black|light|warm؛ frame.shape=landscape|portrait|square؛ layer.position=top|center|bottom؛ layer.align=right|center|left؛ layer.motion=auto|from-right|from-left|from-top|from-bottom|fade|none|from-bottom-left|from-top-right|scale-in؛ layer.exit=stay|fade|right|left|top|bottom؛ layer.font=auto|Tahoma, sans-serif|IranNastaliq, serif|Dima Shekasteh, serif؛ layer.style=normal|italic؛ layer.orientation=horizontal|vertical.",
-      "محدودیت‌ها: حداکثر ۶ صحنه؛ مدت هر صحنه ۲ تا ۸ ثانیه؛ حداکثر ۶ لایه متن در هر صحنه؛ حداکثر تصاویر هر layout مطابق ظرفیت آن: single=1، diagonal/triptych=3، سایر layoutها=4. همه شماره‌های images باید عدد صحیح و بین ۱ و " + scenes.length + " باشند.",
+      "محدودیت‌ها: حداکثر ۲۰ صحنه (در حالت ورق‌زدن ترجیحاً یک صحنه برای هر عکس)؛ مدت هر صحنه ۲ تا ۸ ثانیه؛ حداکثر ۶ لایه متن در هر صحنه؛ حداکثر تصاویر هر layout مطابق ظرفیت آن: single=1، diagonal/triptych=3، سایر layoutها=4. در page-turn حتماً single و یک عکس. همه شماره‌های images باید عدد صحیح و بین ۱ و " + scenes.length + " باشند.",
       "photoScale عددی بین 0.82 و 1.16؛ photoY بین 0.16 و 0.40 (مقدار عددی)؛ photoSpread عددی بین 0.7 و 1.3؛ delay عددی بین 0 و 6؛ size عددی بین 24 و 68. backgroundColor و layer.color باید کد هگز شش‌رقمی باشند. frame.enabled بولی باشد.",
       "قواعد اعتبار: اگر contentMode=image است layers باید خالی یا فاقد متن باشند؛ اگر contentMode=text است images باید خالی باشد؛ اگر contentMode=mixed است دست‌کم یک عکس یا یک لایه متن لازم است. هر عکس را حداقل یک بار در کل طرح بیاور. همه enumها را دقیقاً با حروف انگلیسی و از فهرست بالا بنویس. پیش از ارسال، JSON و تمام مقادیر را کنترل کن.",
       "",
