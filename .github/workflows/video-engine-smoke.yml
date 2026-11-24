@@ -100,7 +100,8 @@ jobs:
           assert.match(js, /lowPowerRender=isLowPowerDevice\(\)\|\|/, "Low-power profile must reduce frame rate and bitrate");
           assert.match(js, /extension==="webm"&&!isLowPowerDevice\(\)/, "Low-power devices must not run the large FFmpeg WASM converter");
           assert.match(js, /if\(!isMp4\)\{\s*if\(lowPower\)return false;/, "Low-power devices must skip VP9 and heavy WASM conversion when AVC is unavailable");
-          assert.match(js, /const lowPower=isLowPowerDevice\(\);\s*const fps=lowPower\?15:20/, "Low-power direct export must use 15 fps");
+          assert.match(js, /let fps=lowPower\?15:20/, "Low-power direct export must use 15 fps");
+          assert.match(js, /if\(!isMp4&&lowPower\)[\s\S]*?fps=12[\s\S]*?bitrate:480000[\s\S]*?getFirstEncodableVideoCodec\(\["avc"\]/, "Low-power export must retry H.264 at 360p/12fps when 540p is rejected");
           assert.match(js, /new MB\.Quality\(\{bitrate:lowPower\?900000:2200000\}\)/, "Low-power direct export must use a reduced bitrate");
           assert.match(js, /if\(!isMp4\)\{\s*if\(lowPower\)return false;/, "Low-power devices must not fall back to VP9 plus a heavy WASM transcode");
           assert.match(js, /const sampleRate=lowPower\?32000:48000/, "Low-power audio encoding must use a reduced sample rate");
