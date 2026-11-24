@@ -2427,6 +2427,7 @@ You are NAVI: a useful, concise and trustworthy assistant.
 
 const NAVI_GEMINI_MAX_ATTEMPTS = 2;
 const NAVI_GEMINI_RETRYABLE_STATUSES = new Set([408, 425, 429, 500, 502, 503, 504]);
+const NAVI_GEMINI_FALLBACK_MODELS = ["gemini-3.8-flash", "gemini-3.5-flash"];
 
 export function shouldRetryNaviGeminiError(error) {
   if (!error) return false;
@@ -2436,16 +2437,16 @@ export function shouldRetryNaviGeminiError(error) {
 
 export function classifyNaviGeminiError(error) {
   const status = Number(error?.httpStatus) || null;
-  if (error?.name === "AbortError") {
+  if (error?.name === "AbortError" || status === 408) {
     return {
       code: "GEMINI_TIMEOUT",
-      message: "پاسخ‌گویی ناوی بیش از زمان مجاز طول کشید. لطفاً کمی بعد دوباره تلاش کن."
+      message: "پاسخ‌گویی ناوی بیش از زمان مجاز طول کشید. ارتباط یا سرویس هوش مصنوعی کند است؛ لطفاً دوباره تلاش کن."
     };
   }
   if (status === 429) {
     return {
       code: "GEMINI_RATE_LIMIT",
-      message: "درخواست‌های سرویس هوش مصنوعی موقتاً به سقف مجاز رسیده‌اند. چند لحظه صبر کن و دوباره تلاش کن."
+      message: "سرویس هوش مصنوعی موقتاً محدودیت درخواست دارد. ناوی مسیر جایگزین را هم امتحان کرد؛ کمی بعد دوباره تلاش کن."
     };
   }
   if (status === 401 || status === 403) {
@@ -2463,13 +2464,13 @@ export function classifyNaviGeminiError(error) {
   if (status && status >= 500) {
     return {
       code: "GEMINI_PROVIDER_UNAVAILABLE",
-      message: "سرویس هوش مصنوعی موقتاً پاسخ‌گو نیست. لطفاً کمی بعد دوباره تلاش کن."
+      message: "سرویس هوش مصنوعی پس از چند تلاش و امتحان مدل‌های جایگزین پاسخ نداد. کمی بعد دوباره تلاش کن."
     };
   }
   if (error instanceof TypeError) {
     return {
       code: "GEMINI_NETWORK_ERROR",
-      message: "ارتباط NAVI با سرویس هوش مصنوعی ناپایدار شد. لطفاً دوباره تلاش کن."
+      message: "ارتباط سرور NAVI با سرویس هوش مصنوعی ناپایدار شد. درخواست حفظ نشد؛ لطفاً دوباره تلاش کن."
     };
   }
   return {
@@ -2478,10 +2479,24 @@ export function classifyNaviGeminiError(error) {
   };
 }
 
-const NAVI_GEMINI_FALLBACK_MODEL = "gemini-3.5-flash";
-
 export function shouldUseNaviGeminiFallback(error) {
-  return [500, 502, 503, 504].includes(Number(error?.httpStatus));
+  return [408, 425, 429, 500, 502, 503, 504].includes(Number(error?.httpStatus));
+}
+
+function getNaviGeminiRetryDelay(error, attempt) {
+  const retryAfter = String(error?.retryAfter || "").trim();
+  let requestedDelay = 0;
+  if (retryAfter) {
+    const seconds = Number(retryAfter);
+    if (Number.isFinite(seconds) && seconds > 0) {
+      requestedDelay = seconds * 1000;
+    } else {
+      const retryAt = Date.parse(retryAfter);
+      if (Number.isFinite(retryAt)) requestedDelay = retryAt - Date.now();
+    }
+  }
+  if (requestedDelay > 0) return Math.min(15000, Math.max(800, requestedDelay));
+  return 800 * attempt + Math.floor(Math.random() * 250);
 }
 
 async function requestGeminiModel({
@@ -2567,10 +2582,7 @@ async function requestGeminiModel({
       const retryable = error.retryable === true || shouldRetryNaviGeminiError(error);
       if (!retryable || attempt >= maxAttempts) throw error;
 
-      const retryAfterSeconds = Number(error.retryAfter);
-      const retryDelay = Number.isFinite(retryAfterSeconds) && retryAfterSeconds > 0
-        ? Math.min(1200, retryAfterSeconds * 1000)
-        : 350 * attempt;
+      const retryDelay = getNaviGeminiRetryDelay(error, attempt);
 
       // Log only provider status and attempt number. Never log prompts,
       // conversation contents, credentials or model response text.
@@ -2606,32 +2618,45 @@ export async function requestGemini({
   } catch (primaryError) {
     if (!shouldUseNaviGeminiFallback(primaryError)) throw primaryError;
 
-    console.warn("[NAVI] Primary Gemini model unavailable; trying free-tier fallback model", {
-      primaryModel: GEMINI_MODEL,
-      fallbackModel: NAVI_GEMINI_FALLBACK_MODEL,
-      httpStatus: Number(primaryError.httpStatus) || null,
-      providerCode: primaryError.providerCode || ""
-    });
-
-    try {
-      const result = await requestGeminiModel({
-        model: NAVI_GEMINI_FALLBACK_MODEL,
-        apiKey,
-        systemInstruction,
-        contents,
-        maxAttempts: 1,
-        fetchImpl
-      });
-      console.info("[NAVI] Gemini fallback model succeeded", {
+    const fallbackErrors = [];
+    for (const fallbackModel of NAVI_GEMINI_FALLBACK_MODELS) {
+      console.warn("[NAVI] Primary Gemini model unavailable; trying fallback model", {
         primaryModel: GEMINI_MODEL,
-        fallbackModel: NAVI_GEMINI_FALLBACK_MODEL
+        fallbackModel,
+        httpStatus: Number(primaryError.httpStatus) || null,
+        providerCode: primaryError.providerCode || ""
       });
-      return result;
-    } catch (fallbackError) {
-      fallbackError.primaryHttpStatus = Number(primaryError.httpStatus) || null;
-      fallbackError.fallbackModel = NAVI_GEMINI_FALLBACK_MODEL;
-      throw fallbackError;
+
+      try {
+        const result = await requestGeminiModel({
+          model: fallbackModel,
+          apiKey,
+          systemInstruction,
+          contents,
+          maxAttempts: 1,
+          fetchImpl
+        });
+        console.info("[NAVI] Gemini fallback model succeeded", {
+          primaryModel: GEMINI_MODEL,
+          fallbackModel
+        });
+        return result;
+      } catch (fallbackError) {
+        fallbackErrors.push(fallbackError);
+        if (!shouldUseNaviGeminiFallback(fallbackError)) {
+          fallbackError.primaryHttpStatus = Number(primaryError.httpStatus) || null;
+          fallbackError.fallbackModelsTried = fallbackErrors.length;
+          fallbackError.fallbackModel = fallbackModel;
+          throw fallbackError;
+        }
+      }
     }
+
+    const finalError = fallbackErrors[fallbackErrors.length - 1] || primaryError;
+    finalError.primaryHttpStatus = Number(primaryError.httpStatus) || null;
+    finalError.fallbackModelsTried = fallbackErrors.length;
+    finalError.fallbackModel = NAVI_GEMINI_FALLBACK_MODELS[NAVI_GEMINI_FALLBACK_MODELS.length - 1];
+    throw finalError;
   }
 }
 
@@ -3000,6 +3025,7 @@ async function handleChat({
       providerCode: safeNaviText(error.providerCode || "", 80),
       providerMessage: safeNaviText(error.providerMessage || "", 300),
       providerRequestId: safeNaviText(error.providerRequestId || "", 120),
+      fallbackModelsTried: Number(error.fallbackModelsTried) || 0,
       errorName: error.name || "Error"
     });
 

@@ -69,14 +69,50 @@ test("Gemini provider 5xx failures fall back to the alternate free-tier model", 
   assert.equal(result.reply, "پاسخ از مدل جایگزین");
   assert.equal(urls.length, 3, "Retry the primary model once, then try the fallback once");
   assert.equal(urls[0], urls[1]);
-  assert.match(urls[2], /models\/gemini-3\.5-flash:generateContent$/);
+  assert.match(urls[2], /models\/gemini-3\.8-flash:generateContent$/);
 });
 
-test("Gemini fallback is limited to upstream 5xx failures", () => {
-  for (const status of [500, 502, 503, 504]) {
+
+test("Gemini tries the second fallback model when the first fallback is also unavailable", async () => {
+  const urls = [];
+  const fetchImpl = async url => {
+    const value = String(url);
+    urls.push(value);
+    if (value.includes("gemini-3.5-flash-lite")) {
+      return new Response(JSON.stringify({
+        error: { status: "UNAVAILABLE", message: "primary unavailable" }
+      }), { status: 503, headers: { "Content-Type": "application/json" } });
+    }
+    if (value.includes("gemini-3.8-flash")) {
+      return new Response(JSON.stringify({
+        error: { status: "UNAVAILABLE", message: "first fallback unavailable" }
+      }), { status: 503, headers: { "Content-Type": "application/json" } });
+    }
+    return new Response(JSON.stringify({
+      candidates: [{
+        content: { parts: [{ text: JSON.stringify({ reply: "پاسخ از مدل دوم" }) }] }
+      }]
+    }), { status: 200, headers: { "Content-Type": "application/json" } });
+  };
+
+  const result = await requestGemini({
+    apiKey: "test-key",
+    systemInstruction: "Return JSON.",
+    contents: [{ role: "user", parts: [{ text: "سلام" }] }],
+    fetchImpl
+  });
+
+  assert.equal(result.reply, "پاسخ از مدل دوم");
+  assert.equal(urls.length, 4);
+  assert.match(urls[2], /models\/gemini-3\.8-flash:generateContent$/);
+  assert.match(urls[3], /models\/gemini-3\.5-flash:generateContent$/);
+});
+
+test("Gemini fallback is limited to retryable upstream failures", () => {
+  for (const status of [408, 425, 429, 500, 502, 503, 504]) {
     assert.equal(shouldUseNaviGeminiFallback({ httpStatus: status }), true);
   }
-  for (const status of [400, 401, 403, 404, 429]) {
+  for (const status of [400, 401, 403, 404]) {
     assert.equal(shouldUseNaviGeminiFallback({ httpStatus: status }), false);
   }
 });
