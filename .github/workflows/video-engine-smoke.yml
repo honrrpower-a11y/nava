@@ -30,7 +30,9 @@ jobs:
           cache: ""
 
       - name: Validate browser renderer syntax
-        run: node --check video-studio.js
+        run: |
+          node --check video-studio.js
+          node --check video-engine/depth-parallax.js
 
       # Regression coverage for the NAVI-only build flow.
       - name: Verify NAVI media controls and one-shot request wiring
@@ -41,6 +43,7 @@ jobs:
           const js = fs.readFileSync("video-studio.js", "utf8");
           const html = fs.readFileSync("index.html", "utf8");
           const app = fs.readFileSync("app.js", "utf8");
+          const depth = fs.readFileSync("video-engine/depth-parallax.js", "utf8");
           const askHandlerCount = js.split('$("navaVideoAskNavi")').length - 1;
           assert.equal(askHandlerCount, 1, "NAVI build button must have exactly one click handler");
           assert.ok(js.includes('$("navaVideoNaviChoosePhotos")?.addEventListener("click",()=>imageInput?.click())'), "NAVI photo button must open the real image picker");
@@ -49,6 +52,13 @@ jobs:
           assert.match(js, /window\.addEventListener\(["']nava:navi-reply["']/, "NAVI reply handler must be present");
           assert.match(js, /schema===["']nava\.video\.scene-plan\.v1["']/, "NAVI scene plan must be schema-validated");
           assert.match(js, /transition:\["cut","fade","slide-left","slide-right","zoom","page-turn"\]/, "NAVI must choose from supported scene transitions");
+          assert.match(js, /depth-parallax/, "NAVI scene plans must support depth-aware photo motion");
+          assert.match(js, /await prepareDepthMotion\(previewStory\)/, "Depth analysis must finish before preview starts");
+          assert.match(js, /await prepareDepthMotion\(renderStory\)/, "Depth analysis must finish before final rendering");
+          assert.match(js, /renderDepthParallax/, "Canvas renderer must composite the depth-parallax frame");
+          assert.match(depth, /onnx-community\/depth-anything-v2-small/, "Depth engine must use the small on-device depth model");
+          assert.match(depth, /device:"webgpu",dtype:"fp16"/, "Depth engine must prefer WebGPU when available");
+          assert.match(depth, /device:"wasm",dtype:"q8"/, "Depth engine must retain a quantized WASM fallback");
           assert.match(js, /resolveLayerTextColor/, "Automatic text color must be contrast-checked against the selected image");
           assert.match(js, /transitionCurrentCanvas/, "Scene transitions must be composited in the actual canvas renderer");
           assert.match(js, /type:"page-turn"/, "Page-turn transition must schedule its own sound effect");
