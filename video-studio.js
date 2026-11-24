@@ -951,9 +951,12 @@
       recorder.start(250);
       // Start captured audio only after MediaRecorder is running; otherwise short
       // opening effects can finish before the recorder begins collecting samples.
-      if(musicElement){musicElement.currentTime=0;await musicElement.play();}
       if(renderStorySounds&&audioDestination&&audioContext){
         scheduleSoundEffects(renderStory,audioDestination,audioContext.currentTime+.18);
+      }
+      if(musicElement){
+        musicElement.currentTime=0;
+        try{await musicElement.play();}catch(error){console.warn("NAVA export music playback:",error);}
       }
       const start=performance.now(),duration=renderDuration,fade=Number(fadeInput.value),baseVolume=Math.max(0,Number(musicVolume.value)/100);
       const tick=()=>{
