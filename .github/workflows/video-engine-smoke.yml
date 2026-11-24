@@ -86,6 +86,9 @@ jobs:
           assert.match(js, /resolveLayerTextColor/, "Automatic text color must be contrast-checked against the selected image");
           assert.match(js, /transitionCurrentCanvas/, "Scene transitions must be composited in the actual canvas renderer");
           assert.match(js, /"page-turn":"page-turn","slide-left":"whoosh","slide-right":"whoosh",zoom:"impact",fade:"sparkle"/, "Page-turn and all other visual transitions must schedule their own sound effects");
+          assert.match(js, /const hasEffects=story\.some\(scene=>\["page-turn","slide-left","slide-right","zoom","fade"\]\.includes\(scene\.transition\)/, "Preview must activate its audio graph for every visual transition");
+          assert.match(js, /const renderStorySounds=renderStory\.some\(scene=>\["page-turn","slide-left","slide-right","zoom","fade"\]\.includes\(scene\.transition\)/, "Final render must create an audio track for every visual transition");
+          assert.match(js, /Math\.sin\(n\*12\.9898\)\*Math\.cos\(n\*4\.1414\)\*Math\.sin\(Math\.PI\*p\)\.42/, "Page-turn paper rustle must be audible in the final audio mix");
           assert.match(js, /const transitionEvents=readyEvents\.filter\(event=>event\.source==="transition"\)/, "All visual transition effects must bypass the regular effects cap");
           assert.match(js, /const transitionEvents=soundEvents\.filter\(event=>event\.source==="transition"\)/, "Mediabunny export must retain every visual transition effect");
           assert.match(js, /"page-turn":"page-turn","slide-left":"whoosh","slide-right":"whoosh",zoom:"impact",fade:"sparkle"/, "Every visual transition must map to a matching sound cue in preview and export");
