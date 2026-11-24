@@ -145,6 +145,8 @@
     if(!plan.scenes.length||plan.scenes.length>20){resultStatusNavi("تعداد صحنه‌های طرح ناوی معتبر نیست؛ طرح باید بین ۱ تا ۲۰ صحنه داشته باشد.");return false;}
     const allowed={transition:["cut","fade","slide-left","slide-right","zoom","page-turn"],colorMode:["auto","manual"],layout:["single","diagonal","triptych","grid","stagger","hero-stack","polaroid","free"],photoMotion:["","slow-zoom","slow-pull","pan-left","pan-right","pan-up","pan-down","diagonal-in","diagonal-out","depth-parallax","none"],position:["top","center","bottom"],align:["right","center","left"],motion:["auto","from-right","from-left","from-top","from-bottom","fade","none","from-bottom-left","from-top-right","scale-in"],reveal:["none","word","char"],sound:["none","type","impact","whoosh","sparkle"],exit:["stay","fade","right","left","top","bottom"],font:["auto","Tahoma, sans-serif","IranNastaliq, serif","Dima Shekasteh, serif"],background:["default","black","light","warm"],frameShape:["landscape","portrait","square"],contentMode:["text","image","mixed"],style:["normal","italic"],orientation:["horizontal","vertical"]};
     const maxImages={single:1,diagonal:3,triptych:3,grid:4,stagger:4,"hero-stack":4,polaroid:4,free:4};
+    const pageTurnPlan=plan.scenes.some(scene=>scene.transition==="page-turn");
+    if(pageTurnPlan&&plan.scenes.some(scene=>scene.layout!=="single"||scene.images.length!==1)){resultStatusNavi("برای ورق‌زدن واقعی، ناوی باید هر عکس را در یک صفحه مستقل قرار دهد؛ طرح چندعکسی/آلبومی را دوباره اصلاح می‌کند.");return false;}
     const invalidScene=plan.scenes.findIndex(scene=>{
       if(!scene||!Number.isFinite(Number(scene.duration))||Number(scene.duration)<2||Number(scene.duration)>8)return true;
       if(!Array.isArray(scene.images)||scene.images.some(n=>!Number.isInteger(Number(n))||Number(n)<1||Number(n)>scenes.length))return true;
@@ -208,7 +210,7 @@
       if(!applied&&naviPlanRetryCount<1&&typeof window.navaVideoNaviRequest==="function"){
         naviPlanRetryCount++;
         resultStatusNavi("طرح اولیه یک یا چند مقدار نامعتبر داشت؛ ناوی در حال بازبینی و اصلاح طرح خودش است…");
-        const repairPrompt="پاسخ JSON قبلی تو در استودیوی ویدئو از نظر اعتبارسنجی موتور نامعتبر بود. خودت طرح را بازبینی و اصلاح کن و فقط یک JSON کامل و معتبر با schema nava.video.scene-plan.v1 بفرست؛ هیچ توضیحی بیرون JSON ننویس. حداکثر ۲۰ صحنه مجاز است. هر صحنه page-turn باید فقط یک عکس و layout=single داشته باشد. transition فقط cut/fade/slide-left/slide-right/zoom/page-turn، colorMode فقط auto/manual و photoMotion فقط مقادیر مجاز از جمله depth-parallax باشد؛ همه enumها دقیقاً مطابق راهنمای قبلی باشند. photoY باید بین 0.16 و 0.40، photoScale بین 0.82 و 1.16 و photoSpread بین 0.7 و 1.3 باشد. از تمام عکس‌های انتخاب‌شده استفاده کن. پاسخ نامعتبر قبلی برای اصلاح: "+reply;
+        const repairPrompt="پاسخ JSON قبلی تو در استودیوی ویدئو از نظر اعتبارسنجی موتور نامعتبر بود. خودت طرح را بازبینی و اصلاح کن و فقط یک JSON کامل و معتبر با schema nava.video.scene-plan.v1 بفرست؛ هیچ توضیحی بیرون JSON ننویس. حداکثر ۲۰ صحنه مجاز است. اگر حتی یک page-turn وجود دارد، تمام صحنه‌های تصویری باید فقط یک عکس و layout=single داشته باشند؛ هیچ چیدمان آلبومی یا پلکانی مجاز نیست. transition فقط cut/fade/slide-left/slide-right/zoom/page-turn، colorMode فقط auto/manual و photoMotion فقط مقادیر مجاز از جمله depth-parallax باشد؛ همه enumها دقیقاً مطابق راهنمای قبلی باشند. photoY باید بین 0.16 و 0.40، photoScale بین 0.82 و 1.16 و photoSpread بین 0.7 و 1.3 باشد. از تمام عکس‌های انتخاب‌شده استفاده کن. پاسخ نامعتبر قبلی برای اصلاح: "+reply;
         if(window.navaVideoNaviRequest({message:repairPrompt,videoPlan:true}))return;
       }
       smartAutoBuild=false;
@@ -441,7 +443,7 @@
           const pageWidth=Math.max(0,w*(1-progress)),strips=48,stripWidth=w/strips;
           if(pageWidth>0){
             for(let i=0;i<strips;i++){
-              const t=(i+.5)/strips;if(t*w>=pageWidth)break;
+              const t=(i+.5)/strips;
               const sourceX=i*stripWidth,sourceW=Math.min(stripWidth,w-sourceX),fold=1-progress;
               const destX=sourceX*fold,destW=sourceW*fold;
               const curl=Math.sin(t*Math.PI)*Math.sin(progress*Math.PI)*h*.035;
