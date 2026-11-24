@@ -17,6 +17,9 @@ on:
       - "modules/navi.js"
       - "modules/config.js"
       - "tests/navi-gemini-retry.test.mjs"
+      - "navi-image-analysis.js"
+      - "tests/navi-image-analysis.test.mjs"
+      - "app.js"
       - ".github/workflows/navi-gemini-resilience-tests.yml"
   workflow_dispatch:
 
