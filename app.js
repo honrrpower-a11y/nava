@@ -3855,7 +3855,9 @@ async function sendMessageToNavi(options = {}) {
 
   const message = typeof options.messageOverride === "string"
     ? options.messageOverride.trim()
-    : userRequest.value.trim();
+    : userRequest.value.trim() || (naviImageInput?.files?.[0]
+      ? "با توجه به گزارش بصری محلی تصویر پیوست‌شده، برای چیدمان و انتخاب محل مناسب متن پیشنهاد بده. توجه کن که محتوای سوژه از سمت مرورگر تشخیص داده نشده است."
+      : "");
 
   if (!message) {
     showNaviReply("لطفاً ابتدا پیامت را بنویس.");
