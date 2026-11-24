@@ -88,7 +88,7 @@ jobs:
           assert.match(js, /"page-turn":"page-turn","slide-left":"whoosh","slide-right":"whoosh",zoom:"impact",fade:"sparkle"/, "Page-turn and all other visual transitions must schedule their own sound effects");
           assert.match(js, /const hasEffects=story\.some\(scene=>\["cut","page-turn","slide-left","slide-right","zoom","fade"\]\.includes\(scene\.transition\)/, "Preview must activate its audio graph for every visual transition");
           assert.match(js, /const renderStorySounds=renderStory\.some\(scene=>\["cut","page-turn","slide-left","slide-right","zoom","fade"\]\.includes\(scene\.transition\)/, "Final render must create an audio track for every visual transition");
-          assert.match(js, /if\(window\.Mediabunny&&!hasVisualTransitionAudio\)/, "Image transition audio must use the live Web Audio capture path, not the direct PCM path");
+          assert.match(js, /if\(window\.Mediabunny&&!hasVisualTransitionAudio&&!isLowPowerDevice\(\)\)/, "Image transition audio must use the live Web Audio capture path on non-low-power devices");
           assert.match(js, /scheduleSoundEffects\(renderStory,audioDestination,audioContext\.currentTime\+\.18\)/, "Final render must capture the same scheduled transition effects as preview");
           assert.match(js, /previewStoryForLoop=previewStory;previewLoopIndex=0/, "Preview audio must retain the story and restart its sound effects on each visual loop");
           assert.match(js, /scheduleSoundEffects\(previewStoryForLoop,previewMasterGain,audioContext\.currentTime\+\.08,0\)/, "Preview loop must reschedule photo and text effects from the beginning");
