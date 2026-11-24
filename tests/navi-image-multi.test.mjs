@@ -27,7 +27,7 @@ test("multi-image validator rejects invalid entries and mixed empty entries", ()
 
 test("multi-image validator enforces the aggregate payload limit", () => {
   const large = "A".repeat(1500000);
-  assert.throws(() => normalizeNaviVisionImages(Array.from({ length: 6 }, () => image(large)).concat(image("AAAA"))), /۶ تصویر/);
+  assert.throws(() => normalizeNaviVisionImages(Array.from({ length: 7 }, () => image("AAAA"))), /۶ تصویر/);
   assert.throws(() => normalizeNaviVisionImages([image(large), image(large), image(large), image(large), image(large), image("AAAA")]), /مجموع تصاویر/);
   assert.equal(normalizeNaviVisionImage(image("AAAA")).inlineData.data, "AAAA");
 });
