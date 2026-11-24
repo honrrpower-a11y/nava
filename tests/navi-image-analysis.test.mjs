@@ -14,7 +14,7 @@ test("local image palette converts quantized RGB bins to distinct midpoints", ()
     ["333", 1],
     ["103", 3]
   ])));
-  assert.deepEqual(palette, ["60DF20", "202020", "DFDFDF"]);
+  assert.deepEqual(palette, ["6020DF", "202020", "DFDFDF"]);
   assert.equal(new Set(palette).size, 3);
 });
 
