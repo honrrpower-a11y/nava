@@ -861,7 +861,11 @@
       const renderDuration=renderStory.length?renderStory.reduce((sum,s)=>sum+s.duration,0):(Number(durationInput?.value)||8);
       if(renderStory.length>1) say("در حال ساخت "+renderStory.length+" صحنه متوالی…");
       resize();drawFrame(0,renderStory,renderDuration);
-      if(window.Mediabunny){
+      // Visual-transition cues are rendered through the live Web Audio graph below,
+      // then captured with the same MediaRecorder stream as the preview sound path.
+      // The direct Mediabunny PCM path has been unreliable for these short transient cues.
+      const hasVisualTransitionAudio=renderStory.some(scene=>["page-turn","slide-left","slide-right","zoom","fade"].includes(scene.transition));
+      if(window.Mediabunny&&!hasVisualTransitionAudio){
         recording=true;renderBtn.disabled=true;previewBtn.disabled=true;progress.style.width="0%";
         say("در حال ساخت MP4 با موتور رندر مستقیم؛ لطفاً صفحه را باز و روشن نگه دار.");
         const mp4Ready=await tryMediabunnyMp4(renderStory,renderDuration);
