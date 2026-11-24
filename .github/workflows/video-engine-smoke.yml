@@ -93,6 +93,15 @@ jobs:
           assert.match(js, /previewStoryForLoop=previewStory;previewLoopIndex=0/, "Preview audio must retain the story and restart its sound effects on each visual loop");
           assert.match(js, /scheduleSoundEffects\(previewStoryForLoop,previewMasterGain,audioContext\.currentTime\+\.08,0\)/, "Preview loop must reschedule photo and text effects from the beginning");
           assert.match(js, /cut:"sparkle"/, "Even hard-cut photo changes must have an audible transition cue in preview and export");
+          assert.match(js, /const deviceProfile=\(\(\)=>\{/, "Adaptive device profile must be initialized once");
+          assert.match(js, /if\(isLowPowerDevice\(\)\)return landscape\?\[640,360\]:\[360,640\]/, "Low-power preview must use reduced dimensions");
+          assert.match(js, /if\(isLowPowerDevice\(\)\)return landscape\?\[960,540\]:\[540,960\]/, "Low-power export must use a 540p canvas");
+          assert.match(js, /تحلیل سنگین عمق اجرا نشد/, "Low-power devices must skip heavy depth inference");
+          assert.match(js, /lowPowerRender=isLowPowerDevice\(\)\|\|/, "Low-power profile must reduce frame rate and bitrate");
+          assert.match(js, /extension==="webm"&&!isLowPowerDevice\(\)/, "Low-power devices must not run the large FFmpeg WASM converter");
+          assert.match(js, /!hasVisualTransitionAudio&&!isLowPowerDevice\(\)/, "Low-power devices must skip the heavier Mediabunny export path");
+          assert.match(js, /پروژه کاملاً متن‌محور/, "NAVI must support text-only video projects");
+
           assert.match(js, /Math\.sin\(n\*12\.9898\).*?\.42/, "Page-turn paper rustle must be audible in the final audio mix");
           assert.match(js, /const transitionEvents=readyEvents\.filter\(event=>event\.source==="transition"\)/, "All visual transition effects must bypass the regular effects cap");
           assert.match(js, /const transitionEvents=soundEvents\.filter\(event=>event\.source==="transition"\)/, "Mediabunny export must retain every visual transition effect");
