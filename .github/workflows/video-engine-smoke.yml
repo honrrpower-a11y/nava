@@ -73,6 +73,10 @@ jobs:
           assert.match(js, /await prepareDepthMotion\(previewStory\)/, "Depth analysis must finish before preview starts");
           assert.match(js, /await prepareDepthMotion\(renderStory\)/, "Depth analysis must finish before final rendering");
           assert.match(js, /renderDepthParallax/, "Canvas renderer must composite the depth-parallax frame");
+          const recorderStartAt = js.indexOf("recorder.start(250);");
+          const effectScheduleAt = js.indexOf("scheduleSoundEffects(renderStory,audioDestination,audioContext.currentTime+.18)", recorderStartAt);
+          assert.ok(recorderStartAt >= 0 && effectScheduleAt > recorderStartAt, "Export sound effects must be scheduled only after MediaRecorder starts capturing");
+          assert.doesNotMatch(js, /scheduleSoundEffects\(renderStory,audioDestination,audioContext\.currentTime\+\.08\)/, "Do not schedule opening effects before MediaRecorder starts");
           assert.match(depth, /onnx-community\/depth-anything-v2-small/, "Depth engine must use the small on-device depth model");
           assert.match(depth, /device:"webgpu",dtype:"fp16"/, "Depth engine must prefer WebGPU when available");
           assert.doesNotMatch(depth, /device:"wasm",dtype:"q8"/, "Avoid CPU-heavy WASM depth inference on mobile devices");
