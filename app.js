@@ -4072,10 +4072,11 @@ async function sendMessageToNavi(options = {}) {
     const shouldNameThread = !isHomePage && threadBeforeNaming && Number(threadBeforeNaming.message_count || 0) === 0;
     if (selectedService === "ویدئو و صدا") {
       // The structured scene-plan is an internal NAVI-to-renderer contract, not user-facing chat.
-      showNaviReply("طرح صحنه‌ها توسط ناوی دریافت شد؛ در حال بررسی و اعمال تصمیم‌های خلاقانه…");
-      window.dispatchEvent(new CustomEvent("nava:navi-reply", {
-        detail: { service: selectedService, reply }
-      }));
+      const videoPlanEvent = new CustomEvent("nava:navi-reply", {
+        detail: { service: selectedService, reply, status: "" }
+      });
+      window.dispatchEvent(videoPlanEvent);
+      showNaviReply(videoPlanEvent.detail.status || "طرح ناوی دریافت شد؛ نتیجه اعمال را در پنل ساخت ویدئو ببین.");
     } else {
       showNaviReply(reply);
     }

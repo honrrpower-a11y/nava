@@ -221,19 +221,32 @@
     if(smartAutoBuildMode&&activeBuildMode()!==smartAutoBuildMode)activateBuildMode(smartAutoBuildMode);
     const reply=String(event.detail.reply||"").trim();
     if(!reply)return;
-    const applied=buildNaviScenePlan(reply);
+    let applied=false,applyError="";
+    try{applied=buildNaviScenePlan(reply);}
+    catch(error){applyError=String(error?.message||"خطای ناشناخته");console.error("NAVA video scene-plan apply failed:",error);}
     if(smartAutoBuild){
-      if(!applied&&naviPlanRetryCount<1&&typeof window.navaVideoNaviRequest==="function"){
+      if(!applied&&!applyError&&naviPlanRetryCount<1&&typeof window.navaVideoNaviRequest==="function"){
         naviPlanRetryCount++;
-        resultStatusNavi("طرح اولیه یک یا چند مقدار نامعتبر داشت؛ ناوی در حال بازبینی و اصلاح طرح خودش است…");
+        const retryStatus="طرح اولیه نیاز به اصلاح داشت؛ ناوی در حال بازبینی و اصلاح خودکار آن است…";
+        resultStatusNavi(retryStatus);if(event.detail)event.detail.status=retryStatus;
         const repairPrompt="پاسخ JSON قبلی تو در استودیوی ویدئو از نظر اعتبارسنجی موتور نامعتبر بود. خودت طرح را بازبینی و اصلاح کن و فقط یک JSON کامل و معتبر با schema nava.video.scene-plan.v1 بفرست؛ هیچ توضیحی بیرون JSON ننویس. حداکثر ۲۰ صحنه مجاز است. page-turn پیش‌فرض نیست و در کل ویدئو حداکثر یک بار مجاز است؛ آن را به اسلایدشوی ورق‌زدن تبدیل نکن. فقط همان یک صحنه احتمالی page-turn باید دقیقاً یک عکس و layout=single داشته باشد؛ سایر صحنه‌ها را بر اساس روایت با چیدمان و انتقال متنوع طراحی کن. transition فقط cut/fade/slide-left/slide-right/zoom/page-turn، colorMode فقط auto/manual و photoMotion فقط مقادیر مجاز از جمله depth-parallax باشد؛ همه enumها دقیقاً مطابق راهنمای قبلی باشند. photoY باید بین 0.16 و 0.40، photoScale بین 0.82 و 1.16 و photoSpread بین 0.7 و 1.3 باشد. artDirection را از none/cinematic/editorial/poster/luxury/tech/organic/documentary/minimal و photoTreatment را از natural/cinematic/monochrome/warm/cool/vivid/muted انتخاب کن؛ accentColor کد هگز معتبر باشد و این تصمیم‌ها در خروجی واقعی اعمال شوند. از تمام عکس‌های انتخاب‌شده استفاده کن. پاسخ نامعتبر قبلی برای اصلاح: "+reply;
         if(window.navaVideoNaviRequest({message:repairPrompt,videoPlan:true,images:naviVisionImages}))return;
       }
       smartAutoBuild=false;
-      if(applied)setTimeout(()=>{if(!renderBtn.disabled)renderBtn.click();else say("طرح ناوی اعمال شد، اما هنوز محتوای قابل‌رندر آماده نیست.");},250);
+      if(applied){
+        const doneStatus="طرح اختصاصی ناوی با موفقیت اعمال شد؛ "+storyCards().length+" صحنه آماده است و ساخت ویدئو آغاز می‌شود.";
+        resultStatusNavi(doneStatus);if(event.detail)event.detail.status=doneStatus;
+        setTimeout(()=>{if(!renderBtn.disabled)renderBtn.click();else say("طرح ناوی اعمال شد، اما دکمه ساخت هنوز مشغول است.");},250);
+      }else{
+        const failedStatus=applyError
+          ?"اعمال طرح ناوی با خطای اجرایی متوقف شد: "+applyError
+          :"ناوی پس از یک بار بازبینی هم طرح معتبر تولید نکرد؛ هیچ تنظیمی حدسی اعمال نشد. بریف را دوباره ارسال کن.";
+        resultStatusNavi(failedStatus);if(event.detail)event.detail.status=failedStatus;
+      }
       smartAutoBuildMode=null;
       naviPlanRetryCount=0;
-      if(!applied)resultStatusNavi("ناوی پس از یک بار بازبینی هم طرح معتبر تولید نکرد؛ هیچ تنظیمی حدسی اعمال نشد. بریف را دوباره ارسال کن.");
+    }else if(event.detail){
+      event.detail.status=applied?"طرح اختصاصی ناوی با موفقیت اعمال شد.":applyError?"اعمال طرح با خطا متوقف شد: "+applyError:"طرح ناوی قابل اعمال نبود؛ جزئیات در پنل ساخت ویدئو نمایش داده شد.";
     }
   });
   manualMotionInput?.addEventListener("change",()=>{if(setupMode()==="manual")storyCards().forEach(card=>card.querySelectorAll("[data-layer-motion]").forEach(el=>{el.value=manualMotionInput.value==="slide-right"?"from-right":manualMotionInput.value==="slide-left"?"from-left":manualMotionInput.value==="rise"?"from-bottom":manualMotionInput.value;}));drawFrame(0);});

@@ -151,12 +151,15 @@ jobs:
           assert.match(js, /photoY بین 0\.16 و 0\.40/, "NAVI prompt must include renderer numeric bounds");
           const videoReplyStart = app.indexOf('if (selectedService === "ویدئو و صدا")');
           const videoReplyBlock = app.slice(videoReplyStart, app.indexOf("} else {", videoReplyStart));
-          assert.match(videoReplyBlock, /showNaviReply\("طرح صحنه‌ها/, "Internal scene JSON must be replaced with a friendly status in chat");
+          assert.match(videoReplyBlock, /showNaviReply\(videoPlanEvent\.detail\.status \|\|/, "NAVI chat must show the final video-plan status rather than a permanent progress message");
+          assert.match(js, /try\{applied=buildNaviScenePlan\(reply\);\}\s*catch\(error\)/, "Scene-plan application errors must be caught and surfaced");
+          assert.match(js, /event\.detail\.status=doneStatus/, "Successful scene-plan application must update the user-facing NAVI status");
+          assert.match(js, /event\.detail\.status=failedStatus/, "Failed scene-plan application must report a visible failure instead of appearing stuck");
           assert.doesNotMatch(videoReplyBlock, /showNaviReply\(reply\)/, "Raw scene JSON must never be shown as a user-facing NAVI reply");
           assert.match(app, /isInternalVideoPlan/, "Restored NAVI history must identify internal video plans");
           assert.match(app, /جزئیات طراحی به‌صورت داخلی پردازش شده است/, "Restored history must show a friendly status instead of raw scene JSON");
           assert.match(app, /nava\.video\.scene-plan\.v1/, "Chat-level video instruction must require the same structured schema");
-          assert.match(js, /if\(applied\)setTimeout\(\(\)=>\{if\(!renderBtn\.disabled\)renderBtn\.click\(\)/, "Valid NAVI scene plans must trigger automatic render");
+          assert.match(js, /if\(applied\)\{[\s\S]*?renderBtn\.click\(\)/, "Valid NAVI scene plans must trigger automatic render");
           for (const id of ["navaVideoNaviChoosePhotos", "navaVideoNaviChooseMusic", "navaVideoBrief", "navaVideoAskNavi"]) {
             assert.ok(html.includes('id="' + id + '"'), "Missing NAVI UI control: " + id);
           }
