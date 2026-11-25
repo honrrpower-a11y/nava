@@ -53,6 +53,14 @@ jobs:
           assert.match(js, /schema===["']nava\.video\.scene-plan\.v1["']/, "NAVI scene plan must be schema-validated");
           assert.match(js, /transition:\["cut","fade","slide-left","slide-right","zoom","page-turn"\]/, "NAVI must choose from supported scene transitions");
           assert.match(js, /depth-parallax/, "NAVI scene plans must support depth-aware photo motion");
+          assert.match(js, /function drawNaviArtDirection\(style,accent,sceneIndex,elapsed,duration\)/, "NAVI visual direction must be rendered as actual canvas graphics, not returned as recommendations");
+          assert.match(js, /artDirection:\["none","cinematic","editorial","poster","luxury","tech","organic","documentary","minimal"\]/, "Scene plans must expose distinct executable art directions");
+          assert.match(js, /photoTreatment:\["natural","cinematic","monochrome","warm","cool","vivid","muted"\]/, "Scene plans must expose executable photo treatments");
+          assert.match(js, /drawNaviArtDirection\(activeStory\.artDirection\|\|"none"/, "Per-scene NAVI art direction must be applied during actual rendering");
+          assert.match(js, /grayscale\(1\) contrast\(1\.08\)/, "Photo treatment must alter source image rendering, not only scene metadata");
+          assert.match(js, /card\.dataset\.naviArtDirection=allowed\.artDirection\.includes\(scene\.artDirection\)/, "NAVI-selected art direction must survive scene-plan application");
+          assert.match(js, /کارگردانی هنری باید در خود تصویر خروجی دیده شود/, "NAVI must make visual design decisions, not merely change captions");
+          assert.match(app, /artDirection، photoTreatment، accentColor/, "Authenticated video planning context must require executable visual direction");
           assert.match(js, /plan.scenes.length>20/, "NAVI scene plan must allow a separate page for each of up to 20 photos");
           assert.match(js, /scene\.transition==="page-turn"&&\(scene\.layout!=="single"\|\|scene\.images\.length!==1\)/, "Only the individual page-turn scene must use one photo");
           assert.doesNotMatch(js, /pageTurnPlan&&plan\.scenes\.some/, "A page-turn scene must not force every other scene into single-photo layout");
