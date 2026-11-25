@@ -422,10 +422,9 @@
   const hexLuminance=hex=>{const value=String(hex||"#ffffff").replace("#","");if(!/^[0-9a-f]{6}$/i.test(value))return 1;const rgb=[0,2,4].map(i=>parseInt(value.slice(i,i+2),16)/255).map(v=>v<=.04045?v/12.92:Math.pow((v+.055)/1.055,2.4));return .2126*rgb[0]+.7152*rgb[1]+.0722*rgb[2];};
   const contrastRatio=(a,b)=>{const x=hexLuminance(a),y=hexLuminance(b);return (Math.max(x,y)+.05)/(Math.min(x,y)+.05);};
   function resolveLayerTextColor(layer,images,background){
-    const requested=layer.color||"#ffffff";if(layer.colorMode!=="auto")return requested;
-    const light=background==="light"?.88:background==="warm"?.22:background==="black"?.02:images.length?imageLuminance(images[0]):.08;
-    if(contrastRatio(requested,light>=.5?"#ffffff":"#111827")>=3.2)return requested;
-    return contrastRatio("#fff4dc",light>=.5?"#ffffff":"#111827")>=contrastRatio("#111827",light>=.5?"#ffffff":"#111827")?"#fff4dc":"#111827";
+    // Whole-image luminance cannot safely predict the brightness under a text line.
+    // Automatic mode therefore uses a light foreground; manual mode remains untouched.
+    return layer.colorMode==="auto"?"#fff4dc":(layer.color||"#ffffff");
   }
   let transitionCurrentCanvas=null,transitionPreviousCanvas=null;
   function transitionBuffers(w,h){
@@ -497,7 +496,11 @@
       const exitAlpha=exitMode==="fade"?1-exitProgress:1;
       const fadeOut=isCurrent?Math.max(0,Math.min(1,(sceneDuration-elapsed)/.28)):1;
       ctx.globalAlpha=Math.min(enterAlpha,exitAlpha,fadeOut);ctx.translate(enterDx+exitDx,enterDy+exitDy);if(resolvedMotion==="scale-in"){const scale=.72+.28*ease;ctx.translate(anchorX,baseY);ctx.scale(scale,scale);ctx.translate(-anchorX,-baseY);}
-      if(layer.frame){const frameTop=h*.065,frameBottom=h*.955,frameLeft=w*.085,frameRight=w*.915;ctx.save();ctx.shadowBlur=0;ctx.strokeStyle=layer.color||"#ffffff";ctx.globalAlpha*=.72;ctx.lineWidth=Math.max(1.2,1.5*sf);ctx.strokeRect(frameLeft,frameTop,frameRight-frameLeft,frameBottom-frameTop);if(layer.frameTitle){ctx.font="600 "+Math.max(13,fontSize*.38)+"px "+activeFont;ctx.textAlign="left";ctx.textBaseline="middle";const labelW=ctx.measureText(layer.frameTitle).width+fontSize*.55;ctx.fillStyle="rgba(8,13,25,.72)";ctx.fillRect(frameLeft+fontSize*.28,frameTop-fontSize*.1,labelW,fontSize*.45);ctx.fillStyle=layer.color||"#ffffff";ctx.fillText(layer.frameTitle,frameLeft+fontSize*.55,frameTop+fontSize*.12);}ctx.restore();}if(layer.orientation==="vertical"){ctx.save();ctx.translate(anchorX,baseY);ctx.rotate(Math.PI/2);shown.forEach((text,i)=>ctx.fillText(text,-i*lineH,0,maxWidth));ctx.restore();}else{shown.forEach((text,i)=>ctx.fillText(text,anchorX,baseY+i*lineH,maxWidth));}
+      if(layer.frame){const frameTop=h*.065,frameBottom=h*.955,frameLeft=w*.085,frameRight=w*.915;ctx.save();ctx.shadowBlur=0;ctx.strokeStyle=layer.color||"#ffffff";ctx.globalAlpha*=.72;ctx.lineWidth=Math.max(1.2,1.5*sf);ctx.strokeRect(frameLeft,frameTop,frameRight-frameLeft,frameBottom-frameTop);if(layer.frameTitle){ctx.font="600 "+Math.max(13,fontSize*.38)+"px "+activeFont;ctx.textAlign="left";ctx.textBaseline="middle";const labelW=ctx.measureText(layer.frameTitle).width+fontSize*.55;ctx.fillStyle="rgba(8,13,25,.72)";ctx.fillRect(frameLeft+fontSize*.28,frameTop-fontSize*.1,labelW,fontSize*.45);ctx.fillStyle=layer.color||"#ffffff";ctx.fillText(layer.frameTitle,frameLeft+fontSize*.55,frameTop+fontSize*.12);}ctx.restore();}
+      // Outline automatic text so it stays legible over both dark shadows and bright highlights.
+      ctx.lineJoin="round";ctx.lineWidth=Math.max(2.5*sf,fontSize*.075);ctx.strokeStyle="rgba(4,9,18,.94)";
+      const drawReadableLine=(text,x,y)=>{ctx.strokeText(text,x,y,maxWidth);ctx.fillText(text,x,y,maxWidth);};
+      if(layer.orientation==="vertical"){ctx.save();ctx.translate(anchorX,baseY);ctx.rotate(Math.PI/2);shown.forEach((text,i)=>drawReadableLine(text,-i*lineH,0));ctx.restore();}else{shown.forEach((text,i)=>drawReadableLine(text,anchorX,baseY+i*lineH));}
       if(layer.underline){const underlineWait=motion==="none"?0:.9,underlineProgress=Math.max(0,Math.min(1,(layerElapsed-underlineWait)/.55));if(underlineProgress>0){const measured=shown.map(text=>Math.min(maxWidth,ctx.measureText(text).width));const longest=Math.max(0,...measured);const lineW=Math.max(fontSize*.55,longest*(Number(layer.underlineWidth)||.7));const underlineAlign=layer.underlineAlign&&layer.underlineAlign!=="match"?layer.underlineAlign:align;const lineX=underlineAlign==="right"?w-margin-lineW:underlineAlign==="left"?margin:(w-lineW)/2;const lineY=baseY+(shown.length-1)*lineH+Math.max(22*sf,fontSize*.62);ctx.save();ctx.globalAlpha*=underlineProgress;ctx.shadowBlur=0;if(layer.underlineColor==="nava-gradient"){const gradient=ctx.createLinearGradient(lineX,lineY,lineX+lineW,lineY);gradient.addColorStop(0,"#e5b85e");gradient.addColorStop(.48,"#25caff");gradient.addColorStop(.82,"#2878ff");gradient.addColorStop(1,"#e5b85e");ctx.strokeStyle=gradient;}else{ctx.strokeStyle=layer.underlineColor||"#ffffff";}ctx.lineWidth=(Number(layer.underlineThickness)||4)*sf;ctx.lineCap="round";ctx.beginPath();ctx.moveTo(lineX,lineY);ctx.lineTo(lineX+lineW*underlineProgress,lineY);ctx.stroke();ctx.restore();}}
       ctx.restore();
     });
@@ -969,11 +972,11 @@
       const renderDuration=renderStory.length?renderStory.reduce((sum,s)=>sum+s.duration,0):(Number(durationInput?.value)||8);
       if(renderStory.length>1) say("در حال ساخت "+renderStory.length+" صحنه متوالی…");
       resize();drawFrame(0,renderStory,renderDuration);
-      // Visual-transition cues are rendered through the live Web Audio graph below,
-      // then captured with the same MediaRecorder stream as the preview sound path.
-      // The direct Mediabunny PCM path has been unreliable for these short transient cues.
+      // Prefer deterministic offline frame encoding on every device when available.
+      // Fixed presentation timestamps prevent slow canvas draws from becoming playback hitches.
+      // Transition and layer cues are synthesized into the matching audio timeline.
       const hasVisualTransitionAudio=renderStory.some(scene=>["cut","page-turn","slide-left","slide-right","zoom","fade"].includes(scene.transition));
-      if(window.Mediabunny&&(!hasVisualTransitionAudio||isLowPowerDevice())){
+      if(window.Mediabunny){
         recording=true;renderBtn.disabled=true;previewBtn.disabled=true;progress.style.width="0%";
         say(isLowPowerDevice()?"در حال ساخت MP4 سبک با وضوح ۵۴۰p و ۲۰ فریم؛ لطفاً صفحه را باز و روشن نگه دار.":"در حال ساخت MP4 با موتور رندر مستقیم؛ لطفاً صفحه را باز و روشن نگه دار.");
         const mp4Ready=await tryMediabunnyMp4(renderStory,renderDuration);
