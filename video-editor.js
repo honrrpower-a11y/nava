@@ -68,21 +68,24 @@
   };
   const getTextAnimationState = (item, time) => {
     if (time < item.start || time >= item.end) return { visible: false, opacity: 0, shift: 0 };
-    if (item.animation === "none") return { visible: true, opacity: 1, shift: 0 };
-    const duration = Math.max(0.08, Math.min(0.28, (item.end - item.start) / 3));
+    if (item.animation === "none") return { visible: true, opacity: 1, shift: 0, scale: 1, reveal: 1 };
+    const duration = Math.max(0.22, Math.min(0.65, (item.end - item.start) * 0.22));
     const entering = Math.max(0, Math.min(1, (time - item.start) / duration));
-    const leaving = Math.max(0, Math.min(1, (item.end - time) / duration));
-    const progress = Math.min(entering, leaving);
-    const shift = item.animation === "slide" ? (1 - progress) * (item.position === "top" ? -18 : 18) : 0;
-    return { visible: true, opacity: progress, shift };
+    const leaving = Math.max(0, Math.min(1, (item.end - time) / 0.22));
+    const opacity = item.animation === "fade" ? Math.min(entering, leaving) : leaving;
+    const shift = item.animation === "slide" ? (1 - entering) * (item.position === "top" ? -42 : 42) : 0;
+    const scale = item.animation === "zoom" ? 0.72 + entering * 0.28 : 1;
+    const reveal = item.animation === "typewriter" ? entering : 1;
+    return { visible: true, opacity, shift, scale, reveal };
   };
   const updateTextPreview = () => {
     if (!textPreview) return;
     const videoRect = preview.getBoundingClientRect();
     const wrapRect = preview.parentElement.getBoundingClientRect();
+    let displayWidth = Math.max(1, videoRect.width);
     if (preview.videoWidth > 0 && preview.videoHeight > 0 && videoRect.width > 0 && videoRect.height > 0) {
       const scale = Math.min(videoRect.width / preview.videoWidth, videoRect.height / preview.videoHeight);
-      const displayWidth = preview.videoWidth * scale;
+      displayWidth = preview.videoWidth * scale;
       const displayHeight = preview.videoHeight * scale;
       textPreview.style.inset = "auto";
       textPreview.style.left = (videoRect.left - wrapRect.left + (videoRect.width - displayWidth) / 2) + "px";
@@ -99,11 +102,13 @@
       if (!state.visible) return;
       const node = document.createElement("div");
       node.className = "nava-editor-text-item nava-editor-text-item--" + item.position;
-      node.textContent = item.text;
+      node.textContent = item.animation === "typewriter"
+        ? item.text.slice(0, Math.max(1, Math.ceil(item.text.length * state.reveal))) : item.text;
       node.style.color = item.color;
       node.style.opacity = String(state.opacity);
-      node.style.transform = "translate(-50%, -50%) translateY(" + state.shift + "px)";
-      node.style.fontSize = item.size === "large" ? "clamp(24px, 6vw, 42px)" : item.size === "small" ? "clamp(14px, 3.2vw, 23px)" : "clamp(18px, 4.5vw, 32px)";
+      node.style.transform = "translate(-50%, -50%) translateY(" + state.shift + "px) scale(" + state.scale + ")";
+      const previewFont = Math.max(12, displayWidth * (Number(item.fontSize) || 6.5) / 100);
+      node.style.fontSize = previewFont + "px";
       node.style.background = item.background ? "rgba(0,0,0,.58)" : "transparent";
       nodes.push(node);
     });
@@ -113,8 +118,11 @@
     items.forEach(item => {
       const state = getTextAnimationState(item, time);
       if (!state.visible) return;
-      const baseSize = item.size === "large" ? 46 : item.size === "small" ? 25 : 35;
-      const fontSize = Math.max(16, Math.round(baseSize * width / 720));
+      const legacySize = item.size === "large" ? 8.5 : item.size === "small" ? 4.8 : 6.5;
+      const baseSize = Math.max(16, Math.round(width * (Number(item.fontSize) || legacySize) / 100));
+      const fontSize = Math.round(baseSize * state.scale);
+      const displayText = item.animation === "typewriter"
+        ? String(item.text).slice(0, Math.max(1, Math.ceil(String(item.text).length * state.reveal))) : String(item.text);
       const lineHeight = fontSize * 1.34;
       const maxTextWidth = width * 0.86;
       ctx.save();
@@ -125,7 +133,7 @@
       ctx.font = "700 " + fontSize + "px Vazirmatn, 'Noto Naskh Arabic', Arial, sans-serif";
       ctx.shadowColor = "rgba(0,0,0,.62)";
       ctx.shadowBlur = Math.max(2, fontSize * 0.16);
-      const paragraphs = String(item.text).split(/\r?\n/);
+      const paragraphs = displayText.split(/\r?\n/);
       const lines = [];
       paragraphs.forEach(paragraph => {
         const words = paragraph.split(/\s+/).filter(Boolean);
@@ -171,7 +179,9 @@
     if (textStartInput) textStartInput.value = "1";
     if (textEndInput) textEndInput.value = "4";
     if (textPositionInput) textPositionInput.value = "bottom";
-    if (textSizeInput) textSizeInput.value = "medium";
+    if (textSizeInput) textSizeInput.value = "6.5";
+    const sizeValue = $("navaEditorTextSizeValue");
+    if (sizeValue) sizeValue.textContent = "6.5%";
     if (textColorInput) textColorInput.value = "#ffffff";
     if (textAnimationInput) textAnimationInput.value = "none";
     if (textBackgroundInput) textBackgroundInput.checked = true;
@@ -551,7 +561,7 @@
     const item = {
       id: editingTextId || "text-" + (++textSequence), text, start, end,
       position: textPositionInput?.value || "bottom",
-      size: textSizeInput?.value || "medium",
+      fontSize: Math.max(3, Math.min(14, Number(textSizeInput?.value) || 6.5)),
       color: textColorInput?.value || "#ffffff",
       animation: textAnimationInput?.value || "none",
       background: Boolean(textBackgroundInput?.checked)
@@ -567,6 +577,15 @@
     resetTextEditor();
     renderTextOverlayList();
     updateTextPreview();
+  });
+  textSizeInput?.addEventListener("input", () => {
+    const sizeValue = $("navaEditorTextSizeValue");
+    if (sizeValue) sizeValue.textContent = Number(textSizeInput.value).toFixed(1) + "%";
+    if (editingTextId) {
+      const item = textOverlays.find(entry => entry.id === editingTextId);
+      if (item) item.fontSize = Number(textSizeInput.value);
+      updateTextPreview();
+    }
   });
   cancelTextEditButton?.addEventListener("click", resetTextEditor);
   textList?.addEventListener("click", event => {
@@ -588,7 +607,9 @@
     textStartInput.value = String(item.start);
     textEndInput.value = String(item.end);
     textPositionInput.value = item.position;
-    textSizeInput.value = item.size;
+    textSizeInput.value = String(item.fontSize || (item.size === "large" ? 8.5 : item.size === "small" ? 4.8 : 6.5));
+    const sizeValue = $("navaEditorTextSizeValue");
+    if (sizeValue) sizeValue.textContent = Number(textSizeInput.value).toFixed(1) + "%";
     textColorInput.value = item.color;
     textAnimationInput.value = item.animation;
     textBackgroundInput.checked = item.background;
@@ -1024,10 +1045,13 @@
       output.addAudioTrack(audioSource);
       await output.start();
 
-      const textCanvas = exportTextOverlays.length ? document.createElement("canvas") : null;
-      if (textCanvas) { textCanvas.width = width; textCanvas.height = height; }
-      const textContext = textCanvas ? textCanvas.getContext("2d", { alpha: false }) : null;
-      if (textCanvas && !textContext) throw new Error("امکان ساخت لایه متن برای خروجی فراهم نشد.");
+      // Every encoded frame must have the exact same dimensions. Source clips can
+      // have different resolutions, so normalize all of them onto this fixed canvas.
+      const textCanvas = document.createElement("canvas");
+      textCanvas.width = width;
+      textCanvas.height = height;
+      const textContext = textCanvas.getContext("2d", { alpha: false });
+      if (!textContext) throw new Error("امکان ساخت بوم ثابت تصویر برای خروجی فراهم نشد.");
       let videoProgress = 0;
       let audioProgress = 0;
       const updateExportProgress = () => {
@@ -1129,21 +1153,20 @@
                 Math.max(0.001, isFirst ? Math.max(1 / fps, (sample.duration || 1 / fps) - trimOffset) : (sample.duration || 1 / fps)),
                 remaining
               );
-              const hasActiveText = textCanvas && exportTextOverlays.some(item =>
+              const hasActiveText = exportTextOverlays.some(item =>
                 compositionTime >= item.start && compositionTime < item.end
               );
+              // Always render to the fixed output canvas, even when no text is active.
+              // Passing original samples through directly can change dimensions mid-stream
+              // (for example, 540x960 followed by 270x480), which MP4 encoding rejects.
+              textContext.fillStyle = "#000";
+              textContext.fillRect(0, 0, width, height);
+              sample.drawWithFit(textContext, { fit: "contain" });
               if (hasActiveText) {
-                textContext.fillStyle = "#000";
-                textContext.fillRect(0, 0, width, height);
-                sample.drawWithFit(textContext, { fit: "contain" });
                 drawTextOverlays(textContext, compositionTime, width, height, exportTextOverlays);
-                renderedSample = new MB.VideoSample(textCanvas, { timestamp: compositionTime, duration: frameDuration });
-                await videoSource.add(renderedSample);
-              } else {
-                sample.setTimestamp(compositionTime);
-                sample.setDuration(frameDuration);
-                await videoSource.add(sample);
               }
+              renderedSample = new MB.VideoSample(textCanvas, { timestamp: compositionTime, duration: frameDuration });
+              await videoSource.add(renderedSample);
               frameCount++;
               totalFrames++;
             } finally {
