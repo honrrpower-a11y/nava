@@ -1039,15 +1039,16 @@
       const renderStory=storyData();
       await prepareDepthMotion(renderStory);
       const renderDuration=renderStory.length?renderStory.reduce((sum,s)=>sum+s.duration,0):(Number(durationInput?.value)||8);
+      const naviExport=activeBuildMode()==="navi";
       if(renderStory.length>1) say("در حال ساخت "+renderStory.length+" صحنه متوالی…");
       resize();drawFrame(0,renderStory,renderDuration);
       // Keep the proven real-time recorder for projects with visual-transition audio.
       // Offline Mediabunny encoding is reserved for cases where it does not bypass that
       // synchronized audio path, or as the low-power-device compatibility route.
       const hasVisualTransitionAudio=renderStory.some(scene=>["cut","page-turn","slide-left","slide-right","zoom","fade"].includes(scene.transition));
-      if(window.Mediabunny&&(!hasVisualTransitionAudio||isLowPowerDevice())){
+      if(window.Mediabunny&&(naviExport||!hasVisualTransitionAudio||isLowPowerDevice())){
         recording=true;renderBtn.disabled=true;previewBtn.disabled=true;progress.style.width="0%";
-        say(isLowPowerDevice()?"در حال ساخت MP4 سبک با وضوح ۵۴۰p و ۲۰ فریم؛ لطفاً صفحه را باز و روشن نگه دار.":"در حال ساخت MP4 با موتور رندر مستقیم؛ لطفاً صفحه را باز و روشن نگه دار.");
+        say(naviExport?"در حال رندر آفلاین NAVI با زمان‌بندی ثابت فریم‌ها و صدای هماهنگ؛ لطفاً صفحه را باز و روشن نگه دار.":isLowPowerDevice()?"در حال ساخت MP4 سبک با وضوح ۵۴۰p؛ لطفاً صفحه را باز و روشن نگه دار.":"در حال ساخت MP4 با موتور رندر مستقیم؛ لطفاً صفحه را باز و روشن نگه دار.");
         const mp4Ready=await tryMediabunnyMp4(renderStory,renderDuration);
         recording=false;renderBtn.disabled=false;previewBtn.disabled=false;
         if(mp4Ready)return;
@@ -1075,7 +1076,6 @@
       // WebM fallback uses a lighter render profile on mobile encoders.
       lowPowerRender=isLowPowerDevice()||!!mimeCandidates[0]?.toLowerCase().startsWith("video/webm");
       resize();drawFrame(0,renderStory,renderDuration);
-      const naviExport=activeBuildMode()==="navi";
       const renderFps=naviExport?18:lowPowerRender?20:deviceProfile.level==="high"?24:20;
       const stream=canvas.captureStream(renderFps);
       const renderStorySounds=renderStory.some(scene=>["cut","page-turn","slide-left","slide-right","zoom","fade"].includes(scene.transition)||(scene.layers||[]).some(layer=>layer.sound&&layer.sound!=="none"));
