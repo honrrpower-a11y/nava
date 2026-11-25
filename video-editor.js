@@ -60,9 +60,11 @@
       return '<article class="nava-editor-clip' + active + '" data-clip-id="' + clip.id + '">' +
         '<button class="nava-editor-clip-select" type="button" data-action="select" aria-label="انتخاب کلیپ ' + (index + 1) + '">' +
         '<span class="nava-editor-clip-index">' + (index + 1) + '</span><span class="nava-editor-clip-name"></span><span class="nava-editor-clip-duration">' + fmt(clip.out - clip.in) + '</span></button>' +
-        '<div class="nava-editor-trim"><label>شروع <input type="number" min="0" step="0.1" inputmode="decimal" data-trim="in" value="' + clip.in.toFixed(1) + '"></label>' +
-        '<label>پایان <input type="number" min="0.1" step="0.1" inputmode="decimal" data-trim="out" value="' + clip.out.toFixed(1) + '"></label>' +
-        '<span class="nava-editor-source-duration">از ' + fmt(clip.duration) + '</span></div>' +
+        '<div class="nava-editor-trim">' +
+        '<div class="nava-editor-trim-head"><span>برش ابتدا و انتهای کلیپ</span><span>مدت انتخاب‌شده: <b data-trim-duration>' + fmt(clip.out - clip.in) + '</b></span></div>' +
+        '<label><span>شروع <output data-trim-value="in">' + fmt(clip.in) + '</output></span><input type="range" min="0" max="' + clip.duration.toFixed(1) + '" step="0.1" data-trim="in" value="' + clip.in.toFixed(1) + '" aria-label="نوار تنظیم شروع کلیپ"></label>' +
+        '<label><span>پایان <output data-trim-value="out">' + fmt(clip.out) + '</output></span><input type="range" min="0.1" max="' + clip.duration.toFixed(1) + '" step="0.1" data-trim="out" value="' + clip.out.toFixed(1) + '" aria-label="نوار تنظیم پایان کلیپ"></label>' +
+        '<span class="nava-editor-source-duration">طول ویدئوی اصلی: ' + fmt(clip.duration) + '</span></div>' +
         '<div class="nava-editor-clip-actions"><button type="button" data-action="up" aria-label="انتقال به بالا" ' + (index === 0 ? "disabled" : "") + '>↑</button>' +
         '<button type="button" data-action="down" aria-label="انتقال به پایین" ' + (index === clips.length - 1 ? "disabled" : "") + '>↓</button>' +
         '<button type="button" data-action="remove" aria-label="حذف کلیپ">حذف</button></div></article>';
