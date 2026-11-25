@@ -648,14 +648,17 @@
     </div>
     <div class="nava-editor-timeline-heading"><h4>کلیپ‌های پروژه</h4><small>برای ویرایش هر بخش، روی نام آن بزن</small></div><div class="nava-editor-timeline" id="navaEditorTimeline"><div class="nava-editor-empty">هنوز ویدئویی اضافه نشده است.</div></div>
     <section class="nava-editor-export" aria-label="خروجی نهایی ویدئو">
+      <label class="nava-editor-ratio-label" for="navaEditorAspectRatio">نسبت تصویر خروجی
+        <select id="navaEditorAspectRatio"><option value="source">مطابق ویدئوی اصلی</option><option value="16:9">افقی ۱۶:۹ (یوتیوب)</option><option value="9:16">عمودی ۹:۱۶ (ریلز و شورتز)</option><option value="1:1">مربع ۱:۱</option><option value="4:5">عمودی ۴:۵ (اینستاگرام)</option></select>
+      </label>
       <button class="nava-editor-export-button" id="navaEditorExport" type="button" disabled>ساخت و دانلود ویدیوی نهایی</button>
       <progress id="navaEditorExportProgress" max="100" value="0" hidden></progress>
       <video class="nava-editor-export-preview" id="navaEditorExportOutput" controls playsinline hidden></video>
       <a class="nava-editor-export-download" id="navaEditorExportDownload" hidden download="nava-edited-video.webm">دریافت ویدیوی نهایی</a>
-      <small>خروجی با امکانات مرورگر ساخته می‌شود؛ فرمت MP4 در مرورگرهای پشتیبان و در غیر این صورت WebM ارائه می‌شود.</small>
+      <small>خروجی با رمزگذاری آفلاین H.264 و AAC ساخته می‌شود. اگر مرورگر یا گوشی رمزگذار سازگار نداشته باشد، خطای روشن نمایش داده می‌شود و فایل ناقص تحویل داده نمی‌شود.</small>
     </section></div>
     <p class="nava-editor-status" id="navaEditorStatus" role="status" aria-live="polite">برای شروع یک یا چند ویدئو انتخاب کن.</p>
-    <p class="nava-editor-note">این نسخه برش، مرتب‌سازی، پیش‌نمایش و ساخت فایل نهایی را پشتیبانی می‌کند. افکت‌های انتقال و تنظیم جداگانه صدای اصلی کلیپ‌ها در مراحل بعدی اضافه می‌شوند.</p>
+    <p class="nava-editor-note">امکانات فعلی: برش، تقسیم کلیپ، تکثیر، جابه‌جایی، کنترل صدای اصلی هر کلیپ، موسیقی پروژه، نسبت تصویر و خروجی MP4 آفلاین. پردازش روی گوشی انجام می‌شود و کیفیت خروجی متناسب با توان دستگاه انتخاب می‌شود.</p>
   </section>
 </section>
 
@@ -1568,6 +1571,6 @@
   <script src="https://github.com/Vanilagy/mediabunny/releases/download/v1.66.3/mediabunny.min.cjs" defer></script>
   <script src="https://github.com/Vanilagy/mediabunny/releases/download/v1.66.3/mediabunny-aac-encoder.min.js" defer></script>
   <script src="video-studio.js?v=video-multi-image-analysis-20261125-1" defer></script>
-  <script src="video-editor.js?v=video-editor-offline-frames-20261125-1" defer></script>
+  <script src="video-editor.js?v=video-editor-core-tools-20261125-1" defer></script>
 </body>
 </html>

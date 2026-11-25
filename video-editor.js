@@ -103,7 +103,10 @@
         '<label><span>شروع <output data-trim-value="in">' + fmt(clip.in) + '</output></span><input type="range" min="0" max="' + clip.duration.toFixed(1) + '" step="0.1" data-trim="in" value="' + clip.in.toFixed(1) + '" aria-label="نوار تنظیم شروع کلیپ"></label>' +
         '<label><span>پایان <output data-trim-value="out">' + fmt(clip.out) + '</output></span><input type="range" min="0.1" max="' + clip.duration.toFixed(1) + '" step="0.1" data-trim="out" value="' + clip.out.toFixed(1) + '" aria-label="نوار تنظیم پایان کلیپ"></label>' +
         '<span class="nava-editor-source-duration">طول ویدئوی اصلی: ' + fmt(clip.duration) + '</span></div>' +
-        '<div class="nava-editor-clip-actions"><button type="button" data-action="up" aria-label="انتقال به بالا" ' + (index === 0 ? "disabled" : "") + '>↑</button>' +
+        '<div class="nava-editor-clip-audio"><label>صدای اصلی <output data-clip-volume-value>' + Math.round((clip.audioVolume ?? 1) * 100) + '%</output><input type="range" min="0" max="100" value="' + Math.round((clip.audioVolume ?? 1) * 100) + '" data-clip-volume aria-label="بلندی صدای اصلی این کلیپ"></label><button type="button" data-action="mute-audio" aria-pressed="' + (clip.muteAudio ? "true" : "false") + '">' + (clip.muteAudio ? "فعال‌کردن صدای اصلی" : "قطع صدای اصلی") + '</button></div>' +
+        '<div class="nava-editor-clip-actions"><button type="button" data-action="split" aria-label="تقسیم در محل پخش">تقسیم در محل پخش</button>' +
+        '<button type="button" data-action="duplicate" aria-label="تکثیر کلیپ">تکثیر</button>' +
+        '<button type="button" data-action="up" aria-label="انتقال به بالا" ' + (index === 0 ? "disabled" : "") + '>↑</button>' +
         '<button type="button" data-action="down" aria-label="انتقال به پایین" ' + (index === clips.length - 1 ? "disabled" : "") + '>↓</button>' +
         '<button type="button" data-action="remove" aria-label="حذف کلیپ">حذف</button></div></article>';
     }).join("");
@@ -120,6 +123,8 @@
     stopPlayback();
     const loadToken = ++previewLoadToken;
     selectedId = clip.id;
+    preview.volume = clip.muteAudio ? 0 : Math.max(0, Math.min(1, clip.audioVolume ?? 1));
+    preview.muted = Boolean(clip.muteAudio);
     preview.pause();
     preview.removeAttribute("src");
     preview.load();
@@ -170,7 +175,7 @@
       await metadataReady;
       const duration = Number.isFinite(probe.duration) ? probe.duration : 0;
       if (!duration || duration <= 0) throw new Error("مدت ویدئو قابل تشخیص نیست.");
-      const clip = { id: "clip-" + (++clipSequence), file, url, duration, width: probe.videoWidth || 0, height: probe.videoHeight || 0, in: 0, out: duration };
+      const clip = { id: "clip-" + (++clipSequence), file, url, duration, width: probe.videoWidth || 0, height: probe.videoHeight || 0, in: 0, out: duration, audioVolume: 1, muteAudio: false };
       clips.push(clip);
       selectedId = clip.id;
       selectClip(clip);
@@ -193,6 +198,8 @@
     }
     currentIndex = index;
     const clip = clips[index];
+    preview.volume = clip.muteAudio ? 0 : Math.max(0, Math.min(1, clip.audioVolume ?? 1));
+    preview.muted = Boolean(clip.muteAudio);
     advancing = true;
     selectedId = clip.id;
     renderTimeline();
@@ -269,6 +276,49 @@
     if (index < 0) return;
     const action = button.dataset.action;
     if (action === "select") { selectClip(clips[index]); return; }
+    if (action === "split") {
+      const clip = clips[index];
+      const splitAt = preview.currentTime;
+      if (selectedId !== clip.id || !Number.isFinite(splitAt) || splitAt <= clip.in + 0.15 || splitAt >= clip.out - 0.15) {
+        setStatus("برای تقسیم، ابتدا کلیپ را انتخاب و پیش‌نمایش را روی نقطهٔ برش متوقف کن؛ نقطه باید داخل محدودهٔ کلیپ باشد.");
+        return;
+      }
+      stopPlayback();
+      const leftUrl = URL.createObjectURL(clip.file);
+      const rightUrl = URL.createObjectURL(clip.file);
+      URL.revokeObjectURL(clip.url);
+      const left = { ...clip, id: "clip-" + (++clipSequence), url: leftUrl, out: splitAt };
+      const right = { ...clip, id: "clip-" + (++clipSequence), url: rightUrl, in: splitAt };
+      clips.splice(index, 1, left, right);
+      selectedId = right.id;
+      renderTimeline();
+      selectClip(right);
+      setStatus("کلیپ در نقطهٔ انتخاب‌شده به دو بخش مستقل تقسیم شد.");
+      return;
+    }
+    if (action === "duplicate") {
+      if (clips.length >= 8) { setStatus("برای حفظ روانی گوشی، حداکثر ۸ بخش در تایم‌لاین پشتیبانی می‌شود."); return; }
+      stopPlayback();
+      const source = clips[index];
+      const copy = { ...source, id: "clip-" + (++clipSequence), url: URL.createObjectURL(source.file) };
+      clips.splice(index + 1, 0, copy);
+      selectedId = copy.id;
+      renderTimeline();
+      selectClip(copy);
+      setStatus("یک نسخهٔ مستقل از کلیپ بعد از آن اضافه شد.");
+      return;
+    }
+    if (action === "mute-audio") {
+      const clip = clips[index];
+      clip.muteAudio = !clip.muteAudio;
+      if (selectedId === clip.id) {
+        preview.muted = clip.muteAudio;
+        preview.volume = clip.muteAudio ? 0 : Math.max(0, Math.min(1, clip.audioVolume ?? 1));
+      }
+      renderTimeline();
+      setStatus(clip.muteAudio ? "صدای اصلی این کلیپ قطع شد." : "صدای اصلی این کلیپ فعال شد.");
+      return;
+    }
     if (action === "remove") {
       stopPlayback();
       const [removed] = clips.splice(index, 1);
@@ -289,6 +339,18 @@
     }
   });
   list.addEventListener("input", event => {
+    const volumeField = event.target.closest("input[data-clip-volume]");
+    if (volumeField) {
+      const card = volumeField.closest("[data-clip-id]");
+      const clip = getClip(card?.dataset.clipId);
+      if (!clip) return;
+      clip.audioVolume = Math.max(0, Math.min(1, Number(volumeField.value) / 100));
+      const output = card.querySelector("[data-clip-volume-value]");
+      if (output) output.textContent = Math.round(clip.audioVolume * 100) + "%";
+      if (selectedId === clip.id && !clip.muteAudio) preview.volume = clip.audioVolume;
+      setStatus("بلندی صدای اصلی «" + clip.file.name + "»: " + Math.round(clip.audioVolume * 100) + "%");
+      return;
+    }
     const field = event.target.closest("input[data-trim]");
     if (!field) return;
     const card = field.closest("[data-clip-id]");
@@ -547,9 +609,18 @@
       const maxEdge = tier === "economy" ? 480 : tier === "high" ? 1080 : 720;
       const fps = tier === "economy" ? 20 : tier === "high" ? 30 : 24;
       const bitrate = tier === "economy" ? 850000 : tier === "high" ? 4500000 : 2200000;
-      const scale = Math.min(1, maxEdge / Math.max(sourceWidth, sourceHeight));
-      const width = Math.max(2, Math.round(sourceWidth * scale / 2) * 2);
-      const height = Math.max(2, Math.round(sourceHeight * scale / 2) * 2);
+      const ratioChoice = $("navaEditorAspectRatio")?.value || "source";
+      const ratios = { "16:9": 16 / 9, "9:16": 9 / 16, "1:1": 1, "4:5": 4 / 5 };
+      let width, height;
+      if (ratios[ratioChoice]) {
+        const ratio = ratios[ratioChoice];
+        if (ratio >= 1) { width = maxEdge; height = Math.round(maxEdge / ratio / 2) * 2; }
+        else { height = maxEdge; width = Math.round(maxEdge * ratio / 2) * 2; }
+      } else {
+        const scale = Math.min(1, maxEdge / Math.max(sourceWidth, sourceHeight));
+        width = Math.max(2, Math.round(sourceWidth * scale / 2) * 2);
+        height = Math.max(2, Math.round(sourceHeight * scale / 2) * 2);
+      }
       const quality = new MB.Quality({ bitrate });
       const videoCodec = await MB.getFirstEncodableVideoCodec(["avc"], {
         width, height, frameRate: fps, quality
@@ -633,7 +704,7 @@
           const frameCount = Math.max(1, Math.ceil(chunkDuration * sampleRate));
           const offline = new OfflineContext(2, frameCount, sampleRate);
           const originalGain = offline.createGain();
-          originalGain.gain.value = 1;
+          originalGain.gain.value = 0;
           originalGain.connect(offline.destination);
           let musicGain = null;
           if (musicBuffer) {
@@ -657,6 +728,10 @@
             const overlapEnd = Math.min(chunkStart + chunkDuration, clipEnd);
             const meta = audioTracks[clipIndex];
             if (overlapEnd > overlapStart && meta.audioSink) {
+              originalGain.gain.setValueAtTime(
+                clip.muteAudio ? 0 : Math.max(0, Math.min(1, clip.audioVolume ?? 1)),
+                Math.max(0, overlapStart - chunkStart)
+              );
               const mediaStart = meta.firstAudioTimestamp + clip.in + (overlapStart - clipOffset);
               const mediaEnd = meta.firstAudioTimestamp + clip.in + (overlapEnd - clipOffset);
               for await (const wrapped of meta.audioSink.buffers(mediaStart, mediaEnd)) {
