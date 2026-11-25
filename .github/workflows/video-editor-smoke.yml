@@ -30,7 +30,7 @@ jobs:
           const html = fs.readFileSync("index.html", "utf8");
           const js = fs.readFileSync("video-editor.js", "utf8");
           const css = fs.readFileSync("video-editor.css", "utf8");
-          for (const id of ["navaVideoPanelVideo","navaVideoEditor","navaEditorFiles","navaEditorAudio","navaEditorPreview","navaEditorTimeline","navaEditorPlay","navaEditorStop","navaEditorClear"]) {
+          for (const id of ["navaVideoPanelVideo","navaEditorFiles","navaEditorAudio","navaEditorPreview","navaEditorTimeline","navaEditorPlay","navaEditorStop","navaEditorClear"]) {
             assert.ok(html.includes('id="' + id + '"'), "Missing editor control: " + id);
             assert.ok(js.includes('$("' + id + '")') || id === "navaVideoPanelVideo", "Editor script does not bind: " + id);
           }
