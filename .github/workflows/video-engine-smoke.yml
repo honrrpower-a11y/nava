@@ -158,7 +158,7 @@ jobs:
           assert.match(js, /try\{applied=buildNaviScenePlan\(reply\);\}\s*catch\(error\)/, "Scene-plan application errors must be caught and surfaced");
           assert.match(js, /event\.detail\.status=doneStatus/, "Successful scene-plan application must update the user-facing NAVI status");
           assert.match(js, /event\.detail\.status=failedStatus/, "Failed scene-plan application must report a visible failure instead of appearing stuck");
-          assert.doesNotMatch(videoReplyBlock, /showNaviReply\(reply\)/, "Raw scene JSON must never be shown as a user-facing NAVI reply");
+          assert.doesNotMatch(videoPlanBlock, /showNaviReply\(reply\)/, "Raw scene JSON must never be shown as a user-facing NAVI reply");
           assert.match(app, /isInternalVideoPlan/, "Restored NAVI history must identify internal video plans");
           assert.match(app, /جزئیات طراحی به‌صورت داخلی پردازش شده است/, "Restored history must show a friendly status instead of raw scene JSON");
           assert.match(app, /nava\.video\.scene-plan\.v1/, "Chat-level video instruction must require the same structured schema");
