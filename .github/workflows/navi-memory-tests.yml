@@ -12,7 +12,7 @@ on:
       - "tests/navi-memory.test.mjs"
       - "tests/navi-office-actions.test.mjs"
       - "tests/navi-context-security.test.mjs"
-      - "tests/navi-platform-knowledge.test.mjs",
+      - "tests/navi-platform-knowledge.test.mjs"
       - "tests/navi-intent-routing.test.mjs"
       - "modules/navi-knowledge.js"
       - ".github/workflows/navi-memory-tests.yml"
@@ -26,6 +26,7 @@ on:
       - "index.html"
       - "tests/navi-memory.test.mjs"
       - "tests/navi-platform-knowledge.test.mjs"
+      - "tests/navi-intent-routing.test.mjs"
       - ".github/workflows/navi-memory-tests.yml"
   workflow_dispatch:
 
