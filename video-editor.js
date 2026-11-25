@@ -78,11 +78,11 @@
     if (!clip) return;
     stopPlayback();
     selectedId = clip.id;
-    preview.src = clip.url;
-    preview.load();
     preview.onloadedmetadata = () => {
       try { preview.currentTime = clip.in; } catch (_) {}
     };
+    preview.src = clip.url;
+    preview.load();
     renderTimeline();
     setStatus("کلیپ انتخاب‌شده: " + clip.file.name + " — بازهٔ قابل‌پخش را از فیلدهای شروع و پایان تنظیم کن.");
   };
@@ -100,13 +100,14 @@
     probe.preload = "metadata";
     probe.muted = true;
     probe.playsInline = true;
-    probe.src = url;
     try {
-      await new Promise((resolve, reject) => {
+      const metadataReady = new Promise((resolve, reject) => {
         const timer = setTimeout(() => reject(new Error("خواندن مشخصات ویدئو بیش از حد طول کشید.")), 15000);
         probe.onloadedmetadata = () => { clearTimeout(timer); resolve(); };
         probe.onerror = () => { clearTimeout(timer); reject(new Error("مرورگر نتوانست این ویدئو را بخواند.")); };
       });
+      probe.src = url;
+      await metadataReady;
       const duration = Number.isFinite(probe.duration) ? probe.duration : 0;
       if (!duration || duration <= 0) throw new Error("مدت ویدئو قابل تشخیص نیست.");
       const clip = { id: "clip-" + (++clipSequence), file, url, duration, in: 0, out: duration };
@@ -135,14 +136,14 @@
     selectedId = clip.id;
     renderTimeline();
     preview.pause();
-    preview.src = clip.url;
-    preview.load();
     try {
-      await new Promise((resolve, reject) => {
-        if (preview.readyState >= 1 && preview.src === clip.url) return resolve();
+      const metadataReady = new Promise((resolve, reject) => {
         preview.onloadedmetadata = resolve;
         preview.onerror = () => reject(new Error("پخش یکی از کلیپ‌ها ممکن نیست: " + clip.file.name));
       });
+      preview.src = clip.url;
+      preview.load();
+      await metadataReady;
       if (token !== playToken) return;
       preview.currentTime = clip.in;
       await new Promise(resolve => {
