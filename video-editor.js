@@ -94,7 +94,7 @@
     selectedId = clip.id;
     preview.pause();
     preview.onloadedmetadata = null;
-    const metadataReady = preview.readyState >= 1 ? Promise.resolve() : new Promise(resolve => {
+    const metadataReady = new Promise(resolve => {
       preview.addEventListener("loadedmetadata", resolve, { once: true });
     });
     preview.src = clip.url;
@@ -153,6 +153,7 @@
     }
     currentIndex = index;
     const clip = clips[index];
+    advancing = true;
     selectedId = clip.id;
     renderTimeline();
     preview.pause();
