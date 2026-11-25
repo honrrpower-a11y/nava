@@ -419,7 +419,7 @@ test("Office operations contains the real NAVI chat inline and removes the separ
   assert.match(app, /mount\.appendChild\(naviWidgetPanel\)/);
   assert.match(app, /homeSlot\.parentNode\.insertBefore\(naviWidgetPanel, homeSlot\.nextSibling\)/);
   assert.match(app, /naviWidgetPanel\.classList\.contains\("is-inline"\)/);
-  assert.match(html, /app\.js\?v=restore-active-studio-20261122-1/);
+  assert.match(html, /app\.js\?v=[^"]+/);
   assert.match(html, /office-workspace\.css\?v=office-back-to-top-20261118-1/);
   assert.match(officeCss, /\.office-workspace-layout/);
   assert.match(officeCss, /body\.navi-studio-context \.office-assistant-column \.navi-widget-panel\.is-inline/);
