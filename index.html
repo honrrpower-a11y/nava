@@ -24,6 +24,7 @@
   <script src="logo-studio.js?v=logo-per-concept-visual-review-20261121-1" defer></script>
   <link rel="stylesheet" href="video-studio.css?v=video-editor-final-export-20261125-1">
   <link rel="stylesheet" href="video-editor.css?v=video-editor-text-overlay-20261125-1">
+  <link rel="stylesheet" href="video-editor-effects.css?v=video-editor-effects-mix-20261126-1">
   <link rel="stylesheet" href="video-editor-guide.css?v=navi-video-editor-guide-20261126-1">
 </head>
 <body>
@@ -654,6 +655,15 @@
         <strong>موسیقی پروژه</strong><small id="navaEditorAudioLabel">موسیقی اضافه نشده است.</small>
         <audio id="navaEditorAudioPlayer" preload="none"></audio>
         <label for="navaEditorAudioVolume">بلندی موسیقی</label><input id="navaEditorAudioVolume" type="range" min="0" max="100" value="75">
+        <div class="nava-editor-effects" aria-label="افکت انتقال و میکس صدا">
+          <strong>افکت انتقال بین کلیپ‌ها</strong>
+          <label for="navaEditorTransition">نوع انتقال<select id="navaEditorTransition"><option value="fade" selected>محو نرم به سیاهی</option><option value="flash">فلش روشن</option><option value="zoom">زوم نرم</option><option value="slide">لغزش افقی</option><option value="cut">بدون افکت (برش مستقیم)</option></select></label>
+          <label for="navaEditorTransitionDuration">مدت افکت <output id="navaEditorTransitionDurationValue">۰٫۶ ثانیه</output><input id="navaEditorTransitionDuration" type="range" min="0.2" max="1.5" step="0.1" value="0.6"></label>
+          <strong>محو تدریجی صدا</strong>
+          <label for="navaEditorAudioFadeIn">افزایش تدریجی صدا <output id="navaEditorAudioFadeInValue">۱ ثانیه</output><input id="navaEditorAudioFadeIn" type="range" min="0" max="5" step="0.5" value="1"></label>
+          <label for="navaEditorAudioFadeOut">کاهش تدریجی صدا <output id="navaEditorAudioFadeOutValue">۱٫۵ ثانیه</output><input id="navaEditorAudioFadeOut" type="range" min="0" max="5" step="0.5" value="1.5"></label>
+          <small>این افکت‌ها در فایل MP4 نهایی رندر می‌شوند؛ محوشدن صدا روی موسیقی و صدای اصلی کلیپ‌ها اعمال می‌شود.</small>
+        </div>
         <div class="nava-editor-playback"><button class="nava-editor-play" id="navaEditorPlay" type="button" disabled>▶ پخش تدوین</button><button class="nava-editor-stop" id="navaEditorStop" type="button" disabled>توقف</button><button class="nava-editor-stop" id="navaEditorClear" type="button" disabled>پاک‌کردن پروژه</button></div>
       </aside>
     </div>
