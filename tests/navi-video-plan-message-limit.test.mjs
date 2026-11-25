@@ -12,3 +12,21 @@ test("only isolated video-plan requests on the video page receive the larger lim
   assert.equal(getNaviMessageLimit({ videoPlan: true }, "homePage"), 12000);
   assert.equal(getNaviMessageLimit({ videoPlan: true }, "officePage"), 12000);
 });
+
+import { parseNaviGeminiResponse } from "../modules/navi.js";
+
+test("video scene plans are carried inside NAVI's required outer JSON reply envelope", () => {
+  const scenePlan = JSON.stringify({
+    schema: "nava.video.scene-plan.v1",
+    scenes: [{ duration: 4, images: [1], layout: "single" }]
+  });
+  const envelope = JSON.stringify({
+    reply: scenePlan,
+    officeAction: null,
+    memoryProposals: []
+  });
+  const parsed = parseNaviGeminiResponse(envelope);
+  assert.equal(parsed.reply, scenePlan);
+  assert.equal(JSON.parse(parsed.reply).schema, "nava.video.scene-plan.v1");
+  assert.equal(parsed.structured, true);
+});

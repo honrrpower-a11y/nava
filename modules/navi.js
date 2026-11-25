@@ -2515,6 +2515,7 @@ async function requestGeminiModel({
   apiKey,
   systemInstruction,
   contents,
+  videoPlan = false,
   maxAttempts = NAVI_GEMINI_MAX_ATTEMPTS,
   fetchImpl = fetch
 }) {
@@ -2543,7 +2544,9 @@ async function requestGeminiModel({
             contents,
             generationConfig: {
               temperature: 0.65,
-              maxOutputTokens: 4096,
+              // Video plans contain a nested scene-plan JSON document; give
+              // this isolated flow a larger completion budget without changing chat.
+              maxOutputTokens: videoPlan ? 8192 : 4096,
               responseMimeType: "application/json"
             }
           }),
@@ -2616,6 +2619,7 @@ export async function requestGemini({
   apiKey,
   systemInstruction,
   contents,
+  videoPlan = false,
   fetchImpl = fetch
 }) {
   try {
@@ -2624,6 +2628,7 @@ export async function requestGemini({
       apiKey,
       systemInstruction,
       contents,
+      videoPlan,
       fetchImpl
     });
   } catch (primaryError) {
@@ -2644,6 +2649,7 @@ export async function requestGemini({
           apiKey,
           systemInstruction,
           contents,
+          videoPlan,
           maxAttempts: 1,
           fetchImpl
         });
@@ -2873,7 +2879,8 @@ async function handleChat({
         "این درخواست فقط برای تبدیل بریف و رسانه‌های انتخاب‌شده به طرح اجرایی صحنه‌های ویدئو است.",
         "بریف و اطلاعات موسیقی در پیام جاری آمده‌اند و تصاویر واقعی نیز ممکن است به‌صورت چند پیوست موقت در همین درخواست باشند.",
         "اگر چند تصویر پیوست شده است، هر تصویر را جداگانه از روی محتوای واقعی‌اش تحلیل کن و سپس همه را برای انتخاب ترتیب، روایت و هماهنگی بصری مقایسه کن؛ گزارش رنگ محلی فقط داده کمکی است.",
-        "خروجی باید دقیقاً از قرارداد JSON و enumهای تعریف‌شده در پیام جاری پیروی کند؛ متن اضافی ننویس.",
+        "خروجی صحنه‌ها باید در reply قرار بگیرد، نه به‌عنوان JSON ریشه‌ای پاسخ NAVI. قرارداد بیرونی NAVI الزامی است: یک شیء JSON با کلیدهای reply (رشته)، officeAction (null) و memoryProposals (آرایه خالی). مقدار reply باید خودِ یک JSON کامل و معتبر با schema=nava.video.scene-plan.v1 باشد؛ آن را به‌صورت رشته JSON صحیح با escape لازم در reply قرار بده. هرگز reply را خالی نگذار و کلیدهای قرارداد بیرونی را حذف نکن.",
+        "درون reply فقط طرح صحنه با schema و enumهای تعریف‌شده در پیام جاری قرار می‌گیرد؛ متن اضافی بیرون از JSON طرح ننویس.",
         "از حافظه یا گفت‌وگوهای پروژه‌های دیگر استفاده نکن و اطلاعات رسانه‌ای را حدس نزن."
       ].join("\n")
     : buildNaviPlatformKnowledge(page, pageTab);
@@ -3043,7 +3050,8 @@ async function handleChat({
     parsed = await requestGemini({
       apiKey: env.GEMINI_API_KEY,
       systemInstruction,
-      contents
+      contents,
+      videoPlan: isVideoPlanRequest
     });
 
   } catch (error) {
