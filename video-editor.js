@@ -39,6 +39,12 @@
   const exportOutput = $("navaEditorExportOutput");
   const exportDownload = $("navaEditorExportDownload");
   const audioVolume = $("navaEditorAudioVolume");
+  const transitionInput = $("navaEditorTransition");
+  const transitionDurationInput = $("navaEditorTransitionDuration");
+  const audioFadeInInput = $("navaEditorAudioFadeIn");
+  const audioFadeOutInput = $("navaEditorAudioFadeOut");
+  const getTransitionSettings = () => ({ type: transitionInput?.value || "fade", duration: Math.max(0, Math.min(1.5, Number(transitionDurationInput?.value) || 0.6)) });
+  const getAudioFadeSettings = () => ({ fadeIn: Math.max(0, Math.min(5, Number(audioFadeInInput?.value) || 0)), fadeOut: Math.max(0, Math.min(5, Number(audioFadeOutInput?.value) || 0)) });
   let clips = [];
   let audioFile = null;
   let audioUrl = "";
@@ -386,6 +392,22 @@
       probe.load();
     }
   };
+  const updatePreviewTransition = () => {
+    if (!preview || !playing || currentIndex < 0) return;
+    const settings = getTransitionSettings();
+    const clip = clips[currentIndex];
+    if (!clip || settings.type === "cut" || !settings.duration) {
+      preview.style.opacity = "1"; preview.style.transform = ""; preview.style.filter = "";
+      return;
+    }
+    const local = Math.max(0, preview.currentTime - clip.in);
+    const length = Math.max(0.01, clip.out - clip.in);
+    const progress = Math.max(0, Math.min(1, local / settings.duration, (length - local) / settings.duration));
+    if (settings.type === "fade") { preview.style.opacity = String(progress); preview.style.transform = ""; preview.style.filter = ""; }
+    else if (settings.type === "flash") { preview.style.opacity = "1"; preview.style.transform = ""; preview.style.filter = "brightness(" + (1 + (1 - progress) * 1.8) + ")"; }
+    else if (settings.type === "zoom") { preview.style.opacity = "1"; preview.style.filter = ""; preview.style.transform = "scale(" + (1.07 - progress * 0.07) + ")"; }
+    else if (settings.type === "slide") { preview.style.opacity = String(progress); preview.style.filter = ""; preview.style.transform = "translateX(" + ((local < settings.duration ? 1 : -1) * (1 - progress) * 7) + "%)"; }
+  };
   const playFrom = async (index, token) => {
     if (token !== playToken || index >= clips.length) {
       if (token === playToken) {
@@ -417,7 +439,9 @@
       await waitForVideoData(preview);
       await waitForPresentedFrame(preview);
       if (token !== playToken) return;
+      preview.style.opacity = "0"; preview.style.transform = ""; preview.style.filter = "";
       await preview.play();
+      updatePreviewTransition();
       advancing = false;
     } catch (error) {
       stopPlayback();
@@ -746,6 +770,7 @@
   });
   stopButton.addEventListener("click", () => { stopPlayback(); setStatus("پخش متوقف شد."); });
   preview.addEventListener("timeupdate", updateTextPreview);
+  preview.addEventListener("timeupdate", updatePreviewTransition);
   window.addEventListener("resize", updateTextPreview);
   preview.addEventListener("timeupdate", advanceIfNeeded);
   preview.addEventListener("ended", advanceIfNeeded);
@@ -927,6 +952,8 @@
     }
     const projectDuration = totalDuration();
     const exportTextOverlays = textOverlays.map(item => ({ ...item }));
+    const transitionSettings = getTransitionSettings();
+    const audioFadeSettings = getAudioFadeSettings();
     if (!projectDuration || projectDuration > 900) {
       setStatus("مدت پروژه باید بیشتر از صفر و حداکثر ۱۵ دقیقه باشد.");
       return;
@@ -1069,13 +1096,31 @@
           const chunkDuration = Math.min(chunkSeconds, projectDuration - chunkStart);
           const frameCount = Math.max(1, Math.ceil(chunkDuration * sampleRate));
           const offline = new OfflineContext(2, frameCount, sampleRate);
+          const scheduleProjectEnvelope = (gainNode, baseVolume) => {
+            const fadeIn = audioFadeSettings.fadeIn;
+            const fadeOut = audioFadeSettings.fadeOut;
+            const valueAt = time => {
+              const inFactor = fadeIn > 0 ? Math.min(1, Math.max(0, time / fadeIn)) : 1;
+              const outFactor = fadeOut > 0 ? Math.min(1, Math.max(0, (projectDuration - time) / fadeOut)) : 1;
+              return baseVolume * inFactor * outFactor;
+            };
+            const points = [chunkStart, chunkStart + chunkDuration];
+            if (fadeIn > chunkStart && fadeIn < chunkStart + chunkDuration) points.push(fadeIn);
+            const fadeOutStart = projectDuration - fadeOut;
+            if (fadeOut > 0 && fadeOutStart > chunkStart && fadeOutStart < chunkStart + chunkDuration) points.push(fadeOutStart);
+            points.sort((a, b) => a - b);
+            gainNode.gain.setValueAtTime(valueAt(points[0]), 0);
+            for (let pointIndex = 1; pointIndex < points.length; pointIndex++) {
+              gainNode.gain.linearRampToValueAtTime(valueAt(points[pointIndex]), points[pointIndex] - chunkStart);
+            }
+          };
           const originalGain = offline.createGain();
-          originalGain.gain.value = 0;
+          scheduleProjectEnvelope(originalGain, 1);
           originalGain.connect(offline.destination);
           let musicGain = null;
           if (musicBuffer) {
             musicGain = offline.createGain();
-            musicGain.gain.value = Math.max(0, Math.min(1, Number(audioVolume.value) / 100));
+            scheduleProjectEnvelope(musicGain, Math.max(0, Math.min(1, Number(audioVolume.value) / 100)));
             musicGain.connect(offline.destination);
             const musicNode = offline.createBufferSource();
             musicNode.buffer = musicBuffer;
@@ -1094,10 +1139,9 @@
             const overlapEnd = Math.min(chunkStart + chunkDuration, clipEnd);
             const meta = audioTracks[clipIndex];
             if (overlapEnd > overlapStart && meta.audioSink) {
-              originalGain.gain.setValueAtTime(
-                clip.muteAudio ? 0 : Math.max(0, Math.min(1, clip.audioVolume ?? 1)),
-                Math.max(0, overlapStart - chunkStart)
-              );
+              const clipGain = offline.createGain();
+              clipGain.gain.value = clip.muteAudio ? 0 : Math.max(0, Math.min(1, clip.audioVolume ?? 1));
+              clipGain.connect(originalGain);
               const mediaStart = meta.firstAudioTimestamp + clip.in + (overlapStart - clipOffset);
               const mediaEnd = meta.firstAudioTimestamp + clip.in + (overlapEnd - clipOffset);
               for await (const wrapped of meta.audioSink.buffers(mediaStart, mediaEnd)) {
@@ -1109,7 +1153,7 @@
                 if (usedEnd <= usedStart) continue;
                 const node = offline.createBufferSource();
                 node.buffer = buffer;
-                node.connect(originalGain);
+                node.connect(clipGain);
                 const when = overlapStart - chunkStart + (usedStart - mediaStart);
                 node.start(when, Math.max(0, usedStart - bufferStart), usedEnd - usedStart);
               }
@@ -1161,7 +1205,29 @@
               // (for example, 540x960 followed by 270x480), which MP4 encoding rejects.
               textContext.fillStyle = "#000";
               textContext.fillRect(0, 0, width, height);
-              sample.drawWithFit(textContext, { fit: "contain" });
+              const edgeDuration = transitionSettings.type === "cut" ? 0 : Math.min(transitionSettings.duration, clipLength / 2);
+              const edgeProgress = edgeDuration > 0
+                ? Math.max(0, Math.min(1, localTime / edgeDuration, (clipLength - localTime) / edgeDuration)) : 1;
+              if (transitionSettings.type === "zoom" || transitionSettings.type === "slide") {
+                textContext.save();
+                const scale = transitionSettings.type === "zoom" ? 1.07 - edgeProgress * 0.07 : 1;
+                const direction = localTime < edgeDuration ? 1 : -1;
+                const shiftX = transitionSettings.type === "slide" ? direction * (1 - edgeProgress) * width * 0.08 : 0;
+                textContext.translate(width / 2 + shiftX, height / 2);
+                textContext.scale(scale, scale);
+                textContext.translate(-width / 2, -height / 2);
+                sample.drawWithFit(textContext, { fit: "contain" });
+                textContext.restore();
+              } else {
+                sample.drawWithFit(textContext, { fit: "contain" });
+                if (edgeDuration > 0 && edgeProgress < 1) {
+                  textContext.save();
+                  textContext.globalAlpha = 1 - edgeProgress;
+                  textContext.fillStyle = transitionSettings.type === "flash" ? "#fff" : "#000";
+                  textContext.fillRect(0, 0, width, height);
+                  textContext.restore();
+                }
+              }
               if (hasActiveText) {
                 drawTextOverlays(textContext, compositionTime, width, height, exportTextOverlays);
               }
@@ -1247,7 +1313,8 @@
       exportDownload.textContent = "دریافت ویدیوی نهایی (MP4 · " + width + "×" + height + ")";
       exportDownload.hidden = false;
       exportProgress.value = 100;
-      setStatus("خروجی MP4 آفلاین آماده شد · H.264 + AAC · " + width + "×" + height + " · " + videoResult.totalFrames + " فریم" + (exportTextOverlays.length ? " · متن‌ها روی تصویر رندر شدند" : "") + ".");
+      const transitionLabel = ({ cut: "بدون انتقال", fade: "محو به سیاهی", flash: "فلش روشن", zoom: "زوم نرم", slide: "لغزش" })[transitionSettings.type] || "انتقال";
+      setStatus("خروجی MP4 آماده شد · H.264 + AAC · " + width + "×" + height + " · " + videoResult.totalFrames + " فریم · انتقال: " + transitionLabel + (audioFadeSettings.fadeIn || audioFadeSettings.fadeOut ? " · محوشدن صدا اعمال شد" : "") + (exportTextOverlays.length ? " · متن‌ها روی تصویر رندر شدند" : "") + ".");
     } catch (error) {
       try { if (output && output.state !== "finalized" && output.state !== "canceled") await output.cancel(); } catch (_) {}
       setStatus(error.message || "ساخت MP4 آفلاین ناموفق بود.");
