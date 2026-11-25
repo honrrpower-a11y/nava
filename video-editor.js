@@ -78,6 +78,20 @@
   };
   const updateTextPreview = () => {
     if (!textPreview) return;
+    const videoRect = preview.getBoundingClientRect();
+    const wrapRect = preview.parentElement.getBoundingClientRect();
+    if (preview.videoWidth > 0 && preview.videoHeight > 0 && videoRect.width > 0 && videoRect.height > 0) {
+      const scale = Math.min(videoRect.width / preview.videoWidth, videoRect.height / preview.videoHeight);
+      const displayWidth = preview.videoWidth * scale;
+      const displayHeight = preview.videoHeight * scale;
+      textPreview.style.inset = "auto";
+      textPreview.style.left = (videoRect.left - wrapRect.left + (videoRect.width - displayWidth) / 2) + "px";
+      textPreview.style.top = (videoRect.top - wrapRect.top + (videoRect.height - displayHeight) / 2) + "px";
+      textPreview.style.width = displayWidth + "px";
+      textPreview.style.height = displayHeight + "px";
+      textPreview.style.right = "auto";
+      textPreview.style.bottom = "auto";
+    }
     const time = getCompositionTime();
     const nodes = [];
     textOverlays.forEach(item => {
@@ -319,6 +333,7 @@
       await waitForVideoData(preview);
       await waitForPresentedFrame(preview);
       if (loadToken !== previewLoadToken || selectedId !== clip.id) return;
+      updateTextPreview();
       setStatus("پیش‌نمایش آماده است: " + clip.file.name);
     } catch (error) {
       if (loadToken === previewLoadToken) setStatus(error.message || "پیش‌نمایش این ویدئو آماده نشد.");
@@ -710,6 +725,7 @@
   });
   stopButton.addEventListener("click", () => { stopPlayback(); setStatus("پخش متوقف شد."); });
   preview.addEventListener("timeupdate", updateTextPreview);
+  window.addEventListener("resize", updateTextPreview);
   preview.addEventListener("timeupdate", advanceIfNeeded);
   preview.addEventListener("ended", advanceIfNeeded);
   clearButton.addEventListener("click", () => {
