@@ -468,7 +468,7 @@
       });
       // Avoid frequent chunk flushing on memory-constrained mobile encoders.
       // The final dataavailable event is collected after stop().
-      recorder.start();
+      recorder.start(2000);
 
       const drawFrame = () => {
         const vw = preview.videoWidth || 16;
