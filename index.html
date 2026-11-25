@@ -24,6 +24,7 @@
   <script src="logo-studio.js?v=logo-per-concept-visual-review-20261121-1" defer></script>
   <link rel="stylesheet" href="video-studio.css?v=video-editor-final-export-20261125-1">
   <link rel="stylesheet" href="video-editor.css?v=video-editor-text-overlay-20261125-1">
+  <link rel="stylesheet" href="video-editor-guide.css?v=navi-video-editor-guide-20261126-1">
 </head>
 <body>
 
@@ -632,6 +633,16 @@
 <section class="nava-video-panel" id="navaVideoPanelVideo" role="tabpanel" hidden>
   <div class="nava-editor-heading"><h3>تدوین ویدئوهای خودت</h3><p>از افزودن کلیپ شروع کن؛ بعد هر کلیپ را انتخاب کن، ابتدا و انتهایش را با نوارهای برش تنظیم کن و ترتیب را بچین.</p><ol class="nava-editor-steps"><li><b>۱</b> افزودن ویدئو</li><li><b>۲</b> انتخاب و برش</li><li><b>۳</b> مرتب‌سازی</li><li><b>۴</b> پیش‌نمایش</li></ol></div>
   <section class="nava-video-editor" id="navaVideoEditor" aria-label="تدوینگر ویدئو">
+    <section class="nava-editor-guide" id="navaEditorGuide" aria-label="راهنمای تدوین با ناوی">
+      <div class="nava-editor-guide-top"><div><span class="nava-editor-guide-kicker">NAVI EDITING ASSISTANT</span><strong>راهنمای تدوین با ناوی</strong><small>هدفت را انتخاب کن؛ ناوی مرحله‌به‌مرحله همراهت می‌آید.</small></div><button type="button" id="navaEditorGuideToggle" aria-expanded="false">شروع راهنما</button></div>
+      <div class="nava-editor-guide-body" id="navaEditorGuideBody" hidden>
+        <div class="nava-editor-guide-choices" id="navaEditorGuideChoices" aria-label="انتخاب هدف تدوین">
+          <button type="button" data-guide-task="start">شروع پروژه</button><button type="button" data-guide-task="trim">برش و کوتاه‌کردن</button><button type="button" data-guide-task="split">تقسیم کلیپ</button><button type="button" data-guide-task="music">افزودن موسیقی</button><button type="button" data-guide-task="text">متن روی ویدئو</button><button type="button" data-guide-task="export">خروجی نهایی</button>
+        </div>
+        <div class="nava-editor-guide-card" id="navaEditorGuideCard" aria-live="polite"><strong>از کدام کار شروع کنیم؟</strong><p>یکی از هدف‌های بالا را انتخاب کن تا مراحل دقیق همان کار نمایش داده شود.</p></div>
+        <div class="nava-editor-guide-controls" id="navaEditorGuideControls" hidden><span id="navaEditorGuideStep">مرحله ۱</span><div><button type="button" id="navaEditorGuidePrev" disabled>مرحله قبل</button><button type="button" id="navaEditorGuideNext">مرحله بعد</button></div></div>
+      </div>
+    </section>
     <div class="nava-editor-toolbar">
       <label for="navaEditorFiles">＋ افزودن ویدئوها<input id="navaEditorFiles" type="file" accept="video/*,.mp4,.mov,.m4v,.webm,.3gp" multiple></label>
       <label for="navaEditorAudio">♫ افزودن موسیقی<input id="navaEditorAudio" type="file" accept="audio/*,.mp3,.m4a,.wav,.ogg"></label>
@@ -1588,5 +1599,6 @@
   <script src="https://github.com/Vanilagy/mediabunny/releases/download/v1.66.3/mediabunny-aac-encoder.min.js" defer></script>
   <script src="video-studio.js?v=video-text-background-two-photo-layout-20261125-1" defer></script>
   <script src="video-editor.js?v=video-editor-size-slider-cachefix-20261125-1" defer></script>
+  <script src="video-editor-guide.js?v=navi-video-editor-guide-20261126-1" defer></script>
 </body>
 </html>
