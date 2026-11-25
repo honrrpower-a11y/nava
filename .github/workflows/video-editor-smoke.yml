@@ -1,0 +1,46 @@
+name: Video Editor Foundation Checks
+
+on:
+  pull_request:
+    paths:
+      - "video-editor.js"
+      - "video-editor.css"
+      - "video-studio.css"
+      - "index.html"
+      - ".github/workflows/video-editor-smoke.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  editor:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Validate editor JavaScript
+        run: node --check video-editor.js
+      - name: Verify editor wiring and local-only media workflow
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from "node:fs";
+          import assert from "node:assert/strict";
+          const html = fs.readFileSync("index.html", "utf8");
+          const js = fs.readFileSync("video-editor.js", "utf8");
+          const css = fs.readFileSync("video-editor.css", "utf8");
+          for (const id of ["navaVideoPanelVideo","navaVideoEditor","navaEditorFiles","navaEditorAudio","navaEditorPreview","navaEditorTimeline","navaEditorPlay","navaEditorStop","navaEditorClear"]) {
+            assert.ok(html.includes('id="' + id + '"'), "Missing editor control: " + id);
+            assert.ok(js.includes('$("#' + id + '")') || id === "navaVideoPanelVideo", "Editor script does not bind: " + id);
+          }
+          assert.match(html, /video-editor\.js\?v=video-editor-foundation/, "Editor script must be cache-versioned");
+          assert.match(html, /video-editor\.css\?v=video-editor-foundation/, "Editor stylesheet must be cache-versioned");
+          assert.match(js, /URL\.createObjectURL/, "Media must be handled locally in the browser");
+          assert.match(js, /data-trim/, "Per-clip trim controls must be wired");
+          assert.match(js, /data-action="up"/, "Clip ordering controls must be available");
+          assert.match(js, /audio\.volume/, "Music volume control must be wired");
+          assert.match(css, /@media\(max-width:680px\)/, "Mobile editor layout must be present");
+          assert.doesNotMatch(js, /fetch\(|XMLHttpRequest|NAVI_BASE/, "Editor must not upload media or call an API");
+          console.log("Video editor foundation checks passed.");
+          NODE
