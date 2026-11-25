@@ -56,6 +56,7 @@
   const updateSummary = () => {
     totalLabel.textContent = clips.length + " کلیپ · " + fmt(totalDuration());
     playButton.disabled = clips.length === 0;
+    exportButton.disabled = clips.length === 0;
     stopButton.disabled = !playing;
     clearButton.disabled = clips.length === 0 && !audioFile;
   };
@@ -416,10 +417,16 @@
         setStatus("در حال ساخت خروجی: کلیپ " + (index + 1) + " از " + clips.length);
         preview.pause();
         preview.src = clip.url;
+        const metadataReady = waitForMediaEvent(preview, "loadedmetadata");
         preview.load();
-        await waitForMediaEvent(preview, "loadedmetadata");
-        preview.currentTime = clip.in;
-        if (Math.abs(preview.currentTime - clip.in) > 0.08) await waitForMediaEvent(preview, "seeked");
+        await metadataReady;
+        if (clip.in > 0.04) {
+          const seekReady = waitForMediaEvent(preview, "seeked");
+          preview.currentTime = clip.in;
+          await seekReady;
+        } else {
+          preview.currentTime = 0;
+        }
         await preview.play();
 
         await new Promise((resolve, reject) => {
