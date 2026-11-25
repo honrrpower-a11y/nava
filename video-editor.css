@@ -240,3 +240,80 @@ body.light .nava-video-editor .nava-editor-export-button{
   font:inherit;font-weight:800;cursor:pointer
 }
 .nava-video-editor .nava-editor-delete-range button:not(:disabled){border-color:#bd665b}
+
+
+/* Timed text overlays: preview layer and compact touch-first controls. */
+.nava-video-editor .nava-editor-preview-wrap{position:relative;overflow:hidden}
+.nava-video-editor .nava-editor-text-preview{position:absolute;inset:10px;z-index:4;pointer-events:none;overflow:hidden}
+.nava-video-editor .nava-editor-text-item{
+  position:absolute;left:50%;width:max-content;max-width:88%;box-sizing:border-box;
+  padding:8px 14px;border-radius:9px;text-align:center;white-space:pre-wrap;
+  overflow-wrap:anywhere;font-family:Vazirmatn,"Noto Naskh Arabic",sans-serif;
+  font-weight:700;line-height:1.5;text-shadow:0 2px 7px rgba(0,0,0,.72)
+}
+.nava-video-editor .nava-editor-text-item--top{top:12%;transform:translate(-50%,-50%)}
+.nava-video-editor .nava-editor-text-item--center{top:50%;transform:translate(-50%,-50%)}
+.nava-video-editor .nava-editor-text-item--bottom{top:86%;transform:translate(-50%,-50%)}
+.nava-video-editor .nava-editor-text-panel{
+  display:grid;gap:10px;margin:12px 0;padding:14px;
+  border:1px solid var(--editor-border);border-radius:14px;
+  background:var(--editor-panel);color:var(--editor-text)
+}
+.nava-video-editor .nava-editor-text-heading{display:grid;gap:4px}
+.nava-video-editor .nava-editor-text-heading strong{font-size:1rem}
+.nava-video-editor .nava-editor-text-heading small,
+.nava-video-editor .nava-editor-text-empty{color:var(--editor-muted);line-height:1.7}
+.nava-video-editor .nava-editor-text-panel>label:not(.nava-editor-text-background){
+  display:grid;gap:6px;font-size:.86rem;font-weight:700
+}
+.nava-video-editor #navaEditorTextContent{
+  width:100%;min-height:68px;box-sizing:border-box;resize:vertical;
+  padding:10px;border:1px solid var(--editor-border);border-radius:9px;
+  background:var(--editor-panel-2);color:var(--editor-text);font:inherit
+}
+.nava-video-editor .nava-editor-text-fields{
+  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px
+}
+.nava-video-editor .nava-editor-text-fields label{
+  display:grid;gap:5px;color:var(--editor-muted);font-size:.8rem
+}
+.nava-video-editor .nava-editor-text-fields input:not([type=color]),
+.nava-video-editor .nava-editor-text-fields select{
+  width:100%;min-width:0;min-height:40px;box-sizing:border-box;padding:7px 9px;
+  border:1px solid var(--editor-border);border-radius:8px;
+  background:var(--editor-panel-2);color:var(--editor-text);font:inherit
+}
+.nava-video-editor .nava-editor-text-fields input[type=color]{
+  width:100%;height:40px;min-height:40px;padding:3px;border:1px solid var(--editor-border);
+  border-radius:8px;background:var(--editor-panel-2)
+}
+.nava-video-editor .nava-editor-text-background{
+  display:flex;align-items:center;gap:8px;color:var(--editor-muted);font-size:.83rem
+}
+.nava-video-editor .nava-editor-text-background input{accent-color:var(--editor-accent)}
+.nava-video-editor .nava-editor-text-actions{display:flex;gap:8px;flex-wrap:wrap}
+.nava-video-editor .nava-editor-text-actions button,
+.nava-video-editor .nava-editor-text-card-actions button{
+  min-height:40px;padding:8px 12px;border:1px solid var(--editor-border);
+  border-radius:9px;background:var(--editor-panel-2);color:var(--editor-text);
+  font:inherit;font-weight:700;cursor:pointer
+}
+.nava-video-editor .nava-editor-text-actions #navaEditorAddText{
+  background:var(--editor-accent);border-color:var(--editor-accent);color:#171b22
+}
+.nava-video-editor .nava-editor-text-actions button:disabled{opacity:.45;cursor:not-allowed}
+.nava-video-editor .nava-editor-text-list{display:grid;gap:7px}
+.nava-video-editor .nava-editor-text-card{
+  display:flex;justify-content:space-between;align-items:center;gap:10px;
+  padding:10px;border:1px solid var(--editor-border);border-radius:10px;
+  background:var(--editor-panel-2);min-width:0
+}
+.nava-video-editor .nava-editor-text-card>div:first-child{display:grid;gap:3px;min-width:0}
+.nava-video-editor .nava-editor-text-card strong{overflow-wrap:anywhere;font-size:.88rem}
+.nava-video-editor .nava-editor-text-card small{color:var(--editor-muted);font-size:.76rem}
+.nava-video-editor .nava-editor-text-card-actions{display:flex;gap:5px;flex-shrink:0}
+.nava-video-editor .nava-editor-text-card-actions button{min-height:34px;padding:5px 8px;font-size:.76rem}
+@media(max-width:560px){
+ .nava-video-editor .nava-editor-text-card{align-items:stretch;flex-direction:column}
+ .nava-video-editor .nava-editor-text-card-actions button{flex:1}
+}
