@@ -4076,10 +4076,11 @@ async function sendMessageToNavi(options = {}) {
     // Render the answer immediately. Secondary synchronization must not block chat.
     const threadBeforeNaming = isHomePage ? null : naviThreads.find(item => item.thread_id === naviActiveThreadId);
     const shouldNameThread = !isHomePage && threadBeforeNaming && Number(threadBeforeNaming.message_count || 0) === 0;
-    if (selectedService === "ویدئو و صدا") {
-      // The structured scene-plan is an internal NAVI-to-renderer contract, not user-facing chat.
+    if (options.videoPlan === true) {
+      // Only the explicit "design/build with NAVI" flow returns a structured
+      // scene plan to the video renderer. Ordinary NAVI chat is always guidance.
       const videoPlanEvent = new CustomEvent("nava:navi-reply", {
-        detail: { service: selectedService, reply, status: "" }
+        detail: { service: selectedService, reply, videoPlan: true, status: "" }
       });
       window.dispatchEvent(videoPlanEvent);
       showNaviReply(videoPlanEvent.detail.status || "طرح ناوی دریافت شد؛ نتیجه اعمال را در پنل ساخت ویدئو ببین.");
