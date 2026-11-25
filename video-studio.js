@@ -960,7 +960,9 @@
         }
         if(!audioReady)return false;
       }
-      const outputFormat=isMp4?new MB.Mp4OutputFormat():new MB.WebMOutputFormat();
+      // Put MP4 movie metadata (moov atom) at the beginning so Telegram and other
+      // messaging apps can read the full duration before/while uploading.
+      const outputFormat=isMp4?new MB.Mp4OutputFormat({fastStart:"in-memory"}):new MB.WebMOutputFormat();
       output=new MB.Output({format:outputFormat,target:new MB.BufferTarget()});
       videoSource=new MB.CanvasSource(canvas,{codec:videoCodec,quality,latencyMode:"quality",hardwareAcceleration:"prefer-hardware"});
       output.addVideoTrack(videoSource,{frameRate:fps});
