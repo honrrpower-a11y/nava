@@ -43,6 +43,32 @@
     return String(m).padStart(2, "0") + ":" + (n % 60).toFixed(1).padStart(4, "0");
   };
   const totalDuration = () => clips.reduce((sum, clip) => sum + Math.max(0, clip.out - clip.in), 0);
+  const waitForVideoData = (video, timeout = 12000) => new Promise((resolve, reject) => {
+    if (video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA && video.videoWidth > 0 && video.videoHeight > 0) return resolve();
+    let timer;
+    const cleanup = () => { clearTimeout(timer); video.removeEventListener("loadeddata", ready); video.removeEventListener("canplay", ready); video.removeEventListener("error", failed); };
+    const ready = () => { if (video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA && video.videoWidth > 0 && video.videoHeight > 0) { cleanup(); resolve(); } };
+    const failed = () => { cleanup(); reject(new Error(video.error?.message || "فریم ویدئو رمزگشایی نشد؛ ممکن است کدک فایل پشتیبانی نشود.")); };
+    video.addEventListener("loadeddata", ready); video.addEventListener("canplay", ready); video.addEventListener("error", failed, { once: true });
+    timer = setTimeout(() => { cleanup(); reject(new Error("بارگذاری فریم ویدئو بیش از حد طول کشید. فایل MP4 با کدک H.264 را امتحان کن.")); }, timeout);
+    ready();
+  });
+  const seekVideo = (video, time) => new Promise((resolve, reject) => {
+    if (Math.abs(video.currentTime - time) < 0.05 && video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) return resolve();
+    let timer;
+    const cleanup = () => { clearTimeout(timer); video.removeEventListener("seeked", done); video.removeEventListener("error", failed); };
+    const done = () => { cleanup(); resolve(); };
+    const failed = () => { cleanup(); reject(new Error("رفتن به زمان انتخاب‌شده در ویدئو ناموفق بود.")); };
+    video.addEventListener("seeked", done, { once: true }); video.addEventListener("error", failed, { once: true });
+    timer = setTimeout(() => { cleanup(); reject(new Error("آماده‌سازی فریم انتخاب‌شده زمان‌بر شد.")); }, 10000);
+    try { video.currentTime = time; } catch (error) { cleanup(); reject(error); }
+  });
+  const waitForPresentedFrame = video => new Promise(resolve => {
+    if (typeof video.requestVideoFrameCallback === "function") {
+      let settled = false; const timer = setTimeout(() => { if (!settled) { settled = true; resolve(); } }, 1200);
+      video.requestVideoFrameCallback(() => { if (!settled) { settled = true; clearTimeout(timer); resolve(); } });
+    } else requestAnimationFrame(() => requestAnimationFrame(resolve));
+  });
   const setStatus = message => { if (status) status.textContent = message; };
   const getClip = id => clips.find(clip => clip.id === id);
   const stopPlayback = () => {
@@ -88,23 +114,37 @@
     });
     updateSummary();
   };
-  const selectClip = clip => {
+  let previewLoadToken = 0;
+  const selectClip = async clip => {
     if (!clip) return;
     stopPlayback();
+    const loadToken = ++previewLoadToken;
     selectedId = clip.id;
     preview.pause();
-    preview.onloadedmetadata = null;
-    const metadataReady = new Promise(resolve => {
-      preview.addEventListener("loadedmetadata", resolve, { once: true });
-    });
-    preview.src = clip.url;
+    preview.removeAttribute("src");
     preview.load();
-    metadataReady.then(() => {
-      if (selectedId !== clip.id) return;
-      try { preview.currentTime = clip.in; } catch (_) {}
-    });
+    preview.preload = "auto";
     renderTimeline();
-    setStatus("کلیپ انتخاب‌شده: " + clip.file.name + " — بازهٔ قابل‌پخش را از فیلدهای شروع و پایان تنظیم کن.");
+    setStatus("در حال آماده‌سازی پیش‌نمایش: " + clip.file.name);
+    try {
+      const metadataReady = new Promise((resolve, reject) => {
+        const timer = setTimeout(() => reject(new Error("خواندن مشخصات ویدئو بیش از حد طول کشید.")), 12000);
+        preview.addEventListener("loadedmetadata", () => { clearTimeout(timer); resolve(); }, { once: true });
+        preview.addEventListener("error", () => { clearTimeout(timer); reject(new Error("این فرمت یا کدک ویدئو در مرورگر قابل‌پخش نیست.")); }, { once: true });
+      });
+      preview.src = clip.url;
+      preview.load();
+      await metadataReady;
+      await waitForVideoData(preview);
+      if (loadToken !== previewLoadToken || selectedId !== clip.id) return;
+      await seekVideo(preview, clip.in);
+      await waitForVideoData(preview);
+      await waitForPresentedFrame(preview);
+      if (loadToken !== previewLoadToken || selectedId !== clip.id) return;
+      setStatus("پیش‌نمایش آماده است: " + clip.file.name);
+    } catch (error) {
+      if (loadToken === previewLoadToken) setStatus(error.message || "پیش‌نمایش این ویدئو آماده نشد.");
+    }
   };
   const addVideo = async file => {
     if (!file || !(file.type.startsWith("video/") || /\.(mp4|m4v|mov|webm|ogv|3gp)$/i.test(file.name))) {
@@ -163,16 +203,14 @@
         preview.onerror = () => reject(new Error("پخش یکی از کلیپ‌ها ممکن نیست: " + clip.file.name));
       });
       preview.src = clip.url;
+      preview.preload = "auto";
       preview.load();
       await metadataReady;
+      await waitForVideoData(preview);
       if (token !== playToken) return;
-      preview.currentTime = clip.in;
-      await new Promise(resolve => {
-        if (Math.abs(preview.currentTime - clip.in) < 0.08) return resolve();
-        const done = () => { preview.removeEventListener("seeked", done); resolve(); };
-        preview.addEventListener("seeked", done, { once: true });
-        setTimeout(done, 1200);
-      });
+      await seekVideo(preview, clip.in);
+      await waitForVideoData(preview);
+      await waitForPresentedFrame(preview);
       if (token !== playToken) return;
       await preview.play();
       advancing = false;
@@ -431,15 +469,13 @@
         preview.pause();
         preview.src = clip.url;
         const metadataReady = waitForMediaEvent(preview, "loadedmetadata");
+        preview.preload = "auto";
         preview.load();
         await metadataReady;
-        if (clip.in > 0.04) {
-          const seekReady = waitForMediaEvent(preview, "seeked");
-          preview.currentTime = clip.in;
-          await seekReady;
-        } else {
-          preview.currentTime = 0;
-        }
+        await waitForVideoData(preview);
+        await seekVideo(preview, clip.in);
+        await waitForVideoData(preview);
+        await waitForPresentedFrame(preview);
         await preview.play();
 
         await new Promise((resolve, reject) => {
