@@ -1,4 +1,4 @@
-/* NAVI guided help for the local video editor. Keeps editing/export engines untouched. */
+/* Step-by-step help for the local video editor. Keeps editing/export engines untouched. */
 (() => {
 "use strict";
 const root=document.getElementById("navaVideoEditor");if(!root)return;
