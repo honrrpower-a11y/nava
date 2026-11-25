@@ -364,7 +364,140 @@
     element.addEventListener(errorName, fail, { once: true });
   });
 
+  // Isolated experimental export path. The image-based video studio is not modified.
+  const exportViaMediaRecorder = async () => {
+    if (!window.MediaRecorder || typeof MediaRecorder.isTypeSupported !== "function") return false;
+    const mime = ['video/mp4;codecs="avc1.42E01E,mp4a.40.2"','video/mp4;codecs="avc1,mp4a.40.2"',"video/mp4"].find(type => {
+      try { return MediaRecorder.isTypeSupported(type); } catch (_) { return false; }
+    });
+    // If native MP4 recording is unavailable, retain the existing H.264/AAC pipeline.
+    if (!mime) return false;
+    const duration = totalDuration();
+    if (!duration || duration > 900) throw new Error("مدت پروژه باید بیشتر از صفر و حداکثر ۱۵ دقیقه باشد.");
+    stopPlayback();
+    exportButton.disabled = true; playButton.disabled = true;
+    exportProgress.hidden = false; exportProgress.value = 0; exportProgress.max = 100;
+    exportOutput.hidden = true; exportDownload.hidden = true;
+    setStatus("آزمایش ضبط مستقیم Canvas برای خروجی MP4…");
+    let stream = null, recorder = null, musicStarted = false, recorderError = null;
+    const chunks = [];
+    try {
+      const first = clips[0], sw = Math.max(1, first.width || 16), sh = Math.max(1, first.height || 9);
+      const ram = Number(navigator.deviceMemory) || 0, cores = Number(navigator.hardwareConcurrency) || 0;
+      const economy = (ram && ram <= 4) || (cores && cores <= 4), high = ram >= 8 && cores >= 8;
+      const maxEdge = economy ? 480 : high ? 1080 : 720, fps = economy ? 20 : high ? 30 : 24;
+      const scale = Math.min(1, maxEdge / Math.max(sw, sh));
+      const width = Math.max(2, Math.round(sw * scale / 2) * 2), height = Math.max(2, Math.round(sh * scale / 2) * 2);
+      const canvas = document.createElement("canvas"); canvas.width = width; canvas.height = height;
+      const ctx = canvas.getContext("2d", { alpha: false, desynchronized: true });
+      if (!ctx) throw new Error("امکان ساخت تصویر خروجی وجود ندارد.");
+      const draw = () => {
+        const vw = preview.videoWidth || sw, vh = preview.videoHeight || sh;
+        const s = Math.min(width / vw, height / vh), dw = vw * s, dh = vh * s;
+        ctx.fillStyle = "#000"; ctx.fillRect(0, 0, width, height);
+        if (preview.readyState >= 2 && preview.videoWidth) ctx.drawImage(preview, (width-dw)/2, (height-dh)/2, dw, dh);
+      };
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) throw new Error("ترکیب صدای کلیپ‌ها و موسیقی در این مرورگر پشتیبانی نمی‌شود.");
+      if (!exportAudioContext || exportAudioContext.state === "closed") {
+        exportAudioContext = new AC(); exportRecordDestination = exportAudioContext.createMediaStreamDestination();
+        exportPreviewGain = exportMusicGain = exportMusicSource = null;
+      }
+      await exportAudioContext.resume();
+      if (!exportPreviewGain) {
+        const src = exportAudioContext.createMediaElementSource(preview);
+        exportPreviewGain = exportAudioContext.createGain(); exportPreviewGain.gain.value = 1;
+        src.connect(exportPreviewGain); exportPreviewGain.connect(exportRecordDestination); exportPreviewGain.connect(exportAudioContext.destination);
+      }
+      if (!exportMusicSource) {
+        exportMusicSource = exportAudioContext.createMediaElementSource(audio);
+        exportMusicGain = exportAudioContext.createGain();
+        exportMusicSource.connect(exportMusicGain); exportMusicGain.connect(exportRecordDestination);
+      }
+      exportPreviewGain.gain.value = 1;
+      exportMusicGain.gain.value = audioFile ? Math.max(0, Math.min(1, Number(audioVolume.value)/100)) : 0;
+      const videoStream = canvas.captureStream(fps), audioTrack = exportRecordDestination.stream.getAudioTracks()[0];
+      if (!videoStream.getVideoTracks().length || !audioTrack || audioTrack.readyState !== "live") throw new Error("مسیر تصویر یا صدای خروجی فعال نشد.");
+      stream = new MediaStream([...videoStream.getVideoTracks(), audioTrack]);
+      recorder = new MediaRecorder(stream, { mimeType: mime, videoBitsPerSecond: economy ? 1000000 : high ? 5000000 : 2500000, audioBitsPerSecond: 128000 });
+      recorder.ondataavailable = e => { if (e.data?.size) chunks.push(e.data); };
+      recorder.onerror = e => { recorderError = e.error || new Error("ضبط MP4 با خطا متوقف شد."); };
+      const stopped = new Promise((resolve,reject) => {
+        recorder.onstop = () => recorderError ? reject(recorderError) : resolve();
+      });
+      draw(); recorder.start(1000);
+      if (audioFile) { audio.loop = true; audio.currentTime = 0; audio.volume = 1; await audio.play(); musicStarted = true; }
+      let doneDuration = 0;
+      for (let i=0; i<clips.length; i++) {
+        const clip = clips[i]; setStatus("ضبط MP4 آزمایشی: کلیپ " + (i+1) + " از " + clips.length);
+        preview.pause();
+        const ready = waitForMediaEvent(preview,"loadedmetadata");
+        preview.src = clip.url; preview.preload = "auto"; preview.load();
+        await ready; await waitForVideoData(preview); await seekVideo(preview,clip.in); await waitForVideoData(preview); await waitForPresentedFrame(preview);
+        draw(); await preview.play();
+        await new Promise((resolve,reject) => {
+          let raf=0, watchdog=0, last=preview.currentTime, lastAt=Date.now(), settled=false;
+          const clean=()=>{ if(raf)cancelAnimationFrame(raf); if(watchdog)clearInterval(watchdog); };
+          const finish=err=>{ if(settled)return; settled=true; clean(); err?reject(err):resolve(); };
+          const tick=()=>{
+            if(settled)return;
+            try {
+              if(recorderError)throw recorderError;
+              draw();
+              const elapsed=Math.max(0,Math.min(clip.out-clip.in,preview.currentTime-clip.in));
+              exportProgress.value=Math.round(((doneDuration+elapsed)/duration)*100);
+              if(preview.currentTime>last+0.015){last=preview.currentTime;lastAt=Date.now();}
+              if(preview.currentTime>=clip.out-0.04||preview.ended){draw();finish();return;}
+              raf=requestAnimationFrame(tick);
+            } catch(err){finish(err);}
+          };
+          raf=requestAnimationFrame(tick);
+          watchdog=setInterval(()=>{if(!settled&&Date.now()-lastAt>8000&&preview.currentTime<clip.out-0.04)finish(new Error("حرکت ویدئو هنگام ضبط متوقف شد؛ فایل ناقص ارائه نشد."));},1000);
+        });
+        preview.pause(); doneDuration+=clip.out-clip.in;
+      }
+      if(musicStarted)audio.pause(); preview.pause(); draw();
+      if(recorder.state!=="inactive")recorder.stop();
+      await stopped;
+      const blob=new Blob(chunks,{type:"video/mp4"});
+      if(!blob.size)throw new Error("فایل MP4 خالی ساخته شد.");
+      const checkUrl=URL.createObjectURL(blob);
+      try {
+        const probe=document.createElement("video"); probe.preload="metadata";
+        await new Promise((resolve,reject)=>{
+          const timer=setTimeout(()=>reject(new Error("بررسی مدت MP4 بیش از حد طول کشید.")),15000);
+          probe.onloadedmetadata=()=>{clearTimeout(timer);resolve();};
+          probe.onerror=()=>{clearTimeout(timer);reject(new Error("فایل MP4 ضبط‌شده قابل‌خواندن نیست."));};
+          probe.src=checkUrl;
+        });
+        if(!Number.isFinite(probe.duration)||probe.duration<duration*0.9)throw new Error("مدت MP4 ناقص است؛ فایل ارائه نشد.");
+        probe.removeAttribute("src");probe.load();
+        const MB=window.Mediabunny;
+        if(!MB?.Input||!MB?.BlobSource||!MB?.ALL_FORMATS)throw new Error("امکان بررسی صدای MP4 نهایی فراهم نشد.");
+        const inputCheck=new MB.Input({source:new MB.BlobSource(blob),formats:MB.ALL_FORMATS});
+        try{if(!await inputCheck.getPrimaryAudioTrack())throw new Error("صدای MP4 در فایل نهایی ثبت نشده است.");}
+        finally{try{inputCheck.dispose();}catch(_){}}
+      } finally {URL.revokeObjectURL(checkUrl);}
+      if(exportUrl)URL.revokeObjectURL(exportUrl);
+      exportUrl=URL.createObjectURL(blob); exportOutput.src=exportUrl; exportOutput.hidden=false; exportOutput.load();
+      exportDownload.href=exportUrl; exportDownload.download="nava-edited-video.mp4";
+      exportDownload.textContent="دریافت ویدیوی نهایی (MP4 · "+width+"×"+height+")"; exportDownload.hidden=false;
+      exportProgress.value=100;
+      setStatus("خروجی آزمایشی آماده شد · MP4 · "+width+"×"+height+" · "+duration.toFixed(1)+" ثانیه. ضبط مستقیم Canvas فعال بود.");
+    } catch(err) {
+      if(recorder&&recorder.state!=="inactive")try{recorder.stop();}catch(_){}
+      setStatus(err.message||"ساخت MP4 آزمایشی ناموفق بود.");
+    } finally {
+      if(musicStarted)audio.pause(); preview.pause();
+      if(stream)stream.getTracks().forEach(track=>track.stop());
+      exportButton.disabled=false; updateSummary();
+    }
+    return true;
+  };
+
   const exportFinalVideo = async () => {
+    const usedAlternate = await exportViaMediaRecorder();
+    if (usedAlternate) return;
     if (!clips.length || exportButton.disabled) return;
     const MB = window.Mediabunny;
     if (!MB || !MB.Output || !MB.Mp4OutputFormat || !MB.BufferTarget ||
