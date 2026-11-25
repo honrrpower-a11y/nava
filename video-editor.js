@@ -390,6 +390,7 @@
     let audioContext = null;
     let canvasStream = null;
     let combinedStream = null;
+    let previewCaptureStream = null;
     let musicStarted = false;
     try {
       const canvas = document.createElement("canvas");
@@ -411,7 +412,6 @@
 
       // Prefer the browser's native media capture for the source video's audio.
       // This avoids routing every decoded audio sample through WebAudio on mobile.
-      let previewCaptureStream = null;
       let sourceAudioTracks = [];
       const capturePreviewAudio = preview.captureStream || preview.mozCaptureStream;
       if (typeof capturePreviewAudio === "function") {
@@ -433,6 +433,8 @@
           exportMusicGain.connect(exportRecordDestination);
         }
         exportMusicGain.gain.value = Math.max(0, Math.min(1, Number(audioVolume.value) / 100));
+      } else if (exportMusicGain) {
+        exportMusicGain.gain.value = 0;
       }
 
       // Fallback for browsers that do not expose an audio track from captureStream().
@@ -449,7 +451,9 @@
 
       combinedStream = new MediaStream([
         ...canvasStream.getVideoTracks(),
-        ...(sourceAudioTracks.length ? sourceAudioTracks : exportRecordDestination.stream.getAudioTracks())
+        ...(sourceAudioTracks.length
+          ? [...sourceAudioTracks, ...(audioFile ? exportRecordDestination.stream.getAudioTracks() : [])]
+          : exportRecordDestination.stream.getAudioTracks())
       ]);
 
       const mimeCandidates = [
@@ -605,7 +609,7 @@
       preview.pause();
       if (canvasStream) canvasStream.getTracks().forEach(track => track.stop());
       if (combinedStream) combinedStream.getTracks().forEach(track => track.stop());
-      if (typeof previewCaptureStream !== "undefined" && previewCaptureStream) {
+      if (previewCaptureStream) {
         previewCaptureStream.getTracks().forEach(track => track.stop());
       }
       exportButton.disabled = false;
