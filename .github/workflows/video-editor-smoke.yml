@@ -48,7 +48,7 @@ jobs:
           assert.match(js, /OfflineAudioContext/, "Clip audio and music must be mixed offline");
           assert.match(js, /data-action="split"/, "Clip split action must be available");
           assert.match(js, /data-action="duplicate"/, "Clip duplicate action must be available");
-          for (const id of ["navaEditorDeleteRangeStart","navaEditorDeleteRangeEnd","navaEditorDeleteRange"]) {
+          for (const id of ["navaEditorDeleteRangeStart","navaEditorDeleteRangeEnd","navaEditorDeleteRange","navaEditorTextContent","navaEditorTextStart","navaEditorTextEnd","navaEditorTextPosition","navaEditorTextSize","navaEditorTextColor","navaEditorTextAnimation","navaEditorTextBackground","navaEditorAddText","navaEditorCancelTextEdit","navaEditorTextList","navaEditorTextPreview"]) {
             assert.ok(html.includes('id="' + id + '"'), "Missing delete-range control: " + id);
           }
           assert.match(js, /deleteRangeButton\?\.addEventListener\("click"/, "Delete-range action must be wired");
@@ -56,6 +56,11 @@ jobs:
           assert.match(js, /afterDuration\s*>=\s*0\.15/, "Delete-range must preserve the clip after the removed interval");
           assert.match(js, /window\.confirm\(/, "Delete-range must require confirmation before changing the edit");
           assert.match(js, /URL\.revokeObjectURL\(oldUrl\)/, "Delete-range must release the replaced clip URL");
+          assert.match(js, /addTextButton\?\.addEventListener\("click"/, "Timed text add/edit action must be wired");
+          assert.match(js, /drawTextOverlays\(textContext, compositionTime/, "Text overlays must be rendered into exported frames");
+          assert.match(js, /new MB\.VideoSample\(textCanvas/, "Text-rendered frames must enter the offline MP4 encoder");
+          assert.match(js, /getCompositionTime/, "Preview text timing must use the assembled timeline");
+          assert.match(html, /متن روی ویدئو/, "Timed text editor must be visible");
           assert.match(js, /data-clip-volume/, "Per-clip original audio volume must be available");
           assert.match(js, /muteAudio/, "Per-clip original audio mute must be supported");
           assert.match(js, /navaEditorAspectRatio/, "Export aspect ratio must be selectable");
