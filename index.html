@@ -646,9 +646,16 @@
         <div class="nava-editor-playback"><button class="nava-editor-play" id="navaEditorPlay" type="button" disabled>▶ پخش تدوین</button><button class="nava-editor-stop" id="navaEditorStop" type="button" disabled>توقف</button><button class="nava-editor-stop" id="navaEditorClear" type="button" disabled>پاک‌کردن پروژه</button></div>
       </aside>
     </div>
-    <div class="nava-editor-timeline-heading"><h4>کلیپ‌های پروژه</h4><small>برای ویرایش هر بخش، روی نام آن بزن</small></div><div class="nava-editor-timeline" id="navaEditorTimeline"><div class="nava-editor-empty">هنوز ویدئویی اضافه نشده است.</div></div></div>
+    <div class="nava-editor-timeline-heading"><h4>کلیپ‌های پروژه</h4><small>برای ویرایش هر بخش، روی نام آن بزن</small></div><div class="nava-editor-timeline" id="navaEditorTimeline"><div class="nava-editor-empty">هنوز ویدئویی اضافه نشده است.</div></div>
+    <section class="nava-editor-export" aria-label="خروجی نهایی ویدئو">
+      <button class="nava-editor-export-button" id="navaEditorExport" type="button" disabled>ساخت و دانلود ویدیوی نهایی</button>
+      <progress id="navaEditorExportProgress" max="100" value="0" hidden></progress>
+      <video class="nava-editor-export-preview" id="navaEditorExportOutput" controls playsinline hidden></video>
+      <a class="nava-editor-export-download" id="navaEditorExportDownload" hidden download="nava-edited-video.webm">دریافت ویدیوی نهایی</a>
+      <small>خروجی با امکانات مرورگر ساخته می‌شود؛ فرمت MP4 در مرورگرهای پشتیبان و در غیر این صورت WebM ارائه می‌شود.</small>
+    </section></div>
     <p class="nava-editor-status" id="navaEditorStatus" role="status" aria-live="polite">برای شروع یک یا چند ویدئو انتخاب کن.</p>
-    <p class="nava-editor-note">این نسخه برای چیدن کلیپ‌ها، برش ابتدا و انتها و پیش‌نمایش است. هنوز خروجی نهایی MP4، افکت انتقال و میکس صدای اصلی و موسیقی فعال نشده‌اند؛ این موارد باید در مرحله بعد به موتور تدوین اضافه شوند.</p>
+    <p class="nava-editor-note">این نسخه برش، مرتب‌سازی، پیش‌نمایش و ساخت فایل نهایی را پشتیبانی می‌کند. افکت‌های انتقال و تنظیم جداگانه صدای اصلی کلیپ‌ها در مراحل بعدی اضافه می‌شوند.</p>
   </section>
 </section>
 
