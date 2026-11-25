@@ -28,6 +28,7 @@
   let playing = false;
   let playToken = 0;
   let currentIndex = -1;
+  let advancing = false;
   let clipSequence = 0;
   let exportUrl = "";
   let exportAudioContext = null;
@@ -91,11 +92,17 @@
     if (!clip) return;
     stopPlayback();
     selectedId = clip.id;
-    preview.onloadedmetadata = () => {
-      try { preview.currentTime = clip.in; } catch (_) {}
-    };
+    preview.pause();
+    preview.onloadedmetadata = null;
+    const metadataReady = preview.readyState >= 1 ? Promise.resolve() : new Promise(resolve => {
+      preview.addEventListener("loadedmetadata", resolve, { once: true });
+    });
     preview.src = clip.url;
     preview.load();
+    metadataReady.then(() => {
+      if (selectedId !== clip.id) return;
+      try { preview.currentTime = clip.in; } catch (_) {}
+    });
     renderTimeline();
     setStatus("کلیپ انتخاب‌شده: " + clip.file.name + " — بازهٔ قابل‌پخش را از فیلدهای شروع و پایان تنظیم کن.");
   };
@@ -167,17 +174,19 @@
       });
       if (token !== playToken) return;
       await preview.play();
+      advancing = false;
     } catch (error) {
       stopPlayback();
       setStatus(error.message || "پخش این کلیپ در مرورگر ممکن نیست.");
     }
   };
   const advanceIfNeeded = () => {
-    if (!playing || currentIndex < 0) return;
+    if (!playing || currentIndex < 0 || advancing) return;
     const clip = clips[currentIndex];
     if (!clip || preview.currentTime >= clip.out - 0.06 || preview.ended) {
+      advancing = true;
       const next = currentIndex + 1;
-      playFrom(next, playToken);
+      playFrom(next, playToken).finally(() => { advancing = false; });
     }
   };
 
@@ -249,12 +258,9 @@
     const value = Math.max(0, Math.min(clip.duration, Number(field.value) || 0));
     if (field.dataset.trim === "in") clip.in = Math.min(value, clip.out - 0.1);
     else clip.out = Math.max(value, clip.in + 0.1);
-    const startField = card.querySelector('[data-trim="in"]');
-    const endField = card.querySelector('[data-trim="out"]');
-    startField.max = Math.max(0.1, clip.out - 0.1).toFixed(1);
-    endField.min = Math.min(clip.duration, clip.in + 0.1).toFixed(1);
-    startField.value = clip.in.toFixed(1);
-    endField.value = clip.out.toFixed(1);
+    // Keep each range on the same fixed 0..source-duration scale.
+    // Dynamic opposite-slider bounds can make mobile browsers drag both thumbs.
+    field.value = (field.dataset.trim === "in" ? clip.in : clip.out).toFixed(1);
     card.querySelector('[data-trim-value="in"]').textContent = fmt(clip.in);
     card.querySelector('[data-trim-value="out"]').textContent = fmt(clip.out);
     card.querySelector("[data-trim-duration]").textContent = fmt(clip.out - clip.in);
@@ -269,6 +275,7 @@
   playButton.addEventListener("click", () => {
     if (!clips.length) return;
     stopPlayback();
+    advancing = false;
     playing = true;
     const token = playToken;
     playButton.textContent = "در حال پخش…";
