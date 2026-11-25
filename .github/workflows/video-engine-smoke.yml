@@ -57,7 +57,8 @@ jobs:
           assert.match(js, /scene\.transition==="page-turn"&&\(scene\.layout!=="single"\|\|scene\.images\.length!==1\)/, "Only the individual page-turn scene must use one photo");
           assert.doesNotMatch(js, /pageTurnPlan&&plan\.scenes\.some/, "A page-turn scene must not force every other scene into single-photo layout");
           assert.match(js, /کارگردانی چیدمان: برای هر صحنه مستقل تصمیم بگیر/, "NAVI prompt must explicitly choose varied layouts per scene");
-          assert.match(js, /فقط همان صحنه‌ای که transition=page-turn دارد/, "The page-turn single-photo rule must be scoped to that scene only");
+          assert.match(js, /page-turn پیش‌فرض نیست و در کل پروژه حداکثر یک بار مجاز است/, "Page-turn must not dominate NAVI-generated videos");
+          assert.match(js, /pageTurnCount>1/, "Reject a repeated page-turn slideshow instead of rendering a repetitive template");
           assert.match(js, /const t=\(i\+\.5\)\/strips;/, "Page-turn curl must draw the full page before folding it");
           assert.match(js, /activeStory\?\.transition==="page-turn"\?"single"/, "Page-turn scenes must render as a single photo page");
           assert.match(js, /allUsableImages.slice\(0,1\)/, "Page-turn scenes must not become multi-photo collages");
@@ -89,7 +90,10 @@ jobs:
           assert.match(js, /"page-turn":"page-turn","slide-left":"whoosh","slide-right":"whoosh",zoom:"impact",fade:"sparkle"/, "Page-turn and all other visual transitions must schedule their own sound effects");
           assert.match(js, /const hasEffects=story\.some\(scene=>\["cut","page-turn","slide-left","slide-right","zoom","fade"\]\.includes\(scene\.transition\)/, "Preview must activate its audio graph for every visual transition");
           assert.match(js, /const renderStorySounds=renderStory\.some\(scene=>\["cut","page-turn","slide-left","slide-right","zoom","fade"\]\.includes\(scene\.transition\)/, "Final render must create an audio track for every visual transition");
-          assert.match(js, /if\(window\.Mediabunny\)\{/, "All devices must prefer deterministic offline frame encoding when supported");
+          assert.match(js, /if\(window\.Mediabunny&&\(!hasVisualTransitionAudio\|\|isLowPowerDevice\(\)\)\)/, "Keep the proven recorder for visual-transition audio; reserve offline MP4 for compatible cases");
+          assert.match(js, /const pageTurnCount=plan\.scenes\.filter\(scene=>scene\?\.transition==="page-turn"\)\.length/, "NAVI plans must not become repeated page-turn slideshows");
+          assert.match(js, /page-turn پیش‌فرض نیست و در کل پروژه حداکثر یک بار مجاز است/, "NAVI must use page-turn sparingly and create project-specific visual direction");
+          assert.match(js, /set\(node\.querySelector\("\[data-layer-color-mode\]"\),"auto",allowed\.colorMode\)/, "NAVI-generated text must start in automatic high-contrast mode");
           assert.match(js, /scheduleSoundEffects\(renderStory,audioDestination,audioContext\.currentTime\+\.18\)/, "Final render must capture the same scheduled transition effects as preview");
           assert.match(js, /previewStoryForLoop=previewStory;previewLoopIndex=0/, "Preview audio must retain the story and restart its sound effects on each visual loop");
           assert.match(js, /scheduleSoundEffects\(previewStoryForLoop,previewMasterGain,audioContext\.currentTime\+\.08,0\)/, "Preview loop must reschedule photo and text effects from the beginning");
