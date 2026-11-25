@@ -13,6 +13,18 @@
   const deleteRangeStart = $("navaEditorDeleteRangeStart");
   const deleteRangeEnd = $("navaEditorDeleteRangeEnd");
   const deleteRangeButton = $("navaEditorDeleteRange");
+  const textContentInput = $("navaEditorTextContent");
+  const textStartInput = $("navaEditorTextStart");
+  const textEndInput = $("navaEditorTextEnd");
+  const textPositionInput = $("navaEditorTextPosition");
+  const textSizeInput = $("navaEditorTextSize");
+  const textColorInput = $("navaEditorTextColor");
+  const textAnimationInput = $("navaEditorTextAnimation");
+  const textBackgroundInput = $("navaEditorTextBackground");
+  const addTextButton = $("navaEditorAddText");
+  const cancelTextEditButton = $("navaEditorCancelTextEdit");
+  const textList = $("navaEditorTextList");
+  const textPreview = $("navaEditorTextPreview");
   const selectedClipLabel = $("navaEditorSelectedLabel");
   const preview = $("navaEditorPreview");
   const status = document.getElementById("navaEditorStatus");
@@ -42,7 +54,164 @@
   let exportPreviewGain = null;
   let exportMusicGain = null;
   let exportMusicSource = null;
+  let textOverlays = [];
+  let textSequence = 0;
+  let editingTextId = null;
 
+  const getCompositionTime = () => {
+    if (!clips.length) return 0;
+    const index = playing && currentIndex >= 0 ? currentIndex : clips.findIndex(clip => clip.id === selectedId);
+    if (index < 0 || !clips[index]) return 0;
+    const clip = clips[index];
+    const offset = clips.slice(0, index).reduce((sum, item) => sum + item.out - item.in, 0);
+    return offset + Math.max(0, Math.min(clip.out - clip.in, (preview.currentTime || clip.in) - clip.in));
+  };
+  const getTextAnimationState = (item, time) => {
+    if (time < item.start || time >= item.end) return { visible: false, opacity: 0, shift: 0 };
+    if (item.animation === "none") return { visible: true, opacity: 1, shift: 0 };
+    const duration = Math.max(0.08, Math.min(0.28, (item.end - item.start) / 3));
+    const entering = Math.max(0, Math.min(1, (time - item.start) / duration));
+    const leaving = Math.max(0, Math.min(1, (item.end - time) / duration));
+    const progress = Math.min(entering, leaving);
+    const shift = item.animation === "slide" ? (1 - progress) * (item.position === "top" ? -18 : 18) : 0;
+    return { visible: true, opacity: progress, shift };
+  };
+  const updateTextPreview = () => {
+    if (!textPreview) return;
+    const videoRect = preview.getBoundingClientRect();
+    const wrapRect = preview.parentElement.getBoundingClientRect();
+    if (preview.videoWidth > 0 && preview.videoHeight > 0 && videoRect.width > 0 && videoRect.height > 0) {
+      const scale = Math.min(videoRect.width / preview.videoWidth, videoRect.height / preview.videoHeight);
+      const displayWidth = preview.videoWidth * scale;
+      const displayHeight = preview.videoHeight * scale;
+      textPreview.style.inset = "auto";
+      textPreview.style.left = (videoRect.left - wrapRect.left + (videoRect.width - displayWidth) / 2) + "px";
+      textPreview.style.top = (videoRect.top - wrapRect.top + (videoRect.height - displayHeight) / 2) + "px";
+      textPreview.style.width = displayWidth + "px";
+      textPreview.style.height = displayHeight + "px";
+      textPreview.style.right = "auto";
+      textPreview.style.bottom = "auto";
+    }
+    const time = getCompositionTime();
+    const nodes = [];
+    textOverlays.forEach(item => {
+      const state = getTextAnimationState(item, time);
+      if (!state.visible) return;
+      const node = document.createElement("div");
+      node.className = "nava-editor-text-item nava-editor-text-item--" + item.position;
+      node.textContent = item.text;
+      node.style.color = item.color;
+      node.style.opacity = String(state.opacity);
+      node.style.transform = "translate(-50%, -50%) translateY(" + state.shift + "px)";
+      node.style.fontSize = item.size === "large" ? "clamp(24px, 6vw, 42px)" : item.size === "small" ? "clamp(14px, 3.2vw, 23px)" : "clamp(18px, 4.5vw, 32px)";
+      node.style.background = item.background ? "rgba(0,0,0,.58)" : "transparent";
+      nodes.push(node);
+    });
+    textPreview.replaceChildren(...nodes);
+  };
+  const drawTextOverlays = (ctx, time, width, height, items) => {
+    items.forEach(item => {
+      const state = getTextAnimationState(item, time);
+      if (!state.visible) return;
+      const baseSize = item.size === "large" ? 46 : item.size === "small" ? 25 : 35;
+      const fontSize = Math.max(16, Math.round(baseSize * width / 720));
+      const lineHeight = fontSize * 1.34;
+      const maxTextWidth = width * 0.86;
+      ctx.save();
+      ctx.globalAlpha = state.opacity;
+      ctx.direction = "rtl";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.font = "700 " + fontSize + "px Vazirmatn, 'Noto Naskh Arabic', Arial, sans-serif";
+      ctx.shadowColor = "rgba(0,0,0,.62)";
+      ctx.shadowBlur = Math.max(2, fontSize * 0.16);
+      const paragraphs = String(item.text).split(/\r?\n/);
+      const lines = [];
+      paragraphs.forEach(paragraph => {
+        const words = paragraph.split(/\s+/).filter(Boolean);
+        if (!words.length) { lines.push(""); return; }
+        let line = "";
+        words.forEach(word => {
+          const candidate = line ? line + " " + word : word;
+          if (line && ctx.measureText(candidate).width > maxTextWidth) {
+            lines.push(line);
+            line = word;
+          } else line = candidate;
+        });
+        if (line) lines.push(line);
+      });
+      const blockHeight = lines.length * lineHeight;
+      const padX = Math.round(fontSize * 0.72);
+      const padY = Math.round(fontSize * 0.42);
+      const widest = Math.min(maxTextWidth, Math.max(0, ...lines.map(line => ctx.measureText(line).width)));
+      const boxWidth = Math.min(width - 24, widest + padX * 2);
+      const boxHeight = blockHeight + padY * 2;
+      let centerY = item.position === "top" ? Math.max(boxHeight / 2 + 18, height * 0.13 + boxHeight / 2) :
+        item.position === "bottom" ? height - Math.max(boxHeight / 2 + 18, height * 0.13 + boxHeight / 2) : height / 2;
+      centerY += state.shift * height / 720;
+      if (item.background) {
+        ctx.shadowBlur = 0;
+        ctx.fillStyle = "rgba(0,0,0,.58)";
+        const x = (width - boxWidth) / 2;
+        const y = centerY - boxHeight / 2;
+        if (typeof ctx.roundRect === "function") {
+          ctx.beginPath(); ctx.roundRect(x, y, boxWidth, boxHeight, Math.max(5, fontSize * 0.24)); ctx.fill();
+        } else ctx.fillRect(x, y, boxWidth, boxHeight);
+      }
+      ctx.shadowColor = "rgba(0,0,0,.72)";
+      ctx.shadowBlur = Math.max(2, fontSize * 0.16);
+      ctx.fillStyle = item.color;
+      lines.forEach((line, index) => ctx.fillText(line, width / 2, centerY - blockHeight / 2 + lineHeight * (index + 0.5), maxTextWidth));
+      ctx.restore();
+    });
+  };
+  const resetTextEditor = () => {
+    editingTextId = null;
+    if (textContentInput) textContentInput.value = "";
+    if (textStartInput) textStartInput.value = "1";
+    if (textEndInput) textEndInput.value = "4";
+    if (textPositionInput) textPositionInput.value = "bottom";
+    if (textSizeInput) textSizeInput.value = "medium";
+    if (textColorInput) textColorInput.value = "#ffffff";
+    if (textAnimationInput) textAnimationInput.value = "none";
+    if (textBackgroundInput) textBackgroundInput.checked = true;
+    if (addTextButton) addTextButton.textContent = "＋ افزودن متن به ویدئو";
+    if (cancelTextEditButton) cancelTextEditButton.hidden = true;
+  };
+  const renderTextOverlayList = () => {
+    if (!textList) return;
+    textList.replaceChildren();
+    if (!textOverlays.length) {
+      const empty = document.createElement("p");
+      empty.className = "nava-editor-text-empty";
+      empty.textContent = "هنوز متنی اضافه نشده است.";
+      textList.append(empty);
+      return;
+    }
+    textOverlays.forEach(item => {
+      const card = document.createElement("div");
+      card.className = "nava-editor-text-card";
+      const copy = document.createElement("div");
+      const title = document.createElement("strong");
+      title.textContent = item.text;
+      const timing = document.createElement("small");
+      timing.textContent = item.start.toFixed(1) + " تا " + item.end.toFixed(1) + " ثانیه · " +
+        (item.position === "top" ? "بالا" : item.position === "center" ? "وسط" : "پایین");
+      copy.append(title, timing);
+      const actions = document.createElement("div");
+      actions.className = "nava-editor-text-card-actions";
+      [["edit","ویرایش"],["remove","حذف"]].forEach(([action,label]) => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.dataset.textAction = action;
+        button.dataset.textId = item.id;
+        button.textContent = label;
+        actions.append(button);
+      });
+      card.append(copy, actions);
+      textList.append(card);
+    });
+  };
   const fmt = value => {
     const n = Math.max(0, Number(value) || 0);
     const m = Math.floor(n / 60);
@@ -96,6 +265,7 @@
     if (splitSelectedButton) splitSelectedButton.disabled = !selectedClip;
     if (duplicateSelectedButton) duplicateSelectedButton.disabled = !selectedClip || clips.length >= 8;
     if (deleteRangeButton) deleteRangeButton.disabled = !selectedClip;
+    if (addTextButton) addTextButton.disabled = clips.length === 0;
     if (deleteRangeStart) deleteRangeStart.max = selectedClip ? String(selectedClip.duration) : "";
     if (deleteRangeEnd) deleteRangeEnd.max = selectedClip ? String(selectedClip.duration) : "";
     if (selectedClipLabel) selectedClipLabel.textContent = selectedClip
@@ -106,6 +276,7 @@
     if (!clips.length) {
       list.innerHTML = '<div class="nava-editor-empty">هنوز ویدئویی اضافه نشده است. از دکمهٔ بالا یک یا چند ویدئو انتخاب کن.</div>';
       updateSummary();
+      updateTextPreview();
       return;
     }
     list.innerHTML = clips.map((clip, index) => {
@@ -131,6 +302,7 @@
       if (name) name.textContent = clip.file.name;
     });
     updateSummary();
+    updateTextPreview();
   };
   let previewLoadToken = 0;
   const selectClip = async clip => {
@@ -161,6 +333,7 @@
       await waitForVideoData(preview);
       await waitForPresentedFrame(preview);
       if (loadToken !== previewLoadToken || selectedId !== clip.id) return;
+      updateTextPreview();
       setStatus("پیش‌نمایش آماده است: " + clip.file.name);
     } catch (error) {
       if (loadToken === previewLoadToken) setStatus(error.message || "پیش‌نمایش این ویدئو آماده نشد.");
@@ -363,6 +536,68 @@
       " ثانیه حذف شد؛ سایر کلیپ‌ها و موسیقی حفظ شدند.");
   });
 
+  addTextButton?.addEventListener("click", () => {
+    const text = String(textContentInput?.value || "").trim();
+    const start = Number(textStartInput?.value);
+    const end = Number(textEndInput?.value);
+    if (!clips.length) { setStatus("ابتدا ویدئو را به تدوینگر اضافه کن."); return; }
+    if (!text) { setStatus("متن موردنظر را بنویس."); textContentInput?.focus(); return; }
+    if (!Number.isFinite(start) || !Number.isFinite(end) || start < 0 || end <= start) {
+      setStatus("زمان شروع و پایان معتبر نیست؛ پایان باید از شروع بیشتر باشد."); return;
+    }
+    if (end > totalDuration() + 0.001) {
+      setStatus("زمان پایان متن از مدت کل تدوین بیشتر است: " + totalDuration().toFixed(1) + " ثانیه."); return;
+    }
+    const item = {
+      id: editingTextId || "text-" + (++textSequence), text, start, end,
+      position: textPositionInput?.value || "bottom",
+      size: textSizeInput?.value || "medium",
+      color: textColorInput?.value || "#ffffff",
+      animation: textAnimationInput?.value || "none",
+      background: Boolean(textBackgroundInput?.checked)
+    };
+    if (editingTextId) {
+      const index = textOverlays.findIndex(entry => entry.id === editingTextId);
+      if (index >= 0) textOverlays.splice(index, 1, item); else textOverlays.push(item);
+      setStatus("متن و زمان‌بندی آن به‌روزرسانی شد.");
+    } else {
+      textOverlays.push(item);
+      setStatus("متن به تایم‌لاین اضافه شد و در خروجی نهایی هم ثبت می‌شود.");
+    }
+    resetTextEditor();
+    renderTextOverlayList();
+    updateTextPreview();
+  });
+  cancelTextEditButton?.addEventListener("click", resetTextEditor);
+  textList?.addEventListener("click", event => {
+    const button = event.target.closest("button[data-text-action]");
+    if (!button) return;
+    const index = textOverlays.findIndex(item => item.id === button.dataset.textId);
+    if (index < 0) return;
+    const item = textOverlays[index];
+    if (button.dataset.textAction === "remove") {
+      textOverlays.splice(index, 1);
+      if (editingTextId === item.id) resetTextEditor();
+      renderTextOverlayList();
+      updateTextPreview();
+      setStatus("متن از پروژه حذف شد.");
+      return;
+    }
+    editingTextId = item.id;
+    textContentInput.value = item.text;
+    textStartInput.value = String(item.start);
+    textEndInput.value = String(item.end);
+    textPositionInput.value = item.position;
+    textSizeInput.value = item.size;
+    textColorInput.value = item.color;
+    textAnimationInput.value = item.animation;
+    textBackgroundInput.checked = item.background;
+    addTextButton.textContent = "ذخیره تغییرات متن";
+    cancelTextEditButton.hidden = false;
+    textContentInput.focus();
+    setStatus("در حال ویرایش متن انتخاب‌شده هستی.");
+  });
+
   list.addEventListener("click", event => {
     const button = event.target.closest("button[data-action]");
     if (!button) return;
@@ -489,6 +724,8 @@
     playFrom(0, token);
   });
   stopButton.addEventListener("click", () => { stopPlayback(); setStatus("پخش متوقف شد."); });
+  preview.addEventListener("timeupdate", updateTextPreview);
+  window.addEventListener("resize", updateTextPreview);
   preview.addEventListener("timeupdate", advanceIfNeeded);
   preview.addEventListener("ended", advanceIfNeeded);
   clearButton.addEventListener("click", () => {
@@ -496,6 +733,10 @@
     clips.forEach(clip => URL.revokeObjectURL(clip.url));
     clips = [];
     selectedId = null;
+    textOverlays = [];
+    resetTextEditor();
+    renderTextOverlayList();
+    updateTextPreview();
     preview.pause();
     preview.removeAttribute("src");
     preview.load();
@@ -657,13 +898,14 @@
   const exportFinalVideo = async () => {
     if (!clips.length || exportButton.disabled) return;
     const MB = window.Mediabunny;
-    const required = ["Input","BlobSource","ALL_FORMATS","VideoSampleSink","VideoSampleSource",
+    const required = ["Input","BlobSource","ALL_FORMATS","VideoSampleSink","VideoSampleSource","VideoSample",
       "AudioBufferSink","AudioBufferSource","Output","Mp4OutputFormat","BufferTarget","Quality"];
     if (!MB || required.some(key => !MB[key])) {
       setStatus("موتور پردازش آفلاین در این مرورگر کامل بارگذاری نشده است. صفحه را تازه‌سازی کن و با Chrome به‌روز دوباره امتحان کن.");
       return;
     }
     const projectDuration = totalDuration();
+    const exportTextOverlays = textOverlays.map(item => ({ ...item }));
     if (!projectDuration || projectDuration > 900) {
       setStatus("مدت پروژه باید بیشتر از صفر و حداکثر ۱۵ دقیقه باشد.");
       return;
@@ -678,6 +920,7 @@
     exportOutput.hidden = true;
     exportDownload.hidden = true;
     setStatus("در حال آماده‌سازی موتور پردازش فریم‌به‌فریم…");
+    if (exportTextOverlays.length && document.fonts?.ready) { try { await document.fonts.ready; } catch (_) {} }
 
     let output = null;
     let videoSource = null;
@@ -781,6 +1024,10 @@
       output.addAudioTrack(audioSource);
       await output.start();
 
+      const textCanvas = exportTextOverlays.length ? document.createElement("canvas") : null;
+      if (textCanvas) { textCanvas.width = width; textCanvas.height = height; }
+      const textContext = textCanvas ? textCanvas.getContext("2d", { alpha: false }) : null;
+      if (textCanvas && !textContext) throw new Error("امکان ساخت لایه متن برای خروجی فراهم نشد.");
       let videoProgress = 0;
       let audioProgress = 0;
       const updateExportProgress = () => {
@@ -870,19 +1117,37 @@
           let frameCount = 0;
           const addFrame = async (sample, isFirst) => {
             if (!sample) return;
+            let renderedSample = null;
             try {
               const sourceTime = sample.timestamp;
               const localTime = isFirst ? 0 : Math.max(0, sourceTime - rangeStart);
               if (!isFirst && (sourceTime < rangeStart - 0.001 || sourceTime >= rangeEnd)) return;
-              sample.setTimestamp(compositionOffset + localTime);
+              const compositionTime = compositionOffset + localTime;
               const remaining = Math.max(0.001, clipLength - localTime);
               const trimOffset = isFirst ? Math.max(0, rangeStart - sourceTime) : 0;
-              const frameDuration = isFirst ? Math.max(1 / fps, (sample.duration || 1 / fps) - trimOffset) : (sample.duration || 1 / fps);
-              sample.setDuration(Math.min(Math.max(0.001, frameDuration), remaining));
-              await videoSource.add(sample);
+              const frameDuration = Math.min(
+                Math.max(0.001, isFirst ? Math.max(1 / fps, (sample.duration || 1 / fps) - trimOffset) : (sample.duration || 1 / fps)),
+                remaining
+              );
+              const hasActiveText = textCanvas && exportTextOverlays.some(item =>
+                compositionTime >= item.start && compositionTime < item.end
+              );
+              if (hasActiveText) {
+                textContext.fillStyle = "#000";
+                textContext.fillRect(0, 0, width, height);
+                sample.drawWithFit(textContext, { fit: "contain" });
+                drawTextOverlays(textContext, compositionTime, width, height, exportTextOverlays);
+                renderedSample = new MB.VideoSample(textCanvas, { timestamp: compositionTime, duration: frameDuration });
+                await videoSource.add(renderedSample);
+              } else {
+                sample.setTimestamp(compositionTime);
+                sample.setDuration(frameDuration);
+                await videoSource.add(sample);
+              }
               frameCount++;
               totalFrames++;
             } finally {
+              if (renderedSample) renderedSample.close();
               sample.close();
             }
           };
@@ -959,7 +1224,7 @@
       exportDownload.textContent = "دریافت ویدیوی نهایی (MP4 · " + width + "×" + height + ")";
       exportDownload.hidden = false;
       exportProgress.value = 100;
-      setStatus("خروجی MP4 آفلاین آماده شد · H.264 + AAC · " + width + "×" + height + " · " + videoResult.totalFrames + " فریم. بدون ضبط زنده Canvas.");
+      setStatus("خروجی MP4 آفلاین آماده شد · H.264 + AAC · " + width + "×" + height + " · " + videoResult.totalFrames + " فریم" + (exportTextOverlays.length ? " · متن‌ها روی تصویر رندر شدند" : "") + ".");
     } catch (error) {
       try { if (output && output.state !== "finalized" && output.state !== "canceled") await output.cancel(); } catch (_) {}
       setStatus(error.message || "ساخت MP4 آفلاین ناموفق بود.");
