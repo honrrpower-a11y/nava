@@ -226,7 +226,7 @@ export function parseNaviGeminiResponse(rawText) {
   const text = String(rawText || "").trim();
 
   if (!text) {
-    return { reply: "", memoryProposals: [], officeAction: null, structured: false };
+    return { reply: "", memoryProposals: [], officeAction: null, navigation: null, structured: false };
   }
 
   // Gemini normally returns a JSON object because responseMimeType is set.
@@ -279,6 +279,7 @@ export function parseNaviGeminiResponse(rawText) {
           ? parsed.memoryProposals
           : [],
         officeAction: normalizeNaviOfficeAction(parsed.officeAction),
+        navigation: normalizeNaviNavigation(parsed.navigation),
         structured: true
       };
     } catch {
@@ -291,8 +292,33 @@ export function parseNaviGeminiResponse(rawText) {
   return {
     reply: safeNaviText(unfenced, 20000),
     memoryProposals: [],
+    navigation: null,
     structured: false
   };
+}
+
+// Only these implemented studio pages can be suggested from the homepage.
+// The route is a suggestion, never an automatic page change.
+const NAVI_ROUTE_TARGETS = Object.freeze({
+  logoPage: "طراحی لوگو",
+  brandPage: "برندینگ",
+  contentPage: "تولید محتوا",
+  storyPage: "استوری‌ساز",
+  articlePage: "مقاله و وبلاگ",
+  officePage: "کارهای آفیس",
+  composePage: "آهنگ‌سازی و نت‌نویسی",
+  avPage: "ویدئو و صدا",
+  seoPage: "سئو",
+  adsPage: "تبلیغات",
+  bizPage: "کسب‌وکار"
+});
+
+export function normalizeNaviNavigation(value, page = "homePage") {
+  if (page !== "homePage" || !isObject(value)) return null;
+  const pageId = typeof value.pageId === "string" ? value.pageId.trim() : "";
+  const studioName = NAVI_ROUTE_TARGETS[pageId];
+  if (!studioName) return null;
+  return { pageId, studioName };
 }
 
 // Validate the model's proposed Office operation against a small allowlist.
@@ -2331,6 +2357,34 @@ A request to open, inspect, summarize, analyze, or continue with NAVI is not
 permission to edit a file. An action is only a proposal and always requires
 separate user confirmation.
 
+HOMEPAGE INTENT ROUTING:
+When the active page is homePage, identify whether the user's CURRENT message
+clearly expresses an intention to use a specific implemented NAVA studio or
+asks where to perform a concrete task. If so, include a navigation object with
+the exact target pageId from this allowlist:
+- logoPage: logo design and visual identity
+- brandPage: brand strategy and positioning
+- contentPage: social content creation
+- storyPage: story text drafting and preview
+- articlePage: articles and blog writing
+- officePage: Word, PDF, Excel or PowerPoint work
+- composePage: music composition and sheet-music work
+- avPage: video creation from text/photos or video editing
+- seoPage: SEO work
+- adsPage: advertising and campaign planning
+- bizPage: business operations, sales, costs, customers, inventory, ledger
+Set navigation to null for general knowledge questions, greetings, capability
+overviews without a stated task, hypothetical examples, ambiguous requests, or
+when the requested capability is not implemented. Never route to musicPage:
+that studio is not currently active. Do not guess from a single keyword; use the
+whole request and distinguish closely related workflows (for example, music
+composition vs. video editing, or video creation vs. editing).
+The reply must answer briefly and explain why this studio is the best fit. Do not
+claim that you navigated or executed the task. The browser will show a user-
+controlled button; navigation must never happen automatically.
+When the user is already inside a studio, set navigation to null. Never use
+historical messages alone as the reason to route; the current request controls.
+
 OUTPUT FORMAT:
 
 Return exactly one valid JSON object.
@@ -2340,6 +2394,7 @@ Do not add text outside the JSON.
 {
   "reply": "Complete natural answer to the user.",
   "officeAction": null,
+  "navigation": null,
   "memoryProposals": []
 }
 
@@ -3307,6 +3362,7 @@ async function handleChat({
   return successResponse({
     reply,
     officeAction,
+    navigation: page === "homePage" ? parsed.navigation : null,
     assistant: "NAVI",
     version: NAVI_VERSION,
 
