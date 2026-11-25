@@ -217,7 +217,8 @@
   function resultStatusNavi(message){const el=$("navaVideoNaviResult");if(el)el.textContent=message;}
   window.addEventListener("nava:navi-error",event=>{if(!smartAutoBuild)return;smartAutoBuild=false;smartAutoBuildMode=null;naviPlanRetryCount=0;resultStatusNavi("ساخت طرح متوقف شد: "+String(event.detail?.message||"ارتباط با ناوی ناموفق بود.")+"؛ عکس‌ها و تحلیل آن‌ها حفظ شده‌اند و می‌توانی دوباره تلاش کنی.");});
   window.addEventListener("nava:navi-reply",event=>{
-    if(event.detail?.service!=="ویدئو و صدا")return;
+    // Never interpret a normal NAVI guidance reply as an executable scene plan.
+    if(event.detail?.videoPlan!==true||event.detail?.service!=="ویدئو و صدا")return;
     if(smartAutoBuildMode&&activeBuildMode()!==smartAutoBuildMode)activateBuildMode(smartAutoBuildMode);
     const reply=String(event.detail.reply||"").trim();
     if(!reply)return;
