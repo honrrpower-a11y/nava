@@ -440,22 +440,35 @@
         ...exportRecordDestination.stream.getAudioTracks()
       ]);
 
+      // Prefer WebM with an explicit Opus audio codec on mobile browsers.
+      // Some Android builds report generic MP4 support but produce truncated,
+      // silent recordings when the audio codec is left implicit.
       const mimeCandidates = [
-        "video/mp4;codecs=avc1.42E01E",
-        "video/mp4",
-        "video/webm;codecs=vp9",
+        "video/webm;codecs=vp8,opus",
+        "video/webm;codecs=vp9,opus",
         "video/webm;codecs=vp8",
-        "video/webm"
+        "video/webm",
+        "video/mp4;codecs=avc1.42E01E,mp4a.40.2",
+        "video/mp4;codecs=avc1.42E01E",
+        "video/mp4"
       ];
       const mimeType = mimeCandidates.find(type => MediaRecorder.isTypeSupported(type)) || "";
-      recorder = new MediaRecorder(combinedStream, mimeType ? { mimeType, videoBitsPerSecond: 1000000, audioBitsPerSecond: 128000 } : { videoBitsPerSecond: 1000000, audioBitsPerSecond: 128000 });
+      if (!mimeType) throw new Error("این مرورگر هیچ قالب ضبط سازگاری برای تصویر و صدا ارائه نمی‌کند.");
+      const audioTracks = exportRecordDestination.stream.getAudioTracks();
+      if (!audioTracks.length || audioTracks.some(track => track.readyState !== "live")) {
+        throw new Error("مسیر صدای خروجی آماده نیست؛ صفحه را تازه‌سازی کن و دوباره امتحان کن.");
+      }
+      audioTracks.forEach(track => { track.enabled = true; });
+      recorder = new MediaRecorder(combinedStream, { mimeType, videoBitsPerSecond: 1000000, audioBitsPerSecond: 128000 });
       const chunks = [];
       recorder.ondataavailable = event => { if (event.data && event.data.size) chunks.push(event.data); };
       const recordingStopped = new Promise((resolve, reject) => {
         recorder.onstop = resolve;
         recorder.onerror = () => reject(new Error("ضبط ویدیوی نهایی ناموفق بود."));
       });
-      recorder.start(1000);
+      // Avoid frequent chunk flushing on memory-constrained mobile encoders.
+      // The final dataavailable event is collected after stop().
+      recorder.start(2000);
 
       const drawFrame = () => {
         const vw = preview.videoWidth || 16;
@@ -492,6 +505,14 @@
         await waitForVideoData(preview);
         await waitForPresentedFrame(preview);
         await preview.play();
+        if (audioContext.state !== "running") {
+          await audioContext.resume();
+          if (audioContext.state !== "running") throw new Error("موتور صدا در مرورگر فعال نشد؛ یک‌بار صفحه را تازه‌سازی کن.");
+        }
+        const activeAudioTracks = exportRecordDestination.stream.getAudioTracks();
+        if (!activeAudioTracks.length || activeAudioTracks.some(track => track.readyState !== "live" || !track.enabled)) {
+          throw new Error("اتصال صدای ضبط هنگام شروع کلیپ قطع شده است.");
+        }
 
         await new Promise((resolve, reject) => {
           let raf = 0;
@@ -574,6 +595,28 @@
       const blobType = recorder.mimeType || mimeType || "video/webm";
       const blob = new Blob(chunks, { type: blobType });
       if (!blob.size) throw new Error("فایل خروجی خالی ساخته شد؛ دوباره تلاش کن.");
+      // Validate the encoded duration before offering a download. This catches
+      // mobile muxer/encoder failures instead of silently delivering a short file.
+      const validationUrl = URL.createObjectURL(blob);
+      try {
+        const probe = document.createElement("video");
+        probe.preload = "metadata";
+        const durationReady = new Promise((resolve, reject) => {
+          const timer = setTimeout(() => reject(new Error("بررسی مدت فایل خروجی بیش از حد طول کشید؛ فایل دانلود نشد.")), 10000);
+          probe.onloadedmetadata = () => { clearTimeout(timer); resolve(); };
+          probe.onerror = () => { clearTimeout(timer); reject(new Error("مرورگر نتوانست فایل ضبط‌شده را بررسی کند؛ فایل دانلود نشد.")); };
+        });
+        probe.src = validationUrl;
+        await durationReady;
+        const actualDuration = Number(probe.duration);
+        probe.removeAttribute("src");
+        probe.load();
+        if (!Number.isFinite(actualDuration) || actualDuration < projectDuration * 0.85) {
+          throw new Error("خروجی ناقص تشخیص داده شد (" + (Number.isFinite(actualDuration) ? actualDuration.toFixed(1) : "نامشخص") + " ثانیه از " + projectDuration.toFixed(1) + " ثانیه). فایل ناقص ارائه نشد؛ این مرورگر در ضبط این پروژه مشکل دارد.");
+        }
+      } finally {
+        URL.revokeObjectURL(validationUrl);
+      }
       if (exportUrl) URL.revokeObjectURL(exportUrl);
       exportUrl = URL.createObjectURL(blob);
       exportOutput.src = exportUrl;
@@ -585,7 +628,7 @@
       exportDownload.textContent = "دریافت ویدیوی نهایی (" + extension.toUpperCase() + ")";
       exportDownload.hidden = false;
       exportProgress.value = 100;
-      setStatus("ویدیوی نهایی آماده شد. می‌توانی پیش‌نمایش کنی یا فایل را دریافت کنی.");
+      setStatus("ویدیوی نهایی آماده شد (" + extension.toUpperCase() + "، " + projectDuration.toFixed(1) + " ثانیه). می‌توانی پیش‌نمایش کنی یا فایل را دریافت کنی.");
     } catch (error) {
       if (recorder && recorder.state !== "inactive") {
         try { recorder.stop(); } catch (_) {}
