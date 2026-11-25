@@ -199,14 +199,19 @@
     audioFile = file;
     audioUrl = URL.createObjectURL(file);
     audio.src = audioUrl;
-    audio.volume = Number(audioVolume.value) / 100;
+    audio.volume = exportMusicGain ? 1 : Number(audioVolume.value) / 100;
+    if (exportMusicGain) exportMusicGain.gain.value = Number(audioVolume.value) / 100;
     audioLabel.textContent = file.name;
     updateSummary();
     setStatus("موسیقی به پروژه اضافه شد. صدای اصلی کلیپ‌ها در این مرحله بدون تغییر باقی می‌ماند.");
   });
   audioVolume.addEventListener("input", () => {
-    audio.volume = Number(audioVolume.value) / 100;
-    if (exportMusicGain && exportAudioContext?.state === "running") exportMusicGain.gain.value = Number(audioVolume.value) / 100;
+    if (exportMusicGain) {
+      audio.volume = 1;
+      if (exportAudioContext?.state === "running") exportMusicGain.gain.value = Number(audioVolume.value) / 100;
+    } else {
+      audio.volume = Number(audioVolume.value) / 100;
+    }
   });
   list.addEventListener("click", event => {
     const button = event.target.closest("button[data-action]");
@@ -359,6 +364,7 @@
         audioContext = exportAudioContext;
         if (audioFile && !exportMusicSource) {
           exportMusicSource = audioContext.createMediaElementSource(audio);
+          audio.volume = 1;
           exportMusicGain = audioContext.createGain();
           exportMusicSource.connect(exportMusicGain);
           exportMusicGain.connect(audioContext.destination);
@@ -371,8 +377,7 @@
         ]);
         await audioContext.resume();
       } else {
-        if (audioFile) throw new Error("این مرورگر امکان میکس موسیقی در خروجی را ندارد.");
-        combinedStream = canvasStream;
+        throw new Error("این مرورگر ابزار لازم برای میکس صدای ویدئو و ساخت خروجی کامل را ندارد.");
       }
 
       const mimeCandidates = [
@@ -480,9 +485,6 @@
     } finally {
       if (musicStarted) audio.pause();
       preview.pause();
-      if (audioContext && audioContext.state === "running") {
-        try { await audioContext.suspend(); } catch (_) {}
-      }
       if (canvasStream) canvasStream.getTracks().forEach(track => track.stop());
       if (combinedStream) combinedStream.getTracks().forEach(track => track.stop());
       exportButton.disabled = false;
