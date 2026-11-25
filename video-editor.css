@@ -72,3 +72,15 @@
 .nava-editor-export-preview{width:100%;max-height:380px;aspect-ratio:16/9;object-fit:contain;background:#03060c;border-radius:10px}
 .nava-editor-export-download{display:block;padding:12px;border-radius:10px;background:#243b56;color:#fff;text-align:center;font-weight:800;text-decoration:none}
 .nava-editor-export small{color:#aab8ce;line-height:1.8}
+
+/* Clip-level audio and editing actions */
+.nava-editor-clip-audio{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:9px 10px;border-top:1px solid var(--border,rgba(255,255,255,.08));}
+.nava-editor-clip-audio label{display:grid;grid-template-columns:auto auto;align-items:center;gap:6px;flex:1 1 180px;color:var(--muted,#aab8ce);font-size:.82rem}
+.nava-editor-clip-audio input[type=range]{grid-column:1/-1;width:100%;accent-color:var(--accent,#e5bd62);touch-action:pan-y}
+.nava-editor-clip-audio output{direction:ltr;color:var(--text,#eef4ff);font-variant-numeric:tabular-nums}
+.nava-editor-clip-audio button{min-height:36px;padding:7px 10px;border:1px solid var(--border,rgba(255,255,255,.14));border-radius:9px;background:var(--surface,rgba(16,27,45,.55));color:var(--text,#eef4ff)}
+.nava-editor-clip-actions{flex-wrap:wrap}
+.nava-editor-clip-actions button{flex:1 1 auto}
+.nava-editor-ratio-label{display:grid;gap:7px;color:#dce7f8;font-size:.9rem;font-weight:700}
+.nava-editor-ratio-label select{width:100%;min-height:42px;padding:8px 12px;border:1px solid rgba(229,189,98,.35);border-radius:10px;background:#101b2d;color:#eef4ff;font:inherit}
+@media(max-width:560px){.nava-editor-clip-audio{align-items:stretch;flex-direction:column}.nava-editor-clip-actions{grid-template-columns:repeat(2,minmax(0,1fr))}}
