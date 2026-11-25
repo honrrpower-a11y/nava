@@ -1016,8 +1016,52 @@ function setNaviStatus(message) {
 function showNaviReply(reply) {
   requestResponse.value = String(reply || "");
   requestResponse.classList.add("show");
+  document.getElementById("naviNavigationSuggestion")?.remove();
   const service = naviAssistantContext?.service || serviceSelect?.value || "";
   window.NavaDocumentExport?.attach(requestResponse, service);
+}
+
+function renderNaviNavigationSuggestion(navigation) {
+  const targets = {
+    logoPage: "طراحی لوگو",
+    brandPage: "برندینگ",
+    contentPage: "تولید محتوا",
+    storyPage: "استوری‌ساز",
+    articlePage: "مقاله و وبلاگ",
+    officePage: "کارهای آفیس",
+    composePage: "آهنگ‌سازی و نت‌نویسی",
+    avPage: "ویدئو و صدا",
+    seoPage: "سئو",
+    adsPage: "تبلیغات",
+    bizPage: "کسب‌وکار"
+  };
+  const pageId = typeof navigation?.pageId === "string" ? navigation.pageId : "";
+  const studioName = targets[pageId];
+  if (!studioName || document.querySelector(".page.active")?.id !== "homePage") return;
+
+  document.getElementById("naviNavigationSuggestion")?.remove();
+  const card = document.createElement("section");
+  card.id = "naviNavigationSuggestion";
+  card.className = "navi-navigation-suggestion";
+  card.setAttribute("aria-label", "پیشنهاد مسیر در نوا");
+  card.style.cssText = "display:grid;gap:9px;margin:12px 0;padding:13px;border:1px solid rgba(190,150,70,.5);border-radius:13px;background:var(--panel,rgba(120,110,90,.08))";
+
+  const heading = document.createElement("strong");
+  heading.textContent = "مسیر پیشنهادی در نوا";
+  const description = document.createElement("p");
+  description.textContent = "برای ادامه این درخواست، استودیوی «" + studioName + "» مناسب‌تر است.";
+  description.style.cssText = "margin:0;line-height:1.8;color:var(--muted)";
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = "btn-primary";
+  button.textContent = "ورود به استودیوی " + studioName;
+  button.addEventListener("click", () => {
+    if (!targets[pageId]) return;
+    showPage(pageId);
+    card.remove();
+  });
+  card.append(heading, description, button);
+  requestResponse.insertAdjacentElement("afterend", card);
 }
 
 function renderNaviOfficeAction(action, options = {}) {
@@ -4086,6 +4130,7 @@ async function sendMessageToNavi(options = {}) {
       showNaviReply(videoPlanEvent.detail.status || "طرح ناوی دریافت شد؛ نتیجه اعمال را در پنل ساخت ویدئو ببین.");
     } else {
       showNaviReply(reply);
+      renderNaviNavigationSuggestion(data.navigation);
     }
     try {
       renderNaviOfficeAction(data.officeAction, { target: options.officeTarget ? "office" : "chat" });
