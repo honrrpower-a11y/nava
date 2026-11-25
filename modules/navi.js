@@ -41,7 +41,17 @@ import {
 
 const NAVI_VERSION = "1.0";
 const NAVI_MAX_MESSAGE = 12000;
+// Video scene plans carry a structured creative brief plus per-image analysis.
+// Keep ordinary chat unchanged while allowing this isolated, image-backed flow
+// enough room for the complete plan instructions and six compact image reports.
+const NAVI_MAX_VIDEO_PLAN_MESSAGE = 24000;
 const NAVI_MAX_MEMORY_VALUE = 12000;
+
+export function getNaviMessageLimit(input, page) {
+  return input?.videoPlan === true && page === "avPage"
+    ? NAVI_MAX_VIDEO_PLAN_MESSAGE
+    : NAVI_MAX_MESSAGE;
+}
 const NAVI_MAX_PROPOSALS = 1;
 const NAVI_GEMINI_TIMEOUT = 60000;
 
@@ -2808,12 +2818,15 @@ async function handleChat({
     );
   }
 
+  const requestedMessagePage = safeNaviText(input.page || "homePage", 100);
+  const messageLimit = getNaviMessageLimit(input, requestedMessagePage);
   const message = safeNaviText(
     input.message || "",
-    NAVI_MAX_MESSAGE + 1
+    messageLimit + 1
   );
-  if (message.length > NAVI_MAX_MESSAGE) {
-    return errorResponse("پیام بیش از ۱۲۰۰۰ نویسه است؛ لطفاً آن را در چند پیام ارسال کن.", 413, corsOrigin);
+  if (message.length > messageLimit) {
+    const limitLabel = messageLimit.toLocaleString("fa-IR");
+    return errorResponse("پیام بیش از " + limitLabel + " نویسه است؛ لطفاً متن درخواست را کوتاه‌تر کن.", 413, corsOrigin);
   }
 
   if (!message) {
