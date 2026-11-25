@@ -406,6 +406,17 @@
     const local = Math.max(0, preview.currentTime - clip.in);
     const length = Math.max(0.01, clip.out - clip.in);
     const progress = Math.max(0, Math.min(1, local / settings.duration, (length - local) / settings.duration));
+    const compositionTime = getCompositionTime();
+    const fadeSettings = getAudioFadeSettings();
+    const audioIn = fadeSettings.fadeIn > 0 ? Math.min(1, compositionTime / fadeSettings.fadeIn) : 1;
+    const audioOut = fadeSettings.fadeOut > 0 ? Math.min(1, Math.max(0, (totalDuration() - compositionTime) / fadeSettings.fadeOut)) : 1;
+    const audioEnvelope = audioIn * audioOut;
+    preview.volume = clip.muteAudio ? 0 : Math.max(0, Math.min(1, (clip.audioVolume ?? 1) * audioEnvelope));
+    if (audioFile) {
+      const musicVolume = Math.max(0, Math.min(1, Number(audioVolume.value) / 100)) * audioEnvelope;
+      if (exportMusicGain && exportAudioContext?.state === "running") exportMusicGain.gain.value = musicVolume;
+      else audio.volume = musicVolume;
+    }
     if (settings.type === "fade") { preview.style.opacity = String(progress); if (textPreview) textPreview.style.opacity = String(progress); preview.style.transform = ""; preview.style.filter = ""; }
     else if (settings.type === "flash") { preview.style.opacity = "1"; if (textPreview) textPreview.style.opacity = "1"; preview.style.transform = ""; preview.style.filter = "brightness(" + (1 + (1 - progress) * 1.8) + ")"; }
     else if (settings.type === "zoom") { preview.style.opacity = "1"; if (textPreview) textPreview.style.opacity = "1"; preview.style.filter = ""; preview.style.transform = "scale(" + (1.07 - progress * 0.07) + ")"; }
