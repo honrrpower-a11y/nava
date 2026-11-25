@@ -495,15 +495,15 @@
     return true;
   };
 
+  // Offline export: decode source frames from the files and encode them by timestamp.
+  // This avoids real-time canvas capture, which can drop frames on mobile devices.
   const exportFinalVideo = async () => {
-    const usedAlternate = await exportViaMediaRecorder();
-    if (usedAlternate) return;
     if (!clips.length || exportButton.disabled) return;
     const MB = window.Mediabunny;
-    if (!MB || !MB.Output || !MB.Mp4OutputFormat || !MB.BufferTarget ||
-        !MB.MediaStreamVideoTrackSource || !MB.MediaStreamAudioTrackSource ||
-        !HTMLCanvasElement.prototype.captureStream) {
-      setStatus("موتور ساخت MP4 در این مرورگر بارگذاری نشده است. صفحه را تازه‌سازی کن و با Chrome به‌روز دوباره امتحان کن.");
+    const required = ["Input","BlobSource","ALL_FORMATS","VideoSampleSink","VideoSampleSource",
+      "AudioBufferSink","AudioBufferSource","Output","Mp4OutputFormat","BufferTarget","Quality"];
+    if (!MB || required.some(key => !MB[key])) {
+      setStatus("موتور پردازش آفلاین در این مرورگر کامل بارگذاری نشده است. صفحه را تازه‌سازی کن و با Chrome به‌روز دوباره امتحان کن.");
       return;
     }
     const projectDuration = totalDuration();
@@ -520,142 +520,93 @@
     exportProgress.max = 100;
     exportOutput.hidden = true;
     exportDownload.hidden = true;
-    setStatus("در حال آماده‌سازی موتور حرفه‌ای MP4…");
+    setStatus("در حال آماده‌سازی موتور پردازش فریم‌به‌فریم…");
 
     let output = null;
     let videoSource = null;
     let audioSource = null;
-    let canvasStream = null;
-    let musicStarted = false;
-    let sourceError = null;
+    let decodeContext = null;
+    const openedInputs = [];
+    const audioTracks = [];
     try {
-      // Match the output canvas to the source orientation. This prevents
-      // portrait phone footage from being squeezed into a tiny 16:9 window.
-      const firstClip = clips[0];
-      const sourceWidth = Math.max(1, Number(firstClip.width) || 16);
-      const sourceHeight = Math.max(1, Number(firstClip.height) || 9);
-      const portrait = sourceHeight > sourceWidth * 1.08;
-      const landscape = sourceWidth > sourceHeight * 1.08;
-      // Conservative adaptive export tiers. Unknown Android devices stay at
-      // 720p rather than being pushed into 1080p by optimistic assumptions.
+      const first = clips[0];
+      const sourceWidth = Math.max(1, Number(first.width) || 16);
+      const sourceHeight = Math.max(1, Number(first.height) || 9);
       const ram = Number(navigator.deviceMemory) || 0;
       const cores = Number(navigator.hardwareConcurrency) || 0;
       const isMobile = /Android|iPhone|iPad|Mobile/i.test(navigator.userAgent || "");
       let tier = "standard";
-      if ((ram > 0 && ram <= 4) || (cores > 0 && cores <= 4)) {
-        tier = "economy";
-      } else if (ram >= 8 && cores >= 8) {
-        tier = "high";
-      }
+      if ((ram > 0 && ram <= 4) || (cores > 0 && cores <= 4) ||
+          (isMobile && !ram && !cores)) tier = "economy";
+      else if (ram >= 8 && cores >= 8) tier = "high";
       try {
         const battery = await navigator.getBattery?.();
         if (battery && battery.level <= 0.2 && !battery.charging) tier = "economy";
       } catch (_) {}
 
-      const maxLongEdge = tier === "economy" ? 480 : tier === "high" ? 1080 : 720;
-      const fpsTarget = tier === "economy" ? 20 : tier === "high" ? 30 : 24;
-      const bitrateTarget = tier === "economy" ? 850000 : tier === "high" ? 4500000 : 2200000;
-      const scale = Math.min(1, maxLongEdge / Math.max(sourceWidth, sourceHeight));
-      const targetWidth = Math.max(2, Math.round((sourceWidth * scale) / 2) * 2);
-      const targetHeight = Math.max(2, Math.round((sourceHeight * scale) / 2) * 2);
-      const fallbackScale = tier === "economy" ? 0.75 : 0.8;
-      const profiles = [
-        [targetWidth, targetHeight, fpsTarget, bitrateTarget],
-        [Math.max(2, Math.round(targetWidth * fallbackScale / 2) * 2),
-         Math.max(2, Math.round(targetHeight * fallbackScale / 2) * 2),
-         Math.max(15, fpsTarget - 4), Math.round(bitrateTarget * 0.7)]
-      ];
-
-      let profile = null;
-      let quality = null;
-      for (const candidate of profiles) {
-        const candidateQuality = new MB.Quality({ bitrate: candidate[3] });
-        try {
-          const codec = await MB.getFirstEncodableVideoCodec(["avc"], {
-            width: candidate[0], height: candidate[1], frameRate: candidate[2], quality: candidateQuality
-          });
-          if (codec === "avc") {
-            profile = candidate;
-            quality = candidateQuality;
-            break;
-          }
-        } catch (_) {}
-      }
-      if (!profile) throw new Error("این گوشی در حال حاضر رمزگذار سخت‌افزاری H.264 لازم برای MP4 را ارائه نمی‌کند. برای جلوگیری از فایل بی‌صدا یا خراب، خروجی ناقص ساخته نشد.");
+      const maxEdge = tier === "economy" ? 480 : tier === "high" ? 1080 : 720;
+      const fps = tier === "economy" ? 20 : tier === "high" ? 30 : 24;
+      const bitrate = tier === "economy" ? 850000 : tier === "high" ? 4500000 : 2200000;
+      const scale = Math.min(1, maxEdge / Math.max(sourceWidth, sourceHeight));
+      const width = Math.max(2, Math.round(sourceWidth * scale / 2) * 2);
+      const height = Math.max(2, Math.round(sourceHeight * scale / 2) * 2);
+      const quality = new MB.Quality({ bitrate });
+      const videoCodec = await MB.getFirstEncodableVideoCodec(["avc"], {
+        width, height, frameRate: fps, quality
+      });
+      if (videoCodec !== "avc") throw new Error("این گوشی رمزگذار H.264 لازم برای خروجی MP4 را ارائه نمی‌کند.");
 
       let audioReady = await MB.canEncodeAudio("aac");
       if (!audioReady && window.MediabunnyAacEncoder?.registerAacEncoder) {
         window.MediabunnyAacEncoder.registerAacEncoder();
         audioReady = await MB.canEncodeAudio("aac");
       }
-      if (!audioReady) throw new Error("رمزگذار صدای AAC در این مرورگر فعال نیست؛ MP4 سازگار با تلگرام ساخته نشد.");
+      if (!audioReady) throw new Error("رمزگذار صدای AAC در این مرورگر فعال نیست؛ خروجی سازگار با تلگرام ساخته نشد.");
 
-      const [width, height, fps] = profile;
-      const canvas = document.createElement("canvas");
-      canvas.width = width;
-      canvas.height = height;
-      const ctx = canvas.getContext("2d", { alpha: false, desynchronized: true });
-      if (!ctx) throw new Error("امکان ساخت تصویر خروجی در این مرورگر وجود ندارد.");
-      const drawFrame = () => {
-        const vw = preview.videoWidth || sourceWidth;
-        const vh = preview.videoHeight || sourceHeight;
-        const scale = Math.min(canvas.width / vw, canvas.height / vh);
-        const drawWidth = vw * scale;
-        const drawHeight = vh * scale;
-        ctx.fillStyle = "#000";
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        if (preview.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA && preview.videoWidth > 0) {
-          ctx.drawImage(preview, (canvas.width - drawWidth) / 2, (canvas.height - drawHeight) / 2, drawWidth, drawHeight);
-        }
-      };
-
-      canvasStream = canvas.captureStream(fps);
-      const canvasTrack = canvasStream.getVideoTracks()[0];
-      if (!canvasTrack || canvasTrack.readyState !== "live") throw new Error("مسیر تصویر خروجی فعال نشد.");
-
+      const OfflineContext = window.OfflineAudioContext || window.webkitOfflineAudioContext;
       const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-      if (!AudioContextClass) throw new Error("این مرورگر امکان ترکیب صدای اصلی و موسیقی را ندارد.");
-      if (!exportAudioContext || exportAudioContext.state === "closed") {
-        exportAudioContext = new AudioContextClass();
-        exportRecordDestination = exportAudioContext.createMediaStreamDestination();
-        exportPreviewGain = null;
-        exportMusicGain = null;
-        exportMusicSource = null;
-      }
-      const audioContext = exportAudioContext;
-      await audioContext.resume();
-      if (!exportPreviewGain) {
-        const previewSource = audioContext.createMediaElementSource(preview);
-        exportPreviewGain = audioContext.createGain();
-        exportPreviewGain.gain.value = 1;
-        previewSource.connect(exportPreviewGain);
-        exportPreviewGain.connect(exportRecordDestination);
-        exportPreviewGain.connect(audioContext.destination);
-      }
-      if (!exportMusicSource) {
-        exportMusicSource = audioContext.createMediaElementSource(audio);
-        exportMusicGain = audioContext.createGain();
-        exportMusicSource.connect(exportMusicGain);
-        exportMusicGain.connect(exportRecordDestination);
-      }
-      exportPreviewGain.gain.value = 1;
-      exportMusicGain.gain.value = audioFile ? Math.max(0, Math.min(1, Number(audioVolume.value) / 100)) : 0;
-      const audioTrack = exportRecordDestination.stream.getAudioTracks()[0];
-      if (!audioTrack || audioTrack.readyState !== "live") throw new Error("مسیر صدای اصلی و موسیقی فعال نشد.");
-      audioTrack.enabled = true;
+      if (!OfflineContext) throw new Error("پردازش آفلاین صدا در این مرورگر پشتیبانی نمی‌شود.");
 
-      // Mediabunny writes a real MP4 container with H.264 video and AAC audio.
-      // Both live tracks share one capture timeline, avoiding MediaRecorder's
-      // truncated-duration and missing-audio behavior on affected Android builds.
-      videoSource = new MB.MediaStreamVideoTrackSource(canvasTrack, {
-        codec: "avc", quality, latencyMode: "realtime", hardwareAcceleration: "prefer-hardware"
-      });
-      audioSource = new MB.MediaStreamAudioTrackSource(audioTrack, {
-        codec: "aac", quality: new MB.Quality({ bitrate: 128000 })
-      });
-      videoSource.errorPromise.catch(error => { sourceError = error || new Error("خطای رمزگذاری تصویر"); });
-      audioSource.errorPromise.catch(error => { sourceError = error || new Error("خطای رمزگذاری صدا"); });
+      // Open each source once. Mediabunny decodes the original media directly,
+      // independently of HTMLVideoElement playback speed.
+      for (let i = 0; i < clips.length; i++) {
+        const clip = clips[i];
+        setStatus("بررسی فایل " + (i + 1) + " از " + clips.length + "…");
+        const inputFile = new MB.Input({ source: new MB.BlobSource(clip.file), formats: MB.ALL_FORMATS });
+        openedInputs.push(inputFile);
+        const videoTrack = await inputFile.getPrimaryVideoTrack();
+        if (!videoTrack) throw new Error("ترک تصویر در فایل «" + clip.file.name + "» پیدا نشد.");
+        const videoSink = new MB.VideoSampleSink(videoTrack, { hardwareAcceleration: "prefer-hardware" });
+        const audioTrack = await inputFile.getPrimaryAudioTrack();
+        audioTracks.push({
+          videoTrack,
+          videoSink,
+          audioTrack,
+          audioSink: audioTrack ? new MB.AudioBufferSink(audioTrack) : null,
+          firstVideoTimestamp: await videoTrack.getFirstTimestamp(),
+          firstAudioTimestamp: audioTrack ? await audioTrack.getFirstTimestamp() : 0
+        });
+      }
 
+      let musicBuffer = null;
+      if (audioFile) {
+        if (!AudioContextClass) throw new Error("مرورگر امکان خواندن فایل موسیقی را ندارد.");
+        decodeContext = new AudioContextClass();
+        const musicBytes = await audioFile.arrayBuffer();
+        musicBuffer = await decodeContext.decodeAudioData(musicBytes);
+        if (!musicBuffer || !musicBuffer.duration) throw new Error("فایل موسیقی قابل رمزگشایی نیست.");
+      }
+
+      videoSource = new MB.VideoSampleSource({
+        codec: "avc",
+        quality,
+        hardwareAcceleration: "prefer-hardware",
+        transform: { width, height, fit: "contain", frameRate: fps }
+      });
+      audioSource = new MB.AudioBufferSource({
+        codec: "aac",
+        quality: new MB.Quality({ bitrate: 128000 })
+      });
       output = new MB.Output({
         format: new MB.Mp4OutputFormat({ fastStart: "in-memory" }),
         target: new MB.BufferTarget()
@@ -664,84 +615,138 @@
       output.addAudioTrack(audioSource);
       await output.start();
 
-      if (audioFile) {
-        audio.loop = true;
-        audio.currentTime = 0;
-        audio.volume = 1;
-        await audio.play();
-        musicStarted = true;
-      }
+      let videoProgress = 0;
+      let audioProgress = 0;
+      const updateExportProgress = () => {
+        exportProgress.value = Math.min(99, Math.round(8 + videoProgress * 0.62 + audioProgress * 0.30));
+      };
 
-      let completedDuration = 0;
-      for (let index = 0; index < clips.length; index++) {
-        const clip = clips[index];
-        setStatus("در حال ساخت MP4 واقعی: کلیپ " + (index + 1) + " از " + clips.length);
-        preview.pause();
-        const metadataReady = waitForMediaEvent(preview, "loadedmetadata");
-        preview.src = clip.url;
-        preview.preload = "auto";
-        preview.load();
-        await metadataReady;
-        await waitForVideoData(preview);
-        await seekVideo(preview, clip.in);
-        await waitForVideoData(preview);
-        await waitForPresentedFrame(preview);
-        drawFrame();
-        await preview.play();
+      // Render audio in short chunks to cap peak memory on phones. Each chunk
+      // mixes the trimmed source audio with the looping music bed.
+      const audioTask = (async () => {
+        const sampleRate = 44100;
+        const chunkSeconds = tier === "economy" ? 2 : 4;
+        const chunkCount = Math.ceil(projectDuration / chunkSeconds);
+        for (let chunkIndex = 0; chunkIndex < chunkCount; chunkIndex++) {
+          const chunkStart = chunkIndex * chunkSeconds;
+          const chunkDuration = Math.min(chunkSeconds, projectDuration - chunkStart);
+          const frameCount = Math.max(1, Math.ceil(chunkDuration * sampleRate));
+          const offline = new OfflineContext(2, frameCount, sampleRate);
+          const originalGain = offline.createGain();
+          originalGain.gain.value = 1;
+          originalGain.connect(offline.destination);
+          let musicGain = null;
+          if (musicBuffer) {
+            musicGain = offline.createGain();
+            musicGain.gain.value = Math.max(0, Math.min(1, Number(audioVolume.value) / 100));
+            musicGain.connect(offline.destination);
+            const musicNode = offline.createBufferSource();
+            musicNode.buffer = musicBuffer;
+            musicNode.loop = true;
+            musicNode.connect(musicGain);
+            const musicOffset = chunkStart % musicBuffer.duration;
+            musicNode.start(0, musicOffset, chunkDuration);
+          }
 
-        await new Promise((resolve, reject) => {
-          let raf = 0;
-          let watchdog = 0;
-          let lastMediaTime = preview.currentTime;
-          let lastProgressAt = Date.now();
-          let settled = false;
-          const cleanup = () => {
-            if (raf) cancelAnimationFrame(raf);
-            if (watchdog) clearInterval(watchdog);
-          };
-          const finish = error => {
-            if (settled) return;
-            settled = true;
-            cleanup();
-            if (error) reject(error); else resolve();
-          };
-          const tick = () => {
-            if (settled) return;
-            try {
-              if (sourceError) throw sourceError;
-              drawFrame();
-              const clipProgress = Math.max(0, Math.min(clip.out - clip.in, preview.currentTime - clip.in));
-              exportProgress.value = Math.round(((completedDuration + clipProgress) / projectDuration) * 100);
-              if (preview.currentTime > lastMediaTime + 0.015) {
-                lastMediaTime = preview.currentTime;
-                lastProgressAt = Date.now();
+          let clipOffset = 0;
+          for (let clipIndex = 0; clipIndex < clips.length; clipIndex++) {
+            const clip = clips[clipIndex];
+            const clipLength = clip.out - clip.in;
+            const clipEnd = clipOffset + clipLength;
+            const overlapStart = Math.max(chunkStart, clipOffset);
+            const overlapEnd = Math.min(chunkStart + chunkDuration, clipEnd);
+            const meta = audioTracks[clipIndex];
+            if (overlapEnd > overlapStart && meta.audioSink) {
+              const mediaStart = meta.firstAudioTimestamp + clip.in + (overlapStart - clipOffset);
+              const mediaEnd = meta.firstAudioTimestamp + clip.in + (overlapEnd - clipOffset);
+              for await (const wrapped of meta.audioSink.buffers(mediaStart, mediaEnd)) {
+                const buffer = wrapped.buffer;
+                const bufferStart = wrapped.timestamp;
+                const bufferEnd = bufferStart + (wrapped.duration || buffer.duration);
+                const usedStart = Math.max(mediaStart, bufferStart);
+                const usedEnd = Math.min(mediaEnd, bufferEnd);
+                if (usedEnd <= usedStart) continue;
+                const node = offline.createBufferSource();
+                node.buffer = buffer;
+                node.connect(originalGain);
+                const when = overlapStart - chunkStart + (usedStart - mediaStart);
+                node.start(when, Math.max(0, usedStart - bufferStart), usedEnd - usedStart);
               }
-              if (preview.currentTime >= clip.out - 0.04 || preview.ended) {
-                drawFrame();
-                finish();
-                return;
-              }
-              raf = requestAnimationFrame(tick);
-            } catch (error) { finish(error); }
-          };
-          raf = requestAnimationFrame(tick);
-          watchdog = setInterval(() => {
-            if (!settled && Date.now() - lastProgressAt > 8000 && preview.currentTime < clip.out - 0.04) {
-              finish(new Error("حرکت ویدئو هنگام خروجی متوقف شد؛ برای جلوگیری از فایل ناقص، ساخت MP4 متوقف شد."));
             }
-          }, 1000);
-        });
-        preview.pause();
-        completedDuration += clip.out - clip.in;
-      }
+            clipOffset = clipEnd;
+          }
+          const mixedBuffer = await offline.startRendering();
+          await audioSource.add(mixedBuffer);
+          audioProgress = (chunkIndex + 1) / chunkCount;
+          updateExportProgress();
+          setStatus("ترکیب صدای کلیپ‌ها و موسیقی: " + Math.round(audioProgress * 100) + "%");
+        }
+        audioSource.close();
+      })();
 
-      if (musicStarted) audio.pause();
-      preview.pause();
-      drawFrame();
-      videoSource.close();
-      audioSource.close();
+      // Decode every source frame in presentation order and give it an exact
+      // composition timestamp. Encoder backpressure is awaited frame by frame.
+      const videoTask = (async () => {
+        let compositionOffset = 0;
+        let totalFrames = 0;
+        const frameCounts = [];
+        for (let i = 0; i < clips.length; i++) {
+          const clip = clips[i];
+          const meta = audioTracks[i];
+          const clipLength = clip.out - clip.in;
+          const rangeStart = meta.firstVideoTimestamp + clip.in;
+          const rangeEnd = meta.firstVideoTimestamp + clip.out;
+          setStatus("پردازش آفلاین تصویر: کلیپ " + (i + 1) + " از " + clips.length + "…");
+          let frameCount = 0;
+          const addFrame = async (sample, isFirst) => {
+            if (!sample) return;
+            try {
+              const sourceTime = sample.timestamp;
+              const localTime = isFirst ? 0 : Math.max(0, sourceTime - rangeStart);
+              if (!isFirst && (sourceTime < rangeStart - 0.001 || sourceTime >= rangeEnd)) return;
+              sample.setTimestamp(compositionOffset + localTime);
+              const remaining = Math.max(0.001, clipLength - localTime);
+              const trimOffset = isFirst ? Math.max(0, rangeStart - sourceTime) : 0;
+              const frameDuration = isFirst ? Math.max(1 / fps, (sample.duration || 1 / fps) - trimOffset) : (sample.duration || 1 / fps);
+              sample.setDuration(Math.min(Math.max(0.001, frameDuration), remaining));
+              await videoSource.add(sample);
+              frameCount++;
+              totalFrames++;
+            } finally {
+              sample.close();
+            }
+          };
+
+          // Include the frame visible at the exact trim-in point, even when
+          // that point falls between two encoded source frames.
+          const firstSample = await meta.videoSink.getSample(rangeStart);
+          if (!firstSample) throw new Error("فریم آغازین کلیپ «" + clip.file.name + "» قابل رمزگشایی نیست.");
+          await addFrame(firstSample, true);
+
+          for await (const sample of meta.videoSink.samples(rangeStart, rangeEnd)) {
+            if (sample.timestamp <= rangeStart + 0.0005) {
+              sample.close();
+              continue;
+            }
+            await addFrame(sample, false);
+          }
+          if (!frameCount) throw new Error("هیچ فریمی از کلیپ «" + clip.file.name + "» پردازش نشد.");
+          frameCounts.push(frameCount);
+          compositionOffset += clipLength;
+          videoProgress = compositionOffset / projectDuration;
+          updateExportProgress();
+        }
+        videoSource.close();
+        return { totalFrames, frameCounts };
+      })();
+
+      const taskResults = await Promise.allSettled([videoTask, audioTask]);
+      const failedTask = taskResults.find(result => result.status === "rejected");
+      if (failedTask) throw failedTask.reason;
+      const videoResult = taskResults[0].value;
+      if (!videoResult.totalFrames) throw new Error("هیچ فریمی برای خروجی رمزگذاری نشد.");
+      setStatus("در حال نهایی‌سازی فایل MP4…");
       await output.finalize();
-      if (sourceError) throw sourceError;
 
       const buffer = output.target.buffer;
       if (!buffer || !buffer.byteLength) throw new Error("فایل MP4 خالی ساخته شد.");
@@ -751,7 +756,7 @@
         const probe = document.createElement("video");
         probe.preload = "metadata";
         const durationReady = new Promise((resolve, reject) => {
-          const timer = setTimeout(() => reject(new Error("بررسی مدت فایل MP4 بیش از حد طول کشید؛ فایل ارائه نشد.")), 15000);
+          const timer = setTimeout(() => reject(new Error("بررسی مدت MP4 بیش از حد طول کشید؛ فایل ارائه نشد.")), 20000);
           probe.onloadedmetadata = () => { clearTimeout(timer); resolve(); };
           probe.onerror = () => { clearTimeout(timer); reject(new Error("فایل MP4 ساخته‌شده قابل‌خواندن نیست؛ دانلود متوقف شد.")); };
         });
@@ -769,8 +774,6 @@
             const encodedAudioTrack = await checkInput.getPrimaryAudioTrack();
             if (!encodedAudioTrack) throw new Error("صدای MP4 در فایل نهایی ثبت نشده است؛ فایل دانلود نشد.");
           } finally { try { checkInput.dispose(); } catch (_) {} }
-        } else {
-          throw new Error("امکان بررسی وجود صدای AAC در فایل نهایی فراهم نشد؛ فایل دانلود نشد.");
         }
       } finally {
         URL.revokeObjectURL(validationUrl);
@@ -786,14 +789,15 @@
       exportDownload.textContent = "دریافت ویدیوی نهایی (MP4 · " + width + "×" + height + ")";
       exportDownload.hidden = false;
       exportProgress.value = 100;
-      setStatus("MP4 نهایی آماده شد · H.264 + AAC · " + width + "×" + height + " · " + projectDuration.toFixed(1) + " ثانیه. آماده ارسال در تلگرام.");
+      setStatus("خروجی MP4 آفلاین آماده شد · H.264 + AAC · " + width + "×" + height + " · " + videoResult.totalFrames + " فریم. بدون ضبط زنده Canvas.");
     } catch (error) {
       try { if (output && output.state !== "finalized" && output.state !== "canceled") await output.cancel(); } catch (_) {}
-      setStatus(error.message || "ساخت MP4 نهایی ناموفق بود.");
+      setStatus(error.message || "ساخت MP4 آفلاین ناموفق بود.");
     } finally {
-      if (musicStarted) audio.pause();
-      preview.pause();
-      if (canvasStream) canvasStream.getTracks().forEach(track => track.stop());
+      openedInputs.forEach(item => { try { item.dispose(); } catch (_) {} });
+      if (decodeContext && decodeContext.state !== "closed") {
+        try { await decodeContext.close(); } catch (_) {}
+      }
       exportButton.disabled = false;
       updateSummary();
     }
