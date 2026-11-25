@@ -32,6 +32,7 @@ jobs:
           const css = fs.readFileSync("video-editor.css", "utf8");
           for (const id of ["navaVideoPanelVideo","navaEditorFiles","navaEditorAudio","navaEditorPreview","navaEditorTimeline","navaEditorPlay","navaEditorStop","navaEditorClear"]) {
             assert.ok(html.includes('id="' + id + '"'), "Missing editor control: " + id);
+            assert.ok(html.includes('id="navaEditorAudioPlayer"'), "Missing audio player element");
             assert.ok(js.includes('$("' + id + '")') || id === "navaVideoPanelVideo", "Editor script does not bind: " + id);
           }
           assert.match(html, /video-editor\.js\?v=video-editor-foundation/, "Editor script must be cache-versioned");
