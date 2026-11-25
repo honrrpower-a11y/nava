@@ -268,6 +268,7 @@
     currentIndex = -1;
     preview.pause();
     preview.style.opacity = "1"; preview.style.transform = ""; preview.style.filter = "";
+    if (textPreview) textPreview.style.opacity = "1";
     audio.pause();
     playButton.textContent = "▶ پخش تدوین";
     root.classList.remove("is-playing");
@@ -399,15 +400,16 @@
     const clip = clips[currentIndex];
     if (!clip || settings.type === "cut" || !settings.duration) {
       preview.style.opacity = "1"; preview.style.transform = ""; preview.style.filter = "";
+      if (textPreview) textPreview.style.opacity = "1";
       return;
     }
     const local = Math.max(0, preview.currentTime - clip.in);
     const length = Math.max(0.01, clip.out - clip.in);
     const progress = Math.max(0, Math.min(1, local / settings.duration, (length - local) / settings.duration));
-    if (settings.type === "fade") { preview.style.opacity = String(progress); preview.style.transform = ""; preview.style.filter = ""; }
-    else if (settings.type === "flash") { preview.style.opacity = "1"; preview.style.transform = ""; preview.style.filter = "brightness(" + (1 + (1 - progress) * 1.8) + ")"; }
-    else if (settings.type === "zoom") { preview.style.opacity = "1"; preview.style.filter = ""; preview.style.transform = "scale(" + (1.07 - progress * 0.07) + ")"; }
-    else if (settings.type === "slide") { preview.style.opacity = String(progress); preview.style.filter = ""; preview.style.transform = "translateX(" + ((local < settings.duration ? 1 : -1) * (1 - progress) * 7) + "%)"; }
+    if (settings.type === "fade") { preview.style.opacity = String(progress); if (textPreview) textPreview.style.opacity = String(progress); preview.style.transform = ""; preview.style.filter = ""; }
+    else if (settings.type === "flash") { preview.style.opacity = "1"; if (textPreview) textPreview.style.opacity = "1"; preview.style.transform = ""; preview.style.filter = "brightness(" + (1 + (1 - progress) * 1.8) + ")"; }
+    else if (settings.type === "zoom") { preview.style.opacity = "1"; if (textPreview) textPreview.style.opacity = "1"; preview.style.filter = ""; preview.style.transform = "scale(" + (1.07 - progress * 0.07) + ")"; }
+    else if (settings.type === "slide") { preview.style.opacity = String(progress); if (textPreview) textPreview.style.opacity = String(progress); preview.style.filter = ""; preview.style.transform = "translateX(" + ((local < settings.duration ? 1 : -1) * (1 - progress) * 7) + "%)"; }
   };
   const playFrom = async (index, token) => {
     if (token !== playToken || index >= clips.length) {
@@ -1238,16 +1240,16 @@
                 textContext.restore();
               } else {
                 sample.drawWithFit(textContext, { fit: "contain" });
-                if (edgeDuration > 0 && edgeProgress < 1) {
-                  textContext.save();
-                  textContext.globalAlpha = 1 - edgeProgress;
-                  textContext.fillStyle = transitionSettings.type === "flash" ? "#fff" : "#000";
-                  textContext.fillRect(0, 0, width, height);
-                  textContext.restore();
-                }
               }
               if (hasActiveText) {
                 drawTextOverlays(textContext, compositionTime, width, height, exportTextOverlays);
+              }
+              if ((transitionSettings.type === "fade" || transitionSettings.type === "flash") && edgeDuration > 0 && edgeProgress < 1) {
+                textContext.save();
+                textContext.globalAlpha = 1 - edgeProgress;
+                textContext.fillStyle = transitionSettings.type === "flash" ? "#fff" : "#000";
+                textContext.fillRect(0, 0, width, height);
+                textContext.restore();
               }
               renderedSample = new MB.VideoSample(textCanvas, { timestamp: compositionTime, duration: frameDuration });
               await videoSource.add(renderedSample);
