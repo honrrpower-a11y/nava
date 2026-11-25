@@ -267,6 +267,7 @@
     playToken++;
     currentIndex = -1;
     preview.pause();
+    preview.style.opacity = "1"; preview.style.transform = ""; preview.style.filter = "";
     audio.pause();
     playButton.textContent = "▶ پخش تدوین";
     root.classList.remove("is-playing");
@@ -490,6 +491,23 @@
       audio.volume = Number(audioVolume.value) / 100;
     }
   });
+  const updateEffectControlLabels = () => {
+    const labels = [
+      ["navaEditorTransitionDuration", "navaEditorTransitionDurationValue", " ثانیه"],
+      ["navaEditorAudioFadeIn", "navaEditorAudioFadeInValue", " ثانیه"],
+      ["navaEditorAudioFadeOut", "navaEditorAudioFadeOutValue", " ثانیه"]
+    ];
+    labels.forEach(([inputId, outputId, suffix]) => {
+      const field = $(inputId), output = $(outputId);
+      if (field && output) output.textContent = Number(field.value).toLocaleString("fa-IR", { maximumFractionDigits: 1 }) + suffix;
+    });
+    if (playing) updatePreviewTransition();
+  };
+  [transitionDurationInput, audioFadeInInput, audioFadeOutInput, transitionInput].forEach(field => {
+    field?.addEventListener("input", updateEffectControlLabels);
+    field?.addEventListener("change", updateEffectControlLabels);
+  });
+  updateEffectControlLabels();
   const clickSelectedClipAction = action => {
     const selectedClip = clips.find(clip => clip.id === selectedId);
     if (!selectedClip) {
