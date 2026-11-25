@@ -35,8 +35,8 @@ jobs:
             assert.ok(html.includes('id="navaEditorAudioPlayer"'), "Missing audio player element");
             assert.ok(js.includes('$("' + id + '")') || id === "navaVideoPanelVideo", "Editor script does not bind: " + id);
           }
-          assert.match(html, /video-editor\.js\?v=video-editor-mobile-flow/, "Editor script must be cache-versioned");
-          assert.match(html, /video-editor\.css\?v=video-editor-mobile-flow/, "Editor stylesheet must be cache-versioned");
+          assert.match(html, /video-editor\.js\?v=video-editor-final-export/, "Editor script must be cache-versioned");
+          assert.match(html, /video-editor\.css\?v=video-editor-final-export/, "Editor stylesheet must be cache-versioned");
           assert.match(js, /URL\.createObjectURL/, "Media must be handled locally in the browser");
           assert.match(js, /data-trim/, "Per-clip trim controls must be wired");
           assert.match(js, /addEventListener\("input"/, "Trim sliders must update live while dragging");
