@@ -1024,10 +1024,13 @@
       output.addAudioTrack(audioSource);
       await output.start();
 
-      const textCanvas = exportTextOverlays.length ? document.createElement("canvas") : null;
-      if (textCanvas) { textCanvas.width = width; textCanvas.height = height; }
-      const textContext = textCanvas ? textCanvas.getContext("2d", { alpha: false }) : null;
-      if (textCanvas && !textContext) throw new Error("امکان ساخت لایه متن برای خروجی فراهم نشد.");
+      // Every encoded frame must have the exact same dimensions. Source clips can
+      // have different resolutions, so normalize all of them onto this fixed canvas.
+      const textCanvas = document.createElement("canvas");
+      textCanvas.width = width;
+      textCanvas.height = height;
+      const textContext = textCanvas.getContext("2d", { alpha: false });
+      if (!textContext) throw new Error("امکان ساخت بوم ثابت تصویر برای خروجی فراهم نشد.");
       let videoProgress = 0;
       let audioProgress = 0;
       const updateExportProgress = () => {
@@ -1129,21 +1132,20 @@
                 Math.max(0.001, isFirst ? Math.max(1 / fps, (sample.duration || 1 / fps) - trimOffset) : (sample.duration || 1 / fps)),
                 remaining
               );
-              const hasActiveText = textCanvas && exportTextOverlays.some(item =>
+              const hasActiveText = exportTextOverlays.some(item =>
                 compositionTime >= item.start && compositionTime < item.end
               );
+              // Always render to the fixed output canvas, even when no text is active.
+              // Passing original samples through directly can change dimensions mid-stream
+              // (for example, 540x960 followed by 270x480), which MP4 encoding rejects.
+              textContext.fillStyle = "#000";
+              textContext.fillRect(0, 0, width, height);
+              sample.drawWithFit(textContext, { fit: "contain" });
               if (hasActiveText) {
-                textContext.fillStyle = "#000";
-                textContext.fillRect(0, 0, width, height);
-                sample.drawWithFit(textContext, { fit: "contain" });
                 drawTextOverlays(textContext, compositionTime, width, height, exportTextOverlays);
-                renderedSample = new MB.VideoSample(textCanvas, { timestamp: compositionTime, duration: frameDuration });
-                await videoSource.add(renderedSample);
-              } else {
-                sample.setTimestamp(compositionTime);
-                sample.setDuration(frameDuration);
-                await videoSource.add(sample);
               }
+              renderedSample = new MB.VideoSample(textCanvas, { timestamp: compositionTime, duration: frameDuration });
+              await videoSource.add(renderedSample);
               frameCount++;
               totalFrames++;
             } finally {
