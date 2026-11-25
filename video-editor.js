@@ -10,6 +10,9 @@
   const list = $("navaEditorTimeline");
   const splitSelectedButton = $("navaEditorSplitSelected");
   const duplicateSelectedButton = $("navaEditorDuplicateSelected");
+  const deleteRangeStart = $("navaEditorDeleteRangeStart");
+  const deleteRangeEnd = $("navaEditorDeleteRangeEnd");
+  const deleteRangeButton = $("navaEditorDeleteRange");
   const selectedClipLabel = $("navaEditorSelectedLabel");
   const preview = $("navaEditorPreview");
   const status = document.getElementById("navaEditorStatus");
@@ -92,6 +95,9 @@
     const selectedClip = clips.find(clip => clip.id === selectedId);
     if (splitSelectedButton) splitSelectedButton.disabled = !selectedClip;
     if (duplicateSelectedButton) duplicateSelectedButton.disabled = !selectedClip || clips.length >= 8;
+    if (deleteRangeButton) deleteRangeButton.disabled = !selectedClip;
+    if (deleteRangeStart) deleteRangeStart.max = selectedClip ? String(selectedClip.duration) : "";
+    if (deleteRangeEnd) deleteRangeEnd.max = selectedClip ? String(selectedClip.duration) : "";
     if (selectedClipLabel) selectedClipLabel.textContent = selectedClip
       ? "کلیپ انتخاب‌شده: " + selectedClip.file.name + " · " + fmt(selectedClip.out - selectedClip.in)
       : "ابتدا یک کلیپ را از فهرست پایین انتخاب کن";
@@ -288,6 +294,74 @@
   };
   splitSelectedButton?.addEventListener("click", () => clickSelectedClipAction("split"));
   duplicateSelectedButton?.addEventListener("click", () => clickSelectedClipAction("duplicate"));
+
+  // Delete a source-time range from the selected clip without changing other clips.
+  deleteRangeButton?.addEventListener("click", () => {
+    const clip = clips.find(item => item.id === selectedId);
+    if (!clip) {
+      setStatus("ابتدا کلیپی را که می‌خواهی ویرایش کنی انتخاب کن.");
+      return;
+    }
+    const start = Number(deleteRangeStart?.value);
+    const end = Number(deleteRangeEnd?.value);
+    if (!Number.isFinite(start) || !Number.isFinite(end) || end <= start) {
+      setStatus("زمان شروع و پایان را به‌صورت ثانیه وارد کن؛ زمان پایان باید از شروع بیشتر باشد.");
+      return;
+    }
+    const epsilon = 0.001;
+    if (start < clip.in - epsilon || end > clip.out + epsilon) {
+      setStatus("بازهٔ واردشده باید داخل محدودهٔ فعلی همین کلیپ باشد: " +
+        clip.in.toFixed(1) + " تا " + clip.out.toFixed(1) + " ثانیه از فایل اصلی.");
+      return;
+    }
+    const beforeDuration = Math.max(0, start - clip.in);
+    const afterDuration = Math.max(0, clip.out - end);
+    if ((beforeDuration > epsilon && beforeDuration < 0.15) ||
+        (afterDuration > epsilon && afterDuration < 0.15)) {
+      setStatus("برای حفظ دقت برش، هر بخش باقی‌مانده باید دست‌کم ۰٫۱۵ ثانیه باشد.");
+      return;
+    }
+    const piecesCount = (beforeDuration >= 0.15 ? 1 : 0) + (afterDuration >= 0.15 ? 1 : 0);
+    if (clips.length - 1 + piecesCount > 8) {
+      setStatus("این حذف تعداد کلیپ‌ها را از سقف ۸ بخش بیشتر می‌کند. ابتدا یک کلیپ دیگر را حذف یا ادغام کن.");
+      return;
+    }
+    if (!window.confirm("بازهٔ " + start.toFixed(1) + " تا " + end.toFixed(1) +
+        " ثانیه از «" + clip.file.name + "» حذف شود؟")) return;
+
+    stopPlayback();
+    const index = clips.findIndex(item => item.id === clip.id);
+    const oldUrl = clip.url;
+    const replacements = [];
+    if (beforeDuration >= 0.15) {
+      replacements.push({
+        ...clip, id: "clip-" + (++clipSequence),
+        url: URL.createObjectURL(clip.file), out: start
+      });
+    }
+    if (afterDuration >= 0.15) {
+      replacements.push({
+        ...clip, id: "clip-" + (++clipSequence),
+        url: URL.createObjectURL(clip.file), in: end
+      });
+    }
+    clips.splice(index, 1, ...replacements);
+    const nextClip = replacements[1] || replacements[0] ||
+      clips[Math.min(index, clips.length - 1)] || clips[index - 1] || null;
+    selectedId = nextClip?.id || null;
+    renderTimeline();
+    if (nextClip) {
+      selectClip(nextClip);
+    } else {
+      preview.pause();
+      preview.removeAttribute("src");
+      preview.load();
+      setStatus("بازه حذف شد و کلیپ انتخاب‌شده کاملاً از پروژه برداشته شد.");
+    }
+    URL.revokeObjectURL(oldUrl);
+    setStatus("بازهٔ " + start.toFixed(1) + " تا " + end.toFixed(1) +
+      " ثانیه حذف شد؛ سایر کلیپ‌ها و موسیقی حفظ شدند.");
+  });
 
   list.addEventListener("click", event => {
     const button = event.target.closest("button[data-action]");
