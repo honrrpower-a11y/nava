@@ -22,7 +22,8 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" defer></script>
   <script src="logo-renderer.js?v=logo-persian-native-text-20261121-1" defer></script>
   <script src="logo-studio.js?v=logo-per-concept-visual-review-20261121-1" defer></script>
-  <link rel="stylesheet" href="video-studio.css?v=video-preview-mute-20261124-1">
+  <link rel="stylesheet" href="video-studio.css?v=video-editor-foundation-20261125-1">
+  <link rel="stylesheet" href="video-editor.css?v=video-editor-foundation-20261125-1">
 </head>
 <body>
 
@@ -628,7 +629,27 @@
             <p class="nava-video-hint">پیش‌نمایش و دریافت ویدئو همین‌جا در همین بخش انجام می‌شود.</p>
           </div>
         </section>
-<section class="nava-video-panel" id="navaVideoPanelVideo" role="tabpanel" hidden><div class="nava-video-coming-soon"><span aria-hidden="true">▶</span><h3>تدوین ویدئوی ورودی</h3><p>برش، اتصال چند ویدئو، انتقال بین صحنه‌ها و تایم‌لاین کامل در مرحله بعد اضافه می‌شود.</p><strong>به‌زودی</strong></div></section>
+<section class="nava-video-panel" id="navaVideoPanelVideo" role="tabpanel" hidden>
+  <div class="nava-editor-heading"><h3>تدوین ویدئوهای خودت</h3><p>ویدئوها را از گوشی انتخاب کن؛ ترتیب، نقطه شروع و پایان هر کلیپ را تنظیم و تدوین را پیش‌نمایش کن. فایل‌ها فقط در مرورگر خودت پردازش می‌شوند.</p></div>
+  <section class="nava-video-editor" id="navaVideoEditor" aria-label="تدوینگر ویدئو">
+    <div class="nava-editor-toolbar">
+      <label for="navaEditorFiles">＋ افزودن ویدئوها<input id="navaEditorFiles" type="file" accept="video/*,.mp4,.mov,.m4v,.webm,.3gp" multiple></label>
+      <label for="navaEditorAudio">♫ افزودن موسیقی<input id="navaEditorAudio" type="file" accept="audio/*,.mp3,.m4a,.wav,.ogg"></label>
+      <span class="nava-editor-summary" id="navaEditorTotal">۰ کلیپ · ۰۰:۰۰</span>
+    </div>
+    <div class="nava-editor-stage">
+      <div class="nava-editor-preview-wrap"><video class="nava-editor-preview" id="navaEditorPreview" controls playsinline preload="metadata"></video></div>
+      <aside class="nava-editor-audio-card">
+        <strong>موسیقی پروژه</strong><small id="navaEditorAudioLabel">موسیقی اضافه نشده است.</small>
+        <label for="navaEditorAudioVolume">بلندی موسیقی</label><input id="navaEditorAudioVolume" type="range" min="0" max="100" value="75">
+        <div class="nava-editor-playback"><button class="nava-editor-play" id="navaEditorPlay" type="button" disabled>▶ پخش تدوین</button><button class="nava-editor-stop" id="navaEditorStop" type="button" disabled>توقف</button><button class="nava-editor-stop" id="navaEditorClear" type="button" disabled>پاک‌کردن پروژه</button></div>
+      </aside>
+    </div>
+    <div><h4>تایم‌لاین و برش کلیپ‌ها</h4><div class="nava-editor-timeline" id="navaEditorTimeline"><div class="nava-editor-empty">هنوز ویدئویی اضافه نشده است.</div></div></div>
+    <p class="nava-editor-status" id="navaEditorStatus" role="status" aria-live="polite">برای شروع یک یا چند ویدئو انتخاب کن.</p>
+    <p class="nava-editor-note">در این مرحله، افزودن ویدئو، مرتب‌سازی، برش ابتدا و انتها، پیش‌نمایش پیوسته و افزودن موسیقی فعال است. خروجی نهایی و افکت‌های انتقال در مرحله بعد اضافه می‌شوند؛ فایل اصلی هیچ‌وقت تغییر نمی‌کند.</p>
+  </section>
+</section>
 
       </section>
     </div>
@@ -1539,5 +1560,6 @@
   <script src="https://github.com/Vanilagy/mediabunny/releases/download/v1.66.3/mediabunny.min.cjs" defer></script>
   <script src="https://github.com/Vanilagy/mediabunny/releases/download/v1.66.3/mediabunny-aac-encoder.min.js" defer></script>
   <script src="video-studio.js?v=video-multi-image-analysis-20261125-1" defer></script>
+  <script src="video-editor.js?v=video-editor-foundation-20261125-1" defer></script>
 </body>
 </html>
