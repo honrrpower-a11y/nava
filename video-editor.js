@@ -203,7 +203,7 @@
     if (exportMusicGain) exportMusicGain.gain.value = Number(audioVolume.value) / 100;
     audioLabel.textContent = file.name;
     updateSummary();
-    setStatus("موسیقی به پروژه اضافه شد. صدای اصلی کلیپ‌ها در این مرحله بدون تغییر باقی می‌ماند.");
+    setStatus("موسیقی به پروژه اضافه شد و هنگام خروجی با صدای اصلی کلیپ‌ها ترکیب می‌شود.");
   });
   audioVolume.addEventListener("input", () => {
     if (exportMusicGain) {
