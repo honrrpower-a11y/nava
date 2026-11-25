@@ -198,3 +198,24 @@ body.light .nava-video-editor .nava-editor-export-button{
   transform:translateY(-1px);
  }
 }
+
+
+/* Prominent timeline actions for the currently selected clip. */
+.nava-video-editor .nava-editor-timeline-tools{
+  display:grid;gap:9px;margin:10px 0 14px;padding:12px;
+  border:1px solid var(--border,#34445c);border-radius:12px;
+  background:var(--panel2,#172337);color:var(--text,#edf2f8)
+}
+.nava-video-editor .nava-editor-timeline-selected{font-size:.9rem;font-weight:700;overflow-wrap:anywhere}
+.nava-video-editor .nava-editor-timeline-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.nava-video-editor .nava-editor-timeline-actions button{
+  min-height:44px;border:1px solid var(--gold,#c6a15b);border-radius:9px;
+  padding:9px 12px;background:var(--panel,#202d40);color:var(--text,#edf2f8);
+  font:inherit;font-weight:700;cursor:pointer
+}
+.nava-video-editor .nava-editor-timeline-actions button:disabled{opacity:.42;cursor:not-allowed}
+.nava-video-editor .nava-editor-timeline-actions button:not(:disabled):hover{filter:brightness(1.12)}
+.nava-video-editor .nava-editor-timeline-tools small{color:var(--muted,#9eafc6);line-height:1.7}
+@media(max-width:480px){
+  .nava-video-editor .nava-editor-timeline-actions{grid-template-columns:1fr}
+}
