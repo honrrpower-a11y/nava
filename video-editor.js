@@ -305,9 +305,13 @@
     card.querySelector("[data-trim-duration]").textContent = fmt(clip.out - clip.in);
     card.querySelector(".nava-editor-clip-duration").textContent = fmt(clip.out - clip.in);
     totalLabel.textContent = clips.length + " کلیپ · " + fmt(totalDuration());
-    if (selectedId === clip.id && !playing) {
-      const target = field.dataset.trim === "in" ? clip.in : Math.min(clip.out, preview.currentTime);
-      if (Math.abs(preview.currentTime - target) > 0.15) preview.currentTime = target;
+    if (selectedId === clip.id) {
+      if (playing) stopPlayback();
+      const outsideTrim = preview.currentTime < clip.in || preview.currentTime >= clip.out;
+      if (outsideTrim) {
+        const target = field.dataset.trim === "in" ? clip.in : Math.max(clip.in, clip.out - 0.1);
+        try { preview.currentTime = target; } catch (_) {}
+      }
     }
     setStatus("برش زنده: " + fmt(clip.out - clip.in) + " از " + clip.file.name);
   });
@@ -389,11 +393,11 @@
     let musicStarted = false;
     try {
       const canvas = document.createElement("canvas");
-      canvas.width = 1280;
-      canvas.height = 720;
+      canvas.width = 960;
+      canvas.height = 540;
       const ctx = canvas.getContext("2d", { alpha: false });
       if (!ctx) throw new Error("امکان ساخت بوم ویدئو در این مرورگر وجود ندارد.");
-      canvasStream = canvas.captureStream(24);
+      canvasStream = canvas.captureStream(20);
 
       const AudioContextClass = window.AudioContext || window.webkitAudioContext;
       if (AudioContextClass) {
@@ -434,7 +438,7 @@
         "video/webm"
       ];
       const mimeType = mimeCandidates.find(type => MediaRecorder.isTypeSupported(type)) || "";
-      recorder = new MediaRecorder(combinedStream, mimeType ? { mimeType, videoBitsPerSecond: 2500000 } : { videoBitsPerSecond: 2500000 });
+      recorder = new MediaRecorder(combinedStream, mimeType ? { mimeType, videoBitsPerSecond: 1600000 } : { videoBitsPerSecond: 1600000 });
       const chunks = [];
       recorder.ondataavailable = event => { if (event.data && event.data.size) chunks.push(event.data); };
       const recordingStopped = new Promise((resolve, reject) => {
@@ -480,23 +484,62 @@
 
         await new Promise((resolve, reject) => {
           let raf = 0;
-          const tick = () => {
-            try {
-              drawFrame();
-              const clipProgress = Math.max(0, Math.min(clip.out - clip.in, preview.currentTime - clip.in));
-              exportProgress.value = Math.round(((completedDuration + clipProgress) / projectDuration) * 100);
-              if (preview.currentTime >= clip.out - 0.035 || preview.ended) {
-                cancelAnimationFrame(raf);
-                resolve();
-                return;
-              }
-              raf = requestAnimationFrame(tick);
-            } catch (error) {
-              cancelAnimationFrame(raf);
-              reject(error);
+          let frameCallback = 0;
+          let watchdog = 0;
+          let lastMediaTime = preview.currentTime;
+          let lastProgressAt = Date.now();
+          let settled = false;
+          const cleanup = () => {
+            if (raf) cancelAnimationFrame(raf);
+            if (watchdog) clearInterval(watchdog);
+            if (frameCallback && typeof preview.cancelVideoFrameCallback === "function") {
+              try { preview.cancelVideoFrameCallback(frameCallback); } catch (_) {}
             }
           };
-          raf = requestAnimationFrame(tick);
+          const finish = error => {
+            if (settled) return;
+            settled = true;
+            cleanup();
+            if (error) reject(error); else resolve();
+          };
+          const updateProgress = () => {
+            const clipProgress = Math.max(0, Math.min(clip.out - clip.in, preview.currentTime - clip.in));
+            exportProgress.value = Math.round(((completedDuration + clipProgress) / projectDuration) * 100);
+            if (preview.currentTime > lastMediaTime + 0.015) {
+              lastMediaTime = preview.currentTime;
+              lastProgressAt = Date.now();
+            }
+            if (preview.currentTime >= clip.out - 0.035 || preview.ended) finish();
+          };
+          const draw = () => {
+            try {
+              if (preview.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA && preview.videoWidth > 0) drawFrame();
+              updateProgress();
+            } catch (error) { finish(error); }
+          };
+          if (typeof preview.requestVideoFrameCallback === "function") {
+            const onFrame = () => {
+              if (settled) return;
+              draw();
+              if (!settled) frameCallback = preview.requestVideoFrameCallback(onFrame);
+            };
+            frameCallback = preview.requestVideoFrameCallback(onFrame);
+          } else {
+            let lastDrawAt = 0;
+            const tick = now => {
+              if (settled) return;
+              if (now - lastDrawAt >= 50) { draw(); lastDrawAt = now; }
+              if (!settled) raf = requestAnimationFrame(tick);
+            };
+            raf = requestAnimationFrame(tick);
+          }
+          watchdog = setInterval(() => {
+            if (settled) return;
+            updateProgress();
+            if (Date.now() - lastProgressAt > 7000 && preview.currentTime < clip.out - 0.035) {
+              finish(new Error("حرکت تصویر هنگام خروجی متوقف شد. برای جلوگیری از فایل خراب، ساخت خروجی متوقف شد؛ ویدئوی کوتاه‌تر یا MP4 با کدک H.264 را امتحان کن."));
+            }
+          }, 1000);
         });
         preview.pause();
         completedDuration += clip.out - clip.in;
