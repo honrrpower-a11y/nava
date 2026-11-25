@@ -1,0 +1,9 @@
+.nava-editor-effects{display:grid;gap:9px;margin-top:12px;padding:12px;border:1px solid var(--border);border-radius:12px;background:rgba(37,202,255,.035)}
+.nava-editor-effects>strong{font-size:12px;color:var(--gold);margin-top:3px}
+.nava-editor-effects label{display:grid;gap:6px;font-size:11px;color:var(--muted);line-height:1.8}
+.nava-editor-effects select{width:100%;min-width:0;padding:9px 10px;border:1px solid var(--border);border-radius:9px;background:var(--bg);color:var(--text);font:inherit}
+.nava-editor-effects input[type=range]{width:100%;accent-color:var(--gold);touch-action:pan-y}
+.nava-editor-effects output{color:var(--blue);font-variant-numeric:tabular-nums}
+.nava-editor-effects small{font-size:10px;line-height:1.9;color:var(--muted)}
+.nava-editor-preview{will-change:opacity,transform,filter;transform-origin:center center}
+@media(max-width:600px){.nava-editor-effects{padding:10px}.nava-editor-effects select{font-size:12px;min-height:40px}}
