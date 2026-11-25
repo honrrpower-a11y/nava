@@ -1,0 +1,12 @@
+/* NAVI step-by-step video editing guide */
+.nava-editor-guide{display:grid;gap:12px;margin:12px 0 16px;padding:14px;border:1px solid var(--border,rgba(229,184,94,.28));border-radius:15px;background:var(--panel,rgba(17,26,43,.88));color:var(--text,#f4f1e9)}
+.nava-editor-guide-top{display:flex;align-items:center;justify-content:space-between;gap:12px}.nava-editor-guide-top>div{display:grid;gap:4px;min-width:0}
+.nava-editor-guide-kicker{color:var(--accent,#c99b48);font-size:.68rem;letter-spacing:.12em;font-weight:800}.nava-editor-guide-top strong{font-size:1rem}.nava-editor-guide-top small{color:var(--muted,#9ba7b8);line-height:1.7}
+.nava-editor-guide button{min-height:40px;padding:8px 12px;border:1px solid var(--border,rgba(229,184,94,.28));border-radius:9px;background:var(--panel2,#172338);color:var(--text,#f4f1e9);font:inherit;font-size:.82rem;font-weight:700;cursor:pointer}
+.nava-editor-guide-top>button{flex:0 0 auto;background:var(--accent,#c99b48);color:#171b22;border-color:transparent}.nava-editor-guide-body{display:grid;gap:12px}
+.nava-editor-guide-choices{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}.nava-editor-guide-choices button{min-width:0;line-height:1.5}.nava-editor-guide-choices button.is-active{border-color:var(--accent,#c99b48);background:color-mix(in srgb,var(--accent,#c99b48) 16%,var(--panel2,#172338))}
+.nava-editor-guide-card{display:grid;gap:8px;padding:13px;border-radius:11px;background:var(--panel2,#172338);border:1px solid var(--border,rgba(229,184,94,.2))}.nava-editor-guide-card strong{line-height:1.7}.nava-editor-guide-card p{margin:0;color:var(--muted,#aab8ce);font-size:.88rem;line-height:1.9}
+.nava-editor-guide-step-actions{display:flex;flex-wrap:wrap;gap:8px}.nava-editor-guide-step-actions button:first-child{border-color:var(--accent,#c99b48)}
+.nava-editor-guide-controls{display:flex;align-items:center;justify-content:space-between;gap:10px}.nava-editor-guide-controls span{color:var(--muted,#aab8ce);font-size:.8rem}.nava-editor-guide-controls>div{display:flex;gap:7px}
+.nava-editor-guide button:disabled{opacity:.4;cursor:not-allowed}
+@media(max-width:520px){.nava-editor-guide-top{align-items:flex-start;flex-direction:column}.nava-editor-guide-top>button{width:100%}.nava-editor-guide-choices{grid-template-columns:repeat(2,minmax(0,1fr))}.nava-editor-guide-controls{align-items:flex-start;flex-direction:column}.nava-editor-guide-controls>div{width:100%}.nava-editor-guide-controls>div button{flex:1}}
