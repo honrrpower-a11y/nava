@@ -22,8 +22,8 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" defer></script>
   <script src="logo-renderer.js?v=logo-persian-native-text-20261121-1" defer></script>
   <script src="logo-studio.js?v=logo-per-concept-visual-review-20261121-1" defer></script>
-  <link rel="stylesheet" href="video-studio.css?v=video-editor-foundation-20261125-1">
-  <link rel="stylesheet" href="video-editor.css?v=video-editor-foundation-20261125-1">
+  <link rel="stylesheet" href="video-studio.css?v=video-editor-mobile-flow-20261125-1">
+  <link rel="stylesheet" href="video-editor.css?v=video-editor-mobile-flow-20261125-1">
 </head>
 <body>
 
@@ -567,7 +567,7 @@
         <p>چند عکس و موسیقی خودت را وارد کن؛ NAVI سناریو و ترتیب پیشنهادی را طراحی می‌کند و موتور تدوین، پیش‌نمایش و خروجی را می‌سازد.</p>
 <div class="nava-video-tabs" role="tablist" aria-label="بخش‌های استودیوی ویدئو">
           <button type="button" class="nava-video-tab is-active" role="tab" aria-selected="true" aria-controls="navaVideoPanelText" data-video-tab="text">ساخت ویدئو</button>
-          <button type="button" class="nava-video-tab" role="tab" aria-selected="false" aria-controls="navaVideoPanelVideo" data-video-tab="video">تدوین ویدئو · به‌زودی</button>
+          <button type="button" class="nava-video-tab" role="tab" aria-selected="false" aria-controls="navaVideoPanelVideo" data-video-tab="video">تدوین ویدئو</button>
         </div>
         <section class="nava-video-panel is-active" id="navaVideoPanelText" role="tabpanel">
           <h3>ساخت ویدئو از چند صحنه متنی</h3>
@@ -630,7 +630,7 @@
           </div>
         </section>
 <section class="nava-video-panel" id="navaVideoPanelVideo" role="tabpanel" hidden>
-  <div class="nava-editor-heading"><h3>تدوین ویدئوهای خودت</h3><p>ویدئوها را از گوشی انتخاب کن؛ ترتیب، نقطه شروع و پایان هر کلیپ را تنظیم و تدوین را پیش‌نمایش کن. فایل‌ها فقط در مرورگر خودت پردازش می‌شوند.</p></div>
+  <div class="nava-editor-heading"><h3>تدوین ویدئوهای خودت</h3><p>از افزودن کلیپ شروع کن؛ بعد هر کلیپ را انتخاب کن، ابتدا و انتهایش را با نوارهای برش تنظیم کن و ترتیب را بچین.</p><ol class="nava-editor-steps"><li><b>۱</b> افزودن ویدئو</li><li><b>۲</b> انتخاب و برش</li><li><b>۳</b> مرتب‌سازی</li><li><b>۴</b> پیش‌نمایش</li></ol></div>
   <section class="nava-video-editor" id="navaVideoEditor" aria-label="تدوینگر ویدئو">
     <div class="nava-editor-toolbar">
       <label for="navaEditorFiles">＋ افزودن ویدئوها<input id="navaEditorFiles" type="file" accept="video/*,.mp4,.mov,.m4v,.webm,.3gp" multiple></label>
@@ -646,9 +646,9 @@
         <div class="nava-editor-playback"><button class="nava-editor-play" id="navaEditorPlay" type="button" disabled>▶ پخش تدوین</button><button class="nava-editor-stop" id="navaEditorStop" type="button" disabled>توقف</button><button class="nava-editor-stop" id="navaEditorClear" type="button" disabled>پاک‌کردن پروژه</button></div>
       </aside>
     </div>
-    <div><h4>تایم‌لاین و برش کلیپ‌ها</h4><div class="nava-editor-timeline" id="navaEditorTimeline"><div class="nava-editor-empty">هنوز ویدئویی اضافه نشده است.</div></div></div>
+    <div class="nava-editor-timeline-heading"><h4>کلیپ‌های پروژه</h4><small>برای ویرایش هر بخش، روی نام آن بزن</small></div><div class="nava-editor-timeline" id="navaEditorTimeline"><div class="nava-editor-empty">هنوز ویدئویی اضافه نشده است.</div></div></div>
     <p class="nava-editor-status" id="navaEditorStatus" role="status" aria-live="polite">برای شروع یک یا چند ویدئو انتخاب کن.</p>
-    <p class="nava-editor-note">در این مرحله، افزودن ویدئو، مرتب‌سازی، برش ابتدا و انتها، پیش‌نمایش پیوسته و افزودن موسیقی فعال است. خروجی نهایی و افکت‌های انتقال در مرحله بعد اضافه می‌شوند؛ فایل اصلی هیچ‌وقت تغییر نمی‌کند.</p>
+    <p class="nava-editor-note">این نسخه برای چیدن کلیپ‌ها، برش ابتدا و انتها و پیش‌نمایش است. هنوز خروجی نهایی MP4، افکت انتقال و میکس صدای اصلی و موسیقی فعال نشده‌اند؛ این موارد باید در مرحله بعد به موتور تدوین اضافه شوند.</p>
   </section>
 </section>
 
@@ -1561,6 +1561,6 @@
   <script src="https://github.com/Vanilagy/mediabunny/releases/download/v1.66.3/mediabunny.min.cjs" defer></script>
   <script src="https://github.com/Vanilagy/mediabunny/releases/download/v1.66.3/mediabunny-aac-encoder.min.js" defer></script>
   <script src="video-studio.js?v=video-multi-image-analysis-20261125-1" defer></script>
-  <script src="video-editor.js?v=video-editor-foundation-20261125-1" defer></script>
+  <script src="video-editor.js?v=video-editor-mobile-flow-20261125-1" defer></script>
 </body>
 </html>
