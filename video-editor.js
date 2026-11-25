@@ -1115,8 +1115,8 @@
           const frameCount = Math.max(1, Math.ceil(chunkDuration * sampleRate));
           const offline = new OfflineContext(2, frameCount, sampleRate);
           const scheduleProjectEnvelope = (gainNode, baseVolume) => {
-            const fadeIn = audioFadeSettings.fadeIn;
-            const fadeOut = audioFadeSettings.fadeOut;
+            const fadeIn = Math.min(audioFadeSettings.fadeIn, projectDuration / 2);
+            const fadeOut = Math.min(audioFadeSettings.fadeOut, projectDuration / 2);
             const valueAt = time => {
               const inFactor = fadeIn > 0 ? Math.min(1, Math.max(0, time / fadeIn)) : 1;
               const outFactor = fadeOut > 0 ? Math.min(1, Math.max(0, (projectDuration - time) / fadeOut)) : 1;
