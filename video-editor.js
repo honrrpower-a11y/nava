@@ -390,45 +390,71 @@
     let audioContext = null;
     let canvasStream = null;
     let combinedStream = null;
+    let previewCaptureStream = null;
     let musicStarted = false;
     try {
       const canvas = document.createElement("canvas");
-      canvas.width = 960;
-      canvas.height = 540;
-      const ctx = canvas.getContext("2d", { alpha: false });
+      // Mobile-safe render profile: reduce decoder, canvas and encoder pressure.
+      canvas.width = 720;
+      canvas.height = 405;
+      const ctx = canvas.getContext("2d", { alpha: false, desynchronized: true });
       if (!ctx) throw new Error("امکان ساخت بوم ویدئو در این مرورگر وجود ندارد.");
-      canvasStream = canvas.captureStream(20);
+      canvasStream = canvas.captureStream(15);
 
       const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-      if (AudioContextClass) {
-        if (!exportAudioContext) {
-          exportAudioContext = new AudioContextClass();
-          exportRecordDestination = exportAudioContext.createMediaStreamDestination();
-          const previewSource = exportAudioContext.createMediaElementSource(preview);
-          exportPreviewGain = exportAudioContext.createGain();
-          exportPreviewGain.gain.value = 1;
-          previewSource.connect(exportPreviewGain);
-          exportPreviewGain.connect(exportAudioContext.destination);
-          exportPreviewGain.connect(exportRecordDestination);
+      if (!AudioContextClass) throw new Error("این مرورگر ابزار لازم برای میکس صدای خروجی را ندارد.");
+      if (!exportAudioContext) {
+        exportAudioContext = new AudioContextClass();
+        exportRecordDestination = exportAudioContext.createMediaStreamDestination();
+      }
+      audioContext = exportAudioContext;
+      await audioContext.resume();
+
+      // Prefer the browser's native media capture for the source video's audio.
+      // This avoids routing every decoded audio sample through WebAudio on mobile.
+      let sourceAudioTracks = [];
+      const capturePreviewAudio = preview.captureStream || preview.mozCaptureStream;
+      if (typeof capturePreviewAudio === "function") {
+        try {
+          previewCaptureStream = capturePreviewAudio.call(preview);
+          sourceAudioTracks = previewCaptureStream.getAudioTracks().filter(track => track.readyState === "live");
+        } catch (_) {
+          previewCaptureStream = null;
+          sourceAudioTracks = [];
         }
-        audioContext = exportAudioContext;
-        if (audioFile && !exportMusicSource) {
+      }
+
+      // WebAudio is used only for optional music mixing, not for the original clip audio.
+      if (audioFile) {
+        if (!exportMusicSource) {
           exportMusicSource = audioContext.createMediaElementSource(audio);
-          audio.volume = 1;
           exportMusicGain = audioContext.createGain();
           exportMusicSource.connect(exportMusicGain);
-          exportMusicGain.connect(audioContext.destination);
           exportMusicGain.connect(exportRecordDestination);
         }
-        if (exportMusicGain) exportMusicGain.gain.value = audioFile ? Math.max(0, Math.min(1, Number(audioVolume.value) / 100)) : 0;
-        combinedStream = new MediaStream([
-          ...canvasStream.getVideoTracks(),
-          ...exportRecordDestination.stream.getAudioTracks()
-        ]);
-        await audioContext.resume();
-      } else {
-        throw new Error("این مرورگر ابزار لازم برای میکس صدای ویدئو و ساخت خروجی کامل را ندارد.");
+        exportMusicGain.gain.value = Math.max(0, Math.min(1, Number(audioVolume.value) / 100));
+      } else if (exportMusicGain) {
+        exportMusicGain.gain.value = 0;
       }
+
+      // Fallback for browsers that do not expose an audio track from captureStream().
+      if (!sourceAudioTracks.length) {
+        if (!exportPreviewGain) {
+          const previewSource = audioContext.createMediaElementSource(preview);
+          exportPreviewGain = audioContext.createGain();
+          exportPreviewGain.gain.value = 1;
+          previewSource.connect(exportPreviewGain);
+          exportPreviewGain.connect(exportRecordDestination);
+          exportPreviewGain.connect(audioContext.destination);
+        }
+      }
+
+      combinedStream = new MediaStream([
+        ...canvasStream.getVideoTracks(),
+        ...(sourceAudioTracks.length
+          ? [...sourceAudioTracks, ...(audioFile ? exportRecordDestination.stream.getAudioTracks() : [])]
+          : exportRecordDestination.stream.getAudioTracks())
+      ]);
 
       const mimeCandidates = [
         "video/mp4;codecs=avc1.42E01E",
@@ -438,7 +464,7 @@
         "video/webm"
       ];
       const mimeType = mimeCandidates.find(type => MediaRecorder.isTypeSupported(type)) || "";
-      recorder = new MediaRecorder(combinedStream, mimeType ? { mimeType, videoBitsPerSecond: 1600000 } : { videoBitsPerSecond: 1600000 });
+      recorder = new MediaRecorder(combinedStream, mimeType ? { mimeType, videoBitsPerSecond: 1000000, audioBitsPerSecond: 128000 } : { videoBitsPerSecond: 1000000, audioBitsPerSecond: 128000 });
       const chunks = [];
       recorder.ondataavailable = event => { if (event.data && event.data.size) chunks.push(event.data); };
       const recordingStopped = new Promise((resolve, reject) => {
@@ -461,6 +487,7 @@
       if (audioFile) {
         audio.loop = true;
         audio.currentTime = 0;
+        // The music element feeds a dedicated WebAudio recording track.
         audio.volume = 1;
         await audio.play();
         musicStarted = true;
@@ -518,9 +545,16 @@
             } catch (error) { finish(error); }
           };
           if (typeof preview.requestVideoFrameCallback === "function") {
-            const onFrame = () => {
+            let lastDrawAt = 0;
+            const onFrame = now => {
               if (settled) return;
-              draw();
+              // Limit canvas work to the 15 fps output cadence, even if source is 30/60 fps.
+              if (!lastDrawAt || now - lastDrawAt >= 66) {
+                draw();
+                lastDrawAt = now;
+              } else {
+                updateProgress();
+              }
               if (!settled) frameCallback = preview.requestVideoFrameCallback(onFrame);
             };
             frameCallback = preview.requestVideoFrameCallback(onFrame);
@@ -528,7 +562,8 @@
             let lastDrawAt = 0;
             const tick = now => {
               if (settled) return;
-              if (now - lastDrawAt >= 50) { draw(); lastDrawAt = now; }
+              if (now - lastDrawAt >= 66) { draw(); lastDrawAt = now; }
+              else updateProgress();
               if (!settled) raf = requestAnimationFrame(tick);
             };
             raf = requestAnimationFrame(tick);
@@ -574,6 +609,9 @@
       preview.pause();
       if (canvasStream) canvasStream.getTracks().forEach(track => track.stop());
       if (combinedStream) combinedStream.getTracks().forEach(track => track.stop());
+      if (previewCaptureStream) {
+        previewCaptureStream.getTracks().forEach(track => track.stop());
+      }
       exportButton.disabled = false;
       updateSummary();
     }
