@@ -43,9 +43,14 @@ jobs:
           assert.match(html, /nava-editor-steps/, "Guided editor workflow must be visible");
           assert.match(js, /data-action="up"/, "Clip ordering controls must be available");
           assert.match(js, /audio\.volume/, "Music volume control must be wired");
-          assert.match(js, /MediaRecorder/, "Final video must be rendered locally in the browser");
-          assert.match(js, /captureStream\(24\)/, "Final render must capture the canvas stream");
-          assert.match(js, /createMediaStreamDestination/, "Original clip audio and music must be mixed into the output");
+          assert.match(js, /VideoSampleSink/, "Source video must be decoded frame by frame");
+          assert.match(js, /VideoSampleSource/, "Final video must use the offline encoder pipeline");
+          assert.match(js, /OfflineAudioContext/, "Clip audio and music must be mixed offline");
+          assert.match(js, /data-action="split"/, "Clip split action must be available");
+          assert.match(js, /data-action="duplicate"/, "Clip duplicate action must be available");
+          assert.match(js, /data-clip-volume/, "Per-clip original audio volume must be available");
+          assert.match(js, /muteAudio/, "Per-clip original audio mute must be supported");
+          assert.match(js, /navaEditorAspectRatio/, "Export aspect ratio must be selectable");
           assert.match(js, /exportDownload\.href/, "Final video download link must be created");
           assert.match(html, /ساخت و دانلود ویدیوی نهایی/, "Final render button must be visible");
           assert.match(css, /@media\(max-width:680px\)/, "Mobile editor layout must be present");
