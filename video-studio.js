@@ -694,8 +694,9 @@
   root.querySelectorAll("[data-video-tab]").forEach(btn=>btn.addEventListener("click",()=>{root.querySelectorAll("[data-video-tab]").forEach(b=>{const active=b===btn;b.classList.toggle("is-active",active);b.setAttribute("aria-selected",String(active));});root.querySelectorAll(".nava-video-panel").forEach(p=>{const active=p.id===btn.getAttribute("aria-controls");p.hidden=!active;p.classList.toggle("is-active",active);});if(sharedOutput&&btn.dataset.videoTab==="text")root.querySelector("#navaVideoPanelText").append(sharedOutput);}));
 
   $("navaVideoAskNavi")?.addEventListener("click",()=>{
-    const brief=(briefInput?.value||"").trim(),result=$("navaVideoNaviResult");
-    if(!brief){result.textContent="ابتدا بریف ویدئو را بنویس.";return;}
+    const userBrief=(briefInput?.value||"").trim(),result=$("navaVideoNaviResult");
+    if(!userBrief&&!scenes.length){result.textContent="برای ساخت کاملاً خودکار، فقط عکس‌ها را انتخاب کن؛ نوشتن بریف اختیاری است.";return;}
+    const brief=userBrief||"کاربر بریف متنی مشخصی ارائه نکرده است. از مشاهده مستقیم همه عکس‌ها و موسیقی انتخاب‌شده، خودت بهترین ایده، موضوع، روایت، متن فارسی، ترتیب صحنه‌ها، سبک بصری و طراحی موشن را کشف و انتخاب کن. هیچ سؤال یا انتخابی از کاربر نخواه؛ اگر چند برداشت ممکن است، مناسب‌ترین و حرفه‌ای‌ترین برداشت را بر اساس خود تصاویر انتخاب کن. متن‌ها باید اصیل، دقیق و متناسب با محتوای واقعی عکس‌ها باشند و از شعارهای عمومی و متن‌های کلیشه‌ای پرهیز کن.";
     if(scenes.length&&!naviVideoAnalysisReady){result.textContent="ابتدا صبر کن تحلیل همه عکس‌ها کامل شود؛ اگر تحلیلی ناموفق بود عکس مشخص‌شده را دوباره انتخاب کن.";return;}
     const imageNames=scenes.map((scene,i)=>(i+1)+". "+scene.file.name+"\n"+(scene.analysis?.report||"تحلیل محلی در دسترس نیست."));
     const selectedMusicFile=musicFile;
@@ -711,7 +712,7 @@
     result.textContent="ناوی در حال بررسی بریف، عکس‌ها و موسیقی و طراحی ویدئو است…";
     const prompt = [
       "نقش تو: کارگردان خلاق، تدوین‌گر روایت و طراح موشن‌گرافیک حرفه‌ای برای ویدئوی کوتاه شبکه‌های اجتماعی.",
-      "هدف: بریف خام کاربر را به یک نقشه اجرایی دقیق، خوش‌ریتم و قابل‌رندر تبدیل کن؛ خروجی نباید شبیه اسلایدشو یا مجموعه‌ای از عکس‌های ثابت با نوشته‌های تکراری باشد.",
+      "هدف: اگر کاربر بریف داده، آن را به یک نقشه اجرایی دقیق، خوش‌ریتم و قابل‌رندر تبدیل کن. اگر بریف خالی است، خودت با دیدن عکس‌ها و شنیدن/شناخت موسیقی، ایده، پیام، روایت، متن فارسی، ترتیب، کارگردانی هنری و موشن را از صفر انتخاب کن؛ از کاربر سؤال نپرس و هیچ انتخاب سبکی را به او واگذار نکن. خروجی نباید شبیه اسلایدشو یا مجموعه‌ای از عکس‌های ثابت با نوشته‌های تکراری باشد.",
       "تحلیل چندتصویری الزامی: تصاویر واقعی پیوست‌شده را تک‌به‌تک مشاهده کن؛ برای هر عکس سوژه‌ها و اشیای قابل مشاهده، محیط، حال‌وهوا، ترکیب‌بندی و ارتباطش با عکس‌های دیگر را جداگانه توصیف کن. سپس همه عکس‌ها را مقایسه کن و روایت، ترتیب صحنه‌ها، نقش هر عکس و پیوستگی بصری را از محتوای واقعی استخراج کن. گزارش محلی و پالت رنگ فقط داده کمکی پیکسلی است و جای دیدن عکس را نمی‌گیرد. اگر محتوای عکسی مبهم است صریحاً نامطمئن بمان و چیزی نساز. از تمام عکس‌ها استفاده کن.",
       "",
       "۱) طراحی روایت:",

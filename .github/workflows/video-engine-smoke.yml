@@ -60,6 +60,9 @@ jobs:
           assert.match(js, /grayscale\(1\) contrast\(1\.08\)/, "Photo treatment must alter source image rendering, not only scene metadata");
           assert.match(js, /card\.dataset\.naviArtDirection=allowed\.artDirection\.includes\(scene\.artDirection\)/, "NAVI-selected art direction must survive scene-plan application");
           assert.match(js, /کارگردانی هنری باید در خود تصویر خروجی دیده شود/, "NAVI must make visual design decisions, not merely change captions");
+          assert.match(js, /if\(!userBrief&&!scenes\.length\)/, "NAVI video build must work without a written brief when photos are supplied");
+          assert.match(js, /اگر بریف خالی است، خودت با دیدن عکس‌ها/, "NAVI must autonomously invent the concept and copy when the user leaves the brief blank");
+          assert.match(html, /توضیح یا ایده دلخواه \(اختیاری\)/, "The video brief must be presented as optional");
           assert.match(app, /artDirection، photoTreatment، accentColor/, "Authenticated video planning context must require executable visual direction");
           assert.match(js, /plan.scenes.length>20/, "NAVI scene plan must allow a separate page for each of up to 20 photos");
           assert.match(js, /scene\.transition==="page-turn"&&\(scene\.layout!=="single"\|\|scene\.images\.length!==1\)/, "Only the individual page-turn scene must use one photo");
