@@ -218,20 +218,31 @@
       setStatus("ترتیب کلیپ‌ها تغییر کرد.");
     }
   });
-  list.addEventListener("change", event => {
+  list.addEventListener("input", event => {
     const field = event.target.closest("input[data-trim]");
     if (!field) return;
-    const clip = getClip(field.closest("[data-clip-id]")?.dataset.clipId);
+    const card = field.closest("[data-clip-id]");
+    const clip = getClip(card?.dataset.clipId);
     if (!clip) return;
     const value = Math.max(0, Math.min(clip.duration, Number(field.value) || 0));
     if (field.dataset.trim === "in") clip.in = Math.min(value, clip.out - 0.1);
     else clip.out = Math.max(value, clip.in + 0.1);
-    stopPlayback();
-    renderTimeline();
-    if (selectedId === clip.id) {
-      preview.currentTime = clip.in;
-      setStatus("برش کلیپ به‌روزرسانی شد: " + fmt(clip.out - clip.in));
+    const startField = card.querySelector('[data-trim="in"]');
+    const endField = card.querySelector('[data-trim="out"]');
+    startField.max = Math.max(0.1, clip.out - 0.1).toFixed(1);
+    endField.min = Math.min(clip.duration, clip.in + 0.1).toFixed(1);
+    startField.value = clip.in.toFixed(1);
+    endField.value = clip.out.toFixed(1);
+    card.querySelector('[data-trim-value="in"]').textContent = fmt(clip.in);
+    card.querySelector('[data-trim-value="out"]').textContent = fmt(clip.out);
+    card.querySelector("[data-trim-duration]").textContent = fmt(clip.out - clip.in);
+    card.querySelector(".nava-editor-clip-duration").textContent = fmt(clip.out - clip.in);
+    totalLabel.textContent = clips.length + " کلیپ · " + fmt(totalDuration());
+    if (selectedId === clip.id && !playing) {
+      const target = field.dataset.trim === "in" ? clip.in : Math.min(clip.out, preview.currentTime);
+      if (Math.abs(preview.currentTime - target) > 0.15) preview.currentTime = target;
     }
+    setStatus("برش زنده: " + fmt(clip.out - clip.in) + " از " + clip.file.name);
   });
   playButton.addEventListener("click", () => {
     if (!clips.length) return;
