@@ -30,6 +30,11 @@
   let currentIndex = -1;
   let clipSequence = 0;
   let exportUrl = "";
+  let exportAudioContext = null;
+  let exportRecordDestination = null;
+  let exportPreviewGain = null;
+  let exportMusicGain = null;
+  let exportMusicSource = null;
 
   const fmt = value => {
     const n = Math.max(0, Number(value) || 0);
@@ -198,7 +203,10 @@
     updateSummary();
     setStatus("موسیقی به پروژه اضافه شد. صدای اصلی کلیپ‌ها در این مرحله بدون تغییر باقی می‌ماند.");
   });
-  audioVolume.addEventListener("input", () => { audio.volume = Number(audioVolume.value) / 100; });
+  audioVolume.addEventListener("input", () => {
+    audio.volume = Number(audioVolume.value) / 100;
+    if (exportMusicGain && exportAudioContext?.state === "running") exportMusicGain.gain.value = Number(audioVolume.value) / 100;
+  });
   list.addEventListener("click", event => {
     const button = event.target.closest("button[data-action]");
     if (!button) return;
@@ -337,24 +345,32 @@
 
       const AudioContextClass = window.AudioContext || window.webkitAudioContext;
       if (AudioContextClass) {
-        audioContext = new AudioContextClass();
-        const previewSource = audioContext.createMediaElementSource(preview);
-        const previewGain = audioContext.createGain();
-        previewGain.gain.value = 1;
-        previewSource.connect(previewGain).connect(audioContext.destination);
-        let audioTracks = [];
-        if (audioFile) {
-          const musicSource = audioContext.createMediaElementSource(audio);
-          const musicGain = audioContext.createGain();
-          musicGain.gain.value = Math.max(0, Math.min(1, Number(audioVolume.value) / 100));
-          musicSource.connect(musicGain).connect(audioContext.destination);
+        if (!exportAudioContext) {
+          exportAudioContext = new AudioContextClass();
+          exportRecordDestination = exportAudioContext.createMediaStreamDestination();
+          const previewSource = exportAudioContext.createMediaElementSource(preview);
+          exportPreviewGain = exportAudioContext.createGain();
+          exportPreviewGain.gain.value = 1;
+          previewSource.connect(exportPreviewGain);
+          exportPreviewGain.connect(exportAudioContext.destination);
+          exportPreviewGain.connect(exportRecordDestination);
         }
+        audioContext = exportAudioContext;
+        if (audioFile && !exportMusicSource) {
+          exportMusicSource = audioContext.createMediaElementSource(audio);
+          exportMusicGain = audioContext.createGain();
+          exportMusicSource.connect(exportMusicGain);
+          exportMusicGain.connect(audioContext.destination);
+          exportMusicGain.connect(exportRecordDestination);
+        }
+        if (exportMusicGain) exportMusicGain.gain.value = audioFile ? Math.max(0, Math.min(1, Number(audioVolume.value) / 100)) : 0;
         combinedStream = new MediaStream([
           ...canvasStream.getVideoTracks(),
-          ...audioContext.destination.stream.getAudioTracks()
+          ...exportRecordDestination.stream.getAudioTracks()
         ]);
         await audioContext.resume();
       } else {
+        if (audioFile) throw new Error("این مرورگر امکان میکس موسیقی در خروجی را ندارد.");
         combinedStream = canvasStream;
       }
 
@@ -457,8 +473,8 @@
     } finally {
       if (musicStarted) audio.pause();
       preview.pause();
-      if (audioContext) {
-        try { await audioContext.close(); } catch (_) {}
+      if (audioContext && audioContext.state === "running") {
+        try { await audioContext.suspend(); } catch (_) {}
       }
       if (canvasStream) canvasStream.getTracks().forEach(track => track.stop());
       if (combinedStream) combinedStream.getTracks().forEach(track => track.stop());
