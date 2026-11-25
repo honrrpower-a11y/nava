@@ -152,7 +152,7 @@ jobs:
           const videoReplyStart = app.indexOf('if (selectedService === "ویدئو و صدا")');
           const videoReplyBlock = app.slice(videoReplyStart, app.indexOf("} else {", videoReplyStart));
           assert.match(videoReplyBlock, /showNaviReply\(videoPlanEvent\.detail\.status \|\|/, "NAVI chat must show the final video-plan status rather than a permanent progress message");
-          assert.match(js, /try\{applied=buildNaviScenePlan\(reply\);\}catch\(error\)/, "Scene-plan application errors must be caught and surfaced");
+          assert.match(js, /try\\{applied=buildNaviScenePlan\\(reply\\);\\}\\s*catch\\(error\\)/, "Scene-plan application errors must be caught and surfaced");
           assert.match(js, /event\.detail\.status=doneStatus/, "Successful scene-plan application must update the user-facing NAVI status");
           assert.match(js, /event\.detail\.status=failedStatus/, "Failed scene-plan application must report a visible failure instead of appearing stuck");
           assert.doesNotMatch(videoReplyBlock, /showNaviReply\(reply\)/, "Raw scene JSON must never be shown as a user-facing NAVI reply");
