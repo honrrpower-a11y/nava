@@ -392,6 +392,10 @@
       if(isLowPowerDevice())return landscape?[640,360]:[360,640];
       return landscape?[960,540]:[540,960];
     }
+    // NAVI scenes include image treatments, art direction and layered typography.
+    // Keep its final export at a predictable 540p profile on phones to avoid
+    // dropping capture frames; preview resolution remains unchanged above.
+    if(activeBuildMode()==="navi")return landscape?[960,540]:[540,960];
     if(isLowPowerDevice())return landscape?[960,540]:[540,960];
     return landscape?[1280,720]:[720,1280];
   }
@@ -857,9 +861,9 @@
     let output=null,videoSource=null,audioSource=null,audioEncodedPackets=0;
     try{
       const lowPower=isLowPowerDevice();
-      let fps=20;
+      let fps=activeBuildMode()==="navi"?18:20;
       let [width,height]=dimensions();
-      let quality=new MB.Quality({bitrate:lowPower?1200000:2200000});
+      let quality=new MB.Quality({bitrate:activeBuildMode()==="navi"?1500000:lowPower?1200000:2200000});
       let videoCodec=await MB.getFirstEncodableVideoCodec(["avc"],{width,height,frameRate:fps,quality});
       let isMp4=videoCodec==="avc";
       // Older Android encoders may reject AVC at 540p/15fps but accept a
@@ -1069,7 +1073,8 @@
       // WebM fallback uses a lighter render profile on mobile encoders.
       lowPowerRender=isLowPowerDevice()||!!mimeCandidates[0]?.toLowerCase().startsWith("video/webm");
       resize();drawFrame(0,renderStory,renderDuration);
-      const renderFps=lowPowerRender?20:deviceProfile.level==="high"?24:20;
+      const naviExport=activeBuildMode()==="navi";
+      const renderFps=naviExport?18:lowPowerRender?20:deviceProfile.level==="high"?24:20;
       const stream=canvas.captureStream(renderFps);
       const renderStorySounds=renderStory.some(scene=>["cut","page-turn","slide-left","slide-right","zoom","fade"].includes(scene.transition)||(scene.layers||[]).some(layer=>layer.sound&&layer.sound!=="none"));
       if(musicElement||renderStorySounds){
@@ -1092,7 +1097,7 @@
       recorder=null;
       for(const candidate of mimeCandidates){
         try{
-          recorder=new MediaRecorder(stream,{mimeType:candidate,videoBitsPerSecond:lowPowerRender?1200000:deviceProfile.level==="high"?3200000:2200000});
+          recorder=new MediaRecorder(stream,{mimeType:candidate,videoBitsPerSecond:naviExport?1500000:lowPowerRender?1200000:deviceProfile.level==="high"?3200000:2200000});
           mime=recorder.mimeType||candidate;
           break;
         }catch(_){recorder=null;}
@@ -1171,7 +1176,7 @@
         progress.style.width=Math.min(100,t/duration*100)+"%";
         if(t>=duration){finishRender();return;}
       };
-      say(isLowPowerDevice()?"حالت سبک فعال است: خروجی ۵۴۰p با ۲۰ فریم بر ثانیه؛ صفحه را باز و روشن نگه دار.":"در حال ساخت ویدئو با تنظیمات متناسب با توان دستگاه؛ لطفاً صفحه را باز و روشن نگه دار.");
+      say(naviExport?"حالت روان NAVI فعال است: خروجی ۵۴۰p با ۱۸ فریم بر ثانیه؛ صفحه را باز و روشن نگه دار.":isLowPowerDevice()?"حالت سبک فعال است: خروجی ۵۴۰p با ۲۰ فریم بر ثانیه؛ صفحه را باز و روشن نگه دار.":"در حال ساخت ویدئو با تنظیمات متناسب با توان دستگاه؛ لطفاً صفحه را باز و روشن نگه دار.");
       tick();
       // Match drawing cadence to the actual capture rate; avoid wasted frames.
       renderTimer=setInterval(tick,Math.round(1000/renderFps));

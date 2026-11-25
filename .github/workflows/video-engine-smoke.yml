@@ -112,14 +112,15 @@ jobs:
           assert.match(js, /const deviceProfile=\(\(\)=>\{/, "Adaptive device profile must be initialized once");
           assert.match(js, /if\(isLowPowerDevice\(\)\)return landscape\?\[640,360\]:\[360,640\]/, "Low-power preview must use reduced dimensions");
           assert.match(js, /if\(isLowPowerDevice\(\)\)return landscape\?\[960,540\]:\[540,960\]/, "Low-power export must use a 540p canvas");
+          assert.match(js, /if\(activeBuildMode\(\)==="navi"\)return landscape\?\[960,540\]:\[540,960\]/, "NAVI final export must use a 540p canvas without reducing preview quality");
           assert.match(js, /تحلیل سنگین عمق اجرا نشد/, "Low-power devices must skip heavy depth inference");
           assert.match(js, /lowPowerRender=isLowPowerDevice\(\)\|\|/, "Low-power profile must retain adaptive export encoding");
-          assert.match(js, /const renderFps=lowPowerRender\?20:/, "Recorder fallback must preserve 20 fps");
+          assert.match(js, /const renderFps=naviExport\?18:lowPowerRender\?20:/, "NAVI recorder export must use the smoother-device 18 fps profile");
           assert.match(js, /extension==="webm"&&!isLowPowerDevice\(\)/, "Low-power devices must not run the large FFmpeg WASM converter");
           assert.match(js, /if\(!isMp4\)\{\s*if\(lowPower\)return false;/, "Low-power devices must skip VP9 and heavy WASM conversion when AVC is unavailable");
-          assert.match(js, /let fps=20/, "Direct export must preserve 20 fps on low-power phones");
+          assert.match(js, /let fps=activeBuildMode\(\)==="navi"\?18:20/, "NAVI direct export must use 18 fps");
           assert.match(js, /if\(!isMp4&&lowPower\)[\s\S]*?fps=15[\s\S]*?bitrate:600000[\s\S]*?getFirstEncodableVideoCodec\(\["avc"\]/, "Low-power export must retry H.264 at 360p/12fps when 540p is rejected");
-          assert.match(js, /new MB\.Quality\(\{bitrate:lowPower\?1200000:2200000\}\)/, "Low-power direct export must use a reduced bitrate");
+          assert.match(js, /new MB\.Quality\(\{bitrate:activeBuildMode\(\)==="navi"\?1500000:lowPower\?1200000:2200000\}\)/, "NAVI direct export must use a reduced bitrate");
           assert.match(js, /if\(!isMp4\)\{\s*if\(lowPower\)return false;/, "Low-power devices must not fall back to VP9 plus a heavy WASM transcode");
           assert.match(js, /const sampleRate=lowPower\?32000:48000/, "Low-power audio encoding must use a reduced sample rate");
           assert.match(js, /await videoSource\.add\(t,1\/fps,\{keyFrame:frame===0\}\)/, "Offline export must assign fixed timestamps to every encoded frame");
