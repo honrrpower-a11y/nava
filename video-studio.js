@@ -450,6 +450,7 @@
     for(const buffer of [transitionCurrentCanvas,transitionPreviousCanvas])if(buffer.width!==w||buffer.height!==h){buffer.width=w;buffer.height=h;}
   }
   function drawNaviArtDirection(style,accent,sceneIndex,elapsed,duration){
+    const w=canvas.width,h=canvas.height;
     const color=/^#[0-9a-f]{6}$/i.test(String(accent||""))?accent:"#e5bd62";
     const pulse=Math.max(0,Math.min(1,(Number(elapsed)||0)/Math.max(1,Number(duration)||1)));
     ctx.save();ctx.lineCap="round";ctx.lineJoin="round";
