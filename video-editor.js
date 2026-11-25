@@ -9,7 +9,7 @@
   const audioInput = $("navaEditorAudio");
   const list = $("navaEditorTimeline");
   const preview = $("navaEditorPreview");
-  const status = $("navaEditorStatus");
+  const status = document.getElementById("navaEditorStatus");
   const totalLabel = $("navaEditorTotal");
   const audioLabel = $("navaEditorAudioLabel");
   const audio = $("navaEditorAudioPlayer");
@@ -43,7 +43,7 @@
     return String(m).padStart(2, "0") + ":" + (n % 60).toFixed(1).padStart(4, "0");
   };
   const totalDuration = () => clips.reduce((sum, clip) => sum + Math.max(0, clip.out - clip.in), 0);
-  const setStatus = message => { status.textContent = message; };
+  const setStatus = message => { if (status) status.textContent = message; };
   const getClip = id => clips.find(clip => clip.id === id);
   const stopPlayback = () => {
     playing = false;
