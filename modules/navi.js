@@ -2619,6 +2619,7 @@ export async function requestGemini({
   apiKey,
   systemInstruction,
   contents,
+  videoPlan = false,
   fetchImpl = fetch
 }) {
   try {
