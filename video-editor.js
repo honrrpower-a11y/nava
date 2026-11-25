@@ -170,7 +170,7 @@
       await metadataReady;
       const duration = Number.isFinite(probe.duration) ? probe.duration : 0;
       if (!duration || duration <= 0) throw new Error("مدت ویدئو قابل تشخیص نیست.");
-      const clip = { id: "clip-" + (++clipSequence), file, url, duration, in: 0, out: duration };
+      const clip = { id: "clip-" + (++clipSequence), file, url, duration, width: probe.videoWidth || 0, height: probe.videoHeight || 0, in: 0, out: duration };
       clips.push(clip);
       selectedId = clip.id;
       selectClip(clip);
@@ -366,8 +366,11 @@
 
   const exportFinalVideo = async () => {
     if (!clips.length || exportButton.disabled) return;
-    if (!window.MediaRecorder || !HTMLCanvasElement.prototype.captureStream) {
-      setStatus("مرورگر این گوشی ابزار لازم برای ساخت فایل ویدئویی را پشتیبانی نمی‌کند. لطفاً از Chrome یا مرورگر به‌روز استفاده کن.");
+    const MB = window.Mediabunny;
+    if (!MB || !MB.Output || !MB.Mp4OutputFormat || !MB.BufferTarget ||
+        !MB.MediaStreamVideoTrackSource || !MB.MediaStreamAudioTrackSource ||
+        !HTMLCanvasElement.prototype.captureStream) {
+      setStatus("موتور ساخت MP4 در این مرورگر بارگذاری نشده است. صفحه را تازه‌سازی کن و با Chrome به‌روز دوباره امتحان کن.");
       return;
     }
     const projectDuration = totalDuration();
@@ -384,36 +387,110 @@
     exportProgress.max = 100;
     exportOutput.hidden = true;
     exportDownload.hidden = true;
-    setStatus("در حال آماده‌سازی موتور خروجی…");
+    setStatus("در حال آماده‌سازی موتور حرفه‌ای MP4…");
 
-    let recorder = null;
-    let audioContext = null;
+    let output = null;
+    let videoSource = null;
+    let audioSource = null;
     let canvasStream = null;
-    let combinedStream = null;
     let musicStarted = false;
+    let sourceError = null;
     try {
+      // Match the output canvas to the source orientation. This prevents
+      // portrait phone footage from being squeezed into a tiny 16:9 window.
+      const firstClip = clips[0];
+      const sourceWidth = Math.max(1, Number(firstClip.width) || 16);
+      const sourceHeight = Math.max(1, Number(firstClip.height) || 9);
+      const portrait = sourceHeight > sourceWidth * 1.08;
+      const landscape = sourceWidth > sourceHeight * 1.08;
+      // Conservative adaptive export tiers. Unknown Android devices stay at
+      // 720p rather than being pushed into 1080p by optimistic assumptions.
+      const ram = Number(navigator.deviceMemory) || 0;
+      const cores = Number(navigator.hardwareConcurrency) || 0;
+      const isMobile = /Android|iPhone|iPad|Mobile/i.test(navigator.userAgent || "");
+      let tier = "standard";
+      if ((ram > 0 && ram <= 4) || (cores > 0 && cores <= 4)) {
+        tier = "economy";
+      } else if (ram >= 8 && cores >= 8) {
+        tier = "high";
+      }
+      try {
+        const battery = await navigator.getBattery?.();
+        if (battery && battery.level <= 0.2 && !battery.charging) tier = "economy";
+      } catch (_) {}
+
+      const maxLongEdge = tier === "economy" ? 480 : tier === "high" ? 1080 : 720;
+      const fpsTarget = tier === "economy" ? 20 : tier === "high" ? 30 : 24;
+      const bitrateTarget = tier === "economy" ? 850000 : tier === "high" ? 4500000 : 2200000;
+      const scale = Math.min(1, maxLongEdge / Math.max(sourceWidth, sourceHeight));
+      const targetWidth = Math.max(2, Math.round((sourceWidth * scale) / 2) * 2);
+      const targetHeight = Math.max(2, Math.round((sourceHeight * scale) / 2) * 2);
+      const fallbackScale = tier === "economy" ? 0.75 : 0.8;
+      const profiles = [
+        [targetWidth, targetHeight, fpsTarget, bitrateTarget],
+        [Math.max(2, Math.round(targetWidth * fallbackScale / 2) * 2),
+         Math.max(2, Math.round(targetHeight * fallbackScale / 2) * 2),
+         Math.max(15, fpsTarget - 4), Math.round(bitrateTarget * 0.7)]
+      ];
+
+      let profile = null;
+      let quality = null;
+      for (const candidate of profiles) {
+        const candidateQuality = new MB.Quality({ bitrate: candidate[3] });
+        try {
+          const codec = await MB.getFirstEncodableVideoCodec(["avc"], {
+            width: candidate[0], height: candidate[1], frameRate: candidate[2], quality: candidateQuality
+          });
+          if (codec === "avc") {
+            profile = candidate;
+            quality = candidateQuality;
+            break;
+          }
+        } catch (_) {}
+      }
+      if (!profile) throw new Error("این گوشی در حال حاضر رمزگذار سخت‌افزاری H.264 لازم برای MP4 را ارائه نمی‌کند. برای جلوگیری از فایل بی‌صدا یا خراب، خروجی ناقص ساخته نشد.");
+
+      let audioReady = await MB.canEncodeAudio("aac");
+      if (!audioReady && window.MediabunnyAacEncoder?.registerAacEncoder) {
+        window.MediabunnyAacEncoder.registerAacEncoder();
+        audioReady = await MB.canEncodeAudio("aac");
+      }
+      if (!audioReady) throw new Error("رمزگذار صدای AAC در این مرورگر فعال نیست؛ MP4 سازگار با تلگرام ساخته نشد.");
+
+      const [width, height, fps] = profile;
       const canvas = document.createElement("canvas");
-      // Mobile-safe render profile: reduce decoder, canvas and encoder pressure.
-      canvas.width = 720;
-      canvas.height = 405;
+      canvas.width = width;
+      canvas.height = height;
       const ctx = canvas.getContext("2d", { alpha: false, desynchronized: true });
-      if (!ctx) throw new Error("امکان ساخت بوم ویدئو در این مرورگر وجود ندارد.");
-      canvasStream = canvas.captureStream(15);
+      if (!ctx) throw new Error("امکان ساخت تصویر خروجی در این مرورگر وجود ندارد.");
+      const drawFrame = () => {
+        const vw = preview.videoWidth || sourceWidth;
+        const vh = preview.videoHeight || sourceHeight;
+        const scale = Math.min(canvas.width / vw, canvas.height / vh);
+        const drawWidth = vw * scale;
+        const drawHeight = vh * scale;
+        ctx.fillStyle = "#000";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        if (preview.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA && preview.videoWidth > 0) {
+          ctx.drawImage(preview, (canvas.width - drawWidth) / 2, (canvas.height - drawHeight) / 2, drawWidth, drawHeight);
+        }
+      };
+
+      canvasStream = canvas.captureStream(fps);
+      const canvasTrack = canvasStream.getVideoTracks()[0];
+      if (!canvasTrack || canvasTrack.readyState !== "live") throw new Error("مسیر تصویر خروجی فعال نشد.");
 
       const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-      if (!AudioContextClass) throw new Error("این مرورگر ابزار لازم برای میکس صدای خروجی را ندارد.");
-      if (!exportAudioContext) {
+      if (!AudioContextClass) throw new Error("این مرورگر امکان ترکیب صدای اصلی و موسیقی را ندارد.");
+      if (!exportAudioContext || exportAudioContext.state === "closed") {
         exportAudioContext = new AudioContextClass();
         exportRecordDestination = exportAudioContext.createMediaStreamDestination();
+        exportPreviewGain = null;
+        exportMusicGain = null;
+        exportMusicSource = null;
       }
-      audioContext = exportAudioContext;
+      const audioContext = exportAudioContext;
       await audioContext.resume();
-
-      // Keep audio tracks stable for the entire export. A track returned by
-      // HTMLMediaElement.captureStream() may end when preview.src changes between
-      // clips, which makes MediaRecorder stop after the first clip/segment.
-      // Route both the source clip audio and optional music through one persistent
-      // MediaStreamAudioDestinationNode instead.
       if (!exportPreviewGain) {
         const previewSource = audioContext.createMediaElementSource(preview);
         exportPreviewGain = audioContext.createGain();
@@ -422,69 +499,41 @@
         exportPreviewGain.connect(exportRecordDestination);
         exportPreviewGain.connect(audioContext.destination);
       }
-
-      if (audioFile) {
-        if (!exportMusicSource) {
-          exportMusicSource = audioContext.createMediaElementSource(audio);
-          exportMusicGain = audioContext.createGain();
-          exportMusicSource.connect(exportMusicGain);
-          exportMusicGain.connect(exportRecordDestination);
-        }
-        exportMusicGain.gain.value = Math.max(0, Math.min(1, Number(audioVolume.value) / 100));
-      } else if (exportMusicGain) {
-        exportMusicGain.gain.value = 0;
+      if (!exportMusicSource) {
+        exportMusicSource = audioContext.createMediaElementSource(audio);
+        exportMusicGain = audioContext.createGain();
+        exportMusicSource.connect(exportMusicGain);
+        exportMusicGain.connect(exportRecordDestination);
       }
+      exportPreviewGain.gain.value = 1;
+      exportMusicGain.gain.value = audioFile ? Math.max(0, Math.min(1, Number(audioVolume.value) / 100)) : 0;
+      const audioTrack = exportRecordDestination.stream.getAudioTracks()[0];
+      if (!audioTrack || audioTrack.readyState !== "live") throw new Error("مسیر صدای اصلی و موسیقی فعال نشد.");
+      audioTrack.enabled = true;
 
-      combinedStream = new MediaStream([
-        ...canvasStream.getVideoTracks(),
-        ...exportRecordDestination.stream.getAudioTracks()
-      ]);
-
-      // Prefer WebM with an explicit Opus audio codec on mobile browsers.
-      // Some Android builds report generic MP4 support but produce truncated,
-      // silent recordings when the audio codec is left implicit.
-      const mimeCandidates = [
-        "video/webm;codecs=vp8,opus",
-        "video/webm;codecs=vp9,opus",
-        "video/webm;codecs=vp8",
-        "video/webm",
-        "video/mp4;codecs=avc1.42E01E,mp4a.40.2",
-        "video/mp4;codecs=avc1.42E01E",
-        "video/mp4"
-      ];
-      const mimeType = mimeCandidates.find(type => MediaRecorder.isTypeSupported(type)) || "";
-      if (!mimeType) throw new Error("این مرورگر هیچ قالب ضبط سازگاری برای تصویر و صدا ارائه نمی‌کند.");
-      const audioTracks = exportRecordDestination.stream.getAudioTracks();
-      if (!audioTracks.length || audioTracks.some(track => track.readyState !== "live")) {
-        throw new Error("مسیر صدای خروجی آماده نیست؛ صفحه را تازه‌سازی کن و دوباره امتحان کن.");
-      }
-      audioTracks.forEach(track => { track.enabled = true; });
-      recorder = new MediaRecorder(combinedStream, { mimeType, videoBitsPerSecond: 1000000, audioBitsPerSecond: 128000 });
-      const chunks = [];
-      recorder.ondataavailable = event => { if (event.data && event.data.size) chunks.push(event.data); };
-      const recordingStopped = new Promise((resolve, reject) => {
-        recorder.onstop = resolve;
-        recorder.onerror = () => reject(new Error("ضبط ویدیوی نهایی ناموفق بود."));
+      // Mediabunny writes a real MP4 container with H.264 video and AAC audio.
+      // Both live tracks share one capture timeline, avoiding MediaRecorder's
+      // truncated-duration and missing-audio behavior on affected Android builds.
+      videoSource = new MB.MediaStreamVideoTrackSource(canvasTrack, {
+        codec: "avc", quality, latencyMode: "realtime", hardwareAcceleration: "prefer-hardware"
       });
-      // Avoid frequent chunk flushing on memory-constrained mobile encoders.
-      // The final dataavailable event is collected after stop().
-      recorder.start(2000);
+      audioSource = new MB.MediaStreamAudioTrackSource(audioTrack, {
+        codec: "aac", quality: new MB.Quality({ bitrate: 128000 })
+      });
+      videoSource.errorPromise.catch(error => { sourceError = error || new Error("خطای رمزگذاری تصویر"); });
+      audioSource.errorPromise.catch(error => { sourceError = error || new Error("خطای رمزگذاری صدا"); });
 
-      const drawFrame = () => {
-        const vw = preview.videoWidth || 16;
-        const vh = preview.videoHeight || 9;
-        const scale = Math.min(canvas.width / vw, canvas.height / vh);
-        const width = vw * scale;
-        const height = vh * scale;
-        ctx.fillStyle = "#000";
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.drawImage(preview, (canvas.width - width) / 2, (canvas.height - height) / 2, width, height);
-      };
+      output = new MB.Output({
+        format: new MB.Mp4OutputFormat({ fastStart: "in-memory" }),
+        target: new MB.BufferTarget()
+      });
+      output.addVideoTrack(videoSource, { frameRate: fps });
+      output.addAudioTrack(audioSource);
+      await output.start();
 
       if (audioFile) {
         audio.loop = true;
         audio.currentTime = 0;
-        // The music element feeds a dedicated WebAudio recording track.
         audio.volume = 1;
         await audio.play();
         musicStarted = true;
@@ -493,10 +542,10 @@
       let completedDuration = 0;
       for (let index = 0; index < clips.length; index++) {
         const clip = clips[index];
-        setStatus("در حال ساخت خروجی: کلیپ " + (index + 1) + " از " + clips.length);
+        setStatus("در حال ساخت MP4 واقعی: کلیپ " + (index + 1) + " از " + clips.length);
         preview.pause();
-        preview.src = clip.url;
         const metadataReady = waitForMediaEvent(preview, "loadedmetadata");
+        preview.src = clip.url;
         preview.preload = "auto";
         preview.load();
         await metadataReady;
@@ -504,19 +553,11 @@
         await seekVideo(preview, clip.in);
         await waitForVideoData(preview);
         await waitForPresentedFrame(preview);
+        drawFrame();
         await preview.play();
-        if (audioContext.state !== "running") {
-          await audioContext.resume();
-          if (audioContext.state !== "running") throw new Error("موتور صدا در مرورگر فعال نشد؛ یک‌بار صفحه را تازه‌سازی کن.");
-        }
-        const activeAudioTracks = exportRecordDestination.stream.getAudioTracks();
-        if (!activeAudioTracks.length || activeAudioTracks.some(track => track.readyState !== "live" || !track.enabled)) {
-          throw new Error("اتصال صدای ضبط هنگام شروع کلیپ قطع شده است.");
-        }
 
         await new Promise((resolve, reject) => {
           let raf = 0;
-          let frameCallback = 0;
           let watchdog = 0;
           let lastMediaTime = preview.currentTime;
           let lastProgressAt = Date.now();
@@ -524,9 +565,6 @@
           const cleanup = () => {
             if (raf) cancelAnimationFrame(raf);
             if (watchdog) clearInterval(watchdog);
-            if (frameCallback && typeof preview.cancelVideoFrameCallback === "function") {
-              try { preview.cancelVideoFrameCallback(frameCallback); } catch (_) {}
-            }
           };
           const finish = error => {
             if (settled) return;
@@ -534,111 +572,95 @@
             cleanup();
             if (error) reject(error); else resolve();
           };
-          const updateProgress = () => {
-            const clipProgress = Math.max(0, Math.min(clip.out - clip.in, preview.currentTime - clip.in));
-            exportProgress.value = Math.round(((completedDuration + clipProgress) / projectDuration) * 100);
-            if (preview.currentTime > lastMediaTime + 0.015) {
-              lastMediaTime = preview.currentTime;
-              lastProgressAt = Date.now();
-            }
-            if (preview.currentTime >= clip.out - 0.035 || preview.ended) finish();
-          };
-          const draw = () => {
+          const tick = () => {
+            if (settled) return;
             try {
-              if (preview.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA && preview.videoWidth > 0) drawFrame();
-              updateProgress();
+              if (sourceError) throw sourceError;
+              drawFrame();
+              const clipProgress = Math.max(0, Math.min(clip.out - clip.in, preview.currentTime - clip.in));
+              exportProgress.value = Math.round(((completedDuration + clipProgress) / projectDuration) * 100);
+              if (preview.currentTime > lastMediaTime + 0.015) {
+                lastMediaTime = preview.currentTime;
+                lastProgressAt = Date.now();
+              }
+              if (preview.currentTime >= clip.out - 0.04 || preview.ended) {
+                drawFrame();
+                finish();
+                return;
+              }
+              raf = requestAnimationFrame(tick);
             } catch (error) { finish(error); }
           };
-          if (typeof preview.requestVideoFrameCallback === "function") {
-            let lastDrawAt = 0;
-            const onFrame = now => {
-              if (settled) return;
-              // Limit canvas work to the 15 fps output cadence, even if source is 30/60 fps.
-              if (!lastDrawAt || now - lastDrawAt >= 66) {
-                draw();
-                lastDrawAt = now;
-              } else {
-                updateProgress();
-              }
-              if (!settled) frameCallback = preview.requestVideoFrameCallback(onFrame);
-            };
-            frameCallback = preview.requestVideoFrameCallback(onFrame);
-          } else {
-            let lastDrawAt = 0;
-            const tick = now => {
-              if (settled) return;
-              if (now - lastDrawAt >= 66) { draw(); lastDrawAt = now; }
-              else updateProgress();
-              if (!settled) raf = requestAnimationFrame(tick);
-            };
-            raf = requestAnimationFrame(tick);
-          }
+          raf = requestAnimationFrame(tick);
           watchdog = setInterval(() => {
-            if (settled) return;
-            updateProgress();
-            if (Date.now() - lastProgressAt > 7000 && preview.currentTime < clip.out - 0.035) {
-              finish(new Error("حرکت تصویر هنگام خروجی متوقف شد. برای جلوگیری از فایل خراب، ساخت خروجی متوقف شد؛ ویدئوی کوتاه‌تر یا MP4 با کدک H.264 را امتحان کن."));
+            if (!settled && Date.now() - lastProgressAt > 8000 && preview.currentTime < clip.out - 0.04) {
+              finish(new Error("حرکت ویدئو هنگام خروجی متوقف شد؛ برای جلوگیری از فایل ناقص، ساخت MP4 متوقف شد."));
             }
           }, 1000);
         });
         preview.pause();
-        if (!recorder || recorder.state !== "recording") {
-          throw new Error("ضبط خروجی زودتر از پایان کلیپ متوقف شد؛ ساخت فایل ناقص متوقف شد. دوباره تلاش کن.");
-        }
         completedDuration += clip.out - clip.in;
       }
 
-      drawFrame();
       if (musicStarted) audio.pause();
-      if (recorder.state !== "inactive") recorder.stop();
-      await recordingStopped;
-      const blobType = recorder.mimeType || mimeType || "video/webm";
-      const blob = new Blob(chunks, { type: blobType });
-      if (!blob.size) throw new Error("فایل خروجی خالی ساخته شد؛ دوباره تلاش کن.");
-      // Validate the encoded duration before offering a download. This catches
-      // mobile muxer/encoder failures instead of silently delivering a short file.
+      preview.pause();
+      drawFrame();
+      videoSource.close();
+      audioSource.close();
+      await output.finalize();
+      if (sourceError) throw sourceError;
+
+      const buffer = output.target.buffer;
+      if (!buffer || !buffer.byteLength) throw new Error("فایل MP4 خالی ساخته شد.");
+      const blob = new Blob([buffer], { type: "video/mp4" });
       const validationUrl = URL.createObjectURL(blob);
       try {
         const probe = document.createElement("video");
         probe.preload = "metadata";
         const durationReady = new Promise((resolve, reject) => {
-          const timer = setTimeout(() => reject(new Error("بررسی مدت فایل خروجی بیش از حد طول کشید؛ فایل دانلود نشد.")), 10000);
+          const timer = setTimeout(() => reject(new Error("بررسی مدت فایل MP4 بیش از حد طول کشید؛ فایل ارائه نشد.")), 15000);
           probe.onloadedmetadata = () => { clearTimeout(timer); resolve(); };
-          probe.onerror = () => { clearTimeout(timer); reject(new Error("مرورگر نتوانست فایل ضبط‌شده را بررسی کند؛ فایل دانلود نشد.")); };
+          probe.onerror = () => { clearTimeout(timer); reject(new Error("فایل MP4 ساخته‌شده قابل‌خواندن نیست؛ دانلود متوقف شد.")); };
         });
         probe.src = validationUrl;
         await durationReady;
         const actualDuration = Number(probe.duration);
         probe.removeAttribute("src");
         probe.load();
-        if (!Number.isFinite(actualDuration) || actualDuration < projectDuration * 0.85) {
-          throw new Error("خروجی ناقص تشخیص داده شد (" + (Number.isFinite(actualDuration) ? actualDuration.toFixed(1) : "نامشخص") + " ثانیه از " + projectDuration.toFixed(1) + " ثانیه). فایل ناقص ارائه نشد؛ این مرورگر در ضبط این پروژه مشکل دارد.");
+        if (!Number.isFinite(actualDuration) || actualDuration < projectDuration * 0.9) {
+          throw new Error("مدت MP4 ناقص است (" + (Number.isFinite(actualDuration) ? actualDuration.toFixed(1) : "نامشخص") + " از " + projectDuration.toFixed(1) + " ثانیه). فایل ناقص ارائه نشد.");
+        }
+        if (MB.Input && MB.BlobSource && MB.ALL_FORMATS) {
+          const checkInput = new MB.Input({ source: new MB.BlobSource(blob), formats: MB.ALL_FORMATS });
+          try {
+            const encodedAudioTrack = await checkInput.getPrimaryAudioTrack();
+            if (!encodedAudioTrack) throw new Error("صدای MP4 در فایل نهایی ثبت نشده است؛ فایل دانلود نشد.");
+          } finally { try { checkInput.dispose(); } catch (_) {} }
+        } else {
+          throw new Error("امکان بررسی وجود صدای AAC در فایل نهایی فراهم نشد؛ فایل دانلود نشد.");
         }
       } finally {
         URL.revokeObjectURL(validationUrl);
       }
+
       if (exportUrl) URL.revokeObjectURL(exportUrl);
       exportUrl = URL.createObjectURL(blob);
       exportOutput.src = exportUrl;
       exportOutput.hidden = false;
       exportOutput.load();
-      const extension = blobType.includes("mp4") ? "mp4" : "webm";
       exportDownload.href = exportUrl;
-      exportDownload.download = "nava-edited-video." + extension;
-      exportDownload.textContent = "دریافت ویدیوی نهایی (" + extension.toUpperCase() + ")";
+      exportDownload.download = "nava-edited-video.mp4";
+      exportDownload.textContent = "دریافت ویدیوی نهایی (MP4 · " + width + "×" + height + ")";
       exportDownload.hidden = false;
       exportProgress.value = 100;
-      setStatus("ویدیوی نهایی آماده شد (" + extension.toUpperCase() + "، " + projectDuration.toFixed(1) + " ثانیه). می‌توانی پیش‌نمایش کنی یا فایل را دریافت کنی.");
+      setStatus("MP4 نهایی آماده شد · H.264 + AAC · " + width + "×" + height + " · " + projectDuration.toFixed(1) + " ثانیه. آماده ارسال در تلگرام.");
     } catch (error) {
-      if (recorder && recorder.state !== "inactive") {
-        try { recorder.stop(); } catch (_) {}
-      }
-      setStatus(error.message || "ساخت ویدیوی نهایی ناموفق بود.");
+      try { if (output && output.state !== "finalized" && output.state !== "canceled") await output.cancel(); } catch (_) {}
+      setStatus(error.message || "ساخت MP4 نهایی ناموفق بود.");
     } finally {
       if (musicStarted) audio.pause();
       preview.pause();
       if (canvasStream) canvasStream.getTracks().forEach(track => track.stop());
-      if (combinedStream) combinedStream.getTracks().forEach(track => track.stop());
       exportButton.disabled = false;
       updateSummary();
     }
