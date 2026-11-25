@@ -403,11 +403,37 @@
       const sourceHeight = Math.max(1, Number(firstClip.height) || 9);
       const portrait = sourceHeight > sourceWidth * 1.08;
       const landscape = sourceWidth > sourceHeight * 1.08;
-      const lowPower = (Number(navigator.deviceMemory) > 0 && Number(navigator.deviceMemory) <= 4) ||
-        (Number(navigator.hardwareConcurrency) > 0 && Number(navigator.hardwareConcurrency) <= 4);
-      const profiles = lowPower
-        ? (portrait ? [[720,1280,24,2200000],[540,960,20,1300000]] : landscape ? [[1280,720,24,2600000],[960,540,20,1500000]] : [[720,720,24,2000000],[540,540,20,1200000]])
-        : (portrait ? [[1080,1920,30,4800000],[720,1280,24,2600000]] : landscape ? [[1920,1080,30,5200000],[1280,720,24,2800000]] : [[1080,1080,30,4200000],[720,720,24,2200000]]);
+      // Conservative adaptive export tiers. Unknown Android devices stay at
+      // 720p rather than being pushed into 1080p by optimistic assumptions.
+      const ram = Number(navigator.deviceMemory) || 0;
+      const cores = Number(navigator.hardwareConcurrency) || 0;
+      const isMobile = /Android|iPhone|iPad|Mobile/i.test(navigator.userAgent || "");
+      let tier = "standard";
+      if ((ram > 0 && ram <= 4) || (cores > 0 && cores <= 4)) {
+        tier = "economy";
+      } else if (ram >= 8 && cores >= 8 && !isMobile) {
+        tier = "high";
+      } else if (ram >= 8 && cores >= 8) {
+        tier = "high";
+      }
+      try {
+        const battery = await navigator.getBattery?.();
+        if (battery && (battery.level <= 0.2 || battery.saveMode === true)) tier = "economy";
+      } catch (_) {}
+
+      const maxLongEdge = tier === "economy" ? 480 : tier === "high" ? 1080 : 720;
+      const fpsTarget = tier === "economy" ? 20 : tier === "high" ? 30 : 24;
+      const bitrateTarget = tier === "economy" ? 850000 : tier === "high" ? 4500000 : 2200000;
+      const scale = Math.min(1, maxLongEdge / Math.max(sourceWidth, sourceHeight));
+      const targetWidth = Math.max(2, Math.round((sourceWidth * scale) / 2) * 2);
+      const targetHeight = Math.max(2, Math.round((sourceHeight * scale) / 2) * 2);
+      const fallbackScale = tier === "economy" ? 0.75 : 0.8;
+      const profiles = [
+        [targetWidth, targetHeight, fpsTarget, bitrateTarget],
+        [Math.max(2, Math.round(targetWidth * fallbackScale / 2) * 2),
+         Math.max(2, Math.round(targetHeight * fallbackScale / 2) * 2),
+         Math.max(15, fpsTarget - 4), Math.round(bitrateTarget * 0.7)]
+      ];
 
       let profile = null;
       let quality = null;
