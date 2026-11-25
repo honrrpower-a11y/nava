@@ -411,14 +411,12 @@
       let tier = "standard";
       if ((ram > 0 && ram <= 4) || (cores > 0 && cores <= 4)) {
         tier = "economy";
-      } else if (ram >= 8 && cores >= 8 && !isMobile) {
-        tier = "high";
       } else if (ram >= 8 && cores >= 8) {
         tier = "high";
       }
       try {
         const battery = await navigator.getBattery?.();
-        if (battery && (battery.level <= 0.2 || battery.saveMode === true)) tier = "economy";
+        if (battery && battery.level <= 0.2 && !battery.charging) tier = "economy";
       } catch (_) {}
 
       const maxLongEdge = tier === "economy" ? 480 : tier === "high" ? 1080 : 720;
