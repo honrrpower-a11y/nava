@@ -82,9 +82,10 @@
     if (!textPreview) return;
     const videoRect = preview.getBoundingClientRect();
     const wrapRect = preview.parentElement.getBoundingClientRect();
+    let displayWidth = Math.max(1, videoRect.width);
     if (preview.videoWidth > 0 && preview.videoHeight > 0 && videoRect.width > 0 && videoRect.height > 0) {
       const scale = Math.min(videoRect.width / preview.videoWidth, videoRect.height / preview.videoHeight);
-      const displayWidth = preview.videoWidth * scale;
+      displayWidth = preview.videoWidth * scale;
       const displayHeight = preview.videoHeight * scale;
       textPreview.style.inset = "auto";
       textPreview.style.left = (videoRect.left - wrapRect.left + (videoRect.width - displayWidth) / 2) + "px";
