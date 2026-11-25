@@ -16,6 +16,10 @@
   const playButton = $("navaEditorPlay");
   const stopButton = $("navaEditorStop");
   const clearButton = $("navaEditorClear");
+  const exportButton = $("navaEditorExport");
+  const exportProgress = $("navaEditorExportProgress");
+  const exportOutput = $("navaEditorExportOutput");
+  const exportDownload = $("navaEditorExportDownload");
   const audioVolume = $("navaEditorAudioVolume");
   let clips = [];
   let audioFile = null;
@@ -25,6 +29,7 @@
   let playToken = 0;
   let currentIndex = -1;
   let clipSequence = 0;
+  let exportUrl = "";
 
   const fmt = value => {
     const n = Math.max(0, Number(value) || 0);
@@ -184,6 +189,7 @@
       return;
     }
     if (audioUrl) URL.revokeObjectURL(audioUrl);
+    if (exportUrl) URL.revokeObjectURL(exportUrl);
     audioFile = file;
     audioUrl = URL.createObjectURL(file);
     audio.src = audioUrl;
@@ -283,6 +289,186 @@
     renderTimeline();
     setStatus("پروژهٔ تدوین پاک شد.");
   });
+  const waitForMediaEvent = (element, eventName, errorName = "error") => new Promise((resolve, reject) => {
+    const cleanup = () => {
+      element.removeEventListener(eventName, done);
+      element.removeEventListener(errorName, fail);
+    };
+    const done = () => { cleanup(); resolve(); };
+    const fail = () => { cleanup(); reject(new Error("مرورگر نتوانست رسانه را برای خروجی آماده کند.")); };
+    element.addEventListener(eventName, done, { once: true });
+    element.addEventListener(errorName, fail, { once: true });
+  });
+
+  const exportFinalVideo = async () => {
+    if (!clips.length || exportButton.disabled) return;
+    if (!window.MediaRecorder || !HTMLCanvasElement.prototype.captureStream) {
+      setStatus("مرورگر این گوشی ابزار لازم برای ساخت فایل ویدئویی را پشتیبانی نمی‌کند. لطفاً از Chrome یا مرورگر به‌روز استفاده کن.");
+      return;
+    }
+    const projectDuration = totalDuration();
+    if (!projectDuration || projectDuration > 900) {
+      setStatus("مدت پروژه باید بیشتر از صفر و حداکثر ۱۵ دقیقه باشد.");
+      return;
+    }
+
+    stopPlayback();
+    exportButton.disabled = true;
+    playButton.disabled = true;
+    exportProgress.hidden = false;
+    exportProgress.value = 0;
+    exportProgress.max = 100;
+    exportOutput.hidden = true;
+    exportDownload.hidden = true;
+    setStatus("در حال آماده‌سازی موتور خروجی…");
+
+    let recorder = null;
+    let audioContext = null;
+    let canvasStream = null;
+    let combinedStream = null;
+    let musicStarted = false;
+    try {
+      const canvas = document.createElement("canvas");
+      canvas.width = 1280;
+      canvas.height = 720;
+      const ctx = canvas.getContext("2d", { alpha: false });
+      if (!ctx) throw new Error("امکان ساخت بوم ویدئو در این مرورگر وجود ندارد.");
+      canvasStream = canvas.captureStream(24);
+
+      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+      if (AudioContextClass) {
+        audioContext = new AudioContextClass();
+        const previewSource = audioContext.createMediaElementSource(preview);
+        const previewGain = audioContext.createGain();
+        previewGain.gain.value = 1;
+        previewSource.connect(previewGain).connect(audioContext.destination);
+        let audioTracks = [];
+        if (audioFile) {
+          const musicSource = audioContext.createMediaElementSource(audio);
+          const musicGain = audioContext.createGain();
+          musicGain.gain.value = Math.max(0, Math.min(1, Number(audioVolume.value) / 100));
+          musicSource.connect(musicGain).connect(audioContext.destination);
+        }
+        combinedStream = new MediaStream([
+          ...canvasStream.getVideoTracks(),
+          ...audioContext.destination.stream.getAudioTracks()
+        ]);
+        await audioContext.resume();
+      } else {
+        combinedStream = canvasStream;
+      }
+
+      const mimeCandidates = [
+        "video/mp4;codecs=avc1.42E01E",
+        "video/mp4",
+        "video/webm;codecs=vp9",
+        "video/webm;codecs=vp8",
+        "video/webm"
+      ];
+      const mimeType = mimeCandidates.find(type => MediaRecorder.isTypeSupported(type)) || "";
+      recorder = new MediaRecorder(combinedStream, mimeType ? { mimeType, videoBitsPerSecond: 2500000 } : { videoBitsPerSecond: 2500000 });
+      const chunks = [];
+      recorder.ondataavailable = event => { if (event.data && event.data.size) chunks.push(event.data); };
+      const recordingStopped = new Promise((resolve, reject) => {
+        recorder.onstop = resolve;
+        recorder.onerror = () => reject(new Error("ضبط ویدیوی نهایی ناموفق بود."));
+      });
+      recorder.start(1000);
+
+      const drawFrame = () => {
+        const vw = preview.videoWidth || 16;
+        const vh = preview.videoHeight || 9;
+        const scale = Math.min(canvas.width / vw, canvas.height / vh);
+        const width = vw * scale;
+        const height = vh * scale;
+        ctx.fillStyle = "#000";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(preview, (canvas.width - width) / 2, (canvas.height - height) / 2, width, height);
+      };
+
+      if (audioFile) {
+        audio.loop = true;
+        audio.currentTime = 0;
+        audio.volume = 1;
+        await audio.play();
+        musicStarted = true;
+      }
+
+      let completedDuration = 0;
+      for (let index = 0; index < clips.length; index++) {
+        const clip = clips[index];
+        setStatus("در حال ساخت خروجی: کلیپ " + (index + 1) + " از " + clips.length);
+        preview.pause();
+        preview.src = clip.url;
+        preview.load();
+        await waitForMediaEvent(preview, "loadedmetadata");
+        preview.currentTime = clip.in;
+        if (Math.abs(preview.currentTime - clip.in) > 0.08) await waitForMediaEvent(preview, "seeked");
+        await preview.play();
+
+        await new Promise((resolve, reject) => {
+          let raf = 0;
+          const tick = () => {
+            try {
+              drawFrame();
+              const clipProgress = Math.max(0, Math.min(clip.out - clip.in, preview.currentTime - clip.in));
+              exportProgress.value = Math.round(((completedDuration + clipProgress) / projectDuration) * 100);
+              if (preview.currentTime >= clip.out - 0.035 || preview.ended) {
+                cancelAnimationFrame(raf);
+                resolve();
+                return;
+              }
+              raf = requestAnimationFrame(tick);
+            } catch (error) {
+              cancelAnimationFrame(raf);
+              reject(error);
+            }
+          };
+          raf = requestAnimationFrame(tick);
+        });
+        preview.pause();
+        completedDuration += clip.out - clip.in;
+      }
+
+      drawFrame();
+      if (musicStarted) audio.pause();
+      if (recorder.state !== "inactive") recorder.stop();
+      await recordingStopped;
+      const blobType = recorder.mimeType || mimeType || "video/webm";
+      const blob = new Blob(chunks, { type: blobType });
+      if (!blob.size) throw new Error("فایل خروجی خالی ساخته شد؛ دوباره تلاش کن.");
+      if (exportUrl) URL.revokeObjectURL(exportUrl);
+      exportUrl = URL.createObjectURL(blob);
+      exportOutput.src = exportUrl;
+      exportOutput.hidden = false;
+      exportOutput.load();
+      const extension = blobType.includes("mp4") ? "mp4" : "webm";
+      exportDownload.href = exportUrl;
+      exportDownload.download = "nava-edited-video." + extension;
+      exportDownload.textContent = "دریافت ویدیوی نهایی (" + extension.toUpperCase() + ")";
+      exportDownload.hidden = false;
+      exportProgress.value = 100;
+      setStatus("ویدیوی نهایی آماده شد. می‌توانی پیش‌نمایش کنی یا فایل را دریافت کنی.");
+    } catch (error) {
+      if (recorder && recorder.state !== "inactive") {
+        try { recorder.stop(); } catch (_) {}
+      }
+      setStatus(error.message || "ساخت ویدیوی نهایی ناموفق بود.");
+    } finally {
+      if (musicStarted) audio.pause();
+      preview.pause();
+      if (audioContext) {
+        try { await audioContext.close(); } catch (_) {}
+      }
+      if (canvasStream) canvasStream.getTracks().forEach(track => track.stop());
+      if (combinedStream) combinedStream.getTracks().forEach(track => track.stop());
+      exportButton.disabled = false;
+      updateSummary();
+    }
+  };
+
+  exportButton.addEventListener("click", exportFinalVideo);
+
   window.addEventListener("beforeunload", () => {
     stopPlayback();
     clips.forEach(clip => URL.revokeObjectURL(clip.url));
