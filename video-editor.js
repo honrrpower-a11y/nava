@@ -706,7 +706,9 @@
               if (!isFirst && (sourceTime < rangeStart - 0.001 || sourceTime >= rangeEnd)) return;
               sample.setTimestamp(compositionOffset + localTime);
               const remaining = Math.max(0.001, clipLength - localTime);
-              sample.setDuration(Math.min(Math.max(0.001, sample.duration || 1 / fps), remaining));
+              const trimOffset = isFirst ? Math.max(0, rangeStart - sourceTime) : 0;
+              const frameDuration = isFirst ? Math.max(1 / fps, (sample.duration || 1 / fps) - trimOffset) : (sample.duration || 1 / fps);
+              sample.setDuration(Math.min(Math.max(0.001, frameDuration), remaining));
               await videoSource.add(sample);
               frameCount++;
               totalFrames++;
@@ -738,7 +740,10 @@
         return { totalFrames, frameCounts };
       })();
 
-      const [videoResult] = await Promise.all([videoTask, audioTask]);
+      const taskResults = await Promise.allSettled([videoTask, audioTask]);
+      const failedTask = taskResults.find(result => result.status === "rejected");
+      if (failedTask) throw failedTask.reason;
+      const videoResult = taskResults[0].value;
       if (!videoResult.totalFrames) throw new Error("هیچ فریمی برای خروجی رمزگذاری نشد.");
       setStatus("در حال نهایی‌سازی فایل MP4…");
       await output.finalize();
