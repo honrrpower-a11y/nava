@@ -371,3 +371,40 @@ body.light .nava-video-frame-tools{background:#fffdf8}
 /* Preview mute control */
 #avPage #navaVideoPreviewMute{min-width:96px;white-space:nowrap}
 #avPage #navaVideoPreviewMute[aria-pressed="true"]{border-color:var(--gold);color:var(--gold)}
+/* NAVA mobile-first source video editor */
+.nava-video-editor{display:grid;gap:16px;margin-top:12px}
+.nava-editor-toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.nava-editor-toolbar label{display:flex;align-items:center;justify-content:center;gap:8px;min-height:42px;padding:9px 14px;border:1px solid rgba(145,170,210,.25);border-radius:12px;background:#17263d;color:#edf4ff;font-weight:700;cursor:pointer}
+.nava-editor-toolbar input[type=file]{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+.nava-editor-summary{margin-inline-start:auto;color:#b9c8dc;font-size:.88rem}
+.nava-editor-stage{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(220px,.85fr);gap:14px;align-items:start}
+.nava-editor-preview-wrap{min-width:0;padding:10px;border:1px solid rgba(145,170,210,.2);border-radius:16px;background:#050912}
+.nava-editor-preview{display:block;width:100%;max-height:420px;aspect-ratio:16/9;object-fit:contain;background:#03060c;border-radius:10px}
+.nava-editor-audio-card{display:grid;gap:10px;padding:14px;border:1px solid rgba(145,170,210,.2);border-radius:16px;background:rgba(16,27,45,.8)}
+.nava-editor-audio-card strong{color:#edf4ff}
+.nava-editor-audio-card small{color:#aab8ce;overflow-wrap:anywhere}
+.nava-editor-audio-card input[type=range]{width:100%;accent-color:#e5bd62}
+.nava-editor-playback{display:flex;flex-wrap:wrap;gap:8px}
+.nava-editor-playback button{border:0;border-radius:11px;padding:11px 15px;font-weight:700;cursor:pointer}
+.nava-editor-play{background:#e5bd62;color:#151a22}
+.nava-editor-stop{background:#24334b;color:#edf4ff}
+.nava-editor-playback button:disabled{opacity:.45;cursor:not-allowed}
+.nava-editor-status{min-height:26px;color:#b9c8dc;font-size:.9rem;line-height:1.7}
+.nava-editor-timeline{display:grid;gap:10px}
+.nava-editor-clip{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:9px;padding:11px;border:1px solid rgba(145,170,210,.2);border-radius:14px;background:rgba(16,27,45,.78);min-width:0}
+.nava-editor-clip.is-selected{border-color:#e5bd62;box-shadow:0 0 0 1px rgba(229,189,98,.18)}
+.nava-editor-clip-select{display:flex;align-items:center;gap:9px;min-width:0;border:0;background:transparent;color:#edf4ff;text-align:right;cursor:pointer}
+.nava-editor-clip-index{display:grid;place-items:center;flex:0 0 30px;height:30px;border-radius:9px;background:#24334b;color:#e5bd62;font-weight:800}
+.nava-editor-clip-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.nava-editor-clip-duration,.nava-editor-source-duration{color:#9eafc6;font-size:.8rem;white-space:nowrap}
+.nava-editor-trim{grid-column:1/-1;display:flex;flex-wrap:wrap;align-items:end;gap:9px}
+.nava-editor-trim label{display:grid;gap:4px;color:#b9c8dc;font-size:.78rem}
+.nava-editor-trim input{width:86px;max-width:100%;box-sizing:border-box;border:1px solid rgba(145,170,210,.24);border-radius:8px;padding:7px;background:#0c1728;color:#fff;direction:ltr}
+.nava-editor-source-duration{align-self:center;margin-inline-start:auto}
+.nava-editor-clip-actions{display:flex;gap:5px;align-items:center}
+.nava-editor-clip-actions button{min-width:34px;min-height:32px;border:0;border-radius:8px;padding:5px 8px;background:#24334b;color:#edf4ff;cursor:pointer}
+.nava-editor-clip-actions button:disabled{opacity:.3;cursor:not-allowed}
+.nava-editor-empty{padding:22px;border:1px dashed rgba(145,170,210,.3);border-radius:14px;color:#aab8ce;text-align:center;line-height:1.9}
+.nava-editor-note{margin:0;color:#9eafc6;font-size:.82rem;line-height:1.8}
+.nava-video-coming-soon{display:none}
+@media(max-width:680px){.nava-editor-stage{grid-template-columns:1fr}.nava-editor-preview{max-height:360px}.nava-editor-summary{width:100%;margin:0}.nava-editor-clip{grid-template-columns:minmax(0,1fr) auto}.nava-editor-trim input{width:76px}.nava-editor-toolbar label{flex:1}}
