@@ -202,8 +202,6 @@
     preview.muted = Boolean(clip.muteAudio);
     advancing = true;
     selectedId = clip.id;
-    preview.volume = clip.muteAudio ? 0 : Math.max(0, Math.min(1, clip.audioVolume ?? 1));
-    preview.muted = Boolean(clip.muteAudio);
     renderTimeline();
     preview.pause();
     try {
