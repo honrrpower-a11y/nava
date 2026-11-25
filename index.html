@@ -654,9 +654,9 @@
         <label for="navaEditorTextStart">از ثانیه<input id="navaEditorTextStart" type="number" min="0" step="0.1" value="1" inputmode="decimal"></label>
         <label for="navaEditorTextEnd">تا ثانیه<input id="navaEditorTextEnd" type="number" min="0.1" step="0.1" value="4" inputmode="decimal"></label>
         <label for="navaEditorTextPosition">محل نمایش<select id="navaEditorTextPosition"><option value="bottom">پایین تصویر</option><option value="center">وسط تصویر</option><option value="top">بالای تصویر</option></select></label>
-        <label for="navaEditorTextSize">اندازه متن<select id="navaEditorTextSize"><option value="small">کوچک</option><option value="medium" selected>متوسط</option><option value="large">بزرگ</option></select></label>
+        <label for="navaEditorTextSize">اندازه متن <output id="navaEditorTextSizeValue">6.5%</output><input id="navaEditorTextSize" type="range" min="3" max="14" step="0.5" value="6.5"></label>
         <label for="navaEditorTextColor">رنگ متن<input id="navaEditorTextColor" type="color" value="#ffffff"></label>
-        <label for="navaEditorTextAnimation">ورود و خروج<select id="navaEditorTextAnimation"><option value="none">بدون حرکت</option><option value="fade">محو شونده</option><option value="slide">حرکت نرم</option></select></label>
+        <label for="navaEditorTextAnimation">افکت متن<select id="navaEditorTextAnimation"><option value="none">بدون افکت</option><option value="fade">محو شدن</option><option value="slide">ورود حرکتی</option><option value="zoom">بزرگ‌شدن نرم</option><option value="typewriter">تایپ تدریجی</option></select></label>
       </div>
       <label class="nava-editor-text-background"><input id="navaEditorTextBackground" type="checkbox" checked> پس‌زمینه نیمه‌شفاف برای خوانایی متن</label>
       <div class="nava-editor-text-actions"><button type="button" id="navaEditorAddText" disabled>＋ افزودن متن به ویدئو</button><button type="button" id="navaEditorCancelTextEdit" hidden>انصراف از ویرایش</button></div>
