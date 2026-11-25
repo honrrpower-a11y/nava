@@ -63,3 +63,12 @@
  .nava-editor-trim{grid-template-columns:1fr}
  .nava-editor-trim-head{align-items:flex-start;flex-direction:column}
 }
+
+/* Final local render and download */
+.nava-editor-export{display:grid;gap:10px;padding:15px;border:1px solid rgba(229,189,98,.35);border-radius:15px;background:rgba(18,31,50,.82)}
+.nava-editor-export-button{min-height:48px;border:0;border-radius:12px;padding:12px 18px;background:#e5bd62;color:#171b22;font-weight:800;font-size:1rem;cursor:pointer}
+.nava-editor-export-button:disabled{opacity:.45;cursor:not-allowed}
+.nava-editor-export progress{width:100%;height:12px;accent-color:#e5bd62}
+.nava-editor-export-preview{width:100%;max-height:380px;aspect-ratio:16/9;object-fit:contain;background:#03060c;border-radius:10px}
+.nava-editor-export-download{display:block;padding:12px;border-radius:10px;background:#243b56;color:#fff;text-align:center;font-weight:800;text-decoration:none}
+.nava-editor-export small{color:#aab8ce;line-height:1.8}

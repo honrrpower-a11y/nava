@@ -30,19 +30,24 @@ jobs:
           const html = fs.readFileSync("index.html", "utf8");
           const js = fs.readFileSync("video-editor.js", "utf8");
           const css = fs.readFileSync("video-editor.css", "utf8");
-          for (const id of ["navaVideoPanelVideo","navaEditorFiles","navaEditorAudio","navaEditorPreview","navaEditorTimeline","navaEditorPlay","navaEditorStop","navaEditorClear"]) {
+          for (const id of ["navaVideoPanelVideo","navaEditorFiles","navaEditorAudio","navaEditorPreview","navaEditorTimeline","navaEditorPlay","navaEditorStop","navaEditorClear","navaEditorExport","navaEditorExportProgress","navaEditorExportOutput","navaEditorExportDownload"]) {
             assert.ok(html.includes('id="' + id + '"'), "Missing editor control: " + id);
             assert.ok(html.includes('id="navaEditorAudioPlayer"'), "Missing audio player element");
             assert.ok(js.includes('$("' + id + '")') || id === "navaVideoPanelVideo", "Editor script does not bind: " + id);
           }
-          assert.match(html, /video-editor\.js\?v=video-editor-mobile-flow/, "Editor script must be cache-versioned");
-          assert.match(html, /video-editor\.css\?v=video-editor-mobile-flow/, "Editor stylesheet must be cache-versioned");
+          assert.match(html, /video-editor\.js\?v=video-editor-final-export/, "Editor script must be cache-versioned");
+          assert.match(html, /video-editor\.css\?v=video-editor-final-export/, "Editor stylesheet must be cache-versioned");
           assert.match(js, /URL\.createObjectURL/, "Media must be handled locally in the browser");
           assert.match(js, /data-trim/, "Per-clip trim controls must be wired");
           assert.match(js, /addEventListener\("input"/, "Trim sliders must update live while dragging");
           assert.match(html, /nava-editor-steps/, "Guided editor workflow must be visible");
           assert.match(js, /data-action="up"/, "Clip ordering controls must be available");
           assert.match(js, /audio\.volume/, "Music volume control must be wired");
+          assert.match(js, /MediaRecorder/, "Final video must be rendered locally in the browser");
+          assert.match(js, /captureStream\(24\)/, "Final render must capture the canvas stream");
+          assert.match(js, /createMediaStreamDestination/, "Original clip audio and music must be mixed into the output");
+          assert.match(js, /exportDownload\.href/, "Final video download link must be created");
+          assert.match(html, /ساخت و دانلود ویدیوی نهایی/, "Final render button must be visible");
           assert.match(css, /@media\(max-width:680px\)/, "Mobile editor layout must be present");
           assert.doesNotMatch(js, /fetch\(|XMLHttpRequest|NAVI_BASE/, "Editor must not upload media or call an API");
           console.log("Video editor foundation checks passed.");
