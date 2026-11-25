@@ -2864,8 +2864,8 @@ async function handleChat({
   const page = knownPages.has(requestedPage) ? requestedPage : "homePage";
   const requestedBusinessTab = safeNaviText(input.pageTab || "", 40);
   const knownBusinessTabs = new Set([
-    "dashboard", "transactions", "catalog", "inventory", "customers",
-    "orders", "tools", "reports", "advisor"
+    "dashboard", "transactions", "accounts", "ledger", "catalog", "inventory",
+    "customers", "orders", "tools", "reports", "advisor"
   ]);
   const pageTab = page === "bizPage" && knownBusinessTabs.has(requestedBusinessTab)
     ? requestedBusinessTab
