@@ -8,6 +8,9 @@
   const input = $("navaEditorFiles");
   const audioInput = $("navaEditorAudio");
   const list = $("navaEditorTimeline");
+  const splitSelectedButton = $("navaEditorSplitSelected");
+  const duplicateSelectedButton = $("navaEditorDuplicateSelected");
+  const selectedClipLabel = $("navaEditorSelectedLabel");
   const preview = $("navaEditorPreview");
   const status = document.getElementById("navaEditorStatus");
   const totalLabel = $("navaEditorTotal");
@@ -86,6 +89,12 @@
     exportButton.disabled = clips.length === 0;
     stopButton.disabled = !playing;
     clearButton.disabled = clips.length === 0 && !audioFile;
+    const selectedClip = clips.find(clip => clip.id === selectedId);
+    if (splitSelectedButton) splitSelectedButton.disabled = !selectedClip;
+    if (duplicateSelectedButton) duplicateSelectedButton.disabled = !selectedClip || clips.length >= 8;
+    if (selectedClipLabel) selectedClipLabel.textContent = selectedClip
+      ? "کلیپ انتخاب‌شده: " + selectedClip.file.name + " · " + fmt(selectedClip.out - selectedClip.in)
+      : "ابتدا یک کلیپ را از فهرست پایین انتخاب کن";
   };
   const renderTimeline = () => {
     if (!clips.length) {
@@ -268,6 +277,18 @@
       audio.volume = Number(audioVolume.value) / 100;
     }
   });
+  const clickSelectedClipAction = action => {
+    const selectedClip = clips.find(clip => clip.id === selectedId);
+    if (!selectedClip) {
+      setStatus("ابتدا یکی از کلیپ‌های فهرست را انتخاب کن.");
+      return;
+    }
+    const card = list.querySelector('[data-clip-id="' + selectedClip.id + '"]');
+    card?.querySelector('button[data-action="' + action + '"]')?.click();
+  };
+  splitSelectedButton?.addEventListener("click", () => clickSelectedClipAction("split"));
+  duplicateSelectedButton?.addEventListener("click", () => clickSelectedClipAction("duplicate"));
+
   list.addEventListener("click", event => {
     const button = event.target.closest("button[data-action]");
     if (!button) return;
