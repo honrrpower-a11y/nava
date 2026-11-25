@@ -34,3 +34,8 @@ textarea.nava-strategy-control{min-height:94px;resize:vertical;line-height:1.8}
 .nava-export-actions button{min-height:42px;padding:9px 15px}
 .nava-export-status{flex:1 1 100%;min-height:20px;margin:0;color:var(--muted);font-size:11px;line-height:1.8}
 .nava-export-actions button:disabled{opacity:.65;cursor:wait}
+
+
+/* Content studio cross-studio handoff actions */
+.content-handoff-actions{display:flex;flex-wrap:wrap;gap:9px;margin-top:14px;padding-top:13px;border-top:1px solid var(--border)}
+.content-handoff-actions button{min-height:42px;flex:1 1 190px}
