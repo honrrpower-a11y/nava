@@ -57,7 +57,8 @@ jobs:
           assert.match(js, /scene\.transition==="page-turn"&&\(scene\.layout!=="single"\|\|scene\.images\.length!==1\)/, "Only the individual page-turn scene must use one photo");
           assert.doesNotMatch(js, /pageTurnPlan&&plan\.scenes\.some/, "A page-turn scene must not force every other scene into single-photo layout");
           assert.match(js, /کارگردانی چیدمان: برای هر صحنه مستقل تصمیم بگیر/, "NAVI prompt must explicitly choose varied layouts per scene");
-          assert.match(js, /فقط همان صحنه‌ای که transition=page-turn دارد/, "The page-turn single-photo rule must be scoped to that scene only");
+          assert.match(js, /page-turn پیش‌فرض نیست و در کل پروژه حداکثر یک بار مجاز است/, "Page-turn must not dominate NAVI-generated videos");
+          assert.match(js, /pageTurnCount>1/, "Reject a repeated page-turn slideshow instead of rendering a repetitive template");
           assert.match(js, /const t=\(i\+\.5\)\/strips;/, "Page-turn curl must draw the full page before folding it");
           assert.match(js, /activeStory\?\.transition==="page-turn"\?"single"/, "Page-turn scenes must render as a single photo page");
           assert.match(js, /allUsableImages.slice\(0,1\)/, "Page-turn scenes must not become multi-photo collages");
