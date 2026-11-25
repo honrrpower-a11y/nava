@@ -390,7 +390,6 @@
     let audioContext = null;
     let canvasStream = null;
     let combinedStream = null;
-    let previewCaptureStream = null;
     let musicStarted = false;
     try {
       const canvas = document.createElement("canvas");
@@ -410,21 +409,20 @@
       audioContext = exportAudioContext;
       await audioContext.resume();
 
-      // Prefer the browser's native media capture for the source video's audio.
-      // This avoids routing every decoded audio sample through WebAudio on mobile.
-      let sourceAudioTracks = [];
-      const capturePreviewAudio = preview.captureStream || preview.mozCaptureStream;
-      if (typeof capturePreviewAudio === "function") {
-        try {
-          previewCaptureStream = capturePreviewAudio.call(preview);
-          sourceAudioTracks = previewCaptureStream.getAudioTracks().filter(track => track.readyState === "live");
-        } catch (_) {
-          previewCaptureStream = null;
-          sourceAudioTracks = [];
-        }
+      // Keep audio tracks stable for the entire export. A track returned by
+      // HTMLMediaElement.captureStream() may end when preview.src changes between
+      // clips, which makes MediaRecorder stop after the first clip/segment.
+      // Route both the source clip audio and optional music through one persistent
+      // MediaStreamAudioDestinationNode instead.
+      if (!exportPreviewGain) {
+        const previewSource = audioContext.createMediaElementSource(preview);
+        exportPreviewGain = audioContext.createGain();
+        exportPreviewGain.gain.value = 1;
+        previewSource.connect(exportPreviewGain);
+        exportPreviewGain.connect(exportRecordDestination);
+        exportPreviewGain.connect(audioContext.destination);
       }
 
-      // WebAudio is used only for optional music mixing, not for the original clip audio.
       if (audioFile) {
         if (!exportMusicSource) {
           exportMusicSource = audioContext.createMediaElementSource(audio);
@@ -437,23 +435,9 @@
         exportMusicGain.gain.value = 0;
       }
 
-      // Fallback for browsers that do not expose an audio track from captureStream().
-      if (!sourceAudioTracks.length) {
-        if (!exportPreviewGain) {
-          const previewSource = audioContext.createMediaElementSource(preview);
-          exportPreviewGain = audioContext.createGain();
-          exportPreviewGain.gain.value = 1;
-          previewSource.connect(exportPreviewGain);
-          exportPreviewGain.connect(exportRecordDestination);
-          exportPreviewGain.connect(audioContext.destination);
-        }
-      }
-
       combinedStream = new MediaStream([
         ...canvasStream.getVideoTracks(),
-        ...(sourceAudioTracks.length
-          ? [...sourceAudioTracks, ...(audioFile ? exportRecordDestination.stream.getAudioTracks() : [])]
-          : exportRecordDestination.stream.getAudioTracks())
+        ...exportRecordDestination.stream.getAudioTracks()
       ]);
 
       const mimeCandidates = [
@@ -577,6 +561,9 @@
           }, 1000);
         });
         preview.pause();
+        if (!recorder || recorder.state !== "recording") {
+          throw new Error("ضبط خروجی زودتر از پایان کلیپ متوقف شد؛ ساخت فایل ناقص متوقف شد. دوباره تلاش کن.");
+        }
         completedDuration += clip.out - clip.in;
       }
 
@@ -609,9 +596,6 @@
       preview.pause();
       if (canvasStream) canvasStream.getTracks().forEach(track => track.stop());
       if (combinedStream) combinedStream.getTracks().forEach(track => track.stop());
-      if (previewCaptureStream) {
-        previewCaptureStream.getTracks().forEach(track => track.stop());
-      }
       exportButton.disabled = false;
       updateSummary();
     }
