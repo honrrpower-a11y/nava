@@ -527,7 +527,7 @@ async function designLogos(data, apiKey) {
       designIdea: naviCreativeBrief.designIdea,
       strategy: naviCreativeBrief.strategy,
       designBriefEnglish: naviCreativeBrief.designBriefEnglish,
-      visualBlueprints: designBlueprints,
+      visualBlueprints: designBlueprints.map(({ html, css, ...semanticBlueprint }) => semanticBlueprint),
       concepts: designBlueprints
     };
     const designBriefEnglish = naviCreativeBrief.designBriefEnglish;
