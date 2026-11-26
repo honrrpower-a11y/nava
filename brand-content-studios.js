@@ -134,84 +134,6 @@
     if (result) requestStudioOutput("برندینگ", context, message, result, document.querySelector("#brandStrategyForm button[type='submit']"));
   });
 
-  function addContentHandoffActions(reply, format) {
-    const host = $("contentStudioOutput");
-    if (!host) return;
-    host.querySelector("[data-content-handoff-actions]")?.remove();
-    const actions = document.createElement("div");
-    actions.dataset.contentHandoffActions = "true";
-    actions.className = "content-handoff-actions";
-    const add = (label, action) => {
-      const button = document.createElement("button");
-      button.type = "button";
-      button.className = "btn-secondary";
-      button.textContent = label;
-      button.addEventListener("click", action);
-      actions.append(button);
-    };
-    const openPage = id => {
-      if (typeof window.showPage === "function") window.showPage(id);
-      else document.getElementById(id)?.classList.add("active");
-    };
-    const videoFormat = /ویدئو|ویدئوی|سناریو/.test(format);
-    const articleFormat = /مقاله/.test(format);
-    const storyFormat = /اسلایدی|شبکه اجتماعی|کپشن/.test(format);
-    if (videoFormat) add("انتقال سناریو به ساخت ویدئو", () => {
-      const brief = $("navaVideoBrief");
-      if (brief) brief.value = "سناریو و بریف تأییدشده از استودیوی تولید محتوا:\n\n" + reply;
-      openPage("avPage");
-      document.querySelector('[data-video-tab="text"]')?.click();
-      document.querySelector('[data-build-mode="navi"]')?.click();
-      $("navaVideoBrief")?.scrollIntoView({ behavior: "smooth", block: "center" });
-    });
-    if (articleFormat) add("انتقال بریف به مقاله و وبلاگ", () => {
-      if ($("studioTask-article")) $("studioTask-article").value = "تولید پیش‌نویس";
-      if ($("studioAudience-article")) $("studioAudience-article").value = read("contentAudience");
-      if ($("studioBrief-article")) $("studioBrief-article").value = "خروجی و بریف تأییدشده از تولید محتوا:\n\n" + reply;
-      openPage("articlePage");
-      $("studioBrief-article")?.scrollIntoView({ behavior: "smooth", block: "center" });
-    });
-    if (storyFormat) add("انتقال متن به استوری‌ساز", () => {
-      if ($("storyInput")) $("storyInput").value = reply;
-      if ($("previewText")) { $("previewText").textContent = reply; $("previewText").classList.remove("empty"); }
-      openPage("storyPage");
-      $("storyInput")?.scrollIntoView({ behavior: "smooth", block: "center" });
-    });
-    if (actions.childElementCount) host.append(actions);
-  }
-
-  $("contentStudioForm")?.addEventListener("submit", event => {
-    event.preventDefault();
-    const context = {
-      platform: $("contentPlatform")?.selectedOptions?.[0]?.textContent?.trim() || "",
-      format: $("contentFormat")?.selectedOptions?.[0]?.textContent?.trim() || "",
-      objective: $("contentObjective")?.selectedOptions?.[0]?.textContent?.trim() || "",
-      topic: read("contentTopic"),
-      audience: read("contentAudience"),
-      tone: $("contentTone")?.selectedOptions?.[0]?.textContent?.trim() || "",
-      keyPoints: read("contentKeyPoints"),
-      callToAction: read("contentCTA"),
-      keywords: read("contentKeywords")
-    };
-    if (!context.topic || !context.audience) {
-      status("contentStudioStatus", "موضوع محتوا و مخاطب هدف را وارد کن.", true);
-      return;
-    }
-    const message = [
-      "در نقش استراتژیست و دبیر ارشد محتوا عمل کن؛ این استودیو مسئول ایده، زاویه محتوا، پیام، ساختار، متن و برنامه انتشار است و تصویر یا ویدئوی نهایی تولید یا رندر نمی‌کند.",
-      "اگر قالب ویدئو انتخاب شده، سناریوی اجرایی، زمان‌بندی صحنه‌ها، متن گوینده، پیشنهاد تصویر هر صحنه و دستور تولید را طوری بنویس که مستقیماً به استودیوی ساخت ویدئو منتقل شود. اگر قالب مقاله انتخاب شده، بریف و طرح مقاله را آماده کن و نگارش کامل را به استودیوی مقاله و وبلاگ بسپار.",
-      "ابتدا اگر اطلاعات ضروری کم است سؤال بپرس. از ادعاهای بی‌پشتوانه، تیتر گمراه‌کننده و تکرار کلیشه‌ای پرهیز کن.",
-      "خروجی را متناسب با پلتفرم و قالب انتخاب‌شده آماده کن؛ شامل ایده و زاویه محتوا، ساختار، متن نهایی، پیشنهاد شروع جذاب و دعوت به اقدام.",
-      "اگر محتوای شبکه اجتماعی است، نسخه کپشن و هشتگ‌های مرتبط را هم ارائه بده؛ اگر مقاله است، تیترها و ساختار سئو را اضافه کن.",
-      "بریف محتوا:\n" + Object.entries(context).map(([k,v]) => k + ": " + (v || "مشخص نشده")).join("\n")
-    ].join("\n\n");
-    status("contentStudioStatus", "درخواست ارسال شد؛ خروجی در فضای همین استودیو نمایش داده می‌شود.");
-    const output = document.querySelector("#contentPage .nava-strategy-layout");
-    let result = document.querySelector("#contentStudioOutput");
-    if (!result && output) { result = document.createElement("div"); result.id = "contentStudioOutput"; result.className = "studio-live-output"; output.append(result); }
-    if (result) requestStudioOutput("تولید محتوا", context, message, result, document.querySelector("#contentStudioForm button[type='submit']"), reply => addContentHandoffActions(reply, context.format));
-  });
-
   $("improveStoryWithNavi")?.addEventListener("click", () => {
     const story = read("storyInput");
     if (!story) {
@@ -246,10 +168,6 @@
   $("brandStudioReset")?.addEventListener("click", () => {
     $("brandStrategyForm")?.reset();
     status("brandStudioStatus", "فرم برند پاک شد.");
-  });
-  $("contentStudioReset")?.addEventListener("click", () => {
-    $("contentStudioForm")?.reset();
-    status("contentStudioStatus", "فرم محتوا پاک شد.");
   });
 
   // Task-specific handoff for the remaining brief-based studios.
