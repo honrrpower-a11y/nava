@@ -851,6 +851,73 @@ window.sendOfficeNaviRequest = function({ message, context } = {}) {
   });
 };
 
+/* CONTENT STUDIO — SUBMIT A REAL, PLATFORM-AWARE CREATION REQUEST */
+(() => {
+  const form = document.getElementById("contentStudioForm");
+  const status = document.getElementById("contentStudioStatus");
+  const reset = document.getElementById("contentStudioReset");
+  if (!form || !status) return;
+
+  const read = id => document.getElementById(id)?.value?.trim() || "";
+  const choice = id => document.getElementById(id)?.selectedOptions?.[0]?.textContent?.trim() || "";
+  const service = "تولید محتوا";
+
+  form.addEventListener("submit", event => {
+    event.preventDefault();
+    if (!form.reportValidity()) return;
+
+    const context = collectNaviStudioContext("contentPage");
+    const platform = context.platform || choice("contentPlatform");
+    const format = context.format || choice("contentFormat");
+    const objective = context.objective || choice("contentObjective");
+    const tone = context.tone || choice("contentTone");
+    const topic = read("contentTopic");
+    const audience = read("contentAudience");
+    const keyPoints = read("contentKeyPoints");
+    const callToAction = read("contentCTA");
+    const keywords = read("contentKeywords");
+
+    const message = [
+      "در استودیوی تولید محتوای NAVA، بر اساس بریف زیر محتوای واقعی و قابل استفاده تولید کن؛ صرفاً بریف را تحلیل یا بازنویسی نکن.",
+      "پلتفرم مقصد: " + platform,
+      "قالب خروجی: " + format,
+      "هدف: " + objective,
+      "لحن: " + tone,
+      "موضوع: " + topic,
+      "مخاطب هدف: " + audience,
+      keyPoints ? "نکات الزامی و اطلاعات مرجع: " + keyPoints : "",
+      callToAction ? "دعوت به اقدام مدنظر: " + callToAction : "",
+      keywords ? "کلیدواژه‌ها: " + keywords : "",
+      "دستور اجرا: خروجی را دقیقاً متناسب با پلتفرم و قالب انتخاب‌شده بساز؛ شروع قوی و غیرکلیشه‌ای داشته باش؛ متن نهایی را کامل و آماده استفاده ارائه کن؛ از توصیه‌های عمومی و عبارت‌های توخالی پرهیز کن؛ اطلاعات، آمار یا ادعاهای تأییدنشده نساز و اگر داده‌ای کافی نیست آن را مشخص کن.",
+      "اگر قالب پست اسلایدی است، متن هر اسلاید را جداگانه و با ترتیب روایی بنویس و کپشن و CTA را هم بده. اگر ویدئوی کوتاه یا بلند یا سناریو است، هوک، ساختار صحنه‌ها، متن گفتار/نوشته روی تصویر و پایان‌بندی را ارائه کن. اگر کپشن و متن شبکه اجتماعی است، نسخه نهایی را بدون توضیحات اضافی آماده انتشار بده. اگر مقاله وبلاگ است، زاویه محتوا، عنوان، ساختار و بریف دقیق نگارش را آماده کن و مشخص کن برای نگارش کامل باید به استودیوی مقاله و وبلاگ منتقل شود. اگر تقویم محتوایی است، یک برنامه منسجم و اجرایی با موضوع، قالب، هدف و پیام هر محتوا بساز.",
+      "در پایان، فقط در صورت مفید بودن، یک پیشنهاد مشخص برای بهترشدن همین خروجی ارائه کن."
+    ].filter(Boolean).join("\n");
+
+    status.textContent = "بریف آماده شد؛ در حال اتصال درخواست به NAVI...";
+    if (!getNaviToken()) {
+      window.openNaviAssistant({ service, context, message });
+      status.textContent = "درخواست آماده است؛ پس از ورود به حساب، آن را از پنل NAVI ارسال کن.";
+      return;
+    }
+
+    if (Array.from(serviceSelect.options).some(option => option.value === service)) {
+      serviceSelect.value = service;
+    }
+    updateNaviAssistantContext(service, context);
+    setNaviWidgetOpen(true, false);
+    status.textContent = "درخواست تولید محتوا به NAVI ارسال شد؛ پاسخ در پنل همراه ناوی نمایش داده می‌شود.";
+    sendMessageToNavi({
+      messageOverride: message,
+      serviceOverride: service,
+      contextOverride: context
+    });
+  });
+
+  reset?.addEventListener("click", () => {
+    status.textContent = "فرم پاک شد؛ بریف تازه‌ای وارد کن.";
+  });
+})();
+
 /* NAVA ACCOUNT UI — theme-aware dropdowns and registration spacing */
 (function initNavaAccountUiStyles() {
   if (document.getElementById("navaAccountUiStyles")) return;
