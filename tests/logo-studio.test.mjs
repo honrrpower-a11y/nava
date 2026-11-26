@@ -314,7 +314,7 @@ test("NAVI rejects a two-line sketch instead of presenting it as a logo", async 
     assert.equal(result.success, true);
     assert.equal(result.concepts.length, 3);
     assert.equal(result.rejectedConcepts.length, 0);
-    assert.ok(result.concepts.every(item => item.html.includes("data-logo-role=\\"symbol\\"")));
+    assert.ok(result.concepts.every(item => item.html.includes('data-logo-role="symbol"')));
     assert.equal(db.visitorUsed, 1, "a usable partial batch consumes one guest trial");
   } finally {
     globalThis.fetch = originalFetch;
