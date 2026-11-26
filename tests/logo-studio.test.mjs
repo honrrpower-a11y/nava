@@ -1157,6 +1157,10 @@ test("NAVI prioritizes the actual brief and only uses layers when the idea needs
   assert.ok(backend.includes("NON-NEGOTIABLE REVISION STANDARD"));
   assert.ok(backend.includes("Change the actual silhouette"));
   assert.ok(backend.includes("PHASE 6B — PROFESSIONAL LOGO FINISH"));
+  assert.ok(backend.includes("PREMIUM FINISH CONTRACT"), "builder must implement premium material finish");
+  assert.ok(backend.includes("materialDirection"), "blueprint must define concept-specific material");
+  assert.ok(backend.includes("finishLayers"), "blueprint must specify concrete finishing layers");
+  assert.ok(backend.includes("under-designed flat placeholders"), "flat placeholder icons must fail craft gate");
   assert.ok(backend.includes("PHASE 6C — SEMANTIC RECOGNITION AND INTEGRATION"));
   assert.ok(backend.includes("A music reference must be more specific than three vertical bars"));
   assert.ok(backend.includes("redesign the silhouette"));
