@@ -963,7 +963,7 @@ async function refineLogoConcepts(data, conceptsInput, apiKey, revisionAttempt =
       : "FIRST REVIEW: prioritize the largest semantic-recognition failure before styling.",
     "You are given the actual browser-rendered PNG preview for each concept, its HTML/CSS source, and the original client brief. Inspect the image itself. Do not merely repeat the rationale or validate that classes exist.",
     "For each concept diagnose visible problems in silhouette, object recognition, spatial relationships, overlap/occlusion, hierarchy, balance, scale, depth, lighting, material, typography and fidelity to the exact brief. Then revise the HTML and CSS so the rendered result visibly fixes those problems.",
-    "The original client brief is the source of truth. Preserve its subject, required objects, exact spatial relationships, brand name and supplied slogan. Never replace the core idea with a generic icon or a different metaphor.",
+    "The original client brief and each concept executionBriefEnglish are binding source-of-truth instructions. Preserve the exact subject, required objects, spatial relationships, brand name and slogan. The English execution brief defines the intended geometry; do not reinterpret it as unrelated decorative shapes or replace its metaphor.",
     "For front/behind/emerging/partially hidden relationships, implement real CSS positioning, stacking and overlap. A relationship is not fixed by adding explanatory text or adjacent shapes.",
     "NON-NEGOTIABLE REVISION STANDARD: a successful revision must materially change the visible .navi-symbol construction, not just its wrapper, color, typography, shadow, scale or decorative effects. Change the actual silhouette, cut-out, contour, proportions, placement, overlap, or geometry of a meaningful symbol layer. Make the smallest set of high-impact changes that fixes the biggest visible mismatch with the original brief. If the current mark is merely an abstract approximation of a named object, replace that approximation with a recognizable constructed silhouette. Preserve the requested idea, but do not preserve a weak arrangement just because it already exists. In visualRevisionNotes name the exact shape/geometry changed and why it better expresses a specific brief anchor. A revision that only changes presentation styling will be rejected; do not claim an improvement without a visible structural correction.",
     "Improve the actual graphic design, not just the code structure: custom silhouette, deliberate geometry, considered negative space, intentional proportions, optical alignment and purposeful layered construction. Avoid arbitrary extra ornaments, generic rings, random diagonal strokes and default badges.",
@@ -978,6 +978,13 @@ async function refineLogoConcepts(data, conceptsInput, apiKey, revisionAttempt =
   concepts.forEach(({ source, image }, index) => {
     parts.push({ text: "CONCEPT " + (index + 1) + "\n" + JSON.stringify({
       title: source.title,
+      executionBriefEnglish: source.executionBriefEnglish,
+      geometryLayerRoles: source.geometryLayerRoles,
+      geometryRecipe: source.geometryRecipe,
+      metaphor: source.metaphor,
+      meaningChain: source.meaningChain,
+      signatureFeature: source.signatureFeature,
+      recognitionRisk: source.recognitionRisk,
       centralThesis: source.centralThesis,
       symbolConstruction: source.symbolConstruction,
       briefAlignment: source.briefAlignment,
