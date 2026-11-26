@@ -12,7 +12,7 @@ test("Content Studio delegates unspecified choices to NAVI", () => {
     assert.ok(select[1].includes("<option selected>تشخیص هوشمند NAVI</option>"));
   }
   assert.ok(app.includes("هرجا مقدار «تشخیص هوشمند NAVI» ثبت شده، خودت"));
-  assert.ok(html.includes("app.js?v=content-studio-adaptive-intelligence-20261126-1"));
+  assert.ok(html.includes("app.js?v=content-studio-quality-gate-20261127-1"));
   assert.ok(app.includes("فقط دستورالعمل مربوط به قالب نهایی اعلام‌شده را اجرا کن"));
 });
 
@@ -28,4 +28,12 @@ test("NAVI's resolved format is used for downstream studio handoff", () => {
   assert.ok(app.includes("تصمیم NAVI: پلتفرم=[نام]؛ قالب=[نام]؛ هدف=[نام]؛ لحن=[نام]"));
   assert.ok(app.includes('const resolved = readDecision(({ platform: "پلتفرم", format: "قالب", objective: "هدف", tone: "لحن" })[key])'));
   assert.ok(app.includes("handoff = effectiveHandoff"));
+});
+
+test("NAVI performs a silent quality review before showing final content", () => {
+  assert.ok(app.includes("کنترل کیفیت داخلی اجباری پیش از نمایش"));
+  assert.ok(app.includes("فقط نسخه نهاییِ بازبینی‌شده را نمایش بده"));
+  assert.ok(app.includes("اطلاعات، عدد، منبع، تجربه، ویژگی محصول یا ادعای تازه نساز"));
+  assert.ok(app.includes("اگر خروجی از ابتدا استاندارد است، بی‌دلیل آن را بازنویسی نکن"));
+  assert.ok(html.includes("app.js?v=content-studio-quality-gate-20261127-1"));
 });
