@@ -1,14 +1,14 @@
 // NAVI blueprint-driven HTML/CSS logo geometry engine.
-// Every concept supplies its own coordinate-based composition; no fixed family templates, SVG, canvas or raster assets.
+// Every concept supplies its own coordinate-based composition; up to 16-point contours support more faithful organic silhouettes. No SVG; no fixed family templates, canvas or raster assets.
 
 function renderBlueprintGeometry(geometrySpec) {
   const invalid = message => { const error = new Error(message); error.diagnosticCode = "LOGO_BLUEPRINT_GEOMETRY_INVALID"; error.validationStage = "geometry-render"; throw error; };
   const tones = {
-    primary: "linear-gradient(145deg,var(--logo-primary),#26394e)",
-    secondary: "linear-gradient(145deg,#d9c49a,#92784f)",
-    accent: "linear-gradient(145deg,#d9eff0,#6d9da3)",
-    light: "linear-gradient(145deg,#fff,#e7e3da)",
-    dark: "linear-gradient(145deg,#46515d,#151d27)",
+    primary: "linear-gradient(145deg,var(--logo-primary),var(--logo-primary))",
+    secondary: "linear-gradient(145deg,var(--logo-primary),var(--logo-background))",
+    accent: "linear-gradient(145deg,var(--logo-background),var(--logo-primary))",
+    light: "linear-gradient(145deg,var(--logo-background),#f2eee4)",
+    dark: "linear-gradient(145deg,#51483b,#211f1b)",
     paper: "linear-gradient(145deg,#fffdf7,#d8d0c2)"
   };
   const layers = Array.isArray(geometrySpec?.layers) ? geometrySpec.layers.slice(0, 8) : [];
@@ -57,8 +57,8 @@ function renderBlueprintGeometry(geometrySpec) {
     if (shape === "capsule") contour = "border-radius:999px";
     if (shape === "diamond") contour = "border-radius:8%;transform:translate(-50%,-50%) rotate(calc(var(--part-rotation) + 45deg))";
     if (shape === "polygon") {
-      let points = Array.isArray(layer.points) ? layer.points.slice(0, 8) : [];
-      const validPoints = points.length >= 3 && points.length <= 8 &&
+      let points = Array.isArray(layer.points) ? layer.points.slice(0, 16) : [];
+      const validPoints = points.length >= 3 && points.length <= 16 &&
         points.every(point => Array.isArray(point) && point.length === 2 &&
           point.every(value => Number.isFinite(Number(value)) && Number(value) >= 0 && Number(value) <= 100));
       if (!validPoints) {
@@ -137,6 +137,8 @@ export function buildStructuredLogoConcepts(data, blueprints) {
       semanticGeometry: ["blueprint-driven-" + geometry.layerCount + "-layer-mark"],
       semanticGeometryNote: "Every visible layer is generated from this concept's own geometry blueprint; no family silhouette is reused.",
       geometryRecipe: blueprint.geometryRecipe || "",
+      executionBriefEnglish: blueprint.executionBriefEnglish || "",
+      geometryLayerRoles: (blueprint.geometrySpec?.layers || []).map(layer => layer.visualRole || ""),
       spatialRelationship: blueprint.spatialRelationship || "",
       negativeSpace: blueprint.negativeSpace || "",
       differsBy: blueprint.signatureFeature || "Independent geometry blueprint",
