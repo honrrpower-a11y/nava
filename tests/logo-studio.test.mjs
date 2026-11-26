@@ -1002,6 +1002,11 @@ test("Logo Studio captures real renders and runs validated automatic visual refi
   assert.ok(ui.includes('concept.visualReview === "refined"'), "only concepts accepted by NAVI visual review may be shown");
   assert.ok(backend.includes("LOGO_VISUAL_QUALITY_LOW"));
   assert.ok(backend.includes("recognitionScore < 8"), "blind-read quality is a hard acceptance gate");
+  assert.ok(backend.includes("TWO-PASS SEMANTIC AUDIT"), "the image must be read before the brief is used to interpret it");
+  assert.ok(backend.includes("unaidedRead"), "the reviewer must report its independent first reading");
+  assert.ok(backend.includes("likelyMisread"), "the reviewer must report the most plausible wrong interpretation");
+  assert.ok(backend.includes("semanticEvidence"), "concrete meanings require visible diagnostic evidence");
+  assert.ok(backend.includes("overlapping rounded rectangles"), "book marks must not pass as generic stacked tiles");
   assert.ok(ui.includes("result.code"), "visual-review failures must expose their diagnostic code");
   assert.ok(backend.includes("error?.name === \"AbortError\" ? \"MODEL_TIMEOUT\""), "review timeouts must be classified as retryable model timeouts");
   assert.ok(backend.includes("controller.abort(), 120000"), "visual review must have a 120-second deadline");
@@ -1033,7 +1038,7 @@ test("NAVI visual refinement reviews real PNGs, validates revised HTML/CSS, and 
       return new Response(JSON.stringify({
         candidates: [{
           content: { parts: [{ text: JSON.stringify({
-            concepts: [{ index: 1, html, css, visualRevisionNotes: "تناسب نشان و جای‌گیری لایه‌ها پس از مشاهده رندر واقعی اصلاح شد.", firstRead: "نشان صوتی پیوسته", recognitionScore: 9, briefFidelityScore: 9, craftScore: 8 }]
+            concepts: [{ index: 1, html, css, visualRevisionNotes: "تناسب نشان و جای‌گیری لایه‌ها پس از مشاهده رندر واقعی اصلاح شد.", firstRead: "نشان صوتی پیوسته", unaidedRead: "نشان صوتی پیوسته", likelyMisread: "فرم انتزاعی", semanticEvidence: ["فرم اصلی قابل تشخیص", "جزء دوم در ساختار ادغام شده"], recognitionScore: 9, briefFidelityScore: 9, craftScore: 8 }]
           }) }] }
         }]
       }), { status: 200, headers: { "Content-Type": "application/json" } });
@@ -1083,7 +1088,7 @@ test("NAVI rejects a visually revised logo when blind-read recognition scores be
         concepts: [{
           index: 1, html, css,
           visualRevisionNotes: "فرم نماد بازطراحی شد.",
-          firstRead: "یک شکل انتزاعی نامشخص",
+          firstRead: "یک شکل انتزاعی نامشخص", unaidedRead: "یک شکل انتزاعی نامشخص", likelyMisread: "کارت‌های روی هم", semanticEvidence: ["لبه‌های لایه‌ای", "سطح هندسی"], 
           recognitionScore: 5, briefFidelityScore: 9, craftScore: 9
         }]
       }) }] } }]
@@ -1121,7 +1126,7 @@ test("NAVI rejects cosmetic-only visual revisions that leave the logo symbol geo
     const original = initial.concepts[0];
     globalThis.fetch = async () => new Response(JSON.stringify({
       candidates: [{ content: { parts: [{ text: JSON.stringify({
-        concepts: [{ index: 1, html: original.html, css: original.css + ".mark{transform:scale(1.02)}", visualRevisionNotes: "اندازه قاب کمی تغییر کرد.", firstRead: "فرم مبهم", recognitionScore: 9, briefFidelityScore: 9, craftScore: 9 }]
+        concepts: [{ index: 1, html: original.html, css: original.css + ".mark{transform:scale(1.02)}", visualRevisionNotes: "اندازه قاب کمی تغییر کرد.", firstRead: "فرم مبهم", unaidedRead: "فرم مبهم", likelyMisread: "شکل انتزاعی", semanticEvidence: ["لبه‌های چندضلعی", "لایه‌های تزئینی"], recognitionScore: 9, briefFidelityScore: 9, craftScore: 9 }]
       }) }] } }]
     }), { status: 200, headers: { "Content-Type": "application/json" } });
     const response = await handleLogoRoute({

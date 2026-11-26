@@ -861,7 +861,9 @@ async function refineLogoConcepts(data, conceptsInput, apiKey, revisionAttempt =
   const system = [
     "You are NAVI VISUAL ART DIRECTOR performing a real render-review-revision pass.",
     "QUALITY IS NOT A VALIDATION EXERCISE: do not approve a merely valid CSS shape. The mark must be immediately recognizable and meaningful when seen alone, with all labels and rationale mentally hidden. Use the NAVA identity as a craft benchmark for bespoke geometry, purposeful layered construction, material-aware finish and a resolved wordmark lockup—but never copy its N monogram, orbit rings, badge, colors or composition. The target is the same level of design authorship, not the same visual style.",
-    "BLIND-READ TEST: state the first thing an ordinary viewer would identify from the symbol alone. If that reading is vague while the brief names a concrete object or clear idea, the mark fails. Verify the blueprint signatureFeature is visibly present and that recognitionRisk has been geometrically resolved. A generic dome with parallel bars, an unrelated dot, or any arrangement of generic primitives is an automatic failure for a bread-and-music brief. Redesign the silhouette until its first read matches the brief.",
+    "TWO-PASS SEMANTIC AUDIT — do not let the brief tell you what the image means. PASS 1: inspect only the symbol area of the attached PNG; deliberately ignore the brand name, slogan, title, blueprint, HTML/CSS and all explanations. Record unaidedRead as the concrete thing or relationship an ordinary viewer would identify first, and likelyMisread as the most plausible different interpretation. PASS 2: only after writing those two observations, compare them with the original brief. If unaidedRead does not independently match the requested subject, recognition fails even if the rationale or brand name makes the intention obvious. Do not award recognition for polished but ambiguous geometry.", 
+    "CONCRETE OBJECT EVIDENCE: list at least two visible diagnostic cues in semanticEvidence that prove the requested object is actually drawn, not merely suggested by an abstract arrangement. A book must visibly read as a book: use unmistakable paired page leaves/open spread meeting at a central spine or gutter, and/or a clearly constructed book block with a defined cover and page edges. A few overlapping rounded rectangles, floating sheets, cards, tiles or generic folded polygons are NOT a recognizable book. For a bookstore/library identity, the symbol must still read as a book at thumbnail size without relying on the wordmark. Apply equivalent object-specific diagnostic evidence to every other concrete subject in the brief; do not reuse the book example as a template.",
+    "BLIND-READ ACCEPTANCE: if likelyMisread describes a more immediate reading than the requested subject (for example cards, stacked tiles, abstract geometric layers for a book brief), recognitionScore must be below 8 and the symbol must be structurally redesigned. Do not explain away a wrong first reading. A generic dome with parallel bars, an unrelated dot, or any arrangement of generic primitives is an automatic failure for a bread-and-music brief. Verify the blueprint signatureFeature is visibly present and that recognitionRisk has been geometrically resolved. Redesign the silhouette until its first read matches the brief.",
     "SCORE THE ACTUAL IMAGE, NOT YOUR INTENTION: return integer scores from 1 to 10 for recognitionScore, briefFidelityScore and craftScore. Recognition means the symbol can be identified without its title or explanation; brief fidelity means the visible geometry expresses the exact requested idea; craft means professional silhouette, proportions, negative space and optical balance. Be strict and do not inflate scores.",
     "HARD ACCEPTANCE GATE: all three scores must be at least 8/10. If any score is below 8, continue redesigning before returning. Never report a high score merely because the HTML/CSS is valid.",
     revisionAttempt >= 2
@@ -875,7 +877,7 @@ async function refineLogoConcepts(data, conceptsInput, apiKey, revisionAttempt =
     "Improve the actual graphic design, not just the code structure: custom silhouette, deliberate geometry, considered negative space, intentional proportions, optical alignment and purposeful layered construction. Avoid arbitrary extra ornaments, generic rings, random diagonal strokes and default badges.",
     "Keep the existing .navi-symbol wrapper and every class referenced by anchorMap so the verified visual anchors remain attached to real layers. You may redesign their geometry and add nested HTML/CSS layers.",
     "Keep all text exactly as supplied. Preserve data-logo-role=brand and data-logo-role=slogan. Persian/Arabic must remain real HTML text with direction:rtl, unicode-bidi:plaintext and suitable font fallbacks.",
-    "Return a single valid JSON object with a concepts array in the same order. Each item must contain index (1-based), html, css, visualRevisionNotes (short Persian explanation of concrete visible changes), firstRead (what a viewer identifies without explanation), recognitionScore (integer 1-10), briefFidelityScore (integer 1-10) and craftScore (integer 1-10). Do not return SVG, images, scripts, markdown or chain-of-thought. HTML must use only the already-supported safe tags and CSS must use the existing safe CSS subset."
+    "Return a single valid JSON object with a concepts array in the same order. Each item must contain index (1-based), html, css, visualRevisionNotes (short Persian explanation of concrete visible changes), unaidedRead (exact first interpretation from symbol-only inspection before consulting the brief), likelyMisread (most plausible competing interpretation), semanticEvidence (array of at least two visible diagnostic cues), firstRead (what a viewer identifies without explanation), recognitionScore (integer 1-10), briefFidelityScore (integer 1-10) and craftScore (integer 1-10). Do not return SVG, images, scripts, markdown or chain-of-thought. HTML must use only the already-supported safe tags and CSS must use the existing safe CSS subset."
   ].join("\n");
   const parts = [{
     text: "Review the actual rendered images and revise every concept. The brief is binding:\n" +
@@ -957,10 +959,16 @@ async function refineLogoConcepts(data, conceptsInput, apiKey, revisionAttempt =
         validateVisualAnchorMap(html, css, source, index + 1, data.format);
         const notes = safeText(candidateConcept.visualRevisionNotes, 360);
         const firstRead = safeText(candidateConcept.firstRead, 180);
+        const unaidedRead = safeText(candidateConcept.unaidedRead, 180);
+        const likelyMisread = safeText(candidateConcept.likelyMisread, 180);
+        const semanticEvidence = Array.isArray(candidateConcept.semanticEvidence)
+          ? candidateConcept.semanticEvidence.map(item => safeText(item, 180)).filter(Boolean).slice(0, 4)
+          : [];
         const recognitionScore = Number(candidateConcept.recognitionScore);
         const briefFidelityScore = Number(candidateConcept.briefFidelityScore);
         const craftScore = Number(candidateConcept.craftScore);
-        if (html.length < 20 || css.length < 40 || !notes || !firstRead ||
+        if (html.length < 20 || css.length < 40 || !notes || !firstRead || !unaidedRead ||
+            !likelyMisread || semanticEvidence.length < 2 ||
             !Number.isInteger(recognitionScore) || !Number.isInteger(briefFidelityScore) ||
             !Number.isInteger(craftScore) || [recognitionScore, briefFidelityScore, craftScore].some(score => score < 1 || score > 10)) {
           throw validationError("LOGO_REVIEW_INCOMPLETE", "Visual refinement did not include a complete blind-read quality report.", "visual-review-output", index + 1);
@@ -969,7 +977,7 @@ async function refineLogoConcepts(data, conceptsInput, apiKey, revisionAttempt =
           throw validationError("LOGO_VISUAL_QUALITY_LOW", "The rendered mark did not pass the strict recognition, brief-fidelity and craft threshold.", "visual-review-quality-gate", index + 1);
         }
         refinedCount += 1;
-        return { ...source, html, css, visualRevisionNotes: notes, firstRead,
+        return { ...source, html, css, visualRevisionNotes: notes, firstRead, unaidedRead, likelyMisread, semanticEvidence,
           visualQuality: { recognitionScore, briefFidelityScore, craftScore },
           visualReview: "refined" };
       } catch (error) {
