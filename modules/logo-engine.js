@@ -249,6 +249,7 @@ function wordmarkHtml(data) {
 }
 
 function renderBlueprintGeometry(geometrySpec) {
+  const invalid = message => { const error = new Error(message); error.diagnosticCode = "LOGO_BLUEPRINT_GEOMETRY_INVALID"; error.validationStage = "geometry-render"; throw error; };
   const tones = {
     primary: "linear-gradient(145deg,var(--logo-primary),#26394e)",
     secondary: "linear-gradient(145deg,#d9c49a,#92784f)",
@@ -258,9 +259,7 @@ function renderBlueprintGeometry(geometrySpec) {
     paper: "linear-gradient(145deg,#fffdf7,#d8d0c2)"
   };
   const layers = Array.isArray(geometrySpec?.layers) ? geometrySpec.layers.slice(0, 8) : [];
-  if (layers.length < 3 || layers.length > 8) {
-    throw new Error("NAVI geometry blueprint must contain 3–8 independent layers.");
-  }
+  if (layers.length < 4 || layers.length > 8) invalid("NAVI geometry blueprint must contain 4–8 independent layers.");
   const html = [];
   const css = [
     ".navi-symbol{position:relative;display:block;width:72cqw;height:72cqw;max-width:72%;max-height:72%;margin:auto;overflow:visible;isolation:isolate}",
@@ -279,7 +278,7 @@ function renderBlueprintGeometry(geometrySpec) {
         x < 0 || x > 100 || y < 0 || y > 100 ||
         width < 5 || width > 100 || height < 5 || height > 100 ||
         rotation < -180 || rotation > 180) {
-      throw new Error("NAVI geometry blueprint contains an invalid primitive.");
+      invalid("NAVI geometry blueprint contains an invalid primitive.");
     }
     const key = [shape,x,y,width,height,rotation,tone].join(":");
     used.add(key);
@@ -293,11 +292,11 @@ function renderBlueprintGeometry(geometrySpec) {
       if (points.length < 3 || points.length > 8 ||
           points.some(point => !Array.isArray(point) || point.length !== 2 ||
             !point.every(value => Number.isFinite(Number(value)) && Number(value) >= 0 && Number(value) <= 100))) {
-        throw new Error("NAVI polygon primitive requires 3–8 valid points.");
+        invalid("NAVI polygon primitive requires 3–8 valid points.");
       }
       contour = "clip-path:polygon(" + points.map(point => Number(point[0]) + "% " + Number(point[1]) + "%").join(",") + ")";
     }
-    const finish = layer.finish === "metal"
+    const finish = layer.finish === "none" ? "" : layer.finish === "metal"
       ? "border:1px solid rgba(255,255,255,.55);box-shadow:inset 0 1.2cqw 1.5cqw rgba(255,255,255,.38),0 1.8cqw 2.4cqw rgba(12,20,30,.2)"
       : layer.finish === "soft"
         ? "border:1px solid rgba(35,45,58,.12);box-shadow:0 1.6cqw 2.2cqw rgba(12,20,30,.16),inset 0 1cqw 1cqw rgba(255,255,255,.24)"
@@ -306,7 +305,7 @@ function renderBlueprintGeometry(geometrySpec) {
     css.push("." + className + "{left:" + x + "%;top:" + y + "%;width:" + width + "%;height:" + height +
       "%;--part-rotation:" + rotation + "deg;background:" + tones[tone] + ";" + contour + ";" + finish + "}");
   });
-  if (used.size < 3) throw new Error("NAVI geometry layers are not distinct enough.");
+  if (used.size < 4) invalid("NAVI geometry layers are not distinct enough.");
   return { html: html.join(""), css: css.join("\n"), layerCount: layers.length };
 }
 
