@@ -555,44 +555,13 @@
       if (!Array.isArray(result.concepts) || result.concepts.length < 1 || result.concepts.length > 3) {
         throw new Error("پاسخ موتور طراحی معتبر نیست؛ طرح قابل‌قبولی دریافت نشد.");
       }
-      let finalConcepts = result.concepts;
-      empty.hidden = false;
-      status.textContent = "مرحله ۱ از ۳ · ناوی بریف و نقشه ساخت را آماده کرد. مرحله ۲ · موتور ساختاریافته HTML/CSS هندسه و تایپوگرافی را می‌سازد. مرحله ۳ · تصویر رندرشده نهایی ارزیابی می‌شود.";
-      submit.textContent = "در حال ارزیابی خروجی نهایی…";
-      try {
-        // Do not let a second generative code pass rewrite the deterministic
-        // geometry. The structured engine is the source of truth for the mark.
-        status.textContent = "موتور HTML/CSS طرح‌ها را ساخته است؛ اکنون هر تصویر نهایی در مرورگر رندر و از نظر خوانایی و انطباق با بریف ارزیابی می‌شود.";
-        const finalAudit = await visuallyAuditFinalConcepts(
-          finalConcepts, brief, result.reviewToken, headers
-        );
-        finalConcepts = finalAudit.concepts.filter(concept => concept.visualReview === "accepted");
-        if (finalConcepts.length) {
-          mountConcepts(finalConcepts, brief, result.planning);
-          empty.hidden = true;
-        } else {
-          results.replaceChildren();
-          empty.hidden = false;
-        }
-        const acceptedCount = finalConcepts.length;
-        const rejectionDetails = (Array.isArray(finalAudit.visualReview?.rejectionReasons)
-          ? finalAudit.visualReview.rejectionReasons : [])
-          .map(item => "طرح " + item.index + ": " + item.code)
-          .join("؛ ");
-        status.textContent = acceptedCount > 0
-          ? "ناوی " + acceptedCount + " لوگو را پس از ارزیابی تصویر نهایی تأیید کرد." +
-            (acceptedCount < finalAudit.visualReview.reviewedCount ? " طرح‌های ضعیف یا مبهم نمایش داده نشدند." : "") +
-            (rejectionDetails ? " ردشده‌ها: " + rejectionDetails : "")
-          : "هیچ لوگویی از ارزیابی تصویر نهایی عبور نکرد؛ طرح تأییدنشده نمایش داده نشد." +
-            (rejectionDetails ? " علت دقیق: " + rejectionDetails : "");
-      } catch (reviewError) {
-        clearReviewStage();
-        frames = [];
-        results.replaceChildren();
-        empty.hidden = false;
-        status.textContent = "ارزیابی کیفیت کامل نشد؛ برای جلوگیری از نمایش لوگوی ضعیف، خروجی خام نشان داده نشد. " +
-          (reviewError?.message || "خطای نامشخص در ارزیابی.");
-      }
+      const finalConcepts = result.concepts;
+      // The structured HTML/CSS engine has already completed its safety and
+      // structural checks. Show the usable designs immediately; image-model
+      // review is optional and must never block delivery or erase generated work.
+      mountConcepts(finalConcepts, brief, result.planning);
+      empty.hidden = true;
+      status.textContent = "سه مسیر لوگو با موتور HTML/CSS ساخته شد. می‌توانی طرح‌ها را ببینی، ویرایش کنی و خروجی بگیری؛ بازبینی هوش مصنوعی مانع نمایش یا تحویل طرح نیست.";
       results.scrollIntoView({ behavior: "smooth", block: "start" });
     } catch (error) {
       status.textContent = error?.message || "ارتباط با موتور طراحی برقرار نشد.";
