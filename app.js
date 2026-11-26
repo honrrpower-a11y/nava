@@ -1199,8 +1199,8 @@ function showNaviReply(reply) {
 function renderContentHandoffAction(reply, handoff) {
   const contentStudioPage = document.querySelector(".page.active")?.id === "contentPage";
   const contentStudioResult = contentStudioPage ? document.getElementById("contentStudioResponseWrap") : null;
-  const responseHost = contentStudioResult || requestResponse?.parentElement;
-  if (!handoff || !responseHost?.isConnected || !String(reply || "").trim()) return;
+  const responseHost = contentStudioResult;
+  if (!handoff || !(contentStudioPage ? responseHost?.isConnected : requestResponse?.isConnected) || !String(reply || "").trim()) return;
   const format = String(handoff.format || "");
   const isCarousel = /اسلاید/.test(format);
   const isVideo = /ویدئو|ویدئوی|ریلز|سناریو/.test(format);
@@ -1306,7 +1306,8 @@ function renderContentHandoffAction(reply, handoff) {
     });
   }
 
-  responseHost.append(card);
+  if (contentStudioPage) responseHost.append(card);
+  else requestResponse.insertAdjacentElement("afterend", card);
 }
 
 function renderStoryHandoffSlides(source, host) {
