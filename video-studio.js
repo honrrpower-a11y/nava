@@ -800,8 +800,7 @@
       "در پروژه بدون عکس، همه صحنه‌ها باید contentMode=text و images=[] داشته باشند؛ مضمون و لحن متن را تحلیل کن و برای هر صحنه یک پالت متناسب و حرفه‌ای انتخاب کن. backgroundColor را کد هگز واقعی و متناسب با معنا بده؛ background=gradient برای ترکیب رنگی یا background=solid برای رنگ یکدست باشد. از رنگ آبی، فیروزه‌ای، بنفش، سبز، گرم یا خنثی بر اساس مفهوم متن استفاده کن؛ همه صحنه‌ها را سیاه یا سرمه‌ای نکن. برای متن روشن و تیره کنتراست کافی در نظر بگیر و از پس‌زمینه‌های گرافیکی ساده و تایپوگرافی متحرک استفاده کن.",
       "موسیقی انتخاب‌شده: " + musicInfo
     ].join("\n");
-    if(typeof window.openNaviAssistant==="function"&&typeof window.navaVideoNaviRequest==="function"){
-      window.openNaviAssistant({service:"ویدئو و صدا",message:prompt,context:{studio:"ویدئو و صدا",brief,images:imageNames,imageCount:scenes.length,music:musicInfo,selectedMedia:{images:imageNames,music:musicInfo},mode:"navi-auto-build",capabilities:["multi-scene text and image composition","photo selection and ordering","per-layer text motion and delay","scene duration and background","photo layout and motion","depth-aware 2.5D image parallax","cinematic scene transitions","adaptive text color","background music","video render and export"]}});
+    if(typeof window.navaVideoNaviRequest==="function"){
       const submitted=window.navaVideoNaviRequest({message:prompt,videoPlan:true,images:naviVisionImages});
       if(!submitted){smartAutoBuild=false;result.textContent="درخواست به ناوی ارسال نشد؛ نشست ورود را بررسی کن.";}
     }else{smartAutoBuild=false;result.textContent="ارسال خودکار به NAVI در دسترس نیست؛ صفحه را به‌روزرسانی کن.";}

@@ -406,22 +406,23 @@ test("active Office file metadata exposes only real workbook sheet names", () =>
 });
 
 
-test("Office uses the single global NAVI assistant instead of mounting a second inline instance", () => {
-  assert.match(html, /class="office-assistant-column"[\s\S]*?id="officeNaviReopen"/);
+test("Office operations contains the real NAVI chat inline and removes the separate blank-chat button", () => {
+  assert.match(html, /class="office-assistant-column"[\s\S]*?id="officeNaviInlineMount"/);
   const operationsStart = html.indexOf('id="officeOperationsPane"');
   const assistantStart = html.indexOf('<aside class="office-assistant-column"');
   assert.ok(assistantStart > operationsStart);
   assert.match(html.slice(operationsStart, assistantStart), /<\/div>\s*<\/div>\s*<\/div>\s*$/);
-  assert.doesNotMatch(html, /id="officeNaviInlineMount"/);
+  assert.match(html, /id="officeNaviInlineMount"[^>]*aria-live="polite"/);
   assert.doesNotMatch(html, /id="officeOpenBlankNavi"/);
   assert.match(html, /id="naviWidgetHomeSlot"/);
-  assert.match(html, /id="naviAssistantWidget"[\s\S]*?id="naviWidgetPanel"/);
   assert.match(app, /function syncNaviWidgetPlacement\(pageId\)/);
-  assert.match(app, /widgetRoot\.appendChild\(naviWidgetPanel\)/);
-  assert.match(app, /naviWidgetPanel\.classList\.remove\("is-inline"\)/);
+  assert.match(app, /mount\.appendChild\(naviWidgetPanel\)/);
+  assert.match(app, /homeSlot\.parentNode\.insertBefore\(naviWidgetPanel, homeSlot\.nextSibling\)/);
+  assert.match(app, /naviWidgetPanel\.classList\.contains\("is-inline"\)/);
   assert.match(html, /app\.js\?v=[^"]+/);
   assert.match(html, /office-workspace\.css\?v=office-back-to-top-20261118-1/);
   assert.match(officeCss, /\.office-workspace-layout/);
+  assert.match(officeCss, /body\.navi-studio-context \.office-assistant-column \.navi-widget-panel\.is-inline/);
   assert.match(officeCss, /@media\(max-width:600px\)/);
 });
 
@@ -440,11 +441,10 @@ test("Office chat preserves NAVI authentication, chat route, and approval card r
   assert.match(app, /pageOverride: "officePage"/);
   assert.match(app, /officeTarget: false/);
   assert.match(app, /naviWidgetPanel\.hidden = !isOpen/);
-  assert.match(app, /officeReopen\.hidden = !isOfficePage \|\| isOpen/);
+  assert.match(app, /officeReopen\.hidden = !inlineOffice \|\| isOpen/);
   assert.match(html, /id="officeNaviReopen"[^>]*hidden/);
-  assert.match(app, /if \(!hasSession && !isOfficePage\)/);
-  assert.match(app, /document\.body\.classList\.toggle\("navi-widget-open", isOpen\)/);
-  assert.match(app, /naviWidgetToggle\.hidden = isOpen \|\| activePageId === "officePage"/);
+  assert.match(app, /if \(!hasSession && !inlineOffice\)/);
+  assert.match(app, /document\.body\.classList\.toggle\("navi-widget-open", isOpen && !inlineOffice\)/);
   assert.doesNotMatch(app, /officeBriefForm\?\.addEventListener\("submit"/);
 });
 
@@ -457,8 +457,7 @@ test("Office is split into separate accessible guidance and operations tabs", ()
   assert.match(html, /id="officeOperationsPane" role="tabpanel"[^>]*hidden/);
   assert.match(html, /id="officeGuidePane"[\s\S]*?id="officeNaviGuideTitle"/);
   assert.match(html, /id="officeOperationsPane"[\s\S]*?id="officeBriefForm"/);
-  assert.match(html, /class="office-assistant-column"[\s\S]*?id="officeNaviReopen"/);
-  assert.doesNotMatch(html, /id="officeNaviInlineMount"/);
+  assert.match(html, /class="office-assistant-column"[\s\S]*?id="officeNaviInlineMount"/);
   const operationsStart = html.indexOf('id="officeOperationsPane"');
   const assistantStart = html.indexOf('<aside class="office-assistant-column"');
   assert.ok(assistantStart > operationsStart);
