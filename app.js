@@ -4687,8 +4687,8 @@ function parseNaviStoryPlan(raw) {
   if (plan.version !== "nava.story.plan.v1" || !Array.isArray(plan.slides) || !plan.slides.length || plan.slides.length > 8) throw new Error("ساختار طرح استوری معتبر نیست.");
   return plan;
 }
-function drawStorySlide(canvas, slide, index, total) {
-  const w=1080,h=1920,scale=Number.isFinite(arguments[4])?arguments[4]:0.5; canvas.width=Math.round(w*scale); canvas.height=Math.round(h*scale);
+function drawStorySlide(canvas, slide, index, total, renderScale = 0.5) {
+  const w=1080,h=1920,scale=Number.isFinite(renderScale)?renderScale:0.5; canvas.width=Math.round(w*scale); canvas.height=Math.round(h*scale);
   const c=canvas.getContext("2d"); c.scale(scale,scale); const accent=/^#[0-9a-f]{6}$/i.test(slide.accent||"")?slide.accent:"#e5b85e";
   const visual=["stadium","matchup","details","crowd","abstract"].includes(slide.visual)?slide.visual:"abstract";
   const bg=c.createLinearGradient(0,0,w,h); bg.addColorStop(0,visual==="details"?"#102b3b":"#07101f"); bg.addColorStop(.55,visual==="crowd"?"#263047":"#17243a"); bg.addColorStop(1,"#030711"); c.fillStyle=bg;c.fillRect(0,0,w,h);
