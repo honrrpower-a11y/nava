@@ -1097,29 +1097,26 @@ test("NAVI rejects cosmetic-only visual revisions that leave the logo symbol geo
   }
 });
 
-test("NAVI prioritizes the actual brief and only uses layers when the idea needs them", () => {
+test("NAVI keeps the client brief in charge while the structured engine owns actual HTML/CSS geometry", () => {
   const backend = readFileSync(new URL("../modules/logo.js", import.meta.url), "utf8");
-  assert.ok(!backend.includes("PHASE 5B — GEOMETRY BLUEPRINT"));
-  assert.ok(backend.includes("Use as few or as many HTML/CSS layers as the idea genuinely needs"));
-  assert.ok(backend.includes("child layers are optional"));
-  assert.ok(backend.includes("NON-NEGOTIABLE REVISION STANDARD"));
-  assert.ok(backend.includes("Change the actual silhouette"));
-  assert.ok(backend.includes("PHASE 6B — PROFESSIONAL LOGO FINISH"));
-  assert.ok(backend.includes("PREMIUM FINISH CONTRACT"), "builder must implement premium material finish");
-  assert.ok(backend.includes("materialDirection"), "blueprint must define concept-specific material");
-  assert.ok(backend.includes("finishLayers"), "blueprint must specify concrete finishing layers");
-  assert.ok(backend.includes("under-designed flat placeholders"), "flat placeholder icons must fail craft gate");
-  assert.ok(backend.includes("PHASE 6C — SEMANTIC RECOGNITION AND INTEGRATION"));
-  assert.ok(backend.includes("A music reference must be more specific than three vertical bars"));
-  assert.ok(backend.includes("redesign the silhouette"));
-  assert.ok(backend.includes("Treat negative space as designed geometry"));
-  assert.ok(backend.includes("optical centering and the mark-to-wordmark relationship"));
-  assert.ok(backend.includes("LOGO_REVIEW_NO_MATERIAL_CHANGE"));
-  assert.ok(backend.includes('thinkingLevel: "HIGH"'));
+  const engine = readFileSync(new URL("../modules/logo-engine.js", import.meta.url), "utf8");
+  const ui = readFileSync(new URL("../logo-studio.js", import.meta.url), "utf8");
+  assert.ok(backend.includes("designPrompt: data.designMode === \"custom\" ? data.designPrompt : \"\""));
+  assert.ok(backend.includes("buildStructuredLogoConcepts(data, designBlueprints)"));
+  assert.ok(backend.includes("deterministic HTML/CSS grammar"));
+  assert.ok(engine.includes("data.designPrompt"));
+  assert.ok(engine.includes("subject-specific"));
+  assert.ok(engine.includes("book:"));
+  assert.ok(engine.includes("music:"));
+  assert.ok(engine.includes("network:"));
+  assert.ok(engine.includes("bread:"));
+  assert.ok(engine.includes("leaf:"));
+  assert.ok(engine.includes("coffee:"));
+  assert.ok(engine.includes("monogram:"));
+  assert.ok(ui.includes("visuallyAuditFinalConcepts("));
+  assert.ok(!ui.slice(ui.indexOf("async function generate(event)"), ui.indexOf("ideaModeInputs.forEach"))
+    .includes("visuallyRefineConcepts("));
 });
-
-
-
 test("NAVI accepts valid logo geometry when CSS selectors are scoped beneath the artboard", async () => {
   const originalFetch = globalThis.fetch;
   const db = new FakeD1();
