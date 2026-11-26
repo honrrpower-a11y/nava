@@ -322,8 +322,17 @@ function validateVisualAnchorMap(html, css, item, conceptIndex, format) {
   return { visualAnchors, anchorMap };
 }
 function conceptsAreNearDuplicates(left, right) {
-  return textSimilarity(left.centralThesis, right.centralThesis) >= 0.76 &&
+  const rationaleDuplicate =
+    textSimilarity(left.centralThesis, right.centralThesis) >= 0.76 &&
     textSimilarity(left.symbolConstruction, right.symbolConstruction) >= 0.76;
+  // Compare the actual HTML/CSS symbol geometry as well as its written rationale.
+  // The fingerprint deliberately excludes palette, typography and wrapper styling,
+  // so recolouring or relabelling the same mark cannot pass as a new concept.
+  const leftGeometry = extractSymbolDesignFingerprint(left.html, left.css);
+  const rightGeometry = extractSymbolDesignFingerprint(right.html, right.css);
+  const geometryDuplicate = Boolean(leftGeometry && rightGeometry) &&
+    textSimilarity(leftGeometry, rightGeometry) >= 0.94;
+  return rationaleDuplicate || geometryDuplicate;
 }
 
 function sanitizeCss(value) {
