@@ -4,6 +4,7 @@
 import { json, safeText } from "./shared.js";
 import { GEMINI_MODEL, ALLOWED_ORIGIN } from "./config.js";
 import { handleGuestTrial, releaseGuestTrialReservation } from "./guest-trial.js";
+import { buildStructuredLogoConcepts } from "./logo-engine.js";
 
 function fail(message, status, corsOrigin, extra = {}) {
   return json({ success: false, error: message, ...extra }, status, corsOrigin);
@@ -390,19 +391,15 @@ async function designLogos(data, apiKey) {
     // Stage 1: turn the brief into a concrete visual construction blueprint
     // before asking the model to write any HTML or CSS.
     const planningSystem = [
-      "You are NAVI's senior brand identity designer AND bespoke HTML/CSS logo craftsperson. You must think like an experienced identity designer, then build the actual logo in native HTML/CSS in this same response. Do not hand the construction off to a fixed template library.",
+      "You are NAVI's senior identity concept architect. This is a design-planning stage, NOT a logo drawing stage.",
       "For each concept define title, centralThesis, briefElements, symbolConstruction, briefAlignment, silhouette, objectCues, spatialRelationship, negativeSpace, geometryRecipe, firstRead, recognitionRisk, signatureFeature and mustAvoid. firstRead must name the exact concrete visual reading, not a vague category or poetic phrase.",
       "For every named object identify at least two diagnostic visual cues that make it recognizable without its label. For a combined idea, define one integrated shape relationship; never propose unrelated icons side by side, generic bars, random dots or a decorative badge. Reject generic construction recipes such as a plain dome with parallel bars, a blob with a line, or a circle with a dot. Specify one distinctive signature feature that makes this exact mark ownable and state the likely wrong first reading that the geometry must prevent.",
       "Describe the outer silhouette precisely, including contour, proportions, major masses, cut-outs, overlap and negative space. geometryRecipe must be a practical construction sequence for visible HTML/CSS layers or one unified shape. State which visual part carries each brief element. Also specify a concept-specific finish direction: materialDirection and finishLayers (2–4 concrete HTML/CSS treatments such as tonal depth, edge highlight, controlled gradient, contact shadow, layered surface or restrained light falloff). These finishing choices must reinforce the metaphor and remain subordinate to recognition; do not default to the same material or effects for every brand.",
       "CUSTOM BRIEF: preserve exact named objects, requested letterforms and relationships. Creative freedom is limited to professional execution, not replacing the idea. NAVI BRIEF: derive a distinctive idea from brand, industry, audience and personality.",
       "Create exactly " + conceptCount + " distinct construction routes. In custom mode all routes must express the same requested core idea but use genuinely different geometry. Do not vary only color, layout or decoration. For each route, specify a unique, metaphor-driven materialDirection and at least two meaningful finishLayers; avoid defaulting every route to the same flat icon style.",
       "PREMIUM FINISH CONTRACT: the NAVA HTML/CSS lab is a craft benchmark only. Match its level of bespoke geometry, material depth, lighting control, optical precision and completed wordmark lockup—not its specific visual language. Follow each blueprint's materialDirection and finishLayers. For every symbol, deliver a deliberate primary silhouette plus concept-relevant secondary surfaces and finishing details where they add material realism or hierarchy. Do not submit a bare flat pictogram merely because it passes semantic recognition. Use gradients, layered backgrounds, highlights, soft shadows, subtle bevel-like edges and controlled light falloff selectively and coherently. The silhouette must still work in one colour and at small size. Never copy the NAVA N mark, orbit rings, badge, palette or composition, and never force its gold/navy/cyan colors or glow onto another identity.",
-      "For each concept, do BOTH jobs: first make the semantic design decisions, then author the actual bespoke HTML and CSS that visibly realizes those exact decisions. HTML/CSS is the real design engine, not a decorative wrapper around a prebuilt symbol. Each route must have its own purpose-built geometry; do not select a category template, reuse stock pictograms, or reduce unfamiliar subjects to a monogram.",
-      "HTML CONTRACT: return a compact HTML fragment using only div, span, p, strong, em, b, i, small and br. For symbol formats include exactly one main <div class=\"navi-symbol\" data-logo-role=\"symbol\">...</div> and a separate brand lockup with <span data-logo-role=\"brand\">{{BRAND_NAME}}</span>; include the exact slogan placeholder when supplied. Build geometry with purposeful nested div/span layers. No SVG, paths, canvas, images, external assets, scripts, style tags, inline styles, or external fonts.",
-      "CSS CONTRACT: provide the complete CSS string for the concept. Define .navi-symbol with explicit positive width and height, a visible filled surface and a distinctive contour (border-radius or clip-path). Build the silhouette and all supporting geometry from native CSS backgrounds, gradients, borders, pseudo-elements, transforms, masks only when safe, and layered HTML elements. Scope selectors beneath .logo-art-root where practical. Use concept-specific geometry, negative space, overlap and proportions. Do not merely add decorative strokes to a generic circle, badge, blob, or letter tile.",
-      "DESIGN QUALITY CONTRACT: make the mark recognizable without its wordmark; the first-read subject must match firstRead. For combined ideas, fuse the objects into one coherent silhouette or meaningful negative-space relationship, not adjacent icons. Use the geometryRecipe as the actual construction sequence and make signatureFeature visibly present in HTML/CSS. Each route must have a genuinely different silhouette and spatial relationship. Keep the mark legible in one colour and at small sizes; make finishLayers reinforce rather than obscure its meaning.",
-      "Before any geometry is authored, write a real NAVI creative brief. Return exactly this JSON shape: {\"brandCore\":\"...\",\"designIdea\":\"یک جمله روشن فارسی درباره ایده اختصاصی برند\",\"strategy\":\"خلاصه جهت‌گیری طراحی\",\"designBriefEnglish\":\"A concise professional art-direction brief: exact brand meaning, audience, core visual metaphor, concrete recognizable subject, required visual relationships, tone, and design constraints.\",\"concepts\":[{\"title\":\"...\",\"centralThesis\":\"...\",\"briefElements\":[\"...\"],\"symbolConstruction\":\"...\",\"briefAlignment\":\"...\",\"silhouette\":\"...\",\"objectCues\":[\"...\",\"...\"],\"spatialRelationship\":\"...\",\"negativeSpace\":\"...\",\"geometryRecipe\":\"...\",\"firstRead\":\"...\",\"recognitionRisk\":\"...\",\"signatureFeature\":\"...\",\"materialDirection\":\"...\",\"finishLayers\":[\"...\",\"...\"] ,\"mustAvoid\":[\"...\"],\"rationale\":\"...\",\"mechanism\":\"...\",\"expressionMove\":\"...\",\"differsBy\":\"...\",\"html\":\"Complete HTML fragment with the symbol and brand placeholders\",\"css\":\"Complete native CSS for this exact concept\"}]}. The concepts array must contain exactly " + conceptCount + " objects. Complete the semantic idea before writing each concept's code. Do not rename keys or wrap the JSON in another object. Return complete HTML/CSS for every concept, not pseudocode or descriptions.",
-      "Do not expose chain-of-thought. Return only valid JSON. Never output SVG or SVG-like markup."
+      "Before any geometry is planned, write a real NAVI creative brief. Return exactly this JSON shape: {\"brandCore\":\"...\",\"designIdea\":\"یک جمله روشن فارسی درباره ایده اختصاصی برند\",\"strategy\":\"خلاصه جهت‌گیری طراحی\",\"designBriefEnglish\":\"A concise professional art-direction brief: exact brand meaning, audience, core visual metaphor, concrete recognizable subject, required visual relationships, tone, and design constraints. This brief must be actionable by the HTML/CSS builder.\",\"concepts\":[{\"title\":\"...\",\"centralThesis\":\"...\",\"briefElements\":[\"...\"],\"symbolConstruction\":\"...\",\"briefAlignment\":\"...\",\"silhouette\":\"...\",\"objectCues\":[\"...\",\"...\"],\"spatialRelationship\":\"...\",\"negativeSpace\":\"...\",\"geometryRecipe\":\"...\",\"firstRead\":\"...\",\"recognitionRisk\":\"...\",\"signatureFeature\":\"...\",\"materialDirection\":\"...\",\"finishLayers\":[\"...\",\"...\"] ,\"mustAvoid\":[\"...\"]}]}. The concepts array must contain exactly " + conceptCount + " objects. The creative brief and designIdea are mandatory and must be completed BEFORE HTML/CSS construction. Do not rename the concepts key or wrap the JSON in another object.",
+      "Do not write HTML, CSS, SVG, markup, paths or code. Do not expose chain-of-thought. Return concise final design decisions only as valid JSON."
     ].join("\n");
     const planningResponse = await fetchGeminiWithRetry(
       "https://generativelanguage.googleapis.com/v1beta/models/" + GEMINI_MODEL + ":generateContent",
@@ -414,7 +411,7 @@ async function designLogos(data, apiKey) {
           contents: [{ role: "user", parts: [{ text: "Create exactly " + conceptCount + " visual construction blueprint(s) from this client brief. Return only the requested JSON.\n" + JSON.stringify(userBrief) }] }],
           generationConfig: {
             thinkingConfig: { thinkingLevel: "HIGH" },
-            maxOutputTokens: 12288,
+            maxOutputTokens: 8192,
             responseMimeType: "application/json"
           }
         }),
@@ -481,20 +478,6 @@ async function designLogos(data, apiKey) {
       const normalized = {
         index: index + 1,
         title: safeText(item?.title, 120),
-        rationale: safeText(item?.rationale, 420),
-        mechanism: safeText(item?.mechanism, 260),
-        expressionMove: safeText(item?.expressionMove, 180),
-        differsBy: safeText(item?.differsBy, 220),
-        axes: item?.axes && typeof item.axes === "object" && !Array.isArray(item.axes)
-          ? Object.fromEntries(Object.entries(item.axes).slice(0, 4).map(([key, value]) => [
-            safeText(key, 48), safeText(value, 64)
-          ]).filter(([key, value]) => key && value))
-          : {},
-        defaultsUsed: Array.isArray(item?.defaultsUsed)
-          ? item.defaultsUsed.slice(0, 4).map(value => safeText(value, 140)).filter(Boolean)
-          : [],
-        html: String(item?.html || "").slice(0, 10000),
-        css: String(item?.css || "").slice(0, 16000),
         centralThesis: safeText(item?.centralThesis, 500),
         briefElements: Array.isArray(item?.briefElements) ? item.briefElements.slice(0, 6).map(value => safeText(value, 180)).filter(Boolean) : [],
         symbolConstruction: safeText(item?.symbolConstruction, 700),
@@ -514,21 +497,15 @@ async function designLogos(data, apiKey) {
       if (!normalized.centralThesis || !normalized.symbolConstruction || !normalized.briefAlignment || !normalized.briefElements.length || !normalized.silhouette || normalized.objectCues.length < 2 || !normalized.spatialRelationship || !normalized.negativeSpace || !normalized.geometryRecipe || !normalized.firstRead || !normalized.recognitionRisk || !normalized.signatureFeature) {
         throw validationError("LOGO_BLUEPRINT_INCOMPLETE", "نقشه ساخت بصری باید سیلوئت، نشانه‌های تشخیصی، رابطه فضایی، فضای منفی، ویژگی امضادار، ریسک برداشت اشتباه و دستور ساخت دقیق داشته باشد.", "concept-planning", index + 1);
       }
-      if (!normalized.html || !normalized.css) {
-        throw validationError("LOGO_HTML_CSS_MISSING", "NAVI باید برای هر ایده، کد کامل و اختصاصی HTML/CSS تولید کند؛ خروجی صرفاً متنی یا قالب آماده پذیرفته نیست.", "html-css-authoring", index + 1);
-      }
       return normalized;
     });
-    // NAVI's own authored HTML/CSS now constructs each approved semantic concept.
-    // The deterministic layer below remains responsible for sanitization,
-    // structural validation, semantic traceability and duplicate rejection.
+    // The approved semantic blueprints are now rendered by a deterministic,
+    // subject-specific HTML/CSS grammar. No second model-generated markup pass
+    // is requested, so malformed or generic model code cannot replace the mark.
+    const structuredBuild = buildStructuredLogoConcepts(data, designBlueprints);
     const plan = {
-      brandCore: naviCreativeBrief.brandCore,
-      designIdea: naviCreativeBrief.designIdea,
       strategy: naviCreativeBrief.strategy,
-      designBriefEnglish: naviCreativeBrief.designBriefEnglish,
-      visualBlueprints: designBlueprints.map(({ html, css, ...semanticBlueprint }) => semanticBlueprint),
-      concepts: designBlueprints
+      concepts: structuredBuild.concepts
     };
     const designBriefEnglish = naviCreativeBrief.designBriefEnglish;
     const concepts = [];
@@ -1179,16 +1156,16 @@ export async function handleLogoRoute({ request, env, origin, corsOrigin }) {
       reviewToken,
       remaining: quota.remaining ?? null,
       planning: {
-        method: "navi-semantic-concept-to-bespoke-html-css",
-        geometryEngine: "navi-authored-html-css-geometry",
-        geometryEngineNote: "NAVI authors the semantic concept and the actual bespoke HTML/CSS geometry for each route. Deterministic validation sanitizes and checks the authored mark; no category template or monogram fallback constructs the symbol.",
+        method: "navi-visual-blueprint-then-structured-html-css-build",
+        geometryEngine: "structured-html-css-grammar",
+        geometryEngineNote: "NAVI owns the semantic brief and visual blueprints; deterministic subject-specific HTML/CSS components own the actual mark geometry. A generative code-revision pass is intentionally excluded so it cannot replace the constructed silhouette.",
         brandCore: plan.brandCore,
         designIdea: plan.designIdea,
         strategy: plan.strategy,
         designBriefEnglish: plan.designBriefEnglish,
         extraModelCalls: 0,
         visualBlueprints: plan.visualBlueprints,
-        note: "NAVI translates each semantic blueprint directly into bespoke HTML/CSS geometry, then validates the rendered-design source for safety, construction and distinctness."
+        note: "NAVI first commits to explicit visual construction blueprints, then builds and validates the final HTML/CSS logo designs."
       },
       concepts: plan.concepts,
       rejectedConcepts: plan.rejectedConcepts || []
