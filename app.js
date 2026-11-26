@@ -4051,7 +4051,11 @@ async function sendMessageToNavi(options = {}) {
 
   if (!token) {
     clearNaviSession();
-    showNaviReply("نشست ورودت پایان یافته است. لطفاً دوباره وارد شو.");
+    if (options.videoPlan === true) {
+      window.dispatchEvent(new CustomEvent("nava:navi-error", { detail: { message: "نشست ورود ناوی معتبر نیست؛ دوباره وارد شو." } }));
+    } else {
+      showNaviReply("نشست ورودت پایان یافته است. لطفاً دوباره وارد شو.");
+    }
     return;
   }
 
