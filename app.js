@@ -4228,7 +4228,8 @@ async function sendMessageToNavi(options = {}) {
     return;
   }
 
-  const selectedImage = options.videoPlan === true ? null : (naviImageInput?.files?.[0] || null);
+  const storyPlan = options.storyPlan === true;
+  const selectedImage = options.videoPlan === true || storyPlan ? null : (naviImageInput?.files?.[0] || null);
   const visionImages = options.videoPlan === true && Array.isArray(options.images) ? options.images.slice(0, 6) : [];
   if (options.videoPlan === true && Array.isArray(options.images) && options.images.length > 6) { window.dispatchEvent(new CustomEvent("nava:navi-error",{detail:{message:"تعداد تصاویر بیش از حد مجاز است."}})); return; }
   let localImageContext = "";
@@ -4284,7 +4285,7 @@ async function sendMessageToNavi(options = {}) {
   const selectedService = options.serviceOverride ||
     (isHomePage ? "انتخاب نشده" : serviceSelect.value);
   const contentHandoff = options.contentHandoff || (window.navaPendingContentHandoff && message.startsWith("در استودیوی تولید محتوای NAVA،") ? window.navaPendingContentHandoff : null);
-  const saveThisMessageToMemory = options.videoPlan === true
+  const saveThisMessageToMemory = options.videoPlan === true || storyPlan
     ? false
     : Boolean(naviSaveComposerMessage?.checked);
   if (naviSaveComposerMessage) naviSaveComposerMessage.checked = false;
@@ -4345,11 +4346,14 @@ async function sendMessageToNavi(options = {}) {
   ].filter(Boolean).join("\n\n");
 
 
-  if (options.videoPlan !== true) {
+  if (options.videoPlan !== true && !storyPlan) {
     sendRequest.disabled = true;
     sendRequest.textContent = "ناوی در حال پاسخ‌گویی...";
     setNaviStatus("پیامت ارسال شد؛ ناوی در حال بررسی آن است...");
     showNaviReply("در حال دریافت پاسخ از ناوی...");
+  } else if (storyPlan) {
+    const status = document.getElementById("storyMessage");
+    if (status) { status.textContent = "NAVI در حال طراحی اسلایدهاست…"; status.classList.add("show"); }
   }
 
   try {
@@ -4365,6 +4369,7 @@ async function sendMessageToNavi(options = {}) {
         message: finalMessage,
         page: options.videoPlan === true ? "avPage" : requestPage,
         videoPlan: options.videoPlan === true,
+        storyPlan,
         videoEditorMode: videoEditorMode && options.videoPlan !== true,
         pageTab: document.querySelector("#bizPage .biz-tab.is-active")?.dataset.bizTab || "",
         businessId: document.querySelector("#bizProfileSelect")?.value || "",
@@ -4463,7 +4468,9 @@ async function sendMessageToNavi(options = {}) {
     // Render the answer immediately. Secondary synchronization must not block chat.
     const threadBeforeNaming = isHomePage || options.videoPlan === true ? null : naviThreads.find(item => item.thread_id === naviActiveThreadId);
     const shouldNameThread = !isHomePage && threadBeforeNaming && Number(threadBeforeNaming.message_count || 0) === 0;
-    if (options.videoPlan === true) {
+    if (storyPlan) {
+      window.dispatchEvent(new CustomEvent("nava:navi-reply", { detail: { service: selectedService, reply, storyPlan: true, status: "" } }));
+    } else if (options.videoPlan === true) {
       // Only the explicit "design/build with NAVI" flow returns a structured
       // scene plan to the video renderer. Ordinary NAVI chat is always guidance.
       const videoPlanEvent = new CustomEvent("nava:navi-reply", {
@@ -4480,7 +4487,7 @@ async function sendMessageToNavi(options = {}) {
       }
     }
     try {
-      renderNaviOfficeAction(data.officeAction, { target: options.officeTarget ? "office" : "chat" });
+      if (!storyPlan) renderNaviOfficeAction(data.officeAction, { target: options.officeTarget ? "office" : "chat" });
       if (options.officeDiagnostic) {
         const card = document.getElementById("naviOfficeActionCard");
         const slot = document.getElementById(options.officeTarget ? "officeActionCardSlot" : "naviOfficeActionChatSlot");
@@ -4498,7 +4505,7 @@ async function sendMessageToNavi(options = {}) {
       });
       throw renderError;
     }
-    if (options.videoPlan !== true) {
+    if (options.videoPlan !== true && !storyPlan) {
       userRequest.value = "";
       if (!isHomePage) appendLocalNaviMessages(finalMessage, reply);
       setNaviStatus("پاسخ ناوی دریافت شد.");
@@ -4511,7 +4518,7 @@ async function sendMessageToNavi(options = {}) {
         await loadNaviThreads();
       })());
     }
-    if (!isHomePage && options.videoPlan !== true) backgroundJobs.push(loadNaviHistory({ silent: true }));
+    if (!isHomePage && options.videoPlan !== true && !storyPlan) backgroundJobs.push(loadNaviHistory({ silent: true }));
 
     const memoryResult = data.memory && typeof data.memory === "object" ? data.memory : null;
     if (memoryResult?.manualSaved || memoryResult?.manualDuplicate || memoryResult?.manualSaveError) {
@@ -4580,24 +4587,18 @@ async function sendMessageToNavi(options = {}) {
     });
     console.error("NAVI connection error:", error);
 
-    if (!getNaviToken()) {
-      showNaviReply(
-        "نشست ناوی پایان یافته یا معتبر نیست. لطفاً دوباره وارد شو."
-      );
+    if (storyPlan) {
+      const status = document.getElementById("storyMessage");
+      if (status) { status.textContent = "طراحی استوری انجام نشد: " + (error?.message || "خطای نامشخص"); status.classList.add("show"); }
+    } else if (!getNaviToken()) {
+      showNaviReply("نشست ناوی پایان یافته یا معتبر نیست. لطفاً دوباره وارد شو.");
     } else {
-      showNaviReply(
-        "فعلاً نتوانستم پاسخ دریافت کنم.\n\n" +
-        "جزئیات خطا: " +
-        (error.message || "خطای نامشخص")
-      );
-
-      setNaviStatus(
-        "ارتباط با ناوی برقرار نشد. می‌توانی دوباره تلاش کنی."
-      );
+      showNaviReply("فعلاً نتوانستم پاسخ دریافت کنم.\n\nجزئیات خطا: " + (error.message || "خطای نامشخص"));
+      setNaviStatus("ارتباط با ناوی برقرار نشد. می‌توانی دوباره تلاش کنی.");
     }
 
   } finally {
-    if (naviSessionVersion === requestVersion && options.videoPlan !== true) {
+    if (naviSessionVersion === requestVersion && options.videoPlan !== true && !storyPlan) {
       sendRequest.disabled = false;
       sendRequest.textContent = "ارسال پیام به ناوی";
     }
@@ -4672,38 +4673,56 @@ copyStory.addEventListener("click", async () => {
   storyMessage.classList.add("show");
 });
 
-improveStoryWithNavi?.addEventListener("click", () => {
-  const content = storyInput?.value?.trim() || "";
-  if (!content) {
-    storyMessage.textContent = "ابتدا محتوا را وارد یا از استودیوی تولید محتوا منتقل کن.";
-    storyMessage.classList.add("show");
-    return;
-  }
-  const service = "استوری‌ساز";
-  const context = {
-    content,
-    source: "انتقال از استودیوی تولید محتوا",
-    instruction: "محتوای منتقل‌شده را به یک طرح اجرایی برای استوری/اسلاید تبدیل کن؛ ترتیب و معنای متن را حفظ کن و برای هر اسلاید چیدمان، سوژه تصویر، سلسله‌مراتب متن، رنگ و تایپوگرافی را دقیق پیشنهاد بده."
-  };
-  const message = [
-    "این بسته محتوایی را برای اجرای بصری در استوری‌ساز آماده کن.",
-    "متن و ترتیب اسلایدها را حفظ کن؛ چیزی را بی‌اجازه حذف یا خلاصه نکن.",
-    "برای هر اسلاید طرح مستقل اما هماهنگ بده: تیتر، متن نهایی روی تصویر، سوژه/تصویر، ترکیب‌بندی، جای عناصر، رنگ، فونت و اندازه نسبی متن.",
-    "اگر بخشی از متن طولانی است، نسخه کوتاه پیشنهادی را جدا از متن اصلی مشخص کن و متن اصلی را نگه دار.",
-    "خروجی را اسلایدبه‌اسلاید و قابل اجرا ارائه کن. ادعا یا اطلاعات تازه نساز.",
-    "",
-    content
-  ].join("\n\n");
-  if (!getNaviToken()) {
-    window.openNaviAssistant({ service, context, message });
-    return;
-  }
-  if (Array.from(serviceSelect.options).some(option => option.value === service)) {
-    serviceSelect.value = service;
-  }
-  updateNaviAssistantContext(service, context);
-  setNaviWidgetOpen(true, false);
-  sendMessageToNavi({ messageOverride: message, serviceOverride: service, contextOverride: context });
+function parseNaviStoryPlan(raw) {
+  const source = String(raw || "").trim();
+  const fenced = source.match(/\x60\x60\x60(?:json)?\\s*([\\s\\S]*?)\x60\x60\x60/i);
+  const candidate = fenced ? fenced[1].trim() : source.slice(source.indexOf("{"), source.lastIndexOf("}") + 1);
+  if (!candidate || candidate[0] !== "{") throw new Error("پاسخ NAVI ساختار طرح بصری ندارد.");
+  const plan = JSON.parse(candidate);
+  if (plan.version !== "nava.story.plan.v1" || !Array.isArray(plan.slides) || !plan.slides.length || plan.slides.length > 8) throw new Error("ساختار طرح استوری معتبر نیست.");
+  return plan;
+}
+function drawStorySlide(canvas, slide, index, total) {
+  const w=1080,h=1920; canvas.width=w; canvas.height=h;
+  const c=canvas.getContext("2d"); const accent=/^#[0-9a-f]{6}$/i.test(slide.accent||"")?slide.accent:"#e5b85e";
+  const bg=c.createLinearGradient(0,0,w,h); bg.addColorStop(0,"#07101f"); bg.addColorStop(.55,"#17243a"); bg.addColorStop(1,"#030711"); c.fillStyle=bg;c.fillRect(0,0,w,h);
+  c.strokeStyle=accent+"55";c.lineWidth=5;
+  for(let i=0;i<8;i++){c.beginPath();c.ellipse(540,780,220+i*70,300+i*90,0,Math.PI,Math.PI*2);c.stroke();}
+  const glow=c.createRadialGradient(540,520,20,540,520,700);glow.addColorStop(0,accent+"55");glow.addColorStop(1,"#07101f00");c.fillStyle=glow;c.fillRect(0,0,w,1100);
+  c.fillStyle=accent;c.fillRect(80,115,150,10);c.direction="rtl";c.textAlign="right";c.fillStyle=accent;c.font="600 34px Vazirmatn,sans-serif";c.fillText(String(slide.kicker||("استوری "+(index+1))),970,220,880);
+  const wrap=(text,y,font,color,maxLines=3)=>{c.font=font;c.fillStyle=color;let line="",lines=[];for(const word of String(text||"").split(/\\s+/)){const next=line?line+" "+word:word;if(c.measureText(next).width>850&&line){lines.push(line);line=word;}else line=next;}if(line)lines.push(line);lines.slice(0,maxLines).forEach((v,i)=>c.fillText(v,970,y+i*105,850));return y+Math.min(lines.length,maxLines)*105;};
+  let y=wrap(slide.headline||slide.title||"",430,"bold 86px Vazirmatn,sans-serif","#fff",3);
+  if(slide.matchup){c.textAlign="center";c.fillStyle=accent;c.font="bold 65px Vazirmatn,sans-serif";c.fillText(String(slide.matchup),540,Math.max(720,y+85),900);y=Math.max(850,y+180);c.textAlign="right";}
+  if(slide.body)y=wrap(slide.body,Math.max(900,y+70),"500 42px Vazirmatn,sans-serif","#eaf0fa",4);
+  const details=[slide.date,slide.time,slide.venue].filter(Boolean);
+  if(details.length){const top=Math.min(1450,Math.max(1160,y+55));c.fillStyle="#ffffff18";c.fillRect(80,top-65,920,details.length*82+45);c.fillStyle="#fff";c.font="600 40px Vazirmatn,sans-serif";details.forEach((v,i)=>c.fillText(String(v),970,top+i*82,850));}
+  if(slide.cta){c.textAlign="center";wrap(slide.cta,1710,"bold 38px Vazirmatn,sans-serif",accent,2);}
+  c.textAlign="left";c.fillStyle="#ffffff88";c.font="600 25px Vazirmatn,sans-serif";c.fillText("NAVA  /  "+(index+1)+" — "+total,80,1840);
+}
+function renderNaviStoryPlan(plan) {
+  const host=document.getElementById("storyVisualSlides"),status=document.getElementById("storyMessage");if(!host)return;
+  host.replaceChildren();host.hidden=false;
+  plan.slides.forEach((slide,index)=>{const card=document.createElement("article");card.className="story-visual-card";const heading=document.createElement("h3");heading.textContent="اسلاید "+(index+1);const canvas=document.createElement("canvas");canvas.className="story-visual-canvas";canvas.setAttribute("role","img");canvas.setAttribute("aria-label",String(slide.headline||slide.title||"پیش‌نمایش استوری"));drawStorySlide(canvas,slide,index,plan.slides.length);const actions=document.createElement("div");actions.className="story-visual-actions";const button=document.createElement("button");button.type="button";button.className="btn-primary";button.textContent="دریافت تصویر PNG";button.addEventListener("click",()=>canvas.toBlob(blob=>{if(!blob){if(status)status.textContent="ساخت PNG در این مرورگر ممکن نشد.";return;}const url=URL.createObjectURL(blob),link=document.createElement("a");link.href=url;link.download="nava-story-"+(index+1)+".png";link.click();setTimeout(()=>URL.revokeObjectURL(url),1500);},"image/png"));actions.append(button);card.append(heading,canvas,actions);host.append(card);});
+  if(status){status.textContent="پیش‌نمایش بصری "+plan.slides.length+" اسلاید آماده شد؛ هر اسلاید با کیفیت ۱۰۸۰×۱۹۲۰ قابل دریافت است.";status.classList.add("show");}
+}
+window.addEventListener("nava:navi-reply",event=>{if(!event.detail?.storyPlan)return;try{renderNaviStoryPlan(parseNaviStoryPlan(event.detail.reply));}catch(error){const status=document.getElementById("storyMessage");if(status){status.textContent=error.message||"طرح استوری قابل نمایش نیست.";status.classList.add("show");}}});
+improveStoryWithNavi?.addEventListener("click",()=>{
+  const content=storyInput?.value?.trim()||"";
+  if(!content){storyMessage.textContent="ابتدا محتوا را وارد یا از استودیوی تولید محتوا منتقل کن.";storyMessage.classList.add("show");return;}
+  const service="استوری‌ساز",context={content,source:"استودیوی تولید محتوا",output:"طرح بصری چنداسلایدی اینستاگرام"};
+  const message=[
+    "تو کارگردان هنری و طراح بصری استوری NAVA هستی. خروجی باید داده ساختاریافته برای رندر باشد، نه پیام خوشامد، کپشن عمومی یا توضیح.",
+    "فقط JSON معتبر و بدون Markdown با schema زیر برگردان: {\"version\":\"nava.story.plan.v1\",\"slides\":[{\"kicker\":\"\",\"headline\":\"\",\"matchup\":\"\",\"body\":\"\",\"date\":\"\",\"time\":\"\",\"venue\":\"\",\"cta\":\"\",\"accent\":\"#RRGGBB\"}]}",
+    "برای اعلام مسابقه ۳ اسلاید بساز: هوک و معرفی، جزئیات زمان و مکان، دعوت به تعامل. برای موضوع‌های دیگر روایت و تعداد مناسب را خودت انتخاب کن؛ حداکثر ۸ اسلاید.",
+    "متن روی تصویر را کوتاه و فارسی نگه دار؛ واقعیت‌ها، تاریخ، ساعت، نام‌ها و مکان را عیناً از ورودی بردار و چیزی نساز. هشتگ‌ها و دستورالعمل‌های داخلی را روی تصویر نیاور.",
+    "محتوای مرجع:\\n"+content
+  ].join("\\n\\n");
+  const host=document.getElementById("storyVisualSlides");if(host){host.replaceChildren();host.hidden=true;}
+  storyMessage.textContent="NAVI در حال طراحی اسلایدهاست…";storyMessage.classList.add("show");
+  if(!getNaviToken()){window.openNaviAssistant({service,context,message});return;}
+  if(Array.from(serviceSelect.options).some(option=>option.value===service))serviceSelect.value=service;
+  updateNaviAssistantContext(service,context);
+  sendMessageToNavi({messageOverride:message,serviceOverride:service,contextOverride:context,storyPlan:true});
 });
  
 
