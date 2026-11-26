@@ -266,6 +266,7 @@ function renderBlueprintGeometry(geometrySpec) {
     ".navi-part{position:absolute;display:block;box-sizing:border-box;transform:translate(-50%,-50%) rotate(var(--part-rotation));transform-origin:center center}"
   ];
   const allowedShapes = new Set(["ellipse","rounded-rect","capsule","diamond","polygon"]);
+  const allowedFinishes = new Set(["none","soft","metal"]);
   const used = new Set();
   layers.forEach((layer, index) => {
     const shape = String(layer?.shape || "");
@@ -273,7 +274,7 @@ function renderBlueprintGeometry(geometrySpec) {
     const x = Number(layer?.x), y = Number(layer?.y);
     const width = Number(layer?.width), height = Number(layer?.height);
     const rotation = Number(layer?.rotation || 0);
-    if (!allowedShapes.has(shape) || !Object.prototype.hasOwnProperty.call(tones, tone) ||
+    if (!allowedShapes.has(shape) || !Object.prototype.hasOwnProperty.call(tones, tone) || !allowedFinishes.has(String(layer?.finish || "soft")) ||
         ![x,y,width,height,rotation].every(Number.isFinite) ||
         x < 0 || x > 100 || y < 0 || y > 100 ||
         width < 5 || width > 100 || height < 5 || height > 100 ||
