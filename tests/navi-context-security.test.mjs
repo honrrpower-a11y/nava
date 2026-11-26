@@ -32,3 +32,28 @@ test("NAVI treats extracted office-document text as untrusted reference data, no
   assert.match(navi, /If only a specific requested operation is unsafe/);
   assert.match(officeFiles, /متن استخراج‌شده از فایل/);
 });
+
+
+test("NAVI keeps a separate persistent conversation thread for each studio and account", () => {
+  assert.match(app, /function naviStudioThreadStorageKey\(pageId\)/);
+  assert.match(app, /NAVI_USER_ID_KEY\)[\s\S]{0,100}naviActiveProjectId[\s\S]{0,80}pageId/);
+  assert.match(app, /function rememberNaviStudioThread\(pageId, threadId\)/);
+  assert.match(app, /async function activateNaviStudioConversation\(pageId\)/);
+  assert.match(app, /rememberNaviStudioThread\(previousPageId, naviActiveThreadId\)/);
+  assert.match(app, /rememberNaviStudioThread\(pageId, threadId\)/);
+});
+
+test("Switching NAVI studios clears the previous composer and transcript before loading the studio thread", () => {
+  const switchBlock = app.match(/async function activateNaviStudioConversation\(pageId\)[\\s\\S]*?\\n\\}/)?.[0] || "";
+  assert.ok(switchBlock.includes('userRequest.value = ""'));
+  assert.ok(switchBlock.includes('naviHistory = []'));
+  assert.ok(switchBlock.includes('renderNaviHistory([])'));
+  assert.ok(switchBlock.includes('requestResponse.classList.remove("show")'));
+  assert.ok(switchBlock.includes('await loadNaviHistory()'));
+});
+
+test("Late history responses cannot overwrite the newly selected studio conversation", () => {
+  const historyBlock = app.match(/async function loadNaviHistory[\\s\\S]*?\\n\\}/)?.[0] || "";
+  assert.match(historyBlock, /const requestedThreadId = naviActiveThreadId/);
+  assert.match(historyBlock, /naviActiveThreadId !== requestedThreadId/);
+});
