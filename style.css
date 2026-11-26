@@ -1304,7 +1304,9 @@ body.light .navi-widget-panel #naviNewProjectName{
 .nava-orbit-item--media{--orbit-x:12%;--orbit-y:72%}
 .nava-orbit-item--seo{--orbit-x:9%;--orbit-y:50%}
 .nava-orbit-item--campaign{--orbit-x:12%;--orbit-y:28%}
-.nava-orbit-item--business{--orbit-x:30%;--orbit-y:14%}
+.nava-orbit-item--business{--orbit-x:30%;--orbit-y:20%}
+.nava-orbit-item--social{--orbit-x:50%;--orbit-y:2%}
+.nava-orbit-item--social .nava-orbit-button{animation-delay:-8.4s}
 .nava-orbit-item--brand .nava-orbit-button{animation-delay:-.7s}
 .nava-orbit-item--content .nava-orbit-button{animation-delay:-1.4s}
 .nava-orbit-item--article .nava-orbit-button{animation-delay:-2.1s}
@@ -1444,7 +1446,8 @@ body.light .nava-orbit-icon{color:#a96d20;border-color:rgba(193,127,37,.28);back
   .nava-orbit-item--media{--orbit-x:16%;--orbit-y:72%}
   .nava-orbit-item--seo{--orbit-x:16%;--orbit-y:50%}
   .nava-orbit-item--campaign{--orbit-x:16%;--orbit-y:28%}
-  .nava-orbit-item--business{--orbit-x:30%;--orbit-y:12%}
+  .nava-orbit-item--business{--orbit-x:30%;--orbit-y:20%}
+  .nava-orbit-item--social{--orbit-x:50%;--orbit-y:2%}
   .nava-home-footnote{margin-top:8px}
 }
 @media(max-width:360px){
