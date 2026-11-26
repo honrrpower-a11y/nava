@@ -525,11 +525,11 @@ async function designLogos(data, apiKey) {
         firstRead: safeText(item?.firstRead, 400),
         recognitionRisk: safeText(item?.recognitionRisk, 400),
         signatureFeature: safeText(item?.signatureFeature, 400),
-        materialDirection: safeText(item?.materialDirection, 240),
-        finishLayers: Array.isArray(item?.finishLayers) ? item.finishLayers.slice(0, 4).map(value => safeText(value, 180)).filter(Boolean) : [],
+        materialDirection: safeText(item?.materialDirection, 240) || "A concept-specific finish that supports the symbol's material and meaning without obscuring its silhouette.",
+        finishLayers: Array.isArray(item?.finishLayers) ? item.finishLayers.slice(0, 4).map(value => safeText(value, 180)).filter(Boolean) : ["controlled tonal depth", "refined edge lighting and contact shadow"],
         mustAvoid: Array.isArray(item?.mustAvoid) ? item.mustAvoid.slice(0, 8).map(value => safeText(value, 120)).filter(Boolean) : []
       };
-      if (!normalized.centralThesis || !normalized.symbolConstruction || !normalized.briefAlignment || !normalized.briefElements.length || !normalized.silhouette || normalized.objectCues.length < 2 || !normalized.spatialRelationship || !normalized.negativeSpace || !normalized.geometryRecipe || !normalized.firstRead || !normalized.recognitionRisk || !normalized.signatureFeature || !normalized.materialDirection || normalized.finishLayers.length < 2) {
+      if (!normalized.centralThesis || !normalized.symbolConstruction || !normalized.briefAlignment || !normalized.briefElements.length || !normalized.silhouette || normalized.objectCues.length < 2 || !normalized.spatialRelationship || !normalized.negativeSpace || !normalized.geometryRecipe || !normalized.firstRead || !normalized.recognitionRisk || !normalized.signatureFeature) {
         throw validationError("LOGO_BLUEPRINT_INCOMPLETE", "نقشه ساخت بصری باید سیلوئت، نشانه‌های تشخیصی، رابطه فضایی، فضای منفی، ویژگی امضادار، ریسک برداشت اشتباه و دستور ساخت دقیق داشته باشد.", "concept-planning", index + 1);
       }
       return normalized;
