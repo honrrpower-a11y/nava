@@ -1088,7 +1088,7 @@ test("NAVI rejects a visually revised logo when blind-read recognition scores be
         concepts: [{
           index: 1, html, css,
           visualRevisionNotes: "فرم نماد بازطراحی شد.",
-          firstRead: "یک شکل انتزاعی نامشخص",
+          firstRead: "یک شکل انتزاعی نامشخص", unaidedRead: "یک شکل انتزاعی نامشخص", likelyMisread: "کارت‌های روی هم", semanticEvidence: ["لبه‌های لایه‌ای", "سطح هندسی"], 
           recognitionScore: 5, briefFidelityScore: 9, craftScore: 9
         }]
       }) }] } }]
@@ -1126,7 +1126,7 @@ test("NAVI rejects cosmetic-only visual revisions that leave the logo symbol geo
     const original = initial.concepts[0];
     globalThis.fetch = async () => new Response(JSON.stringify({
       candidates: [{ content: { parts: [{ text: JSON.stringify({
-        concepts: [{ index: 1, html: original.html, css: original.css + ".mark{transform:scale(1.02)}", visualRevisionNotes: "اندازه قاب کمی تغییر کرد.", firstRead: "فرم مبهم", recognitionScore: 9, briefFidelityScore: 9, craftScore: 9 }]
+        concepts: [{ index: 1, html: original.html, css: original.css + ".mark{transform:scale(1.02)}", visualRevisionNotes: "اندازه قاب کمی تغییر کرد.", firstRead: "فرم مبهم", unaidedRead: "فرم مبهم", likelyMisread: "شکل انتزاعی", semanticEvidence: ["لبه‌های چندضلعی", "لایه‌های تزئینی"], recognitionScore: 9, briefFidelityScore: 9, craftScore: 9 }]
       }) }] } }]
     }), { status: 200, headers: { "Content-Type": "application/json" } });
     const response = await handleLogoRoute({
