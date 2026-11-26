@@ -2847,3 +2847,55 @@ body:has(> .nava-access-panel.is-gate-active){overflow:hidden}
 .nava-video-analysis-card small,.nava-video-analysis-complete{font-size:11px;color:var(--muted,#687386);}
 .nava-video-analysis-complete{margin:4px 0 0;line-height:1.7;}
 @media(max-width:560px){.nava-video-image-analysis{padding:9px;gap:8px}.nava-video-analysis-card{padding:8px}.nava-video-palette-swatch{flex:1 1 76px;}}
+
+
+/* NAVA ORBIT — balanced 13-studio constellation.
+   Even angular spacing replaces the overlapping top-positioned social entry.
+   All destinations retain the same visual weight and card treatment. */
+.nava-orbit-item--logo{--orbit-x:50%;--orbit-y:6%}
+.nava-orbit-item--brand{--orbit-x:69.6%;--orbit-y:11.1%}
+.nava-orbit-item--content{--orbit-x:84.5%;--orbit-y:25.1%}
+.nava-orbit-item--article{--orbit-x:91.7%;--orbit-y:44.7%}
+.nava-orbit-item--office{--orbit-x:89.3%;--orbit-y:65.6%}
+.nava-orbit-item--music{--orbit-x:77.8%;--orbit-y:83%}
+.nava-orbit-item--composition{--orbit-x:60%;--orbit-y:92.8%}
+.nava-orbit-item--story{--orbit-x:40%;--orbit-y:92.8%}
+.nava-orbit-item--media{--orbit-x:22.2%;--orbit-y:83%}
+.nava-orbit-item--seo{--orbit-x:10.7%;--orbit-y:65.6%}
+.nava-orbit-item--campaign{--orbit-x:8.3%;--orbit-y:44.7%}
+.nava-orbit-item--business{--orbit-x:15.5%;--orbit-y:25.1%}
+.nava-orbit-item--social{--orbit-x:30.4%;--orbit-y:11.1%}
+.nava-orbit-item--social .nava-orbit-button{animation-delay:-8.4s}
+
+@media(max-width:900px) and (min-width:601px){
+  .nava-orbit-item--logo{--orbit-x:50%;--orbit-y:6%}
+  .nava-orbit-item--brand{--orbit-x:69.6%;--orbit-y:11.1%}
+  .nava-orbit-item--content{--orbit-x:84.5%;--orbit-y:25.1%}
+  .nava-orbit-item--article{--orbit-x:91.7%;--orbit-y:44.7%}
+  .nava-orbit-item--office{--orbit-x:89.3%;--orbit-y:65.6%}
+  .nava-orbit-item--music{--orbit-x:77.8%;--orbit-y:83%}
+  .nava-orbit-item--composition{--orbit-x:60%;--orbit-y:92.8%}
+  .nava-orbit-item--story{--orbit-x:40%;--orbit-y:92.8%}
+  .nava-orbit-item--media{--orbit-x:22.2%;--orbit-y:83%}
+  .nava-orbit-item--seo{--orbit-x:10.7%;--orbit-y:65.6%}
+  .nava-orbit-item--campaign{--orbit-x:8.3%;--orbit-y:44.7%}
+  .nava-orbit-item--business{--orbit-x:15.5%;--orbit-y:25.1%}
+  .nava-orbit-item--social{--orbit-x:30.4%;--orbit-y:11.1%}
+}
+
+@media(max-width:600px){
+  .nava-orbit-stage{height:680px}
+  .nava-orbit-item--logo{--orbit-x:50%;--orbit-y:6%}
+  .nava-orbit-item--brand{--orbit-x:69.6%;--orbit-y:11.1%}
+  .nava-orbit-item--content{--orbit-x:84.5%;--orbit-y:25.1%}
+  .nava-orbit-item--article{--orbit-x:91.7%;--orbit-y:44.7%}
+  .nava-orbit-item--office{--orbit-x:89.3%;--orbit-y:65.6%}
+  .nava-orbit-item--music{--orbit-x:77.8%;--orbit-y:83%}
+  .nava-orbit-item--composition{--orbit-x:60%;--orbit-y:92.8%}
+  .nava-orbit-item--story{--orbit-x:40%;--orbit-y:92.8%}
+  .nava-orbit-item--media{--orbit-x:22.2%;--orbit-y:83%}
+  .nava-orbit-item--seo{--orbit-x:10.7%;--orbit-y:65.6%}
+  .nava-orbit-item--campaign{--orbit-x:8.3%;--orbit-y:44.7%}
+  .nava-orbit-item--business{--orbit-x:15.5%;--orbit-y:25.1%}
+  .nava-orbit-item--social{--orbit-x:30.4%;--orbit-y:11.1%}
+}
