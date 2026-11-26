@@ -337,16 +337,21 @@
     reviewStage = document.createElement("div");
     reviewStage.className = "logo-review-render-stage";
     reviewStage.setAttribute("aria-hidden", "true");
-    reviewStage.style.cssText = "position:fixed;left:-10000px;top:0;width:320px;height:320px;display:block;visibility:hidden;pointer-events:none;overflow:hidden;z-index:-1";
-    frames = concepts.map(concept => {
+    // Keep the iframe document paintable. Moving the stage off-screen is
+    // sufficient; visibility:hidden makes browser capture engines return
+    // empty/unavailable frames on mobile browsers.
+    reviewStage.style.cssText = "position:fixed;left:-10000px;top:0;width:320px;height:320px;display:block;visibility:visible;pointer-events:none;overflow:visible;z-index:-1";
+    const reviewFrames = concepts.map(concept => {
       const frame = makeFrame(concept, brief);
-      frame.style.cssText = "display:block;width:320px;height:320px;border:0";
+      frame.style.cssText = "display:block;visibility:visible;width:320px;height:320px;border:0";
+      reviewStage.append(frame);
       frame.srcdoc = frame.__navaMarkup;
       delete frame.__navaMarkup;
-      reviewStage.append(frame);
       return frame;
     });
     document.body.append(reviewStage);
+    frames = reviewFrames;
+    return reviewFrames;
   }
 
   function mountConcepts(concepts, brief, planning) {
@@ -390,11 +395,14 @@
     return { token, visitorId };
   }
 
-  async function visuallyRefineConcepts(concepts, brief, reviewToken, headers) {
+  async function visuallyRefineConcepts(concepts, brief, reviewToken, headers, reviewFrames) {
     if (!reviewToken || !window.NavaLogoRenderer?.capturePreviewDataUrl) {
       throw new Error("مجوز یا ابزار ثبت تصویر برای بازبینی بصری آماده نیست.");
     }
-    const activeFrames = frames.slice(0, concepts.length);
+    const activeFrames = Array.isArray(reviewFrames) ? reviewFrames : [];
+    if (activeFrames.length !== concepts.length) {
+      throw new Error("تعداد قاب‌های آماده بازبینی با تعداد طرح‌ها برابر نیست.");
+    }
     const renderedConcepts = await Promise.all(concepts.map(async (concept, index) => {
       const frame = activeFrames[index];
       if (!frame) throw new Error("یکی از قاب‌های لوگو برای بازبینی پیدا نشد.");
@@ -505,13 +513,13 @@
       }
       let finalConcepts = result.concepts;
       // Prepare actual HTML/CSS renders first; they remain hidden until NAVI accepts them.
-      prepareReviewFrames(finalConcepts, brief);
+      const reviewFrames = prepareReviewFrames(finalConcepts, brief);
       empty.hidden = false;
       status.textContent = "مرحله ۱ از ۳ · ناوی بریف و ایده‌های بصری را می‌سازد. مرحله ۲ · موتور HTML/CSS طرح‌ها را می‌سازد. مرحله ۳ · ناوی رندر واقعی را می‌بیند و آزمون تشخیص‌پذیری انجام می‌دهد.";
       submit.textContent = "ناوی در حال داوری و اصلاح…";
       try {
         const visualReview = await visuallyRefineConcepts(
-          finalConcepts, brief, result.reviewToken, headers
+          finalConcepts, brief, result.reviewToken, headers, reviewFrames
         );
         finalConcepts = visualReview.concepts.filter(concept => concept.visualReview === "refined");
         if (finalConcepts.length) {
