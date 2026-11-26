@@ -250,6 +250,8 @@
     const strategy = document.createElement("div");
     strategy.className = "logo-concept-strategy";
     const strategyRows = [
+      ["استعاره بصری", concept.metaphor],
+      ["زنجیره معنا", concept.meaningChain],
       ["ایده مرکزی", concept.centralThesis],
       ["ارتباط با درخواست", concept.briefAlignment],
       ["تبدیل ایده به نماد", concept.symbolConstruction],

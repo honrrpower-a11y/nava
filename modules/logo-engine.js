@@ -10,7 +10,9 @@ function detectFamily(data, blueprint) {
   const text = [
     data.symbolIdea, data.industry, data.brandName,
     blueprint?.firstRead, blueprint?.centralThesis, blueprint?.symbolConstruction,
-    blueprint?.geometryRecipe, blueprint?.objectCues?.join(" ")
+    blueprint?.geometryRecipe, blueprint?.objectCues?.join(" "),
+    blueprint?.metaphor, blueprint?.meaningChain, blueprint?.centralThesis,
+    blueprint?.firstRead, blueprint?.rationale
   ].join(" ").toLocaleLowerCase("fa");
   const familyOf = value => {
     if (/کتاب|کتابخانه|کتابفروشی|book|library|bookstore|reading/.test(value)) return "book";
@@ -197,6 +199,35 @@ function deriveSemanticGeometry(blueprint, family, index) {
   } else if (radiance) {
     features.push("radiance-metaphor-retained-in-brief");
   }
+  // A named writing instrument is a concrete metaphor, not a decorative ray.
+  // Build it as a single object physically emerging from the book gutter.
+  const writingInstrument = /خودکار|مداد|قلم(?!رو)|pen|pencil|quill|fountain[ -]?pen|writing instrument/.test(semanticText);
+  if (writingInstrument && family === "book") {
+    html.push('<span class="book-pen" aria-hidden="true"><span class="book-pen-shaft"></span><span class="book-pen-nib"></span><span class="book-pen-glow"></span></span>');
+    css.push([
+      '.navi-symbol{isolation:isolate}',
+      '.book-pen{position:absolute;z-index:5;left:45%;top:-8%;width:10%;height:66%;transform:rotate(7deg);transform-origin:50% 88%;filter:drop-shadow(0 1.4cqw 1.4cqw rgba(28,25,20,.22));pointer-events:none}',
+      '.book-pen-shaft{position:absolute;left:23%;top:13%;width:54%;height:78%;border-radius:38% 38% 22% 22%;background:linear-gradient(90deg,#76512b 0%,#c79a55 24%,#f4dfad 48%,#a77b3e 72%,#694522 100%);box-shadow:inset .8cqw 0 0 rgba(255,255,255,.38),inset -.8cqw 0 0 rgba(45,27,12,.22)}',
+      '.book-pen-nib{position:absolute;left:10%;top:0;width:80%;height:22%;background:linear-gradient(110deg,#f6e5bd,#b98b4b 72%,#72502c);clip-path:polygon(50% 0,100% 100%,0 100%);filter:drop-shadow(0 .5cqw .5cqw rgba(0,0,0,.2))}',
+      '.book-pen-glow{position:absolute;left:25%;top:-5%;width:50%;height:13%;border-radius:50%;background:radial-gradient(ellipse,rgba(255,231,170,.78),rgba(232,190,111,.22) 48%,transparent 76%);filter:blur(1.4cqw)}'
+    ].join("\n"));
+    features.push("book-integrated-writing-instrument");
+  }
+
+  // A backward-opening page is a folded paper layer behind the main book,
+  // not a floating ray or an unrelated ornament.
+  const rearwardPage = /به سمت پشت|رو به پشت|به عقب باز|عقب.?باز|برگشته به پشت|صفحه.?پشت|پشت.?باز|backward|rearward|turned back|folded back|back-facing page|page behind/.test(semanticText);
+  if (rearwardPage && family === "book") {
+    html.push('<span class="book-rearward-page" aria-hidden="true"><span class="book-rearward-fold"></span></span>');
+    css.push([
+      '.navi-symbol{isolation:isolate}',
+      '.book-rearward-page{position:absolute;z-index:0;left:19%;top:-4%;width:62%;height:47%;border:1px solid rgba(63,55,43,.16);border-radius:8% 10% 22% 18%;background:linear-gradient(145deg,#fffdf6 0%,#e8e0d1 74%,#c9beac 100%);clip-path:polygon(0 0,100% 5%,91% 100%,12% 86%);transform:rotate(-14deg);transform-origin:bottom center;box-shadow:0 1.5cqw 2cqw rgba(25,31,39,.18)}',
+      '.book-rearward-fold{position:absolute;right:0;top:0;width:23%;height:27%;background:linear-gradient(135deg,#d6cbb9,#f8f3e9);clip-path:polygon(0 0,100% 100%,0 100%)}',
+      '.book-spread,.closed-book,.turning-page{z-index:1}'
+    ].join("\n"));
+    features.push("backward-opening-page");
+  }
+
   const asymmetricMass = /نامتقارن|یک.?طرف|یک سمت|سمت راست|سمت چپ|پرتر|سنگین.?تر|asymmetr|one[- ]sided|one side|heavier side|larger side|thicker side/.test(semanticText);
   if (asymmetricMass) {
     const rulesByFamily = {
@@ -230,8 +261,8 @@ export function buildStructuredLogoConcepts(data, blueprints) {
     let html = data.format === "wordmark"
       ? wordmarkHtml(data)
       : '<div class="mark-lockup"><div class="navi-symbol" data-logo-role="symbol">' +
-        variant.html.replace(/\{\{INITIAL\}\}/g, esc(initial)) +
         semanticGeometry.html +
+        variant.html.replace(/\{\{INITIAL\}\}/g, esc(initial)) +
         '</div><div class="brand-lockup"><strong data-logo-role="brand">{{BRAND_NAME}}</strong>' +
         (data.slogan ? '<small data-logo-role="slogan">{{SLOGAN}}</small>' : "") +
         '</div></div>';
@@ -254,7 +285,9 @@ export function buildStructuredLogoConcepts(data, blueprints) {
     concepts.push({
       index: index + 1,
       title: blueprint.title || variant.title,
-      rationale: variant.rationale,
+      rationale: blueprint.rationale || blueprint.centralThesis || variant.rationale,
+      metaphor: blueprint.metaphor || "",
+      meaningChain: blueprint.meaningChain || blueprint.symbolConstruction || "",
       centralThesis: blueprint.centralThesis || variant.rationale,
       briefElements: anchors.length ? anchors : [blueprint.firstRead || variant.title],
       symbolConstruction: blueprint.symbolConstruction || variant.rationale,

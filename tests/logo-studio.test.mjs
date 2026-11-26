@@ -1305,3 +1305,18 @@ test("NAVI final visual audit judges the revised rendered PNG and rejects weak f
     globalThis.fetch = originalFetch;
   }
 });
+
+
+test("NAVI concept planning explicitly prioritizes concrete metaphor and a brand-to-form meaning chain", () => {
+  const backend = readFileSync(new URL("../modules/logo.js", import.meta.url), "utf8");
+  const engine = readFileSync(new URL("../modules/logo-engine.js", import.meta.url), "utf8");
+  const ui = readFileSync(new URL("../logo-studio.js", import.meta.url), "utf8");
+  assert.ok(backend.includes("SEMANTIC FIDELITY"));
+  assert.ok(backend.includes("meaningChain"));
+  assert.ok(backend.includes("do not translate abstract words mechanically"));
+  assert.ok(engine.includes("book-integrated-writing-instrument"));
+  assert.ok(engine.includes("backward-opening-page"));
+  assert.ok(engine.includes("rationale: blueprint.rationale || blueprint.centralThesis || variant.rationale"));
+  assert.ok(ui.includes('["استعاره بصری", concept.metaphor]'));
+  assert.ok(ui.includes('["زنجیره معنا", concept.meaningChain]'));
+});

@@ -141,3 +141,51 @@ test("book concepts use three genuinely different silhouettes and never place a 
   assert.equal(new Set(result.concepts.map(item => item.html)).size, 3);
   assert.equal(new Set(result.concepts.map(item => item.css)).size, 3);
 });
+
+
+test("a writing instrument is physically integrated with the book gutter and its tip receives a restrained glow", () => {
+  const blueprint = {
+    title: "خودکارِ الهام",
+    rationale: "خودکار از عطف کتاب بیرون می‌آید و نوک روشن آن لحظه شکل‌گیری ایده را نشان می‌دهد.",
+    metaphor: "خودکارِ نویسنده که از دل کتاب برمی‌خیزد",
+    meaningChain: "خلق و نوشتن به کتاب پیوند می‌خورد و نوک درخشان خودکار لحظه الهام را نشان می‌دهد",
+    centralThesis: "کتاب و نوشتن در یک حرکت واحد به هم پیوند می‌خورند",
+    briefElements: ["کتاب باز", "خودکار", "نوک درخشان"],
+    symbolConstruction: "خودکار از عطف کتاب بیرون می‌آید و نوک آن کمی نورانی است",
+    briefAlignment: "خودکار، نوشتن و خلق ایده را به هویت کتاب پیوند می‌دهد",
+    firstRead: "خودکاری که از عطف کتاب باز بیرون آمده",
+    objectCues: ["بدنه باریک و بلند خودکار", "نوک فلزی مشخص با هاله ملایم"],
+    spatialRelationship: "خودکار از عطف مرکزی کتاب به سمت بالا بیرون آمده است",
+    negativeSpace: "فاصله دو صفحه، بدنه خودکار را قاب می‌گیرد",
+    geometryRecipe: "دو صفحه کتاب باز با خودکار عمودی متصل به عطف و نوک فلزی کمی درخشان",
+    signatureFeature: "خودکار یکپارچه با عطف کتاب"
+  };
+  const concept = buildStructuredLogoConcepts(base, [blueprint]).concepts[0];
+  assert.ok(concept.semanticGeometry.includes("book-integrated-writing-instrument"));
+  assert.match(concept.html, /book-pen-shaft/);
+  assert.match(concept.html, /book-pen-nib/);
+  assert.match(concept.css, /\.book-pen-glow/);
+  assert.match(concept.rationale, /خودکار از عطف کتاب/);
+  assert.equal(concept.metaphor, blueprint.metaphor);
+});
+
+test("a page described as opening backward becomes a folded paper layer behind the book", () => {
+  const blueprint = {
+    title: "صفحه رو به پشت",
+    centralThesis: "یک صفحه از کتاب به سمت پشت باز می‌شود",
+    briefElements: ["کتاب", "صفحه برگشته به پشت"],
+    symbolConstruction: "صفحه‌ای از پشت کتاب به عقب برگشته و لایه زیرین را نشان می‌دهد",
+    briefAlignment: "حرکت صفحه، عبور از گذشته و گشودن مسیر تازه را منتقل می‌کند",
+    firstRead: "کتابی با صفحه‌ای که به پشت برگشته",
+    objectCues: ["لبه کاغذ برگشته", "تاخوردگی قابل تشخیص در گوشه صفحه"],
+    spatialRelationship: "صفحه به سمت پشت و پشت لایه اصلی کتاب باز شده است",
+    negativeSpace: "فاصله میان صفحه برگشته و صفحات اصلی، حرکت ورق را نشان می‌دهد",
+    geometryRecipe: "یک صفحه روشن با گوشه تاخورده در پشت سیلوئت کتاب قرار می‌گیرد",
+    signatureFeature: "صفحه برگشته در پشت کتاب"
+  };
+  const concept = buildStructuredLogoConcepts(base, [blueprint]).concepts[0];
+  assert.ok(concept.semanticGeometry.includes("backward-opening-page"));
+  assert.match(concept.html, /book-rearward-page/);
+  assert.match(concept.html, /book-rearward-fold/);
+  assert.match(concept.css, /\.book-rearward-page/);
+});
