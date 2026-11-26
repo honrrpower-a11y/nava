@@ -29,7 +29,7 @@ test("structured logo engine builds three distinct native HTML/CSS book marks", 
   assert.equal(new Set(result.concepts.map(item => item.css)).size, 3);
   for (const concept of result.concepts) {
     assert.match(concept.html, /class="navi-symbol" data-logo-role="symbol"/);
-    assert.match(concept.html, /class="book-|class="closed-book|class="angular-book/);
+    assert.match(concept.html, /class="book-|class="closed-book|class="turning-page/);
     assert.match(concept.css, /\.navi-symbol/);
     assert.match(concept.css, /background/);
     assert.doesNotMatch(concept.html + concept.css, /<\s*\/?\s*svg\b|<path\b|<circle\b/i);
