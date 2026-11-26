@@ -503,7 +503,7 @@
             (finalConcepts.length < 3 ? " طرح‌های مبهم یا ضعیف نمایش داده نشدند." : "") +
             (rejectionDetails ? " ردشده‌ها: " + rejectionDetails : "")
           : "هیچ طرحی از آزمون تشخیص‌پذیری و کیفیت ناوی عبور نکرد؛ طرح خام و مبهم نمایش داده نشد." +
-            (rejectionDetails ? " علت‌ها: " + rejectionDetails : "");
+            (rejectionDetails ? " علت دقیق: " + rejectionDetails : "");
       } catch (reviewError) {
         results.replaceChildren();
         empty.hidden = false;
