@@ -18,48 +18,65 @@ function renderBlueprintGeometry(geometrySpec) {
     ".navi-symbol{position:relative;display:block;width:72cqw;height:72cqw;max-width:72%;max-height:72%;margin:auto;overflow:visible;isolation:isolate}",
     ".navi-part{position:absolute;display:block;box-sizing:border-box;transform:translate(-50%,-50%) rotate(var(--part-rotation));transform-origin:center center}"
   ];
-  const allowedShapes = new Set(["ellipse","rounded-rect","capsule","diamond","polygon"]);
-  const allowedFinishes = new Set(["none","soft","metal"]);
-  const used = new Set();
+  const shapeAliases = {
+    circle: "ellipse", oval: "ellipse", rect: "rounded-rect", rectangle: "rounded-rect",
+    "round-rect": "rounded-rect", roundrect: "rounded-rect", rounded_rectangle: "rounded-rect",
+    rhombus: "diamond", lozenge: "diamond", line: "capsule", stroke: "capsule",
+    freeform: "polygon", custom: "polygon"
+  };
+  const toneAliases = {
+    gold: "secondary", brass: "secondary", bronze: "secondary", cyan: "accent",
+    teal: "accent", silver: "light", white: "light", ivory: "paper",
+    cream: "paper", navy: "dark", black: "dark", blue: "primary"
+  };
+  const finishAliases = { matte: "none", flat: "none", satin: "soft", glossy: "metal", polished: "metal", shadow: "soft" };
   layers.forEach((layer, index) => {
-    const shape = String(layer?.shape || "");
-    const tone = String(layer?.tone || "primary");
+    let shape = String(layer?.shape || "").toLowerCase().trim();
+    shape = shapeAliases[shape] || shape;
+    let tone = String(layer?.tone || "primary").toLowerCase().trim();
+    tone = toneAliases[tone] || tone;
+    let finish = String(layer?.finish || "soft").toLowerCase().trim();
+    finish = finishAliases[finish] || finish;
     const x = Number(layer?.x), y = Number(layer?.y);
     const width = Number(layer?.width), height = Number(layer?.height);
-    const rotation = Number(layer?.rotation || 0);
-    if (!allowedShapes.has(shape) || !Object.prototype.hasOwnProperty.call(tones, tone) || !allowedFinishes.has(String(layer?.finish || "soft")) ||
-        ![x,y,width,height,rotation].every(Number.isFinite) ||
+    const rotation = Number(layer?.rotation ?? 0);
+    if (!["ellipse","rounded-rect","capsule","diamond","polygon"].includes(shape)) {
+      shape = Array.isArray(layer?.points) && layer.points.length >= 3 ? "polygon" : "rounded-rect";
+    }
+    if (!Object.prototype.hasOwnProperty.call(tones, tone)) tone = "primary";
+    if (!["none","soft","metal"].includes(finish)) finish = "soft";
+    if (![x,y,width,height,rotation].every(Number.isFinite) ||
         x < 0 || x > 100 || y < 0 || y > 100 ||
         width < 5 || width > 100 || height < 5 || height > 100 ||
         rotation < -180 || rotation > 180) {
       invalid("NAVI geometry blueprint contains an invalid primitive.");
     }
-    const key = [shape,x,y,width,height,rotation,tone].join(":");
-    used.add(key);
     const className = "navi-part-" + (index + 1);
     let contour = "border-radius:12%";
     if (shape === "ellipse") contour = "border-radius:50%";
     if (shape === "capsule") contour = "border-radius:999px";
     if (shape === "diamond") contour = "border-radius:8%;transform:translate(-50%,-50%) rotate(calc(var(--part-rotation) + 45deg))";
     if (shape === "polygon") {
-      const points = Array.isArray(layer.points) ? layer.points.slice(0, 8) : [];
-      if (points.length < 3 || points.length > 8 ||
-          points.some(point => !Array.isArray(point) || point.length !== 2 ||
-            !point.every(value => Number.isFinite(Number(value)) && Number(value) >= 0 && Number(value) <= 100))) {
-        invalid("NAVI polygon primitive requires 3–8 valid points.");
+      let points = Array.isArray(layer.points) ? layer.points.slice(0, 8) : [];
+      const validPoints = points.length >= 3 && points.length <= 8 &&
+        points.every(point => Array.isArray(point) && point.length === 2 &&
+          point.every(value => Number.isFinite(Number(value)) && Number(value) >= 0 && Number(value) <= 100));
+      if (!validPoints) {
+        // Models occasionally label a primitive as polygon but omit its vertices.
+        // Keep the layer usable as a clean geometric surface instead of failing the whole request.
+        shape = "diamond";
+        contour = "border-radius:8%;transform:translate(-50%,-50%) rotate(calc(var(--part-rotation) + 45deg))";
+      } else {
+        contour = "clip-path:polygon(" + points.map(point => Number(point[0]) + "% " + Number(point[1]) + "%").join(",") + ")";
       }
-      contour = "clip-path:polygon(" + points.map(point => Number(point[0]) + "% " + Number(point[1]) + "%").join(",") + ")";
     }
-    const finish = layer.finish === "none" ? "" : layer.finish === "metal"
+    const finishCss = finish === "none" ? "" : finish === "metal"
       ? "border:1px solid rgba(255,255,255,.55);box-shadow:inset 0 1.2cqw 1.5cqw rgba(255,255,255,.38),0 1.8cqw 2.4cqw rgba(12,20,30,.2)"
-      : layer.finish === "soft"
-        ? "border:1px solid rgba(35,45,58,.12);box-shadow:0 1.6cqw 2.2cqw rgba(12,20,30,.16),inset 0 1cqw 1cqw rgba(255,255,255,.24)"
-        : "box-shadow:inset 0 .8cqw 1cqw rgba(255,255,255,.18)";
+      : "border:1px solid rgba(35,45,58,.12);box-shadow:0 1.6cqw 2.2cqw rgba(12,20,30,.16),inset 0 1cqw 1cqw rgba(255,255,255,.24)";
     html.push('<span class="navi-part ' + className + '" aria-hidden="true"></span>');
     css.push("." + className + "{left:" + x + "%;top:" + y + "%;width:" + width + "%;height:" + height +
-      "%;--part-rotation:" + rotation + "deg;background:" + tones[tone] + ";" + contour + ";" + finish + "}");
+      "%;--part-rotation:" + rotation + "deg;background:" + tones[tone] + ";" + contour + ";" + finishCss + "}");
   });
-  if (used.size < 4) invalid("NAVI geometry layers are not distinct enough.");
   return { html: html.join(""), css: css.join("\n"), layerCount: layers.length };
 }
 
