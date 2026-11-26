@@ -1210,22 +1210,20 @@ test("NAVI exposes per-concept visual refinement rejection diagnostics to Logo S
 });
 
 
-test("Logo Studio re-renders revised HTML/CSS and accepts only concepts that pass a final image-only audit", () => {
+test("Logo Studio re-renders structured HTML/CSS output and accepts only concepts that pass a final image-only audit", () => {
   const ui = readFileSync(new URL("../logo-studio.js", import.meta.url), "utf8");
   const backend = readFileSync(new URL("../modules/logo.js", import.meta.url), "utf8");
   assert.ok(ui.includes("async function visuallyAuditFinalConcepts"));
   assert.ok(ui.includes('action: "visual-final-audit"'));
   assert.ok(ui.includes("capturePreviewDataUrl(frame, 640)"));
-  assert.ok(ui.includes("const refinedCandidates = visualReview.concepts.filter"));
   assert.ok(ui.includes('concept.visualReview === "accepted"'));
-  assert.ok(ui.includes("داوری مستقل تصویر نهایی"));
+  assert.ok(ui.includes("ارزیابی تصویر نهایی"));
   assert.ok(backend.includes("async function auditFinalLogoConcepts"));
   assert.ok(backend.includes("TWO STAGES IN ORDER"));
   assert.ok(backend.includes("FINAL IMAGE"));
   assert.ok(backend.includes("LOGO_FINAL_VISUAL_QUALITY_LOW"));
   assert.ok(backend.includes('input?.action === "visual-final-audit"'));
 });
-
 test("NAVI final visual audit judges the revised rendered PNG and rejects weak final designs without consuming another trial", async () => {
   const originalFetch = globalThis.fetch;
   const db = new FakeD1();
