@@ -962,7 +962,7 @@ window.sendOfficeNaviRequest = function({ message, context } = {}) {
     ].filter(Boolean).join("\n");
 
     const contentHandoff = {
-      platform, format, objective, tone, topic, audience
+      platform, format, objective, tone, topic, audience, keyPoints, callToAction, keywords
     };
     window.navaPendingContentHandoff = contentHandoff;
     status.textContent = "بریف آماده شد؛ در حال ارسال درخواست به NAVI...";
@@ -1180,58 +1180,112 @@ function showNaviReply(reply) {
 }
 
 function renderContentHandoffAction(reply, handoff) {
-  if (!handoff || handoff.format !== "پست اسلایدی" ||
-      !requestResponse?.isConnected || !String(reply || "").trim()) return;
+  if (!handoff || !requestResponse?.isConnected || !String(reply || "").trim()) return;
+  const format = String(handoff.format || "");
+  const isCarousel = /اسلاید/.test(format);
+  const isVideo = /ویدئو|ویدئوی|ریلز|سناریو/.test(format);
+  const isArticle = /مقاله/.test(format);
+  const isStoryText = /کپشن|شبکه اجتماعی/.test(format);
+  if (!isCarousel && !isVideo && !isArticle && !isStoryText) return;
+
   const card = document.createElement("section");
   card.id = "contentHandoffAction";
   card.className = "content-handoff-actions";
   card.setAttribute("aria-label", "انتقال محتوای تولیدشده");
   const note = document.createElement("p");
-  note.textContent = "متن کامل، ترتیب اسلایدها، کپشن و راهنمای بصری را یک‌جا به استوری‌ساز منتقل کن.";
+  note.textContent = "خروجی کامل NAVI آماده است؛ می‌توانی آن را همراه با بریف و اطلاعات مخاطب به استودیوی مرتبط منتقل کنی.";
   note.style.cssText = "flex:1 0 100%;margin:0;color:var(--muted);font-size:12px;line-height:1.8";
-  const button = document.createElement("button");
-  button.type = "button";
-  button.className = "btn-primary";
-  button.textContent = "انتقال بسته کامل به استوری‌ساز";
-  button.addEventListener("click", () => {
-    const packageText = [
-      "بسته محتوای تولیدشده در NAVA",
-      "پلتفرم: " + (handoff.platform || "مشخص نشده"),
-      "قالب: " + (handoff.format || "پست اسلایدی"),
-      "هدف: " + (handoff.objective || "مشخص نشده"),
-      "لحن: " + (handoff.tone || "مشخص نشده"),
-      "موضوع: " + (handoff.topic || ""),
-      "مخاطب: " + (handoff.audience || ""),
-      "",
-      "دستور طراحی برای استوری‌ساز:",
-      "محتوا را به ترتیب اسلایدها حفظ کن. برای هر اسلاید، تیتر، متن روی تصویر، توضیح تکمیلی، ایده تصویر، ترکیب‌بندی، سلسله‌مراتب بصری، رنگ و تایپوگرافی را جداگانه در نظر بگیر. یکپارچگی هویت بصری کل مجموعه را حفظ کن. متن فارسی را بدون تغییر معنایی و خوانا نگه دار.",
-      "",
-      "خروجی کامل NAVI:",
-      String(reply || "").trim()
-    ].join("\n");
-    const input = document.getElementById("storyInput");
-    if (!input) return;
-    input.value = packageText;
-    input.dispatchEvent(new Event("input", { bubbles: true }));
-    const summary = document.getElementById("storyHandoffSummary");
-    if (summary) {
-      summary.hidden = false;
-      summary.textContent = "بسته کامل از استودیوی تولید محتوا دریافت شد — " +
-        (handoff.platform || "پلتفرم نامشخص") + " / " +
-        (handoff.format || "پست اسلایدی") + " / " +
-        (handoff.topic || "موضوع نامشخص") +
-        ". متن اسلایدها، کپشن و راهنمای طراحی در کادر محتوا قرار گرفت.";
-    }
-    const preview = document.getElementById("storyHandoffSlides");
-    if (preview) renderStoryHandoffSlides(String(reply || ""), preview);
-    showPage("storyPage");
-    document.getElementById("storyInput")?.focus({ preventScroll: true });
-    if (storyMessage) {
-      storyMessage.textContent = "بسته کامل محتوا منتقل شد. پیش‌نمایش فعلی این استودیو متنی است.";
-      storyMessage.classList.add("show");
-    }
-  });
-  card.append(note, button);
+
+  const contextText = [
+    "بسته محتوای تولیدشده در NAVA",
+    "پلتفرم: " + (handoff.platform || "مشخص نشده"),
+    "قالب: " + (handoff.format || "مشخص نشده"),
+    "هدف: " + (handoff.objective || "مشخص نشده"),
+    "لحن: " + (handoff.tone || "مشخص نشده"),
+    "موضوع: " + (handoff.topic || ""),
+    "مخاطب: " + (handoff.audience || ""),
+    handoff.keyPoints ? "نکات الزامی: " + handoff.keyPoints : "",
+    handoff.callToAction ? "دعوت به اقدام: " + handoff.callToAction : "",
+    handoff.keywords ? "کلیدواژه‌ها: " + handoff.keywords : ""
+  ].filter(Boolean).join("\n");
+
+  const addButton = (label, action, primary = false) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = primary ? "btn-primary" : "btn-secondary";
+    button.textContent = label;
+    button.addEventListener("click", action);
+    card.append(button);
+  };
+
+  if (isCarousel || isStoryText) {
+    addButton(isCarousel ? "انتقال بسته کامل به استوری‌ساز" : "انتقال متن به استوری‌ساز", () => {
+      const packageText = [
+        contextText,
+        "",
+        isCarousel ? "دستور طراحی برای استوری‌ساز:" : "دستور آماده‌سازی متن:",
+        isCarousel
+          ? "ترتیب و محتوای هر اسلاید را حفظ کن. تیتر، متن روی تصویر، توضیح تکمیلی، ایده تصویر، ترکیب‌بندی، سلسله‌مراتب بصری، رنگ و تایپوگرافی را جداگانه در نظر بگیر. هویت بصری مجموعه یکپارچه باشد. متن فارسی را بدون تغییر معنایی نگه دار."
+          : "متن را برای ساخت استوری خوانا و خوش‌ساخت آماده کن؛ پیام اصلی، لحن و CTA را حفظ کن و آن را بی‌دلیل طولانی نکن.",
+        "",
+        "خروجی کامل NAVI:",
+        String(reply || "").trim()
+      ].join("\n");
+      const input = document.getElementById("storyInput");
+      if (!input) return;
+      input.value = packageText;
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+      const summary = document.getElementById("storyHandoffSummary");
+      if (summary) {
+        summary.hidden = false;
+        summary.textContent = "بسته محتوا از استودیوی تولید محتوا دریافت شد — " +
+          (handoff.platform || "پلتفرم نامشخص") + " / " +
+          (handoff.format || "قالب نامشخص") + " / " +
+          (handoff.topic || "موضوع نامشخص") +
+          ". متن و راهنمای لازم در کادر محتوا قرار گرفت.";
+      }
+      const preview = document.getElementById("storyHandoffSlides");
+      if (preview) {
+        if (isCarousel) renderStoryHandoffSlides(String(reply || ""), preview);
+        else { preview.replaceChildren(); preview.hidden = true; }
+      }
+      showPage("storyPage");
+      document.getElementById("storyInput")?.focus({ preventScroll: true });
+      if (storyMessage) {
+        storyMessage.textContent = isCarousel
+          ? "بسته کامل محتوا منتقل شد. پیش‌نمایش فعلی این استودیو متنی است."
+          : "متن محتوا منتقل شد. پیش‌نمایش فعلی این استودیو متنی است.";
+        storyMessage.classList.add("show");
+      }
+    }, true);
+  }
+
+  if (isVideo) {
+    addButton("انتقال سناریو به استودیوی ویدئو", () => {
+      const brief = document.getElementById("navaVideoBrief");
+      if (!brief) return;
+      brief.value = contextText + "\n\nسناریو و دستور تولید تأییدشده:\n\n" + String(reply || "").trim();
+      showPage("avPage");
+      document.querySelector('[data-video-tab="text"]')?.click();
+      document.querySelector('[data-build-mode="navi"]')?.click();
+      brief.scrollIntoView({ behavior: "smooth", block: "center" });
+    });
+  }
+
+  if (isArticle) {
+    addButton("انتقال مقاله به استودیوی مقاله و وبلاگ", () => {
+      const task = document.getElementById("studioTask-article");
+      const audience = document.getElementById("studioAudience-article");
+      const brief = document.getElementById("studioBrief-article");
+      if (!brief) return;
+      if (task) task.value = Array.from(task.options || []).find(option => /تولید پیش‌نویس/.test(option.textContent || ""))?.value || task.value;
+      if (audience) audience.value = handoff.audience || "";
+      brief.value = contextText + "\n\nمقاله و خروجی تأییدشده از تولید محتوا:\n\n" + String(reply || "").trim();
+      showPage("articlePage");
+      brief.scrollIntoView({ behavior: "smooth", block: "center" });
+    });
+  }
+
   requestResponse.insertAdjacentElement("afterend", card);
 }
 
