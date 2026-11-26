@@ -976,8 +976,12 @@ window.sendOfficeNaviRequest = function({ message, context } = {}) {
       serviceSelect.value = service;
     }
     updateNaviAssistantContext(service, context);
-    setNaviWidgetOpen(true, false);
-    status.textContent = "درخواست تولید محتوا ارسال شد؛ پس از دریافت پاسخ، انتقال خروجی به استودیوی مرتبط در دسترس قرار می‌گیرد.";
+    const inlineResult = document.getElementById("contentStudioResponseWrap");
+    const inlineOutput = document.getElementById("contentStudioResponse");
+    document.getElementById("contentStudioHandoffAction")?.remove();
+    if (inlineResult) inlineResult.hidden = true;
+    if (inlineOutput) { inlineOutput.value = ""; inlineOutput.classList.remove("show"); }
+    status.textContent = "درخواست تولید محتوا ارسال شد؛ پاسخ ناوی همین پایین نمایش داده می‌شود.";
     sendMessageToNavi({
       messageOverride: message,
       serviceOverride: service,
@@ -1172,16 +1176,25 @@ function setNaviStatus(message) {
 }
 
 function showNaviReply(reply) {
-  requestResponse.value = String(reply || "");
-  requestResponse.classList.add("show");
+  const contentStudioPage = document.querySelector(".page.active")?.id === "contentPage";
+  const inlineResult = contentStudioPage ? document.getElementById("contentStudioResponse") : null;
+  const inlineWrap = contentStudioPage ? document.getElementById("contentStudioResponseWrap") : null;
+  const responseTarget = inlineResult || requestResponse;
+  responseTarget.value = String(reply || "");
+  responseTarget.classList.add("show");
+  if (inlineWrap) inlineWrap.hidden = false;
   document.getElementById("naviNavigationSuggestion")?.remove();
   document.getElementById("contentHandoffAction")?.remove();
-  const service = naviAssistantContext?.service || serviceSelect?.value || "";
-  window.NavaDocumentExport?.attach(requestResponse, service);
+  document.getElementById("contentStudioHandoffAction")?.remove();
+  const service = contentStudioPage ? "تولید محتوا" : (naviAssistantContext?.service || serviceSelect?.value || "");
+  window.NavaDocumentExport?.attach(responseTarget, service);
 }
 
 function renderContentHandoffAction(reply, handoff) {
-  if (!handoff || !requestResponse?.isConnected || !String(reply || "").trim()) return;
+  const contentStudioPage = document.querySelector(".page.active")?.id === "contentPage";
+  const contentStudioResult = contentStudioPage ? document.getElementById("contentStudioResponseWrap") : null;
+  const responseHost = contentStudioResult || requestResponse?.parentElement;
+  if (!handoff || !responseHost?.isConnected || !String(reply || "").trim()) return;
   const format = String(handoff.format || "");
   const isCarousel = /اسلاید/.test(format);
   const isVideo = /ویدئو|ویدئوی|ریلز|سناریو/.test(format);
@@ -1190,7 +1203,7 @@ function renderContentHandoffAction(reply, handoff) {
   if (!isCarousel && !isVideo && !isArticle && !isStoryText) return;
 
   const card = document.createElement("section");
-  card.id = "contentHandoffAction";
+  card.id = contentStudioPage ? "contentStudioHandoffAction" : "contentHandoffAction";
   card.className = "content-handoff-actions";
   card.setAttribute("aria-label", "انتقال محتوای تولیدشده");
   const note = document.createElement("p");
@@ -1287,7 +1300,7 @@ function renderContentHandoffAction(reply, handoff) {
     });
   }
 
-  requestResponse.insertAdjacentElement("afterend", card);
+  responseHost.append(card);
 }
 
 function renderStoryHandoffSlides(source, host) {
