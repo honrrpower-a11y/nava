@@ -6,17 +6,26 @@ const esc = value => String(value || "").replace(/[&<>"']/g, c => ({
 })[c]);
 
 function detectFamily(data, blueprint) {
+  const prompt = String(data.designPrompt || "").toLocaleLowerCase("fa");
   const text = [
-    data.designPrompt, data.symbolIdea, data.industry, data.brandName,
+    data.symbolIdea, data.industry, data.brandName,
     blueprint?.firstRead, blueprint?.centralThesis, blueprint?.symbolConstruction,
     blueprint?.geometryRecipe, blueprint?.objectCues?.join(" ")
   ].join(" ").toLocaleLowerCase("fa");
-  if (/کتاب|کتابخانه|کتابفروشی|book|library|bookstore|reading/.test(text)) return "book";
-  if (/موسیقی|آهنگ|صدا|موزیک|music|audio|sound|melody/.test(text)) return "music";
-  if (/شبکه|اینترنت|اتصال|ارتباط|network|internet|connect|web/.test(text)) return "network";
-  if (/نان|نانوایی|شیرینی|بیکری|bread|bakery|pastry/.test(text)) return "bread";
-  if (/برگ|گیاه|طبیعت|سبز|leaf|plant|botanical|nature/.test(text)) return "leaf";
-  if (/قهوه|کافه|coffee|cafe/.test(text)) return "coffee";
+  const familyOf = value => {
+    if (/کتاب|کتابخانه|کتابفروشی|book|library|bookstore|reading/.test(value)) return "book";
+    if (/موسیقی|آهنگ|صدا|موزیک|music|audio|sound|melody/.test(value)) return "music";
+    if (/شبکه|اینترنت|اتصال|ارتباط|network|internet|connect|web/.test(value)) return "network";
+    if (/نان|نانوایی|شیرینی|بیکری|bread|bakery|pastry/.test(value)) return "bread";
+    if (/برگ|گیاه|طبیعت|سبز|leaf|plant|botanical|nature/.test(value)) return "leaf";
+    if (/قهوه|کافه|coffee|cafe/.test(value)) return "coffee";
+    return "";
+  };
+  // In client mode the explicit design request outranks older/default form hints.
+  const requestedFamily = data.designMode === "custom" ? familyOf(prompt) : "";
+  if (requestedFamily) return requestedFamily;
+  const inferredFamily = familyOf(text);
+  if (inferredFamily) return inferredFamily;
   return "monogram";
 }
 
