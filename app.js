@@ -4291,7 +4291,7 @@ async function sendMessageToNavi(options = {}) {
   if (naviSaveComposerMessage) naviSaveComposerMessage.checked = false;
   // Home chat owns a separate persistent thread. It must never reuse the
   // dashboard/Office thread selected in the shared NAVI workspace state.
-  let requestThreadId = isHomePage || options.videoPlan === true ? "" : naviActiveThreadId;
+  let requestThreadId = isHomePage || options.videoPlan === true || storyPlan ? "" : naviActiveThreadId;
 
   const contextLines = requestContext
     ? Object.entries(requestContext.context || {}).map(([key, value]) => key + ": " + value)
@@ -4336,7 +4336,7 @@ async function sendMessageToNavi(options = {}) {
     localImageContext ? "تحلیل بصری محلی (فقط ویژگی‌های پیکسلی):\n" + localImageContext : "",
     visionImage ? "تصویر واقعی نیز به همین درخواست پیوست شده است؛ آن را مستقیماً مشاهده و تحلیل کن. گزارش پیکسلی محلی را با تشخیص معنایی اشتباه نگیر و فقط درباره مواردی که واقعاً در تصویر می‌بینی اظهارنظر کن." : "",
     visionImages.length ? "به این درخواست "+visionImages.length+" تصویر واقعی پیوست شده است. هر تصویر را جداگانه ببین و سپس همه را با هم مقایسه کن؛ هیچ‌کدام را صرفاً از روی نام فایل حدس نزن." : "",
-    requestContext ? "پاسخ را با توجه به همین محیط و اطلاعات زمینه‌ای ارائه کن؛ اگر اقدامی به ابزار استودیو نیاز دارد، قبل از ادعای انجام آن راهنمایی کن." : "",
+    requestContext && !storyPlan ? "پاسخ را با توجه به همین محیط و اطلاعات زمینه‌ای ارائه کن؛ اگر اقدامی به ابزار استودیو نیاز دارد، قبل از ادعای انجام آن راهنمایی کن." : "",
     videoEditorMode ? "راهنمای ویژه بخش تدوین ویدئو: کاربر در ویرایشگر محلی ویدئو است، نه در ابزار ساخت ویدئو از عکس. به پرسش واقعی او درباره تدوین پاسخ مستقیم و کاربردی بده و مراحل را با نام کنترل‌های موجود در همین ویرایشگر توضیح بده. امکانات شناخته‌شده شامل افزودن و انتخاب کلیپ، تنظیم ابتدا و انتهای کلیپ، جابه‌جایی ترتیب، تقسیم در زمان فعلی، تکثیر و حذف بازه‌ای از فایل اصلی، افزودن موسیقی و تنظیم بلندی آن، افزودن چند لایه متن با زمان شروع و پایان و محل و اندازه و رنگ و انیمیشن، انتخاب نسبت تصویر و ساخت خروجی نهایی است. اگر درباره یکی از این ابزارها سؤال شد، همان ابزار را توضیح بده و از موضوع ساخت ویدئو از عکس یا تولید طرح صحنه منحرف نشو. NAVI در این بخش فقط راهنمایی متنی ارائه می‌کند و نباید ادعا کند خودش کلیپ را تغییر داده، دکمه‌ای را زده یا خروجی ساخته است. فقط وقتی کاربر صریحاً درخواست ساخت ویدئو از عکس یا تولید سناریو کرد، موضوع را به آن فرایند مرتبط کن. پاسخ عادی و قابل‌فهم بده؛ JSON یا طرح صحنه تولید نکن." : "",
     selectedService === "ویدئو و صدا" && !videoEditorMode ? "راهنمای ویژه استودیوی ویدئو: تو خودت کارگردان و تصمیم‌گیرنده تمام جزئیات خلاقانه هستی. برای هر صحنه مستقل، طرح اجرایی ساختاریافته تولید کن؛ از تکرار یک حرکت یا چیدمان برای همه صحنه‌ها خودداری کن. چیدمان هر صحنه را مستقل و بر اساس روایت انتخاب کن؛ تک‌عکس پیش‌فرض نیست و باید در صورت تناسب از ترکیب‌های چندعکسی مثل triptych، grid، stagger، hero-stack، polaroid و free نیز استفاده کنی. اگر transition=page-turn انتخاب شد، فقط همان صحنه باید دقیقاً یک عکس و layout=single داشته باشد؛ این محدودیت به صحنه‌های دیگر سرایت نمی‌کند و برای آلبومی یا پلکانی کردن چند عکس از page-turn استفاده نکن. در صورت نیاز برای عکس‌های متعدد صحنه‌های جداگانه بساز (حداکثر ۲۰ صحنه). خروجی باید فقط یک شیء JSON معتبر با schema دقیق nava.video.scene-plan.v1 و آرایه scenes باشد؛ هر صحنه باید مدت، شماره عکس‌ها، contentMode، layout، photoMotion، تنظیمات جایگاه عکس، background، frame، artDirection، photoTreatment، accentColor و آرایه layers را داشته باشد؛ هر لایه متن باید متن، position، align، motion، delay، exit، font، size، style، orientation، color و underline داشته باشد؛ همچنین reveal را از بین none/word/char و sound را از بین none/type/impact/whoosh/sparkle انتخاب کن؛ transition را از بین cut/fade/slide-left/slide-right/zoom/page-turn و colorMode را از بین auto/manual انتخاب کن. برای متن‌های نمایشی در صورت تناسب از word یا char استفاده کن و برای ورود عنوان یا لوگو افکت صوتی متناسب انتخاب کن؛ از افکت صوتی برای همه لایه‌ها بی‌دلیل استفاده نکن. فقط enumهای تعریف‌شده در راهنمای موتور را استفاده کن؛ توضیح یا فرمان متنی خارج از JSON ننویس. انتخاب‌ها را بر اساس محتوای واقعی بریف و عکس‌ها انجام بده، نه قواعد ثابت و شرط‌های کلمه‌ای.": "",
     officeRequestContext
@@ -4374,9 +4374,9 @@ async function sendMessageToNavi(options = {}) {
         pageTab: document.querySelector("#bizPage .biz-tab.is-active")?.dataset.bizTab || "",
         businessId: document.querySelector("#bizProfileSelect")?.value || "",
         threadId: requestThreadId,
-        isolatedContext: isHomePage || options.videoPlan === true,
+        isolatedContext: isHomePage || options.videoPlan === true || storyPlan,
         saveToMemory: saveThisMessageToMemory,
-        history: isHomePage || options.videoPlan === true ? [] : naviHistory.slice(-NAVI_CONTEXT_MESSAGES),
+        history: isHomePage || options.videoPlan === true || storyPlan ? [] : naviHistory.slice(-NAVI_CONTEXT_MESSAGES),
         image: visionImage,
         images: options.videoPlan === true ? visionImages : undefined
       })
@@ -4400,7 +4400,7 @@ async function sendMessageToNavi(options = {}) {
     if (response.status === 401 || response.status === 403) {
       clearNaviSession();
 
-      if (options.videoPlan !== true) showLoginError("نشست ناوی معتبر نیست یا پایان یافته است. دوباره وارد شو.");
+      if (options.videoPlan !== true && !storyPlan) showLoginError("نشست ناوی معتبر نیست یا پایان یافته است. دوباره وارد شو.");
 
       throw new Error("دسترسی تأیید نشد؛ لطفاً دوباره وارد شو.");
     }
@@ -4466,7 +4466,7 @@ async function sendMessageToNavi(options = {}) {
     }
 
     // Render the answer immediately. Secondary synchronization must not block chat.
-    const threadBeforeNaming = isHomePage || options.videoPlan === true ? null : naviThreads.find(item => item.thread_id === naviActiveThreadId);
+    const threadBeforeNaming = isHomePage || options.videoPlan === true || storyPlan ? null : naviThreads.find(item => item.thread_id === naviActiveThreadId);
     const shouldNameThread = !isHomePage && threadBeforeNaming && Number(threadBeforeNaming.message_count || 0) === 0;
     if (storyPlan) {
       window.dispatchEvent(new CustomEvent("nava:navi-reply", { detail: { service: selectedService, reply, storyPlan: true, status: "" } }));
@@ -4529,7 +4529,7 @@ async function sendMessageToNavi(options = {}) {
           : memoryResult.manualSaveError);
     }
 
-    if (!isHomePage && options.videoPlan !== true && !naviMemoryBusy) {
+    if (!isHomePage && options.videoPlan !== true && !storyPlan && !naviMemoryBusy) {
       backgroundJobs.push((async () => {
         const refreshed = await loadNaviMemories(true);
         if (!refreshed || !memoryResult || !memoryResult.composerSaveRequested || memoryResult.commandRecognized) return;
@@ -4648,6 +4648,9 @@ clearStory.addEventListener("click", () => {
 
   storyMessage.textContent = "";
   storyMessage.classList.remove("show");
+  const visualHost = document.getElementById("storyVisualSlides");
+  if (visualHost) { visualHost.replaceChildren(); visualHost.hidden = true; }
+  previewText.hidden = false;
 });
 
 copyStory.addEventListener("click", async () => {
