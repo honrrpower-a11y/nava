@@ -972,7 +972,7 @@ test("Logo Studio delivers structured HTML/CSS geometry without blocking on opti
   assert.ok(ui.includes("capturePreviewDataUrl(frame, 640)"));
   assert.ok(ui.includes("function prepareReviewFrames(concepts, brief)"));
   assert.ok(ui.includes("visibility:visible"));
-  assert.ok(ui.includes("result.reviewToken"));
+  assert.ok(ui.includes("mountConcepts(finalConcepts, brief, result.planning)"));
   assert.ok(ui.includes('action: "visual-final-audit"'));
   assert.ok(ui.includes("بازبینی هوش مصنوعی مانع نمایش یا تحویل طرح نیست"));
   assert.ok(backend.includes("buildStructuredLogoConcepts"));
