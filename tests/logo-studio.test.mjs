@@ -120,6 +120,10 @@ function makeGeminiResponse(plan = makeDesign()) {
       ]
     ];
     concept.geometrySpec ||= { layers: geometryVariants[conceptIndex % geometryVariants.length] };
+    concept.executionBriefEnglish ||= "Build the exact named metaphor as one recognizable integrated silhouette; preserve its object anatomy, spatial relationship and negative space rather than using unrelated decorative primitives.";
+    concept.geometrySpec.layers.forEach((layer, layerIndex) => {
+      layer.visualRole ||= layerIndex === 0 ? "primary recognizable subject silhouette" : "integrated supporting anatomy that completes the named metaphor";
+    });
     concept.silhouette ||= concept.symbolConstruction || concept.centralThesis;
     concept.objectCues ||= (concept.briefElements || []).slice(0, 2);
     while (concept.objectCues.length < 2) concept.objectCues.push("ویژگی تشخیصی فرم");
@@ -192,6 +196,9 @@ test("NAVI writes a professional creative brief before building three sanitized 
     assert.equal(geminiCalls, 1, "NAVI plans once; the structured HTML/CSS engine performs the actual construction");
     assert.match(sentPrompts[0], /senior identity concept architect/i);
     assert.match(sentPrompts[0], /geometryRecipe/i);
+    assert.match(sentPrompts[0], /ENGLISH-TO-GEOMETRY EXECUTION/i);
+    assert.match(sentPrompts[0], /executionBriefEnglish/i);
+    assert.match(sentPrompts[0], /12–16 carefully placed polygon points/i);
     assert.match(sentPrompts[0], /exactly 3 objects/i);
     assert.match(sentPrompts[0], /Do not rename the concepts key/i);
     assert.match(sentPrompts[0], /Do not write HTML, CSS, SVG/i);
@@ -210,6 +217,8 @@ test("NAVI writes a professional creative brief before building three sanitized 
     assert.equal(result.planning.extraModelCalls, 1, "the browser performs one visual redesign stage after the initial blueprint render");
     assert.equal(result.planning.visualBlueprints.length, 3);
     assert.ok(result.planning.visualBlueprints.every(item => item.geometryRecipe && item.silhouette && item.objectCues.length >= 2 && item.signatureFeature && item.recognitionRisk));
+    assert.ok(result.planning.visualBlueprints.every(item => item.executionBriefEnglish));
+    assert.ok(result.concepts.every(item => item.geometryLayerRoles.length >= 4 && item.geometryLayerRoles.every(role => role.length >= 8)));
     assert.match(result.planning.designBriefEnglish, /distinctive Persian creative-studio identity/i);
     assert.ok(result.concepts.every(item => item.html.includes("نوا")));
     assert.ok(result.concepts.every(item => item.html.includes('data-logo-role="brand"')));
@@ -219,6 +228,7 @@ test("NAVI writes a professional creative brief before building three sanitized 
     assert.ok(result.concepts.every(item => !item.html.includes("<script")));
     assert.ok(result.concepts.every(item => item.css.includes("var(--logo-primary)")));
     assert.ok(result.concepts[0].css.includes(".navi-symbol"), "the structured geometry engine supplies the actual mark CSS");
+    assert.ok(!result.concepts[0].css.includes("#6d9da3"), "the renderer must not inject a fixed cyan accent into unrelated brand palettes");
     assert.ok(result.concepts.every(item => !Object.prototype.hasOwnProperty.call(item, "svg")));
     assert.ok(result.concepts.every(item => !JSON.stringify(item).includes("foreignObject")));
     assert.ok(result.concepts.every(item => item.html.includes("<div")));
