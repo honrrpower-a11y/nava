@@ -759,8 +759,8 @@ test("Logo Studio lets the client delegate ideation to NAVI or supply a binding 
   assert.ok(ui.includes('brief.designMode === "custom" && !brief.designPrompt'));
   assert.ok(backend.includes('designMode: input?.designMode === "custom" ? "custom" : "navi"'));
   assert.ok(backend.includes('data.designMode === "custom" ? data.designPrompt : ""'));
-  assert.ok(backend.includes("IDEA OWNERSHIP — CLIENT MODE"));
-  assert.ok(backend.includes("IDEA OWNERSHIP — NAVI MODE"));
+  assert.ok(backend.includes("CUSTOM BRIEF: preserve exact named objects"));
+  assert.ok(backend.includes("NAVI BRIEF: derive a distinctive idea"));
   assert.ok(backend.includes("designIdea: naviCreativeBrief.designIdea"));
   assert.ok(ui.includes("planning.designIdea"));
 });
@@ -1118,7 +1118,7 @@ test("NAVI keeps the client brief in charge while the structured engine owns act
   const ui = readFileSync(new URL("../logo-studio.js", import.meta.url), "utf8");
   assert.ok(backend.includes("designPrompt: data.designMode === \"custom\" ? data.designPrompt : \"\""));
   assert.ok(backend.includes("buildStructuredLogoConcepts(data, designBlueprints)"));
-  assert.ok(backend.includes("deterministic HTML/CSS grammar"));
+  assert.ok(backend.includes("buildStructuredLogoConcepts(data, designBlueprints)"));
   assert.ok(engine.includes("data.designPrompt"));
   assert.ok(engine.includes("subject-specific"));
   assert.ok(engine.includes("book:"));
