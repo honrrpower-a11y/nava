@@ -514,7 +514,7 @@ async function designLogos(data, apiKey) {
         },
         mustAvoid: Array.isArray(item?.mustAvoid) ? item.mustAvoid.slice(0, 8).map(value => safeText(value, 120)).filter(Boolean) : []
       };
-      if (!normalized.centralThesis || !normalized.symbolConstruction || !normalized.briefAlignment || !normalized.briefElements.length || !normalized.silhouette || normalized.objectCues.length < 2 || !normalized.spatialRelationship || !normalized.negativeSpace || !normalized.geometryRecipe || !normalized.firstRead || !normalized.recognitionRisk || !normalized.signatureFeature || (data.format !== "wordmark" && normalized.geometrySpec.layers.length < 3)) {
+      if (!normalized.centralThesis || !normalized.symbolConstruction || !normalized.briefAlignment || !normalized.briefElements.length || !normalized.silhouette || normalized.objectCues.length < 2 || !normalized.spatialRelationship || !normalized.negativeSpace || !normalized.geometryRecipe || !normalized.firstRead || !normalized.recognitionRisk || !normalized.signatureFeature || (data.format !== "wordmark" && normalized.geometrySpec.layers.length < 4)) {
         throw validationError("LOGO_BLUEPRINT_INCOMPLETE", "نقشه ساخت بصری باید سیلوئت، نشانه‌های تشخیصی، رابطه فضایی، فضای منفی، ویژگی امضادار، ریسک برداشت اشتباه و دستور ساخت دقیق داشته باشد.", "concept-planning", index + 1);
       }
       return normalized;
