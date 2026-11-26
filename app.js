@@ -888,12 +888,20 @@ window.sendOfficeNaviRequest = function({ message, context } = {}) {
       keyPoints ? "نکات الزامی و اطلاعات مرجع: " + keyPoints : "",
       callToAction ? "دعوت به اقدام مدنظر: " + callToAction : "",
       keywords ? "کلیدواژه‌ها: " + keywords : "",
-      "دستور اجرا: خروجی را دقیقاً متناسب با پلتفرم و قالب انتخاب‌شده بساز؛ شروع قوی و غیرکلیشه‌ای داشته باش؛ متن نهایی را کامل و آماده استفاده ارائه کن؛ از توصیه‌های عمومی و عبارت‌های توخالی پرهیز کن؛ اطلاعات، آمار یا ادعاهای تأییدنشده نساز و اگر داده‌ای کافی نیست آن را مشخص کن.",
-      "اگر قالب پست اسلایدی است، متن هر اسلاید را جداگانه و با ترتیب روایی بنویس و کپشن و CTA را هم بده. اگر ویدئوی کوتاه یا بلند یا سناریو است، هوک، ساختار صحنه‌ها، متن گفتار/نوشته روی تصویر و پایان‌بندی را ارائه کن. اگر کپشن و متن شبکه اجتماعی است، نسخه نهایی را بدون توضیحات اضافی آماده انتشار بده. اگر مقاله وبلاگ است، زاویه محتوا، عنوان، ساختار و بریف دقیق نگارش را آماده کن و مشخص کن برای نگارش کامل باید به استودیوی مقاله و وبلاگ منتقل شود. اگر تقویم محتوایی است، یک برنامه منسجم و اجرایی با موضوع، قالب، هدف و پیام هر محتوا بساز.",
-      "در پایان، فقط در صورت مفید بودن، یک پیشنهاد مشخص برای بهترشدن همین خروجی ارائه کن."
+      "استاندارد عمومی: خروجی را دقیقاً متناسب با پلتفرم و قالب انتخاب‌شده بساز؛ متن نهایی باید کامل، آماده استفاده و بدون نیاز به بازنویسی اساسی باشد. شروع قوی و غیرکلیشه‌ای داشته باش. اطلاعات، آمار، منبع یا ادعای تأییدنشده نساز؛ کمبود داده را صریح مشخص کن. متن را برای محدودیت طول و رفتار مخاطب همان پلتفرم تنظیم کن.",
+      "برای پست اسلایدی: یک روایت منسجم ۵ تا ۸ اسلایدی بساز. برای تک‌تک اسلایدها جداگانه این موارد را ارائه کن: نقش اسلاید در روایت، تیتر، متن کوتاه قابل درج روی تصویر، توضیح تکمیلی، ایده تصویر یا سوژه، ترکیب‌بندی و چیدمان عناصر، سلسله‌مراتب متن، پیشنهاد رنگ و تایپوگرافی. اسلاید اول هوک روشن، اسلایدهای میانی محتوای دقیق و مرحله‌ای، و اسلاید آخر جمع‌بندی و CTA داشته باشد. کپشن نهایی، CTA، متن جایگزین توصیفی تصاویر و هشتگ‌های مرتبط را هم اضافه کن. از تکرار یک قالب بصری برای همه اسلایدها پرهیز کن اما هویت بصری مجموعه را یکپارچه نگه دار.",
+      "برای ویدئوی کوتاه/بلند یا سناریو: سناریوی کامل و قابل تولید بده؛ زمان‌بندی هر صحنه، تصویر و حرکت دوربین، گفتار یا نریشن، نوشته روی تصویر، صدا/موسیقی پیشنهادی، انتقال‌ها و پایان‌بندی را مشخص کن. فقط بریف یا توصیه برای انتقال به استودیوی دیگر نده.",
+      "برای کپشن و متن شبکه اجتماعی: نسخه نهایی آماده انتشار، شروع جذاب، بدنه متناسب با پلتفرم، CTA و هشتگ‌های محدود و مرتبط را ارائه کن.",
+      "برای مقاله وبلاگ: خود مقاله کامل را با عنوان، مقدمه، تیترهای ساختاریافته، بدنه، جمع‌بندی و در صورت تناسب پرسش‌های متداول بنویس؛ صرفاً طرح یا بریف مقاله تحویل نده. منبع یا آمار ساختگی اضافه نکن.",
+      "برای تقویم محتوایی: برنامه اجرایی و منسجم با تاریخ/تناوب پیشنهادی، موضوع، قالب، هدف، پیام محوری و CTA هر محتوا بساز.",
+      "اگر موضوع سلامت، ورزش یا ایمنی است، دستورها را محافظه‌کارانه و دقیق بنویس؛ از وعده درمان، ادعای قطعی و حرکت پرخطر پرهیز کن و محدودیت‌ها یا هشدار لازم را کوتاه ذکر کن. در پایان فقط یک پیشنهاد مشخص و مرتبط بده."
     ].filter(Boolean).join("\n");
 
-    status.textContent = "بریف آماده شد؛ در حال اتصال درخواست به NAVI...";
+    const contentHandoff = {
+      platform, format, objective, tone, topic, audience
+    };
+    window.navaPendingContentHandoff = contentHandoff;
+    status.textContent = "بریف آماده شد؛ در حال ارسال درخواست به NAVI...";
     if (!getNaviToken()) {
       window.openNaviAssistant({ service, context, message });
       status.textContent = "درخواست آماده است؛ پس از ورود به حساب، آن را از پنل NAVI ارسال کن.";
@@ -905,15 +913,17 @@ window.sendOfficeNaviRequest = function({ message, context } = {}) {
     }
     updateNaviAssistantContext(service, context);
     setNaviWidgetOpen(true, false);
-    status.textContent = "درخواست تولید محتوا به NAVI ارسال شد؛ پاسخ در پنل همراه ناوی نمایش داده می‌شود.";
+    status.textContent = "درخواست تولید محتوا ارسال شد؛ پس از دریافت پاسخ، انتقال بسته کامل به استوری‌ساز در دسترس قرار می‌گیرد.";
     sendMessageToNavi({
       messageOverride: message,
       serviceOverride: service,
-      contextOverride: context
+      contextOverride: context,
+      contentHandoff
     });
   });
 
   reset?.addEventListener("click", () => {
+    window.navaPendingContentHandoff = null;
     status.textContent = "فرم پاک شد؛ بریف تازه‌ای وارد کن.";
   });
 })();
@@ -1100,8 +1110,86 @@ function showNaviReply(reply) {
   requestResponse.value = String(reply || "");
   requestResponse.classList.add("show");
   document.getElementById("naviNavigationSuggestion")?.remove();
+  document.getElementById("contentHandoffAction")?.remove();
   const service = naviAssistantContext?.service || serviceSelect?.value || "";
   window.NavaDocumentExport?.attach(requestResponse, service);
+}
+
+function renderContentHandoffAction(reply, handoff) {
+  if (!handoff || handoff.format !== "پست اسلایدی" ||
+      !requestResponse?.isConnected || !String(reply || "").trim()) return;
+  const card = document.createElement("section");
+  card.id = "contentHandoffAction";
+  card.className = "content-handoff-actions";
+  card.setAttribute("aria-label", "انتقال محتوای تولیدشده");
+  const note = document.createElement("p");
+  note.textContent = "متن کامل، ترتیب اسلایدها، کپشن و راهنمای بصری را یک‌جا به استوری‌ساز منتقل کن.";
+  note.style.cssText = "flex:1 0 100%;margin:0;color:var(--muted);font-size:12px;line-height:1.8";
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = "btn-primary";
+  button.textContent = "انتقال بسته کامل به استوری‌ساز";
+  button.addEventListener("click", () => {
+    const packageText = [
+      "بسته محتوای تولیدشده در NAVA",
+      "پلتفرم: " + (handoff.platform || "مشخص نشده"),
+      "قالب: " + (handoff.format || "پست اسلایدی"),
+      "هدف: " + (handoff.objective || "مشخص نشده"),
+      "لحن: " + (handoff.tone || "مشخص نشده"),
+      "موضوع: " + (handoff.topic || ""),
+      "مخاطب: " + (handoff.audience || ""),
+      "",
+      "دستور طراحی برای استوری‌ساز:",
+      "محتوا را به ترتیب اسلایدها حفظ کن. برای هر اسلاید، تیتر، متن روی تصویر، توضیح تکمیلی، ایده تصویر، ترکیب‌بندی، سلسله‌مراتب بصری، رنگ و تایپوگرافی را جداگانه در نظر بگیر. یکپارچگی هویت بصری کل مجموعه را حفظ کن. متن فارسی را بدون تغییر معنایی و خوانا نگه دار.",
+      "",
+      "خروجی کامل NAVI:",
+      String(reply || "").trim()
+    ].join("\n");
+    const input = document.getElementById("storyInput");
+    if (!input) return;
+    input.value = packageText;
+    input.dispatchEvent(new Event("input", { bubbles: true }));
+    const summary = document.getElementById("storyHandoffSummary");
+    if (summary) {
+      summary.hidden = false;
+      summary.textContent = "بسته کامل از استودیوی تولید محتوا دریافت شد — " +
+        (handoff.platform || "پلتفرم نامشخص") + " / " +
+        (handoff.format || "پست اسلایدی") + " / " +
+        (handoff.topic || "موضوع نامشخص") +
+        ". متن اسلایدها، کپشن و راهنمای طراحی در کادر محتوا قرار گرفت.";
+    }
+    const preview = document.getElementById("storyHandoffSlides");
+    if (preview) renderStoryHandoffSlides(String(reply || ""), preview);
+    showPage("storyPage");
+    document.getElementById("storyInput")?.focus({ preventScroll: true });
+    if (storyMessage) {
+      storyMessage.textContent = "بسته کامل محتوا منتقل شد. پیش‌نمایش فعلی این استودیو متنی است.";
+      storyMessage.classList.add("show");
+    }
+  });
+  card.append(note, button);
+  requestResponse.insertAdjacentElement("afterend", card);
+}
+
+function renderStoryHandoffSlides(source, host) {
+  host.replaceChildren();
+  const text = String(source || "");
+  const pattern = /(?:^|\n)[^\n]*اسلاید\s*([۰-۹0-9]+)[^\n]*\n([\s\S]*?)(?=\n[^\n]*اسلاید\s*[۰-۹0-9]+|\n\s*(?:#{1,3}\s*)?(?:کپشن|هشتگ)|$)/g;
+  let match;
+  let count = 0;
+  while ((match = pattern.exec(text))) {
+    count++;
+    const card = document.createElement("article");
+    card.className = "story-handoff-slide";
+    const heading = document.createElement("strong");
+    heading.textContent = "اسلاید " + match[1];
+    const body = document.createElement("p");
+    body.textContent = match[2].replace(/\*\*/g, "").replace(/^\s*[-*]\s*/gm, "").trim();
+    card.append(heading, body);
+    host.append(card);
+  }
+  host.hidden = count === 0;
+  if (!count) host.textContent = "";
 }
 
 function renderNaviNavigationSuggestion(navigation) {
@@ -4022,6 +4110,7 @@ async function sendMessageToNavi(options = {}) {
       : naviAssistantContext;
   const selectedService = options.serviceOverride ||
     (isHomePage ? "انتخاب نشده" : serviceSelect.value);
+  const contentHandoff = options.contentHandoff || window.navaPendingContentHandoff || null;
   const saveThisMessageToMemory = options.videoPlan === true
     ? false
     : Boolean(naviSaveComposerMessage?.checked);
@@ -4214,6 +4303,10 @@ async function sendMessageToNavi(options = {}) {
     } else {
       showNaviReply(reply);
       renderNaviNavigationSuggestion(data.navigation);
+      if (contentHandoff) {
+        renderContentHandoffAction(reply, contentHandoff);
+        window.navaPendingContentHandoff = null;
+      }
     }
     try {
       renderNaviOfficeAction(data.officeAction, { target: options.officeTarget ? "office" : "chat" });
@@ -4362,6 +4455,7 @@ const previewText = document.getElementById("previewText");
 const clearStory = document.getElementById("clearStory");
 const copyStory = document.getElementById("copyStory");
 const storyMessage = document.getElementById("storyMessage");
+const improveStoryWithNavi = document.getElementById("improveStoryWithNavi");
 
 storyInput.addEventListener("input", () => {
   const text = storyInput.value.trim();
@@ -4404,6 +4498,40 @@ copyStory.addEventListener("click", async () => {
   }
 
   storyMessage.classList.add("show");
+});
+
+improveStoryWithNavi?.addEventListener("click", () => {
+  const content = storyInput?.value?.trim() || "";
+  if (!content) {
+    storyMessage.textContent = "ابتدا محتوا را وارد یا از استودیوی تولید محتوا منتقل کن.";
+    storyMessage.classList.add("show");
+    return;
+  }
+  const service = "استوری‌ساز";
+  const context = {
+    content,
+    source: "انتقال از استودیوی تولید محتوا",
+    instruction: "محتوای منتقل‌شده را به یک طرح اجرایی برای استوری/اسلاید تبدیل کن؛ ترتیب و معنای متن را حفظ کن و برای هر اسلاید چیدمان، سوژه تصویر، سلسله‌مراتب متن، رنگ و تایپوگرافی را دقیق پیشنهاد بده."
+  };
+  const message = [
+    "این بسته محتوایی را برای اجرای بصری در استوری‌ساز آماده کن.",
+    "متن و ترتیب اسلایدها را حفظ کن؛ چیزی را بی‌اجازه حذف یا خلاصه نکن.",
+    "برای هر اسلاید طرح مستقل اما هماهنگ بده: تیتر، متن نهایی روی تصویر، سوژه/تصویر، ترکیب‌بندی، جای عناصر، رنگ، فونت و اندازه نسبی متن.",
+    "اگر بخشی از متن طولانی است، نسخه کوتاه پیشنهادی را جدا از متن اصلی مشخص کن و متن اصلی را نگه دار.",
+    "خروجی را اسلایدبه‌اسلاید و قابل اجرا ارائه کن. ادعا یا اطلاعات تازه نساز.",
+    "",
+    content
+  ].join("\n\n");
+  if (!getNaviToken()) {
+    window.openNaviAssistant({ service, context, message });
+    return;
+  }
+  if (Array.from(serviceSelect.options).some(option => option.value === service)) {
+    serviceSelect.value = service;
+  }
+  updateNaviAssistantContext(service, context);
+  setNaviWidgetOpen(true, false);
+  sendMessageToNavi({ messageOverride: message, serviceOverride: service, contextOverride: context });
 });
  
 
