@@ -897,7 +897,7 @@ test("NAVI accepts a single unified symbol silhouette without artificial child l
     assert.equal(response.status, 200, JSON.stringify(result));
     assert.equal(result.success, true);
     assert.equal(result.concepts[0].visualAnchors.length, 1);
-    assert.equal(result.concepts[0].anchorMap[0].layerClass, "navi-symbol");
+    assert.equal(result.concepts[0].anchorMap[0].layerClass, "navi-part-1");
     assert.equal(db.visitorUsed, 1);
   } finally {
     globalThis.fetch = originalFetch;
