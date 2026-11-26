@@ -168,25 +168,25 @@ test("NAVI writes a professional creative brief before building three sanitized 
     assert.equal(response.status, 200);
     assert.equal(result.success, true);
     assert.equal(result.concepts.length, 3);
-    assert.equal(geminiCalls, 1, "NAVI plans once; the structured HTML/CSS engine performs the actual construction");
+    assert.equal(geminiCalls, 1, "NAVI plans and authors the complete HTML/CSS geometry in one structured response");
     assert.match(sentPrompts[0], /senior identity concept architect/i);
     assert.match(sentPrompts[0], /geometryRecipe/i);
     assert.match(sentPrompts[0], /exactly 3 objects/i);
     assert.match(sentPrompts[0], /Do not rename the concepts key/i);
-    assert.match(sentPrompts[0], /Do not write HTML, CSS, SVG/i);
+    assert.match(sentPrompts[0], /HTML CONTRACT/i);
     assert.match(sentPrompts[0], /at least two diagnostic visual cues/i);
     assert.match(sentPrompts[0], /signatureFeature/i);
     assert.match(sentPrompts[0], /recognitionRisk/i);
     assert.match(sentPrompts[0], /plain dome with parallel bars/i);
-    assert.equal(geminiCalls, 1, "one planning call is sufficient; the deterministic engine constructs the logo geometry");
+    assert.equal(geminiCalls, 1, "one model response contains the creative brief, semantic blueprints and bespoke HTML/CSS construction");
     assert.match(sentPrompt, /A concise professional art-direction brief/);
-    assert.match(sentPrompt, /Do not write HTML, CSS, SVG/i);
-    assert.equal(result.planning.method, "navi-visual-blueprint-then-structured-html-css-build");
-    assert.equal(result.planning.geometryEngine, "structured-html-css-grammar");
+    assert.match(sentPrompt, /CSS CONTRACT/i);
+    assert.equal(result.planning.method, "navi-semantic-concept-to-bespoke-html-css");
+    assert.equal(result.planning.geometryEngine, "navi-authored-html-css-geometry");
     assert.match(sentPrompts[0], /professional art-direction brief/i);
-    assert.equal(geminiCalls, 1, "the second free-form HTML/CSS generation call has been removed");
+    assert.equal(geminiCalls, 1, "the authored geometry is returned with the semantic blueprint, avoiding a second generation request");
     assert.match(sentPrompts[0], /A concise professional art-direction brief/);
-    assert.equal(result.planning.extraModelCalls, 0, "only NAVI blueprint planning is generative; the actual logo geometry is built deterministically");
+    assert.equal(result.planning.extraModelCalls, 0, "NAVI authors both the semantic plan and actual HTML/CSS geometry in one model response");
     assert.equal(result.planning.visualBlueprints.length, 3);
     assert.ok(result.planning.visualBlueprints.every(item => item.geometryRecipe && item.silhouette && item.objectCues.length >= 2 && item.signatureFeature && item.recognitionRisk));
     assert.match(result.planning.designBriefEnglish, /distinctive Persian creative-studio identity/i);
@@ -197,6 +197,8 @@ test("NAVI writes a professional creative brief before building three sanitized 
     assert.ok(result.concepts.every(item => !item.html.includes("{{BRAND_NAME}}")));
     assert.ok(result.concepts.every(item => !item.html.includes("<script")));
     assert.ok(result.concepts.every(item => item.css.includes("var(--logo-primary)")));
+    assert.ok(result.concepts.every(item => item.css.includes(".navi-symbol")));
+    assert.ok(result.concepts.every(item => item.html.includes("data-logo-role=\\"symbol\\"")));
     assert.ok(result.concepts[0].css.includes(".navi-symbol"), "the structured geometry engine supplies the actual mark CSS");
     assert.ok(result.concepts.every(item => !Object.prototype.hasOwnProperty.call(item, "svg")));
     assert.ok(result.concepts.every(item => !JSON.stringify(item).includes("foreignObject")));
@@ -1113,13 +1115,15 @@ test("NAVI rejects cosmetic-only visual revisions that leave the logo symbol geo
   }
 });
 
-test("NAVI keeps the client brief in charge while the structured engine owns actual HTML/CSS geometry", () => {
+test("NAVI keeps the client brief in charge and authors concept-specific HTML/CSS instead of selecting fixed geometry families", () => {
   const backend = readFileSync(new URL("../modules/logo.js", import.meta.url), "utf8");
   const engine = readFileSync(new URL("../modules/logo-engine.js", import.meta.url), "utf8");
   const ui = readFileSync(new URL("../logo-studio.js", import.meta.url), "utf8");
   assert.ok(backend.includes("designPrompt: data.designMode === \"custom\" ? data.designPrompt : \"\""));
-  assert.ok(backend.includes("buildStructuredLogoConcepts(data, designBlueprints)"));
-  assert.ok(backend.includes("buildStructuredLogoConcepts(data, designBlueprints)"));
+  assert.ok(backend.includes("navi-authored-html-css-geometry"));
+  assert.ok(backend.includes("HTML CONTRACT"));
+  assert.ok(backend.includes("CSS CONTRACT"));
+  assert.ok(!backend.includes("buildStructuredLogoConcepts(data, designBlueprints)"));
   assert.ok(engine.includes("data.designPrompt"));
   assert.ok(engine.includes("subject-specific"));
   assert.ok(engine.includes("book:"));
