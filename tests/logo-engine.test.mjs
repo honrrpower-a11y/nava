@@ -98,6 +98,24 @@ test("invalid or incomplete geometry is rejected instead of silently reusing a f
   );
 });
 
+test("renderer normalizes common model vocabulary and repairs incomplete polygon details without weakening coordinate safety", () => {
+  const compatible = structuredClone(geometryA);
+  compatible.layers[0].shape = "freeform";
+  compatible.layers[0].points = [];
+  compatible.layers[0].tone = "gold";
+  compatible.layers[1].shape = "rect";
+  compatible.layers[1].finish = "glossy";
+  compatible.layers[2].shape = "circle";
+  compatible.layers[2].tone = "cyan";
+  const concept = buildStructuredLogoConcepts(base, [blueprint("سازگار", compatible)]).concepts[0];
+  assert.match(concept.css, /linear-gradient/);
+  assert.match(concept.css, /navi-part-4/);
+  assert.match(concept.css, /rotate\(calc\(var\(--part-rotation\) \+ 45deg\)\)/);
+  const badCoordinate = structuredClone(geometryA);
+  badCoordinate.layers[0].x = 140;
+  assert.throws(() => buildStructuredLogoConcepts(base, [blueprint("مختصات خارج محدوده", badCoordinate)]), /invalid primitive/);
+});
+
 test("wordmark-only output does not invent a symbol or require geometry layers", () => {
   const result = buildStructuredLogoConcepts(
     { ...base, format: "wordmark" },
