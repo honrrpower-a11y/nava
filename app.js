@@ -644,6 +644,7 @@ function restoreNavaReturnContext() {
   }
   const targetPage = document.getElementById(pending.pageId);
   if (!targetPage || !targetPage.classList.contains("page")) return false;
+  showPage(pending.pageId);
   if (Array.isArray(pending.fields)) {
     for (const saved of pending.fields) {
       if (!saved || typeof saved.id !== "string") continue;
@@ -1746,8 +1747,7 @@ async function saveNaviHistoryMessage(messageId, button) {
 
   if (!token) {
     clearNaviSession();
-    if (options.videoPlan === true) window.dispatchEvent(new CustomEvent("nava:navi-error", { detail: { message: "نشست ورود ناوی معتبر نیست؛ دوباره وارد شو." } }));
-    else showNaviReply("نشست ورودت پایان یافته است. لطفاً دوباره وارد شو.");
+    showNaviReply("نشست ورودت پایان یافته است. لطفاً دوباره وارد شو.");
     return;
   }
 
