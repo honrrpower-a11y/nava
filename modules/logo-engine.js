@@ -184,20 +184,24 @@ function deriveSemanticGeometry(blueprint, family, index) {
   const css = [];
   const features = [];
   const radiance = /پرتو|اشعه|شعاع|نور|روشنای|درخشش|تابش|سپیده|طلوع|light|ray|radiance|glow|beam|sunbeam/.test(semanticText);
-  if (radiance) {
-    const rayCount = 3 + (index % 3);
-    const rays = Array.from({ length: rayCount }, (_, rayIndex) => '<span class="semantic-ray ray-' + (rayIndex + 1) + '"></span>').join("");
-    html.push('<span class="semantic-radiance" aria-hidden="true">' + rays + '</span>');
+  // For an open-book concept, light must be part of the book's own silhouette.
+  // A single rising negative-space aperture replaces detached decorative sunbeams.
+  if (radiance && family === "book") {
+    html.push('<span class="semantic-inspiration" aria-hidden="true"><span class="inspiration-core"></span><span class="inspiration-flow flow-left"></span><span class="inspiration-flow flow-right"></span></span>');
     css.push([
-      '.semantic-radiance{position:absolute;z-index:6;left:50%;top:-19%;width:36%;height:47%;transform:translateX(-50%);pointer-events:none;filter:drop-shadow(0 .8cqw 1.2cqw rgba(177,137,65,.2))}',
-      '.semantic-ray{position:absolute;bottom:0;display:block;width:10%;height:var(--ray-height,78%);background:linear-gradient(180deg,rgba(222,183,105,.2),#c49a52 58%,#e5cb91);clip-path:polygon(50% 0,100% 100%,0 100%);transform-origin:50% 100%;border-radius:30% 30% 0 0}',
-      '.semantic-ray.ray-1{left:8%;height:58%;transform:rotate(-35deg)}',
-      '.semantic-ray.ray-2{left:27%;height:84%;transform:rotate(-17deg)}',
-      '.semantic-ray.ray-3{left:46%;height:100%;width:12%}',
-      '.semantic-ray.ray-4{left:66%;height:82%;transform:rotate(17deg)}',
-      '.semantic-ray.ray-5{left:84%;height:58%;transform:rotate(35deg)}'
-    ].join(""));
-    features.push("radiance-rays");
+      '.book-spread{isolation:isolate}',
+      '.semantic-inspiration{position:absolute;z-index:2;left:50%;top:-13%;width:31%;height:66%;transform:translateX(-50%);pointer-events:none;display:block}',
+      '.inspiration-core{position:absolute;left:28%;top:5%;width:44%;height:91%;background:linear-gradient(180deg,rgba(244,213,151,.96),rgba(190,145,73,.86) 56%,rgba(190,145,73,.05));clip-path:polygon(50% 0,67% 22%,78% 45%,100% 76%,74% 100%,26% 100%,0 76%,22% 45%,33% 22%);filter:drop-shadow(0 0 2cqw rgba(208,166,99,.28))}',
+      '.inspiration-flow{position:absolute;top:25%;width:35%;height:61%;border-top:2.2cqw solid rgba(207,166,99,.86);border-radius:50% 50% 0 0}',
+      '.inspiration-flow.flow-left{left:1%;transform:rotate(28deg) skewY(-12deg);border-left:1.4cqw solid rgba(207,166,99,.52)}',
+      '.inspiration-flow.flow-right{right:1%;transform:rotate(-28deg) skewY(12deg);border-right:1.4cqw solid rgba(207,166,99,.52)}',
+      '.book-spine{z-index:4}'
+    ].join("\n"));
+    features.push("integrated-inspiration-aperture");
+  } else if (radiance) {
+    // Other symbol families receive no generic rays; keep the metaphor in the brief
+    // unless their own family grammar defines a genuinely integrated light form.
+    features.push("radiance-metaphor-retained-in-brief");
   }
   const asymmetricMass = /نامتقارن|یک.?طرف|یک سمت|سمت راست|سمت چپ|پرتر|سنگین.?تر|asymmetr|one[- ]sided|one side|heavier side|larger side|thicker side/.test(semanticText);
   if (asymmetricMass) {

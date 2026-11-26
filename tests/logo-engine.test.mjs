@@ -86,11 +86,13 @@ test("NAVI's ray and light construction cues become visible native HTML/CSS geom
   };
   const result = buildStructuredLogoConcepts(base, [blueprint]);
   const concept = result.concepts[0];
-  assert.ok(concept.semanticGeometry.includes("radiance-rays"));
-  assert.match(concept.html, /semantic-radiance/);
-  assert.match(concept.html, /semantic-ray ray-1/);
-  assert.match(concept.css, /semantic-ray\.ray-3/);
-  assert.match(concept.css, /linear-gradient\(180deg,rgba\(222,183,105/);
+  assert.ok(concept.semanticGeometry.includes("integrated-inspiration-aperture"));
+  assert.match(concept.html, /semantic-inspiration/);
+  assert.match(concept.html, /inspiration-core/);
+  assert.match(concept.html, /inspiration-flow flow-left/);
+  assert.match(concept.css, /\.semantic-inspiration\{position:absolute/);
+  assert.match(concept.css, /\.inspiration-core\{.*clip-path:polygon/s);
+  assert.doesNotMatch(concept.html + concept.css, /semantic-ray|semantic-radiance/);
   assert.match(concept.geometryRecipe, /پرتو نور/);
 });
 
