@@ -5,10 +5,12 @@ on:
     branches: [main]
     paths:
       - "modules/logo.js"
+      - "modules/logo-engine.js"
       - "modules/guest-trial.js"
       - "logo-studio.js"
       - "index.html"
       - "tests/logo-studio.test.mjs"
+      - "tests/logo-engine.test.mjs"
       - ".github/workflows/logo-studio-tests.yml"
   push:
     branches: [main, feat/navi-native-vector-logo]
@@ -32,6 +34,6 @@ jobs:
         with:
           node-version: 22
       - name: Check logo studio JavaScript syntax
-        run: node --check modules/logo.js && node --check modules/guest-trial.js && node --check logo-studio.js
+        run: node --check modules/logo.js && node --check modules/logo-engine.js && node --check modules/guest-trial.js && node --check logo-studio.js
       - name: Run logo studio regression tests
-        run: node --test tests/logo-studio.test.mjs tests/guest-trial.test.mjs
+        run: node --test tests/logo-studio.test.mjs tests/logo-engine.test.mjs tests/guest-trial.test.mjs
