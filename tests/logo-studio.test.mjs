@@ -27,6 +27,7 @@ const INPUT = {
 function makeDesign() {
   return {
     brandCore: "هویتی شنیداری و خلاق",
+    designIdea: "پیوند صدا و خلاقیت در یک نشان اختصاصی",
     strategy: "سه مسیر مستقل با تکیه بر هویت برند و موج صوتی.",
     designBriefEnglish: "Create a distinctive Persian creative-studio identity. Build a compact sound-inspired symbol with custom geometry, confident Persian typography, balanced negative space, and the exact gold and white palette.",
     concepts: [
@@ -136,7 +137,7 @@ function makeGeminiResponse(plan = makeDesign()) {
   }), { status: 200, headers: { "Content-Type": "application/json" } });
 }
 
-test("NAVI writes an English brief and three sanitized HTML/CSS logo designs in one Gemini call", async () => {
+test("NAVI writes a professional creative brief before building three sanitized HTML/CSS logo designs", async () => {
   const originalFetch = globalThis.fetch;
   const db = new FakeD1();
   let geminiCalls = 0;
@@ -151,7 +152,7 @@ test("NAVI writes an English brief and three sanitized HTML/CSS logo designs in 
       const payload = await generated.json();
       const planned = JSON.parse(payload.candidates[0].content.parts[0].text);
       return new Response(JSON.stringify({
-        candidates: [{ content: { parts: [{ text: JSON.stringify({ blueprints: planned.concepts }) }] } }]
+        candidates: [{ content: { parts: [{ text: JSON.stringify({ brandCore: planned.brandCore, designIdea: planned.designIdea, strategy: planned.strategy, designBriefEnglish: planned.designBriefEnglish, blueprints: planned.concepts }) }] } }]
       }), { status: 200, headers: { "Content-Type": "application/json" } });
     }
     return makeGeminiResponse();
@@ -167,7 +168,7 @@ test("NAVI writes an English brief and three sanitized HTML/CSS logo designs in 
     assert.equal(response.status, 200);
     assert.equal(result.success, true);
     assert.equal(result.concepts.length, 3);
-    assert.equal(geminiCalls, 2, "NAVI first plans visual construction, then builds the HTML/CSS designs");
+    assert.equal(geminiCalls, 2, "NAVI first writes its creative brief and visual blueprint, then builds the HTML/CSS designs");
     assert.match(sentPrompts[0], /senior identity concept architect/i);
     assert.match(sentPrompts[0], /geometryRecipe/i);
     assert.match(sentPrompts[0], /exactly 3 objects/i);
@@ -225,6 +226,10 @@ test("NAVI writes an English brief and three sanitized HTML/CSS logo designs in 
     assert.match(sentPrompt, /{{BRAND_NAME}}/i);
     assert.match(sentPrompt, /one valid JSON object/i);
     assert.equal(result.planning.method, "navi-visual-blueprint-then-html-css-build");
+    assert.match(sentPrompts[0], /professional art-direction brief/i);
+    assert.match(sentPrompts[1], /NAVI CREATIVE BRIEF \(PRE-DESIGN, MANDATORY\)/);
+    assert.match(sentPrompts[1], /shopping bag, handbag, luggage, tote/i);
+    assert.match(sentPrompts[0], /A concise professional art-direction brief/);
     assert.equal(result.planning.extraModelCalls, 1);
     assert.equal(result.planning.visualBlueprints.length, 3);
     assert.ok(result.planning.visualBlueprints.every(item => item.geometryRecipe && item.silhouette && item.objectCues.length >= 2 && item.signatureFeature && item.recognitionRisk));
@@ -786,7 +791,7 @@ test("Logo Studio lets the client delegate ideation to NAVI or supply a binding 
   assert.ok(backend.includes('data.designMode === "custom" ? data.designPrompt : ""'));
   assert.ok(backend.includes("IDEA OWNERSHIP — CLIENT MODE"));
   assert.ok(backend.includes("IDEA OWNERSHIP — NAVI MODE"));
-  assert.ok(backend.includes("designIdea: safeText(plan.designIdea, 320)"));
+  assert.ok(backend.includes("designIdea: naviCreativeBrief.designIdea"));
   assert.ok(ui.includes("planning.designIdea"));
 });
 
