@@ -16,7 +16,7 @@ test("Story Studio routes NAVI design responses to a visual renderer, not chat",
 test("Story Studio renders vertical slides and exports PNG locally", () => {
   assert.match(app, /canvas\.width=Math\.round\(w\*scale\); canvas\.height=Math\.round\(h\*scale\)/);
   assert.match(app, /drawStorySlide\(exportCanvas,slide,index,plan\.slides\.length,1\)/);
-  assert.match(app, /canvas\.toBlob/);
+  assert.match(app, /exportCanvas\.toBlob/);
   assert.match(app, /nava-story-/);
   assert.match(html, /id="storyVisualSlides"/);
   assert.match(css, /\.story-visual-canvas/);
