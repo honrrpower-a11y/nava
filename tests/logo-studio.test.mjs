@@ -168,7 +168,7 @@ test("NAVI writes a professional creative brief before building three sanitized 
     assert.equal(response.status, 200);
     assert.equal(result.success, true);
     assert.equal(result.concepts.length, 3);
-    assert.equal(geminiCalls, 2, "NAVI first writes its creative brief and visual blueprint, then builds the HTML/CSS designs");
+    assert.equal(geminiCalls, 1, "NAVI plans once; the structured HTML/CSS engine performs the actual construction");
     assert.match(sentPrompts[0], /senior identity concept architect/i);
     assert.match(sentPrompts[0], /geometryRecipe/i);
     assert.match(sentPrompts[0], /exactly 3 objects/i);
@@ -178,53 +178,9 @@ test("NAVI writes a professional creative brief before building three sanitized 
     assert.match(sentPrompts[0], /signatureFeature/i);
     assert.match(sentPrompts[0], /recognitionRisk/i);
     assert.match(sentPrompts[0], /plain dome with parallel bars/i);
-    assert.match(sentPrompt, /APPROVED VISUAL CONSTRUCTION BLUEPRINT/i);
-    assert.match(sentPrompt, /diagnostic object cues, spatial relationships, negative space, signatureFeature and recognitionRisk correction/i);
-    assert.match(sentPrompt, /CRAFT BENCHMARK — STUDY THE HAND-BUILT NAVA HTML\/CSS LAB AS A CRAFT REFERENCE ONLY/i);
-    assert.match(sentPrompt, /DESIGN BEFORE DECORATION/i);
-    assert.match(sentPrompt, /PHASE 6D — SIGNATURE IDENTITY, NOT GENERIC ICON/i);
-    assert.match(sentPrompt, /PHASE 6E — BLIND-READ EVIDENCE/i);
-    assert.match(sentPrompt, /same level of design authorship/i);
-    assert.match(sentPrompt, /signatureFeature/i);
-    assert.match(sentPrompt, /recognitionRisk/i);
-    assert.match(sentPrompt, /PHASE 1 — DISCOVERY/i);
-    assert.match(sentPrompt, /PHASE 2 — CATEGORY RESEARCH/i);
-    assert.match(sentPrompt, /PHASE 4A — IDENTITY COHESION/i);
-    assert.match(sentPrompt, /2–4 decision axes/i);
-    assert.match(sentPrompt, /PHASE 4B — ANTI-DEFAULT REFLEX/i);
-    assert.match(sentPrompt, /PHASE 4C — BRIEF TRACEABILITY/i);
-    assert.match(sentPrompt, /PHASE 4D — CLIENT BRIEF DOMINANCE/i);
-    assert.match(sentPrompt, /PHASE 4E — ANCHOR-TO-FORM GUIDANCE/i);
-    assert.match(sentPrompt, /PHASE 4F — SPATIAL RELATIONSHIPS/i);
-    assert.match(sentPrompt, /Use actual placement, overlap, clipping and stacking only where the idea needs them/i);
-    assert.match(sentPrompt, /first solve the recognizable idea and outer silhouette in monochrome/i);
-    assert.match(sentPrompt, /anchorMap explaining where each important idea is visibly expressed/i);
-    assert.match(sentPrompt, /main \.navi-symbol silhouette itself or to a real styled child layer/i);
-    assert.match(sentPrompt, /exact client idea and relationships/i);
-    assert.match(sentPrompt, /brief fidelity first/i);
-    assert.match(sentPrompt, /actual \.navi-symbol/i);
-    assert.match(sentPrompt, /symbolConstruction/i);
-    assert.match(sentPrompt, /HTML\/CSS symbol itself MUST visibly implement/i);
-    assert.match(sentPrompt, /at least one concept must avoid the usual defaults/i);
-    assert.match(sentPrompt, /mechanism, expressionMove, differsBy, axes/i);
-    assert.match(sentPrompt, /8–12 genuinely different/i);
-    assert.match(sentPrompt, /different central thesis, outer silhouette/i);
-    assert.match(sentPrompt, /16 px/i);
-    assert.match(sentPrompt, /HTML and CSS are the only design and rendering medium/i);
-    assert.match(sentPrompt, /HTML and CSS are the only design and rendering medium/i);
-    assert.match(sentPrompt, /one carefully shaped silhouette when that is sufficient/i);
-    assert.match(sentPrompt, /For Z specifically, preserve a clear top horizontal/i);
-    assert.match(sentPrompt, /artboard\/canvas background must be white or a light neutral/i);
-    assert.match(sentPrompt, /Never assign the root a fixed 1000px width or height/i);
-    assert.match(sentPrompt, /320×320 mobile preview/i);
-    assert.match(sentPrompt, /crooked stray strokes/i);
-    assert.match(sentPrompt, /Add named child layers only where needed to construct the idea/i);
-    assert.match(sentPrompt, /SVG and all SVG-derived tags or attributes are forbidden/i);
-    assert.match(sentPrompt, /CSS clip-path polygons/i);
-    assert.match(sentPrompt, /A line-based mark is acceptable only when its strokes form a complete, recognizable and intentional symbol/i);
-    assert.match(sentPrompt, /Navy or blue may still be used as an intentional brand-mark/i);
-    assert.match(sentPrompt, /{{BRAND_NAME}}/i);
-    assert.match(sentPrompt, /one valid JSON object/i);
+    assert.equal(geminiCalls, 1, "one planning call is sufficient; the deterministic engine constructs the logo geometry");
+    assert.match(sentPrompt, /A concise professional art-direction brief/);
+    assert.match(sentPrompt, /Do not write HTML, CSS, SVG/i);
     assert.equal(result.planning.method, "navi-visual-blueprint-then-structured-html-css-build");
     assert.equal(result.planning.geometryEngine, "structured-html-css-grammar");
     assert.match(sentPrompts[0], /professional art-direction brief/i);
@@ -629,8 +585,7 @@ test("NAVI reports truncated model output and refunds the reserved trial without
     const body = JSON.parse(options.body);
     assert.equal(body.generationConfig.thinkingConfig.thinkingLevel, "HIGH");
     assert.equal("temperature" in body.generationConfig, false);
-    if (body.generationConfig.maxOutputTokens === 8192) return makeGeminiResponse();
-    assert.equal(body.generationConfig.maxOutputTokens, 32768);
+    assert.equal(body.generationConfig.maxOutputTokens, 8192);
     return new Response(JSON.stringify({
       candidates: [{ finishReason: "MAX_TOKENS", content: { parts: [{ text: '{"concepts":' }] } }],
       usageMetadata: { candidatesTokenCount: 32768 }
@@ -647,7 +602,7 @@ test("NAVI reports truncated model output and refunds the reserved trial without
     assert.equal(response.status, 502);
     assert.equal(result.code, "MODEL_OUTPUT_TRUNCATED");
     assert.match(result.error, /پاسخ طراحی ناقص/);
-    assert.equal(calls, 2, "the planner succeeds once; the truncated builder response is not retried as another stage");
+    assert.equal(calls, 1, "the single planning response is rejected when truncated");
     assert.equal(db.visitorUsed, 0);
     assert.equal([...db.reservations.values()][0].status, "refunded");
   } finally {
@@ -1244,7 +1199,7 @@ test("NAVI retries a transient Gemini service failure once before returning a lo
     const result = await response.json();
     assert.equal(response.status, 200, JSON.stringify(result));
     assert.equal(result.success, true);
-    assert.equal(calls, 3, "planner retry plus one successful planner/build sequence");
+    assert.equal(calls, 2, "the single planning request is retried once after a transient service error");
     assert.equal(db.visitorUsed, 1);
   } finally {
     globalThis.fetch = originalFetch;
