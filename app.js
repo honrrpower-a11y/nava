@@ -977,7 +977,7 @@ window.sendOfficeNaviRequest = function({ message, context } = {}) {
     }
     updateNaviAssistantContext(service, context);
     setNaviWidgetOpen(true, false);
-    status.textContent = "درخواست تولید محتوا ارسال شد؛ پس از دریافت پاسخ، انتقال بسته کامل به استوری‌ساز در دسترس قرار می‌گیرد.";
+    status.textContent = "درخواست تولید محتوا ارسال شد؛ پس از دریافت پاسخ، انتقال خروجی به استودیوی مرتبط در دسترس قرار می‌گیرد.";
     sendMessageToNavi({
       messageOverride: message,
       serviceOverride: service,
