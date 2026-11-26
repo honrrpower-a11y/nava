@@ -12,7 +12,7 @@ test("Content Studio delegates unspecified choices to NAVI", () => {
     assert.ok(select[1].includes("<option selected>تشخیص هوشمند NAVI</option>"));
   }
   assert.ok(app.includes("هرجا مقدار «تشخیص هوشمند NAVI» ثبت شده، خودت"));
-  assert.ok(html.includes("app.js?v=content-studio-quality-gate-20261127-3"));
+  assert.ok(html.includes("app.js?v=content-studio-quality-gate-20261127-4"));
   assert.ok(app.includes("فقط دستورالعمل مربوط به قالب نهایی اعلام‌شده را اجرا کن"));
 });
 
@@ -39,7 +39,7 @@ test("NAVI performs a silent quality review before showing final content", () =>
   assert.ok(app.includes("تولید کپشن نهایی را متوقف کن"));
   assert.ok(app.includes("هرگز جای‌خالی یا داده ساختگی را به‌عنوان خروجی نهایی تحویل نده"));
   assert.ok(app.includes("بازبینی نهایی ضدجای‌خالی"));
-  assert.ok(html.includes("app.js?v=content-studio-quality-gate-20261127-3"));
+  assert.ok(html.includes("app.js?v=content-studio-quality-gate-20261127-4"));
 });
 
 
@@ -54,5 +54,5 @@ test("Content Studio silently proofreads Persian copy and validates hashtags", (
   assert.ok(app.includes("«نبردی حساس»"));
   assert.ok(app.includes("اعداد واقعیِ مستقل"));
 
-  assert.ok(html.includes("app.js?v=content-studio-quality-gate-20261127-3"));
+  assert.ok(html.includes("app.js?v=content-studio-quality-gate-20261127-4"));
 });
