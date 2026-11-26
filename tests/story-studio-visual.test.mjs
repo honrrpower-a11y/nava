@@ -7,7 +7,7 @@ const html = readFileSync(new URL("../index.html", import.meta.url), "utf8");
 const css = readFileSync(new URL("../style.css", import.meta.url), "utf8");
 
 test("Story Studio routes NAVI design responses to a visual renderer, not chat", () => {
-  assert.match(app, /storyPlan\\s*:\\s*true/);
+  assert.match(app, /storyPlan\s*:\s*true/);
   assert.match(app, /detail: \{ service: selectedService, reply, storyPlan: true/);
   assert.match(app, /nava\.story\.plan\.v1/);
   assert.match(app, /renderNaviStoryPlan\(parseNaviStoryPlan/);
