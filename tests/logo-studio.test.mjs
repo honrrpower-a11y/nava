@@ -1260,3 +1260,83 @@ test("NAVI exposes per-concept visual refinement rejection diagnostics to Logo S
   assert.ok(ui.includes("علت دقیق:"));
   assert.ok(ui.includes('["علت رد اصلاح", concept.visualReviewIssue]'));
 });
+
+
+test("Logo Studio re-renders revised HTML/CSS and accepts only concepts that pass a final image-only audit", () => {
+  const ui = readFileSync(new URL("../logo-studio.js", import.meta.url), "utf8");
+  const backend = readFileSync(new URL("../modules/logo.js", import.meta.url), "utf8");
+  assert.ok(ui.includes("async function visuallyAuditFinalConcepts"));
+  assert.ok(ui.includes('action: "visual-final-audit"'));
+  assert.ok(ui.includes("capturePreviewDataUrl(frame, 640)"));
+  assert.ok(ui.includes("const refinedCandidates = visualReview.concepts.filter"));
+  assert.ok(ui.includes('concept.visualReview === "accepted"'));
+  assert.ok(ui.includes("داوری مستقل تصویر نهایی"));
+  assert.ok(backend.includes("async function auditFinalLogoConcepts"));
+  assert.ok(backend.includes("TWO STAGES IN ORDER"));
+  assert.ok(backend.includes("FINAL IMAGE"));
+  assert.ok(backend.includes("LOGO_FINAL_VISUAL_QUALITY_LOW"));
+  assert.ok(backend.includes('input?.action === "visual-final-audit"'));
+});
+
+test("NAVI final visual audit judges the revised rendered PNG and rejects weak final designs without consuming another trial", async () => {
+  const originalFetch = globalThis.fetch;
+  const db = new FakeD1();
+  let sentPayload;
+  try {
+    globalThis.fetch = async () => makeGeminiResponse();
+    const initialResponse = await handleLogoRoute({
+      request: makeRequest(),
+      env: { NAVA_DB: db, NAVI_SESSION_SECRET: "test-secret-key", GEMINI_API_KEY: "test-gemini-key" },
+      origin: ORIGIN,
+      corsOrigin: ORIGIN
+    });
+    const initial = await initialResponse.json();
+    assert.equal(initialResponse.status, 200);
+    assert.ok(initial.reviewToken);
+    assert.equal(db.visitorUsed, 1);
+
+    globalThis.fetch = async (_url, options) => {
+      sentPayload = JSON.parse(options.body);
+      return new Response(JSON.stringify({
+        candidates: [{
+          content: { parts: [{ text: JSON.stringify({
+            concepts: [
+              { index: 1, unaidedRead: "کتاب باز با دو صفحه مشخص", likelyMisread: "بال‌های باز", firstRead: "کتاب باز", semanticEvidence: ["دو صفحه متقارن با شیار مرکزی", "لبه‌های مستقل صفحات"], recognitionScore: 9, briefFidelityScore: 9, craftScore: 8 },
+              { index: 2, unaidedRead: "ذوزنقه شبیه کوره", likelyMisread: "ظرف یا کوره", firstRead: "فرم هندسی مبهم", semanticEvidence: ["سطح چندضلعی", "لبه‌های مورب"], recognitionScore: 4, briefFidelityScore: 3, craftScore: 7 }
+            ]
+          }) }] }
+        }]
+      }), { status: 200, headers: { "Content-Type": "application/json" } });
+    };
+    const response = await handleLogoRoute({
+      request: makeRequest({
+        ...INPUT,
+        action: "visual-final-audit",
+        reviewToken: initial.reviewToken,
+        concepts: [
+          { previewImage: "data:image/png;base64,aGVsbG8=" },
+          { previewImage: "data:image/png;base64,d29ybGQ=" }
+        ]
+      }),
+      env: { NAVA_DB: db, NAVI_SESSION_SECRET: "test-secret-key", GEMINI_API_KEY: "test-gemini-key" },
+      origin: ORIGIN,
+      corsOrigin: ORIGIN
+    });
+    const result = await response.json();
+    assert.equal(response.status, 200, JSON.stringify(result));
+    assert.equal(result.success, true);
+    assert.equal(result.visualReview.method, "final-render-blind-read-quality-gate");
+    assert.equal(result.visualReview.acceptedCount, 1);
+    assert.equal(result.concepts[0].visualReview, "accepted");
+    assert.equal(result.concepts[1].visualReview, "rejected");
+    assert.equal(result.concepts[1].visualReviewIssue, "LOGO_FINAL_VISUAL_QUALITY_LOW");
+    const parts = sentPayload.contents[0].parts;
+    const imageIndexes = parts.map((part, index) => part.inlineData ? index : -1).filter(index => index >= 0);
+    const briefIndex = parts.findIndex(part => part.text?.includes('"brandName":"نوا"'));
+    assert.equal(imageIndexes.length, 2);
+    assert.ok(imageIndexes[0] < briefIndex && imageIndexes[1] < briefIndex, "blind visual reading must be presented before the client brief");
+    assert.equal(db.visitorUsed, 1, "final visual audit must not reserve or consume another guest trial");
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
