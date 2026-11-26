@@ -427,57 +427,63 @@
         previewImage
       };
     }));
-    // Review one rendered concept per request. A single oversized or malformed
-    // batch must not cancel the visual review of every other concept.
-    const reviewed = [];
+    // First review all concepts together to minimize Gemini calls. Retry only rejected
+    // concepts individually so a single weak route cannot cancel the others.
+    const reviewed = new Array(concepts.length);
     const rejectionReasons = [];
     let refinedCount = 0;
-    for (let index = 0; index < renderedConcepts.length; index += 1) {
+    const postReview = async (batch, attempt, issue = "") => {
+      const response = await fetch("https://nava-music-api.honrrpower.workers.dev/logo/generate", {
+        method: "POST",
+        headers,
+        cache: "no-store",
+        body: JSON.stringify({
+          ...brief,
+          action: "visual-refine",
+          reviewToken,
+          revisionAttempt: attempt,
+          previousReviewIssue: issue,
+          concepts: batch
+        })
+      });
+      const result = await response.json();
+      if (!response.ok || !result.success ||
+          !Array.isArray(result.concepts) || result.concepts.length !== batch.length) {
+        throw new Error(result.code || ("HTTP_" + response.status));
+      }
+      return result.concepts;
+    };
+    let firstPass = [];
+    let firstPassError = "";
+    try {
+      firstPass = await postReview(renderedConcepts, 1);
+    } catch (error) {
+      firstPassError = String(error?.message || "LOGO_REVIEW_NETWORK_ERROR");
+    }
+    for (let index = 0; index < concepts.length; index += 1) {
       const source = concepts[index];
-      let accepted = null;
-      let lastCode = "LOGO_REVIEW_REJECTED";
-      for (let attempt = 1; attempt <= 2 && !accepted; attempt += 1) {
+      let candidate = firstPass[index] || null;
+      if (candidate?.visualReview !== "refined") {
+        const issue = candidate?.visualReviewIssue || firstPassError || "LOGO_REVIEW_REJECTED";
         try {
-          const response = await fetch("https://nava-music-api.honrrpower.workers.dev/logo/generate", {
-            method: "POST",
-            headers,
-            cache: "no-store",
-            body: JSON.stringify({
-              ...brief,
-              action: "visual-refine",
-              reviewToken,
-              revisionAttempt: attempt,
-              previousReviewIssue: attempt === 2 ? lastCode : "",
-              concepts: [renderedConcepts[index]]
-            })
-          });
-          const result = await response.json();
-          if (!response.ok || !result.success ||
-              !Array.isArray(result.concepts) || result.concepts.length !== 1) {
-            lastCode = result.code || ("HTTP_" + response.status);
-            continue;
-          }
-          const concept = result.concepts[0];
-          if (concept.visualReview === "refined") {
-            accepted = concept;
-            refinedCount += 1;
-            break;
-          }
-          lastCode = concept.visualReviewIssue || "LOGO_REVIEW_REJECTED";
+          const retry = await postReview([renderedConcepts[index]], 2, issue);
+          candidate = retry[0] || candidate;
         } catch (error) {
-          const match = String(error?.message || "").match(/\[([A-Z0-9_]+)\]/);
-          lastCode = match?.[1] || "LOGO_REVIEW_NETWORK_ERROR";
+          candidate = candidate || null;
         }
       }
-      if (accepted) reviewed.push(accepted);
-      else {
-        rejectionReasons.push({ index: index + 1, code: lastCode });
-        reviewed.push({ ...source, visualReview: "rejected", visualReviewIssue: lastCode });
+      if (candidate?.visualReview === "refined") {
+        reviewed[index] = candidate;
+        refinedCount += 1;
+      } else {
+        const code = candidate?.visualReviewIssue || firstPassError || "LOGO_REVIEW_REJECTED";
+        rejectionReasons.push({ index: index + 1, code });
+        reviewed[index] = { ...source, visualReview: "rejected", visualReviewIssue: code };
       }
     }
     return {
       success: true,
-      visualReview: { method: "render-review-refine-per-concept", reviewedCount: reviewed.length, refinedCount, rejectionReasons },
+      visualReview: { method: "render-review-refine-batched", reviewedCount: reviewed.length, refinedCount, rejectionReasons },
       concepts: reviewed
     };
   }
@@ -557,13 +563,33 @@
       if (!Array.isArray(result.concepts) || result.concepts.length < 1 || result.concepts.length > 3) {
         throw new Error("پاسخ موتور طراحی معتبر نیست؛ طرح قابل‌قبولی دریافت نشد.");
       }
-      const finalConcepts = result.concepts;
-      // The structured HTML/CSS engine has already completed its safety and
-      // structural checks. Show the usable designs immediately; image-model
-      // review is optional and must never block delivery or erase generated work.
-      mountConcepts(finalConcepts, brief, result.planning);
+      const initialConcepts = result.concepts;
+      status.textContent = "طرح‌های اولیه ساخته شدند؛ ناوی اکنون تصویر واقعی هر لوگو را بدون دیدن نام و توضیحات بررسی و در صورت نیاز بازطراحی می‌کند…";
+      const reviewFrames = prepareReviewFrames(initialConcepts, brief);
+      let visualResult;
+      try {
+        visualResult = await visuallyRefineConcepts(
+          initialConcepts, brief, result.reviewToken, headers, reviewFrames
+        );
+      } finally {
+        clearReviewStage();
+        frames = [];
+      }
+      const approvedConcepts = visualResult.concepts.filter(concept => concept.visualReview === "refined");
+      if (!approvedConcepts.length) {
+        if (result.reservationId) {
+          await fetch("https://nava-music-api.honrrpower.workers.dev/logo/generate", {
+            method: "POST", headers, cache: "no-store",
+            body: JSON.stringify({ action: "release-trial", reservationId: result.reservationId })
+          }).catch(() => {});
+        }
+        throw new Error("هیچ‌یک از لوگوها در بازبینی تصویری مستقل به کیفیت و تطابق لازم نرسید؛ طرح ضعیف نمایش داده نشد و فرصت آزمایشی آزاد شد. لطفاً ایده را دقیق‌تر کن یا دوباره تلاش کن.");
+      }
+      mountConcepts(approvedConcepts, brief, result.planning);
       empty.hidden = true;
-      status.textContent = "سه مسیر لوگو با موتور HTML/CSS ساخته شد. می‌توانی طرح‌ها را ببینی، ویرایش کنی و خروجی بگیری؛ بازبینی هوش مصنوعی مانع نمایش یا تحویل طرح نیست.";
+      status.textContent = approvedConcepts.length === initialConcepts.length
+        ? "ناوی هر سه لوگو را از روی تصویر واقعی بازبینی و بازطراحی کرد؛ فقط نسخه‌های تأییدشده نمایش داده می‌شوند."
+        : approvedConcepts.length + " طرح از " + initialConcepts.length + " طرح پس از بازطراحی و بازبینی تصویری تأیید شد؛ طرح‌های ضعیف نمایش داده نشدند.";
       results.scrollIntoView({ behavior: "smooth", block: "start" });
     } catch (error) {
       status.textContent = error?.message || "ارتباط با موتور طراحی برقرار نشد.";
