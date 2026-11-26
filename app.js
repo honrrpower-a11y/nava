@@ -385,28 +385,46 @@ function setNavaAccessGate(active) {
 
 function syncNaviWidgetPlacement(pageId) {
   if (!naviWidgetPanel) return;
-  // Keep the single NAVI panel in its global widget shell. Studio pages may
-  // offer a local shortcut to open it, but never re-parent or auto-open it.
-  const widgetRoot = document.getElementById("naviAssistantWidget");
-  if (widgetRoot && naviWidgetPanel.parentElement !== widgetRoot) {
-    widgetRoot.appendChild(naviWidgetPanel);
+  const mount = document.getElementById("officeNaviInlineMount");
+  const homeSlot = document.getElementById("naviWidgetHomeSlot");
+  const reopen = document.getElementById("officeNaviReopen");
+  const isOffice = pageId === "officePage" && mount;
+
+  if (isOffice) {
+    const enteringOffice = naviWidgetPanel.parentElement !== mount;
+    if (enteringOffice) mount.appendChild(naviWidgetPanel);
+    naviWidgetPanel.classList.add("is-inline");
+    if (naviWidgetToggle) {
+      naviWidgetToggle.hidden = true;
+      naviWidgetToggle.setAttribute("aria-expanded", String(!naviWidgetPanel.hidden));
+    }
+    if (naviWidgetClose) naviWidgetClose.hidden = false;
+    if (naviWelcomeBubble) naviWelcomeBubble.hidden = true;
+    document.body.classList.remove("navi-widget-open");
+    if (enteringOffice) setNaviWidgetOpen(true, false);
+    else if (reopen) reopen.hidden = !naviWidgetPanel.hidden;
+    return;
   }
-  naviWidgetPanel.classList.remove("is-inline");
-  if (naviWidgetClose) naviWidgetClose.hidden = false;
-  if (naviWidgetToggle) {
-    naviWidgetToggle.hidden = !naviWidgetPanel.hidden || pageId === "officePage";
-    naviWidgetToggle.setAttribute("aria-expanded", String(!naviWidgetPanel.hidden));
+
+  if (naviWidgetPanel.parentElement === mount || naviWidgetPanel.classList.contains("is-inline")) {
+    setNaviWidgetOpen(false);
+    naviWidgetPanel.classList.remove("is-inline");
+    if (homeSlot?.parentNode) homeSlot.parentNode.insertBefore(naviWidgetPanel, homeSlot.nextSibling);
+    if (naviWidgetToggle) {
+      naviWidgetToggle.hidden = false;
+      naviWidgetToggle.setAttribute("aria-expanded", "false");
+    }
+    if (naviWidgetClose) naviWidgetClose.hidden = false;
+    if (reopen) reopen.hidden = true;
+    document.body.classList.remove("navi-widget-open");
   }
-  const officeReopen = document.getElementById("officeNaviReopen");
-  if (officeReopen) officeReopen.hidden = pageId !== "officePage" || !naviWidgetPanel.hidden;
-  if (naviWelcomeBubble && pageId !== "homePage") naviWelcomeBubble.hidden = true;
 }
 
 function showPage(pageId) {
   if (!Array.from(pages).some(page => page.id === pageId)) return;
   if (navaAccessGateActive && pageId !== "homePage") return;
   saveNavaActivePage(pageId);
-  // Page changes must not interrupt NAVI or create a second assistant instance.
+  if (naviWidgetPanel && !naviWidgetPanel.hidden && document.querySelector(".page.active")?.id !== "officePage") setNaviWidgetOpen(false);
   pages.forEach(page => page.classList.toggle("active", page.id === pageId));
   syncNaviWidgetPlacement(pageId);
   navButtons.forEach(button => button.classList.toggle("active", button.dataset.page === pageId));
@@ -626,7 +644,6 @@ function restoreNavaReturnContext() {
   }
   const targetPage = document.getElementById(pending.pageId);
   if (!targetPage || !targetPage.classList.contains("page")) return false;
-  showPage(pending.pageId);
   if (Array.isArray(pending.fields)) {
     for (const saved of pending.fields) {
       if (!saved || typeof saved.id !== "string") continue;
@@ -655,20 +672,17 @@ function setNaviWidgetOpen(isOpen, focusComposer = false) {
   syncNaviWidgetMode();
 
   if (isOpen && !getNaviToken()) captureNavaReturnContext();
-  // NAVI is one persistent, viewport-level assistant across every studio.
-  naviWidgetPanel.classList.remove("is-inline");
-  if (isOpen) positionNaviWidgetOnOrbit();
+  const inlineOffice = naviWidgetPanel.classList.contains("is-inline");
+  if (isOpen && !inlineOffice) positionNaviWidgetOnOrbit();
 
   naviWidgetPanel.hidden = !isOpen;
-  const activePageId = document.querySelector(".page.active")?.id || "";
-  naviWidgetToggle.hidden = isOpen || activePageId === "officePage";
+  naviWidgetToggle.hidden = inlineOffice || isOpen;
   naviWidgetPanel.classList.toggle("is-open", isOpen);
   naviWidgetPanel.classList.toggle("is-auth-entry", isOpen && !getNaviToken());
-  document.body.classList.toggle("navi-widget-open", isOpen);
+  document.body.classList.toggle("navi-widget-open", isOpen && !inlineOffice);
   naviWidgetToggle.setAttribute("aria-expanded", isOpen ? "true" : "false");
   const officeReopen = document.getElementById("officeNaviReopen");
-  const isOfficePage = activePageId === "officePage";
-  if (officeReopen) officeReopen.hidden = !isOfficePage || isOpen;
+  if (officeReopen) officeReopen.hidden = !inlineOffice || isOpen;
   const studioMode = document.body.classList.contains("navi-studio-context");
   naviWidgetToggle.setAttribute("aria-label",
     isOpen ? "بستن همراه ناوی" :
@@ -694,10 +708,12 @@ if (naviWidgetToggle) {
 }
 function closeNaviWidgetRespectingAccessChoice() {
   const hasSession = Boolean(getNaviToken());
+  const inlineOffice = Boolean(naviWidgetPanel?.classList.contains("is-inline"));
   setNaviWidgetOpen(false);
 
-  const isOfficePage = document.querySelector(".page.active")?.id === "officePage";
-  if (!hasSession && !isOfficePage) {
+  // In Office, closing the assistant only collapses its panel; it must never
+  // cover the file workspace with the global access-choice dialog.
+  if (!hasSession && !inlineOffice) {
     document.querySelector(".nava-access-panel")?.classList.remove("is-dismissed");
     setNavaAccessGate(true);
   }
@@ -1730,7 +1746,8 @@ async function saveNaviHistoryMessage(messageId, button) {
 
   if (!token) {
     clearNaviSession();
-    showNaviReply("نشست ورودت پایان یافته است. لطفاً دوباره وارد شو.");
+    if (options.videoPlan === true) window.dispatchEvent(new CustomEvent("nava:navi-error", { detail: { message: "نشست ورود ناوی معتبر نیست؛ دوباره وارد شو." } }));
+    else showNaviReply("نشست ورودت پایان یافته است. لطفاً دوباره وارد شو.");
     return;
   }
 
@@ -4040,7 +4057,7 @@ async function sendMessageToNavi(options = {}) {
 
   const selectedImage = options.videoPlan === true ? null : (naviImageInput?.files?.[0] || null);
   const visionImages = options.videoPlan === true && Array.isArray(options.images) ? options.images.slice(0, 6) : [];
-  if (options.videoPlan === true && Array.isArray(options.images) && options.images.length > 6) { showNaviReply("برای تحلیل ویدئو حداکثر ۶ تصویر ارسال کن."); window.dispatchEvent(new CustomEvent("nava:navi-error",{detail:{message:"تعداد تصاویر بیش از حد مجاز است."}})); return; }
+  if (options.videoPlan === true && Array.isArray(options.images) && options.images.length > 6) { window.dispatchEvent(new CustomEvent("nava:navi-error",{detail:{message:"تعداد تصاویر بیش از حد مجاز است."}})); return; }
   let localImageContext = "";
   let visionImage = null;
   if (selectedImage) {
@@ -4067,8 +4084,8 @@ async function sendMessageToNavi(options = {}) {
       : "");
 
   if (!message) {
-    showNaviReply("لطفاً ابتدا پیامت را بنویس.");
-    userRequest.focus();
+    if (options.videoPlan === true) window.dispatchEvent(new CustomEvent("nava:navi-error", { detail: { message: "شرح درخواست ساخت ویدئو خالی است." } }));
+    else { showNaviReply("لطفاً ابتدا پیامت را بنویس."); userRequest.focus(); }
     return;
   }
 
@@ -4100,7 +4117,7 @@ async function sendMessageToNavi(options = {}) {
   if (naviSaveComposerMessage) naviSaveComposerMessage.checked = false;
   // Home chat owns a separate persistent thread. It must never reuse the
   // dashboard/Office thread selected in the shared NAVI workspace state.
-  let requestThreadId = isHomePage ? "" : naviActiveThreadId;
+  let requestThreadId = isHomePage || options.videoPlan === true ? "" : naviActiveThreadId;
 
   const contextLines = requestContext
     ? Object.entries(requestContext.context || {}).map(([key, value]) => key + ": " + value)
@@ -4155,11 +4172,12 @@ async function sendMessageToNavi(options = {}) {
   ].filter(Boolean).join("\n\n");
 
 
-  sendRequest.disabled = true;
-  sendRequest.textContent = "ناوی در حال پاسخ‌گویی...";
-
-  setNaviStatus("پیامت ارسال شد؛ ناوی در حال بررسی آن است...");
-  showNaviReply("در حال دریافت پاسخ از ناوی...");
+  if (options.videoPlan !== true) {
+    sendRequest.disabled = true;
+    sendRequest.textContent = "ناوی در حال پاسخ‌گویی...";
+    setNaviStatus("پیامت ارسال شد؛ ناوی در حال بررسی آن است...");
+    showNaviReply("در حال دریافت پاسخ از ناوی...");
+  }
 
   try {
     if (isHomePage) requestThreadId = await ensureHomeNaviThread();
@@ -4180,7 +4198,7 @@ async function sendMessageToNavi(options = {}) {
         threadId: requestThreadId,
         isolatedContext: isHomePage || options.videoPlan === true,
         saveToMemory: saveThisMessageToMemory,
-        history: isHomePage ? [] : naviHistory.slice(-NAVI_CONTEXT_MESSAGES),
+        history: isHomePage || options.videoPlan === true ? [] : naviHistory.slice(-NAVI_CONTEXT_MESSAGES),
         image: visionImage,
         images: options.videoPlan === true ? visionImages : undefined
       })
@@ -4204,9 +4222,7 @@ async function sendMessageToNavi(options = {}) {
     if (response.status === 401 || response.status === 403) {
       clearNaviSession();
 
-      showLoginError(
-        "نشست ناوی معتبر نیست یا پایان یافته است. دوباره وارد شو."
-      );
+      if (options.videoPlan !== true) showLoginError("نشست ناوی معتبر نیست یا پایان یافته است. دوباره وارد شو.");
 
       throw new Error("دسترسی تأیید نشد؛ لطفاً دوباره وارد شو.");
     }
@@ -4214,7 +4230,6 @@ async function sendMessageToNavi(options = {}) {
     if (!response.ok || !data.success) {
       if (options.videoPlan === true) {
         const failureMessage=String(data.error||data.diagnostic||"سرویس تحلیل چندتصویری NAVI پاسخ موفق نداد.").slice(0,260);
-        window.dispatchEvent(new CustomEvent("nava:navi-error",{detail:{message:failureMessage}}));
         throw new Error(failureMessage+(data.requestId?" | کد پیگیری: "+data.requestId:""));
       }
       if (selectedImage && localImageContext) {
@@ -4273,7 +4288,7 @@ async function sendMessageToNavi(options = {}) {
     }
 
     // Render the answer immediately. Secondary synchronization must not block chat.
-    const threadBeforeNaming = isHomePage ? null : naviThreads.find(item => item.thread_id === naviActiveThreadId);
+    const threadBeforeNaming = isHomePage || options.videoPlan === true ? null : naviThreads.find(item => item.thread_id === naviActiveThreadId);
     const shouldNameThread = !isHomePage && threadBeforeNaming && Number(threadBeforeNaming.message_count || 0) === 0;
     if (options.videoPlan === true) {
       // Only the explicit "design/build with NAVI" flow returns a structured
@@ -4282,7 +4297,7 @@ async function sendMessageToNavi(options = {}) {
         detail: { service: selectedService, reply, videoPlan: true, status: "" }
       });
       window.dispatchEvent(videoPlanEvent);
-      showNaviReply(videoPlanEvent.detail.status || "طرح ناوی دریافت شد؛ نتیجه اعمال را در پنل ساخت ویدئو ببین.");
+      // The video studio owns this task's progress and result panel; never render it in chat.
     } else {
       showNaviReply(reply);
       renderNaviNavigationSuggestion(data.navigation);
@@ -4310,9 +4325,11 @@ async function sendMessageToNavi(options = {}) {
       });
       throw renderError;
     }
-    userRequest.value = "";
-    if (!isHomePage) appendLocalNaviMessages(finalMessage, reply);
-    setNaviStatus("پاسخ ناوی دریافت شد.");
+    if (options.videoPlan !== true) {
+      userRequest.value = "";
+      if (!isHomePage) appendLocalNaviMessages(finalMessage, reply);
+      setNaviStatus("پاسخ ناوی دریافت شد.");
+    }
 
     const backgroundJobs = [];
     if (shouldNameThread) {
@@ -4321,7 +4338,7 @@ async function sendMessageToNavi(options = {}) {
         await loadNaviThreads();
       })());
     }
-    if (!isHomePage) backgroundJobs.push(loadNaviHistory({ silent: true }));
+    if (!isHomePage && options.videoPlan !== true) backgroundJobs.push(loadNaviHistory({ silent: true }));
 
     const memoryResult = data.memory && typeof data.memory === "object" ? data.memory : null;
     if (memoryResult?.manualSaved || memoryResult?.manualDuplicate || memoryResult?.manualSaveError) {
@@ -4332,7 +4349,7 @@ async function sendMessageToNavi(options = {}) {
           : memoryResult.manualSaveError);
     }
 
-    if (!isHomePage && !naviMemoryBusy) {
+    if (!isHomePage && options.videoPlan !== true && !naviMemoryBusy) {
       backgroundJobs.push((async () => {
         const refreshed = await loadNaviMemories(true);
         if (!refreshed || !memoryResult || !memoryResult.composerSaveRequested || memoryResult.commandRecognized) return;
@@ -4368,8 +4385,7 @@ async function sendMessageToNavi(options = {}) {
     if (options.videoPlan === true) {
       const reason=String(error?.message||"ارتباط با NAVI ناموفق بود.").slice(0,260);
       window.dispatchEvent(new CustomEvent("nava:navi-error",{detail:{message:reason}}));
-      showNaviReply("ساخت طرح ویدئو ناموفق بود: "+reason+"\nعکس‌ها و تحلیل محلی آن‌ها حفظ شده‌اند؛ دوباره تلاش کن.");
-      setNaviStatus("درخواست ویدئو ناموفق بود؛ امکان تلاش دوباره وجود دارد.");
+      // The video studio displays this failure in its own lower result panel.
       return;
     }
 
@@ -4408,7 +4424,7 @@ async function sendMessageToNavi(options = {}) {
     }
 
   } finally {
-    if (naviSessionVersion === requestVersion) {
+    if (naviSessionVersion === requestVersion && options.videoPlan !== true) {
       sendRequest.disabled = false;
       sendRequest.textContent = "ارسال پیام به ناوی";
     }
