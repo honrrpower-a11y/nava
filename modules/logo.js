@@ -505,7 +505,7 @@ async function designLogos(data, apiKey) {
     }
     const plannedConcepts = Array.isArray(blueprint?.concepts) ? blueprint.concepts :
       (Array.isArray(blueprint?.blueprints) ? blueprint.blueprints :
-      (Array.isArray(blueprint?.visualBlueprints) ? blueprint.visualBlueprints : null)));
+      (Array.isArray(blueprint?.visualBlueprints) ? blueprint.visualBlueprints : null));
     if (!plannedConcepts || plannedConcepts.length !== conceptCount) {
       throw validationError("LOGO_BLUEPRINT_COUNT", "NAVI did not return the requested number of visual construction blueprints.", "concept-planning");
     }
