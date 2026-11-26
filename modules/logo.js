@@ -1187,7 +1187,7 @@ export async function handleLogoRoute({ request, env, origin, corsOrigin }) {
       planning: {
         method: "navi-visual-blueprint-then-structured-html-css-build",
         geometryEngine: "structured-html-css-grammar",
-        geometryEngineNote: "NAVI owns the semantic brief and visual blueprints; deterministic subject-specific HTML/CSS components own the actual mark geometry. A generative code-revision pass is intentionally excluded so it cannot replace the constructed silhouette.",
+        geometryEngineNote: "NAVI authors the semantic blueprint, a constrained HTML/CSS engine creates the first render, and a separate image-grounded NAVI art-direction pass materially redesigns and scores the rendered mark before it can be shown.",
         brandCore: plan.brandCore,
         designIdea: plan.designIdea,
         strategy: plan.strategy,
