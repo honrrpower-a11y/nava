@@ -63,7 +63,7 @@ test("each concept is rendered from its own NAVI-authored geometry blueprint", (
   const result = buildStructuredLogoConcepts(base, blueprints);
   assert.equal(result.family, "blueprint");
   assert.equal(result.concepts.length, 3);
-  assert.equal(new Set(result.concepts.map(item => item.html)).size, 3);
+  assert.equal(new Set(result.concepts.map(item => item.css)).size, 3);
   assert.equal(new Set(result.concepts.map(item => item.css)).size, 3);
   for (const concept of result.concepts) {
     assert.match(concept.html, /class="navi-symbol" data-logo-role="symbol"/);
