@@ -727,7 +727,11 @@ test("Logo Studio builds a new card and a sandboxed HTML/CSS preview for every c
   assert.ok(source.includes("function makeFrame(concept, brief)"));
   assert.ok(source.includes("frame.__navaMarkup = previewDocument(concept, brief)"));
   assert.ok(source.includes("frame.srcdoc = frame.__navaMarkup"));
-  assert.ok(source.indexOf("results.append(card)") < source.indexOf("frame.srcdoc = frame.__navaMarkup"), "the preview iframe is initialized only after its card is mounted");
+  const mountStart = source.indexOf("function mountConcepts(concepts, brief, planning)");
+  const mountEnd = source.indexOf("function getSession()", mountStart);
+  const mountSource = source.slice(mountStart, mountEnd);
+  assert.ok(mountSource.indexOf("results.append(card)") < mountSource.indexOf("frame.srcdoc = frame.__navaMarkup"), "visible preview iframes are initialized only after their cards are mounted");
+  assert.ok(source.indexOf("function prepareReviewFrames(concepts, brief)") < source.indexOf("function mountConcepts(concepts, brief, planning)"), "hidden review frames are staged separately before accepted concepts are mounted");
   assert.ok(source.includes("function conceptCard(concept, index, brief)"));
   assert.ok(source.includes("results.append(card)"));
   assert.ok(source.includes("frame.className = \"logo-html-css-preview\""));
@@ -974,6 +978,9 @@ test("Logo Studio captures real renders and runs validated automatic visual refi
   assert.ok(ui.includes("async function visuallyRefineConcepts"));
   assert.ok(ui.includes('action: "visual-refine"'));
   assert.ok(ui.includes("capturePreviewDataUrl(frame, 640)"));
+  assert.ok(ui.includes("function prepareReviewFrames(concepts, brief)"), "real preview frames must exist before visual review starts");
+  assert.ok(ui.includes("prepareReviewFrames(finalConcepts, brief)"), "review staging must be prepared before capture");
+  assert.ok(ui.includes("clearReviewStage();"), "off-screen review frames must be removed after review");
   assert.ok(ui.includes("briefAlignment: concept.briefAlignment"), "visual review must retain the original concept brief traceability fields");
   assert.ok(ui.includes("result.reviewToken"));
   assert.ok(ui.includes("finalConcepts = visualReview.concepts"));

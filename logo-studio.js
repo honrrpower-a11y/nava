@@ -24,6 +24,7 @@
     fields.ideaPromptWrap.hidden = !custom;
   }
   let frames = [];
+  let reviewStage = null;
   let selectedConcept = "";
 
   const palettes = {
@@ -323,7 +324,33 @@
     return card;
   }
 
+  function clearReviewStage() {
+    if (reviewStage) reviewStage.remove();
+    reviewStage = null;
+  }
+
+  // Build private, off-screen browser frames before NAVI's visual review.
+  // The original flow tried to capture frames before mountConcepts() created
+  // them, so every first-pass review failed with a missing-frame error.
+  function prepareReviewFrames(concepts, brief) {
+    clearReviewStage();
+    reviewStage = document.createElement("div");
+    reviewStage.className = "logo-review-render-stage";
+    reviewStage.setAttribute("aria-hidden", "true");
+    reviewStage.style.cssText = "position:fixed;left:-10000px;top:0;width:320px;height:320px;display:block;visibility:hidden;pointer-events:none;overflow:hidden;z-index:-1";
+    frames = concepts.map(concept => {
+      const frame = makeFrame(concept, brief);
+      frame.style.cssText = "display:block;width:320px;height:320px;border:0";
+      frame.srcdoc = frame.__navaMarkup;
+      delete frame.__navaMarkup;
+      reviewStage.append(frame);
+      return frame;
+    });
+    document.body.append(reviewStage);
+  }
+
   function mountConcepts(concepts, brief, planning) {
+    clearReviewStage();
     results.replaceChildren();
     frames = [];
     selectedConcept = "";
@@ -477,6 +504,8 @@
         throw new Error("پاسخ موتور طراحی معتبر نیست؛ طرح قابل‌قبولی دریافت نشد.");
       }
       let finalConcepts = result.concepts;
+      // Prepare actual HTML/CSS renders first; they remain hidden until NAVI accepts them.
+      prepareReviewFrames(finalConcepts, brief);
       empty.hidden = false;
       status.textContent = "مرحله ۱ از ۳ · ناوی بریف و ایده‌های بصری را می‌سازد. مرحله ۲ · موتور HTML/CSS طرح‌ها را می‌سازد. مرحله ۳ · ناوی رندر واقعی را می‌بیند و آزمون تشخیص‌پذیری انجام می‌دهد.";
       submit.textContent = "ناوی در حال داوری و اصلاح…";
@@ -505,6 +534,8 @@
           : "هیچ طرحی از آزمون تشخیص‌پذیری و کیفیت ناوی عبور نکرد؛ طرح خام و مبهم نمایش داده نشد." +
             (rejectionDetails ? " علت دقیق: " + rejectionDetails : "");
       } catch (reviewError) {
+        clearReviewStage();
+        frames = [];
         results.replaceChildren();
         empty.hidden = false;
         status.textContent = "بازبینی کیفیت کامل نشد؛ برای جلوگیری از نمایش لوگوی ضعیف، خروجی خام نشان داده نشد. " +
