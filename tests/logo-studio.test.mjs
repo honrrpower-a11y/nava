@@ -727,7 +727,11 @@ test("Logo Studio builds a new card and a sandboxed HTML/CSS preview for every c
   assert.ok(source.includes("function makeFrame(concept, brief)"));
   assert.ok(source.includes("frame.__navaMarkup = previewDocument(concept, brief)"));
   assert.ok(source.includes("frame.srcdoc = frame.__navaMarkup"));
-  assert.ok(source.indexOf("results.append(card)") < source.indexOf("frame.srcdoc = frame.__navaMarkup"), "the preview iframe is initialized only after its card is mounted");
+  const mountStart = source.indexOf("function mountConcepts(concepts, brief, planning)");
+  const mountEnd = source.indexOf("function getSession()", mountStart);
+  const mountSource = source.slice(mountStart, mountEnd);
+  assert.ok(mountSource.indexOf("results.append(card)") < mountSource.indexOf("frame.srcdoc = frame.__navaMarkup"), "visible preview iframes are initialized only after their cards are mounted");
+  assert.ok(source.indexOf("function prepareReviewFrames(concepts, brief)") < source.indexOf("function mountConcepts(concepts, brief, planning)"), "hidden review frames are staged separately before accepted concepts are mounted");
   assert.ok(source.includes("function conceptCard(concept, index, brief)"));
   assert.ok(source.includes("results.append(card)"));
   assert.ok(source.includes("frame.className = \"logo-html-css-preview\""));
