@@ -1002,7 +1002,7 @@ test("Logo Studio captures real renders and runs validated automatic visual refi
   assert.ok(ui.includes("briefAlignment: concept.briefAlignment"), "visual review must retain the original concept brief traceability fields");
   assert.ok(ui.includes("result.reviewToken"));
   assert.ok(ui.includes("const refinedCandidates = visualReview.concepts.filter"));
-  assert.ok(ui.includes("طرح خام و مبهم نمایش داده نشد"));
+  assert.ok(ui.includes("طرح تأییدنشده نمایش داده نشد"));
   assert.ok(ui.includes("revisionAttempt: attempt"), "a rejected design receives one stronger second review");
   assert.ok(ui.includes('concept.visualReview === "refined"'), "only concepts accepted by NAVI visual review may be shown");
   assert.ok(backend.includes("LOGO_VISUAL_QUALITY_LOW"));
