@@ -416,10 +416,19 @@
       const previewImage = await window.NavaLogoRenderer.capturePreviewDataUrl(frame, 640);
       return {
         title: concept.title,
+        rationale: concept.rationale,
+        metaphor: concept.metaphor,
+        meaningChain: concept.meaningChain,
         centralThesis: concept.centralThesis,
         symbolConstruction: concept.symbolConstruction,
         briefElements: concept.briefElements,
         briefAlignment: concept.briefAlignment,
+        silhouette: concept.silhouette,
+        geometryRecipe: concept.geometryRecipe,
+        spatialRelationship: concept.spatialRelationship,
+        negativeSpace: concept.negativeSpace,
+        signatureFeature: concept.expressionMove || concept.signatureFeature,
+        recognitionRisk: concept.recognitionRisk,
         visualAnchors: concept.visualAnchors,
         anchorMap: concept.anchorMap,
         html: concept.html,
@@ -571,6 +580,14 @@
         visualResult = await visuallyRefineConcepts(
           initialConcepts, brief, result.reviewToken, headers, reviewFrames
         );
+      } catch (reviewError) {
+        if (result.reservationId) {
+          await fetch("https://nava-music-api.honrrpower.workers.dev/logo/generate", {
+            method: "POST", headers, cache: "no-store",
+            body: JSON.stringify({ action: "release-trial", reservationId: result.reservationId })
+          }).catch(() => {});
+        }
+        throw reviewError;
       } finally {
         clearReviewStage();
         frames = [];
