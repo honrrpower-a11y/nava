@@ -976,8 +976,12 @@ window.sendOfficeNaviRequest = function({ message, context } = {}) {
       serviceSelect.value = service;
     }
     updateNaviAssistantContext(service, context);
-    setNaviWidgetOpen(true, false);
-    status.textContent = "درخواست تولید محتوا ارسال شد؛ پس از دریافت پاسخ، انتقال خروجی به استودیوی مرتبط در دسترس قرار می‌گیرد.";
+    const inlineResult = document.getElementById("contentStudioResponseWrap");
+    const inlineOutput = document.getElementById("contentStudioResponse");
+    document.getElementById("contentStudioHandoffAction")?.remove();
+    if (inlineResult) inlineResult.hidden = true;
+    if (inlineOutput) { inlineOutput.value = ""; inlineOutput.classList.remove("show"); }
+    status.textContent = "درخواست تولید محتوا ارسال شد؛ پاسخ ناوی همین پایین نمایش داده می‌شود.";
     sendMessageToNavi({
       messageOverride: message,
       serviceOverride: service,
@@ -989,6 +993,11 @@ window.sendOfficeNaviRequest = function({ message, context } = {}) {
   reset?.addEventListener("click", () => {
     form.reset();
     window.navaPendingContentHandoff = null;
+    const resultWrap = document.getElementById("contentStudioResponseWrap");
+    const resultOutput = document.getElementById("contentStudioResponse");
+    if (resultWrap) resultWrap.hidden = true;
+    if (resultOutput) { resultOutput.value = ""; resultOutput.classList.remove("show"); }
+    document.getElementById("contentStudioHandoffAction")?.remove();
     status.textContent = "فرم پاک شد؛ بریف تازه‌ای وارد کن.";
   });
 })();
@@ -1172,16 +1181,26 @@ function setNaviStatus(message) {
 }
 
 function showNaviReply(reply) {
-  requestResponse.value = String(reply || "");
-  requestResponse.classList.add("show");
+  const contentStudioRequest = document.querySelector(".page.active")?.id === "contentPage" &&
+    Boolean(window.navaPendingContentHandoff);
+  const inlineResult = contentStudioRequest ? document.getElementById("contentStudioResponse") : null;
+  const inlineWrap = contentStudioRequest ? document.getElementById("contentStudioResponseWrap") : null;
+  const responseTarget = inlineResult || requestResponse;
+  responseTarget.value = String(reply || "");
+  responseTarget.classList.add("show");
+  if (inlineWrap) inlineWrap.hidden = false;
   document.getElementById("naviNavigationSuggestion")?.remove();
   document.getElementById("contentHandoffAction")?.remove();
-  const service = naviAssistantContext?.service || serviceSelect?.value || "";
-  window.NavaDocumentExport?.attach(requestResponse, service);
+  document.getElementById("contentStudioHandoffAction")?.remove();
+  const service = contentStudioRequest ? "تولید محتوا" : (naviAssistantContext?.service || serviceSelect?.value || "");
+  window.NavaDocumentExport?.attach(responseTarget, service);
 }
 
 function renderContentHandoffAction(reply, handoff) {
-  if (!handoff || !requestResponse?.isConnected || !String(reply || "").trim()) return;
+  const contentStudioPage = document.querySelector(".page.active")?.id === "contentPage";
+  const contentStudioResult = contentStudioPage ? document.getElementById("contentStudioResponseWrap") : null;
+  const responseHost = contentStudioResult;
+  if (!handoff || !(contentStudioPage ? responseHost?.isConnected : requestResponse?.isConnected) || !String(reply || "").trim()) return;
   const format = String(handoff.format || "");
   const isCarousel = /اسلاید/.test(format);
   const isVideo = /ویدئو|ویدئوی|ریلز|سناریو/.test(format);
@@ -1190,7 +1209,7 @@ function renderContentHandoffAction(reply, handoff) {
   if (!isCarousel && !isVideo && !isArticle && !isStoryText) return;
 
   const card = document.createElement("section");
-  card.id = "contentHandoffAction";
+  card.id = contentStudioPage ? "contentStudioHandoffAction" : "contentHandoffAction";
   card.className = "content-handoff-actions";
   card.setAttribute("aria-label", "انتقال محتوای تولیدشده");
   const note = document.createElement("p");
@@ -1287,7 +1306,8 @@ function renderContentHandoffAction(reply, handoff) {
     });
   }
 
-  requestResponse.insertAdjacentElement("afterend", card);
+  if (contentStudioPage) responseHost.append(card);
+  else requestResponse.insertAdjacentElement("afterend", card);
 }
 
 function renderStoryHandoffSlides(source, host) {

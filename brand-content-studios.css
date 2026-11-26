@@ -49,3 +49,12 @@ textarea.nava-strategy-control{min-height:94px;resize:vertical;line-height:1.8}
 .story-handoff-slide p{margin:0;white-space:pre-wrap;overflow-wrap:anywhere;font-size:12px;line-height:1.9;color:var(--muted)}
 .story-handoff-slides[hidden],.story-handoff-summary[hidden]{display:none!important}
 @media(max-width:560px){.story-handoff-slides{grid-template-columns:1fr}}
+
+
+/* Inline NAVI response in Content Studio */
+.nava-content-result{grid-column:1/-1;min-width:0;margin-top:12px;padding:17px;border:1px solid color-mix(in srgb,var(--gold) 42%,var(--border));border-radius:15px;background:var(--panel2)}
+.nava-content-result[hidden]{display:none!important}
+.nava-content-result h3{margin:0 0 12px;color:var(--gold);font-size:15px}
+.nava-content-result-output{display:block;width:100%;min-height:300px;max-height:68vh;resize:vertical;padding:15px;border:1px solid var(--border);border-radius:11px;background:var(--panel);color:var(--text);font:inherit;font-size:13px;line-height:2;white-space:pre-wrap;overflow-wrap:anywhere}
+.nava-content-result-output.show{display:block}
+.nava-content-result .nava-export-actions{margin-top:12px}

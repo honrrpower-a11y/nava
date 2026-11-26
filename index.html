@@ -330,6 +330,10 @@
           </div>
           <div class="nava-strategy-actions"><button class="btn-primary" type="submit">تولید محتوا با ناوی</button><button class="btn-secondary" id="contentStudioReset" type="button">پاک کردن فرم</button></div>
           <div class="nava-strategy-status" id="contentStudioStatus" role="status" aria-live="polite">بریف محتوا را تکمیل کن تا ناوی بر اساس آن خروجی بسازد.</div>
+          <section class="nava-content-result" id="contentStudioResponseWrap" aria-labelledby="contentStudioResponseTitle" hidden>
+            <h3 id="contentStudioResponseTitle">خروجی تولیدشده با NAVI</h3>
+            <textarea class="nava-content-result-output" id="contentStudioResponse" readonly aria-label="پاسخ ناوی در استودیوی تولید محتوا"></textarea>
+          </section>
         </form>
         <aside class="nava-strategy-guide"><h3>خروجی متناسب با قالب</h3><ul>
           <li><strong>شبکه اجتماعی:</strong> ایده، هوک، ساختار، کپشن و دعوت به تعامل.</li>
