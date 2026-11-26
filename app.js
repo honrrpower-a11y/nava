@@ -4637,6 +4637,8 @@ storyInput.addEventListener("input", () => {
     text || "متن استوری تو اینجا نمایش داده می‌شود";
 
   previewText.classList.toggle("empty", !text);
+  const visualHost=document.getElementById("storyVisualSlides");if(visualHost){visualHost.hidden=true;visualHost.replaceChildren();}
+  previewText.hidden=false;
 });
 
 clearStory.addEventListener("click", () => {
@@ -4685,9 +4687,12 @@ function parseNaviStoryPlan(raw) {
 function drawStorySlide(canvas, slide, index, total) {
   const w=1080,h=1920; canvas.width=w; canvas.height=h;
   const c=canvas.getContext("2d"); const accent=/^#[0-9a-f]{6}$/i.test(slide.accent||"")?slide.accent:"#e5b85e";
-  const bg=c.createLinearGradient(0,0,w,h); bg.addColorStop(0,"#07101f"); bg.addColorStop(.55,"#17243a"); bg.addColorStop(1,"#030711"); c.fillStyle=bg;c.fillRect(0,0,w,h);
+  const visual=["stadium","matchup","details","crowd","abstract"].includes(slide.visual)?slide.visual:"abstract";
+  const bg=c.createLinearGradient(0,0,w,h); bg.addColorStop(0,visual==="details"?"#102b3b":"#07101f"); bg.addColorStop(.55,visual==="crowd"?"#263047":"#17243a"); bg.addColorStop(1,"#030711"); c.fillStyle=bg;c.fillRect(0,0,w,h);
   c.strokeStyle=accent+"55";c.lineWidth=5;
-  for(let i=0;i<8;i++){c.beginPath();c.ellipse(540,780,220+i*70,300+i*90,0,Math.PI,Math.PI*2);c.stroke();}
+  if(["stadium","matchup","abstract"].includes(visual)){for(let i=0;i<8;i++){c.beginPath();c.ellipse(540,780,220+i*70,300+i*90,0,Math.PI,Math.PI*2);c.stroke();}}
+  if(visual==="details"){c.strokeStyle=accent+"77";c.lineWidth=4;c.strokeRect(70,960,940,520);c.beginPath();c.moveTo(540,960);c.lineTo(540,1480);c.stroke();}
+  if(visual==="crowd"){for(let row=0;row<5;row++)for(let col=0;col<16;col++){const x=65+col*63+(row%2)*18,y=1040+row*88;c.fillStyle=row%2?accent+"88":"#dce7f055";c.beginPath();c.arc(x,y,16,0,Math.PI*2);c.fill();c.fillRect(x-13,y+15,26,42);}}
   const glow=c.createRadialGradient(540,520,20,540,520,700);glow.addColorStop(0,accent+"55");glow.addColorStop(1,"#07101f00");c.fillStyle=glow;c.fillRect(0,0,w,1100);
   c.fillStyle=accent;c.fillRect(80,115,150,10);c.direction="rtl";c.textAlign="right";c.fillStyle=accent;c.font="600 34px Vazirmatn,sans-serif";c.fillText(String(slide.kicker||("استوری "+(index+1))),970,220,880);
   const wrap=(text,y,font,color,maxLines=3)=>{c.font=font;c.fillStyle=color;let line="",lines=[];for(const word of String(text||"").split(/\s+/)){const next=line?line+" "+word:word;if(c.measureText(next).width>850&&line){lines.push(line);line=word;}else line=next;}if(line)lines.push(line);lines.slice(0,maxLines).forEach((v,i)=>c.fillText(v,970,y+i*105,850));return y+Math.min(lines.length,maxLines)*105;};
@@ -4702,6 +4707,7 @@ function drawStorySlide(canvas, slide, index, total) {
 function renderNaviStoryPlan(plan) {
   const host=document.getElementById("storyVisualSlides"),status=document.getElementById("storyMessage");if(!host)return;
   host.replaceChildren();host.hidden=false;
+  const rawPreview=document.getElementById("previewText");if(rawPreview)rawPreview.hidden=true;
   plan.slides.forEach((slide,index)=>{const card=document.createElement("article");card.className="story-visual-card";const heading=document.createElement("h3");heading.textContent="اسلاید "+(index+1);const canvas=document.createElement("canvas");canvas.className="story-visual-canvas";canvas.setAttribute("role","img");canvas.setAttribute("aria-label",String(slide.headline||slide.title||"پیش‌نمایش استوری"));drawStorySlide(canvas,slide,index,plan.slides.length);const actions=document.createElement("div");actions.className="story-visual-actions";const button=document.createElement("button");button.type="button";button.className="btn-primary";button.textContent="دریافت تصویر PNG";button.addEventListener("click",()=>canvas.toBlob(blob=>{if(!blob){if(status)status.textContent="ساخت PNG در این مرورگر ممکن نشد.";return;}const url=URL.createObjectURL(blob),link=document.createElement("a");link.href=url;link.download="nava-story-"+(index+1)+".png";link.click();setTimeout(()=>URL.revokeObjectURL(url),1500);},"image/png"));actions.append(button);card.append(heading,canvas,actions);host.append(card);});
   if(status){status.textContent="پیش‌نمایش بصری "+plan.slides.length+" اسلاید آماده شد؛ هر اسلاید با کیفیت ۱۰۸۰×۱۹۲۰ قابل دریافت است.";status.classList.add("show");}
 }
@@ -4715,8 +4721,8 @@ improveStoryWithNavi?.addEventListener("click",()=>{
     "فقط JSON معتبر و بدون Markdown با schema زیر برگردان: {\"version\":\"nava.story.plan.v1\",\"slides\":[{\"kicker\":\"\",\"headline\":\"\",\"matchup\":\"\",\"body\":\"\",\"date\":\"\",\"time\":\"\",\"venue\":\"\",\"cta\":\"\",\"accent\":\"#RRGGBB\"}]}",
     "برای اعلام مسابقه ۳ اسلاید بساز: هوک و معرفی، جزئیات زمان و مکان، دعوت به تعامل. برای موضوع‌های دیگر روایت و تعداد مناسب را خودت انتخاب کن؛ حداکثر ۸ اسلاید.",
     "متن روی تصویر را کوتاه و فارسی نگه دار؛ واقعیت‌ها، تاریخ، ساعت، نام‌ها و مکان را عیناً از ورودی بردار و چیزی نساز. هشتگ‌ها و دستورالعمل‌های داخلی را روی تصویر نیاور.",
-    "محتوای مرجع:\\n"+content
-  ].join("\\n\\n");
+    "محتوای مرجع:\n"+content
+  ].join("\n\n");
   const host=document.getElementById("storyVisualSlides");if(host){host.replaceChildren();host.hidden=true;}
   storyMessage.textContent="NAVI در حال طراحی اسلایدهاست…";storyMessage.classList.add("show");
   if(!getNaviToken()){window.openNaviAssistant({service,context,message});return;}
