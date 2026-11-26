@@ -423,6 +423,8 @@ function syncNaviWidgetPlacement(pageId) {
 function showPage(pageId) {
   if (!Array.from(pages).some(page => page.id === pageId)) return;
   if (navaAccessGateActive && pageId !== "homePage") return;
+  const previousPageId = document.querySelector(".page.active")?.id || "";
+  if (getNaviToken() && previousPageId && naviActiveThreadId) rememberNaviStudioThread(previousPageId, naviActiveThreadId);
   saveNavaActivePage(pageId);
   if (naviWidgetPanel && !naviWidgetPanel.hidden && document.querySelector(".page.active")?.id !== "officePage") setNaviWidgetOpen(false);
   pages.forEach(page => page.classList.toggle("active", page.id === pageId));
@@ -456,6 +458,68 @@ function showPage(pageId) {
     serviceSelect.value = "انتخاب نشده";
   }
   window.scrollTo({ top: 0, behavior: "smooth" });
+  if (getNaviToken()) {
+    activateNaviStudioConversation(pageId).catch(error => {
+      console.error("NAVI studio conversation switch failed:", error);
+      setNaviStatus("گفت‌وگوی اختصاصی این استودیو بارگذاری نشد؛ دوباره تلاش کن.");
+    });
+  }
+}
+
+let naviStudioConversationSwitchVersion = 0;
+function naviStudioThreadStorageKey(pageId) {
+  const account = getNaviStoredValue(NAVI_USER_ID_KEY) || getNaviStoredValue(NAVI_USER_NAME_KEY) || "account";
+  return "nava_navi_studio_thread_v1:" + account + ":" + naviActiveProjectId + ":" + pageId;
+}
+function rememberNaviStudioThread(pageId, threadId) {
+  if (!pageId || !threadId || !getNaviToken()) return;
+  try { setNaviStoredValue(naviStudioThreadStorageKey(pageId), threadId); }
+  catch (error) { console.warn("Could not persist the studio conversation mapping."); }
+}
+async function activateNaviStudioConversation(pageId) {
+  const token = getNaviToken();
+  if (!token || !pageId) return false;
+  const version = ++naviStudioConversationSwitchVersion;
+  if (userRequest) userRequest.value = "";
+  if (naviImageInput) naviImageInput.value = "";
+  if (naviImageStatus) naviImageStatus.textContent = "تصویری انتخاب نشده است.";
+  if (naviImageClear) naviImageClear.hidden = true;
+  if (requestResponse) { requestResponse.value = ""; requestResponse.classList.remove("show"); }
+  naviHistory = [];
+  renderNaviHistory([]);
+  if (naviHistoryLoading && naviHistoryLoadPromise) await naviHistoryLoadPromise;
+  if (version !== naviStudioConversationSwitchVersion || getNaviToken() !== token) return false;
+  if (!await loadNaviThreads()) return false;
+  if (version !== naviStudioConversationSwitchVersion || getNaviToken() !== token) return false;
+
+  const saved = getNaviStoredValue(naviStudioThreadStorageKey(pageId));
+  let threadId = saved && naviThreads.some(thread => thread.thread_id === saved) ? saved : "";
+  if (!threadId && pageId === "homePage" && naviThreads.some(thread => thread.thread_id === naviActiveThreadId)) threadId = naviActiveThreadId;
+
+  if (!threadId) {
+    const response = await fetch(NAVI_THREADS_API, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
+      body: JSON.stringify({ title: pageId === "homePage" ? "گفت‌وگوی عمومی" : "گفت‌وگوی اختصاصی استودیو", projectId: naviActiveProjectId }),
+      cache: "no-store"
+    });
+    const data = await response.json();
+    if (!response.ok || !data.success || !data.thread?.thread_id) throw new Error(data.error || "ساخت گفت‌وگوی اختصاصی استودیو ناموفق بود.");
+    threadId = data.thread.thread_id;
+  }
+  if (version !== naviStudioConversationSwitchVersion || getNaviToken() !== token) return false;
+  naviActiveThreadId = threadId;
+  setNaviStoredValue("nava_navi_active_thread", threadId);
+  rememberNaviStudioThread(pageId, threadId);
+  naviHistory = [];
+  renderNaviThreads();
+  renderNaviHistory([]);
+  if (naviHistoryLoading && naviHistoryLoadPromise) await naviHistoryLoadPromise;
+  if (version !== naviStudioConversationSwitchVersion) return false;
+  await loadNaviHistory();
+  if (version !== naviStudioConversationSwitchVersion) return false;
+  setNaviStatus("گفت‌وگوی اختصاصی این بخش آماده است؛ مکالمه استودیوهای دیگر جدا نگه داشته می‌شود.");
+  return true;
 }
 
 navButtons.forEach(button => {
@@ -1827,6 +1891,7 @@ async function loadNaviHistory({ silent = false } = {}) {
   }
 
   const requestVersion = naviSessionVersion;
+  const requestedThreadId = naviActiveThreadId;
 
   naviHistoryLoading = true;
   if (!silent) {
@@ -1854,7 +1919,8 @@ async function loadNaviHistory({ silent = false } = {}) {
 
       if (
         getNaviToken() !== token ||
-        naviSessionVersion !== requestVersion
+        naviSessionVersion !== requestVersion ||
+        naviActiveThreadId !== requestedThreadId
       ) {
         return false;
       }
@@ -1886,7 +1952,7 @@ async function loadNaviHistory({ silent = false } = {}) {
       return true;
 
     } catch (error) {
-      if (naviSessionVersion !== requestVersion) return false;
+      if (naviSessionVersion !== requestVersion || naviActiveThreadId !== requestedThreadId) return false;
 
       console.error("NAVI history error:", error);
 
@@ -3019,6 +3085,7 @@ function renderNaviThreads() {
     button.addEventListener("click", async () => {
       naviActiveThreadId = thread.thread_id;
       setNaviStoredValue("nava_navi_active_thread", naviActiveThreadId);
+      rememberNaviStudioThread(document.querySelector(".page.active")?.id, naviActiveThreadId);
       renderNaviThreads();
       requestResponse.value = "";
       requestResponse.classList.remove("show");
@@ -3163,6 +3230,7 @@ async function createNaviThread() {
     if (!response.ok || !data.success || !data.thread?.thread_id) throw new Error(data.error || "ساخت گفت‌وگوی جدید ناموفق بود.");
     naviActiveThreadId = data.thread.thread_id;
     setNaviStoredValue("nava_navi_active_thread", naviActiveThreadId);
+    rememberNaviStudioThread(document.querySelector(".page.active")?.id, naviActiveThreadId);
     naviHistory = [];
     requestResponse.value = "";
     requestResponse.classList.remove("show");
