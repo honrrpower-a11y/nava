@@ -12,6 +12,7 @@ test("Content Studio delegates unspecified choices to NAVI", () => {
     assert.match(select[1], /<option selected>تشخیص هوشمند NAVI<\\/option>/);
   }
   assert.match(app, /هرجا مقدار «تشخیص هوشمند NAVI» ثبت شده، خودت/);
+  assert.match(app, /فقط دستورالعمل مربوط به قالب نهایی اعلام‌شده را اجرا کن/);
 });
 
 test("Audience is optional and inferred when omitted", () => {
