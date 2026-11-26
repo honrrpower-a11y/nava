@@ -414,7 +414,7 @@ async function designLogos(data, apiKey) {
           contents: [{ role: "user", parts: [{ text: "Create exactly " + conceptCount + " visual construction blueprint(s) from this client brief. Return only the requested JSON.\n" + JSON.stringify(userBrief) }] }],
           generationConfig: {
             thinkingConfig: { thinkingLevel: "HIGH" },
-            maxOutputTokens: 8192,
+            maxOutputTokens: 12288,
             responseMimeType: "application/json"
           }
         }),
@@ -506,7 +506,7 @@ async function designLogos(data, apiKey) {
       if (!normalized.centralThesis || !normalized.symbolConstruction || !normalized.briefAlignment || !normalized.briefElements.length || !normalized.silhouette || normalized.objectCues.length < 2 || !normalized.spatialRelationship || !normalized.negativeSpace || !normalized.geometryRecipe || !normalized.firstRead || !normalized.recognitionRisk || !normalized.signatureFeature) {
         throw validationError("LOGO_BLUEPRINT_INCOMPLETE", "نقشه ساخت بصری باید سیلوئت، نشانه‌های تشخیصی، رابطه فضایی، فضای منفی، ویژگی امضادار، ریسک برداشت اشتباه و دستور ساخت دقیق داشته باشد.", "concept-planning", index + 1);
       }
-      if (data.format !== "wordmark" && (!normalized.html || !normalized.css)) {
+      if (!normalized.html || !normalized.css) {
         throw validationError("LOGO_HTML_CSS_MISSING", "NAVI باید برای هر ایده، کد کامل و اختصاصی HTML/CSS تولید کند؛ خروجی صرفاً متنی یا قالب آماده پذیرفته نیست.", "html-css-authoring", index + 1);
       }
       return normalized;
