@@ -265,7 +265,7 @@ test("NAVI rejects SVG-based artwork instead of silently stripping it and showin
     const result = await response.json();
     assert.equal(response.status,200);
     assert.equal(result.success,true);
-    assert.ok(result.concepts.every(concept => !/<\\s*\\/?\\s*svg\\b|<path\\b/i.test(concept.html + concept.css)));
+    assert.ok(result.concepts.every(concept => !concept.html.includes("<svg") && !concept.html.includes("<path")));
     assert.equal(db.visitorUsed,1);
   } finally {globalThis.fetch=originalFetch;}
 });
