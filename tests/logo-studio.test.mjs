@@ -365,6 +365,37 @@ test("NAVI keeps valid concepts when one of three fails quality validation", asy
   }
 });
 
+test("NAVI rejects visually identical symbol geometry even when the concept descriptions differ", async () => {
+  const originalFetch = globalThis.fetch;
+  const db = new FakeD1();
+  const repeatedGeometry = makeDesign();
+  // Keep the first symbol's complete HTML/CSS construction, but give the second
+  // concept different strategy text and a different title. Only the mark geometry
+  // is shared, which must be enough to reject it as a duplicate.
+  repeatedGeometry.concepts[1].html = repeatedGeometry.concepts[0].html;
+  repeatedGeometry.concepts[1].css = repeatedGeometry.concepts[0].css;
+  repeatedGeometry.concepts[1].centralThesis = "یک فرم تازه با محوریت حرکت و گسترش ساخته می‌شود";
+  repeatedGeometry.concepts[1].symbolConstruction = "هندسه‌ای متفاوت با لبه‌های تیز و فضای منفی مستقل شکل می‌گیرد";
+  repeatedGeometry.concepts[1].title = "حرکت تازه";
+  globalThis.fetch = async () => makeGeminiResponse(repeatedGeometry);
+  try {
+    const response = await handleLogoRoute({
+      request: makeRequest(),
+      env: { NAVA_DB: db, NAVI_SESSION_SECRET: "test-secret-key", GEMINI_API_KEY: "test-gemini-key" },
+      origin: ORIGIN,
+      corsOrigin: ORIGIN
+    });
+    const result = await response.json();
+    assert.equal(response.status, 200);
+    assert.equal(result.concepts.length, 2);
+    assert.equal(result.rejectedConcepts.length, 1);
+    assert.equal(result.rejectedConcepts[0].index, 2);
+    assert.equal(result.rejectedConcepts[0].code, "LOGO_CONCEPTS_NOT_DISTINCT");
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
 test("NAVI rejects repeated concepts that describe the same central idea and construction", async () => {
   const originalFetch = globalThis.fetch;
   const db = new FakeD1();
