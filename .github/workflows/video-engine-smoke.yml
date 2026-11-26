@@ -151,8 +151,9 @@ jobs:
           assert.match(js, /فقط یک شیء JSON معتبر/, "NAVI prompt must request machine-readable creative direction");
           assert.match(js, /naviPlanRetryCount<1/, "NAVI must get one chance to repair its own invalid plan");
           assert.match(js, /photoY بین 0\.16 و 0\.40/, "NAVI prompt must include renderer numeric bounds");
-          const videoPlanDispatch = app.indexOf('if (options.videoPlan === true) {');
-          const videoPlanBlock = app.slice(videoPlanDispatch, app.indexOf("    try {", videoPlanDispatch));
+          const videoPlanEventAt = app.indexOf('const videoPlanEvent = new CustomEvent("nava:navi-reply"');
+          const videoPlanDispatch = app.lastIndexOf('if (options.videoPlan === true) {', videoPlanEventAt);
+          const videoPlanBlock = app.slice(videoPlanDispatch, app.indexOf("    try {", videoPlanEventAt));
           assert.ok(videoPlanDispatch >= 0, "Only explicit video-plan requests may enter the scene-plan flow");
           assert.match(videoPlanBlock, /nava:navi-reply[\s\S]*videoPlan: true/, "Only explicit video-plan requests may dispatch a structured scene plan");
           assert.match(videoPlanBlock, /else\s*\{\s*showNaviReply\(reply\);/, "Ordinary NAVI chat must display its guidance reply directly");
