@@ -1336,3 +1336,34 @@ test("NAVI concept planning explicitly prioritizes concrete metaphor and a brand
   assert.ok(ui.includes('["استعاره بصری", concept.metaphor]'));
   assert.ok(ui.includes('["زنجیره معنا", concept.meaningChain]'));
 });
+
+
+test("a guest trial reservation can be refunded when no logo passes visual refinement", async () => {
+  const originalFetch = globalThis.fetch;
+  const db = new FakeD1();
+  try {
+    globalThis.fetch = async () => makeGeminiResponse();
+    const initialResponse = await handleLogoRoute({
+      request: makeRequest(),
+      env: { NAVA_DB: db, NAVI_SESSION_SECRET: "test-secret-key", GEMINI_API_KEY: "test-gemini-key" },
+      origin: ORIGIN,
+      corsOrigin: ORIGIN
+    });
+    const initial = await initialResponse.json();
+    assert.equal(initialResponse.status, 200);
+    assert.ok(initial.reservationId);
+    assert.equal(db.visitorUsed, 1);
+    const releaseResponse = await handleLogoRoute({
+      request: makeRequest({ action: "release-trial", reservationId: initial.reservationId }),
+      env: { NAVA_DB: db, NAVI_SESSION_SECRET: "test-secret-key" },
+      origin: ORIGIN,
+      corsOrigin: ORIGIN
+    });
+    const released = await releaseResponse.json();
+    assert.equal(releaseResponse.status, 200);
+    assert.equal(released.released, true);
+    assert.equal(db.visitorUsed, 0);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
