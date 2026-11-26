@@ -41,3 +41,13 @@ test("NAVI performs a silent quality review before showing final content", () =>
   assert.ok(app.includes("بازبینی نهایی ضدجای‌خالی"));
   assert.ok(html.includes("app.js?v=content-studio-quality-gate-20261127-2"));
 });
+
+
+test("Content Studio silently proofreads Persian copy and validates hashtags", () => {
+  assert.ok(app.includes("بازبینی نگارشی و املایی پیش از انتشار"));
+  assert.ok(app.includes("نیم‌فاصله، فاصله‌گذاری، نشانه‌گذاری"));
+  assert.ok(app.includes("غلط تایپی، واژه نامفهوم، ترکیب نامعتبر"));
+  assert.ok(app.includes("نام اشخاص، باشگاه‌ها، برندها، مکان‌ها، تاریخ‌ها، اعداد و اصطلاحات تخصصی را حدس نزن"));
+  assert.ok(app.includes("هیچ غلط تایپی آشکار یا هشتگ نامفهوم باقی نگذار"));
+  assert.ok(html.includes("app.js?v=content-studio-quality-gate-20261127-3"));
+});
