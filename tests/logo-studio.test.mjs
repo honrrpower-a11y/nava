@@ -198,7 +198,7 @@ test("NAVI writes a professional creative brief before building three sanitized 
     assert.ok(result.concepts.every(item => !item.html.includes("<script")));
     assert.ok(result.concepts.every(item => item.css.includes("var(--logo-primary)")));
     assert.ok(result.concepts.every(item => item.css.includes(".navi-symbol")));
-    assert.ok(result.concepts.every(item => item.html.includes("data-logo-role=\\"symbol\\"")));
+    assert.ok(result.concepts.every(item => item.html.includes('data-logo-role="symbol"')));
     assert.ok(result.concepts[0].css.includes(".navi-symbol"), "the structured geometry engine supplies the actual mark CSS");
     assert.ok(result.concepts.every(item => !Object.prototype.hasOwnProperty.call(item, "svg")));
     assert.ok(result.concepts.every(item => !JSON.stringify(item).includes("foreignObject")));
