@@ -41,16 +41,15 @@ import {
 
 const NAVI_VERSION = "1.0";
 const NAVI_MAX_MESSAGE = 12000;
-// Video scene plans carry a structured creative brief plus per-image analysis.
-// Keep ordinary chat unchanged while allowing this isolated, image-backed flow
-// enough room for the complete plan instructions and six compact image reports.
+// Isolated creative plans need a larger prompt budget than ordinary chat.
 const NAVI_MAX_VIDEO_PLAN_MESSAGE = 24000;
+const NAVI_MAX_STORY_PLAN_MESSAGE = 24000;
 const NAVI_MAX_MEMORY_VALUE = 12000;
 
 export function getNaviMessageLimit(input, page) {
-  return input?.videoPlan === true && page === "avPage"
-    ? NAVI_MAX_VIDEO_PLAN_MESSAGE
-    : NAVI_MAX_MESSAGE;
+  if (input?.videoPlan === true && page === "avPage") return NAVI_MAX_VIDEO_PLAN_MESSAGE;
+  if (input?.storyPlan === true && page === "storyPage") return NAVI_MAX_STORY_PLAN_MESSAGE;
+  return NAVI_MAX_MESSAGE;
 }
 const NAVI_MAX_PROPOSALS = 1;
 const NAVI_GEMINI_TIMEOUT = 60000;
@@ -2571,6 +2570,7 @@ async function requestGeminiModel({
   systemInstruction,
   contents,
   videoPlan = false,
+  storyPlan = false,
   maxAttempts = NAVI_GEMINI_MAX_ATTEMPTS,
   fetchImpl = fetch
 }) {
@@ -2599,9 +2599,8 @@ async function requestGeminiModel({
             contents,
             generationConfig: {
               temperature: 0.65,
-              // Video plans contain a nested scene-plan JSON document; give
-              // this isolated flow a larger completion budget without changing chat.
-              maxOutputTokens: videoPlan ? 8192 : 4096,
+              // Creative plans return a nested JSON document inside NAVI's outer envelope.
+              maxOutputTokens: videoPlan || storyPlan ? 8192 : 4096,
               responseMimeType: "application/json"
             }
           }),
@@ -2675,6 +2674,7 @@ export async function requestGemini({
   systemInstruction,
   contents,
   videoPlan = false,
+  storyPlan = false,
   fetchImpl = fetch
 }) {
   try {
@@ -2684,6 +2684,7 @@ export async function requestGemini({
       systemInstruction,
       contents,
       videoPlan,
+      storyPlan,
       fetchImpl
     });
   } catch (primaryError) {
@@ -2705,6 +2706,7 @@ export async function requestGemini({
           systemInstruction,
           contents,
           videoPlan,
+          storyPlan,
           maxAttempts: 1,
           fetchImpl
         });
@@ -2823,6 +2825,10 @@ export function shouldUseNaviVideoPlanContext(input, page) {
   return input?.videoPlan === true && page === "avPage";
 }
 
+export function shouldUseNaviStoryPlanContext(input, page) {
+  return input?.storyPlan === true && page === "storyPage";
+}
+
 // ======================================
 // CHAT
 // ======================================
@@ -2928,9 +2934,23 @@ async function handleChat({
   // Never trust client-supplied page text. Only server-authored knowledge is
   // injected into the model context; client identifiers merely select entries.
   const isVideoPlanRequest = shouldUseNaviVideoPlanContext(input, page);
+  const isStoryPlanRequest = shouldUseNaviStoryPlanContext(input, page);
   const isVideoEditorRequest = input.videoEditorMode === true &&
     page === "avPage" && input.videoPlan !== true;
-  const pageContext = isVideoPlanRequest
+  const pageContext = isStoryPlanRequest
+    ? [
+        "صفحه فعال: استوری‌ساز نوا.",
+        "این درخواست یک کار طراحی گرافیکی است، نه گفت‌وگوی عمومی و نه صرفاً پیشنهاد متنی.",
+        "محتوای مرجع در پیام جاری آمده است. آن را به یک روایت بصری منسجم و مناسب استوری عمودی اینستاگرام تبدیل کن.",
+        "قرارداد بیرونی NAVI الزامی است: دقیقاً یک شیء JSON با کلیدهای reply (رشته)، officeAction (null)، navigation (null) و memoryProposals (آرایه خالی) برگردان.",
+        "مقدار reply باید یک رشته JSON معتبر باشد که پس از parse شدن دقیقاً این ساختار را داشته باشد: {\"version\":\"nava.story.plan.v1\",\"slides\":[{\"kicker\":\"\",\"headline\":\"\",\"matchup\":\"\",\"body\":\"\",\"date\":\"\",\"time\":\"\",\"venue\":\"\",\"cta\":\"\",\"visual\":\"stadium|matchup|details|crowd|abstract\",\"accent\":\"#RRGGBB\"}]}. رشته JSON داخلی باید escape صحیح داشته باشد.",
+        "برای اطلاعیه مسابقه معمولاً سه اسلاید بساز: معرفی و هوک، جزئیات زمان و مکان، دعوت به تعامل. برای موضوع‌های دیگر تعداد و روایت مناسب را خودت انتخاب کن؛ حداکثر ۸ اسلاید.",
+        "از اطلاعات ورودی دقیقاً استفاده کن؛ نام‌ها، تاریخ، ساعت، مکان و واقعیت‌ها را تغییر نده و چیزی اختراع نکن. متن هر اسلاید کوتاه، خوانا و فارسی باشد.",
+        "برای هر اسلاید visual را متناسب با نقش آن انتخاب کن: stadium برای فضای ورزشگاه، matchup برای معرفی دو طرف، details برای اطلاعات، crowd برای انرژی جمعیت و abstract برای موضوعات دیگر. accent یک رنگ شش‌رقمی معتبر باشد.",
+        "پاسخ متنی، توضیح طراحی، Markdown، سلام و احوالپرسی یا پیام عدم پشتیبانی برنگردان. اگر اطلاعات کم است، با داده موجود طرحی محتاطانه بساز و چیزی را جعل نکن.",
+        "از حافظه و گفت‌وگوهای قبلی استفاده نکن؛ فقط محتوای مرجع همین درخواست معتبر است."
+      ].join("\n")
+    : isVideoPlanRequest
     ? [
         "صفحه فعال: استودیوی ویدئو و صدا.",
         "این درخواست فقط برای تبدیل بریف و رسانه‌های انتخاب‌شده به طرح اجرایی صحنه‌های ویدئو است.",
@@ -3002,7 +3022,7 @@ async function handleChat({
   try {
     await ensureNaviMainThread(env.NAVA_DB, userId);
 
-    if (!isVideoPlanRequest) {
+    if (!isVideoPlanRequest && !isStoryPlanRequest) {
       const [
         historyResult,
         memoryResult
@@ -3120,7 +3140,8 @@ async function handleChat({
       apiKey: env.GEMINI_API_KEY,
       systemInstruction,
       contents,
-      videoPlan: isVideoPlanRequest
+      videoPlan: isVideoPlanRequest,
+      storyPlan: isStoryPlanRequest
     });
 
   } catch (error) {
