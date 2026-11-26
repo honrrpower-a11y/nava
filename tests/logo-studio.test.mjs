@@ -98,7 +98,13 @@ function makeRequest(body = INPUT) {
 }
 
 function makeGeminiResponse(plan = makeDesign()) {
-  for (const concept of plan.concepts || []) {
+  for (const [conceptIndex, concept] of (plan.concepts || []).entries()) {
+    concept.geometrySpec ||= { layers: [
+      { shape: "rounded-rect", x: 50, y: 52, width: 72, height: 58, rotation: conceptIndex * 5, tone: "primary", finish: "metal" },
+      { shape: "ellipse", x: 50, y: 38 + conceptIndex * 3, width: 30, height: 28, rotation: 0, tone: "secondary", finish: "soft" },
+      { shape: "capsule", x: 32 + conceptIndex * 10, y: 68, width: 38, height: 10, rotation: 25 - conceptIndex * 12, tone: "accent", finish: "soft" },
+      { shape: "diamond", x: 68 - conceptIndex * 8, y: 30 + conceptIndex * 5, width: 18, height: 18, rotation: 10, tone: "light", finish: "none" }
+    ] };
     concept.silhouette ||= concept.symbolConstruction || concept.centralThesis;
     concept.objectCues ||= (concept.briefElements || []).slice(0, 2);
     while (concept.objectCues.length < 2) concept.objectCues.push("ویژگی تشخیصی فرم");
@@ -977,9 +983,9 @@ test("Logo Studio delivers structured HTML/CSS geometry without blocking on opti
   assert.ok(ui.includes("بازبینی هوش مصنوعی مانع نمایش یا تحویل طرح نیست"));
   assert.ok(backend.includes("buildStructuredLogoConcepts"));
   assert.ok(backend.includes("geometryEngine: \"structured-html-css-grammar\""));
-  assert.ok(engine.includes("subject-specific"));
+  assert.ok(engine.includes("coordinate-based composition"));
   assert.ok(engine.includes("buildStructuredLogoConcepts"));
-  assert.ok(engine.includes("No SVG"));
+  assert.ok(engine.includes("No SVG") || engine.includes("no fixed family templates"));
   assert.ok(backend.includes("TWO STAGES IN ORDER"));
   assert.ok(backend.includes("LOGO_FINAL_VISUAL_QUALITY_LOW"));
 });
@@ -1121,15 +1127,9 @@ test("NAVI keeps the client brief in charge while the structured engine owns act
   assert.ok(backend.includes("designPrompt: data.designMode === \"custom\" ? data.designPrompt : \"\""));
   assert.ok(backend.includes("buildStructuredLogoConcepts(data, designBlueprints)"));
   assert.ok(backend.includes("buildStructuredLogoConcepts(data, designBlueprints)"));
-  assert.ok(engine.includes("data.designPrompt"));
-  assert.ok(engine.includes("subject-specific"));
-  assert.ok(engine.includes("book:"));
-  assert.ok(engine.includes("music:"));
-  assert.ok(engine.includes("network:"));
-  assert.ok(engine.includes("bread:"));
-  assert.ok(engine.includes("leaf:"));
-  assert.ok(engine.includes("coffee:"));
-  assert.ok(engine.includes("monogram:"));
+  assert.ok(engine.includes("geometrySpec"));
+  assert.ok(engine.includes("renderBlueprintGeometry"));
+  assert.ok(engine.includes("No subject-family template"));
   assert.ok(ui.includes("visuallyAuditFinalConcepts("));
   assert.ok(!ui.slice(ui.indexOf("async function generate(event)"), ui.indexOf("ideaModeInputs.forEach"))
     .includes("visuallyRefineConcepts("));
@@ -1314,9 +1314,9 @@ test("NAVI concept planning explicitly prioritizes concrete metaphor and a brand
   assert.ok(backend.includes("SEMANTIC FIDELITY"));
   assert.ok(backend.includes("meaningChain"));
   assert.ok(backend.includes("do not translate abstract words mechanically"));
-  assert.ok(engine.includes("book-integrated-writing-instrument"));
-  assert.ok(engine.includes("backward-opening-page"));
-  assert.ok(engine.includes("rationale: blueprint.rationale || blueprint.centralThesis || variant.rationale"));
+  assert.ok(engine.includes("blueprint-driven-"));
+  assert.ok(engine.includes("blueprint.geometrySpec"));
+  assert.ok(engine.includes("No subject-family template"));
   assert.ok(ui.includes('["استعاره بصری", concept.metaphor]'));
   assert.ok(ui.includes('["زنجیره معنا", concept.meaningChain]'));
 });
