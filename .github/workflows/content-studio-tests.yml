@@ -32,5 +32,7 @@ jobs:
           node-version: 22
       - name: Check JavaScript syntax
         run: node --check app.js
+      - name: Check regression test syntax
+        run: node --check tests/content-studio-intelligence.test.mjs
       - name: Test adaptive Content Studio behavior
         run: node --test tests/content-studio-intelligence.test.mjs
