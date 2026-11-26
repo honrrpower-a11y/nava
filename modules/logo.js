@@ -507,6 +507,7 @@ async function designLogos(data, apiKey) {
       strategy: naviCreativeBrief.strategy,
       concepts: structuredBuild.concepts
     };
+    const designBriefEnglish = naviCreativeBrief.designBriefEnglish;
     const concepts = [];
     const rejectedConcepts = [];
     plan.concepts.forEach((item, index) => {
