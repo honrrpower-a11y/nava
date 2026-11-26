@@ -357,6 +357,69 @@ function sanitizeCss(value) {
   return css + (keyframes.length ? "\n" + keyframes.join("\n") : "");
 }
 
+function normalizeLogoBlueprint(item, index, format) {
+  return {
+    index: index + 1,
+    title: safeText(item?.title, 120),
+    rationale: safeText(item?.rationale, 420),
+    metaphor: safeText(item?.metaphor, 320),
+    meaningChain: safeText(item?.meaningChain, 500),
+    centralThesis: safeText(item?.centralThesis, 500),
+    briefElements: Array.isArray(item?.briefElements) ? item.briefElements.slice(0, 6).map(value => safeText(value, 180)).filter(Boolean) : [],
+    symbolConstruction: safeText(item?.symbolConstruction, 700),
+    briefAlignment: safeText(item?.briefAlignment, 500),
+    silhouette: safeText(item?.silhouette, 700),
+    objectCues: Array.isArray(item?.objectCues) ? item.objectCues.slice(0, 6).map(value => safeText(value, 180)).filter(Boolean) : [],
+    spatialRelationship: safeText(item?.spatialRelationship, 500),
+    negativeSpace: safeText(item?.negativeSpace, 500),
+    geometryRecipe: safeText(item?.geometryRecipe, 900),
+    firstRead: safeText(item?.firstRead, 400),
+    recognitionRisk: safeText(item?.recognitionRisk, 400),
+    signatureFeature: safeText(item?.signatureFeature, 400),
+    materialDirection: safeText(item?.materialDirection, 240) || "A concept-specific finish that supports the symbol's material and meaning without obscuring its silhouette.",
+    finishLayers: Array.isArray(item?.finishLayers) ? item.finishLayers.slice(0, 4).map(value => safeText(value, 180)).filter(Boolean) : ["controlled tonal depth", "refined edge lighting and contact shadow"],
+    geometrySpec: {
+      layers: Array.isArray(item?.geometrySpec?.layers) ? item.geometrySpec.layers.slice(0, 8).map(layer => ({
+        shape: safeText(layer?.shape, 24),
+        x: Number(layer?.x), y: Number(layer?.y),
+        width: Number(layer?.width), height: Number(layer?.height),
+        rotation: Number(layer?.rotation || 0),
+        tone: safeText(layer?.tone, 24),
+        finish: safeText(layer?.finish || "soft", 24),
+        points: Array.isArray(layer?.points) ? layer.points.slice(0, 8).map(point =>
+          Array.isArray(point) ? [Number(point[0]), Number(point[1])] : []
+        ) : []
+      })) : []
+    },
+    mustAvoid: Array.isArray(item?.mustAvoid) ? item.mustAvoid.slice(0, 8).map(value => safeText(value, 120)).filter(Boolean) : []
+  };
+}
+
+function missingLogoBlueprintFields(item, format) {
+  const missing = [];
+  for (const [field, label] of [
+    ["centralThesis", "centralThesis"],
+    ["symbolConstruction", "symbolConstruction"],
+    ["briefAlignment", "briefAlignment"],
+    ["briefElements", "briefElements"],
+    ["silhouette", "silhouette"],
+    ["objectCues", "objectCues (at least two diagnostic cues)"],
+    ["spatialRelationship", "spatialRelationship"],
+    ["negativeSpace", "negativeSpace"],
+    ["geometryRecipe", "geometryRecipe"],
+    ["firstRead", "firstRead"],
+    ["recognitionRisk", "recognitionRisk"],
+    ["signatureFeature", "signatureFeature"]
+  ]) {
+    const value = item?.[field];
+    if (Array.isArray(value) ? value.length === 0 : !value) missing.push(label);
+  }
+  if (format !== "wordmark" && (item?.geometrySpec?.layers?.length || 0) < 4) {
+    missing.push("geometrySpec.layers (at least four valid construction layers)");
+  }
+  return missing;
+}
+
 async function designLogos(data, apiKey) {
   if (!apiKey) throw new Error("NAVI design service is not configured.");
   const userBrief = {
@@ -478,47 +541,94 @@ async function designLogos(data, apiKey) {
     if (!plannedConcepts || plannedConcepts.length !== conceptCount) {
       throw validationError("LOGO_BLUEPRINT_COUNT", "NAVI did not return the requested number of visual construction blueprints.", "concept-planning");
     }
-    const designBlueprints = plannedConcepts.map((item, index) => {
-      const normalized = {
-        index: index + 1,
-        title: safeText(item?.title, 120),
-        rationale: safeText(item?.rationale, 420),
-        metaphor: safeText(item?.metaphor, 320),
-        meaningChain: safeText(item?.meaningChain, 500),
-        centralThesis: safeText(item?.centralThesis, 500),
-        briefElements: Array.isArray(item?.briefElements) ? item.briefElements.slice(0, 6).map(value => safeText(value, 180)).filter(Boolean) : [],
-        symbolConstruction: safeText(item?.symbolConstruction, 700),
-        briefAlignment: safeText(item?.briefAlignment, 500),
-        silhouette: safeText(item?.silhouette, 700),
-        objectCues: Array.isArray(item?.objectCues) ? item.objectCues.slice(0, 6).map(value => safeText(value, 180)).filter(Boolean) : [],
-        spatialRelationship: safeText(item?.spatialRelationship, 500),
-        negativeSpace: safeText(item?.negativeSpace, 500),
-        geometryRecipe: safeText(item?.geometryRecipe, 900),
-        firstRead: safeText(item?.firstRead, 400),
-        recognitionRisk: safeText(item?.recognitionRisk, 400),
-        signatureFeature: safeText(item?.signatureFeature, 400),
-        materialDirection: safeText(item?.materialDirection, 240) || "A concept-specific finish that supports the symbol's material and meaning without obscuring its silhouette.",
-        finishLayers: Array.isArray(item?.finishLayers) ? item.finishLayers.slice(0, 4).map(value => safeText(value, 180)).filter(Boolean) : ["controlled tonal depth", "refined edge lighting and contact shadow"],
-        geometrySpec: {
-          layers: Array.isArray(item?.geometrySpec?.layers) ? item.geometrySpec.layers.slice(0, 8).map(layer => ({
-            shape: safeText(layer?.shape, 24),
-            x: Number(layer?.x), y: Number(layer?.y),
-            width: Number(layer?.width), height: Number(layer?.height),
-            rotation: Number(layer?.rotation || 0),
-            tone: safeText(layer?.tone, 24),
-            finish: safeText(layer?.finish || "soft", 24),
-            points: Array.isArray(layer?.points) ? layer.points.slice(0, 8).map(point =>
-              Array.isArray(point) ? [Number(point[0]), Number(point[1])] : []
-            ) : []
-          })) : []
-        },
-        mustAvoid: Array.isArray(item?.mustAvoid) ? item.mustAvoid.slice(0, 8).map(value => safeText(value, 120)).filter(Boolean) : []
+    let normalizedBlueprints = plannedConcepts.map((item, index) =>
+      normalizeLogoBlueprint(item, index, data.format)
+    );
+    let incompleteBlueprints = normalizedBlueprints
+      .map((item, index) => ({ index, item, missing: missingLogoBlueprintFields(item, data.format) }))
+      .filter(entry => entry.missing.length > 0);
+
+    // Repair only incomplete concepts in one bounded model call. Complete
+    // concepts remain untouched, and the same strict validation runs again.
+    if (incompleteBlueprints.length) {
+      const repairSystem = [
+        "You are NAVI's senior identity concept architect repairing incomplete logo blueprints.",
+        "Return ONLY valid JSON: {\"concepts\":[{\"index\":1, ...complete blueprint fields...}]}",
+        "Repair only the listed concepts. Preserve each concept's existing central meaning, metaphor, exact requested objects, spatial relationships, silhouette direction and distinctive signature. Do not replace the idea with a new concept or generic decoration.",
+        "For each repaired concept return every required field: title, rationale, metaphor, meaningChain, centralThesis, briefElements, symbolConstruction, briefAlignment, silhouette, objectCues (at least two diagnostic visible cues), spatialRelationship, negativeSpace, geometryRecipe, firstRead, recognitionRisk, signatureFeature, materialDirection, finishLayers, geometrySpec.layers, mustAvoid.",
+        "For non-wordmark marks geometrySpec.layers must contain 4–8 actual coordinate-based layers on a 100×100 artboard. Each layer requires shape (ellipse, rounded-rect, capsule, diamond, polygon), x, y, width, height, rotation, tone and finish. Use 3–8 [x,y] points for polygons. The geometry must depict the exact metaphor and object anatomy, not abstract filler.",
+        "Do not return HTML, CSS, SVG, code, explanations or chain-of-thought. Never omit a required field. Keep the original concept index."
+      ].join("\n");
+      const repairRequest = {
+        clientBrief: userBrief,
+        naviCreativeBrief,
+        incompleteConcepts: incompleteBlueprints.map(({ index, item, missing }) => ({
+          index: index + 1,
+          missingFields: missing,
+          existingBlueprint: item
+        }))
       };
-      if (!normalized.centralThesis || !normalized.symbolConstruction || !normalized.briefAlignment || !normalized.briefElements.length || !normalized.silhouette || normalized.objectCues.length < 2 || !normalized.spatialRelationship || !normalized.negativeSpace || !normalized.geometryRecipe || !normalized.firstRead || !normalized.recognitionRisk || !normalized.signatureFeature || (data.format !== "wordmark" && normalized.geometrySpec.layers.length < 4)) {
-        throw validationError("LOGO_BLUEPRINT_INCOMPLETE", "نقشه ساخت بصری باید سیلوئت، نشانه‌های تشخیصی، رابطه فضایی، فضای منفی، ویژگی امضادار، ریسک برداشت اشتباه و دستور ساخت دقیق داشته باشد.", "concept-planning", index + 1);
+      const repairResponse = await fetchGeminiWithRetry(
+        "https://generativelanguage.googleapis.com/v1beta/models/" + GEMINI_MODEL + ":generateContent",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
+          body: JSON.stringify({
+            systemInstruction: { parts: [{ text: repairSystem }] },
+            contents: [{ role: "user", parts: [{ text: "Repair only the incomplete concepts below. Preserve their original meaning and return complete JSON.\\n" + JSON.stringify(repairRequest) }] }],
+            generationConfig: {
+              thinkingConfig: { thinkingLevel: "HIGH" },
+              maxOutputTokens: 8192,
+              responseMimeType: "application/json"
+            }
+          }),
+          signal: controller.signal
+        }
+      );
+      const repairPayload = await repairResponse.json().catch(() => ({}));
+      if (!repairResponse.ok) {
+        const error = new Error("Gemini blueprint repair HTTP " + repairResponse.status);
+        error.httpStatus = repairResponse.status;
+        error.diagnosticCode = repairResponse.status === 429 ? "MODEL_RATE_LIMIT" :
+          repairResponse.status >= 500 ? "MODEL_SERVICE_ERROR" :
+          repairResponse.status === 400 ? "MODEL_REQUEST_REJECTED" : "MODEL_API_ERROR";
+        error.validationStage = "concept-planning-repair";
+        throw error;
       }
-      return normalized;
-    });
+      const repairCandidate = repairPayload?.candidates?.[0];
+      const repairFinish = String(repairCandidate?.finishReason || "");
+      if (!repairCandidate || (repairFinish && !["STOP", "FINISH_REASON_UNSPECIFIED"].includes(repairFinish))) {
+        throw validationError("LOGO_BLUEPRINT_INCOMPLETE",
+          "ترمیم یک‌باره نقشه ناقص کامل نشد؛ بخش‌های ناقص: " +
+          incompleteBlueprints.map(entry => "طرح " + (entry.index + 1) + " (" + entry.missing.join("، ") + ")").join("؛ "),
+          "concept-planning-repair", incompleteBlueprints[0]?.index + 1 || null);
+      }
+      let repaired;
+      try {
+        const repairRaw = (repairCandidate.content?.parts || []).map(part => part.text || "").join("");
+        repaired = extractJsonObject(repairRaw);
+      } catch {
+        repaired = null;
+      }
+      const repairedConcepts = Array.isArray(repaired?.concepts) ? repaired.concepts : [];
+      const repairedByIndex = new Map(repairedConcepts.map(item => [Number(item?.index), item]));
+      for (const entry of incompleteBlueprints) {
+        const candidate = repairedByIndex.get(entry.index + 1);
+        if (candidate) normalizedBlueprints[entry.index] = normalizeLogoBlueprint(candidate, entry.index, data.format);
+      }
+      incompleteBlueprints = normalizedBlueprints
+        .map((item, index) => ({ index, item, missing: missingLogoBlueprintFields(item, data.format) }))
+        .filter(entry => entry.missing.length > 0);
+      if (incompleteBlueprints.length) {
+        const details = incompleteBlueprints.map(entry =>
+          "طرح " + (entry.index + 1) + ": " + entry.missing.join("، ")
+        ).join("؛ ");
+        throw validationError("LOGO_BLUEPRINT_INCOMPLETE",
+          "پس از یک‌بار ترمیم هدفمند، نقشه ساخت هنوز ناقص است: " + details + ".",
+          "concept-planning-repair", incompleteBlueprints[0].index + 1);
+      }
+    }
+    const designBlueprints = normalizedBlueprints;
     // Each approved blueprint contains the actual coordinate-based geometry.
     // The constrained renderer builds native HTML/CSS primitives without fixed family templates or model-authored markup.
     const structuredBuild = buildStructuredLogoConcepts(data, designBlueprints);
