@@ -49,5 +49,10 @@ test("Content Studio silently proofreads Persian copy and validates hashtags", (
   assert.ok(app.includes("غلط تایپی، واژه نامفهوم، ترکیب نامعتبر"));
   assert.ok(app.includes("نام اشخاص، باشگاه‌ها، برندها، مکان‌ها، تاریخ‌ها، اعداد و اصطلاحات تخصصی را حدس نزن"));
   assert.ok(app.includes("هیچ غلط تایپی آشکار یا هشتگ نامفهوم باقی نگذار"));
+  assert.ok(app.includes("کنترل نویسه‌های مخدوش الزامی است"));
+  assert.ok(app.includes("«نبرد0 حساس»"));
+  assert.ok(app.includes("«نبردی حساس»"));
+  assert.ok(app.includes("اعداد واقعیِ مستقل"));
+
   assert.ok(html.includes("app.js?v=content-studio-quality-gate-20261127-3"));
 });
