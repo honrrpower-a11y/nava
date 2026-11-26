@@ -178,7 +178,7 @@ test("NAVI writes an English brief and three sanitized HTML/CSS logo designs in 
     assert.match(sentPrompts[0], /recognitionRisk/i);
     assert.match(sentPrompts[0], /plain dome with parallel bars/i);
     assert.match(sentPrompt, /APPROVED VISUAL CONSTRUCTION BLUEPRINT/i);
-    assert.match(sentPrompt, /diagnostic object cues, spatial relationships, negative space and geometry recipe/i);
+    assert.match(sentPrompt, /diagnostic object cues, spatial relationships, negative space, signatureFeature and recognitionRisk correction/i);
     assert.match(sentPrompt, /CRAFT BENCHMARK — STUDY THE HAND-BUILT NAVA HTML\/CSS LAB AS A CRAFT REFERENCE ONLY/i);
     assert.match(sentPrompt, /DESIGN BEFORE DECORATION/i);
     assert.match(sentPrompt, /PHASE 6D — SIGNATURE IDENTITY, NOT GENERIC ICON/i);
