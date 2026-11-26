@@ -29,3 +29,11 @@ test("NAVI's resolved format is used for downstream studio handoff", () => {
   assert.ok(app.includes('const resolved = readDecision(({ platform: "پلتفرم", format: "قالب", objective: "هدف", tone: "لحن" })[key])'));
   assert.ok(app.includes("handoff = effectiveHandoff"));
 });
+
+test("NAVI performs a silent quality review before showing final content", () => {
+  assert.ok(app.includes("کنترل کیفیت داخلی اجباری پیش از نمایش"));
+  assert.ok(app.includes("فقط نسخه نهاییِ بازبینی‌شده را نمایش بده"));
+  assert.ok(app.includes("اطلاعات، عدد، منبع، تجربه، ویژگی محصول یا ادعای تازه نساز"));
+  assert.ok(app.includes("اگر خروجی از ابتدا استاندارد است، بی‌دلیل آن را بازنویسی نکن"));
+  assert.ok(html.includes("app.js?v=content-studio-quality-gate-20261127-1"));
+});
