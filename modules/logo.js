@@ -333,7 +333,7 @@ function conceptsAreNearDuplicates(left, right) {
   const leftGeometry = extractSymbolDesignFingerprint(left.html, left.css);
   const rightGeometry = extractSymbolDesignFingerprint(right.html, right.css);
   const geometryDuplicate = Boolean(leftGeometry && rightGeometry) &&
-    textSimilarity(leftGeometry, rightGeometry) >= 0.94;
+    textSimilarity(leftGeometry, rightGeometry) >= 0.84;
   return rationaleDuplicate || geometryDuplicate;
 }
 
