@@ -16,6 +16,8 @@ on:
       - "app.js"
       - "index.html"
       - "tests/content-studio-intelligence.test.mjs"
+      - "tests/story-studio-visual.test.mjs"
+      - "style.css"
       - ".github/workflows/content-studio-tests.yml"
   workflow_dispatch:
 
