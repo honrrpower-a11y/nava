@@ -1011,6 +1011,128 @@ async function refineLogoConcepts(data, conceptsInput, apiKey, revisionAttempt =
   }
 }
 
+
+async function auditFinalLogoConcepts(data, conceptsInput, apiKey) {
+  if (!apiKey) throw new Error("NAVI design service is not configured.");
+  if (!Array.isArray(conceptsInput) || conceptsInput.length < 1 || conceptsInput.length > 3) {
+    throw validationError("LOGO_FINAL_AUDIT_INPUT_INVALID", "Final visual audit requires one to three rendered concepts.", "final-visual-audit-input");
+  }
+  const concepts = conceptsInput.map((item, index) => {
+    const match = /^data:image\\/png;base64,([A-Za-z0-9+/]+={0,2})$/.exec(String(item?.previewImage || ""));
+    if (!match || match[1].length > 850000) {
+      throw validationError("LOGO_FINAL_AUDIT_IMAGE_INVALID", "A final rendered PNG is missing or too large.", "final-visual-audit-image", index + 1);
+    }
+    return { index: index + 1, image: match[1] };
+  });
+  const userBrief = {
+    brandName: data.brandName,
+    designMode: data.designMode,
+    designPrompt: data.designPrompt,
+    slogan: data.slogan,
+    industry: data.industry,
+    audience: data.audience,
+    symbolIdea: data.symbolIdea,
+    format: data.format,
+    typography: data.typography,
+    personality: data.personality
+  };
+  const system = [
+    "You are an independent final logo quality auditor. You do not design, edit or rewrite code. You inspect only the final rendered PNG images supplied by the client browser.",
+    "This is a RELEASE GATE, not a design-description exercise. Do not approve a weak logo because it has a convincing title, rationale or source code. A rejected mark must remain rejected.",
+    "TWO STAGES IN ORDER. First inspect each image's symbol only, deliberately ignoring the brand name and any knowledge of the requested brand. Record unaidedRead as the concrete thing an ordinary unfamiliar viewer would identify first, and likelyMisread as the strongest competing interpretation. Do not infer meaning from the request. Then, and only then, compare that first reading with the client brief supplied after the images.",
+    "The symbol must communicate the requested subject from its visible silhouette and defining details. If a bookstore/book brief produces a generic trapezoid, kiln, bag, container, stack of cards or abstract polygon instead of a recognizable book, it fails. A recognizable open book should show paired page leaves meeting at a central gutter/spine, or another unmistakable book construction. Apply equally strict concrete-object recognition to all other named subjects.",
+    "Score the FINAL IMAGE, not the intention: recognitionScore measures unaided identification; briefFidelityScore measures visible match to the exact request; craftScore measures silhouette quality, proportion, negative space, optical balance, material finish and typography. Be conservative. Abstract/unclear first reads cannot score 8 or higher for recognition.",
+    "Accept only when all three integer scores are at least 8/10 and the unaidedRead matches the brief's central requested subject. If likelyMisread is more immediate than the requested subject, recognitionScore must be below 8. Never inflate scores to make the pipeline succeed.",
+    "Return one JSON object with a concepts array in the same order. Each item must contain index, unaidedRead, likelyMisread, firstRead, semanticEvidence (at least two visible cues), recognitionScore, briefFidelityScore and craftScore. No markdown, source code, SVG, images, or chain-of-thought."
+  ].join("\n");
+  const parts = [{
+    text: "STAGE 1 — BLIND IMAGE READING. Inspect the following final rendered images before reading any client brief. For each, write the actual first visual interpretation and strongest likely misread.\n"
+  }];
+  concepts.forEach(({ index, image }) => {
+    parts.push({ text: "FINAL RENDER " + index + " — inspect the symbol silhouette first." });
+    parts.push({ inlineData: { mimeType: "image/png", data: image } });
+  });
+  parts.push({
+    text: "STAGE 2 — CLIENT BRIEF COMPARISON. Now compare your already-recorded unaided readings with this exact client brief. Do not revise the first-read observations to fit the brief.\n" +
+      JSON.stringify(userBrief) + "\nReturn the required JSON quality audit for every final render."
+  });
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 90000);
+  try {
+    const response = await fetchGeminiWithRetry(
+      "https://generativelanguage.googleapis.com/v1beta/models/" + GEMINI_MODEL + ":generateContent",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
+        body: JSON.stringify({
+          systemInstruction: { parts: [{ text: system }] },
+          contents: [{ role: "user", parts }],
+          generationConfig: {
+            thinkingConfig: { thinkingLevel: "HIGH" },
+            maxOutputTokens: 8192,
+            responseMimeType: "application/json"
+          }
+        }),
+        signal: controller.signal
+      }
+    );
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      const error = new Error("Gemini final visual audit HTTP " + response.status);
+      error.httpStatus = response.status;
+      error.diagnosticCode = response.status === 429 ? "MODEL_RATE_LIMIT" :
+        response.status >= 500 ? "MODEL_SERVICE_ERROR" :
+        response.status === 400 ? "MODEL_REQUEST_REJECTED" : "MODEL_API_ERROR";
+      throw error;
+    }
+    const candidate = payload?.candidates?.[0];
+    if (!candidate) throw validationError("MODEL_EMPTY_RESPONSE", "Final visual audit returned no candidate.", "final-visual-audit-model");
+    if (candidate.finishReason === "MAX_TOKENS") {
+      throw validationError("MODEL_OUTPUT_TRUNCATED", "Final visual audit output was truncated.", "final-visual-audit-model");
+    }
+    const raw = (candidate.content?.parts || []).map(part => part.text || "").join("");
+    const plan = extractJsonObject(raw);
+    if (!Array.isArray(plan.concepts) || plan.concepts.length !== concepts.length) {
+      throw validationError("LOGO_FINAL_AUDIT_COUNT", "Final visual audit did not return every rendered concept.", "final-visual-audit-count");
+    }
+    const audited = plan.concepts.map((item, index) => {
+      const unaidedRead = safeText(item?.unaidedRead, 180);
+      const likelyMisread = safeText(item?.likelyMisread, 180);
+      const firstRead = safeText(item?.firstRead, 180);
+      const semanticEvidence = Array.isArray(item?.semanticEvidence)
+        ? item.semanticEvidence.map(value => safeText(value, 180)).filter(Boolean).slice(0, 4)
+        : [];
+      const scores = ["recognitionScore", "briefFidelityScore", "craftScore"].map(key => Number(item?.[key]));
+      if (!unaidedRead || !likelyMisread || !firstRead || semanticEvidence.length < 2 ||
+          scores.some(score => !Number.isInteger(score) || score < 1 || score > 10)) {
+        throw validationError("LOGO_FINAL_AUDIT_INCOMPLETE", "Final visual audit omitted required evidence or valid scores.", "final-visual-audit-output", index + 1);
+      }
+      const [recognitionScore, briefFidelityScore, craftScore] = scores;
+      const accepted = scores.every(score => score >= 8);
+      return {
+        index: index + 1,
+        unaidedRead,
+        likelyMisread,
+        firstRead,
+        semanticEvidence,
+        visualQuality: { recognitionScore, briefFidelityScore, craftScore },
+        visualReview: accepted ? "accepted" : "rejected",
+        visualReviewIssue: accepted ? "" : "LOGO_FINAL_VISUAL_QUALITY_LOW"
+      };
+    });
+    return {
+      method: "final-render-blind-read-quality-gate",
+      reviewedCount: audited.length,
+      acceptedCount: audited.filter(item => item.visualReview === "accepted").length,
+      rejectionReasons: audited.filter(item => item.visualReview !== "accepted")
+        .map(item => ({ index: item.index, code: item.visualReviewIssue })),
+      concepts: audited
+    };
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 export async function handleLogoRoute({ request, env, origin, corsOrigin }) {
   if (origin !== ALLOWED_ORIGIN) return fail("مبدأ درخواست مجاز نیست.", 403, corsOrigin);
   if (request.method !== "POST") return fail("روش درخواست پشتیبانی نمی‌شود.", 405, corsOrigin);
@@ -1019,7 +1141,7 @@ export async function handleLogoRoute({ request, env, origin, corsOrigin }) {
   try {
     const raw = await request.text();
     input = JSON.parse(raw);
-    const maximumBodyLength = input?.action === "visual-refine" ? 3000000 : 12000;
+    const maximumBodyLength = ["visual-refine", "visual-final-audit"].includes(input?.action) ? 3000000 : 12000;
     if (raw.length > maximumBodyLength) return fail("حجم اطلاعات درخواست بیش از حد مجاز است.", 413, corsOrigin);
   } catch {
     return fail("اطلاعات بریف معتبر نیست.", 400, corsOrigin);
@@ -1048,6 +1170,31 @@ export async function handleLogoRoute({ request, env, origin, corsOrigin }) {
   if (!data.format) return fail("ساختار لوگوی انتخاب‌شده معتبر نیست.", 400, corsOrigin);
   if (!/^#[0-9a-fA-F]{6}$/.test(data.primaryColor) || !/^#[0-9a-fA-F]{6}$/.test(data.darkColor)) {
     return fail("رنگ‌های انتخاب‌شده معتبر نیستند؛ پالت را دوباره انتخاب کن.", 400, corsOrigin);
+  }
+
+
+  if (input?.action === "visual-final-audit") {
+    const reviewAuthorized = await verifyLogoReviewToken(
+      env.NAVI_SESSION_SECRET, data.brandName, input.reviewToken
+    );
+    if (!reviewAuthorized) return fail("مجوز بازبینی نهایی معتبر نیست یا زمان آن پایان یافته است؛ دوباره طرح را تولید کن.", 403, corsOrigin);
+    try {
+      const audit = await auditFinalLogoConcepts(data, input.concepts, env.GEMINI_API_KEY);
+      return json({ success: true, visualReview: audit, concepts: audit.concepts }, 200, corsOrigin);
+    } catch (error) {
+      const diagnosticCode = error?.diagnosticCode || (error?.name === "AbortError" ? "MODEL_TIMEOUT" : "LOGO_FINAL_AUDIT_FAILED");
+      console.error("[NAVA LOGO] final visual audit failure:", JSON.stringify({
+        diagnosticCode,
+        httpStatus: error?.httpStatus || null,
+        validationStage: error?.validationStage || null,
+        conceptIndex: error?.conceptIndex || null,
+        message: String(error?.message || error).slice(0, 220)
+      }));
+      return fail("بازبینی تصویر نهایی لوگو کامل نشد؛ برای جلوگیری از تحویل طرح تأییدنشده، خروجی نمایش داده نمی‌شود.", 502, corsOrigin, {
+        code: diagnosticCode,
+        retryable: ["MODEL_RATE_LIMIT", "MODEL_SERVICE_ERROR", "MODEL_TIMEOUT"].includes(diagnosticCode)
+      });
+    }
   }
 
   if (input?.action === "visual-refine") {
