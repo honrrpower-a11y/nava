@@ -4110,7 +4110,7 @@ async function sendMessageToNavi(options = {}) {
       : naviAssistantContext;
   const selectedService = options.serviceOverride ||
     (isHomePage ? "انتخاب نشده" : serviceSelect.value);
-  const contentHandoff = options.contentHandoff || window.navaPendingContentHandoff || null;
+  const contentHandoff = options.contentHandoff || (window.navaPendingContentHandoff && message.startsWith("در استودیوی تولید محتوای NAVA،") ? window.navaPendingContentHandoff : null);
   const saveThisMessageToMemory = options.videoPlan === true
     ? false
     : Boolean(naviSaveComposerMessage?.checked);
