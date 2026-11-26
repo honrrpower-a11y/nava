@@ -105,6 +105,8 @@ function makeGeminiResponse(plan = makeDesign()) {
     concept.negativeSpace ||= concept.symbolConstruction;
     concept.geometryRecipe ||= concept.symbolConstruction;
     concept.firstRead ||= concept.centralThesis;
+    concept.recognitionRisk ||= "برداشت کلی و مبهم؛ باید با نشانه‌های تشخیصی دقیق‌تر اصلاح شود";
+    concept.signatureFeature ||= "ویژگی هندسی اختصاصی و قابل تشخیص در سیلوئت";
     const html = String(concept.html || "");
     const symbolStart = html.indexOf('class="navi-symbol');
     const symbolOpenEnd = symbolStart >= 0 ? html.indexOf(">", symbolStart) : -1;
@@ -172,10 +174,18 @@ test("NAVI writes an English brief and three sanitized HTML/CSS logo designs in 
     assert.match(sentPrompts[0], /Do not rename the concepts key/i);
     assert.match(sentPrompts[0], /Do not write HTML, CSS, SVG/i);
     assert.match(sentPrompts[0], /at least two diagnostic visual cues/i);
+    assert.match(sentPrompts[0], /signatureFeature/i);
+    assert.match(sentPrompts[0], /recognitionRisk/i);
+    assert.match(sentPrompts[0], /plain dome with parallel bars/i);
     assert.match(sentPrompt, /APPROVED VISUAL CONSTRUCTION BLUEPRINT/i);
-    assert.match(sentPrompt, /diagnostic object cues, spatial relationships, negative space and geometry recipe/i);
+    assert.match(sentPrompt, /diagnostic object cues, spatial relationships, negative space, signatureFeature and recognitionRisk correction/i);
     assert.match(sentPrompt, /CRAFT BENCHMARK — STUDY THE HAND-BUILT NAVA HTML\/CSS LAB AS A CRAFT REFERENCE ONLY/i);
     assert.match(sentPrompt, /DESIGN BEFORE DECORATION/i);
+    assert.match(sentPrompt, /PHASE 6D — SIGNATURE IDENTITY, NOT GENERIC ICON/i);
+    assert.match(sentPrompt, /PHASE 6E — BLIND-READ EVIDENCE/i);
+    assert.match(sentPrompt, /same level of design authorship/i);
+    assert.match(sentPrompt, /signatureFeature/i);
+    assert.match(sentPrompt, /recognitionRisk/i);
     assert.match(sentPrompt, /PHASE 1 — DISCOVERY/i);
     assert.match(sentPrompt, /PHASE 2 — CATEGORY RESEARCH/i);
     assert.match(sentPrompt, /PHASE 4A — IDENTITY COHESION/i);
@@ -217,7 +227,7 @@ test("NAVI writes an English brief and three sanitized HTML/CSS logo designs in 
     assert.equal(result.planning.method, "navi-visual-blueprint-then-html-css-build");
     assert.equal(result.planning.extraModelCalls, 1);
     assert.equal(result.planning.visualBlueprints.length, 3);
-    assert.ok(result.planning.visualBlueprints.every(item => item.geometryRecipe && item.silhouette && item.objectCues.length >= 2));
+    assert.ok(result.planning.visualBlueprints.every(item => item.geometryRecipe && item.silhouette && item.objectCues.length >= 2 && item.signatureFeature && item.recognitionRisk));
     assert.match(result.planning.designBriefEnglish, /distinctive Persian creative-studio identity/i);
     assert.ok(result.concepts.every(item => item.html.includes("نوا")));
     assert.ok(result.concepts.every(item => item.html.includes('data-logo-role="brand"')));
