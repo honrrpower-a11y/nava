@@ -1008,6 +1008,8 @@ test("Logo Studio visually refines rendered HTML/CSS concepts before delivery", 
   assert.ok(ui.includes('action: "visual-final-audit"'));
   assert.ok(backend.includes("buildStructuredLogoConcepts"));
   assert.ok(backend.includes("geometryEngine: \"structured-html-css-grammar\""));
+  assert.ok(backend.includes("executionBriefEnglish: source.executionBriefEnglish"));
+  assert.ok(backend.includes("geometryLayerRoles: source.geometryLayerRoles"));
   assert.ok(engine.includes("coordinate-based composition"));
   assert.ok(engine.includes("buildStructuredLogoConcepts"));
   assert.ok(engine.includes("No SVG") || engine.includes("no fixed family templates"));
