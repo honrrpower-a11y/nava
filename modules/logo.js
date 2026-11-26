@@ -13,17 +13,18 @@ function fail(message, status, corsOrigin, extra = {}) {
 // Retry transient Gemini overloads once; keep the same request and abort deadline.
 async function fetchGeminiWithRetry(url, options) {
   const retryableStatuses = new Set([429, 500, 502, 503, 504]);
-  for (let attempt = 0; attempt < 2; attempt += 1) {
+  const retryDelays = [700, 1500];
+  for (let attempt = 0; attempt < 3; attempt += 1) {
     let response;
     try {
       response = await fetch(url, options);
     } catch (error) {
-      if (attempt === 1) throw error;
-      await new Promise(resolve => setTimeout(resolve, 800));
+      if (attempt >= 2) throw error;
+      await new Promise(resolve => setTimeout(resolve, retryDelays[attempt]));
       continue;
     }
-    if (!retryableStatuses.has(response.status) || attempt === 1) return response;
-    await new Promise(resolve => setTimeout(resolve, 800));
+    if (!retryableStatuses.has(response.status) || attempt >= 2) return response;
+    await new Promise(resolve => setTimeout(resolve, retryDelays[attempt]));
   }
   throw new Error("Gemini request failed after retry.");
 }
@@ -1182,7 +1183,7 @@ export async function handleLogoRoute({ request, env, origin, corsOrigin }) {
       httpStatus: error?.httpStatus || null,
       finishReason: error?.finishReason || null,
       outputLength: error?.outputLength || null,
-      validationStage: error?.validationStage || "unclassified-design-pipeline",
+      validationStage: error?.validationStage || error?.stage || "unclassified-design-pipeline",
       conceptIndex: error?.conceptIndex || null,
       message: String(error?.message || error).slice(0, 320),
       stack: String(error?.stack || "").slice(0, 1800)
@@ -1218,7 +1219,7 @@ export async function handleLogoRoute({ request, env, origin, corsOrigin }) {
     };
     return fail(messages[diagnosticCode] || messages.LOGO_VALIDATION_FAILED, 502, corsOrigin, {
       code: diagnosticCode,
-      stage: error?.validationStage || "unclassified-design-pipeline",
+      stage: error?.validationStage || error?.stage || "unclassified-design-pipeline",
       conceptIndex: error?.conceptIndex || null,
       retryable: ["MODEL_TIMEOUT", "MODEL_RATE_LIMIT", "MODEL_SERVICE_ERROR", "MODEL_EMPTY_RESPONSE"].includes(diagnosticCode)
     });
