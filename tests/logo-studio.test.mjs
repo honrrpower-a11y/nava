@@ -253,7 +253,7 @@ test("Logo Studio recovers omitted visual-anchor arrays from the validated brief
     assert.equal(result.concepts.length, 1);
     assert.equal(result.concepts[0].visualAnchors.length, 2);
     assert.equal(result.concepts[0].anchorMap.length, 2);
-    assert.ok(result.concepts[0].anchorMap.every(entry => ["wave", "navi-symbol"].includes(entry.layerClass)));
+    assert.ok(result.concepts[0].anchorMap.every(entry => /^navi-part-[1-4]$/.test(entry.layerClass)));
     assert.equal(db.visitorUsed, 1);
   } finally {
     globalThis.fetch = originalFetch;
