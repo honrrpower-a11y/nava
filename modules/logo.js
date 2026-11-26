@@ -485,6 +485,14 @@ async function designLogos(data, apiKey) {
         mechanism: safeText(item?.mechanism, 260),
         expressionMove: safeText(item?.expressionMove, 180),
         differsBy: safeText(item?.differsBy, 220),
+        axes: item?.axes && typeof item.axes === "object" && !Array.isArray(item.axes)
+          ? Object.fromEntries(Object.entries(item.axes).slice(0, 4).map(([key, value]) => [
+            safeText(key, 48), safeText(value, 64)
+          ]).filter(([key, value]) => key && value))
+          : {},
+        defaultsUsed: Array.isArray(item?.defaultsUsed)
+          ? item.defaultsUsed.slice(0, 4).map(value => safeText(value, 140)).filter(Boolean)
+          : [],
         html: String(item?.html || "").slice(0, 10000),
         css: String(item?.css || "").slice(0, 16000),
         centralThesis: safeText(item?.centralThesis, 500),
