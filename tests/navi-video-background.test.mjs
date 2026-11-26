@@ -27,5 +27,6 @@ test("NAVI video plans still trigger automatic validation, repair, and local res
 test("NAVI keeps the active studio context when restoring a guest's return form", () => {
   const restore = app.match(/function restoreNavaReturnContext\(\)\s*\{[\s\S]*?\n\}/)?.[0] || "";
   assert.ok(restore.includes("syncNaviStudioContextFromActivePage()"));
-  assert.doesNotMatch(restore, /showPage\(pending\.pageId\)/);
+  assert.equal((restore.match(/showPage\(pending\.pageId\)/g) || []).length, 1);
+  assert.ok(restore.indexOf("showPage(pending.pageId)") < restore.indexOf("syncNaviStudioContextFromActivePage()"));
 });
