@@ -12,6 +12,7 @@
   <link rel="stylesheet" href="style.css?v=navi-video-image-analysis-20261125-1">
   <link rel="stylesheet" href="logo-studio.css?v=navi-idea-director-20261120-1">
   <link rel="stylesheet" href="brand-content-studios.css?v=studio-output-inline-20261114-1">
+  <link rel="stylesheet" href="social-management.css?v=social-management-navi-workspaces-20261126-1">
   <link rel="stylesheet" href="business-tools.css?v=business-navi-help-20261116-1">
   <link rel="stylesheet" href="studio-workspaces.css?v=composition-staff-20261114-1">
   <link rel="stylesheet" href="office-navi-guide.css?v=office-two-tabs-20261118-1">
@@ -150,10 +151,74 @@
         </div>
       </div>
 
+      <div class="nava-social-management-entry">
+        <div class="nava-social-management-entry-copy">
+          <span class="nava-home-eyebrow">SOCIAL GROWTH WORKSPACE</span>
+          <strong>مدیریت شبکه‌های اجتماعی</strong>
+          <span>فضاهای مستقل برای YouTube، Instagram و Telegram</span>
+        </div>
+        <button class="nava-social-management-entry-button" type="button" onclick="showPage('socialPage')">ورود به مدیریت شبکه‌ها <span aria-hidden="true">←</span></button>
+      </div>
+
       <p class="nava-home-footnote"><span aria-hidden="true">✦</span> هر مسیر، شروع یک تجربه تازه در نواست.</p>
     </div>
 
 
+  </section>
+
+  <section class="page" id="socialPage" data-studio-service="مدیریت شبکه‌های اجتماعی">
+    <div class="studio-workspace social-management-workspace">
+      <div class="studio-workspace-head">
+        <div><span class="studio-kicker">NAVA SOCIAL GROWTH / MANAGEMENT</span><h1>مدیریت شبکه‌های اجتماعی</h1><p>برای هر شبکه فضای کاری مستقل داشته باش؛ استراتژی، برنامه انتشار و مسیر رشد را با NAVI مدیریت کن.</p></div>
+        <button class="btn-secondary" type="button" onclick="showPage('homePage')">بازگشت به استودیوها</button>
+      </div>
+      <div class="social-management-intro">
+        <strong>تولید محتوا با مدیریت شبکه‌ها فرق دارد</strong>
+        <p>محتوا در استودیوی تولید محتوا ساخته می‌شود؛ اینجا برای هر کانال هدف‌گذاری، برنامه‌ریزی انتشار، بررسی عملکرد و تصمیم‌های رشد انجام می‌شود. محتوای آماده نیز می‌تواند به استودیوی تولید محتوا منتقل شود.</p>
+      </div>
+      <div class="social-management-tabs" role="tablist" aria-label="انتخاب فضای شبکه اجتماعی">
+        <button class="social-management-tab is-active" type="button" role="tab" aria-selected="true" aria-controls="socialPanelInstagram" data-social-tab="instagram"><span aria-hidden="true">◎</span> Instagram</button>
+        <button class="social-management-tab" type="button" role="tab" aria-selected="false" aria-controls="socialPanelYoutube" data-social-tab="youtube"><span aria-hidden="true">▶</span> YouTube</button>
+        <button class="social-management-tab" type="button" role="tab" aria-selected="false" aria-controls="socialPanelTelegram" data-social-tab="telegram"><span aria-hidden="true">➤</span> Telegram</button>
+      </div>
+      <section class="social-management-panel is-active" id="socialPanelInstagram" role="tabpanel" data-social-panel="instagram">
+        <div class="social-platform-heading"><div><span>INSTAGRAM WORKSPACE</span><h2>مدیریت اینستاگرام</h2><p>پست، ریلز، استوری، تعامل و رشد صفحه</p></div><span class="social-platform-mark">◎</span></div>
+        <div class="social-management-fields">
+          <div><label for="socialInstagramAccount">نام یا شناسه صفحه</label><input class="studio-control" id="socialInstagramAccount" maxlength="120" placeholder="مثلاً ritmetan"></div>
+          <div><label for="socialInstagramTask">درخواست اصلی</label><select class="studio-control" id="socialInstagramTask"><option>برنامه رشد و استراتژی صفحه</option><option>تقویم محتوایی</option><option>بهبود بازدید و تعامل</option><option>تحلیل افت عملکرد</option><option>برنامه ریلز و استوری</option><option>بررسی و بهینه‌سازی پروفایل</option></select></div>
+          <div><label for="socialInstagramAudience">مخاطب هدف</label><input class="studio-control" id="socialInstagramAudience" maxlength="220" placeholder="چه کسانی باید این صفحه را دنبال کنند؟"></div>
+          <div><label for="socialInstagramGoal">هدف فعلی صفحه</label><input class="studio-control" id="socialInstagramGoal" maxlength="220" placeholder="مثلاً افزایش تعامل یا جذب مشتری"></div>
+          <div class="social-management-wide"><label for="socialInstagramBrief">وضعیت فعلی یا مسئله‌ای که باید بررسی شود</label><textarea class="studio-control social-management-brief" id="socialInstagramBrief" maxlength="2500" placeholder="آمار، نوع محتوا، مشکل صفحه یا توضیحی که برای برنامه‌ریزی لازم است..."></textarea></div>
+        </div>
+        <div class="social-management-actions"><button class="btn-primary social-management-navi" type="button" data-social-submit="instagram">برنامه‌ریزی با NAVI</button><button class="btn-secondary social-management-content" type="button" data-social-content="instagram">ساخت محتوا برای اینستاگرام</button></div>
+      </section>
+      <section class="social-management-panel" id="socialPanelYoutube" role="tabpanel" data-social-panel="youtube" hidden>
+        <div class="social-platform-heading"><div><span>YOUTUBE WORKSPACE</span><h2>مدیریت یوتیوب</h2><p>کانال، ویدئوهای بلند، Shorts و عملکرد محتوا</p></div><span class="social-platform-mark">▶</span></div>
+        <div class="social-management-fields">
+          <div><label for="socialYoutubeAccount">نام یا شناسه کانال</label><input class="studio-control" id="socialYoutubeAccount" maxlength="120" placeholder="نام کانال یا شناسه آن"></div>
+          <div><label for="socialYoutubeTask">درخواست اصلی</label><select class="studio-control" id="socialYoutubeTask"><option>استراتژی رشد کانال</option><option>تقویم و برنامه انتشار</option><option>بهبود عنوان و تصویر بندانگشتی</option><option>برنامه ویدئوهای بلند</option><option>برنامه YouTube Shorts</option><option>تحلیل بازدید و نگهداشت مخاطب</option></select></div>
+          <div><label for="socialYoutubeAudience">مخاطب هدف</label><input class="studio-control" id="socialYoutubeAudience" maxlength="220" placeholder="مخاطب اصلی کانال"></div>
+          <div><label for="socialYoutubeGoal">هدف فعلی کانال</label><input class="studio-control" id="socialYoutubeGoal" maxlength="220" placeholder="مثلاً افزایش زمان تماشا یا مشترک"></div>
+          <div class="social-management-wide"><label for="socialYoutubeBrief">وضعیت فعلی یا مسئله‌ای که باید بررسی شود</label><textarea class="studio-control social-management-brief" id="socialYoutubeBrief" maxlength="2500" placeholder="موضوع کانال، آمار موجود، مشکل بازدید یا جزئیات برنامه..."></textarea></div>
+        </div>
+        <div class="social-management-actions"><button class="btn-primary social-management-navi" type="button" data-social-submit="youtube">برنامه‌ریزی با NAVI</button><button class="btn-secondary social-management-content" type="button" data-social-content="youtube">ساخت محتوا برای یوتیوب</button></div>
+      </section>
+      <section class="social-management-panel" id="socialPanelTelegram" role="tabpanel" data-social-panel="telegram" hidden>
+        <div class="social-platform-heading"><div><span>TELEGRAM WORKSPACE</span><h2>مدیریت تلگرام</h2><p>کانال، پیام‌ها، نظم انتشار و ارتباط با اعضا</p></div><span class="social-platform-mark">➤</span></div>
+        <div class="social-management-fields">
+          <div><label for="socialTelegramAccount">نام یا شناسه کانال</label><input class="studio-control" id="socialTelegramAccount" maxlength="120" placeholder="نام یا شناسه کانال"></div>
+          <div><label for="socialTelegramTask">درخواست اصلی</label><select class="studio-control" id="socialTelegramTask"><option>استراتژی رشد کانال</option><option>تقویم انتشار پیام‌ها</option><option>افزایش بازدید و مشارکت اعضا</option><option>طراحی قالب محتوای کانال</option><option>تحلیل افت بازدید</option><option>برنامه ارتباط با مخاطبان</option></select></div>
+          <div><label for="socialTelegramAudience">مخاطب هدف</label><input class="studio-control" id="socialTelegramAudience" maxlength="220" placeholder="اعضای فعلی و مخاطبان موردنظر"></div>
+          <div><label for="socialTelegramGoal">هدف فعلی کانال</label><input class="studio-control" id="socialTelegramGoal" maxlength="220" placeholder="مثلاً افزایش اعضای فعال یا فروش"></div>
+          <div class="social-management-wide"><label for="socialTelegramBrief">وضعیت فعلی یا مسئله‌ای که باید بررسی شود</label><textarea class="studio-control social-management-brief" id="socialTelegramBrief" maxlength="2500" placeholder="نوع کانال، وضعیت انتشار، آمار یا مسئله فعلی..."></textarea></div>
+        </div>
+        <div class="social-management-actions"><button class="btn-primary social-management-navi" type="button" data-social-submit="telegram">برنامه‌ریزی با NAVI</button><button class="btn-secondary social-management-content" type="button" data-social-content="telegram">ساخت محتوا برای تلگرام</button></div>
+      </section>
+      <div class="social-management-boundary">
+        <strong>وضعیت اتصال شبکه‌ها</strong>
+        <p>در این مرحله، فضای مشاوره و برنامه‌ریزی با NAVI فعال است. اتصال مستقیم حساب‌ها، انتشار خودکار، دریافت آمار زنده و مدیریت کامنت‌ها هنوز به API رسمی و مجوز دسترسی نیاز دارد و در این نسخه فعال معرفی نمی‌شود. اطلاعات فرم نیز تا زمان پیاده‌سازی ذخیره‌سازی امن حساب‌محور، فقط برای همان درخواست به NAVI فرستاده می‌شود.</p>
+      </div>
+    </div>
   </section>
 
   <section class="page" id="logoPage">
@@ -258,7 +323,7 @@
         <form class="nava-strategy-form" id="contentStudioForm">
           <h3>بریف تولید محتوا</h3><p>موضوع و مخاطب هدف برای شروع ضروری‌اند.</p>
           <div class="nava-strategy-fields">
-            <div class="nava-strategy-field"><label for="contentPlatform">پلتفرم انتشار</label><select class="nava-strategy-control" id="contentPlatform"><option>اینستاگرام</option><option>یوتیوب</option><option>وب‌سایت</option><option>تلگرام</option><option>لینکدین</option><option>چند پلتفرم</option></select></div>
+            <div class="nava-strategy-field"><label for="contentPlatform">پلتفرم مقصد (برای تنظیم قالب محتوا)</label><select class="nava-strategy-control" id="contentPlatform"><option>اینستاگرام</option><option>یوتیوب</option><option>وب‌سایت</option><option>تلگرام</option><option>لینکدین</option><option>چند پلتفرم</option></select></div>
             <div class="nava-strategy-field"><label for="contentFormat">قالب محتوا</label><select class="nava-strategy-control" id="contentFormat"><option>پست اسلایدی</option><option>ویدئوی کوتاه / ریلز</option><option>ویدئوی بلند</option><option>کپشن و متن شبکه اجتماعی</option><option>مقاله وبلاگ</option><option>سناریو ویدئو</option><option>تقویم محتوایی</option></select></div>
             <div class="nava-strategy-field"><label for="contentObjective">هدف محتوا</label><select class="nava-strategy-control" id="contentObjective"><option>آگاهی از برند</option><option>آموزش و ارزش‌آفرینی</option><option>تعامل و مشارکت</option><option>جذب مخاطب جدید</option><option>معرفی محصول یا خدمت</option><option>فروش و تبدیل</option></select></div>
             <div class="nava-strategy-field"><label for="contentTone">لحن محتوا</label><select class="nava-strategy-control" id="contentTone"><option>صمیمی و محاوره‌ای</option><option>حرفه‌ای و دقیق</option><option>آموزشی و ساده</option><option>الهام‌بخش</option><option>طنز کنترل‌شده</option><option>رسمی</option></select></div>
@@ -1458,6 +1523,7 @@
             <option value="طراحی لوگو">طراحی لوگو</option>
             <option value="برندینگ">برندینگ</option>
             <option value="تولید محتوا">تولید محتوا</option>
+            <option value="مدیریت شبکه‌های اجتماعی">مدیریت شبکه‌های اجتماعی</option>
             <option value="مقاله و وبلاگ">مقاله و وبلاگ</option>
             <option value="کارهای اداری و آفیس">کارهای اداری و آفیس</option>
             <option value="تولید موسیقی">تولید موسیقی</option>
@@ -1587,6 +1653,7 @@
 
   <script src="nava-dialogs.js?v=nava-branded-dialogs-20261116-2" defer></script>
   <script src="brand-content-studios.js?v=business-form-routing-fix-20261116-2" defer></script>
+  <script src="social-management.js?v=social-management-navi-workspaces-20261126-1" defer></script>
   <script src="business-tools.js?v=business-suite-20261115-2" defer></script>
   <script src="business-workspace.js?v=nava-branded-dialogs-20261116-2" defer></script>
   <script src="business-catalog-ui.js?v=nava-branded-dialogs-20261116-2" defer></script>
