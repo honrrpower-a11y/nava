@@ -976,11 +976,11 @@ test("Logo Studio renders structured HTML/CSS geometry and audits final PNGs wit
   assert.ok(ui.includes("result.reviewToken"));
   assert.ok(ui.includes('action: "visual-final-audit"'));
   assert.ok(ui.includes("طرح تأییدنشده نمایش داده نشد"));
-  assert.ok(backend.includes("buildStructuredLogoConcepts"));
-  assert.ok(backend.includes("geometryEngine: \"structured-html-css-grammar\""));
-  assert.ok(engine.includes("subject-specific"));
-  assert.ok(engine.includes("buildStructuredLogoConcepts"));
-  assert.ok(engine.includes("No SVG"));
+  assert.ok(backend.includes("geometryEngine: \"navi-authored-html-css-geometry\""));
+  assert.ok(backend.includes("HTML CONTRACT"));
+  assert.ok(backend.includes("CSS CONTRACT"));
+  assert.ok(!backend.includes("buildStructuredLogoConcepts"));
+  assert.ok(engine.includes("No SVG"), "legacy geometry grammar remains isolated and is not used by the production pipeline");
   assert.ok(backend.includes("TWO STAGES IN ORDER"));
   assert.ok(backend.includes("LOGO_FINAL_VISUAL_QUALITY_LOW"));
 });
