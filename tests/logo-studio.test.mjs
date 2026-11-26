@@ -1367,3 +1367,57 @@ test("a guest trial reservation can be refunded when no logo passes visual refin
     globalThis.fetch = originalFetch;
   }
 });
+
+
+test("NAVI maps an unindexed single-concept repair to the missing concept and preserves its valid blueprint", async () => {
+  const originalFetch = globalThis.fetch;
+  const db = new FakeD1();
+  let geminiCalls = 0;
+  let repairPrompt = "";
+  globalThis.fetch = async (_url, options) => {
+    geminiCalls += 1;
+    if (geminiCalls === 1) {
+      const generated = await makeGeminiResponse();
+      const payload = await generated.json();
+      const planned = JSON.parse(payload.candidates[0].content.parts[0].text);
+      planned.concepts[2].objectCues = [];
+      return new Response(JSON.stringify({
+        candidates: [{ content: { parts: [{ text: JSON.stringify({
+          brandCore: planned.brandCore,
+          designIdea: planned.designIdea,
+          strategy: planned.strategy,
+          designBriefEnglish: planned.designBriefEnglish,
+          concepts: planned.concepts
+        }) }] } }]
+      }), { status: 200, headers: { "Content-Type": "application/json" } });
+    }
+    repairPrompt = JSON.stringify(JSON.parse(options.body));
+    // Gemini sometimes omits the requested concept index and returns only
+    // the field that needed repair. This must patch, not replace, the concept.
+    return new Response(JSON.stringify({
+      candidates: [{ content: { parts: [{ text: JSON.stringify({
+        concepts: [{ objectCues: ["دو لبه تشخیصی متصل", "شکاف مرکزی پیوسته"] }]
+      }) }] } }]
+    }), { status: 200, headers: { "Content-Type": "application/json" } });
+  };
+  try {
+    const response = await handleLogoRoute({
+      request: makeRequest(),
+      env: { NAVA_DB: db, NAVI_SESSION_SECRET: "test-secret-key", GEMINI_API_KEY: "test-gemini-key" },
+      origin: ORIGIN,
+      corsOrigin: ORIGIN
+    });
+    const result = await response.json();
+    assert.equal(response.status, 200, JSON.stringify(result));
+    assert.equal(result.success, true);
+    assert.equal(result.concepts.length, 3);
+    assert.equal(geminiCalls, 2, "one additional bounded repair call is made only for the incomplete concept");
+    assert.match(repairPrompt, /"index":3/);
+    assert.deepEqual(result.planning.visualBlueprints[2].objectCues, ["دو لبه تشخیصی متصل", "شکاف مرکزی پیوسته"]);
+    assert.equal(result.planning.visualBlueprints[2].centralThesis, "سه واحد هندسی تکرارشونده ریتم و گسترش ایده را مجسم می‌کنند");
+    assert.equal(result.planning.visualBlueprints[2].geometrySpec.layers.length, 4);
+    assert.equal(db.visitorUsed, 1);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
