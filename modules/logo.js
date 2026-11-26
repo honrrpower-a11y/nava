@@ -535,84 +535,14 @@ async function designLogos(data, apiKey) {
       }
       return normalized;
     });
-    const blueprintForBuilder = JSON.stringify(designBlueprints);
-    const response = await fetchGeminiWithRetry(
-      "https://generativelanguage.googleapis.com/v1beta/models/" + GEMINI_MODEL + ":generateContent",
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
-        body: JSON.stringify({
-          systemInstruction: { parts: [{ text: system }] },
-          contents: [{ role: "user", parts: [{ text: "Create exactly " + conceptCount + " complete logo design" + (conceptCount === 1 ? "" : " concepts") + " using the ORIGINAL CLIENT BRIEF, the NAVI CREATIVE BRIEF, and the approved visual construction blueprint below. The NAVI creative brief was written before drawing and is a required design input, not an after-the-fact explanation. First obey its core visual metaphor and exact concrete subject; then implement the blueprint's silhouette, diagnostic object cues, spatial relationships, negative space, signatureFeature and recognitionRisk correction visibly in HTML/CSS. Do not replace the meaning with a visually attractive but unrelated symbol. If the requested business is a bookstore or the brand context explicitly names books, the symbol must be unmistakably book-related (recognizable open book, closed book, page spread, spine or page block); a shopping bag, handbag, luggage, tote or generic container is a semantic failure unless explicitly requested. The client brief remains the final authority if any wording conflicts.\\nORIGINAL CLIENT BRIEF:\\n" + JSON.stringify(userBrief) + "\\nNAVI CREATIVE BRIEF (PRE-DESIGN, MANDATORY):\\n" + JSON.stringify(naviCreativeBrief) + "\\nAPPROVED VISUAL CONSTRUCTION BLUEPRINT:\\n" + blueprintForBuilder }] }],
-          generationConfig: {
-            thinkingConfig: { thinkingLevel: "HIGH" },
-            maxOutputTokens: 32768,
-            responseMimeType: "application/json"
-          }
-        }),
-        signal: controller.signal
-      }
-    );
-    const payload = await response.json().catch(() => ({}));
-    if (!response.ok) {
-      const error = new Error("Gemini HTTP " + response.status);
-      error.httpStatus = response.status;
-      error.diagnosticCode = response.status === 429 ? "MODEL_RATE_LIMIT" :
-        response.status >= 500 ? "MODEL_SERVICE_ERROR" :
-        response.status === 400 ? "MODEL_REQUEST_REJECTED" : "MODEL_API_ERROR";
-      throw error;
-    }
-    if (payload?.promptFeedback?.blockReason) {
-      const error = new Error("Gemini blocked the logo-design prompt: " + payload.promptFeedback.blockReason);
-      error.diagnosticCode = "MODEL_PROMPT_BLOCKED";
-      throw error;
-    }
-    const candidate = payload?.candidates?.[0];
-    if (!candidate) {
-      const error = new Error("Gemini returned no candidate.");
-      error.diagnosticCode = "MODEL_EMPTY_RESPONSE";
-      throw error;
-    }
-    const finishReason = String(candidate.finishReason || "");
-    if (finishReason === "MAX_TOKENS") {
-      const error = new Error("Gemini output reached maxOutputTokens; output is incomplete.");
-      error.diagnosticCode = "MODEL_OUTPUT_TRUNCATED";
-      error.finishReason = finishReason;
-      throw error;
-    }
-    if (finishReason && !["STOP", "FINISH_REASON_UNSPECIFIED"].includes(finishReason)) {
-      const error = new Error("Gemini stopped generation: " + finishReason);
-      error.diagnosticCode = finishReason === "SAFETY" ? "MODEL_OUTPUT_BLOCKED" : "MODEL_FINISH_ERROR";
-      error.finishReason = finishReason;
-      throw error;
-    }
-    const raw = (candidate.content?.parts || []).map(part => part.text || "").join("");
-    if (!raw.trim()) {
-      const error = new Error("Gemini returned an empty text response.");
-      error.diagnosticCode = "MODEL_EMPTY_RESPONSE";
-      throw error;
-    }
-    let plan;
-    try {
-      plan = extractJsonObject(raw);
-    } catch {
-      const error = new Error("Gemini response was not complete valid JSON.");
-      error.diagnosticCode = "MODEL_INVALID_JSON";
-      error.outputLength = raw.length;
-      throw error;
-    }
-    if (!Array.isArray(plan.concepts) || plan.concepts.length !== conceptCount) {
-      throw validationError("LOGO_CONCEPT_COUNT", "NAVI did not return the requested number of logo designs.", "concept-count");
-    }
-    // The model builder's free-form markup is deliberately not used as the
-    // production drawing engine. NAVI supplies semantic blueprints; a
-    // deterministic HTML/CSS grammar constructs the actual logo geometry.
+    // The approved semantic blueprints are now rendered by a deterministic,
+    // subject-specific HTML/CSS grammar. No second model-generated markup pass
+    // is requested, so malformed or generic model code cannot replace the mark.
     const structuredBuild = buildStructuredLogoConcepts(data, designBlueprints);
-    plan.concepts = structuredBuild.concepts;
-    const designBriefEnglish = naviCreativeBrief.designBriefEnglish;
-    if (!designBriefEnglish || !safeText(plan.strategy, 500)) {
-      throw validationError("LOGO_BRIEF_INCOMPLETE", "NAVI returned an incomplete design brief.", "brief");
-    }
+    const plan = {
+      strategy: naviCreativeBrief.strategy,
+      concepts: structuredBuild.concepts
+    };
     const concepts = [];
     const rejectedConcepts = [];
     plan.concepts.forEach((item, index) => {
@@ -1268,7 +1198,7 @@ export async function handleLogoRoute({ request, env, origin, corsOrigin }) {
         designIdea: plan.designIdea,
         strategy: plan.strategy,
         designBriefEnglish: plan.designBriefEnglish,
-        extraModelCalls: 1,
+        extraModelCalls: 0,
         visualBlueprints: plan.visualBlueprints,
         note: "NAVI first commits to explicit visual construction blueprints, then builds and validates the final HTML/CSS logo designs."
       },
