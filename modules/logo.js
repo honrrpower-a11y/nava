@@ -862,7 +862,7 @@ async function refineLogoConcepts(data, conceptsInput, apiKey, revisionAttempt =
     "HARD ACCEPTANCE GATE: all three scores must be at least 8/10. If any score is below 8, continue redesigning before returning. Never report a high score merely because the HTML/CSS is valid.",
     revisionAttempt >= 2
       ? "SECOND ATTEMPT: the previous visual review failed. Do not preserve the weak silhouette. Rebuild the central mark decisively from the brief's recognizable diagnostic cues; replace ambiguous geometry rather than polishing it. The output must be visibly and semantically stronger."
-      : "FIRST REVIEW: prioritize the largest semantic-recognition failure before styling."
+      : "FIRST REVIEW: prioritize the largest semantic-recognition failure before styling.",
     "You are given the actual browser-rendered PNG preview for each concept, its HTML/CSS source, and the original client brief. Inspect the image itself. Do not merely repeat the rationale or validate that classes exist.",
     "For each concept diagnose visible problems in silhouette, object recognition, spatial relationships, overlap/occlusion, hierarchy, balance, scale, depth, lighting, material, typography and fidelity to the exact brief. Then revise the HTML and CSS so the rendered result visibly fixes those problems.",
     "The original client brief is the source of truth. Preserve its subject, required objects, exact spatial relationships, brand name and supplied slogan. Never replace the core idea with a generic icon or a different metaphor.",
