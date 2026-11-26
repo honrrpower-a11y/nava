@@ -4675,7 +4675,7 @@ copyStory.addEventListener("click", async () => {
 
 function parseNaviStoryPlan(raw) {
   const source = String(raw || "").trim();
-  const fenced = source.match(/\x60\x60\x60(?:json)?\\s*([\\s\\S]*?)\x60\x60\x60/i);
+  const fenced = source.match(/```(?:json)?\s*([\s\S]*?)```/i);
   const candidate = fenced ? fenced[1].trim() : source.slice(source.indexOf("{"), source.lastIndexOf("}") + 1);
   if (!candidate || candidate[0] !== "{") throw new Error("پاسخ NAVI ساختار طرح بصری ندارد.");
   const plan = JSON.parse(candidate);
@@ -4690,7 +4690,7 @@ function drawStorySlide(canvas, slide, index, total) {
   for(let i=0;i<8;i++){c.beginPath();c.ellipse(540,780,220+i*70,300+i*90,0,Math.PI,Math.PI*2);c.stroke();}
   const glow=c.createRadialGradient(540,520,20,540,520,700);glow.addColorStop(0,accent+"55");glow.addColorStop(1,"#07101f00");c.fillStyle=glow;c.fillRect(0,0,w,1100);
   c.fillStyle=accent;c.fillRect(80,115,150,10);c.direction="rtl";c.textAlign="right";c.fillStyle=accent;c.font="600 34px Vazirmatn,sans-serif";c.fillText(String(slide.kicker||("استوری "+(index+1))),970,220,880);
-  const wrap=(text,y,font,color,maxLines=3)=>{c.font=font;c.fillStyle=color;let line="",lines=[];for(const word of String(text||"").split(/\\s+/)){const next=line?line+" "+word:word;if(c.measureText(next).width>850&&line){lines.push(line);line=word;}else line=next;}if(line)lines.push(line);lines.slice(0,maxLines).forEach((v,i)=>c.fillText(v,970,y+i*105,850));return y+Math.min(lines.length,maxLines)*105;};
+  const wrap=(text,y,font,color,maxLines=3)=>{c.font=font;c.fillStyle=color;let line="",lines=[];for(const word of String(text||"").split(/\s+/)){const next=line?line+" "+word:word;if(c.measureText(next).width>850&&line){lines.push(line);line=word;}else line=next;}if(line)lines.push(line);lines.slice(0,maxLines).forEach((v,i)=>c.fillText(v,970,y+i*105,850));return y+Math.min(lines.length,maxLines)*105;};
   let y=wrap(slide.headline||slide.title||"",430,"bold 86px Vazirmatn,sans-serif","#fff",3);
   if(slide.matchup){c.textAlign="center";c.fillStyle=accent;c.font="bold 65px Vazirmatn,sans-serif";c.fillText(String(slide.matchup),540,Math.max(720,y+85),900);y=Math.max(850,y+180);c.textAlign="right";}
   if(slide.body)y=wrap(slide.body,Math.max(900,y+70),"500 42px Vazirmatn,sans-serif","#eaf0fa",4);
