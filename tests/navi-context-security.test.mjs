@@ -44,7 +44,7 @@ test("NAVI keeps a separate persistent conversation thread for each studio and a
 });
 
 test("Switching NAVI studios clears the previous composer and transcript before loading the studio thread", () => {
-  const switchBlock = app.match(/async function activateNaviStudioConversation\(pageId\)[\\s\\S]*?\\n\\}/)?.[0] || "";
+  const switchBlock = app.match(/async function activateNaviStudioConversation\(pageId\)[\s\S]*?\n\}/)?.[0] || "";
   assert.ok(switchBlock.includes('userRequest.value = ""'));
   assert.ok(switchBlock.includes('naviHistory = []'));
   assert.ok(switchBlock.includes('renderNaviHistory([])'));
@@ -53,7 +53,7 @@ test("Switching NAVI studios clears the previous composer and transcript before 
 });
 
 test("Late history responses cannot overwrite the newly selected studio conversation", () => {
-  const historyBlock = app.match(/async function loadNaviHistory[\\s\\S]*?\\n\\}/)?.[0] || "";
+  const historyBlock = app.match(/async function loadNaviHistory[\s\S]*?\n\}/)?.[0] || "";
   assert.match(historyBlock, /const requestedThreadId = naviActiveThreadId/);
   assert.match(historyBlock, /naviActiveThreadId !== requestedThreadId/);
 });
