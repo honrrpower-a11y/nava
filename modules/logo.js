@@ -1018,7 +1018,7 @@ async function auditFinalLogoConcepts(data, conceptsInput, apiKey) {
     throw validationError("LOGO_FINAL_AUDIT_INPUT_INVALID", "Final visual audit requires one to three rendered concepts.", "final-visual-audit-input");
   }
   const concepts = conceptsInput.map((item, index) => {
-    const match = /^data:image\\/png;base64,([A-Za-z0-9+/]+={0,2})$/.exec(String(item?.previewImage || ""));
+    const match = /^data:image\/png;base64,([A-Za-z0-9+/]+={0,2})$/.exec(String(item?.previewImage || ""));
     if (!match || match[1].length > 850000) {
       throw validationError("LOGO_FINAL_AUDIT_IMAGE_INVALID", "A final rendered PNG is missing or too large.", "final-visual-audit-image", index + 1);
     }
