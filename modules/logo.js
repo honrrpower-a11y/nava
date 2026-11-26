@@ -433,7 +433,7 @@ async function designLogos(data, apiKey) {
       "CUSTOM BRIEF: preserve exact named objects, requested letterforms and relationships. Creative freedom is limited to professional execution, not replacing the idea. NAVI BRIEF: derive a distinctive idea from brand, industry, audience and personality.",
       "Create exactly " + conceptCount + " distinct construction routes. In custom mode all routes must express the same requested core idea but use genuinely different geometry. Do not vary only color, layout or decoration.",
       "The NAVA HTML/CSS lab is a craft benchmark only. Do not copy its N mark, orbit rings, badge, palette or composition.",
-      "Return exactly this JSON shape: {\"concepts\":[{\"title\":\"...\",\"centralThesis\":\"...\",\"briefElements\":[\"...\"],\"symbolConstruction\":\"...\",\"briefAlignment\":\"...\",\"silhouette\":\"...\",\"objectCues\":[\"...\",\"...\"],\"spatialRelationship\":\"...\",\"negativeSpace\":\"...\",\"geometryRecipe\":\"...\",\"firstRead\":\"...\",\"recognitionRisk\":\"...\",\"signatureFeature\":\"...\",\"mustAvoid\":[\"...\"]}]}. The concepts array must contain exactly " + conceptCount + " objects. Do not rename the concepts key or wrap the JSON in another object.",
+      "Before any geometry is planned, write a real NAVI creative brief. Return exactly this JSON shape: {\"brandCore\":\"...\",\"designIdea\":\"یک جمله روشن فارسی درباره ایده اختصاصی برند\",\"strategy\":\"خلاصه جهت‌گیری طراحی\",\"designBriefEnglish\":\"A concise professional art-direction brief: exact brand meaning, audience, core visual metaphor, concrete recognizable subject, required visual relationships, tone, and design constraints. This brief must be actionable by the HTML/CSS builder.\",\"concepts\":[{\"title\":\"...\",\"centralThesis\":\"...\",\"briefElements\":[\"...\"],\"symbolConstruction\":\"...\",\"briefAlignment\":\"...\",\"silhouette\":\"...\",\"objectCues\":[\"...\",\"...\"],\"spatialRelationship\":\"...\",\"negativeSpace\":\"...\",\"geometryRecipe\":\"...\",\"firstRead\":\"...\",\"recognitionRisk\":\"...\",\"signatureFeature\":\"...\",\"mustAvoid\":[\"...\"]}]}. The concepts array must contain exactly " + conceptCount + " objects. The creative brief and designIdea are mandatory and must be completed BEFORE HTML/CSS construction. Do not rename keys or wrap the JSON in another object.",
       "Do not write HTML, CSS, SVG, markup, paths or code. Do not expose chain-of-thought. Return concise final design decisions only as valid JSON."
     ].join("\n");
     const planningResponse = await fetchGeminiWithRetry(
@@ -493,10 +493,19 @@ async function designLogos(data, apiKey) {
       error.stage = "concept-planning";
       throw error;
     }
-    const plannedConcepts = Array.isArray(blueprint) ? blueprint :
-      (Array.isArray(blueprint.concepts) ? blueprint.concepts :
-      (Array.isArray(blueprint.blueprints) ? blueprint.blueprints :
-      (Array.isArray(blueprint.visualBlueprints) ? blueprint.visualBlueprints : null)));
+    const naviCreativeBrief = {
+      brandCore: safeText(blueprint?.brandCore, 300),
+      designIdea: safeText(blueprint?.designIdea, 320),
+      strategy: safeText(blueprint?.strategy, 500),
+      designBriefEnglish: safeText(blueprint?.designBriefEnglish, 2200)
+    };
+    if (!naviCreativeBrief.brandCore || !naviCreativeBrief.designIdea ||
+        !naviCreativeBrief.strategy || !naviCreativeBrief.designBriefEnglish) {
+      throw validationError("LOGO_NAVI_BRIEF_INCOMPLETE", "NAVI must finish its creative strategy and professional art-direction brief before logo construction.", "concept-planning");
+    }
+    const plannedConcepts = Array.isArray(blueprint?.concepts) ? blueprint.concepts :
+      (Array.isArray(blueprint?.blueprints) ? blueprint.blueprints :
+      (Array.isArray(blueprint?.visualBlueprints) ? blueprint.visualBlueprints : null)));
     if (!plannedConcepts || plannedConcepts.length !== conceptCount) {
       throw validationError("LOGO_BLUEPRINT_COUNT", "NAVI did not return the requested number of visual construction blueprints.", "concept-planning");
     }
@@ -531,7 +540,7 @@ async function designLogos(data, apiKey) {
         headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
         body: JSON.stringify({
           systemInstruction: { parts: [{ text: system }] },
-          contents: [{ role: "user", parts: [{ text: "Create exactly " + conceptCount + " complete logo design" + (conceptCount === 1 ? "" : " concepts") + " using BOTH the original client brief and the approved visual construction blueprint below. The blueprint is the committed concept direction: implement its exact silhouette, diagnostic object cues, spatial relationships, negative space, signatureFeature and recognitionRisk correction visibly in HTML/CSS. Do not replace it with a different metaphor. The client brief remains the final authority if any wording conflicts.\\nCLIENT BRIEF:\\n" + JSON.stringify(userBrief) + "\\nAPPROVED VISUAL CONSTRUCTION BLUEPRINT:\\n" + blueprintForBuilder }] }],
+          contents: [{ role: "user", parts: [{ text: "Create exactly " + conceptCount + " complete logo design" + (conceptCount === 1 ? "" : " concepts") + " using the ORIGINAL CLIENT BRIEF, the NAVI CREATIVE BRIEF, and the approved visual construction blueprint below. The NAVI creative brief was written before drawing and is a required design input, not an after-the-fact explanation. First obey its core visual metaphor and exact concrete subject; then implement the blueprint's silhouette, diagnostic object cues, spatial relationships, negative space, signatureFeature and recognitionRisk correction visibly in HTML/CSS. Do not replace the meaning with a visually attractive but unrelated symbol. If the requested business is a bookstore or the brand context explicitly names books, the symbol must be unmistakably book-related (recognizable open book, closed book, page spread, spine or page block); a shopping bag, handbag, luggage, tote or generic container is a semantic failure unless explicitly requested. The client brief remains the final authority if any wording conflicts.\\nORIGINAL CLIENT BRIEF:\\n" + JSON.stringify(userBrief) + "\\nNAVI CREATIVE BRIEF (PRE-DESIGN, MANDATORY):\\n" + JSON.stringify(naviCreativeBrief) + "\\nAPPROVED VISUAL CONSTRUCTION BLUEPRINT:\\n" + blueprintForBuilder }] }],
           generationConfig: {
             thinkingConfig: { thinkingLevel: "HIGH" },
             maxOutputTokens: 32768,
@@ -592,7 +601,7 @@ async function designLogos(data, apiKey) {
     if (!Array.isArray(plan.concepts) || plan.concepts.length !== conceptCount) {
       throw validationError("LOGO_CONCEPT_COUNT", "NAVI did not return the requested number of logo designs.", "concept-count");
     }
-    const designBriefEnglish = safeText(plan.designBriefEnglish, 1800);
+    const designBriefEnglish = naviCreativeBrief.designBriefEnglish;
     if (!designBriefEnglish || !safeText(plan.strategy, 500)) {
       throw validationError("LOGO_BRIEF_INCOMPLETE", "NAVI returned an incomplete design brief.", "brief");
     }
@@ -724,9 +733,9 @@ async function designLogos(data, apiKey) {
       throw validationError("LOGO_CONCEPTS_NOT_DISTINCT", "NAVI returned repeated logo concept titles.", "concept-distinctness");
     }
     return {
-      brandCore: safeText(plan.brandCore, 300),
-      designIdea: safeText(plan.designIdea, 320) || safeText(plan.brandCore, 300) || safeText(plan.strategy, 320),
-      strategy: safeText(plan.strategy, 500),
+      brandCore: naviCreativeBrief.brandCore,
+      designIdea: naviCreativeBrief.designIdea,
+      strategy: naviCreativeBrief.strategy,
       designBriefEnglish,
       visualBlueprints: designBlueprints,
       concepts,
