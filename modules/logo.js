@@ -1261,7 +1261,9 @@ export async function handleLogoRoute({ request, env, origin, corsOrigin }) {
       reviewToken,
       remaining: quota.remaining ?? null,
       planning: {
-        method: "navi-visual-blueprint-then-html-css-build",
+        method: "navi-visual-blueprint-then-structured-html-css-build",
+        geometryEngine: "structured-html-css-grammar",
+        geometryEngineNote: "NAVI owns the semantic brief and visual blueprints; deterministic subject-specific HTML/CSS components own the actual mark geometry. A generative code-revision pass is intentionally excluded so it cannot replace the constructed silhouette.",
         brandCore: plan.brandCore,
         designIdea: plan.designIdea,
         strategy: plan.strategy,
