@@ -412,10 +412,26 @@ function missingLogoBlueprintFields(item, format) {
     ["signatureFeature", "signatureFeature"]
   ]) {
     const value = item?.[field];
-    if (Array.isArray(value) ? value.length === 0 : !value) missing.push(label);
+    if (field === "objectCues" ? (!Array.isArray(value) || value.length < 2) :
+        Array.isArray(value) ? value.length === 0 : !value) missing.push(label);
   }
-  if (format !== "wordmark" && (item?.geometrySpec?.layers?.length || 0) < 4) {
-    missing.push("geometrySpec.layers (at least four valid construction layers)");
+  if (format !== "wordmark") {
+    const layers = item?.geometrySpec?.layers || [];
+    if (layers.length < 4 || layers.length > 8) {
+      missing.push("geometrySpec.layers (4–8 construction layers)");
+    } else {
+      const validShapes = new Set(["ellipse", "rounded-rect", "capsule", "diamond", "polygon"]);
+      const invalidLayer = layers.some(layer =>
+        !validShapes.has(layer.shape) ||
+        ![layer.x, layer.y, layer.width, layer.height, layer.rotation].every(Number.isFinite) ||
+        layer.x < 0 || layer.x > 100 || layer.y < 0 || layer.y > 100 ||
+        layer.width < 5 || layer.width > 100 || layer.height < 5 || layer.height > 100 ||
+        layer.rotation < -180 || layer.rotation > 180 ||
+        (layer.shape === "polygon" && (layer.points.length < 3 || layer.points.length > 8 ||
+          layer.points.some(point => point.length !== 2 || point.some(value => !Number.isFinite(value) || value < 0 || value > 100))))
+      );
+      if (invalidLayer) missing.push("geometrySpec.layers (valid shapes, coordinates, dimensions and polygon points)");
+    }
   }
   return missing;
 }
