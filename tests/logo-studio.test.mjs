@@ -98,7 +98,28 @@ function makeRequest(body = INPUT) {
 }
 
 function makeGeminiResponse(plan = makeDesign()) {
-  for (const concept of plan.concepts || []) {
+  for (const [conceptIndex, concept] of (plan.concepts || []).entries()) {
+    const geometryVariants = [
+      [
+        { shape: "polygon", x: 50, y: 54, width: 78, height: 66, rotation: 0, tone: "primary", finish: "metal", points: [[0,15],[50,0],[100,15],[88,100],[12,100]] },
+        { shape: "rounded-rect", x: 50, y: 43, width: 10, height: 68, rotation: 8, tone: "secondary", finish: "soft" },
+        { shape: "ellipse", x: 50, y: 14, width: 18, height: 18, rotation: 0, tone: "accent", finish: "soft" },
+        { shape: "capsule", x: 50, y: 77, width: 42, height: 9, rotation: 0, tone: "light", finish: "none" }
+      ],
+      [
+        { shape: "ellipse", x: 50, y: 50, width: 82, height: 82, rotation: 0, tone: "dark", finish: "soft" },
+        { shape: "diamond", x: 50, y: 50, width: 58, height: 58, rotation: 18, tone: "secondary", finish: "metal" },
+        { shape: "polygon", x: 50, y: 42, width: 28, height: 72, rotation: 32, tone: "light", finish: "soft", points: [[0,0],[100,12],[70,100],[25,82]] },
+        { shape: "rounded-rect", x: 77, y: 24, width: 14, height: 24, rotation: -18, tone: "accent", finish: "none" }
+      ],
+      [
+        { shape: "capsule", x: 50, y: 48, width: 92, height: 34, rotation: -28, tone: "primary", finish: "metal" },
+        { shape: "polygon", x: 50, y: 50, width: 62, height: 76, rotation: 12, tone: "paper", finish: "soft", points: [[50,0],[100,38],[82,100],[18,100],[0,38]] },
+        { shape: "diamond", x: 30, y: 24, width: 28, height: 28, rotation: 30, tone: "accent", finish: "soft" },
+        { shape: "ellipse", x: 70, y: 74, width: 24, height: 18, rotation: 0, tone: "dark", finish: "none" }
+      ]
+    ];
+    concept.geometrySpec ||= { layers: geometryVariants[conceptIndex % geometryVariants.length] };
     concept.silhouette ||= concept.symbolConstruction || concept.centralThesis;
     concept.objectCues ||= (concept.briefElements || []).slice(0, 2);
     while (concept.objectCues.length < 2) concept.objectCues.push("ویژگی تشخیصی فرم");
@@ -209,9 +230,9 @@ test("NAVI writes a professional creative brief before building three sanitized 
     assert.equal(result.concepts[0].symbolConstruction, "دو مسیر منحنی در مرکز به هم می‌رسند و یک شکاف پیوسته در دل فرم می‌سازند");
     assert.equal(result.concepts[0].briefAlignment, "این فرم اتصال صدا و خلاقیت را در هویت استودیوی موسیقی نشان می‌دهد");
     assert.deepEqual(result.concepts[0].briefElements, ["موج صوتی","اتصال دو مسیر"]);
-    assert.match(result.concepts[0].mechanism, /deterministic HTML\/CSS component grammar/);
+    assert.match(result.concepts[0].mechanism, /NAVI-authored geometric blueprint/);
     assert.equal(result.concepts[0].expressionMove, "ویژگی هندسی اختصاصی و قابل تشخیص در سیلوئت");
-    assert.match(result.concepts[0].differsBy, /distinct silhouette and geometry/);
+    assert.equal(result.concepts[0].differsBy, "ویژگی هندسی اختصاصی و قابل تشخیص در سیلوئت");
     assert.ok(result.concepts[0].axes && Object.keys(result.concepts[0].axes).length > 0);
     assert.deepEqual(result.concepts[0].defaultsUsed, []);
     assert.ok(result.concepts.every(item => item.html.length >= 90 && item.css.length >= 350), "each concept must contain substantial HTML and CSS");
@@ -247,7 +268,7 @@ test("Logo Studio recovers omitted visual-anchor arrays from the validated brief
     assert.equal(result.concepts.length, 1);
     assert.equal(result.concepts[0].visualAnchors.length, 2);
     assert.equal(result.concepts[0].anchorMap.length, 2);
-    assert.ok(result.concepts[0].anchorMap.every(entry => ["wave", "navi-symbol"].includes(entry.layerClass)));
+    assert.ok(result.concepts[0].anchorMap.every(entry => /^navi-part-[1-4]$/.test(entry.layerClass)));
     assert.equal(db.visitorUsed, 1);
   } finally {
     globalThis.fetch = originalFetch;
@@ -876,7 +897,7 @@ test("NAVI accepts a single unified symbol silhouette without artificial child l
     assert.equal(response.status, 200, JSON.stringify(result));
     assert.equal(result.success, true);
     assert.equal(result.concepts[0].visualAnchors.length, 1);
-    assert.equal(result.concepts[0].anchorMap[0].layerClass, "navi-symbol");
+    assert.equal(result.concepts[0].anchorMap[0].layerClass, "navi-part-1");
     assert.equal(db.visitorUsed, 1);
   } finally {
     globalThis.fetch = originalFetch;
@@ -977,13 +998,13 @@ test("Logo Studio delivers structured HTML/CSS geometry without blocking on opti
   assert.ok(ui.includes("بازبینی هوش مصنوعی مانع نمایش یا تحویل طرح نیست"));
   assert.ok(backend.includes("buildStructuredLogoConcepts"));
   assert.ok(backend.includes("geometryEngine: \"structured-html-css-grammar\""));
-  assert.ok(engine.includes("subject-specific"));
+  assert.ok(engine.includes("coordinate-based composition"));
   assert.ok(engine.includes("buildStructuredLogoConcepts"));
-  assert.ok(engine.includes("No SVG"));
+  assert.ok(engine.includes("No SVG") || engine.includes("no fixed family templates"));
   assert.ok(backend.includes("TWO STAGES IN ORDER"));
   assert.ok(backend.includes("LOGO_FINAL_VISUAL_QUALITY_LOW"));
 });
-test("NAVI visual refinement reviews real PNGs, validates revised HTML/CSS, and does not consume another trial", async () => {
+test("NAVI visual review cannot replace blueprint geometry with freeform HTML/CSS and does not consume another trial", async () => {
   const originalFetch = globalThis.fetch;
   const db = new FakeD1();
   let sentPayload;
@@ -1026,8 +1047,8 @@ test("NAVI visual refinement reviews real PNGs, validates revised HTML/CSS, and 
     assert.equal(response.status, 200, JSON.stringify(result));
     assert.equal(result.success, true);
     assert.equal(result.visualReview.method, "render-review-refine");
-    assert.equal(result.visualReview.refinedCount, 1);
-    assert.equal(result.concepts[0].visualReview, "refined");
+    assert.equal(result.visualReview.refinedCount, 0);
+    assert.equal(result.concepts[0].visualReviewIssue, "LOGO_VISUAL_ANCHOR_MAP_INVALID");
     assert.match(result.concepts[0].html, /data-logo-role="brand"/);
     assert.match(result.concepts[0].html, /نوا/);
     assert.ok(sentPayload.contents[0].parts.some(part => part.inlineData?.mimeType === "image/png"));
@@ -1121,15 +1142,9 @@ test("NAVI keeps the client brief in charge while the structured engine owns act
   assert.ok(backend.includes("designPrompt: data.designMode === \"custom\" ? data.designPrompt : \"\""));
   assert.ok(backend.includes("buildStructuredLogoConcepts(data, designBlueprints)"));
   assert.ok(backend.includes("buildStructuredLogoConcepts(data, designBlueprints)"));
-  assert.ok(engine.includes("data.designPrompt"));
-  assert.ok(engine.includes("subject-specific"));
-  assert.ok(engine.includes("book:"));
-  assert.ok(engine.includes("music:"));
-  assert.ok(engine.includes("network:"));
-  assert.ok(engine.includes("bread:"));
-  assert.ok(engine.includes("leaf:"));
-  assert.ok(engine.includes("coffee:"));
-  assert.ok(engine.includes("monogram:"));
+  assert.ok(engine.includes("geometrySpec"));
+  assert.ok(engine.includes("renderBlueprintGeometry"));
+  assert.ok(engine.includes("No subject-family template"));
   assert.ok(ui.includes("visuallyAuditFinalConcepts("));
   assert.ok(!ui.slice(ui.indexOf("async function generate(event)"), ui.indexOf("ideaModeInputs.forEach"))
     .includes("visuallyRefineConcepts("));
@@ -1179,7 +1194,7 @@ test("NAVI accepts a complete unified silhouette even when an optional child nod
     assert.equal(response.status, 200, JSON.stringify(result));
     assert.equal(result.success, true);
     assert.equal(result.concepts.length, 1);
-    assert.equal(result.concepts[0].anchorMap[0].layerClass, "navi-symbol");
+    assert.equal(result.concepts[0].anchorMap[0].layerClass, "navi-part-1");
     assert.equal(db.visitorUsed, 1);
   } finally {
     globalThis.fetch = originalFetch;
@@ -1314,9 +1329,9 @@ test("NAVI concept planning explicitly prioritizes concrete metaphor and a brand
   assert.ok(backend.includes("SEMANTIC FIDELITY"));
   assert.ok(backend.includes("meaningChain"));
   assert.ok(backend.includes("do not translate abstract words mechanically"));
-  assert.ok(engine.includes("book-integrated-writing-instrument"));
-  assert.ok(engine.includes("backward-opening-page"));
-  assert.ok(engine.includes("rationale: blueprint.rationale || blueprint.centralThesis || variant.rationale"));
+  assert.ok(engine.includes("blueprint-driven-"));
+  assert.ok(engine.includes("blueprint.geometrySpec"));
+  assert.ok(engine.includes("No subject-family template"));
   assert.ok(ui.includes('["استعاره بصری", concept.metaphor]'));
   assert.ok(ui.includes('["زنجیره معنا", concept.meaningChain]'));
 });
