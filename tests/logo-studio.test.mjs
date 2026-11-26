@@ -99,12 +99,27 @@ function makeRequest(body = INPUT) {
 
 function makeGeminiResponse(plan = makeDesign()) {
   for (const [conceptIndex, concept] of (plan.concepts || []).entries()) {
-    concept.geometrySpec ||= { layers: [
-      { shape: "rounded-rect", x: 50, y: 52, width: 72, height: 58, rotation: conceptIndex * 5, tone: "primary", finish: "metal" },
-      { shape: "ellipse", x: 50, y: 38 + conceptIndex * 3, width: 30, height: 28, rotation: 0, tone: "secondary", finish: "soft" },
-      { shape: "capsule", x: 32 + conceptIndex * 10, y: 68, width: 38, height: 10, rotation: 25 - conceptIndex * 12, tone: "accent", finish: "soft" },
-      { shape: "diamond", x: 68 - conceptIndex * 8, y: 30 + conceptIndex * 5, width: 18, height: 18, rotation: 10, tone: "light", finish: "none" }
-    ] };
+    const geometryVariants = [
+      [
+        { shape: "polygon", x: 50, y: 54, width: 78, height: 66, rotation: 0, tone: "primary", finish: "metal", points: [[0,15],[50,0],[100,15],[88,100],[12,100]] },
+        { shape: "rounded-rect", x: 50, y: 43, width: 10, height: 68, rotation: 8, tone: "secondary", finish: "soft" },
+        { shape: "ellipse", x: 50, y: 14, width: 18, height: 18, rotation: 0, tone: "accent", finish: "soft" },
+        { shape: "capsule", x: 50, y: 77, width: 42, height: 9, rotation: 0, tone: "light", finish: "none" }
+      ],
+      [
+        { shape: "ellipse", x: 50, y: 50, width: 82, height: 82, rotation: 0, tone: "dark", finish: "soft" },
+        { shape: "diamond", x: 50, y: 50, width: 58, height: 58, rotation: 18, tone: "secondary", finish: "metal" },
+        { shape: "polygon", x: 50, y: 42, width: 28, height: 72, rotation: 32, tone: "light", finish: "soft", points: [[0,0],[100,12],[70,100],[25,82]] },
+        { shape: "rounded-rect", x: 77, y: 24, width: 14, height: 24, rotation: -18, tone: "accent", finish: "none" }
+      ],
+      [
+        { shape: "capsule", x: 50, y: 48, width: 92, height: 34, rotation: -28, tone: "primary", finish: "metal" },
+        { shape: "polygon", x: 50, y: 50, width: 62, height: 76, rotation: 12, tone: "paper", finish: "soft", points: [[50,0],[100,38],[82,100],[18,100],[0,38]] },
+        { shape: "diamond", x: 30, y: 24, width: 28, height: 28, rotation: 30, tone: "accent", finish: "soft" },
+        { shape: "ellipse", x: 70, y: 74, width: 24, height: 18, rotation: 0, tone: "dark", finish: "none" }
+      ]
+    ];
+    concept.geometrySpec ||= { layers: geometryVariants[conceptIndex % geometryVariants.length] };
     concept.silhouette ||= concept.symbolConstruction || concept.centralThesis;
     concept.objectCues ||= (concept.briefElements || []).slice(0, 2);
     while (concept.objectCues.length < 2) concept.objectCues.push("ویژگی تشخیصی فرم");
