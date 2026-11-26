@@ -257,6 +257,8 @@
       ["ویژگی متمایز", concept.expressionMove],
       ["تفاوت این مسیر", concept.differsBy],
       ["بازبینی و اصلاح بصری", concept.visualRevisionNotes],
+      ["برداشت در نگاه اول", concept.firstRead],
+      ["ارزیابی کیفیت بصری", concept.visualQuality ? "تشخیص " + concept.visualQuality.recognitionScore + "/10 · وفاداری به بریف " + concept.visualQuality.briefFidelityScore + "/10 · پرداخت " + concept.visualQuality.craftScore + "/10" : ""],
       ["علت رد اصلاح", concept.visualReviewIssue]
     ];
     strategyRows.forEach(([label, value]) => {
@@ -391,40 +393,45 @@
     let refinedCount = 0;
     for (let index = 0; index < renderedConcepts.length; index += 1) {
       const source = concepts[index];
-      try {
-        const response = await fetch("https://nava-music-api.honrrpower.workers.dev/logo/generate", {
-          method: "POST",
-          headers,
-          cache: "no-store",
-          body: JSON.stringify({
-            ...brief,
-            action: "visual-refine",
-            reviewToken,
-            concepts: [renderedConcepts[index]]
-          })
-        });
-        const result = await response.json();
-        if (!response.ok || !result.success ||
-            !Array.isArray(result.concepts) || result.concepts.length !== 1) {
-          const code = result.code || ("HTTP_" + response.status);
-          rejectionReasons.push({ index: index + 1, code });
-          reviewed.push({ ...source, visualReview: "original-preserved", visualReviewIssue: code });
-          continue;
-        }
-        const concept = result.concepts[0];
-        if (concept.visualReview === "refined") refinedCount += 1;
-        if (concept.visualReview === "original-preserved") {
-          rejectionReasons.push({
-            index: index + 1,
-            code: concept.visualReviewIssue || "LOGO_REVIEW_REJECTED"
+      let accepted = null;
+      let lastCode = "LOGO_REVIEW_REJECTED";
+      for (let attempt = 1; attempt <= 2 && !accepted; attempt += 1) {
+        try {
+          const response = await fetch("https://nava-music-api.honrrpower.workers.dev/logo/generate", {
+            method: "POST",
+            headers,
+            cache: "no-store",
+            body: JSON.stringify({
+              ...brief,
+              action: "visual-refine",
+              reviewToken,
+              revisionAttempt: attempt,
+              previousReviewIssue: attempt === 2 ? lastCode : "",
+              concepts: [renderedConcepts[index]]
+            })
           });
+          const result = await response.json();
+          if (!response.ok || !result.success ||
+              !Array.isArray(result.concepts) || result.concepts.length !== 1) {
+            lastCode = result.code || ("HTTP_" + response.status);
+            continue;
+          }
+          const concept = result.concepts[0];
+          if (concept.visualReview === "refined") {
+            accepted = concept;
+            refinedCount += 1;
+            break;
+          }
+          lastCode = concept.visualReviewIssue || "LOGO_REVIEW_REJECTED";
+        } catch (error) {
+          const match = String(error?.message || "").match(/\[([A-Z0-9_]+)\]/);
+          lastCode = match?.[1] || "LOGO_REVIEW_NETWORK_ERROR";
         }
-        reviewed.push(concept);
-      } catch (error) {
-        const match = String(error?.message || "").match(/\[([A-Z0-9_]+)\]/);
-        const code = match?.[1] || "LOGO_REVIEW_NETWORK_ERROR";
-        rejectionReasons.push({ index: index + 1, code });
-        reviewed.push({ ...source, visualReview: "original-preserved", visualReviewIssue: code });
+      }
+      if (accepted) reviewed.push(accepted);
+      else {
+        rejectionReasons.push({ index: index + 1, code: lastCode });
+        reviewed.push({ ...source, visualReview: "rejected", visualReviewIssue: lastCode });
       }
     }
     return {
@@ -470,16 +477,21 @@
         throw new Error("پاسخ موتور طراحی معتبر نیست؛ طرح قابل‌قبولی دریافت نشد.");
       }
       let finalConcepts = result.concepts;
-      mountConcepts(finalConcepts, brief, result.planning);
-      empty.hidden = true;
-      status.textContent = "طرح‌های اولیه ساخته شدند؛ نوا در حال مشاهده تصویر واقعی هر لوگو و اصلاح ایرادهای بصری است.";
-      submit.textContent = "در حال بازبینی بصری…";
+      empty.hidden = false;
+      status.textContent = "مرحله ۱ از ۳ · ناوی بریف و ایده‌های بصری را می‌سازد. مرحله ۲ · موتور HTML/CSS طرح‌ها را می‌سازد. مرحله ۳ · ناوی رندر واقعی را می‌بیند و آزمون تشخیص‌پذیری انجام می‌دهد.";
+      submit.textContent = "ناوی در حال داوری و اصلاح…";
       try {
         const visualReview = await visuallyRefineConcepts(
           finalConcepts, brief, result.reviewToken, headers
         );
-        finalConcepts = visualReview.concepts;
-        mountConcepts(finalConcepts, brief, result.planning);
+        finalConcepts = visualReview.concepts.filter(concept => concept.visualReview === "refined");
+        if (finalConcepts.length) {
+          mountConcepts(finalConcepts, brief, result.planning);
+          empty.hidden = true;
+        } else {
+          results.replaceChildren();
+          empty.hidden = false;
+        }
         const refinedCount = Number(visualReview.visualReview?.refinedCount || 0);
         const rejectionDetails = Array.isArray(visualReview.visualReview?.rejectionReasons)
           ? visualReview.visualReview.rejectionReasons
@@ -487,12 +499,15 @@
               .join("؛ ")
           : "";
         status.textContent = refinedCount > 0
-          ? "بازبینی تصویری انجام شد؛ " + refinedCount + " طرح پس از مشاهده رندر واقعی اصلاح شدند." +
-            (rejectionDetails ? " موارد ردشده: " + rejectionDetails : "")
-          : "بازبینی تصویری انجام شد؛ اصلاح معتبر تأیید نشد." +
-            (rejectionDetails ? " علت دقیق: " + rejectionDetails : " کد علت در دسترس نیست.");
+          ? "ناوی " + refinedCount + " طرح را پس از مشاهده رندر واقعی و عبور از آزمون کیفیت تأیید کرد." +
+            (finalConcepts.length < 3 ? " طرح‌های مبهم یا ضعیف نمایش داده نشدند." : "") +
+            (rejectionDetails ? " ردشده‌ها: " + rejectionDetails : "")
+          : "هیچ طرحی از آزمون تشخیص‌پذیری و کیفیت ناوی عبور نکرد؛ طرح خام و مبهم نمایش داده نشد." +
+            (rejectionDetails ? " علت‌ها: " + rejectionDetails : "");
       } catch (reviewError) {
-        status.textContent = "بازبینی تصویری کامل نشد؛ طرح‌های اولیه حفظ شدند. " +
+        results.replaceChildren();
+        empty.hidden = false;
+        status.textContent = "بازبینی کیفیت کامل نشد؛ برای جلوگیری از نمایش لوگوی ضعیف، خروجی خام نشان داده نشد. " +
           (reviewError?.message || "خطای نامشخص در بازبینی.");
       }
       results.scrollIntoView({ behavior: "smooth", block: "start" });
