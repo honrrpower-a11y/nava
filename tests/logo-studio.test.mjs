@@ -979,7 +979,10 @@ test("Logo Studio captures real renders and runs validated automatic visual refi
   assert.ok(ui.includes('action: "visual-refine"'));
   assert.ok(ui.includes("capturePreviewDataUrl(frame, 640)"));
   assert.ok(ui.includes("function prepareReviewFrames(concepts, brief)"), "real preview frames must exist before visual review starts");
-  assert.ok(ui.includes("prepareReviewFrames(finalConcepts, brief)"), "review staging must be prepared before capture");
+  assert.ok(ui.includes("const reviewFrames = prepareReviewFrames(finalConcepts, brief)"), "review staging must be captured as a local frame list");
+  assert.ok(ui.includes("headers, reviewFrames"), "visual review must receive the exact staged frames");
+  assert.ok(ui.includes("visibility:visible"), "review frames must remain paintable for browser capture");
+  assert.ok(ui.includes("activeFrames.length !== concepts.length"), "review must reject a frame/concept count mismatch explicitly");
   assert.ok(ui.includes("clearReviewStage();"), "off-screen review frames must be removed after review");
   assert.ok(ui.includes("briefAlignment: concept.briefAlignment"), "visual review must retain the original concept brief traceability fields");
   assert.ok(ui.includes("result.reviewToken"));
