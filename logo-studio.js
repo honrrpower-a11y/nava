@@ -552,21 +552,16 @@
         throw new Error("پاسخ موتور طراحی معتبر نیست؛ طرح قابل‌قبولی دریافت نشد.");
       }
       let finalConcepts = result.concepts;
-      // Prepare actual HTML/CSS renders first; they remain hidden until NAVI accepts them.
-      const reviewFrames = prepareReviewFrames(finalConcepts, brief);
       empty.hidden = false;
-      status.textContent = "مرحله ۱ از ۳ · ناوی بریف و ایده‌های بصری را می‌سازد. مرحله ۲ · موتور HTML/CSS طرح‌ها را می‌سازد. مرحله ۳ · ناوی رندر واقعی را می‌بیند و آزمون تشخیص‌پذیری انجام می‌دهد.";
-      submit.textContent = "ناوی در حال داوری و اصلاح…";
+      status.textContent = "مرحله ۱ از ۳ · ناوی بریف و نقشه ساخت را آماده کرد. مرحله ۲ · موتور ساختاریافته HTML/CSS هندسه و تایپوگرافی را می‌سازد. مرحله ۳ · تصویر رندرشده نهایی ارزیابی می‌شود.";
+      submit.textContent = "در حال ارزیابی خروجی نهایی…";
       try {
-        const visualReview = await visuallyRefineConcepts(
-          finalConcepts, brief, result.reviewToken, headers, reviewFrames
+        // Do not let a second generative code pass rewrite the deterministic
+        // geometry. The structured engine is the source of truth for the mark.
+        status.textContent = "موتور HTML/CSS طرح‌ها را ساخته است؛ اکنون هر تصویر نهایی در مرورگر رندر و از نظر خوانایی و انطباق با بریف ارزیابی می‌شود.";
+        const finalAudit = await visuallyAuditFinalConcepts(
+          finalConcepts, brief, result.reviewToken, headers
         );
-        const refinedCandidates = visualReview.concepts.filter(concept => concept.visualReview === "refined");
-        let finalAudit = { concepts: [], visualReview: { acceptedCount: 0, rejectionReasons: [] } };
-        if (refinedCandidates.length) {
-          status.textContent = "اصلاح اولیه انجام شد؛ اکنون نسخه اصلاح‌شده دوباره در مرورگر رندر می‌شود تا فقط تصویر نهایی داوری شود.";
-          finalAudit = await visuallyAuditFinalConcepts(refinedCandidates, brief, result.reviewToken, headers);
-        }
         finalConcepts = finalAudit.concepts.filter(concept => concept.visualReview === "accepted");
         if (finalConcepts.length) {
           mountConcepts(finalConcepts, brief, result.planning);
@@ -576,26 +571,23 @@
           empty.hidden = false;
         }
         const acceptedCount = finalConcepts.length;
-        const rejected = [
-          ...(Array.isArray(visualReview.visualReview?.rejectionReasons) ? visualReview.visualReview.rejectionReasons : []),
-          ...(Array.isArray(finalAudit.visualReview?.rejectionReasons) ? finalAudit.visualReview.rejectionReasons : [])
-        ];
-        const rejectionDetails = rejected
+        const rejectionDetails = (Array.isArray(finalAudit.visualReview?.rejectionReasons)
+          ? finalAudit.visualReview.rejectionReasons : [])
           .map(item => "طرح " + item.index + ": " + item.code)
           .join("؛ ");
         status.textContent = acceptedCount > 0
-          ? "ناوی " + acceptedCount + " لوگو را پس از رندر مجدد و داوری مستقل تصویر نهایی تأیید کرد." +
-            (acceptedCount < 3 ? " طرح‌های ضعیف یا مبهم نمایش داده نشدند." : "") +
+          ? "ناوی " + acceptedCount + " لوگو را پس از ارزیابی تصویر نهایی تأیید کرد." +
+            (acceptedCount < finalAudit.visualReview.reviewedCount ? " طرح‌های ضعیف یا مبهم نمایش داده نشدند." : "") +
             (rejectionDetails ? " ردشده‌ها: " + rejectionDetails : "")
-          : "هیچ لوگویی از داوری تصویر نهایی عبور نکرد؛ طرح تأییدنشده نمایش داده نشد." +
+          : "هیچ لوگویی از ارزیابی تصویر نهایی عبور نکرد؛ طرح تأییدنشده نمایش داده نشد." +
             (rejectionDetails ? " علت دقیق: " + rejectionDetails : "");
       } catch (reviewError) {
         clearReviewStage();
         frames = [];
         results.replaceChildren();
         empty.hidden = false;
-        status.textContent = "بازبینی کیفیت کامل نشد؛ برای جلوگیری از نمایش لوگوی ضعیف، خروجی خام نشان داده نشد. " +
-          (reviewError?.message || "خطای نامشخص در بازبینی.");
+        status.textContent = "ارزیابی کیفیت کامل نشد؛ برای جلوگیری از نمایش لوگوی ضعیف، خروجی خام نشان داده نشد. " +
+          (reviewError?.message || "خطای نامشخص در ارزیابی.");
       }
       results.scrollIntoView({ behavior: "smooth", block: "start" });
     } catch (error) {
