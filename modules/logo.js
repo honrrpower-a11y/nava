@@ -4,6 +4,7 @@
 import { json, safeText } from "./shared.js";
 import { GEMINI_MODEL, ALLOWED_ORIGIN } from "./config.js";
 import { handleGuestTrial, releaseGuestTrialReservation } from "./guest-trial.js";
+import { buildStructuredLogoConcepts } from "./logo-engine.js";
 
 function fail(message, status, corsOrigin, extra = {}) {
   return json({ success: false, error: message, ...extra }, status, corsOrigin);
@@ -603,6 +604,11 @@ async function designLogos(data, apiKey) {
     if (!Array.isArray(plan.concepts) || plan.concepts.length !== conceptCount) {
       throw validationError("LOGO_CONCEPT_COUNT", "NAVI did not return the requested number of logo designs.", "concept-count");
     }
+    // The model builder's free-form markup is deliberately not used as the
+    // production drawing engine. NAVI supplies semantic blueprints; a
+    // deterministic HTML/CSS grammar constructs the actual logo geometry.
+    const structuredBuild = buildStructuredLogoConcepts(data, designBlueprints);
+    plan.concepts = structuredBuild.concepts;
     const designBriefEnglish = naviCreativeBrief.designBriefEnglish;
     if (!designBriefEnglish || !safeText(plan.strategy, 500)) {
       throw validationError("LOGO_BRIEF_INCOMPLETE", "NAVI returned an incomplete design brief.", "brief");
