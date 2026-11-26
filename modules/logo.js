@@ -626,11 +626,42 @@ async function designLogos(data, apiKey) {
       } catch {
         repaired = null;
       }
-      const repairedConcepts = Array.isArray(repaired?.concepts) ? repaired.concepts : [];
-      const repairedByIndex = new Map(repairedConcepts.map(item => [Number(item?.index), item]));
+      const repairedConcepts = Array.isArray(repaired?.concepts) ? repaired.concepts :
+        (Array.isArray(repaired?.blueprints) ? repaired.blueprints :
+        (Array.isArray(repaired?.visualBlueprints) ? repaired.visualBlueprints : []));
+      const repairedByIndex = new Map();
+      repairedConcepts.forEach((item, position) => {
+        const explicitIndex = Number(item?.index ?? item?.conceptIndex ?? item?.conceptNumber);
+        if (Number.isInteger(explicitIndex) && explicitIndex >= 1 && explicitIndex <= conceptCount) {
+          repairedByIndex.set(explicitIndex, item);
+        } else if (incompleteBlueprints.length === 1 && repairedConcepts.length === 1) {
+          // Gemini may omit the requested index when exactly one concept is repaired.
+          repairedByIndex.set(incompleteBlueprints[0].index + 1, item);
+        } else if (repairedConcepts.length === incompleteBlueprints.length) {
+          // With omitted indexes, preserve the requested order for a one-to-one batch.
+          repairedByIndex.set(incompleteBlueprints[position].index + 1, item);
+        }
+      });
       for (const entry of incompleteBlueprints) {
         const candidate = repairedByIndex.get(entry.index + 1);
-        if (candidate) normalizedBlueprints[entry.index] = normalizeLogoBlueprint(candidate, entry.index, data.format);
+        if (!candidate || typeof candidate !== "object") continue;
+        const existing = normalizedBlueprints[entry.index];
+        // A repair is a patch, not a replacement. Preserve valid original
+        // meaning and geometry when Gemini returns only the missing fields.
+        const merged = { ...existing, ...candidate };
+        for (const field of ["briefElements", "objectCues", "finishLayers", "mustAvoid"]) {
+          if (!Array.isArray(candidate[field]) || candidate[field].length === 0) {
+            merged[field] = existing[field];
+          }
+        }
+        merged.geometrySpec = {
+          ...(existing.geometrySpec || {}),
+          ...(candidate.geometrySpec || {})
+        };
+        if (!Array.isArray(candidate.geometrySpec?.layers) || candidate.geometrySpec.layers.length === 0) {
+          merged.geometrySpec.layers = existing.geometrySpec?.layers || [];
+        }
+        normalizedBlueprints[entry.index] = normalizeLogoBlueprint(merged, entry.index, data.format);
       }
       incompleteBlueprints = normalizedBlueprints
         .map((item, index) => ({ index, item, missing: missingLogoBlueprintFields(item, data.format) }))
