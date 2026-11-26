@@ -4704,7 +4704,7 @@ function drawStorySlide(canvas, slide, index, total) {
   if(slide.body)y=wrap(slide.body,Math.max(900,y+70),"500 42px Vazirmatn,sans-serif","#eaf0fa",4);
   const details=[slide.date,slide.time,slide.venue].filter(Boolean);
   if(details.length){const top=Math.min(1450,Math.max(1160,y+55));c.fillStyle="#ffffff18";c.fillRect(80,top-65,920,details.length*82+45);c.fillStyle="#fff";c.font="600 40px Vazirmatn,sans-serif";details.forEach((v,i)=>c.fillText(String(v),970,top+i*82,850));}
-  if(slide.cta){c.textAlign="center";wrap(slide.cta,1710,"bold 38px Vazirmatn,sans-serif",accent,2);}
+  if(slide.cta){c.textAlign="right";wrap(slide.cta,1710,"bold 38px Vazirmatn,sans-serif",accent,2);}
   c.textAlign="left";c.fillStyle="#ffffff88";c.font="600 25px Vazirmatn,sans-serif";c.fillText("NAVA  /  "+(index+1)+" — "+total,80,1840);
 }
 function renderNaviStoryPlan(plan) {
