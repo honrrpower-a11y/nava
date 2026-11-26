@@ -425,6 +425,8 @@
         briefAlignment: concept.briefAlignment,
         silhouette: concept.silhouette,
         geometryRecipe: concept.geometryRecipe,
+        executionBriefEnglish: concept.executionBriefEnglish,
+        geometryLayerRoles: concept.geometryLayerRoles,
         spatialRelationship: concept.spatialRelationship,
         negativeSpace: concept.negativeSpace,
         signatureFeature: concept.expressionMove || concept.signatureFeature,
