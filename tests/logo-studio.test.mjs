@@ -977,7 +977,11 @@ test("Logo Studio captures real renders and runs validated automatic visual refi
   assert.ok(ui.includes("briefAlignment: concept.briefAlignment"), "visual review must retain the original concept brief traceability fields");
   assert.ok(ui.includes("result.reviewToken"));
   assert.ok(ui.includes("finalConcepts = visualReview.concepts"));
-  assert.ok(ui.includes("طرح‌های اولیه حفظ شدند"));
+  assert.ok(ui.includes("طرح خام و مبهم نمایش داده نشد"));
+  assert.ok(ui.includes("revisionAttempt: attempt"), "a rejected design receives one stronger second review");
+  assert.ok(ui.includes('concept.visualReview === "refined"'), "only concepts accepted by NAVI visual review may be shown");
+  assert.ok(backend.includes("LOGO_VISUAL_QUALITY_LOW"));
+  assert.ok(backend.includes("recognitionScore < 8"), "blind-read quality is a hard acceptance gate");
   assert.ok(ui.includes("result.code"), "visual-review failures must expose their diagnostic code");
   assert.ok(backend.includes("error?.name === \"AbortError\" ? \"MODEL_TIMEOUT\""), "review timeouts must be classified as retryable model timeouts");
   assert.ok(backend.includes("controller.abort(), 120000"), "visual review must have a 120-second deadline");
@@ -1009,7 +1013,7 @@ test("NAVI visual refinement reviews real PNGs, validates revised HTML/CSS, and 
       return new Response(JSON.stringify({
         candidates: [{
           content: { parts: [{ text: JSON.stringify({
-            concepts: [{ index: 1, html, css, visualRevisionNotes: "تناسب نشان و جای‌گیری لایه‌ها پس از مشاهده رندر واقعی اصلاح شد." }]
+            concepts: [{ index: 1, html, css, visualRevisionNotes: "تناسب نشان و جای‌گیری لایه‌ها پس از مشاهده رندر واقعی اصلاح شد.", firstRead: "نشان صوتی پیوسته", recognitionScore: 9, briefFidelityScore: 9, craftScore: 8 }]
           }) }] }
         }]
       }), { status: 200, headers: { "Content-Type": "application/json" } });
@@ -1039,6 +1043,49 @@ test("NAVI visual refinement reviews real PNGs, validates revised HTML/CSS, and 
   }
 });
 
+test("NAVI rejects a visually revised logo when blind-read recognition scores below the quality threshold", async () => {
+  const originalFetch = globalThis.fetch;
+  const db = new FakeD1();
+  try {
+    globalThis.fetch = async () => makeGeminiResponse();
+    const initialResponse = await handleLogoRoute({
+      request: makeRequest(),
+      env: { NAVA_DB: db, NAVI_SESSION_SECRET: "test-secret-key", GEMINI_API_KEY: "test-gemini-key" },
+      origin: ORIGIN,
+      corsOrigin: ORIGIN
+    });
+    const initial = await initialResponse.json();
+    const original = initial.concepts[0];
+    const html = original.html.replace('class="navi-symbol', 'class="navi-symbol revised');
+    const css = original.css + '.navi-symbol.revised{clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)}';
+    globalThis.fetch = async () => new Response(JSON.stringify({
+      candidates: [{ content: { parts: [{ text: JSON.stringify({
+        concepts: [{
+          index: 1, html, css,
+          visualRevisionNotes: "فرم نماد بازطراحی شد.",
+          firstRead: "یک شکل انتزاعی نامشخص",
+          recognitionScore: 5, briefFidelityScore: 9, craftScore: 9
+        }]
+      }) }] } }]
+    }), { status: 200, headers: { "Content-Type": "application/json" } });
+    const response = await handleLogoRoute({
+      request: makeRequest({
+        ...INPUT, action: "visual-refine", reviewToken: initial.reviewToken,
+        concepts: [{ ...original, previewImage: "data:image/png;base64,aGVsbG8=" }]
+      }),
+      env: { NAVA_DB: db, NAVI_SESSION_SECRET: "test-secret-key", GEMINI_API_KEY: "test-gemini-key" },
+      origin: ORIGIN,
+      corsOrigin: ORIGIN
+    });
+    const result = await response.json();
+    assert.equal(response.status, 200);
+    assert.equal(result.visualReview.refinedCount, 0);
+    assert.equal(result.concepts[0].visualReviewIssue, "LOGO_VISUAL_QUALITY_LOW");
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
 test("NAVI rejects cosmetic-only visual revisions that leave the logo symbol geometry unchanged", async () => {
   const originalFetch = globalThis.fetch;
   const db = new FakeD1();
@@ -1054,7 +1101,7 @@ test("NAVI rejects cosmetic-only visual revisions that leave the logo symbol geo
     const original = initial.concepts[0];
     globalThis.fetch = async () => new Response(JSON.stringify({
       candidates: [{ content: { parts: [{ text: JSON.stringify({
-        concepts: [{ index: 1, html: original.html, css: original.css + ".mark{transform:scale(1.02)}", visualRevisionNotes: "اندازه قاب کمی تغییر کرد." }]
+        concepts: [{ index: 1, html: original.html, css: original.css + ".mark{transform:scale(1.02)}", visualRevisionNotes: "اندازه قاب کمی تغییر کرد.", firstRead: "فرم مبهم", recognitionScore: 9, briefFidelityScore: 9, craftScore: 9 }]
       }) }] } }]
     }), { status: 200, headers: { "Content-Type": "application/json" } });
     const response = await handleLogoRoute({

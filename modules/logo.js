@@ -826,7 +826,7 @@ function hasMaterialSymbolRevision(originalHtml, originalCss, revisedHtml, revis
   return Boolean(before && after && before !== after);
 }
 
-async function refineLogoConcepts(data, conceptsInput, apiKey) {
+async function refineLogoConcepts(data, conceptsInput, apiKey, revisionAttempt = 1) {
   if (!apiKey) throw new Error("NAVI design service is not configured.");
   if (!Array.isArray(conceptsInput) || conceptsInput.length < 1 || conceptsInput.length > 3) {
     throw validationError("LOGO_REVIEW_INPUT_INVALID", "Visual review requires one to three rendered concepts.", "visual-review-input");
@@ -856,6 +856,13 @@ async function refineLogoConcepts(data, conceptsInput, apiKey) {
   };
   const system = [
     "You are NAVI VISUAL ART DIRECTOR performing a real render-review-revision pass.",
+    "QUALITY IS NOT A VALIDATION EXERCISE: do not approve a merely valid CSS shape. The mark must be immediately recognizable and meaningful when seen alone, with all labels and rationale mentally hidden.",
+    "BLIND-READ TEST: state the first thing an ordinary viewer would identify from the symbol alone. If that reading is vague while the brief names a concrete object or clear idea, the mark fails. Redesign the silhouette until its first read matches the brief.",
+    "SCORE THE ACTUAL IMAGE, NOT YOUR INTENTION: return integer scores from 1 to 10 for recognitionScore, briefFidelityScore and craftScore. Recognition means the symbol can be identified without its title or explanation; brief fidelity means the visible geometry expresses the exact requested idea; craft means professional silhouette, proportions, negative space and optical balance. Be strict and do not inflate scores.",
+    "HARD ACCEPTANCE GATE: all three scores must be at least 8/10. If any score is below 8, continue redesigning before returning. Never report a high score merely because the HTML/CSS is valid.",
+    revisionAttempt >= 2
+      ? "SECOND ATTEMPT: the previous visual review failed. Do not preserve the weak silhouette. Rebuild the central mark decisively from the brief's recognizable diagnostic cues; replace ambiguous geometry rather than polishing it. The output must be visibly and semantically stronger."
+      : "FIRST REVIEW: prioritize the largest semantic-recognition failure before styling.",
     "You are given the actual browser-rendered PNG preview for each concept, its HTML/CSS source, and the original client brief. Inspect the image itself. Do not merely repeat the rationale or validate that classes exist.",
     "For each concept diagnose visible problems in silhouette, object recognition, spatial relationships, overlap/occlusion, hierarchy, balance, scale, depth, lighting, material, typography and fidelity to the exact brief. Then revise the HTML and CSS so the rendered result visibly fixes those problems.",
     "The original client brief is the source of truth. Preserve its subject, required objects, exact spatial relationships, brand name and supplied slogan. Never replace the core idea with a generic icon or a different metaphor.",
@@ -864,7 +871,7 @@ async function refineLogoConcepts(data, conceptsInput, apiKey) {
     "Improve the actual graphic design, not just the code structure: custom silhouette, deliberate geometry, considered negative space, intentional proportions, optical alignment and purposeful layered construction. Avoid arbitrary extra ornaments, generic rings, random diagonal strokes and default badges.",
     "Keep the existing .navi-symbol wrapper and every class referenced by anchorMap so the verified visual anchors remain attached to real layers. You may redesign their geometry and add nested HTML/CSS layers.",
     "Keep all text exactly as supplied. Preserve data-logo-role=brand and data-logo-role=slogan. Persian/Arabic must remain real HTML text with direction:rtl, unicode-bidi:plaintext and suitable font fallbacks.",
-    "Return a single valid JSON object with a concepts array in the same order. Each item must contain only index (1-based), html, css and visualRevisionNotes (short Persian explanation of concrete visible changes). Do not return SVG, images, scripts, markdown or chain-of-thought. HTML must use only the already-supported safe tags and CSS must use the existing safe CSS subset."
+    "Return a single valid JSON object with a concepts array in the same order. Each item must contain index (1-based), html, css, visualRevisionNotes (short Persian explanation of concrete visible changes), firstRead (what a viewer identifies without explanation), recognitionScore (integer 1-10), briefFidelityScore (integer 1-10) and craftScore (integer 1-10). Do not return SVG, images, scripts, markdown or chain-of-thought. HTML must use only the already-supported safe tags and CSS must use the existing safe CSS subset."
   ].join("\n");
   const parts = [{
     text: "Review the actual rendered images and revise every concept. The brief is binding:\n" +
@@ -945,11 +952,22 @@ async function refineLogoConcepts(data, conceptsInput, apiKey) {
         validateConceptTraceability(source, index + 1);
         validateVisualAnchorMap(html, css, source, index + 1, data.format);
         const notes = safeText(candidateConcept.visualRevisionNotes, 360);
-        if (html.length < 20 || css.length < 40 || !notes) {
-          throw validationError("LOGO_REVIEW_INCOMPLETE", "Visual refinement was incomplete.", "visual-review-output", index + 1);
+        const firstRead = safeText(candidateConcept.firstRead, 180);
+        const recognitionScore = Number(candidateConcept.recognitionScore);
+        const briefFidelityScore = Number(candidateConcept.briefFidelityScore);
+        const craftScore = Number(candidateConcept.craftScore);
+        if (html.length < 20 || css.length < 40 || !notes || !firstRead ||
+            !Number.isInteger(recognitionScore) || !Number.isInteger(briefFidelityScore) ||
+            !Number.isInteger(craftScore) || [recognitionScore, briefFidelityScore, craftScore].some(score => score < 1 || score > 10)) {
+          throw validationError("LOGO_REVIEW_INCOMPLETE", "Visual refinement did not include a complete blind-read quality report.", "visual-review-output", index + 1);
+        }
+        if (recognitionScore < 8 || briefFidelityScore < 8 || craftScore < 8) {
+          throw validationError("LOGO_VISUAL_QUALITY_LOW", "The rendered mark did not pass the strict recognition, brief-fidelity and craft threshold.", "visual-review-quality-gate", index + 1);
         }
         refinedCount += 1;
-        return { ...source, html, css, visualRevisionNotes: notes, visualReview: "refined" };
+        return { ...source, html, css, visualRevisionNotes: notes, firstRead,
+          visualQuality: { recognitionScore, briefFidelityScore, craftScore },
+          visualReview: "refined" };
       } catch (error) {
         return {
           ...source,
@@ -1015,7 +1033,7 @@ export async function handleLogoRoute({ request, env, origin, corsOrigin }) {
     );
     if (!reviewAuthorized) return fail("مجوز بازبینی بصری معتبر نیست یا زمان آن پایان یافته است؛ دوباره طرح را تولید کن.", 403, corsOrigin);
     try {
-      const review = await refineLogoConcepts(data, input.concepts, env.GEMINI_API_KEY);
+      const review = await refineLogoConcepts(data, input.concepts, env.GEMINI_API_KEY, Number(input.revisionAttempt) === 2 ? 2 : 1);
       return json({
         success: true,
         visualReview: {
