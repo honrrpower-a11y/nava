@@ -959,21 +959,22 @@ test("NAVI accepts a transparent symbol wrapper when nested layers create the ac
 });
 
 
-test("Logo Studio renders structured HTML/CSS geometry and audits final PNGs without generative code rewriting", () => {
+test("Logo Studio delivers structured HTML/CSS geometry without blocking on optional final PNG audit", () => {
   const ui = readFileSync(new URL("../logo-studio.js", import.meta.url), "utf8");
   const backend = readFileSync(new URL("../modules/logo.js", import.meta.url), "utf8");
   const engine = readFileSync(new URL("../modules/logo-engine.js", import.meta.url), "utf8");
   const generateStart = ui.indexOf("async function generate(event)");
   const generateEnd = ui.indexOf("ideaModeInputs.forEach", generateStart);
   const generateSource = ui.slice(generateStart, generateEnd);
-  assert.ok(generateSource.includes("visuallyAuditFinalConcepts("));
+  assert.ok(!generateSource.includes("visuallyAuditFinalConcepts("), "optional visual audit must not block initial delivery");
+  assert.ok(generateSource.includes("mountConcepts(finalConcepts, brief, result.planning)"));
   assert.ok(!generateSource.includes("visuallyRefineConcepts("), "a generative revision must not overwrite structured mark geometry");
   assert.ok(ui.includes("capturePreviewDataUrl(frame, 640)"));
   assert.ok(ui.includes("function prepareReviewFrames(concepts, brief)"));
   assert.ok(ui.includes("visibility:visible"));
   assert.ok(ui.includes("result.reviewToken"));
   assert.ok(ui.includes('action: "visual-final-audit"'));
-  assert.ok(ui.includes("طرح تأییدنشده نمایش داده نشد"));
+  assert.ok(ui.includes("بازبینی هوش مصنوعی مانع نمایش یا تحویل طرح نیست"));
   assert.ok(backend.includes("buildStructuredLogoConcepts"));
   assert.ok(backend.includes("geometryEngine: \"structured-html-css-grammar\""));
   assert.ok(engine.includes("subject-specific"));
@@ -1212,25 +1213,30 @@ test("NAVI retries a transient Gemini service failure once before returning a lo
 });
 
 
-test("NAVI exposes per-concept visual refinement rejection diagnostics to Logo Studio", () => {
+test("NAVI retains per-concept visual refinement diagnostics without making initial delivery depend on them", () => {
   const backend = readFileSync(new URL("../modules/logo.js", import.meta.url), "utf8");
   const ui = readFileSync(new URL("../logo-studio.js", import.meta.url), "utf8");
   assert.ok(backend.includes("rejectionReasons: review.rejectionReasons"));
   assert.ok(backend.includes('code: concept.visualReviewIssue || "LOGO_REVIEW_REJECTED"'));
-  assert.ok(ui.includes('item.code'));
-  assert.ok(ui.includes("علت دقیق:"));
-  assert.ok(ui.includes('["علت رد اصلاح", concept.visualReviewIssue]'));
+  const generateStart = ui.indexOf("async function generate(event)");
+  const generateEnd = ui.indexOf("ideaModeInputs.forEach", generateStart);
+  const generateSource = ui.slice(generateStart, generateEnd);
+  assert.ok(generateSource.includes("mountConcepts(finalConcepts, brief, result.planning)"));
+  assert.ok(!generateSource.includes("rejectionReasons"), "review diagnostics must not gate initial logo delivery");
 });
 
 
-test("Logo Studio re-renders structured HTML/CSS output and accepts only concepts that pass a final image-only audit", () => {
+test("Logo Studio retains optional image-only audit support without requiring audit acceptance for initial delivery", () => {
   const ui = readFileSync(new URL("../logo-studio.js", import.meta.url), "utf8");
   const backend = readFileSync(new URL("../modules/logo.js", import.meta.url), "utf8");
   assert.ok(ui.includes("async function visuallyAuditFinalConcepts"));
   assert.ok(ui.includes('action: "visual-final-audit"'));
   assert.ok(ui.includes("capturePreviewDataUrl(frame, 640)"));
-  assert.ok(ui.includes('concept.visualReview === "accepted"'));
-  assert.ok(ui.includes("ارزیابی تصویر نهایی"));
+  const generateStart = ui.indexOf("async function generate(event)");
+  const generateEnd = ui.indexOf("ideaModeInputs.forEach", generateStart);
+  const generateSource = ui.slice(generateStart, generateEnd);
+  assert.ok(!generateSource.includes("concept.visualReview === \"accepted\""));
+  assert.ok(generateSource.includes("mountConcepts(finalConcepts, brief, result.planning)"));
   assert.ok(backend.includes("async function auditFinalLogoConcepts"));
   assert.ok(backend.includes("TWO STAGES IN ORDER"));
   assert.ok(backend.includes("FINAL IMAGE"));
