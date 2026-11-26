@@ -68,3 +68,52 @@ test("wordmark-only format remains native HTML/CSS and does not invent a symbol"
   assert.doesNotMatch(result.concepts[0].html, /navi-symbol|<svg/i);
   assert.match(result.concepts[0].html, /data-logo-role="brand"/);
 });
+
+
+test("NAVI's ray and light construction cues become visible native HTML/CSS geometry", () => {
+  const blueprint = {
+    title: "کتاب و روشنایی",
+    centralThesis: "کتاب گشوده که نور از عطف آن می‌تابد",
+    briefElements: ["کتاب باز", "عطف مرکزی", "پرتوهای نور"],
+    symbolConstruction: "دو صفحه باز با عطف روشن و پرتوهای منشعب از مرکز",
+    briefAlignment: "کتاب و روشنایی دانش در یک نشان یکپارچه",
+    firstRead: "کتاب باز با پرتو نور",
+    objectCues: ["دو صفحه مستقل و قابل تشخیص", "پرتوهای باریک نور از عطف"],
+    spatialRelationship: "پرتوها از بالای عطف مرکزی به بیرون باز می‌شوند",
+    negativeSpace: "فاصله باریک میان دو صفحه مسیر نور را تعریف می‌کند",
+    geometryRecipe: "دو صفحه کتاب باز؛ سه تا پنج پرتو نور از عطف به سمت بالا",
+    signatureFeature: "پرتوهای طلایی برخاسته از عطف کتاب"
+  };
+  const result = buildStructuredLogoConcepts(base, [blueprint]);
+  const concept = result.concepts[0];
+  assert.ok(concept.semanticGeometry.includes("radiance-rays"));
+  assert.match(concept.html, /semantic-radiance/);
+  assert.match(concept.html, /semantic-ray ray-1/);
+  assert.match(concept.css, /semantic-ray\.ray-3/);
+  assert.match(concept.css, /linear-gradient\(180deg,rgba\(222,183,105/);
+  assert.match(concept.geometryRecipe, /پرتو نور/);
+});
+
+test("NAVI's asymmetric spatial relationship changes the subject's actual geometry", () => {
+  const blueprint = {
+    title: "شبکه نامتقارن",
+    centralThesis: "شبکه‌ای با یک گره اصلی پررنگ‌تر",
+    briefElements: ["گره مرکزی", "اتصال‌ها", "گره بزرگ‌تر"],
+    symbolConstruction: "گره مرکزی و مسیرهای ارتباطی با یک سمت برجسته‌تر",
+    briefAlignment: "نماد شبکه با تاکید نامتقارن",
+    firstRead: "شبکه ارتباطی",
+    objectCues: ["گره‌های متصل", "گره اصلی بزرگ‌تر"],
+    spatialRelationship: "یک سمت شبکه پرتر و ضخیم‌تر از سمت دیگر است",
+    negativeSpace: "فاصله میان گره‌ها باید خوانا بماند",
+    geometryRecipe: "شبکه‌ای با یک سمت پرتر و گره اصلی بزرگ‌تر",
+    signatureFeature: "تاکید نامتقارن بر یک سمت شبکه"
+  };
+  const result = buildStructuredLogoConcepts({
+    ...base, designPrompt: "نماد شبکه و اینترنت", industry: "فناوری شبکه"
+  }, [blueprint]);
+  const concept = result.concepts[0];
+  assert.ok(concept.semanticGeometry.includes("asymmetric-mass"));
+  assert.match(concept.css, /\.net-node\.node-a\{width:33%/);
+  assert.match(concept.css, /\.net-node\.node-b\{width:21%/);
+  assert.match(concept.spatialRelationship, /پرتر/);
+});
