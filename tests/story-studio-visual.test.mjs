@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
+import { getNaviMessageLimit, shouldUseNaviStoryPlanContext } from "../modules/navi.js";
 
 const app = readFileSync(new URL("../app.js", import.meta.url), "utf8");
 const html = readFileSync(new URL("../index.html", import.meta.url), "utf8");
@@ -26,4 +27,20 @@ test("Story design requests are isolated from chat history and memory", () => {
   assert.match(app, /isolatedContext: isHomePage \|\| options\.videoPlan === true \|\| storyPlan/);
   assert.match(app, /saveThisMessageToMemory = options\.videoPlan === true \|\| storyPlan/);
   assert.match(app, /history: isHomePage \|\| options\.videoPlan === true \|\| storyPlan \? \[\]/);
+});
+
+test("backend recognizes Story Studio requests only on storyPage and allocates a plan budget", () => {
+  assert.equal(shouldUseNaviStoryPlanContext({ storyPlan: true }, "storyPage"), true);
+  assert.equal(shouldUseNaviStoryPlanContext({ storyPlan: true }, "homePage"), false);
+  assert.equal(shouldUseNaviStoryPlanContext({ storyPlan: false }, "storyPage"), false);
+  assert.equal(getNaviMessageLimit({ storyPlan: true }, "storyPage"), 24000);
+  assert.equal(getNaviMessageLimit({ storyPlan: true }, "homePage"), 12000);
+});
+
+test("backend uses a dedicated structured visual brief and excludes prior chat history", () => {
+  const backend = readFileSync(new URL("../modules/navi.js", import.meta.url), "utf8");
+  assert.match(backend, /const isStoryPlanRequest = shouldUseNaviStoryPlanContext\(input, page\)/);
+  assert.match(backend, /این درخواست یک کار طراحی گرافیکی است/);
+  assert.match(backend, /if \(!isVideoPlanRequest && !isStoryPlanRequest\)/);
+  assert.match(backend, /storyPlan: isStoryPlanRequest/);
 });
