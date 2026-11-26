@@ -211,9 +211,9 @@ test("NAVI writes a professional creative brief before building three sanitized 
     assert.equal(result.concepts[0].symbolConstruction, "دو مسیر منحنی در مرکز به هم می‌رسند و یک شکاف پیوسته در دل فرم می‌سازند");
     assert.equal(result.concepts[0].briefAlignment, "این فرم اتصال صدا و خلاقیت را در هویت استودیوی موسیقی نشان می‌دهد");
     assert.deepEqual(result.concepts[0].briefElements, ["موج صوتی","اتصال دو مسیر"]);
-    assert.match(result.concepts[0].mechanism, /deterministic HTML\/CSS component grammar/);
-    assert.equal(result.concepts[0].expressionMove, "ویژگی هندسی اختصاصی و قابل تشخیص در سیلوئت");
-    assert.match(result.concepts[0].differsBy, /distinct silhouette and geometry/);
+    assert.match(result.concepts[0].mechanism, /اتصال دو مسیر صوتی/);
+    assert.equal(result.concepts[0].expressionMove, "شکاف مرکزی پیوسته");
+    assert.match(result.concepts[0].differsBy, /ساختار باز و نامتقارن/);
     assert.ok(result.concepts[0].axes && Object.keys(result.concepts[0].axes).length > 0);
     assert.deepEqual(result.concepts[0].defaultsUsed, []);
     assert.ok(result.concepts.every(item => item.html.length >= 90 && item.css.length >= 350), "each concept must contain substantial HTML and CSS");
@@ -265,14 +265,13 @@ test("NAVI rejects SVG-based artwork instead of silently stripping it and showin
   try {
     const response = await handleLogoRoute({request:makeRequest(),env:{NAVA_DB:db,NAVI_SESSION_SECRET:"test-secret-key",GEMINI_API_KEY:"test-gemini-key"},origin:ORIGIN,corsOrigin:ORIGIN});
     const result = await response.json();
-    assert.equal(response.status,200);
-    assert.equal(result.success,true);
-    assert.ok(result.concepts.every(concept => !concept.html.includes("<svg") && !concept.html.includes("<path")));
-    assert.equal(db.visitorUsed,1);
+    assert.equal(response.status,502);
+    assert.equal(result.code,"LOGO_SVG_SOURCE_FORBIDDEN");
+    assert.equal(db.visitorUsed,0, "unsafe SVG source refunds the reserved trial");
   } finally {globalThis.fetch=originalFetch;}
 });
 
-test("NAVI never returns SVG-only model markup because the structured engine builds the final mark", async () => {
+test("NAVI rejects SVG-only model markup instead of replacing it with a fixed geometry template", async () => {
   const originalFetch = globalThis.fetch;
   const db = new FakeD1();
   const design = makeDesign();
@@ -287,10 +286,9 @@ test("NAVI never returns SVG-only model markup because the structured engine bui
       corsOrigin: ORIGIN
     });
     const result = await response.json();
-    assert.equal(response.status, 200);
-    assert.equal(result.success, true);
-    assert.ok(result.concepts.every(concept => !concept.html.includes("<svg") && !concept.html.includes("<path")));
-    assert.equal(db.visitorUsed, 1);
+    assert.equal(response.status, 502);
+    assert.equal(result.code, "LOGO_SVG_SOURCE_FORBIDDEN");
+    assert.equal(db.visitorUsed, 0);
   } finally {
     globalThis.fetch = originalFetch;
   }
@@ -314,8 +312,8 @@ test("NAVI rejects a two-line sketch instead of presenting it as a logo", async 
     // A bad concept is rejected individually while the two valid concepts survive.
     assert.equal(response.status, 200);
     assert.equal(result.success, true);
-    assert.equal(result.concepts.length, 3);
-    assert.equal(result.rejectedConcepts.length, 0);
+    assert.equal(result.concepts.length, 2);
+    assert.equal(result.rejectedConcepts.length, 1);
     assert.ok(result.concepts.every(item => item.html.includes('data-logo-role="symbol"')));
     assert.equal(db.visitorUsed, 1, "a usable partial batch consumes one guest trial");
   } finally {
@@ -340,8 +338,8 @@ test("NAVI keeps valid concepts when one of three fails quality validation", asy
     const result = await response.json();
     assert.equal(response.status, 200);
     assert.equal(result.success, true);
-    assert.equal(result.concepts.length, 3);
-    assert.equal(result.rejectedConcepts.length, 0);
+    assert.equal(result.concepts.length, 2);
+    assert.equal(result.rejectedConcepts.length, 1);
     assert.ok(result.concepts.every(item => item.id && item.html.includes('data-logo-role="brand"')));
     assert.ok(result.concepts.every(item => !item.html.includes("{{BRAND_NAME}}")));
     assert.equal(db.visitorUsed, 1, "a usable partial batch consumes one guest trial");
@@ -372,9 +370,9 @@ test("NAVI rejects visually identical symbol geometry even when the concept desc
     });
     const result = await response.json();
     assert.equal(response.status, 200);
-    assert.equal(result.concepts.length, 3);
-    assert.equal(result.rejectedConcepts.length, 0);
-    assert.equal(new Set(result.concepts.map(item => item.css)).size, 3);
+    assert.equal(result.concepts.length, 2);
+    assert.equal(result.rejectedConcepts.length, 1);
+    assert.equal(new Set(result.concepts.map(item => item.css)).size, 2);
   } finally {
     globalThis.fetch = originalFetch;
   }
@@ -475,10 +473,9 @@ test("NAVI CSS cannot load remote resources or execute injected markup", async (
       corsOrigin: ORIGIN
     });
     const result = await response.json();
-    assert.equal(response.status, 200);
-    assert.equal(result.success, true);
-    assert.ok(result.concepts.every(item => !item.css.includes("url(")));
-    assert.equal(db.visitorUsed, 1);
+    assert.equal(response.status, 502);
+    assert.equal(result.code, "LOGO_CSS_UNSAFE");
+    assert.equal(db.visitorUsed, 0, "unsafe external CSS refunds the reserved trial");
   } finally {
     globalThis.fetch = originalFetch;
   }
@@ -505,7 +502,7 @@ test("NAVI repairs a missing brand placeholder with a visible semantic wordmark"
     assert.equal(result.concepts.length, 3);
     assert.ok(result.concepts[1].html.includes('<span data-logo-role="brand">نوا</span>'));
     assert.ok(!result.concepts[1].html.includes("{{BRAND_NAME}}"));
-    assert.ok(!result.concepts[1].css.includes(".navi-brand-lockup"));
+    assert.ok(result.concepts[1].css.includes(".navi-brand-lockup"));
     assert.equal(db.visitorUsed, 1, "a recovered design batch should consume the trial normally");
     assert.equal([...db.reservations.values()][0].status, "reserved", "successful requests keep their reservation active for quota accounting");
   } finally {
@@ -531,7 +528,7 @@ test("NAVI repairs a missing slogan placeholder with a visible semantic slogan",
     assert.equal(result.success, true);
     assert.ok(result.concepts[1].html.includes('<span data-logo-role="slogan">صدای ایده‌های تازه</span>'));
     assert.ok(!result.concepts[1].html.includes("{{SLOGAN}}"));
-    assert.ok(!result.concepts[1].css.includes(".navi-slogan-lockup"));
+    assert.ok(result.concepts[1].css.includes(".navi-slogan-lockup"));
     assert.equal(db.visitorUsed, 1);
     assert.equal([...db.reservations.values()][0].status, "reserved");
   } finally {
@@ -602,7 +599,7 @@ test("NAVI reports truncated model output and refunds the reserved trial without
     const body = JSON.parse(options.body);
     assert.equal(body.generationConfig.thinkingConfig.thinkingLevel, "HIGH");
     assert.equal("temperature" in body.generationConfig, false);
-    assert.equal(body.generationConfig.maxOutputTokens, 8192);
+    assert.equal(body.generationConfig.maxOutputTokens, 12288);
     return new Response(JSON.stringify({
       candidates: [{ finishReason: "MAX_TOKENS", content: { parts: [{ text: '{"concepts":' }] } }],
       usageMetadata: { candidatesTokenCount: 32768 }
@@ -901,7 +898,7 @@ test("NAVI rejects stray line strokes that do not form a filled logo silhouette"
     const result = await response.json();
     assert.equal(response.status, 200, JSON.stringify(result));
     assert.equal(result.success, true);
-    assert.equal(result.rejectedConcepts.length, 0);
+    assert.equal(result.rejectedConcepts.length, 1);
     assert.ok(result.concepts[0].css.includes(".navi-symbol"));
   } finally {
     globalThis.fetch = originalFetch;
@@ -927,7 +924,7 @@ test("NAVI quality gate does not count an empty named layer as geometric constru
     const result = await response.json();
     assert.equal(response.status, 200);
     assert.equal(result.success, true);
-    assert.equal(result.rejectedConcepts.length, 0);
+    assert.equal(result.rejectedConcepts.length, 1);
     assert.ok(result.concepts[0].html.includes('data-logo-role="symbol"'));
   } finally {
     globalThis.fetch = originalFetch;
