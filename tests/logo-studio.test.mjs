@@ -225,6 +225,10 @@ test("NAVI writes an English brief and three sanitized HTML/CSS logo designs in 
     assert.match(sentPrompt, /{{BRAND_NAME}}/i);
     assert.match(sentPrompt, /one valid JSON object/i);
     assert.equal(result.planning.method, "navi-visual-blueprint-then-html-css-build");
+    assert.match(sentPayloads[0].contents[0].parts[0].text, /professional art-direction brief/i);
+    assert.match(sentPayloads[1].contents[0].parts[0].text, /NAVI CREATIVE BRIEF \(PRE-DESIGN, MANDATORY\)/);
+    assert.match(sentPayloads[1].contents[0].parts[0].text, /shopping bag, handbag, luggage, tote/i);
+    assert.match(sentPayloads[1].contents[0].parts[0].text, /A concise professional art-direction brief/);
     assert.equal(result.planning.extraModelCalls, 1);
     assert.equal(result.planning.visualBlueprints.length, 3);
     assert.ok(result.planning.visualBlueprints.every(item => item.geometryRecipe && item.silhouette && item.objectCues.length >= 2 && item.signatureFeature && item.recognitionRisk));
