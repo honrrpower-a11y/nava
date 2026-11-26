@@ -475,7 +475,7 @@ test("NAVI CSS cannot load remote resources or execute injected markup", async (
     const result = await response.json();
     assert.equal(response.status, 200);
     assert.equal(result.success, true);
-    assert.ok(result.concepts.every(item => !/url\\s*\\(/i.test(item.css)));
+    assert.ok(result.concepts.every(item => !item.css.includes("url(")));
     assert.equal(db.visitorUsed, 1);
   } finally {
     globalThis.fetch = originalFetch;
@@ -937,7 +937,7 @@ test("NAVI accepts a transparent symbol wrapper when nested layers create the ac
   const db = new FakeD1();
   const layered = makeDesign();
   layered.concepts[0].css = layered.concepts[0].css
-    .replace(/\\.navi-symbol\\{[^}]*\\}/, ".navi-symbol{position:relative;display:grid;place-items:center;width:260px;height:260px}")
+    .replace(/\.navi-symbol\{[^}]*\}/, ".navi-symbol{position:relative;display:grid;place-items:center;width:260px;height:260px}")
     .replace(".wave{display:block;width:150px;height:60px;border:8px solid var(--logo-primary);border-radius:50%}", ".wave{display:block;width:150px;height:60px;background:var(--logo-primary);clip-path:polygon(0 40%,20% 10%,50% 80%,80% 10%,100% 40%,100% 65%,80% 35%,50% 100%,20% 35%,0 65%)}");
   globalThis.fetch = async () => makeGeminiResponse(layered);
   try {
