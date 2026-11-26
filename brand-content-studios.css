@@ -39,3 +39,13 @@ textarea.nava-strategy-control{min-height:94px;resize:vertical;line-height:1.8}
 /* Content studio cross-studio handoff actions */
 .content-handoff-actions{display:flex;flex-wrap:wrap;gap:9px;margin-top:14px;padding-top:13px;border-top:1px solid var(--border)}
 .content-handoff-actions button{min-height:42px;flex:1 1 190px}
+
+
+/* Structured content handoff into Story Maker */
+.story-handoff-summary{margin:12px 0;padding:12px 14px;border:1px solid color-mix(in srgb,var(--gold) 48%,var(--border));border-radius:12px;background:var(--panel2);color:var(--text);font-size:12px;line-height:1.9}
+.story-handoff-slides{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));gap:10px;margin:14px 0}
+.story-handoff-slide{min-width:0;padding:13px;border:1px solid var(--border);border-radius:13px;background:var(--panel2);color:var(--text)}
+.story-handoff-slide strong{display:block;margin-bottom:8px;color:var(--gold);font-size:13px}
+.story-handoff-slide p{margin:0;white-space:pre-wrap;overflow-wrap:anywhere;font-size:12px;line-height:1.9;color:var(--muted)}
+.story-handoff-slides[hidden],.story-handoff-summary[hidden]{display:none!important}
+@media(max-width:560px){.story-handoff-slides{grid-template-columns:1fr}}
