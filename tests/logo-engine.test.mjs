@@ -86,12 +86,10 @@ test("NAVI's ray and light construction cues become visible native HTML/CSS geom
   };
   const result = buildStructuredLogoConcepts(base, [blueprint]);
   const concept = result.concepts[0];
-  assert.ok(concept.semanticGeometry.includes("integrated-inspiration-aperture"));
-  assert.match(concept.html, /semantic-inspiration/);
-  assert.match(concept.html, /inspiration-core/);
-  assert.match(concept.html, /inspiration-flow flow-left/);
-  assert.match(concept.css, /\.semantic-inspiration\{position:absolute/);
-  assert.match(concept.css, /\.inspiration-core\{.*clip-path:polygon/s);
+  assert.ok(concept.semanticGeometry.includes("diffuse-gutter-glow"));
+  assert.match(concept.css, /\.book-spread::after\{content:"";.*radial-gradient/s);
+  assert.match(concept.css, /border-radius:50%/);
+  assert.doesNotMatch(concept.html + concept.css, /semantic-inspiration|inspiration-core|clip-path:polygon\(50% 0/);
   assert.doesNotMatch(concept.html + concept.css, /semantic-ray|semantic-radiance/);
   assert.match(concept.geometryRecipe, /پرتو نور/);
 });
@@ -118,4 +116,28 @@ test("NAVI's asymmetric spatial relationship changes the subject's actual geomet
   assert.match(concept.css, /\.net-node\.node-a\{width:33%/);
   assert.match(concept.css, /\.net-node\.node-b\{width:21%/);
   assert.match(concept.spatialRelationship, /پرتر/);
+});
+
+
+test("book concepts use three genuinely different silhouettes and never place a spear over the closed book or page turn", () => {
+  const blueprints = [0,1,2].map((n) => ({
+    title: "کتاب و روشنایی " + n,
+    centralThesis: "کتاب گشوده که نور از عطف آن می‌تابد",
+    briefElements: ["کتاب", "صفحه", "روشنایی"],
+    symbolConstruction: "کتاب و صفحه با ساختار مستقل " + n,
+    briefAlignment: "هویت فرهنگی و مطالعه",
+    firstRead: "کتاب",
+    objectCues: ["پرتو نور", "کتاب"],
+    geometryRecipe: "کتاب با روشنایی"
+  }));
+  const result = buildStructuredLogoConcepts(base, blueprints);
+  const [open, closed, page] = result.concepts;
+  assert.match(open.html, /book-spread/);
+  assert.match(open.css, /diffuse|radial-gradient/);
+  assert.match(closed.html, /closed-book/);
+  assert.match(page.html, /turning-page|page-sheet|page-fold/);
+  assert.doesNotMatch(closed.html + closed.css, /semantic-inspiration|inspiration-core|clip-path:polygon\(50% 0/);
+  assert.doesNotMatch(page.html + page.css, /semantic-inspiration|inspiration-core|clip-path:polygon\(50% 0/);
+  assert.equal(new Set(result.concepts.map(item => item.html)).size, 3);
+  assert.equal(new Set(result.concepts.map(item => item.css)).size, 3);
 });
