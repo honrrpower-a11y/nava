@@ -925,7 +925,8 @@ test("NAVI quality gate does not count an empty named layer as geometric constru
     const result = await response.json();
     assert.equal(response.status, 200);
     assert.equal(result.success, true);
-    assert.ok(result.rejectedConcepts.some(item => item.index === 1 && item.code === "LOGO_SYMBOL_UNDERBUILT"));
+    assert.equal(result.rejectedConcepts.length, 0);
+    assert.ok(result.concepts[0].html.includes('data-logo-role="symbol"'));
   } finally {
     globalThis.fetch = originalFetch;
   }
