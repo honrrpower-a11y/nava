@@ -207,7 +207,7 @@ test("NAVI writes a professional creative brief before building three sanitized 
     assert.match(sentPrompts[0], /professional art-direction brief/i);
     assert.equal(geminiCalls, 1, "the second free-form HTML/CSS generation call has been removed");
     assert.match(sentPrompts[0], /A concise professional art-direction brief/);
-    assert.equal(result.planning.extraModelCalls, 0, "only NAVI blueprint planning is generative; the actual logo geometry is built deterministically");
+    assert.equal(result.planning.extraModelCalls, 1, "the browser performs one visual redesign stage after the initial blueprint render");
     assert.equal(result.planning.visualBlueprints.length, 3);
     assert.ok(result.planning.visualBlueprints.every(item => item.geometryRecipe && item.silhouette && item.objectCues.length >= 2 && item.signatureFeature && item.recognitionRisk));
     assert.match(result.planning.designBriefEnglish, /distinctive Persian creative-studio identity/i);
@@ -980,7 +980,7 @@ test("NAVI accepts a transparent symbol wrapper when nested layers create the ac
 });
 
 
-test("Logo Studio delivers structured HTML/CSS geometry without blocking on optional final PNG audit", () => {
+test("Logo Studio visually refines rendered HTML/CSS concepts before delivery", () => {
   const ui = readFileSync(new URL("../logo-studio.js", import.meta.url), "utf8");
   const backend = readFileSync(new URL("../modules/logo.js", import.meta.url), "utf8");
   const engine = readFileSync(new URL("../modules/logo-engine.js", import.meta.url), "utf8");
@@ -988,14 +988,14 @@ test("Logo Studio delivers structured HTML/CSS geometry without blocking on opti
   const generateEnd = ui.indexOf("ideaModeInputs.forEach", generateStart);
   const generateSource = ui.slice(generateStart, generateEnd);
   assert.ok(!generateSource.includes("visuallyAuditFinalConcepts("), "optional visual audit must not block initial delivery");
-  assert.ok(generateSource.includes("mountConcepts(finalConcepts, brief, result.planning)"));
-  assert.ok(!generateSource.includes("visuallyRefineConcepts("), "a generative revision must not overwrite structured mark geometry");
+  assert.ok(generateSource.includes("visuallyRefineConcepts("), "the rendered image must be revised before delivery");
+  assert.ok(generateSource.includes("mountConcepts(approvedConcepts, brief, result.planning)"));
+  assert.ok(generateSource.includes('concept.visualReview === "refined"'));
   assert.ok(ui.includes("capturePreviewDataUrl(frame, 640)"));
   assert.ok(ui.includes("function prepareReviewFrames(concepts, brief)"));
   assert.ok(ui.includes("visibility:visible"));
-  assert.ok(ui.includes("mountConcepts(finalConcepts, brief, result.planning)"));
+  assert.ok(ui.includes("mountConcepts(approvedConcepts, brief, result.planning)"));
   assert.ok(ui.includes('action: "visual-final-audit"'));
-  assert.ok(ui.includes("بازبینی هوش مصنوعی مانع نمایش یا تحویل طرح نیست"));
   assert.ok(backend.includes("buildStructuredLogoConcepts"));
   assert.ok(backend.includes("geometryEngine: \"structured-html-css-grammar\""));
   assert.ok(engine.includes("coordinate-based composition"));
@@ -1135,7 +1135,7 @@ test("NAVI rejects cosmetic-only visual revisions that leave the logo symbol geo
   }
 });
 
-test("NAVI keeps the client brief in charge while the structured engine owns actual HTML/CSS geometry", () => {
+test("NAVI keeps the client brief in charge and performs a rendered visual redesign before delivery", () => {
   const backend = readFileSync(new URL("../modules/logo.js", import.meta.url), "utf8");
   const engine = readFileSync(new URL("../modules/logo-engine.js", import.meta.url), "utf8");
   const ui = readFileSync(new URL("../logo-studio.js", import.meta.url), "utf8");
@@ -1146,7 +1146,7 @@ test("NAVI keeps the client brief in charge while the structured engine owns act
   assert.ok(engine.includes("renderBlueprintGeometry"));
   assert.ok(engine.includes("No subject-family template"));
   assert.ok(ui.includes("visuallyAuditFinalConcepts("));
-  assert.ok(!ui.slice(ui.indexOf("async function generate(event)"), ui.indexOf("ideaModeInputs.forEach"))
+  assert.ok(ui.slice(ui.indexOf("async function generate(event)"), ui.indexOf("ideaModeInputs.forEach"))
     .includes("visuallyRefineConcepts("));
 });
 test("NAVI accepts valid logo geometry when CSS selectors are scoped beneath the artboard", async () => {
@@ -1228,7 +1228,7 @@ test("NAVI retries a transient Gemini service failure once before returning a lo
 });
 
 
-test("NAVI retains per-concept visual refinement diagnostics without making initial delivery depend on them", () => {
+test("NAVI only displays concepts that pass rendered visual refinement", () => {
   const backend = readFileSync(new URL("../modules/logo.js", import.meta.url), "utf8");
   const ui = readFileSync(new URL("../logo-studio.js", import.meta.url), "utf8");
   assert.ok(backend.includes("rejectionReasons: review.rejectionReasons"));
@@ -1236,12 +1236,13 @@ test("NAVI retains per-concept visual refinement diagnostics without making init
   const generateStart = ui.indexOf("async function generate(event)");
   const generateEnd = ui.indexOf("ideaModeInputs.forEach", generateStart);
   const generateSource = ui.slice(generateStart, generateEnd);
-  assert.ok(generateSource.includes("mountConcepts(finalConcepts, brief, result.planning)"));
-  assert.ok(!generateSource.includes("rejectionReasons"), "review diagnostics must not gate initial logo delivery");
+  assert.ok(generateSource.includes("mountConcepts(approvedConcepts, brief, result.planning)"));
+  assert.ok(generateSource.includes("rejectionReasons") || ui.includes("rejectionReasons"));
+  assert.ok(generateSource.includes("release-trial"), "failed visual review restores the guest trial reservation");
 });
 
 
-test("Logo Studio retains optional image-only audit support without requiring audit acceptance for initial delivery", () => {
+test("Logo Studio retains a separate final image-only audit endpoint", () => {
   const ui = readFileSync(new URL("../logo-studio.js", import.meta.url), "utf8");
   const backend = readFileSync(new URL("../modules/logo.js", import.meta.url), "utf8");
   assert.ok(ui.includes("async function visuallyAuditFinalConcepts"));
@@ -1251,7 +1252,7 @@ test("Logo Studio retains optional image-only audit support without requiring au
   const generateEnd = ui.indexOf("ideaModeInputs.forEach", generateStart);
   const generateSource = ui.slice(generateStart, generateEnd);
   assert.ok(!generateSource.includes("concept.visualReview === \"accepted\""));
-  assert.ok(generateSource.includes("mountConcepts(finalConcepts, brief, result.planning)"));
+  assert.ok(generateSource.includes("mountConcepts(approvedConcepts, brief, result.planning)"));
   assert.ok(backend.includes("async function auditFinalLogoConcepts"));
   assert.ok(backend.includes("TWO STAGES IN ORDER"));
   assert.ok(backend.includes("FINAL IMAGE"));
@@ -1334,4 +1335,35 @@ test("NAVI concept planning explicitly prioritizes concrete metaphor and a brand
   assert.ok(engine.includes("No subject-family template"));
   assert.ok(ui.includes('["استعاره بصری", concept.metaphor]'));
   assert.ok(ui.includes('["زنجیره معنا", concept.meaningChain]'));
+});
+
+
+test("a guest trial reservation can be refunded when no logo passes visual refinement", async () => {
+  const originalFetch = globalThis.fetch;
+  const db = new FakeD1();
+  try {
+    globalThis.fetch = async () => makeGeminiResponse();
+    const initialResponse = await handleLogoRoute({
+      request: makeRequest(),
+      env: { NAVA_DB: db, NAVI_SESSION_SECRET: "test-secret-key", GEMINI_API_KEY: "test-gemini-key" },
+      origin: ORIGIN,
+      corsOrigin: ORIGIN
+    });
+    const initial = await initialResponse.json();
+    assert.equal(initialResponse.status, 200);
+    assert.ok(initial.reservationId);
+    assert.equal(db.visitorUsed, 1);
+    const releaseResponse = await handleLogoRoute({
+      request: makeRequest({ action: "release-trial", reservationId: initial.reservationId }),
+      env: { NAVA_DB: db, NAVI_SESSION_SECRET: "test-secret-key" },
+      origin: ORIGIN,
+      corsOrigin: ORIGIN
+    });
+    const released = await releaseResponse.json();
+    assert.equal(releaseResponse.status, 200);
+    assert.equal(released.released, true);
+    assert.equal(db.visitorUsed, 0);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
 });
