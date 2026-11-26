@@ -791,7 +791,7 @@ test("Logo Studio lets the client delegate ideation to NAVI or supply a binding 
   assert.ok(backend.includes('data.designMode === "custom" ? data.designPrompt : ""'));
   assert.ok(backend.includes("IDEA OWNERSHIP — CLIENT MODE"));
   assert.ok(backend.includes("IDEA OWNERSHIP — NAVI MODE"));
-  assert.ok(backend.includes("designIdea: safeText(plan.designIdea, 320)"));
+  assert.ok(backend.includes("designIdea: naviCreativeBrief.designIdea"));
   assert.ok(ui.includes("planning.designIdea"));
 });
 
