@@ -48,7 +48,8 @@ jobs:
           assert.equal(askHandlerCount, 1, "NAVI build button must have exactly one click handler");
           assert.ok(js.includes('$("navaVideoNaviChoosePhotos")?.addEventListener("click",()=>imageInput?.click())'), "NAVI photo button must open the real image picker");
           assert.ok(js.includes('$("navaVideoNaviChooseMusic")?.addEventListener("click",()=>musicInput?.click())'), "NAVI music button must open the real music picker");
-          assert.match(js, /selectedMedia:\{images:imageNames,music:musicInfo\}/, "NAVI context must include selected media metadata");
+          assert.doesNotMatch(js, /openNaviAssistant\(\{service:["\x27]ویدئو و صدا["\x27]/, "Background video planning must not open the shared NAVI chat");
+          assert.match(js, /window\.navaVideoNaviRequest\(\{message:prompt,videoPlan:true,images:naviVisionImages\}\)/, "The video studio must submit its isolated plan request directly");
           assert.match(js, /window\.addEventListener\(["']nava:navi-reply["']/, "NAVI reply handler must be present");
           assert.match(js, /schema===["']nava\.video\.scene-plan\.v1["']/, "NAVI scene plan must be schema-validated");
           assert.match(js, /transition:\["cut","fade","slide-left","slide-right","zoom","page-turn"\]/, "NAVI must choose from supported scene transitions");
