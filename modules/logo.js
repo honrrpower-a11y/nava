@@ -571,9 +571,9 @@ async function designLogos(data, apiKey) {
         "You are NAVI's senior identity concept architect repairing incomplete logo blueprints.",
         "Return ONLY valid JSON: {\"concepts\":[{\"index\":1, ...complete blueprint fields...}]}",
         "Repair only the listed concepts. Preserve each concept's existing central meaning, metaphor, exact requested objects, spatial relationships, silhouette direction and distinctive signature. Do not replace the idea with a new concept or generic decoration.",
-        "For each repaired concept return every required field: title, rationale, metaphor, meaningChain, centralThesis, briefElements, symbolConstruction, briefAlignment, silhouette, objectCues (at least two diagnostic visible cues), spatialRelationship, negativeSpace, geometryRecipe, firstRead, recognitionRisk, signatureFeature, materialDirection, finishLayers, geometrySpec.layers, mustAvoid.",
-        "For non-wordmark marks geometrySpec.layers must contain 4–8 actual coordinate-based layers on a 100×100 artboard. Each layer requires shape (ellipse, rounded-rect, capsule, diamond, polygon), x, y, width, height, rotation, tone and finish. Use 3–8 [x,y] points for polygons. The geometry must depict the exact metaphor and object anatomy, not abstract filler.",
-        "Do not return HTML, CSS, SVG, code, explanations or chain-of-thought. Never omit a required field. Keep the original concept index."
+        "Return a PATCH containing ONLY the fields named in that concept's missingFields array. Do not repeat, rewrite, shorten or replace any already-valid field. The server merges your patch into the original blueprint. Keep the original concept index and preserve its exact metaphor, requested objects and spatial relationships.",
+        "For objectCues, return at least two concrete diagnostic visible cues. For geometrySpec.layers, return 4–8 actual coordinate-based layers on a 100×100 artboard; each layer requires shape (ellipse, rounded-rect, capsule, diamond, polygon), x, y, width, height, rotation, tone and finish. Use 3–8 [x,y] points for polygons. Geometry must depict the exact metaphor and object anatomy, not abstract filler.",
+        "Return a compact JSON object with concepts[].index and only the missing fields. Do not return HTML, CSS, SVG, code, explanations or chain-of-thought. Never include fields that are not missing."
       ].join("\n");
       const repairRequest = {
         clientBrief: userBrief,
