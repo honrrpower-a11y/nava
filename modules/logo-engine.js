@@ -172,6 +172,48 @@ const families = {
   ]
 };
 
+// Translate NAVI's semantic construction notes into controlled, visible HTML/CSS geometry.
+// The model never supplies markup here: blueprint language only selects reusable primitives.
+function deriveSemanticGeometry(blueprint, family, index) {
+  const semanticText = [
+    blueprint?.geometryRecipe, blueprint?.objectCues?.join(" "),
+    blueprint?.spatialRelationship, blueprint?.negativeSpace,
+    blueprint?.signatureFeature, blueprint?.silhouette
+  ].filter(Boolean).join(" ").toLocaleLowerCase("fa");
+  const html = [];
+  const css = [];
+  const features = [];
+  const radiance = /پرتو|اشعه|شعاع|نور|روشنای|درخشش|تابش|سپیده|طلوع|light|ray|radiance|glow|beam|sunbeam/.test(semanticText);
+  if (radiance) {
+    const rayCount = 3 + (index % 3);
+    const rays = Array.from({ length: rayCount }, (_, rayIndex) => '<span class="semantic-ray ray-' + (rayIndex + 1) + '"></span>').join("");
+    html.push('<span class="semantic-radiance" aria-hidden="true">' + rays + '</span>');
+    css.push([
+      '.semantic-radiance{position:absolute;z-index:6;left:50%;top:-19%;width:36%;height:47%;transform:translateX(-50%);pointer-events:none;filter:drop-shadow(0 .8cqw 1.2cqw rgba(177,137,65,.2))}',
+      '.semantic-ray{position:absolute;bottom:0;display:block;width:10%;height:var(--ray-height,78%);background:linear-gradient(180deg,rgba(222,183,105,.2),#c49a52 58%,#e5cb91);clip-path:polygon(50% 0,100% 100%,0 100%);transform-origin:50% 100%;border-radius:30% 30% 0 0}',
+      '.semantic-ray.ray-1{left:8%;height:58%;transform:rotate(-35deg)}',
+      '.semantic-ray.ray-2{left:27%;height:84%;transform:rotate(-17deg)}',
+      '.semantic-ray.ray-3{left:46%;height:100%;width:12%}',
+      '.semantic-ray.ray-4{left:66%;height:82%;transform:rotate(17deg)}',
+      '.semantic-ray.ray-5{left:84%;height:58%;transform:rotate(35deg)}'
+    ].join(""));
+    features.push("radiance-rays");
+  }
+  const asymmetricMass = /نامتقارن|یک.?طرف|یک سمت|سمت راست|سمت چپ|پرتر|سنگین.?تر|asymmetr|one[- ]sided|one side|heavier side|larger side|thicker side/.test(semanticText);
+  if (asymmetricMass) {
+    const rulesByFamily = {
+      book: '.book-page.page-left{width:52%;transform:skewY(5deg) scaleY(1.02)}.book-page.page-right{width:44%;transform:skewY(-9deg) scaleY(.96)}.book-spine{width:3.2%;left:48.5%}',
+      network: '.net-node.node-a{width:33%;height:33%}.net-node.node-b{width:21%;height:21%}.net-node.node-center{width:34%;height:34%;left:35%}.net-link.link-a{height:6%}',
+      music: '.ribbon-loop{width:61%;border-width:8cqw}.ribbon-core{width:56%;left:35%}.ribbon-tail{width:22%;opacity:.65}',
+      leaf: '.leaf-body{inset:0 2% 5% 15%;border-radius:8% 92% 4% 84%}.leaf-vein{width:3.2%;left:48%}',
+      bread: '.loaf{left:2%;right:10%;transform:rotate(-5deg)}.loaf-score.score-one{height:42%}',
+      coffee: '.cup-bowl{width:72%;left:5%}.cup-handle{right:0;width:26%}'
+    };
+    if (rulesByFamily[family]) { css.push(rulesByFamily[family]); features.push("asymmetric-mass"); }
+  }
+  return { html: html.join(""), css: css.join("\\n"), features };
+}
+
 function wordmarkHtml(data) {
   return '<div class="logo-lockup"><div class="wordmark-only"><span data-logo-role="brand">{{BRAND_NAME}}</span></div>' +
     (data.slogan ? '<small class="slogan-only" data-logo-role="slogan">{{SLOGAN}}</small>' : "") + '</div>';
@@ -186,10 +228,12 @@ export function buildStructuredLogoConcepts(data, blueprints) {
   for (let index = 0; index < count; index += 1) {
     const blueprint = blueprints[index] || blueprints[0] || {};
     const variant = variants[index % variants.length];
+    const semanticGeometry = deriveSemanticGeometry(blueprint, family, index);
     let html = data.format === "wordmark"
       ? wordmarkHtml(data)
       : '<div class="mark-lockup"><div class="navi-symbol" data-logo-role="symbol">' +
         variant.html.replace(/\{\{INITIAL\}\}/g, esc(initial)) +
+        semanticGeometry.html +
         '</div><div class="brand-lockup"><strong data-logo-role="brand">{{BRAND_NAME}}</strong>' +
         (data.slogan ? '<small data-logo-role="slogan">{{SLOGAN}}</small>' : "") +
         '</div></div>';
@@ -197,6 +241,7 @@ export function buildStructuredLogoConcepts(data, blueprints) {
       '.logo-art-root{display:grid;place-items:center;padding:7%;direction:rtl;text-align:center;font-family:Arial,Tahoma,sans-serif;color:var(--logo-primary)}',
       '.mark-lockup{width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5cqw}',
       variant.css,
+      semanticGeometry.css,
       '.brand-lockup{max-width:90%;display:flex;flex-direction:column;align-items:center;gap:1.5cqw;margin-top:1cqw}',
       '.brand-lockup strong{display:block;color:var(--logo-primary);font-size:clamp(28px,7cqw,76px);font-weight:850;line-height:1.3;letter-spacing:-.035em;direction:auto;unicode-bidi:plaintext;text-wrap:balance}',
       '.brand-lockup small{display:block;color:var(--logo-primary);font-size:clamp(13px,2.8cqw,27px);font-weight:500;line-height:1.5;opacity:.78;direction:auto;unicode-bidi:plaintext}',
@@ -220,6 +265,11 @@ export function buildStructuredLogoConcepts(data, blueprints) {
       anchorMap: visualAnchors.map(anchor => ({ anchorId: anchor.id, layerClass: "navi-symbol", visualRole: "visible in the primary HTML/CSS silhouette" })),
       mechanism: "A semantic subject-specific construction is rendered from a deterministic HTML/CSS component grammar, then finished as a responsive identity lockup.",
       expressionMove: blueprint.signatureFeature || variant.title,
+      semanticGeometry: semanticGeometry.features,
+      semanticGeometryNote: semanticGeometry.features.length ? "NAVI blueprint cues were translated into visible geometry: " + semanticGeometry.features.join(", ") : "Base subject grammar retained; no supported secondary geometry cue was detected.",
+      geometryRecipe: blueprint.geometryRecipe || "",
+      spatialRelationship: blueprint.spatialRelationship || "",
+      negativeSpace: blueprint.negativeSpace || "",
       differsBy: variant.title + " — distinct silhouette and geometry, not a recolour.",
       axes: { "ساختار": variant.title, "پرداخت": blueprint.materialDirection || "concept-specific" },
       defaultsUsed: [],
