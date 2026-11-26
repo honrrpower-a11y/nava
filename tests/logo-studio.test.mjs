@@ -168,25 +168,25 @@ test("NAVI writes a professional creative brief before building three sanitized 
     assert.equal(response.status, 200);
     assert.equal(result.success, true);
     assert.equal(result.concepts.length, 3);
-    assert.equal(geminiCalls, 1, "NAVI plans once; the structured HTML/CSS engine performs the actual construction");
-    assert.match(sentPrompts[0], /senior identity concept architect/i);
+    assert.equal(geminiCalls, 1, "NAVI plans and authors the complete HTML/CSS geometry in one structured response");
+    assert.match(sentPrompts[0], /senior brand identity designer/i);
     assert.match(sentPrompts[0], /geometryRecipe/i);
     assert.match(sentPrompts[0], /exactly 3 objects/i);
-    assert.match(sentPrompts[0], /Do not rename the concepts key/i);
-    assert.match(sentPrompts[0], /Do not write HTML, CSS, SVG/i);
+    assert.match(sentPrompts[0], /Do not rename keys/i);
+    assert.match(sentPrompts[0], /HTML CONTRACT/i);
     assert.match(sentPrompts[0], /at least two diagnostic visual cues/i);
     assert.match(sentPrompts[0], /signatureFeature/i);
     assert.match(sentPrompts[0], /recognitionRisk/i);
     assert.match(sentPrompts[0], /plain dome with parallel bars/i);
-    assert.equal(geminiCalls, 1, "one planning call is sufficient; the deterministic engine constructs the logo geometry");
+    assert.equal(geminiCalls, 1, "one model response contains the creative brief, semantic blueprints and bespoke HTML/CSS construction");
     assert.match(sentPrompt, /A concise professional art-direction brief/);
-    assert.match(sentPrompt, /Do not write HTML, CSS, SVG/i);
-    assert.equal(result.planning.method, "navi-visual-blueprint-then-structured-html-css-build");
-    assert.equal(result.planning.geometryEngine, "structured-html-css-grammar");
+    assert.match(sentPrompt, /CSS CONTRACT/i);
+    assert.equal(result.planning.method, "navi-semantic-concept-to-bespoke-html-css");
+    assert.equal(result.planning.geometryEngine, "navi-authored-html-css-geometry");
     assert.match(sentPrompts[0], /professional art-direction brief/i);
-    assert.equal(geminiCalls, 1, "the second free-form HTML/CSS generation call has been removed");
+    assert.equal(geminiCalls, 1, "the authored geometry is returned with the semantic blueprint, avoiding a second generation request");
     assert.match(sentPrompts[0], /A concise professional art-direction brief/);
-    assert.equal(result.planning.extraModelCalls, 0, "only NAVI blueprint planning is generative; the actual logo geometry is built deterministically");
+    assert.equal(result.planning.extraModelCalls, 0, "NAVI authors both the semantic plan and actual HTML/CSS geometry in one model response");
     assert.equal(result.planning.visualBlueprints.length, 3);
     assert.ok(result.planning.visualBlueprints.every(item => item.geometryRecipe && item.silhouette && item.objectCues.length >= 2 && item.signatureFeature && item.recognitionRisk));
     assert.match(result.planning.designBriefEnglish, /distinctive Persian creative-studio identity/i);
@@ -197,6 +197,8 @@ test("NAVI writes a professional creative brief before building three sanitized 
     assert.ok(result.concepts.every(item => !item.html.includes("{{BRAND_NAME}}")));
     assert.ok(result.concepts.every(item => !item.html.includes("<script")));
     assert.ok(result.concepts.every(item => item.css.includes("var(--logo-primary)")));
+    assert.ok(result.concepts.every(item => item.css.includes(".navi-symbol")));
+    assert.ok(result.concepts.every(item => item.html.includes('data-logo-role="symbol"')));
     assert.ok(result.concepts[0].css.includes(".navi-symbol"), "the structured geometry engine supplies the actual mark CSS");
     assert.ok(result.concepts.every(item => !Object.prototype.hasOwnProperty.call(item, "svg")));
     assert.ok(result.concepts.every(item => !JSON.stringify(item).includes("foreignObject")));
@@ -209,9 +211,9 @@ test("NAVI writes a professional creative brief before building three sanitized 
     assert.equal(result.concepts[0].symbolConstruction, "دو مسیر منحنی در مرکز به هم می‌رسند و یک شکاف پیوسته در دل فرم می‌سازند");
     assert.equal(result.concepts[0].briefAlignment, "این فرم اتصال صدا و خلاقیت را در هویت استودیوی موسیقی نشان می‌دهد");
     assert.deepEqual(result.concepts[0].briefElements, ["موج صوتی","اتصال دو مسیر"]);
-    assert.match(result.concepts[0].mechanism, /deterministic HTML\/CSS component grammar/);
-    assert.equal(result.concepts[0].expressionMove, "ویژگی هندسی اختصاصی و قابل تشخیص در سیلوئت");
-    assert.match(result.concepts[0].differsBy, /distinct silhouette and geometry/);
+    assert.match(result.concepts[0].mechanism, /اتصال دو مسیر صوتی/);
+    assert.equal(result.concepts[0].expressionMove, "شکاف مرکزی پیوسته");
+    assert.match(result.concepts[0].differsBy, /ساختار باز و نامتقارن/);
     assert.ok(result.concepts[0].axes && Object.keys(result.concepts[0].axes).length > 0);
     assert.deepEqual(result.concepts[0].defaultsUsed, []);
     assert.ok(result.concepts.every(item => item.html.length >= 90 && item.css.length >= 350), "each concept must contain substantial HTML and CSS");
@@ -263,14 +265,13 @@ test("NAVI rejects SVG-based artwork instead of silently stripping it and showin
   try {
     const response = await handleLogoRoute({request:makeRequest(),env:{NAVA_DB:db,NAVI_SESSION_SECRET:"test-secret-key",GEMINI_API_KEY:"test-gemini-key"},origin:ORIGIN,corsOrigin:ORIGIN});
     const result = await response.json();
-    assert.equal(response.status,200);
-    assert.equal(result.success,true);
-    assert.ok(result.concepts.every(concept => !concept.html.includes("<svg") && !concept.html.includes("<path")));
-    assert.equal(db.visitorUsed,1);
+    assert.equal(response.status,502);
+    assert.equal(result.code,"LOGO_SVG_SOURCE_FORBIDDEN");
+    assert.equal(db.visitorUsed,0, "unsafe SVG source refunds the reserved trial");
   } finally {globalThis.fetch=originalFetch;}
 });
 
-test("NAVI never returns SVG-only model markup because the structured engine builds the final mark", async () => {
+test("NAVI rejects SVG-only model markup instead of replacing it with a fixed geometry template", async () => {
   const originalFetch = globalThis.fetch;
   const db = new FakeD1();
   const design = makeDesign();
@@ -285,10 +286,9 @@ test("NAVI never returns SVG-only model markup because the structured engine bui
       corsOrigin: ORIGIN
     });
     const result = await response.json();
-    assert.equal(response.status, 200);
-    assert.equal(result.success, true);
-    assert.ok(result.concepts.every(concept => !concept.html.includes("<svg") && !concept.html.includes("<path")));
-    assert.equal(db.visitorUsed, 1);
+    assert.equal(response.status, 502);
+    assert.equal(result.code, "LOGO_SVG_SOURCE_FORBIDDEN");
+    assert.equal(db.visitorUsed, 0);
   } finally {
     globalThis.fetch = originalFetch;
   }
@@ -312,8 +312,8 @@ test("NAVI rejects a two-line sketch instead of presenting it as a logo", async 
     // A bad concept is rejected individually while the two valid concepts survive.
     assert.equal(response.status, 200);
     assert.equal(result.success, true);
-    assert.equal(result.concepts.length, 3);
-    assert.equal(result.rejectedConcepts.length, 0);
+    assert.equal(result.concepts.length, 2);
+    assert.equal(result.rejectedConcepts.length, 1);
     assert.ok(result.concepts.every(item => item.html.includes('data-logo-role="symbol"')));
     assert.equal(db.visitorUsed, 1, "a usable partial batch consumes one guest trial");
   } finally {
@@ -338,8 +338,8 @@ test("NAVI keeps valid concepts when one of three fails quality validation", asy
     const result = await response.json();
     assert.equal(response.status, 200);
     assert.equal(result.success, true);
-    assert.equal(result.concepts.length, 3);
-    assert.equal(result.rejectedConcepts.length, 0);
+    assert.equal(result.concepts.length, 2);
+    assert.equal(result.rejectedConcepts.length, 1);
     assert.ok(result.concepts.every(item => item.id && item.html.includes('data-logo-role="brand"')));
     assert.ok(result.concepts.every(item => !item.html.includes("{{BRAND_NAME}}")));
     assert.equal(db.visitorUsed, 1, "a usable partial batch consumes one guest trial");
@@ -370,9 +370,9 @@ test("NAVI rejects visually identical symbol geometry even when the concept desc
     });
     const result = await response.json();
     assert.equal(response.status, 200);
-    assert.equal(result.concepts.length, 3);
-    assert.equal(result.rejectedConcepts.length, 0);
-    assert.equal(new Set(result.concepts.map(item => item.css)).size, 3);
+    assert.equal(result.concepts.length, 2);
+    assert.equal(result.rejectedConcepts.length, 1);
+    assert.equal(new Set(result.concepts.map(item => item.css)).size, 2);
   } finally {
     globalThis.fetch = originalFetch;
   }
@@ -473,10 +473,9 @@ test("NAVI CSS cannot load remote resources or execute injected markup", async (
       corsOrigin: ORIGIN
     });
     const result = await response.json();
-    assert.equal(response.status, 200);
-    assert.equal(result.success, true);
-    assert.ok(result.concepts.every(item => !item.css.includes("url(")));
-    assert.equal(db.visitorUsed, 1);
+    assert.equal(response.status, 502);
+    assert.equal(result.code, "LOGO_CSS_UNSAFE");
+    assert.equal(db.visitorUsed, 0, "unsafe external CSS refunds the reserved trial");
   } finally {
     globalThis.fetch = originalFetch;
   }
@@ -503,7 +502,7 @@ test("NAVI repairs a missing brand placeholder with a visible semantic wordmark"
     assert.equal(result.concepts.length, 3);
     assert.ok(result.concepts[1].html.includes('<span data-logo-role="brand">نوا</span>'));
     assert.ok(!result.concepts[1].html.includes("{{BRAND_NAME}}"));
-    assert.ok(!result.concepts[1].css.includes(".navi-brand-lockup"));
+    assert.ok(result.concepts[1].css.includes(".navi-brand-lockup"));
     assert.equal(db.visitorUsed, 1, "a recovered design batch should consume the trial normally");
     assert.equal([...db.reservations.values()][0].status, "reserved", "successful requests keep their reservation active for quota accounting");
   } finally {
@@ -529,7 +528,7 @@ test("NAVI repairs a missing slogan placeholder with a visible semantic slogan",
     assert.equal(result.success, true);
     assert.ok(result.concepts[1].html.includes('<span data-logo-role="slogan">صدای ایده‌های تازه</span>'));
     assert.ok(!result.concepts[1].html.includes("{{SLOGAN}}"));
-    assert.ok(!result.concepts[1].css.includes(".navi-slogan-lockup"));
+    assert.ok(result.concepts[1].css.includes(".navi-slogan-lockup"));
     assert.equal(db.visitorUsed, 1);
     assert.equal([...db.reservations.values()][0].status, "reserved");
   } finally {
@@ -600,7 +599,7 @@ test("NAVI reports truncated model output and refunds the reserved trial without
     const body = JSON.parse(options.body);
     assert.equal(body.generationConfig.thinkingConfig.thinkingLevel, "HIGH");
     assert.equal("temperature" in body.generationConfig, false);
-    assert.equal(body.generationConfig.maxOutputTokens, 8192);
+    assert.equal(body.generationConfig.maxOutputTokens, 12288);
     return new Response(JSON.stringify({
       candidates: [{ finishReason: "MAX_TOKENS", content: { parts: [{ text: '{"concepts":' }] } }],
       usageMetadata: { candidatesTokenCount: 32768 }
@@ -899,7 +898,7 @@ test("NAVI rejects stray line strokes that do not form a filled logo silhouette"
     const result = await response.json();
     assert.equal(response.status, 200, JSON.stringify(result));
     assert.equal(result.success, true);
-    assert.equal(result.rejectedConcepts.length, 0);
+    assert.equal(result.rejectedConcepts.length, 1);
     assert.ok(result.concepts[0].css.includes(".navi-symbol"));
   } finally {
     globalThis.fetch = originalFetch;
@@ -925,7 +924,7 @@ test("NAVI quality gate does not count an empty named layer as geometric constru
     const result = await response.json();
     assert.equal(response.status, 200);
     assert.equal(result.success, true);
-    assert.equal(result.rejectedConcepts.length, 0);
+    assert.equal(result.rejectedConcepts.length, 1);
     assert.ok(result.concepts[0].html.includes('data-logo-role="symbol"'));
   } finally {
     globalThis.fetch = originalFetch;
@@ -974,11 +973,11 @@ test("Logo Studio renders structured HTML/CSS geometry and audits final PNGs wit
   assert.ok(ui.includes("result.reviewToken"));
   assert.ok(ui.includes('action: "visual-final-audit"'));
   assert.ok(ui.includes("طرح تأییدنشده نمایش داده نشد"));
-  assert.ok(backend.includes("buildStructuredLogoConcepts"));
-  assert.ok(backend.includes("geometryEngine: \"structured-html-css-grammar\""));
-  assert.ok(engine.includes("subject-specific"));
-  assert.ok(engine.includes("buildStructuredLogoConcepts"));
-  assert.ok(engine.includes("No SVG"));
+  assert.ok(backend.includes("geometryEngine: \"navi-authored-html-css-geometry\""));
+  assert.ok(backend.includes("HTML CONTRACT"));
+  assert.ok(backend.includes("CSS CONTRACT"));
+  assert.ok(!backend.includes("buildStructuredLogoConcepts"));
+  assert.ok(engine.includes("No SVG"), "legacy geometry grammar remains isolated and is not used by the production pipeline");
   assert.ok(backend.includes("TWO STAGES IN ORDER"));
   assert.ok(backend.includes("LOGO_FINAL_VISUAL_QUALITY_LOW"));
 });
@@ -1113,22 +1112,15 @@ test("NAVI rejects cosmetic-only visual revisions that leave the logo symbol geo
   }
 });
 
-test("NAVI keeps the client brief in charge while the structured engine owns actual HTML/CSS geometry", () => {
+test("NAVI keeps the client brief in charge and authors concept-specific HTML/CSS instead of selecting fixed geometry families", () => {
   const backend = readFileSync(new URL("../modules/logo.js", import.meta.url), "utf8");
-  const engine = readFileSync(new URL("../modules/logo-engine.js", import.meta.url), "utf8");
   const ui = readFileSync(new URL("../logo-studio.js", import.meta.url), "utf8");
   assert.ok(backend.includes("designPrompt: data.designMode === \"custom\" ? data.designPrompt : \"\""));
-  assert.ok(backend.includes("buildStructuredLogoConcepts(data, designBlueprints)"));
-  assert.ok(backend.includes("buildStructuredLogoConcepts(data, designBlueprints)"));
-  assert.ok(engine.includes("data.designPrompt"));
-  assert.ok(engine.includes("subject-specific"));
-  assert.ok(engine.includes("book:"));
-  assert.ok(engine.includes("music:"));
-  assert.ok(engine.includes("network:"));
-  assert.ok(engine.includes("bread:"));
-  assert.ok(engine.includes("leaf:"));
-  assert.ok(engine.includes("coffee:"));
-  assert.ok(engine.includes("monogram:"));
+  assert.ok(backend.includes("navi-authored-html-css-geometry"));
+  assert.ok(backend.includes("HTML CONTRACT"));
+  assert.ok(backend.includes("CSS CONTRACT"));
+  assert.ok(!backend.includes("buildStructuredLogoConcepts(data, designBlueprints)"));
+  assert.ok(!backend.includes('from "./logo-engine.js"'), "production design must not route through fixed family templates");
   assert.ok(ui.includes("visuallyAuditFinalConcepts("));
   assert.ok(!ui.slice(ui.indexOf("async function generate(event)"), ui.indexOf("ideaModeInputs.forEach"))
     .includes("visuallyRefineConcepts("));
