@@ -476,6 +476,46 @@
     };
   }
 
+
+  async function visuallyAuditFinalConcepts(concepts, brief, reviewToken, headers) {
+    if (!Array.isArray(concepts) || concepts.length < 1 || concepts.length > 3) {
+      throw new Error("برای بازبینی نهایی، طرح اصلاح‌شده معتبری وجود ندارد.");
+    }
+    const auditFrames = prepareReviewFrames(concepts, brief);
+    try {
+      const rendered = await Promise.all(concepts.map(async (concept, index) => {
+        const frame = auditFrames[index];
+        if (!frame) throw new Error("قاب رندر نهایی یکی از لوگوها پیدا نشد.");
+        await waitForFrame(frame);
+        return { previewImage: await window.NavaLogoRenderer.capturePreviewDataUrl(frame, 640) };
+      }));
+      const response = await fetch("https://nava-music-api.honrrpower.workers.dev/logo/generate", {
+        method: "POST",
+        headers,
+        cache: "no-store",
+        body: JSON.stringify({
+          ...brief,
+          action: "visual-final-audit",
+          reviewToken,
+          concepts: rendered
+        })
+      });
+      const result = await response.json();
+      if (!response.ok || !result.success || !Array.isArray(result.concepts) ||
+          result.concepts.length !== concepts.length) {
+        const diagnostic = result.code ? " [" + result.code + "]" : "";
+        throw new Error((result.error || "بازبینی مستقل تصویر نهایی ناموفق بود.") + diagnostic);
+      }
+      return {
+        visualReview: result.visualReview || {},
+        concepts: result.concepts.map((audit, index) => ({ ...concepts[index], ...audit }))
+      };
+    } finally {
+      clearReviewStage();
+      frames = [];
+    }
+  }
+
   async function generate(event) {
     event?.preventDefault();
     const brief = readBrief();
@@ -521,7 +561,13 @@
         const visualReview = await visuallyRefineConcepts(
           finalConcepts, brief, result.reviewToken, headers, reviewFrames
         );
-        finalConcepts = visualReview.concepts.filter(concept => concept.visualReview === "refined");
+        const refinedCandidates = visualReview.concepts.filter(concept => concept.visualReview === "refined");
+        let finalAudit = { concepts: [], visualReview: { acceptedCount: 0, rejectionReasons: [] } };
+        if (refinedCandidates.length) {
+          status.textContent = "اصلاح اولیه انجام شد؛ اکنون نسخه اصلاح‌شده دوباره در مرورگر رندر می‌شود تا فقط تصویر نهایی داوری شود.";
+          finalAudit = await visuallyAuditFinalConcepts(refinedCandidates, brief, result.reviewToken, headers);
+        }
+        finalConcepts = finalAudit.concepts.filter(concept => concept.visualReview === "accepted");
         if (finalConcepts.length) {
           mountConcepts(finalConcepts, brief, result.planning);
           empty.hidden = true;
@@ -529,17 +575,19 @@
           results.replaceChildren();
           empty.hidden = false;
         }
-        const refinedCount = Number(visualReview.visualReview?.refinedCount || 0);
-        const rejectionDetails = Array.isArray(visualReview.visualReview?.rejectionReasons)
-          ? visualReview.visualReview.rejectionReasons
-              .map(item => "طرح " + item.index + ": " + item.code)
-              .join("؛ ")
-          : "";
-        status.textContent = refinedCount > 0
-          ? "ناوی " + refinedCount + " طرح را پس از مشاهده رندر واقعی و عبور از آزمون کیفیت تأیید کرد." +
-            (finalConcepts.length < 3 ? " طرح‌های مبهم یا ضعیف نمایش داده نشدند." : "") +
+        const acceptedCount = finalConcepts.length;
+        const rejected = [
+          ...(Array.isArray(visualReview.visualReview?.rejectionReasons) ? visualReview.visualReview.rejectionReasons : []),
+          ...(Array.isArray(finalAudit.visualReview?.rejectionReasons) ? finalAudit.visualReview.rejectionReasons : [])
+        ];
+        const rejectionDetails = rejected
+          .map(item => "طرح " + item.index + ": " + item.code)
+          .join("؛ ");
+        status.textContent = acceptedCount > 0
+          ? "ناوی " + acceptedCount + " لوگو را پس از رندر مجدد و داوری مستقل تصویر نهایی تأیید کرد." +
+            (acceptedCount < 3 ? " طرح‌های ضعیف یا مبهم نمایش داده نشدند." : "") +
             (rejectionDetails ? " ردشده‌ها: " + rejectionDetails : "")
-          : "هیچ طرحی از آزمون تشخیص‌پذیری و کیفیت ناوی عبور نکرد؛ طرح خام و مبهم نمایش داده نشد." +
+          : "هیچ لوگویی از داوری تصویر نهایی عبور نکرد؛ طرح تأییدنشده نمایش داده نشد." +
             (rejectionDetails ? " علت دقیق: " + rejectionDetails : "");
       } catch (reviewError) {
         clearReviewStage();
