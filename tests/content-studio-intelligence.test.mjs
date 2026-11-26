@@ -12,7 +12,7 @@ test("Content Studio delegates unspecified choices to NAVI", () => {
     assert.ok(select[1].includes("<option selected>تشخیص هوشمند NAVI</option>"));
   }
   assert.ok(app.includes("هرجا مقدار «تشخیص هوشمند NAVI» ثبت شده، خودت"));
-  assert.ok(html.includes("app.js?v=content-studio-quality-gate-20261127-1"));
+  assert.ok(html.includes("app.js?v=content-studio-quality-gate-20261127-2"));
   assert.ok(app.includes("فقط دستورالعمل مربوط به قالب نهایی اعلام‌شده را اجرا کن"));
 });
 
