@@ -44,10 +44,10 @@ const families = {
       css:'.navi-symbol{position:relative;width:54cqw;height:70cqw;max-width:54%;max-height:70%;margin:auto;overflow:visible}.closed-book{position:absolute;inset:4% 7% 8% 7%;transform:rotate(-7deg);filter:drop-shadow(2cqw 2.8cqw 2cqw rgba(20,28,40,.2))}.page-block{position:absolute;right:3%;top:7%;width:83%;height:88%;background:repeating-linear-gradient(180deg,#fff 0 2.5%,#d9d5cc 2.7% 3.3%);border-radius:3% 8% 8% 3%;clip-path:polygon(0 0,100% 5%,100% 100%,0 94%)}.book-cover{position:absolute;z-index:2;left:0;top:0;width:84%;height:94%;border-radius:8% 3% 3% 8%;background:linear-gradient(125deg,var(--logo-primary),#34465a 72%,#182b40);box-shadow:inset 1.4cqw 0 0 rgba(255,255,255,.17),inset -1.2cqw 0 0 rgba(0,0,0,.2)}.cover-inset{position:absolute;inset:10%;border:1.2cqw solid rgba(255,255,255,.5);border-radius:4%}.cover-mark{position:absolute;left:36%;top:30%;width:28%;height:35%;border:1.5cqw solid rgba(255,255,255,.85);border-radius:45% 45% 12% 12%}.book-spine{position:absolute;z-index:3;left:6%;top:0;width:7%;height:96%;background:linear-gradient(90deg,rgba(0,0,0,.28),rgba(255,255,255,.3));border-radius:5px}'
     },
     {
-      title:"صفحه و عطف",
-      rationale:"سیلوئت باز و زاویه‌دار صفحات با عطف ممتد، خوانش کتاب را با فرمی فشرده‌تر و معاصر ترکیب می‌کند.",
-      html:'<div class="angular-book"><div class="leaf-page left-leaf"></div><div class="leaf-page right-leaf"></div><div class="gutter"></div><div class="page-edge"></div></div>',
-      css:'.navi-symbol{position:relative;width:78cqw;height:58cqw;max-width:78%;max-height:58%;margin:auto;overflow:visible}.angular-book{position:absolute;inset:8% 0 4%;filter:drop-shadow(0 2cqw 1.5cqw rgba(15,25,38,.16))}.leaf-page{position:absolute;top:5%;width:49%;height:83%;background:linear-gradient(145deg,#fff,#e7e2d8);border:1px solid rgba(35,45,55,.18)}.left-leaf{left:0;clip-path:polygon(0 0,100% 14%,91% 100%,10% 78%);border-radius:8% 2% 12% 20%}.right-leaf{right:0;clip-path:polygon(0 14%,100% 0,90% 78%,9% 100%);border-radius:2% 8% 20% 12%}.gutter{position:absolute;left:48%;top:17%;height:68%;width:4%;background:linear-gradient(90deg,rgba(0,0,0,.35),rgba(255,255,255,.6),rgba(0,0,0,.12));border-radius:50%}.page-edge{position:absolute;bottom:3%;left:12%;width:76%;height:8%;background:var(--logo-primary);clip-path:polygon(0 0,50% 55%,100% 0,92% 100%,8% 100%);border-radius:0 0 20% 20%}'
+      title:"برگِ ورق‌خورده",
+      rationale:"یک صفحه مستقل با گوشه تاخورده و لایه کاغذ زیرین؛ خوانش کتاب و مطالعه را بدون تکرار فرم دوصفحه‌ای منتقل می‌کند.",
+      html:'<div class="turning-page"><div class="sheet-shadow"></div><div class="page-sheet"><span class="page-fold"></span><span class="page-rule rule-one"></span><span class="page-rule rule-two"></span><span class="page-rule rule-three"></span></div></div>',
+      css:'.navi-symbol{position:relative;width:64cqw;height:72cqw;max-width:64%;max-height:72%;margin:auto;overflow:visible}.turning-page{position:absolute;inset:5% 12% 7%;filter:drop-shadow(2cqw 2.8cqw 2cqw rgba(20,28,40,.18));transform:rotate(-4deg)}.sheet-shadow{position:absolute;inset:7% 0 0 8%;background:linear-gradient(145deg,#d9d4c9,#aaa397);border-radius:5% 12% 8% 5%;transform:rotate(4deg)}.page-sheet{position:absolute;inset:0 7% 4% 0;background:linear-gradient(145deg,#fff 0%,#f4f0e7 72%,#ddd6c9 100%);border:1px solid rgba(35,45,55,.16);border-radius:5% 12% 8% 5%;clip-path:polygon(0 0,78% 0,100% 18%,100% 100%,0 100%)}.page-fold{position:absolute;right:0;top:0;width:24%;height:19%;background:linear-gradient(135deg,#e3ded3 0%,#c9c1b3 100%);clip-path:polygon(0 0,100% 100%,0 100%);border-radius:0 8% 0 0}.page-rule{position:absolute;left:18%;height:1.8%;border-radius:99px;background:var(--logo-primary);opacity:.2}.rule-one{top:37%;width:54%}.rule-two{top:48%;width:43%}.rule-three{top:59%;width:48%}'
     }
   ],
   music: [
@@ -184,23 +184,17 @@ function deriveSemanticGeometry(blueprint, family, index) {
   const css = [];
   const features = [];
   const radiance = /پرتو|اشعه|شعاع|نور|روشنای|درخشش|تابش|سپیده|طلوع|light|ray|radiance|glow|beam|sunbeam/.test(semanticText);
-  // For an open-book concept, light must be part of the book's own silhouette.
-  // A single rising negative-space aperture replaces detached decorative sunbeams.
-  if (radiance && family === "book") {
-    html.push('<span class="semantic-inspiration" aria-hidden="true"><span class="inspiration-core"></span><span class="inspiration-flow flow-left"></span><span class="inspiration-flow flow-right"></span></span>');
+  // Light is a quiet, diffuse glow integrated into the open-book spread only.
+  // Never place a pointed beam over a closed book or a page-turn concept.
+  if (radiance && family === "book" && index === 0) {
     css.push([
       '.book-spread{isolation:isolate}',
-      '.semantic-inspiration{position:absolute;z-index:2;left:50%;top:-13%;width:31%;height:66%;transform:translateX(-50%);pointer-events:none;display:block}',
-      '.inspiration-core{position:absolute;left:28%;top:5%;width:44%;height:91%;background:linear-gradient(180deg,rgba(244,213,151,.96),rgba(190,145,73,.86) 56%,rgba(190,145,73,.05));clip-path:polygon(50% 0,67% 22%,78% 45%,100% 76%,74% 100%,26% 100%,0 76%,22% 45%,33% 22%);filter:drop-shadow(0 0 2cqw rgba(208,166,99,.28))}',
-      '.inspiration-flow{position:absolute;top:25%;width:35%;height:61%;border-top:2.2cqw solid rgba(207,166,99,.86);border-radius:50% 50% 0 0}',
-      '.inspiration-flow.flow-left{left:1%;transform:rotate(28deg) skewY(-12deg);border-left:1.4cqw solid rgba(207,166,99,.52)}',
-      '.inspiration-flow.flow-right{right:1%;transform:rotate(-28deg) skewY(12deg);border-right:1.4cqw solid rgba(207,166,99,.52)}',
-      '.book-spine{z-index:4}'
+      '.book-spread::after{content:"";position:absolute;z-index:0;left:40%;top:-8%;width:20%;height:28%;border-radius:50%;background:radial-gradient(ellipse,rgba(244,213,151,.58) 0%,rgba(207,166,99,.2) 48%,transparent 76%);filter:blur(1.8cqw);pointer-events:none}',
+      '.book-page{z-index:1}',
+      '.book-spine,.book-foot{z-index:2}'
     ].join("\n"));
-    features.push("integrated-inspiration-aperture");
+    features.push("diffuse-gutter-glow");
   } else if (radiance) {
-    // Other symbol families receive no generic rays; keep the metaphor in the brief
-    // unless their own family grammar defines a genuinely integrated light form.
     features.push("radiance-metaphor-retained-in-brief");
   }
   const asymmetricMass = /نامتقارن|یک.?طرف|یک سمت|سمت راست|سمت چپ|پرتر|سنگین.?تر|asymmetr|one[- ]sided|one side|heavier side|larger side|thicker side/.test(semanticText);
