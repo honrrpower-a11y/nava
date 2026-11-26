@@ -385,46 +385,28 @@ function setNavaAccessGate(active) {
 
 function syncNaviWidgetPlacement(pageId) {
   if (!naviWidgetPanel) return;
-  const mount = document.getElementById("officeNaviInlineMount");
-  const homeSlot = document.getElementById("naviWidgetHomeSlot");
-  const reopen = document.getElementById("officeNaviReopen");
-  const isOffice = pageId === "officePage" && mount;
-
-  if (isOffice) {
-    const enteringOffice = naviWidgetPanel.parentElement !== mount;
-    if (enteringOffice) mount.appendChild(naviWidgetPanel);
-    naviWidgetPanel.classList.add("is-inline");
-    if (naviWidgetToggle) {
-      naviWidgetToggle.hidden = true;
-      naviWidgetToggle.setAttribute("aria-expanded", String(!naviWidgetPanel.hidden));
-    }
-    if (naviWidgetClose) naviWidgetClose.hidden = false;
-    if (naviWelcomeBubble) naviWelcomeBubble.hidden = true;
-    document.body.classList.remove("navi-widget-open");
-    if (enteringOffice) setNaviWidgetOpen(true, false);
-    else if (reopen) reopen.hidden = !naviWidgetPanel.hidden;
-    return;
+  // Keep the single NAVI panel in its global widget shell. Studio pages may
+  // offer a local shortcut to open it, but never re-parent or auto-open it.
+  const widgetRoot = document.getElementById("naviAssistantWidget");
+  if (widgetRoot && naviWidgetPanel.parentElement !== widgetRoot) {
+    widgetRoot.appendChild(naviWidgetPanel);
   }
-
-  if (naviWidgetPanel.parentElement === mount || naviWidgetPanel.classList.contains("is-inline")) {
-    setNaviWidgetOpen(false);
-    naviWidgetPanel.classList.remove("is-inline");
-    if (homeSlot?.parentNode) homeSlot.parentNode.insertBefore(naviWidgetPanel, homeSlot.nextSibling);
-    if (naviWidgetToggle) {
-      naviWidgetToggle.hidden = false;
-      naviWidgetToggle.setAttribute("aria-expanded", "false");
-    }
-    if (naviWidgetClose) naviWidgetClose.hidden = false;
-    if (reopen) reopen.hidden = true;
-    document.body.classList.remove("navi-widget-open");
+  naviWidgetPanel.classList.remove("is-inline");
+  if (naviWidgetClose) naviWidgetClose.hidden = false;
+  if (naviWidgetToggle) {
+    naviWidgetToggle.hidden = !naviWidgetPanel.hidden;
+    naviWidgetToggle.setAttribute("aria-expanded", String(!naviWidgetPanel.hidden));
   }
+  const officeReopen = document.getElementById("officeNaviReopen");
+  if (officeReopen) officeReopen.hidden = pageId !== "officePage" || !naviWidgetPanel.hidden;
+  if (naviWelcomeBubble && pageId !== "homePage") naviWelcomeBubble.hidden = true;
 }
 
 function showPage(pageId) {
   if (!Array.from(pages).some(page => page.id === pageId)) return;
   if (navaAccessGateActive && pageId !== "homePage") return;
   saveNavaActivePage(pageId);
-  if (naviWidgetPanel && !naviWidgetPanel.hidden && document.querySelector(".page.active")?.id !== "officePage") setNaviWidgetOpen(false);
+  // Page changes must not interrupt NAVI or create a second assistant instance.
   pages.forEach(page => page.classList.toggle("active", page.id === pageId));
   syncNaviWidgetPlacement(pageId);
   navButtons.forEach(button => button.classList.toggle("active", button.dataset.page === pageId));
@@ -654,7 +636,7 @@ function restoreNavaReturnContext() {
       else if (typeof saved.value === "string") field.value = saved.value;
     }
   }
-  showPage(pending.pageId);
+  syncNaviStudioContextFromActivePage();
   try { sessionStorage.removeItem(NAVA_RETURN_CONTEXT_KEY); } catch (_) {}
   targetPage.querySelector("input:not([type='hidden']), textarea, select")?.focus({ preventScroll: true });
   return true;
@@ -673,17 +655,19 @@ function setNaviWidgetOpen(isOpen, focusComposer = false) {
   syncNaviWidgetMode();
 
   if (isOpen && !getNaviToken()) captureNavaReturnContext();
-  const inlineOffice = naviWidgetPanel.classList.contains("is-inline");
-  if (isOpen && !inlineOffice) positionNaviWidgetOnOrbit();
+  // NAVI is one persistent, viewport-level assistant across every studio.
+  naviWidgetPanel.classList.remove("is-inline");
+  if (isOpen) positionNaviWidgetOnOrbit();
 
   naviWidgetPanel.hidden = !isOpen;
-  naviWidgetToggle.hidden = inlineOffice || isOpen;
+  naviWidgetToggle.hidden = isOpen;
   naviWidgetPanel.classList.toggle("is-open", isOpen);
   naviWidgetPanel.classList.toggle("is-auth-entry", isOpen && !getNaviToken());
-  document.body.classList.toggle("navi-widget-open", isOpen && !inlineOffice);
+  document.body.classList.toggle("navi-widget-open", isOpen);
   naviWidgetToggle.setAttribute("aria-expanded", isOpen ? "true" : "false");
   const officeReopen = document.getElementById("officeNaviReopen");
-  if (officeReopen) officeReopen.hidden = !inlineOffice || isOpen;
+  const isOfficePage = document.querySelector(".page.active")?.id === "officePage";
+  if (officeReopen) officeReopen.hidden = !isOfficePage || isOpen;
   const studioMode = document.body.classList.contains("navi-studio-context");
   naviWidgetToggle.setAttribute("aria-label",
     isOpen ? "بستن همراه ناوی" :
@@ -709,12 +693,9 @@ if (naviWidgetToggle) {
 }
 function closeNaviWidgetRespectingAccessChoice() {
   const hasSession = Boolean(getNaviToken());
-  const inlineOffice = Boolean(naviWidgetPanel?.classList.contains("is-inline"));
   setNaviWidgetOpen(false);
 
-  // In Office, closing the assistant only collapses its panel; it must never
-  // cover the file workspace with the global access-choice dialog.
-  if (!hasSession && !inlineOffice) {
+  if (!hasSession) {
     document.querySelector(".nava-access-panel")?.classList.remove("is-dismissed");
     setNavaAccessGate(true);
   }
