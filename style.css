@@ -2899,3 +2899,14 @@ body:has(> .nava-access-panel.is-gate-active){overflow:hidden}
   .nava-orbit-item--business{--orbit-x:15.5%;--orbit-y:25.1%}
   .nava-orbit-item--social{--orbit-x:30.4%;--orbit-y:11.1%}
 }
+
+
+/* Story Studio — real 9:16 graphic previews and local PNG export */
+.story-visual-slides{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:16px;margin:18px 0}
+.story-visual-slides[hidden]{display:none!important}
+.story-visual-card{min-width:0;padding:12px;border:1px solid var(--border);border-radius:16px;background:var(--panel);box-shadow:var(--shadow)}
+.story-visual-card h3{margin:0 0 10px;color:var(--gold);font-size:14px}
+.story-visual-canvas{display:block;width:min(100%,360px);height:auto;margin:0 auto;border-radius:10px;background:#07101f;box-shadow:0 12px 30px #0005}
+.story-visual-actions{display:flex;justify-content:center;margin-top:10px}
+.story-visual-actions button{width:100%;max-width:360px;min-height:42px}
+@media(max-width:600px){.story-visual-slides{grid-template-columns:1fr;gap:12px}.story-visual-card{padding:10px}.story-visual-canvas{width:min(100%,340px)}}
