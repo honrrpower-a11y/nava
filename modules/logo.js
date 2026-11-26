@@ -772,6 +772,8 @@ async function designLogos(data, apiKey) {
         rationale,
         ...traceability,
         ...anchorContract,
+        executionBriefEnglish: safeText(item?.executionBriefEnglish, 900),
+        geometryLayerRoles: Array.isArray(item?.geometrySpec?.layers) ? item.geometrySpec.layers.slice(0, 8).map(layer => safeText(layer?.visualRole, 180)) : [],
         mechanism: safeText(item?.mechanism, 260),
         expressionMove: safeText(item?.expressionMove, 180),
         differsBy: safeText(item?.differsBy, 220),
