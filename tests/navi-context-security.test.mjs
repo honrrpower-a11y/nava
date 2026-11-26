@@ -36,7 +36,7 @@ test("NAVI treats extracted office-document text as untrusted reference data, no
 
 test("NAVI keeps a separate persistent conversation thread for each studio and account", () => {
   assert.match(app, /function naviStudioThreadStorageKey\(pageId\)/);
-  assert.match(app, /NAVI_USER_ID_KEY\)[\s\S]{0,100}naviActiveProjectId[\s\S]{0,80}pageId/);
+  assert.match(app, /return "nava_navi_studio_thread_v1:" \+ account \+ ":" \+ naviActiveProjectId \+ ":" \+ pageId/);
   assert.match(app, /function rememberNaviStudioThread\(pageId, threadId\)/);
   assert.match(app, /async function activateNaviStudioConversation\(pageId\)/);
   assert.match(app, /rememberNaviStudioThread\(previousPageId, naviActiveThreadId\)/);
