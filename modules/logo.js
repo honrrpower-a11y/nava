@@ -1086,6 +1086,15 @@ export async function handleLogoRoute({ request, env, origin, corsOrigin }) {
     primaryColor: safeText(input?.primaryColor, 12),
     darkColor: safeText(input?.darkColor, 12)
   };
+  if (input?.action === "release-trial") {
+    const reservationId = typeof input.reservationId === "string" ? input.reservationId : "";
+    if (!/^[a-f0-9-]{36}$/i.test(reservationId)) {
+      return fail("شناسه آزادسازی فرصت آزمایشی معتبر نیست.", 400, corsOrigin);
+    }
+    const released = await releaseGuestTrialReservation({ env, reservationId });
+    return json({ success: true, released }, 200, corsOrigin);
+  }
+
   if (!data.brandName) return fail("نام برند برای طراحی لازم است.", 400, corsOrigin);
   if (!data.format) return fail("ساختار لوگوی انتخاب‌شده معتبر نیست.", 400, corsOrigin);
   if (!/^#[0-9a-fA-F]{6}$/.test(data.primaryColor) || !/^#[0-9a-fA-F]{6}$/.test(data.darkColor)) {
@@ -1173,6 +1182,7 @@ export async function handleLogoRoute({ request, env, origin, corsOrigin }) {
       success: true,
       brandName: data.brandName,
       reviewToken,
+      reservationId: quota.reservationId || "",
       remaining: quota.remaining ?? null,
       planning: {
         method: "navi-visual-blueprint-then-structured-html-css-build",
@@ -1182,9 +1192,9 @@ export async function handleLogoRoute({ request, env, origin, corsOrigin }) {
         designIdea: plan.designIdea,
         strategy: plan.strategy,
         designBriefEnglish: plan.designBriefEnglish,
-        extraModelCalls: 0,
+        extraModelCalls: 1,
         visualBlueprints: plan.visualBlueprints,
-        note: "NAVI first commits to explicit visual construction blueprints, then builds and validates the final HTML/CSS logo designs."
+        note: "NAVI creates a semantic blueprint, renders a safe HTML/CSS draft, then the browser captures the real render and NAVI performs a blind visual redesign pass before any concept is shown."
       },
       concepts: plan.concepts,
       rejectedConcepts: plan.rejectedConcepts || []
