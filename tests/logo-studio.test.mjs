@@ -230,9 +230,9 @@ test("NAVI writes a professional creative brief before building three sanitized 
     assert.equal(result.concepts[0].symbolConstruction, "دو مسیر منحنی در مرکز به هم می‌رسند و یک شکاف پیوسته در دل فرم می‌سازند");
     assert.equal(result.concepts[0].briefAlignment, "این فرم اتصال صدا و خلاقیت را در هویت استودیوی موسیقی نشان می‌دهد");
     assert.deepEqual(result.concepts[0].briefElements, ["موج صوتی","اتصال دو مسیر"]);
-    assert.match(result.concepts[0].mechanism, /deterministic HTML\/CSS component grammar/);
+    assert.match(result.concepts[0].mechanism, /NAVI-authored geometric blueprint/);
     assert.equal(result.concepts[0].expressionMove, "ویژگی هندسی اختصاصی و قابل تشخیص در سیلوئت");
-    assert.match(result.concepts[0].differsBy, /distinct silhouette and geometry/);
+    assert.equal(result.concepts[0].differsBy, "ویژگی هندسی اختصاصی و قابل تشخیص در سیلوئت");
     assert.ok(result.concepts[0].axes && Object.keys(result.concepts[0].axes).length > 0);
     assert.deepEqual(result.concepts[0].defaultsUsed, []);
     assert.ok(result.concepts.every(item => item.html.length >= 90 && item.css.length >= 350), "each concept must contain substantial HTML and CSS");
@@ -1004,7 +1004,7 @@ test("Logo Studio delivers structured HTML/CSS geometry without blocking on opti
   assert.ok(backend.includes("TWO STAGES IN ORDER"));
   assert.ok(backend.includes("LOGO_FINAL_VISUAL_QUALITY_LOW"));
 });
-test("NAVI visual refinement reviews real PNGs, validates revised HTML/CSS, and does not consume another trial", async () => {
+test("NAVI visual review cannot replace blueprint geometry with freeform HTML/CSS and does not consume another trial", async () => {
   const originalFetch = globalThis.fetch;
   const db = new FakeD1();
   let sentPayload;
@@ -1047,8 +1047,8 @@ test("NAVI visual refinement reviews real PNGs, validates revised HTML/CSS, and 
     assert.equal(response.status, 200, JSON.stringify(result));
     assert.equal(result.success, true);
     assert.equal(result.visualReview.method, "render-review-refine");
-    assert.equal(result.visualReview.refinedCount, 1);
-    assert.equal(result.concepts[0].visualReview, "refined");
+    assert.equal(result.visualReview.refinedCount, 0);
+    assert.equal(result.concepts[0].visualReviewIssue, "LOGO_REVIEW_NO_MATERIAL_CHANGE");
     assert.match(result.concepts[0].html, /data-logo-role="brand"/);
     assert.match(result.concepts[0].html, /نوا/);
     assert.ok(sentPayload.contents[0].parts.some(part => part.inlineData?.mimeType === "image/png"));
@@ -1194,7 +1194,7 @@ test("NAVI accepts a complete unified silhouette even when an optional child nod
     assert.equal(response.status, 200, JSON.stringify(result));
     assert.equal(result.success, true);
     assert.equal(result.concepts.length, 1);
-    assert.equal(result.concepts[0].anchorMap[0].layerClass, "navi-symbol");
+    assert.equal(result.concepts[0].anchorMap[0].layerClass, "navi-part-1");
     assert.equal(db.visitorUsed, 1);
   } finally {
     globalThis.fetch = originalFetch;
