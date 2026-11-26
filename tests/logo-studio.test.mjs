@@ -169,10 +169,10 @@ test("NAVI writes a professional creative brief before building three sanitized 
     assert.equal(result.success, true);
     assert.equal(result.concepts.length, 3);
     assert.equal(geminiCalls, 1, "NAVI plans and authors the complete HTML/CSS geometry in one structured response");
-    assert.match(sentPrompts[0], /senior identity concept architect/i);
+    assert.match(sentPrompts[0], /senior brand identity designer/i);
     assert.match(sentPrompts[0], /geometryRecipe/i);
     assert.match(sentPrompts[0], /exactly 3 objects/i);
-    assert.match(sentPrompts[0], /Do not rename the concepts key/i);
+    assert.match(sentPrompts[0], /Do not rename keys/i);
     assert.match(sentPrompts[0], /HTML CONTRACT/i);
     assert.match(sentPrompts[0], /at least two diagnostic visual cues/i);
     assert.match(sentPrompts[0], /signatureFeature/i);
@@ -1117,22 +1117,13 @@ test("NAVI rejects cosmetic-only visual revisions that leave the logo symbol geo
 
 test("NAVI keeps the client brief in charge and authors concept-specific HTML/CSS instead of selecting fixed geometry families", () => {
   const backend = readFileSync(new URL("../modules/logo.js", import.meta.url), "utf8");
-  const engine = readFileSync(new URL("../modules/logo-engine.js", import.meta.url), "utf8");
   const ui = readFileSync(new URL("../logo-studio.js", import.meta.url), "utf8");
   assert.ok(backend.includes("designPrompt: data.designMode === \"custom\" ? data.designPrompt : \"\""));
   assert.ok(backend.includes("navi-authored-html-css-geometry"));
   assert.ok(backend.includes("HTML CONTRACT"));
   assert.ok(backend.includes("CSS CONTRACT"));
   assert.ok(!backend.includes("buildStructuredLogoConcepts(data, designBlueprints)"));
-  assert.ok(engine.includes("data.designPrompt"));
-  assert.ok(engine.includes("subject-specific"));
-  assert.ok(engine.includes("book:"));
-  assert.ok(engine.includes("music:"));
-  assert.ok(engine.includes("network:"));
-  assert.ok(engine.includes("bread:"));
-  assert.ok(engine.includes("leaf:"));
-  assert.ok(engine.includes("coffee:"));
-  assert.ok(engine.includes("monogram:"));
+  assert.ok(!backend.includes('from "./logo-engine.js"'), "production design must not route through fixed family templates");
   assert.ok(ui.includes("visuallyAuditFinalConcepts("));
   assert.ok(!ui.slice(ui.indexOf("async function generate(event)"), ui.indexOf("ideaModeInputs.forEach"))
     .includes("visuallyRefineConcepts("));
