@@ -268,6 +268,21 @@ function collectNaviStudioContext(pageId) {
       keyPoints: value("contentKeyPoints"), callToAction: value("contentCTA"),
       keywords: value("contentKeywords")
     },
+    socialPage: (() => {
+      const panel = document.querySelector("#socialPage .social-management-panel:not([hidden])");
+      if (!panel) return {};
+      const read = suffix => panel.querySelector("[id$='" + suffix + "']")?.value?.trim() || "";
+      const platform = panel.dataset.socialPanel || "";
+      const task = panel.querySelector("select")?.selectedOptions?.[0]?.textContent?.trim() || "";
+      return {
+        platform: platform === "instagram" ? "Instagram" : platform === "youtube" ? "YouTube" : "Telegram",
+        task,
+        brandName: read("Account"),
+        audience: read("Audience"),
+        objective: read("Goal"),
+        brief: read("Brief")
+      };
+    })(),
     storyPage: { content: value("storyInput") },
     articlePage: {
       task: selected("studioTask-article"),
@@ -416,7 +431,7 @@ function showPage(pageId) {
 
   const studioByPage = {
     logoPage: "طراحی لوگو", brandPage: "برندینگ",
-    contentPage: "تولید محتوا", storyPage: "استوری‌ساز",
+    contentPage: "تولید محتوا", socialPage: "مدیریت شبکه‌های اجتماعی", storyPage: "استوری‌ساز",
     musicPage: "تولید موسیقی",
     articlePage: "مقاله و وبلاگ",
     officePage: "کارهای اداری و آفیس",
@@ -461,6 +476,7 @@ function syncNaviStudioContextFromActivePage() {
     logoPage: "طراحی لوگو",
     brandPage: "برندینگ",
     contentPage: "تولید محتوا",
+    socialPage: "مدیریت شبکه‌های اجتماعی",
     storyPage: "استوری‌ساز",
     musicPage: "تولید موسیقی",
     articlePage: "مقاله و وبلاگ",

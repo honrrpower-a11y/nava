@@ -1,0 +1,46 @@
+/* Social management: distinct from content creation, shared NAVA workspace shell. */
+.nava-social-management-entry{display:flex;align-items:center;justify-content:space-between;gap:18px;max-width:920px;margin:18px auto 0;padding:18px 22px;border:1px solid rgba(37,202,255,.25);border-radius:18px;background:linear-gradient(115deg,rgba(37,202,255,.075),rgba(229,184,94,.065));}
+.nava-social-management-entry-copy{display:flex;flex-direction:column;gap:5px;min-width:0}
+.nava-social-management-entry-copy .nava-home-eyebrow{font-size:9px;margin:0}
+.nava-social-management-entry-copy strong{color:var(--text);font-size:16px}
+.nava-social-management-entry-copy>span:last-child{color:var(--muted);font-size:11px;line-height:1.8}
+.nava-social-management-entry-button{flex:0 0 auto;display:inline-flex;align-items:center;gap:10px;padding:12px 16px;border:1px solid rgba(37,202,255,.38);border-radius:12px;background:rgba(37,202,255,.09);color:var(--text);font:inherit;font-size:12px;font-weight:700;cursor:pointer}
+.nava-social-management-entry-button:hover{border-color:var(--blue);background:rgba(37,202,255,.15)}
+.social-management-intro{margin:0 0 20px;padding:17px 20px;border:1px solid rgba(37,202,255,.22);border-radius:15px;background:rgba(37,202,255,.055)}
+.social-management-intro strong{display:block;color:var(--blue);font-size:14px;margin-bottom:5px}
+.social-management-intro p{margin:0;color:var(--muted);font-size:12px;line-height:2}
+.social-management-tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:14px}
+.social-management-tab{display:flex;align-items:center;justify-content:center;gap:9px;min-height:54px;padding:10px;border:1px solid var(--border);border-radius:13px;background:var(--card-surface);color:var(--muted);font:inherit;font-size:13px;font-weight:700;cursor:pointer}
+.social-management-tab>span{font-size:19px}
+.social-management-tab.is-active{border-color:var(--blue);background:rgba(37,202,255,.09);color:var(--text);box-shadow:0 0 0 2px rgba(37,202,255,.07)}
+.social-management-panel{padding:22px;border:1px solid var(--border);border-radius:18px;background:var(--card-surface);box-shadow:var(--shadow)}
+.social-management-panel[hidden]{display:none}
+.social-platform-heading{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:18px}
+.social-platform-heading>div>span{color:var(--blue);font-size:9px;letter-spacing:1.7px;direction:ltr;display:block}
+.social-platform-heading h2{margin:5px 0;color:var(--text);font-size:20px}
+.social-platform-heading p{margin:0;color:var(--muted);font-size:12px;line-height:1.8}
+.social-platform-mark{display:grid;place-items:center;width:52px;height:52px;flex:0 0 52px;border:1px solid rgba(37,202,255,.25);border-radius:15px;background:rgba(37,202,255,.08);color:var(--blue);font-size:27px}
+.social-management-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 16px}
+.social-management-fields>div{min-width:0}
+.social-management-fields label{display:block;margin:14px 0 7px;color:var(--gold);font-size:12px}
+.social-management-wide{grid-column:1/-1}
+.social-management-brief{min-height:120px;resize:vertical;line-height:1.9}
+.social-management-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:18px}
+.social-management-actions button{min-width:190px}
+.social-management-boundary{margin-top:18px;padding:15px 18px;border:1px dashed var(--border);border-radius:14px}
+.social-management-boundary strong{display:block;color:var(--text);font-size:12px;margin-bottom:5px}
+.social-management-boundary p{margin:0;color:var(--muted);font-size:11px;line-height:2}
+body.light .nava-social-management-entry,body.light .social-management-intro,body.light .social-management-panel,body.light .social-management-tab{background-color:rgba(255,253,248,.94)}
+body.light .social-management-tab.is-active{background:rgba(37,202,255,.10)}
+@media(max-width:600px){
+  .nava-social-management-entry{align-items:stretch;flex-direction:column;margin:14px 4px 0;padding:15px}
+  .nava-social-management-entry-button{justify-content:center;width:100%}
+  .social-management-tabs{gap:6px}
+  .social-management-tab{min-height:48px;gap:5px;padding:8px 4px;font-size:11px}
+  .social-management-panel{padding:15px}
+  .social-management-fields{grid-template-columns:1fr}
+  .social-management-wide{grid-column:auto}
+  .social-management-actions{flex-direction:column}
+  .social-management-actions button{width:100%;min-width:0}
+  .social-platform-heading h2{font-size:18px}
+}
