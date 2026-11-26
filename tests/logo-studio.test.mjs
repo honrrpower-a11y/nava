@@ -943,37 +943,29 @@ test("NAVI accepts a transparent symbol wrapper when nested layers create the ac
 });
 
 
-test("Logo Studio captures real renders and runs validated automatic visual refinement", () => {
+test("Logo Studio renders structured HTML/CSS geometry and audits final PNGs without generative code rewriting", () => {
   const ui = readFileSync(new URL("../logo-studio.js", import.meta.url), "utf8");
   const backend = readFileSync(new URL("../modules/logo.js", import.meta.url), "utf8");
-  assert.ok(ui.includes("async function visuallyRefineConcepts"));
-  assert.ok(ui.includes('action: "visual-refine"'));
+  const engine = readFileSync(new URL("../modules/logo-engine.js", import.meta.url), "utf8");
+  const generateStart = ui.indexOf("async function generate(event)");
+  const generateEnd = ui.indexOf("ideaModeInputs.forEach", generateStart);
+  const generateSource = ui.slice(generateStart, generateEnd);
+  assert.ok(generateSource.includes("visuallyAuditFinalConcepts("));
+  assert.ok(!generateSource.includes("visuallyRefineConcepts("), "a generative revision must not overwrite structured mark geometry");
   assert.ok(ui.includes("capturePreviewDataUrl(frame, 640)"));
-  assert.ok(ui.includes("function prepareReviewFrames(concepts, brief)"), "real preview frames must exist before visual review starts");
-  assert.ok(ui.includes("const reviewFrames = prepareReviewFrames(finalConcepts, brief)"), "review staging must be captured as a local frame list");
-  assert.ok(ui.includes("headers, reviewFrames"), "visual review must receive the exact staged frames");
-  assert.ok(ui.includes("visibility:visible"), "review frames must remain paintable for browser capture");
-  assert.ok(ui.includes("activeFrames.length !== concepts.length"), "review must reject a frame/concept count mismatch explicitly");
-  assert.ok(ui.includes("clearReviewStage();"), "off-screen review frames must be removed after review");
-  assert.ok(ui.includes("briefAlignment: concept.briefAlignment"), "visual review must retain the original concept brief traceability fields");
+  assert.ok(ui.includes("function prepareReviewFrames(concepts, brief)"));
+  assert.ok(ui.includes("visibility:visible"));
   assert.ok(ui.includes("result.reviewToken"));
-  assert.ok(ui.includes("const refinedCandidates = visualReview.concepts.filter"));
+  assert.ok(ui.includes('action: "visual-final-audit"'));
   assert.ok(ui.includes("طرح تأییدنشده نمایش داده نشد"));
-  assert.ok(ui.includes("revisionAttempt: attempt"), "a rejected design receives one stronger second review");
-  assert.ok(ui.includes('concept.visualReview === "refined"'), "only concepts accepted by NAVI visual review may be shown");
-  assert.ok(backend.includes("LOGO_VISUAL_QUALITY_LOW"));
-  assert.ok(backend.includes("recognitionScore < 8"), "blind-read quality is a hard acceptance gate");
-  assert.ok(backend.includes("TWO-PASS SEMANTIC AUDIT"), "the image must be read before the brief is used to interpret it");
-  assert.ok(backend.includes("unaidedRead"), "the reviewer must report its independent first reading");
-  assert.ok(backend.includes("likelyMisread"), "the reviewer must report the most plausible wrong interpretation");
-  assert.ok(backend.includes("semanticEvidence"), "concrete meanings require visible diagnostic evidence");
-  assert.ok(backend.includes("overlapping rounded rectangles"), "book marks must not pass as generic stacked tiles");
-  assert.ok(ui.includes("result.code"), "visual-review failures must expose their diagnostic code");
-  assert.ok(backend.includes("error?.name === \"AbortError\" ? \"MODEL_TIMEOUT\""), "review timeouts must be classified as retryable model timeouts");
-  assert.ok(backend.includes("controller.abort(), 120000"), "visual review must have a 120-second deadline");
-  assert.ok(ui.includes("بازبینی و اصلاح بصری"));
+  assert.ok(backend.includes("buildStructuredLogoConcepts"));
+  assert.ok(backend.includes("geometryEngine: \"structured-html-css-grammar\""));
+  assert.ok(engine.includes("subject-specific"));
+  assert.ok(engine.includes("buildStructuredLogoConcepts"));
+  assert.ok(engine.includes("No SVG"));
+  assert.ok(backend.includes("TWO STAGES IN ORDER"));
+  assert.ok(backend.includes("LOGO_FINAL_VISUAL_QUALITY_LOW"));
 });
-
 test("NAVI visual refinement reviews real PNGs, validates revised HTML/CSS, and does not consume another trial", async () => {
   const originalFetch = globalThis.fetch;
   const db = new FakeD1();
@@ -993,7 +985,7 @@ test("NAVI visual refinement reviews real PNGs, validates revised HTML/CSS, and 
 
     const original = initial.concepts[0];
     const html = '<div class="mark"><div class="navi-symbol seal" data-logo-role="symbol"><span class="wave"></span><span class="orbit"></span></div><strong><span data-logo-role="brand">نوا</span></strong><small><span data-logo-role="slogan">صدای ایده‌های تازه</span></small></div>';
-    const css = original.css.replace("border-radius:50%", "border-radius:34% 66% 42% 58%;clip-path:polygon(50% 0,100% 42%,72% 100%,0 78%,12% 28%)");
+    const css = '.logo-art-root{display:grid;place-items:center;width:100%;height:100%}.mark{display:grid;justify-items:center;gap:20px}.navi-symbol{position:relative;width:240px;height:240px;background:var(--logo-primary);border-radius:34% 66% 42% 58%;clip-path:polygon(50% 0,100% 42%,72% 100%,0 78%,12% 28%)}.wave{display:block;width:70%;height:24%;border:8px solid var(--logo-background);border-radius:50%}.orbit{position:absolute;inset:12%;border:3px solid var(--logo-background);border-radius:50%}';
     globalThis.fetch = async (_url, options) => {
       sentPayload = JSON.parse(options.body);
       return new Response(JSON.stringify({
