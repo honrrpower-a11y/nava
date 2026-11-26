@@ -229,7 +229,7 @@ test("NAVI writes a professional creative brief before building three sanitized 
     assert.match(sentPrompts[0], /professional art-direction brief/i);
     assert.match(sentPrompts[1], /NAVI CREATIVE BRIEF \(PRE-DESIGN, MANDATORY\)/);
     assert.match(sentPrompts[1], /shopping bag, handbag, luggage, tote/i);
-    assert.match(sentPrompts[1], /A concise professional art-direction brief/);
+    assert.match(sentPrompts[0], /A concise professional art-direction brief/);
     assert.equal(result.planning.extraModelCalls, 1);
     assert.equal(result.planning.visualBlueprints.length, 3);
     assert.ok(result.planning.visualBlueprints.every(item => item.geometryRecipe && item.silhouette && item.objectCues.length >= 2 && item.signatureFeature && item.recognitionRisk));
