@@ -987,6 +987,7 @@ window.sendOfficeNaviRequest = function({ message, context } = {}) {
   });
 
   reset?.addEventListener("click", () => {
+    form.reset();
     window.navaPendingContentHandoff = null;
     status.textContent = "فرم پاک شد؛ بریف تازه‌ای وارد کن.";
   });
