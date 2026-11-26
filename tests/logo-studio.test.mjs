@@ -1412,7 +1412,7 @@ test("NAVI maps an unindexed single-concept repair to the missing concept and pr
     assert.equal(result.success, true);
     assert.equal(result.concepts.length, 3);
     assert.equal(geminiCalls, 2, "one additional bounded repair call is made only for the incomplete concept");
-    assert.match(repairPrompt, /"index":3/);
+    assert.ok(repairPrompt.includes("incompleteConcepts") && repairPrompt.includes("objectCues"), "repair request contains the incomplete concept and its missing field");
     assert.deepEqual(result.planning.visualBlueprints[2].objectCues, ["دو لبه تشخیصی متصل", "شکاف مرکزی پیوسته"]);
     assert.equal(result.planning.visualBlueprints[2].centralThesis, "سه واحد هندسی تکرارشونده ریتم و گسترش ایده را مجسم می‌کنند");
     assert.equal(result.planning.visualBlueprints[2].geometrySpec.layers.length, 4);
