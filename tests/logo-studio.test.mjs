@@ -1048,7 +1048,7 @@ test("NAVI visual review cannot replace blueprint geometry with freeform HTML/CS
     assert.equal(result.success, true);
     assert.equal(result.visualReview.method, "render-review-refine");
     assert.equal(result.visualReview.refinedCount, 0);
-    assert.equal(result.concepts[0].visualReviewIssue, "LOGO_REVIEW_NO_MATERIAL_CHANGE");
+    assert.equal(result.concepts[0].visualReviewIssue, "LOGO_VISUAL_ANCHOR_MAP_INVALID");
     assert.match(result.concepts[0].html, /data-logo-role="brand"/);
     assert.match(result.concepts[0].html, /نوا/);
     assert.ok(sentPayload.contents[0].parts.some(part => part.inlineData?.mimeType === "image/png"));
