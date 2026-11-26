@@ -18,7 +18,7 @@
   <link rel="stylesheet" href="office-navi-guide.css?v=office-two-tabs-20261118-1">
   <link rel="stylesheet" href="office-workspace.css?v=office-back-to-top-20261118-1">
   <script src="navi-image-analysis.js?v=navi-hybrid-vision-20261124-1" defer></script>
-  <script src="app.js?v=content-studio-quality-gate-20261127-4" defer></script>
+  <script src="app.js?v=content-studio-quality-gate-20261127-4&story=visual-renderer-1" defer></script>
   <script src="office-navi-guide.js?v=office-back-to-top-20261118-1" defer></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" defer></script>
   <script src="logo-renderer.js?v=logo-persian-native-text-20261121-1" defer></script>
@@ -355,7 +355,7 @@
           <h1>استوری‌ساز نوا</h1>
           <p>
             بسته محتوای تولیدشده را از استودیوی تولید محتوا دریافت کن، ساختار اسلایدها را بررسی کن و برای طراحی دقیق‌تر از NAVI کمک بگیر.
-            پیش‌نمایش این نسخه متنی است و هنوز تصویر نهایی رندر نمی‌کند.
+            NAVI طرح اسلایدها را به پیش‌نمایش گرافیکی عمودی تبدیل می‌کند و امکان دریافت PNG می‌دهد.
           </p>
           <div class="story-handoff-summary" id="storyHandoffSummary" role="status" aria-live="polite" hidden></div>
           <div class="story-handoff-slides" id="storyHandoffSlides" aria-label="ساختار اسلایدهای منتقل‌شده" hidden></div>
@@ -366,6 +366,7 @@
           <div class="story-preview empty" id="previewText">
             متن استوری تو اینجا نمایش داده می‌شود
           </div>
+          <section class="story-visual-slides" id="storyVisualSlides" aria-label="پیش‌نمایش بصری اسلایدها" hidden></section>
           <div class="story-actions">
             <button class="btn-secondary" onclick="showPage('homePage')">بازگشت به استودیوها</button>
             <button class="btn-secondary" id="clearStory">پاک کردن متن</button>
