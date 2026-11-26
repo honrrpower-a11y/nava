@@ -23,7 +23,7 @@ test("Audience is optional and inferred when omitted", () => {
 });
 
 test("NAVI's resolved format is used for downstream studio handoff", () => {
-  assert.match(app, /تصمیم\\s\*NAVI/);
+  assert.match(app, /تصمیم\\s*NAVI/);
   assert.match(app, /readDecision\(\(\{ platform: "پلتفرم", format: "قالب", objective: "هدف", tone: "لحن" \}\)\[key\]\)/);
   assert.match(app, /handoff = effectiveHandoff/);
 });
