@@ -993,6 +993,11 @@ window.sendOfficeNaviRequest = function({ message, context } = {}) {
   reset?.addEventListener("click", () => {
     form.reset();
     window.navaPendingContentHandoff = null;
+    const resultWrap = document.getElementById("contentStudioResponseWrap");
+    const resultOutput = document.getElementById("contentStudioResponse");
+    if (resultWrap) resultWrap.hidden = true;
+    if (resultOutput) { resultOutput.value = ""; resultOutput.classList.remove("show"); }
+    document.getElementById("contentStudioHandoffAction")?.remove();
     status.textContent = "فرم پاک شد؛ بریف تازه‌ای وارد کن.";
   });
 })();
@@ -1176,9 +1181,10 @@ function setNaviStatus(message) {
 }
 
 function showNaviReply(reply) {
-  const contentStudioPage = document.querySelector(".page.active")?.id === "contentPage";
-  const inlineResult = contentStudioPage ? document.getElementById("contentStudioResponse") : null;
-  const inlineWrap = contentStudioPage ? document.getElementById("contentStudioResponseWrap") : null;
+  const contentStudioRequest = document.querySelector(".page.active")?.id === "contentPage" &&
+    Boolean(window.navaPendingContentHandoff);
+  const inlineResult = contentStudioRequest ? document.getElementById("contentStudioResponse") : null;
+  const inlineWrap = contentStudioRequest ? document.getElementById("contentStudioResponseWrap") : null;
   const responseTarget = inlineResult || requestResponse;
   responseTarget.value = String(reply || "");
   responseTarget.classList.add("show");
@@ -1186,7 +1192,7 @@ function showNaviReply(reply) {
   document.getElementById("naviNavigationSuggestion")?.remove();
   document.getElementById("contentHandoffAction")?.remove();
   document.getElementById("contentStudioHandoffAction")?.remove();
-  const service = contentStudioPage ? "تولید محتوا" : (naviAssistantContext?.service || serviceSelect?.value || "");
+  const service = contentStudioRequest ? "تولید محتوا" : (naviAssistantContext?.service || serviceSelect?.value || "");
   window.NavaDocumentExport?.attach(responseTarget, service);
 }
 
