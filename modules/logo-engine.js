@@ -211,7 +211,7 @@ function deriveSemanticGeometry(blueprint, family, index) {
     };
     if (rulesByFamily[family]) { css.push(rulesByFamily[family]); features.push("asymmetric-mass"); }
   }
-  return { html: html.join(""), css: css.join("\\n"), features };
+  return { html: html.join(""), css: css.join("\n"), features };
 }
 
 function wordmarkHtml(data) {
