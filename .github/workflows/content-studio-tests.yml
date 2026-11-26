@@ -7,6 +7,8 @@ on:
       - "app.js"
       - "index.html"
       - "tests/content-studio-intelligence.test.mjs"
+      - "tests/story-studio-visual.test.mjs"
+      - "style.css"
       - ".github/workflows/content-studio-tests.yml"
   push:
     branches: [main]
@@ -33,6 +35,8 @@ jobs:
       - name: Check JavaScript syntax
         run: node --check app.js
       - name: Check regression test syntax
-        run: node --check tests/content-studio-intelligence.test.mjs
+        run: |
+          node --check tests/content-studio-intelligence.test.mjs
+          node --check tests/story-studio-visual.test.mjs
       - name: Test adaptive Content Studio behavior
-        run: node --test tests/content-studio-intelligence.test.mjs
+        run: node --test tests/content-studio-intelligence.test.mjs tests/story-studio-visual.test.mjs
