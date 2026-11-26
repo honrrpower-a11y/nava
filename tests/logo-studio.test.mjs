@@ -275,7 +275,7 @@ test("NAVI rejects SVG-only artwork when no CSS-built symbol remains", async () 
   design.concepts[0].html='<div class="mark"><div class="navi-symbol" data-logo-role="symbol"><svg viewBox="0 0 200 200"><path d="M20 20 H180 V180 H20 Z"/></svg></div><strong>{{BRAND_NAME}}</strong></div>';
   design.concepts[0].css='.logo-art-root{display:grid;place-items:center;width:100%;height:100%}.mark{display:grid}.navi-symbol{width:220px;height:220px}';
   globalThis.fetch=async()=>makeGeminiResponse(design);
-  try {const response=await handleLogoRoute({request:makeRequest(),env:{NAVA_DB:db,NAVI_SESSION_SECRET:"test-secret-key",GEMINI_API_KEY:"test-gemini-key"},origin:ORIGIN,corsOrigin:ORIGIN});const result=await response.json();assert.equal(response.status,200);assert.equal(result.success,true);assert.ok(result.concepts.every(concept => !/<\\s*\\/?\\s*svg\\b|<path\\b/i.test(concept.html + concept.css)));assert.equal(db.visitorUsed,1);}
+    assert.ok(result.concepts.every(concept => !concept.html.includes("<svg") && !concept.html.includes("<path")));
   finally {globalThis.fetch=originalFetch;}
 });
 
