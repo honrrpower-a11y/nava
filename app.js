@@ -394,7 +394,7 @@ function syncNaviWidgetPlacement(pageId) {
   naviWidgetPanel.classList.remove("is-inline");
   if (naviWidgetClose) naviWidgetClose.hidden = false;
   if (naviWidgetToggle) {
-    naviWidgetToggle.hidden = !naviWidgetPanel.hidden;
+    naviWidgetToggle.hidden = !naviWidgetPanel.hidden || pageId === "officePage";
     naviWidgetToggle.setAttribute("aria-expanded", String(!naviWidgetPanel.hidden));
   }
   const officeReopen = document.getElementById("officeNaviReopen");
@@ -660,13 +660,14 @@ function setNaviWidgetOpen(isOpen, focusComposer = false) {
   if (isOpen) positionNaviWidgetOnOrbit();
 
   naviWidgetPanel.hidden = !isOpen;
-  naviWidgetToggle.hidden = isOpen;
+  const activePageId = document.querySelector(".page.active")?.id || "";
+  naviWidgetToggle.hidden = isOpen || activePageId === "officePage";
   naviWidgetPanel.classList.toggle("is-open", isOpen);
   naviWidgetPanel.classList.toggle("is-auth-entry", isOpen && !getNaviToken());
   document.body.classList.toggle("navi-widget-open", isOpen);
   naviWidgetToggle.setAttribute("aria-expanded", isOpen ? "true" : "false");
   const officeReopen = document.getElementById("officeNaviReopen");
-  const isOfficePage = document.querySelector(".page.active")?.id === "officePage";
+  const isOfficePage = activePageId === "officePage";
   if (officeReopen) officeReopen.hidden = !isOfficePage || isOpen;
   const studioMode = document.body.classList.contains("navi-studio-context");
   naviWidgetToggle.setAttribute("aria-label",
@@ -695,7 +696,8 @@ function closeNaviWidgetRespectingAccessChoice() {
   const hasSession = Boolean(getNaviToken());
   setNaviWidgetOpen(false);
 
-  if (!hasSession) {
+  const isOfficePage = document.querySelector(".page.active")?.id === "officePage";
+  if (!hasSession && !isOfficePage) {
     document.querySelector(".nava-access-panel")?.classList.remove("is-dismissed");
     setNavaAccessGate(true);
   }
