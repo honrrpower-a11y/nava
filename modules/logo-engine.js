@@ -1,5 +1,5 @@
 // NAVI blueprint-driven HTML/CSS logo geometry engine.
-// Every concept supplies its own coordinate-based composition; up to 16-point contours support more faithful organic silhouettes. No fixed family templates; no SVG, canvas or raster assets.
+// Every concept supplies its own coordinate-based composition; up to 16-point contours support more faithful organic silhouettes. No SVG; no fixed family templates, canvas or raster assets.
 
 function renderBlueprintGeometry(geometrySpec) {
   const invalid = message => { const error = new Error(message); error.diagnosticCode = "LOGO_BLUEPRINT_GEOMETRY_INVALID"; error.validationStage = "geometry-render"; throw error; };
