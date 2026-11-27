@@ -1279,6 +1279,21 @@ function renderContentHandoffAction(reply, handoff) {
       ].join("\n");
       const input = document.getElementById("storyInput");
       if (!input) return;
+      // Preserve the exact upstream NAVI deliverable as structured source data.
+      window.navaPendingStoryBrief = {
+        source: "content-studio",
+        sourceReply: String(reply || "").trim(),
+        packageText,
+        platform: String(handoff.platform || ""),
+        format: String(handoff.format || ""),
+        objective: String(handoff.objective || ""),
+        tone: String(handoff.tone || ""),
+        topic: String(handoff.topic || ""),
+        audience: String(handoff.audience || ""),
+        keyPoints: String(handoff.keyPoints || ""),
+        callToAction: String(handoff.callToAction || ""),
+        keywords: String(handoff.keywords || "")
+      };
       input.value = packageText;
       input.dispatchEvent(new Event("input", { bubbles: true }));
       const summary = document.getElementById("storyHandoffSummary");
@@ -4380,7 +4395,8 @@ async function sendMessageToNavi(options = {}) {
         history: isHomePage || options.videoPlan === true || storyPlan ? [] : naviHistory.slice(-NAVI_CONTEXT_MESSAGES),
         image: visionImage,
         images: options.videoPlan === true ? visionImages : undefined,
-        storyImages: storyPlan ? visionImages : undefined
+        storyImages: storyPlan ? visionImages : undefined,
+        storyBrief: storyPlan && options.storyBrief && typeof options.storyBrief === "object" ? options.storyBrief : undefined
       })
     });
 
@@ -4670,6 +4686,7 @@ storyInput.addEventListener("input", () => {
 
 clearStory.addEventListener("click", () => {
   storyInput.value = "";
+  window.navaPendingStoryBrief = null;
   previewText.textContent = "متن استوری تو اینجا نمایش داده می‌شود";
   previewText.classList.add("empty");
 
@@ -5151,6 +5168,8 @@ improveStoryWithNavi?.addEventListener("click",()=>{
  if(!content){storyMessage.textContent="ابتدا محتوا را وارد یا از استودیوی تولید محتوا منتقل کن.";storyMessage.classList.add("show");return;}
  if(storyPhotoAnalysisBusy){storyMessage.textContent="تحلیل عکس‌ها هنوز کامل نشده؛ چند لحظه صبر کن.";storyMessage.classList.add("show");return;}
  const service="استوری‌ساز",context={content,source:"استودیوی تولید محتوا",output:"طرح بصری چنداسلایدی اینستاگرام"};
+ const pendingBrief=window.navaPendingStoryBrief&&window.navaPendingStoryBrief.source==="content-studio"?window.navaPendingStoryBrief:null;
+ const storyBrief=pendingBrief?{...pendingBrief,packageText:String(pendingBrief.packageText||"").slice(0,18000),sourceReply:String(pendingBrief.sourceReply||"").slice(0,14000)}:null;
  const photoContext=storyPhotoAssets.map((item,index)=>(index+1)+". "+item.file.name+"\n"+item.analysis.report).join("\n\n");
  const message=[
   "تو مدیر هنری، عکاس تبلیغاتی و طراح گرافیک یک استودیوی حرفه‌ای هستی. عکس‌های پیوست‌شده را واقعاً ببین؛ گزارش محلی فقط مکمل است.",
@@ -5160,7 +5179,10 @@ improveStoryWithNavi?.addEventListener("click",()=>{
   "هر اسلاید را به‌صورت یک صحنه گرافیکی آزاد و اجرایی طراحی کن، نه با انتخاب یک قالب آماده. کلید elements اجباری است و باید ۴ تا ۱۴ عنصر واقعی از پشت‌زمینه به جلو داشته باشد؛ مختصات x,y,w,h درصدی از بوم ۱۰۸۰×۱۹۲۰ هستند و هر چهار مقدار باید بین ۰ تا ۱۰۰ باشند. با عناصر shape فقط برای گرافیک اختصاصی و معنادار مثل خط، دایره، قوس، لوزی و جزئیات هندسی استفاده کن؛ از مستطیل‌های بزرگ توپر، کارت و پنل رنگی به‌عنوان تزئین پیش‌فرض استفاده نکن. اگر اسلاید عکس دارد، عکس باید عنصر بصری غالب بماند و هیچ مستطیل بزرگ و مات روی آن قرار نگیرد؛ فقط اگر خوانایی واقعاً بدون آن ممکن نیست، یک پوشش بسیار ظریف با opacity حداکثر 0.22 و role=\"intentional-overlay\" مجاز است. رنگ نارنجی یا هر رنگ تأکیدی را به‌صورت پیش‌فرض به شکل پنل روی عکس نریز؛ رنگ و فرم را از تحلیل همان عکس و روایت همان اسلاید انتخاب کن. image برای قاب‌بندی عکس واقعی، و text برای هر لایه نوشتاری کار کن. ترتیب آرایه همان ترتیب رسم از عقب به جلو است. هر اسلاید باید نقشه مستقل داشته باشد: جای دقیق هر عنصر، اندازه، زاویه، رنگ، شفافیت، نقش فونت، اندازه و وزن فونت، تراز و محدوده متن را خودت تعیین کن. برای هر اسلاید بدون عکس هم با شکل‌ها و تایپوگرافی ترکیب‌بندی کامل بساز؛ صرفاً یک پس‌زمینه خالی و متن وسط ممنوع است. برای عکس از imageIndex معتبر استفاده کن؛ صفر یعنی عنصر عکس وجود ندارد. اگر یک عکس در چند اسلاید تکرار می‌شود، قاب، مقیاس و ترکیب‌بندی را تغییر بده. از اجزای بصری معنادار و متناسب با موضوع استفاده کن؛ عناصر تزئینی بی‌دلیل یا کارت‌های تکراری نساز. رندرر مختصات و لایه‌های تو را مستقیماً اجرا می‌کند و جایگاه عناصر را دوباره حدس نمی‌زند.",
   "هر اسلاید را مثل یک پوستر یا صفحه مجله مستقل طراحی کن، اما کل مجموعه باید هویت و روایت یکپارچه داشته باشد. نسبت عکس و متن، مقیاس تیتر، محل تیتر، فضای منفی و ساختار را آگاهانه متنوع کن.",
   "اگر عکسی وجود ندارد، طرح را با گرافیک تایپوگرافیک اصیل کامل کن؛ عکس ساختگی یا ادعای وجود عکس واقعی ممنوع است.",
-  "گزارش تحلیل محلی عکس‌ها:\n"+(photoContext||"هیچ عکس کاربری پیوست نشده است.")+"\n\nمحتوای مرجع:\n"+content,
+  pendingBrief
+   ? "منبع اصلی این طراحی، خروجی کامل و تأییدشده استودیوی تولید محتوای NAVI است که جداگانه در storyBrief نیز ارسال شده. ابتدا متن کامل هر اسلاید را از همان خروجی استخراج کن؛ موضوع کوتاه یا یادداشت تکمیلی داخل کادر استوری فقط مکمل است و هرگز جایگزین محتوای اصلی نیست. اگر خروجی منبع شامل چند اسلاید است، تعداد و ترتیب و پیام هر اسلاید را حفظ کن.\\n\\nبسته کامل انتقال‌یافته:\\n"+storyBrief.packageText+"\\n\\nخروجی اصلی NAVI (متن مرجع اسلایدها):\\n"+storyBrief.sourceReply+"\\n\\nیادداشت/درخواست تکمیلی کاربر در کادر استوری:\\n"+content
+   : "محتوای مرجع واردشده مستقیم از کاربر:\\n"+content,
+  "گزارش تحلیل محلی عکس‌ها:\\n"+(photoContext||"هیچ عکس کاربری پیوست نشده است."),
   "قرارداد پاسخ: یک شیء JSON بیرونی با reply به‌صورت رشته کوتاه، storyPlan به‌صورت خودِ شیء JSON طرح، officeAction=null، navigation=null و memoryProposals=[] برگردان. هرگز طرح را داخل رشته reply قرار نده و JSON تو‌در‌تو نساز. storyPlan باید version=nava.story.plan.v1 و slides داشته باشد؛ هر اسلاید باید elements اجرایی از نوع text یا image یا shape با مختصات درصدی x,y,w,h، رنگ‌ها، تایپوگرافی و ترتیب لایه‌ها داشته باشد. type هر عنصر فقط یکی از text یا image یا shape باشد؛ imageIndex برای تصویر واقعی و 0 برای بدون تصویر است. خودِ storyPlan را به‌صورت object معتبر JSON تحویل بده.",
   "برای اعلام مسابقه معمولاً ۳ اسلاید بساز: هوک و معرفی، جزئیات زمان و مکان، دعوت به تعامل. برای موضوع‌های دیگر روایت و تعداد مناسب را خودت انتخاب کن؛ حداکثر ۸ اسلاید.",
   "واقعیت‌ها، تاریخ، ساعت، نام‌ها و مکان را عیناً از ورودی بردار و چیزی اختراع نکن. متن روی تصویر کوتاه و فارسی باشد. از حافظه و گفت‌وگوهای قبلی استفاده نکن."
@@ -5170,7 +5192,7 @@ improveStoryWithNavi?.addEventListener("click",()=>{
  if(!getNaviToken()){window.openNaviAssistant({service,context,message});return;}
  if(Array.from(serviceSelect.options).some(option=>option.value===service))serviceSelect.value=service;
  updateNaviAssistantContext(service,context);
- sendMessageToNavi({messageOverride:message,serviceOverride:service,contextOverride:context,storyPlan:true,images:storyPhotoVisionImages});
+ sendMessageToNavi({messageOverride:message,serviceOverride:service,contextOverride:context,storyPlan:true,storyBrief,images:storyPhotoVisionImages});
 });
 
 
