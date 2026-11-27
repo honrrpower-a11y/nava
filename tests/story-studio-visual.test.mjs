@@ -213,7 +213,13 @@ test("Story Studio prevents large opaque color panels from covering user photos"
   assert.match(navi, /intentional-overlay/);
 });
 
-test("Story Studio drops empty optional text layers but rejects slides without real text", () => {\n  assert.match(app, /slide\.elements=slide\.elements\.filter\(element=>!\(element&&element\.type==="text"&&!String\(element\.text\|\|""\)\.trim\(\)\)\)/);\n  assert.match(app, /slide\.elements\.some\(element=>element&&element\.type==="text"&&String\(element\.text\|\|""\)\.trim\(\)\)/);\n  assert.match(navi, /هرگز text خالی، فاصله، placeholder یا لایه متنی رزروشده تولید نکن/);\n});\n\ntest("Story Studio executes NAVI-authored freeform scene graphs instead of choosing fixed templates", () => {
+test("Story Studio drops empty optional text layers but rejects slides without real text", () => {
+  assert.match(app, /slide\.elements=slide\.elements\.filter\(element=>!\(element&&element\.type==="text"&&!String\(element\.text\|\|""\)\.trim\(\)\)\)/);
+  assert.match(app, /slide\.elements\.some\(element=>element&&element\.type==="text"&&String\(element\.text\|\|""\)\.trim\(\)\)/);
+  assert.match(navi, /هرگز text خالی، فاصله، placeholder یا لایه متنی رزروشده تولید نکن/);
+});
+
+test("Story Studio executes NAVI-authored freeform scene graphs instead of choosing fixed templates", () => {
   assert.match(app, /function drawNaviArtDirectedStorySlide\(canvas,slide,renderScale=0\.5,fallbackPhoto=null\)/);
   assert.match(app, /if\(Array\.isArray\(slide\.elements\)&&slide\.elements\.length\)return drawNaviArtDirectedStorySlide/);
   assert.match(app, /plan\.slides\.forEach\(\(slide,index\)=>\{if\(!Array\.isArray\(slide\.elements\)/);
