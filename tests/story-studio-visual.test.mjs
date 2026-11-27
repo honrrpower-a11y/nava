@@ -166,3 +166,14 @@ test("Story Studio enforces a larger minimum type scale for mobile and NAVI avoi
   assert.match(navi, /قانون سخت خوانایی موبایل/);
   assert.doesNotMatch(navi, /typeTreatment[^\n]{0,80}compact/);
 });
+
+
+test("Story Studio validates text and accent contrast against every no-photo gradient stop", () => {
+  assert.match(app, /function storyReadableColorAcross\(candidate,fallback,surfaces,minimum=4\.5\)/);
+  assert.match(app, /surfaces\.every\(surface=>storyContrastRatio\(candidate,surface\)>=minimum\)/);
+  assert.match(app, /const contrastSurfaces=photoBackground\?\[contrastSurface\]:paletteStops/);
+  assert.match(app, /storyReadableColorAcross\(slide\.headlineColor,preferredInk,contrastSurfaces,4\.5\)/);
+  assert.match(app, /storyReadableColorAcross\(slide\.bodyColor,preferredBody,contrastSurfaces,4\.5\)/);
+  assert.match(app, /gradient\(palette\[0\],palette\[1\],palette\[2\]\)/);
+  assert.doesNotMatch(app, /addColorStop\(\.58,"#172337"\)/);
+});
