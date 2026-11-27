@@ -90,8 +90,11 @@ test("Story Studio sends selected photos through NAVI vision and applies per-sli
   assert.match(app, /imageIndex/);
   assert.match(navi, /هر تصویر را جداگانه از محتوای واقعی آن تحلیل کن/);
   assert.match(navi, /imageIndex=0 یعنی آن اسلاید عمداً بدون عکس باشد/);
-  assert.match(navi, /از تکرار خودکار یک عکس در تمام اسلایدها خودداری کن/);
-  assert.match(app, /اگر فقط یک عکس انتخاب شده، آن را پیش\u200bفرض فقط در مناسب\u200bترین اسلاید به کار ببر/);
+  assert.match(navi, /تکرار عکس را نه اجباری کن و نه ممنوع/);
+  assert.match(app, /می‌توانی یک عکس را برای چند اسلاید انتخاب کنی/);
+  assert.match(app, /noneOption\.textContent="بدون عکس"/);
+  assert.match(app, /imageSelect\.addEventListener\("change"/);
+  assert.match(navi, /تکرار عکس را نه اجباری کن و نه ممنوع/);
   assert.match(navi, /typeTreatment/);
   assert.match(navi, /headlineColor/);
 });
