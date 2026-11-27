@@ -4687,11 +4687,15 @@ function parseNaviStoryPlan(raw) {
   if (plan.version !== "nava.story.plan.v1" || !Array.isArray(plan.slides) || !plan.slides.length || plan.slides.length > 8) throw new Error("ساختار طرح استوری معتبر نیست.");
   return plan;
 }
-function drawStorySlide(canvas, slide, index, total, renderScale = 0.5) {
+const storySlideImages = new Map();
+function clearStorySlideImages(){for(const item of storySlideImages.values())if(item?.url)URL.revokeObjectURL(item.url);storySlideImages.clear();}
+function drawStorySlide(canvas, slide, index, total, renderScale = 0.5, photo = null) {
   const w=1080,h=1920,scale=Number.isFinite(renderScale)?renderScale:0.5; canvas.width=Math.round(w*scale); canvas.height=Math.round(h*scale);
   const c=canvas.getContext("2d"); c.scale(scale,scale); const accent=/^#[0-9a-f]{6}$/i.test(slide.accent||"")?slide.accent:"#e5b85e";
   const visual=["stadium","matchup","details","crowd","abstract"].includes(slide.visual)?slide.visual:"abstract";
   const bg=c.createLinearGradient(0,0,w,h); bg.addColorStop(0,visual==="details"?"#102b3b":"#07101f"); bg.addColorStop(.55,visual==="crowd"?"#263047":"#17243a"); bg.addColorStop(1,"#030711"); c.fillStyle=bg;c.fillRect(0,0,w,h);
+  if(photo&&slide.imagePlacement==="subject"){const box={x:100,y:680,w:880,h:760};const r=Math.max(box.w/photo.width,box.h/photo.height),sw=box.w/r,sh=box.h/r;c.drawImage(photo,(photo.width-sw)/2,(photo.height-sh)/2,sw,sh,box.x,box.y,box.w,box.h);c.strokeStyle=accent;c.lineWidth=7;c.strokeRect(box.x,box.y,box.w,box.h);}
+  else if(photo&&slide.imagePlacement==="background"){const r=Math.max(w/photo.width,h/photo.height),sw=w/r,sh=h/r;c.drawImage(photo,(photo.width-sw)/2,(photo.height-sh)/2,sw,sh,0,0,w,h);const shade=c.createLinearGradient(0,0,0,h);shade.addColorStop(0,"#07101fbb");shade.addColorStop(.5,"#07101f66");shade.addColorStop(1,"#030711e8");c.fillStyle=shade;c.fillRect(0,0,w,h);}
   c.strokeStyle=accent+"55";c.lineWidth=5;
   if(["stadium","matchup","abstract"].includes(visual)){for(let i=0;i<8;i++){c.beginPath();c.ellipse(540,780,220+i*70,300+i*90,0,Math.PI,Math.PI*2);c.stroke();}}
   if(visual==="details"){c.strokeStyle=accent+"77";c.lineWidth=4;c.strokeRect(70,960,940,520);c.beginPath();c.moveTo(540,960);c.lineTo(540,1480);c.stroke();}
