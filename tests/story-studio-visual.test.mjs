@@ -143,7 +143,7 @@ test("Story Studio protects selected typography colors against low contrast and 
   assert.match(app, /const contrastSurface=photoBackground\?/);
   assert.match(app, /rgba\(3,8,18,\.28\)/);
   assert.match(app, /rgba\(3,8,18,\.68\)/);
-  assert.match(app, /storyReadableColor\(design\.headlineColor,lightLayout\?/);
+  assert.match(app, /storyReadableColorAcross\(slide\.headlineColor,preferredInk,contrastSurfaces,4\.5\)/);
   assert.match(navi, /headlineColor و bodyColor باید با سطح پس\u200cزمینه/);
   assert.match(navi, /accent حداقل 3:1/);
 });
