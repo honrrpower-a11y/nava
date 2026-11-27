@@ -112,5 +112,14 @@ test("Story Studio enforces phone-readable type sizes and WCAG contrast for gene
   assert.match(app, /function storyReadableColor\(candidate,fallback,surface,minimum=4\.5\)/);
   assert.match(app, /const bodySize=busy>\.55\?46:50/);
   assert.match(app, /slide\.typeTreatment==="compact"\?82/);
-  assert.match(html, /story=mobile-readability-20261127-1/);
+  assert.match(html, /story-optional-brand-signature-20261127-1/);
+});
+
+
+test("Story Studio has no forced NAVA/page footer and only renders an explicit optional brand signature", () => {
+  assert.doesNotMatch(app, /fillText\("NAVA  \/  "/);
+  assert.match(app, /typeof slide\.brandSignature==="string"/);
+  assert.match(app, /if\(brandSignature\)/);
+  assert.match(navi, /brandSignature/);
+  assert.match(navi, /هرگز NAVA یا شماره اسلاید را خودکار اضافه نکن/);
 });
