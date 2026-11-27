@@ -2933,7 +2933,7 @@ async function updateNaviMemory(id, memoryValue, button, editor) {
       getNaviToken() !== token ||
       naviSessionVersion !== requestVersion
     ) {
-      return;
+      return seoReport ? false : undefined;
     }
 
     if (response.status === 401 || response.status === 403) {
@@ -4237,8 +4237,13 @@ async function sendMessageToNavi(options = {}) {
 
   if (!token) {
     clearNaviSession();
+    const message = "نشست ورود ناوی معتبر نیست؛ دوباره وارد شو.";
+    if (options.seoReport === true) {
+      window.dispatchEvent(new CustomEvent("nava:seo-error", { detail: { message } }));
+      return false;
+    }
     if (options.videoPlan === true) {
-      window.dispatchEvent(new CustomEvent("nava:navi-error", { detail: { message: "نشست ورود ناوی معتبر نیست؛ دوباره وارد شو." } }));
+      window.dispatchEvent(new CustomEvent("nava:navi-error", { detail: { message } }));
     } else {
       showNaviReply("نشست ورودت پایان یافته است. لطفاً دوباره وارد شو.");
     }
@@ -4587,9 +4592,10 @@ async function sendMessageToNavi(options = {}) {
         if (result.status === "rejected") console.warn("NAVI background synchronization failed:", result.reason);
       });
     });
+    if (seoReport) return true;
 
   } catch (error) {
-    if (naviSessionVersion !== requestVersion) return;
+    if (naviSessionVersion !== requestVersion) return seoReport ? false : undefined;
 
     if (seoReport) {
       window.dispatchEvent(new CustomEvent("nava:seo-error", { detail: { message: error?.message || "ارتباط با NAVI ناموفق بود." } }));
