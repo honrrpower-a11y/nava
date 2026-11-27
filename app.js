@@ -4759,6 +4759,10 @@ function storyContrastRatio(first,second) {
 function storyReadableColor(candidate,fallback,surface,minimum=4.5) {
   return /^#[0-9a-f]{6}$/i.test(String(candidate||""))&&storyContrastRatio(candidate,surface)>=minimum?candidate:fallback;
 }
+function storyReadableColorAcross(candidate,fallback,surfaces,minimum=4.5) {
+  return /^#[0-9a-f]{6}$/i.test(String(candidate||""))&&
+    surfaces.every(surface=>storyContrastRatio(candidate,surface)>=minimum)?candidate:fallback;
+}
 function resolveStorySlideDesign(slide,photo,index) {
   const layouts=["cover","editorial","split","quote","details","closing"];
   const layout=layouts.includes(slide.layout)?slide.layout:
@@ -4772,7 +4776,15 @@ function resolveStorySlideDesign(slide,photo,index) {
   const photoBackground=Boolean(photo&&(slide.imagePlacement==="background"||(slide.imagePlacement!=="subject"&&layout==="cover")));
   const zoneBrightness=photo?.zoneBrightness??photo?.brightness??.42;
   const contrastSurface=photoBackground?(zoneBrightness>.46?"#f0ece3":"#101827"):surface;
-  const accent=storyReadableColor(requestedAccent,fallbackAccent,contrastSurface,3);
+  const paletteStopsByDirection={
+    luxury:["#100e0b","#1b1510","#251b10"],tech:["#071c2b","#04121f","#030812"],
+    bold:["#2a0d19","#190a12","#09060a"],poster:["#17102b","#100b20","#080710"],
+    cinematic:["#101827","#0b1220","#050912"],editorial:["#f0ece3","#e5dfd4","#d9d2c5"],
+    organic:["#e9eee5","#d9e3d5","#c9d8c6"],minimal:["#f3f4f2","#e9ece9","#dfe3e0"]
+  };
+  const paletteStops=paletteStopsByDirection[artDirection]||paletteStopsByDirection.cinematic;
+  const contrastSurfaces=photoBackground?[contrastSurface]:paletteStops;
+  const accent=storyReadableColorAcross(requestedAccent,fallbackAccent,contrastSurfaces,3);
   const safeZone=photo?.safeZone??4,safeColumn=safeZone%3,safeRow=Math.floor(safeZone/3);
   const align=["right","center","left"].includes(slide.headlineAlign)?slide.headlineAlign:(layout==="quote"?"center":photo?(safeColumn===0?"left":safeColumn===2?"right":"center"):(layout==="cover"||layout==="closing"?"center":"right"));
   // Each art direction gets a deliberate Persian display face and a stable, highly legible body face.
@@ -4799,8 +4811,8 @@ function resolveStorySlideDesign(slide,photo,index) {
   const preferredInk=photoBackground?photoInk:(lightLayout?"#202a35":"#ffffff");
   const preferredBody=photoBackground?(zoneBrightness>.46?"#26323d":"#f6f7fa"):(lightLayout?"#3d4852":"#f6f7fa");
   // NAVI-selected ink is accepted only when it passes contrast against the actual art-direction surface.
-  const textColor=photoBackground?preferredInk:storyReadableColor(slide.headlineColor,preferredInk,surface,4.5);
-  const bodyColor=photoBackground?preferredBody:storyReadableColor(slide.bodyColor,preferredBody,surface,4.5);
+  const textColor=photoBackground?preferredInk:storyReadableColorAcross(slide.headlineColor,preferredInk,contrastSurfaces,4.5);
+  const bodyColor=photoBackground?preferredBody:storyReadableColorAcross(slide.bodyColor,preferredBody,contrastSurfaces,4.5);
   const textX=align==="left"?115:align==="center"?540:965;
   return {layout,accent,family,bodyFamily,headlineFont,bodyFont,kickerFont,matchupFont,ctaFont,
     headlineLineHeight,bodyLineHeight,headlineWeight:displayWeight,bodyWeight,
@@ -4824,17 +4836,16 @@ function drawStorySlide(canvas, slide, index, total, renderScale = 0.5, photo = 
     c.save();c.beginPath();c.roundRect(x,y,bw,bh,radius);c.clip();
     c.drawImage(img,crop.sx,crop.sy,crop.sw,crop.sh,x,y,bw,bh);c.restore();
   };
-  const gradient=(top="#101827",bottom="#050912")=>{
-    const g=c.createLinearGradient(0,0,w,h);g.addColorStop(0,top);g.addColorStop(.58,"#172337");g.addColorStop(1,bottom);
+  const gradient=(top="#101827",middle="#172337",bottom="#050912")=>{
+    const g=c.createLinearGradient(0,0,w,h);g.addColorStop(0,top);g.addColorStop(.58,middle);g.addColorStop(1,bottom);
     c.fillStyle=g;c.fillRect(0,0,w,h);
   };
   const direction=design.artDirection;
   const lightLayout=direction==="editorial"||direction==="organic"||direction==="minimal";
-  const palettes={luxury:["#100e0b","#251b10"],tech:["#071c2b","#030812"],bold:["#2a0d19","#09060a"],poster:["#17102b","#080710"],cinematic:["#101827","#050912"],editorial:["#f0ece3","#d9d2c5"],organic:["#e9eee5","#c9d8c6"],minimal:["#f3f4f2","#dfe3e0"]};
+  const palettes={luxury:["#100e0b","#1b1510","#251b10"],tech:["#071c2b","#04121f","#030812"],bold:["#2a0d19","#190a12","#09060a"],poster:["#17102b","#100b20","#080710"],cinematic:["#101827","#0b1220","#050912"],editorial:["#f0ece3","#e5dfd4","#d9d2c5"],organic:["#e9eee5","#d9e3d5","#c9d8c6"],minimal:["#f3f4f2","#e9ece9","#dfe3e0"]};
   const palette=palettes[direction]||palettes.cinematic;
-  gradient(palette[0],palette[1]);
-  const ink=storyReadableColor(design.headlineColor,lightLayout?"#202a35":"#ffffff",lightLayout?(direction==="organic"?"#e9eee5":direction==="minimal"?"#f3f4f2":"#f0ece3"):"#101827",4.5);
-  const secondary=storyReadableColor(design.bodyColor,lightLayout?"#3d4852":"#f6f7fa",lightLayout?(direction==="organic"?"#e9eee5":direction==="minimal"?"#f3f4f2":"#f0ece3"):"#101827",4.5);
+  gradient(palette[0],palette[1],palette[2]);
+  // Text colors were validated against every rendered gradient stop in resolveStorySlideDesign.
   const imagePlacement=design.placement;
   if(photo&&imagePlacement==="background"){
     const crop=cropSource(photo,w,h,design.imageFocus);
