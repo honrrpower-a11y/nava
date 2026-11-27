@@ -125,6 +125,20 @@ test("Story Studio enforces phone-readable type sizes and WCAG contrast for gene
 });
 
 
+test("Story Studio applies art-direction typography profiles and Persian-safe role hierarchy", () => {
+  assert.match(app, /const serifDisplay=slide\.typeTreatment==="serif"\|\|artDirection==="editorial"\|\|artDirection==="luxury"\|\|layout==="quote"/);
+  assert.match(app, /const bodyFamily="Vazirmatn,sans-serif"/);
+  assert.match(app, /const displayWeight=artDirection==="bold"\|\|artDirection==="poster"\|\|artDirection==="tech"\?900/);
+  assert.match(app, /headlineLineHeight=serifDisplay\?142:132/);
+  assert.match(app, /bodyLineHeight=bodySize>=68\?96:90/);
+  assert.match(app, /design\.headlineLineHeight/);
+  assert.match(app, /design\.bodyLineHeight/);
+  assert.match(app, /design\.matchupFont/);
+  assert.match(navi, /فونت نستعلیق یا خوشنویسی را برای متن اطلاعاتی و بدنه انتخاب نکن/);
+  assert.match(navi, /در یک مجموعه، خانواده فونت‌ها هماهنگ بماند/);
+  assert.match(html, /Vazirmatn:wght@400;600;700;800;900/);
+});
+
 test("Story Studio protects selected typography colors against low contrast and photo highlights", () => {
   assert.match(app, /const contrastSurface=photoBackground\?/);
   assert.match(app, /rgba\(3,8,18,\.28\)/);
@@ -144,10 +158,11 @@ test("Story Studio has no forced NAVA/page footer and only renders an explicit o
 
 
 test("Story Studio enforces a larger minimum type scale for mobile and NAVI avoids compact typography", () => {
-  assert.match(app, /busy>\.55\?112:132/);
-  assert.match(app, /kickerFont:"700 48px/);
+  assert.match(app, /headlineBase=\{cover:128,editorial:112,split:108,quote:122,details:104,closing:120\}/);
+  assert.match(app, /kickerFont="700 48px /);
   assert.match(app, /const bodySize=busy>\.55\?62:68/);
-  assert.match(app, /700 60px Vazirmatn/);
+  assert.match(app, /ctaFont="800 60px /);
+  assert.match(app, /Math\.max\(100,headlineBase-/);
   assert.match(navi, /قانون سخت خوانایی موبایل/);
   assert.doesNotMatch(navi, /typeTreatment[^\n]{0,80}compact/);
 });

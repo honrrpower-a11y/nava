@@ -4775,10 +4775,23 @@ function resolveStorySlideDesign(slide,photo,index) {
   const accent=storyReadableColor(requestedAccent,fallbackAccent,contrastSurface,3);
   const safeZone=photo?.safeZone??4,safeColumn=safeZone%3,safeRow=Math.floor(safeZone/3);
   const align=["right","center","left"].includes(slide.headlineAlign)?slide.headlineAlign:(layout==="quote"?"center":photo?(safeColumn===0?"left":safeColumn===2?"right":"center"):(layout==="cover"||layout==="closing"?"center":"right"));
-  const family=slide.typeTreatment==="serif"||layout==="editorial"||layout==="quote"?"Noto Naskh Arabic,serif":"Vazirmatn,sans-serif";
-  // Typography is sized for a full-screen phone story; busy photos change placement, never shrink copy to illegibility.
-  const headlineSize=slide.typeTreatment==="oversized"?(busy>.55?112:132):(busy>.55?100:busy>.32?108:(layout==="cover"?120:layout==="quote"?116:108));
+  // Each art direction gets a deliberate Persian display face and a stable, highly legible body face.
+  const serifDisplay=slide.typeTreatment==="serif"||artDirection==="editorial"||artDirection==="luxury"||layout==="quote";
+  const family=serifDisplay?"Noto Naskh Arabic,serif":"Vazirmatn,sans-serif";
+  const bodyFamily="Vazirmatn,sans-serif";
+  const displayWeight=artDirection==="bold"||artDirection==="poster"||artDirection==="tech"?900:serifDisplay?700:800;
+  const bodyWeight=700;
+  // Layout-specific scale creates hierarchy; image complexity may adjust it slightly but never below the mobile floor.
+  const headlineBase={cover:128,editorial:112,split:108,quote:122,details:104,closing:120}[layout]||112;
+  const headlineSize=slide.typeTreatment==="oversized"?Math.max(132,headlineBase+12):Math.max(100,headlineBase-(busy>.55?8:0));
   const bodySize=busy>.55?62:68;
+  const headlineLineHeight=serifDisplay?142:132;
+  const bodyLineHeight=bodySize>=68?96:90;
+  const headlineFont=displayWeight+" "+headlineSize+"px "+family;
+  const bodyFont=bodyWeight+" "+bodySize+"px "+bodyFamily;
+  const kickerFont="700 48px "+bodyFamily;
+  const matchupFont="800 76px "+bodyFamily;
+  const ctaFont="800 60px "+bodyFamily;
   const placement=slide.imagePlacement==="background"||slide.imagePlacement==="subject"?slide.imagePlacement:
     (photo?(layout==="cover"?"background":"subject"):"none");
   // Select text ink using the low-detail area of the actual photo.
@@ -4789,8 +4802,8 @@ function resolveStorySlideDesign(slide,photo,index) {
   const textColor=photoBackground?preferredInk:storyReadableColor(slide.headlineColor,preferredInk,surface,4.5);
   const bodyColor=photoBackground?preferredBody:storyReadableColor(slide.bodyColor,preferredBody,surface,4.5);
   const textX=align==="left"?115:align==="center"?540:965;
-  return {layout,accent,family,headlineFont:(layout==="cover"||layout==="quote"?"800 ":"700 ")+headlineSize+"px "+family,
-    bodyFont:"700 "+bodySize+"px "+family,kickerFont:"700 48px Vazirmatn,sans-serif",
+  return {layout,accent,family,bodyFamily,headlineFont,bodyFont,kickerFont,matchupFont,ctaFont,
+    headlineLineHeight,bodyLineHeight,headlineWeight:displayWeight,bodyWeight,
     headlineColor:textColor,bodyColor,
     align,headlineSize,textX,safeZone,safeRow,photoBrightness:bright,photoBusy:busy,placement,artDirection,imageFocus:["top","bottom","left","right","center"].includes(slide.imageFocus)?slide.imageFocus:"center",needsPanel:false};
 }
@@ -4866,37 +4879,37 @@ function drawStorySlide(canvas, slide, index, total, renderScale = 0.5, photo = 
   if(layout==="cover"){
     drawRule(align==="center"?475:align==="left"?115:835,180,130);
     drawText(slide.kicker||"روایت تصویری",tx,260,design.kickerFont,accent,align,850,isBackground);
-    let y=wrap(slide.headline||slide.title||"",tx,align==="center"?650:570,design.headlineFont,textColor,align,900,132,3);
-    if(slide.body)wrap(slide.body,tx,y+45,design.bodyFont,bodyColor,align,820,88,3);
+    let y=wrap(slide.headline||slide.title||"",tx,align==="center"?650:570,design.headlineFont,textColor,align,900,design.headlineLineHeight,3);
+    if(slide.body)wrap(slide.body,tx,y+45,design.bodyFont,bodyColor,align,820,design.bodyLineHeight,3);
   } else if(layout==="split"){
     drawText(slide.kicker||"نگاهی نزدیک‌تر",965,180,design.kickerFont,accent,"right",850);
     const headlineY=photo&&imagePlacement==="subject"?1260:500;
-    let y=wrap(slide.headline||slide.title||"",965,headlineY,design.headlineFont,textColor,"right",850,124,3);
-    if(slide.matchup)drawText(slide.matchup,540,y+90,"800 76px Vazirmatn,sans-serif",accent,"center",900);
-    if(slide.body)wrap(slide.body,965,Math.max(y+175,photo?1510:800),design.bodyFont,bodyColor,"right",850,90,3);
+    let y=wrap(slide.headline||slide.title||"",965,headlineY,design.headlineFont,textColor,"right",850,design.headlineLineHeight,3);
+    if(slide.matchup)drawText(slide.matchup,540,y+90,design.matchupFont,accent,"center",900);
+    if(slide.body)wrap(slide.body,965,Math.max(y+175,photo?1510:800),design.bodyFont,bodyColor,"right",850,design.bodyLineHeight,3);
   } else if(layout==="quote"){
     drawText("“",540,470,"800 220px Georgia,serif",accent,"center",900);
-    wrap(slide.headline||slide.title||slide.body||"",540,700,design.headlineFont,textColor,"center",900,125,5);
-    if(slide.body&&slide.headline)wrap(slide.body,540,1320,design.bodyFont,bodyColor,"center",820,90,3);
+    wrap(slide.headline||slide.title||slide.body||"",540,700,design.headlineFont,textColor,"center",900,design.headlineLineHeight,5);
+    if(slide.body&&slide.headline)wrap(slide.body,540,1320,design.bodyFont,bodyColor,"center",820,design.bodyLineHeight,3);
     drawRule(475,1580,130);
   } else if(layout==="details"){
     drawText(slide.kicker||"جزئیات",965,240,design.kickerFont,accent,"right",850);
-    wrap(slide.headline||slide.title||"",965,430,design.headlineFont,textColor,"right",850,120,3);
+    wrap(slide.headline||slide.title||"",965,430,design.headlineFont,textColor,"right",850,design.headlineLineHeight,3);
     const facts=[slide.date,slide.time,slide.venue].filter(Boolean);
     let y=Math.max(850,photo&&imagePlacement==="subject"?1530:780);
-    facts.forEach(fact=>{drawRule(870,y-48,70);wrap(fact,965,y,design.bodyFont,bodyColor,"right",850,90,1);y+=135;});
-    if(slide.body)wrap(slide.body,965,Math.min(1500,y+25),design.bodyFont,bodyColor,"right",850,88,3);
+    facts.forEach(fact=>{drawRule(870,y-48,70);wrap(fact,965,y,design.bodyFont,bodyColor,"right",850,design.bodyLineHeight,1);y+=135;});
+    if(slide.body)wrap(slide.body,965,Math.min(1500,y+25),design.bodyFont,bodyColor,"right",850,design.bodyLineHeight,3);
   } else if(layout==="closing"){
     drawText(slide.kicker||"قدم بعدی",540,300,design.kickerFont,accent,"center",850,isBackground);
-    wrap(slide.headline||slide.title||"با ما همراه شو",540,520,design.headlineFont,textColor,"center",900,136,3);
-    if(slide.body)wrap(slide.body,540,930,design.bodyFont,bodyColor,"center",850,92,3);
-    if(slide.cta){c.save();c.fillStyle=accent;c.beginPath();c.roundRect(210,1440,660,112,56);c.fill();c.restore();drawText(slide.cta,540,1512,"700 60px Vazirmatn,sans-serif",storyContrastRatio("#17202b",accent)>=4.5?"#17202b":"#ffffff","center",600);}
+    wrap(slide.headline||slide.title||"با ما همراه شو",540,520,design.headlineFont,textColor,"center",900,design.headlineLineHeight,3);
+    if(slide.body)wrap(slide.body,540,930,design.bodyFont,bodyColor,"center",850,design.bodyLineHeight,3);
+    if(slide.cta){c.save();c.fillStyle=accent;c.beginPath();c.roundRect(210,1440,660,112,56);c.fill();c.restore();drawText(slide.cta,540,1512,design.ctaFont,storyContrastRatio("#17202b",accent)>=4.5?"#17202b":"#ffffff","center",600);}
   } else {
     drawText(slide.kicker||"یادداشت تصویری",tx,230,design.kickerFont,accent,align,850,isBackground);
-    let y=wrap(slide.headline||slide.title||"",tx,450,design.headlineFont,textColor,align,850,124,3);
-    if(slide.body)wrap(slide.body,tx,y+55,design.bodyFont,bodyColor,align,850,92,4);
+    let y=wrap(slide.headline||slide.title||"",tx,450,design.headlineFont,textColor,align,850,design.headlineLineHeight,3);
+    if(slide.body)wrap(slide.body,tx,y+55,design.bodyFont,bodyColor,align,850,design.bodyLineHeight,4);
   }
-  if(slide.cta&&layout!=="closing")wrap(slide.cta,965,1710,"700 60px Vazirmatn,sans-serif",accent,"right",820,60,2);
+  if(slide.cta&&layout!=="closing")wrap(slide.cta,965,1710,design.ctaFont,accent,"right",820,60,2);
   const brandSignature=typeof slide.brandSignature==="string"?slide.brandSignature.trim().slice(0,32):"";
   if(brandSignature){
     c.save();c.direction="rtl";c.textAlign="right";
