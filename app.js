@@ -4282,7 +4282,8 @@ async function sendMessageToNavi(options = {}) {
 
   const requestVersion = naviSessionVersion;
   const activePageId = document.querySelector(".page.active")?.id || "homePage";
-  const isHomePage = activePageId === "homePage";
+  // An explicit SEO handoff belongs to the SEO studio even if its assistant rail is floating over the homepage.
+  const isHomePage = activePageId === "homePage" && options.pageOverride !== "seoPage";
   const videoEditorPanel = document.getElementById("navaVideoPanelVideo");
   const videoEditorMode = activePageId === "avPage" &&
     Boolean(document.getElementById("navaVideoEditor")) &&
@@ -4640,6 +4641,8 @@ window.navaSeoNaviRequest = function({ message, context } = {}) {
   if (Array.from(serviceSelect.options).some(option => option.value === service)) {
     serviceSelect.value = service;
   }
+  // Keep the complete report visible in the composer as a fallback as well as passing it explicitly.
+  if (userRequest) userRequest.value = cleanMessage;
   updateNaviAssistantContext(service, seoContext);
   setNaviWidgetOpen(true, false);
   return sendMessageToNavi({
