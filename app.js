@@ -1590,6 +1590,8 @@ function getNaviToken() {
   return token;
 }
 
+window.NAVA_SEO_CONFIG = { apiBase: NAVI_BASE, getToken: () => getNaviToken() };
+
 function saveNaviSession(token, expiresIn) {
   const duration = Number(expiresIn);
 
