@@ -24,7 +24,9 @@ test("conversation preparation preserves an SEO report above the ordinary 12,000
   const report = "گزارش سئو " + "جزئیات یافته‌ها ".repeat(1200);
   const contents = prepareNaviHistory([], report, 24000);
   assert.equal(contents[0].role, "user");
-  assert.equal(contents[0].parts[0].text, report);
+  // NAVI text sanitization trims surrounding whitespace but must not truncate the report.
+  assert.equal(contents[0].parts[0].text, report.trim());
+  assert.ok(contents[0].parts[0].text.length > 12000);
 });
 
 import { parseNaviGeminiResponse } from "../modules/navi.js";
