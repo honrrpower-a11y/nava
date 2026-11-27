@@ -31,11 +31,41 @@
     });
     byId("seoDiscussWithNavi").onclick = () => {
       const summary = report.findings.map(item => "- " + item.title + ": " + item.detail).join("\n");
-      window.openNaviAssistant?.({
-        service: "سئو",
-        context: { pageUrl: report.finalUrl, pageTitle: report.title, metaDescription: report.description, h1: report.h1, wordCount: report.wordCount, findings: report.findings },
-        message: "این گزارش واقعی بررسی صفحه من است. بر اساس آن، ایرادها را اولویت‌بندی کن و یک برنامه اصلاح عملی و مرحله‌ای ارائه بده. مواردی را که از این گزارش قابل نتیجه‌گیری نیستند، قطعی اعلام نکن.\n\n" + summary
-      });
+      const message = [
+        "این گزارش واقعی بررسی صفحه من است. بر اساس آن، ایرادها را اولویت‌بندی کن و یک برنامه اصلاح عملی و مرحله‌ای ارائه بده.",
+        "برای هر اقدام، دلیل، اولویت و روش اجرای روشن بنویس. مواردی را که از این گزارش قابل نتیجه‌گیری نیستند، قطعی اعلام نکن.",
+        "",
+        "نشانی صفحه: " + report.finalUrl,
+        "عنوان صفحه: " + (report.title || "ثبت نشده"),
+        "توضیحات متا: " + (report.description || "ثبت نشده"),
+        "تیترهای H1: " + (report.h1.join(" | ") || "ثبت نشده"),
+        "تعداد واژه‌ها: " + report.wordCount,
+        "تعداد تیترهای H2: " + report.h2Count,
+        "تعداد تصاویر: " + report.imageCount,
+        "تصاویر بدون متن جایگزین: " + report.imagesMissingAlt,
+        "لینک‌های داخلی: " + report.internalLinks,
+        "لینک‌های خارجی: " + report.externalLinks,
+        "",
+        "یافته‌های تحلیل:",
+        summary || "یافته جزئی دیگری ثبت نشده است."
+      ].join("\n");
+      const context = {
+        task: "اولویت‌بندی گزارش واقعی و تدوین برنامه اصلاح سئو",
+        brief: "گزارش صفحه: " + report.finalUrl + "\n" + summary
+      };
+      const token = window.NAVA_SEO_CONFIG?.getToken?.();
+      if (!token) {
+        window.openNaviAssistant?.({ service: "سئو", context, message });
+        return;
+      }
+      window.openNaviAssistant?.({ service: "سئو", context, message });
+      if (typeof window.sendMessageToNavi === "function") {
+        window.sendMessageToNavi({
+          messageOverride: message,
+          serviceOverride: "سئو",
+          contextOverride: context
+        });
+      }
     };
     byId("seoDownloadReport").onclick = () => {
       const lines = [
