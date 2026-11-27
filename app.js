@@ -4763,7 +4763,8 @@ function resolveStorySlideDesign(slide,photo,index) {
   const layout=layouts.includes(slide.layout)?slide.layout:
     (index===0?"cover":slide.cta?"closing":slide.matchup?"split":slide.date||slide.time||slide.venue?"details":slide.body&&String(slide.body).length<110?"quote":"editorial");
   const bright=photo?.brightness??.42,busy=photo?.busy??.3,saturated=photo?.saturation??.35;
-  const lightLayout=slide.artDirection==="editorial"||slide.artDirection==="organic"||slide.artDirection==="minimal"||layout==="editorial"||layout==="quote";
+  const artDirection=["editorial","cinematic","poster","luxury","tech","organic","minimal","bold"].includes(slide.artDirection)?slide.artDirection:"cinematic";
+  const lightLayout=artDirection==="editorial"||artDirection==="organic"||artDirection==="minimal";
   const surface=lightLayout?"#f0ece3":"#101827";
   const fallbackAccent=lightLayout?"#80520d":"#f2c66d";
   const requestedAccent=/^#[0-9a-f]{6}$/i.test(slide.accent||"")?slide.accent:(photo&&photo.saturation>.1?photo.accent:fallbackAccent);
@@ -4771,7 +4772,6 @@ function resolveStorySlideDesign(slide,photo,index) {
   const safeZone=photo?.safeZone??4,safeColumn=safeZone%3,safeRow=Math.floor(safeZone/3);
   const align=["right","center","left"].includes(slide.headlineAlign)?slide.headlineAlign:(layout==="quote"?"center":photo?(safeColumn===0?"left":safeColumn===2?"right":"center"):(layout==="cover"||layout==="closing"?"center":"right"));
   const family=slide.typeTreatment==="serif"||layout==="editorial"||layout==="quote"?"Noto Naskh Arabic,serif":"Vazirmatn,sans-serif";
-  const artDirection=["editorial","cinematic","poster","luxury","tech","organic","minimal","bold"].includes(slide.artDirection)?slide.artDirection:"cinematic";
   // Typography is sized for a full-screen phone story; busy photos change placement, never shrink copy to illegibility.
   const headlineSize=slide.typeTreatment==="oversized"?(busy>.55?88:116):slide.typeTreatment==="compact"?82:(busy>.55?84:busy>.32?92:(layout==="cover"?106:layout==="quote"?100:92));
   const bodySize=busy>.55?46:50;
@@ -4809,7 +4809,7 @@ function drawStorySlide(canvas, slide, index, total, renderScale = 0.5, photo = 
     c.fillStyle=g;c.fillRect(0,0,w,h);
   };
   const direction=design.artDirection;
-  const lightLayout=layout==="editorial"||direction==="organic"||direction==="minimal";
+  const lightLayout=layout==="editorial"||direction==="editorial"||direction==="organic"||direction==="minimal";
   const palettes={luxury:["#100e0b","#251b10"],tech:["#071c2b","#030812"],bold:["#2a0d19","#09060a"],poster:["#17102b","#080710"],cinematic:["#101827","#050912"],editorial:["#f0ece3","#d9d2c5"],organic:["#e9eee5","#c9d8c6"],minimal:["#f3f4f2","#dfe3e0"]};
   const palette=palettes[direction]||palettes.cinematic;
   gradient(palette[0],palette[1]);
