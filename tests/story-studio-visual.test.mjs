@@ -17,6 +17,14 @@ test("Story Studio routes NAVI design responses to a visual renderer, not chat",
   assert.match(app, /renderNaviStoryPlan\(parseNaviStoryPlan/);
 });
 
+test("Story Studio never silently truncates generated Persian text layers", () => {
+  assert.match(app, /const wrapLines=\(\)=>\{/);
+  assert.match(app, /let lines=wrapLines\(\),availableHeight=Math\.max\(lineHeight,box\.h\)/);
+  assert.match(app, /Never discard words because a generated text box was given an undersized maxLines value/);
+  assert.match(app, /lines\.forEach\(\(lineText,i\)=>ctx\.fillText/);
+  assert.doesNotMatch(app, /const visible=lines\.slice\(0,num\(item\.maxLines/);
+});
+
 test("Story Studio applies the selected per-slide photo as the authoritative source for every image layer", () => {
   assert.match(app, /const imageFor=item=>\{if\(fallbackPhoto\)return fallbackPhoto/);
   assert.match(app, /slide\.imageIndex=selected;syncSlideImageElements\(slide,selected\)/);
