@@ -71,6 +71,7 @@ test("Story Studio exposes photo-analysis results and uses the detected safe zon
   assert.match(app, /busyLabel/);
   assert.match(app, /تحلیل عکس انجام شد/);
   assert.match(app, /safeZone/);
+  assert.match(app, /count\*\.12/);
   assert.match(app, /textX:align==="left"/);
   assert.match(app, /فضای مناسب متن/);
 });
