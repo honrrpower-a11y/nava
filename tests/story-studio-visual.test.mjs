@@ -228,5 +228,5 @@ test("Story Studio accepts a direct structured plan object in the outer NAVI res
 test("Story Studio browser consumes a plan object without parsing a nested JSON string", () => {
   assert.match(app, /reply: data\.storyPlan && typeof data\.storyPlan === "object" \? data\.storyPlan : reply/);
   assert.match(app, /let plan = raw && typeof raw === "object"/);
-  assert.match(n, /JSON تو‌در‌تو داخل reply ممنوع است/);
+  assert.match(navi, /JSON تو‌در‌تو داخل reply ممنوع است/);
 });
