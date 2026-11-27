@@ -2964,6 +2964,8 @@ async function handleChat({
   // injected into the model context; client identifiers merely select entries.
   const isVideoPlanRequest = shouldUseNaviVideoPlanContext(input, page);
   const isStoryPlanRequest = shouldUseNaviStoryPlanContext(input, page);
+  // A real SEO audit handoff gets a dedicated, report-first instruction path.
+  const isSeoReportRequest = input.seoReport === true && page === "seoPage";
   const storyBrief = isStoryPlanRequest ? normalizeNaviStoryBrief(input.storyBrief) : null;
   const isVideoEditorRequest = input.videoEditorMode === true &&
     page === "avPage" && input.videoPlan !== true;
@@ -2985,6 +2987,15 @@ async function handleChat({
         "اگر عکس‌های کاربر در همین درخواست پیوست شده‌اند، فقط در اسلایدهایی که واقعاً به عکس نیاز دارند از imageIndex معتبر استفاده کن؛ imageIndex=0 برای سایر اسلایدها مجاز و مطلوب است. استفاده از یک عکس در چند اسلاید مجاز است و تصمیم باید بر اساس تناسب بصری و روایت باشد؛ برای همان اسلاید imageRequest را خالی بگذار و کاربر را بی‌دلیل به بارگذاری دوباره عکس دعوت نکن. اگر هیچ عکسی پیوست نشده، عکس اختیاری است؛ طرح باید بدون آن کامل بماند. فقط اگر یک دارایی بصری ضروری در عکس‌های پیوست‌شده وجود ندارد، imageRequest را با شرح دقیق آن پر کن. imagePlacement فقط background یا subject باشد وقتی imageIndex معتبر یا imageRequest وجود دارد، وگرنه none. هیچ لوگو، چهره، بازیکن یا مکان واقعی را جعل نکن و تصویر واقعی را ادعا نکن.",
         "پاسخ متنی، توضیح طراحی، Markdown، سلام و احوالپرسی یا پیام عدم پشتیبانی برنگردان. اگر اطلاعات کم است، با داده موجود طرحی محتاطانه بساز و چیزی را جعل نکن.",
         "از حافظه و گفت‌وگوهای قبلی استفاده نکن؛ فقط محتوای مرجع همین درخواست معتبر است."
+      ].join("\n")
+    : isSeoReportRequest
+    ? [
+        "صفحه فعال: استودیوی سئو نوا؛ درخواست حاضر انتقال یک گزارش واقعی ممیزی صفحه است.",
+        "گزارش در پیام جاری با عنوان «گزارش تحلیل» و جزئیات URL، title، meta description، H1، شمارنده‌ها و یافته‌ها آمده است. آن را ورودی اصلی تحلیل قرار بده؛ کاربر از تو بریف جدید یا شرح ایده نمی‌خواهد.",
+        "ابتدا وضعیت کلی صفحه را از یافته‌های گزارش جمع‌بندی کن. سپس یافته‌ها را بر اساس اثر احتمالی و فوریت به سه سطح فوری، مهم و تکمیلی اولویت‌بندی کن.",
+        "برای هر مورد مهم، دقیقاً بگو چه چیزی باید تغییر کند، چرا، و یک نمونه یا دستور اجرایی قابل استفاده ارائه بده. اگر گزارش داده لازم برای نتیجه‌گیری را ندارد، محدودیت را شفاف بگو و سؤال غیرضروری نپرس.",
+        "میان ایراد فنی، کیفیت محتوا و ساختار صفحه تفاوت بگذار. از ادعای رتبه گوگل، حجم جست‌وجو، بک‌لینک، Core Web Vitals یا نتیجه قطعی سئو که در گزارش وجود ندارد خودداری کن.",
+        "پاسخ باید تحلیل واقعی همین گزارش و برنامه اقدام مرحله‌ای باشد؛ متن عمومی درباره امکانات استودیوی سئو یا درخواست دوباره برای وارد کردن شرح درخواست ممنوع است. پاسخ معمولی و روشن فارسی بده و JSON تولید نکن."
       ].join("\n")
     : isVideoPlanRequest
     ? [
@@ -3058,7 +3069,7 @@ async function handleChat({
   try {
     await ensureNaviMainThread(env.NAVA_DB, userId);
 
-    if (!isVideoPlanRequest && !isStoryPlanRequest) {
+    if (!isVideoPlanRequest && !isStoryPlanRequest && !isSeoReportRequest) {
       const [
         historyResult,
         memoryResult
