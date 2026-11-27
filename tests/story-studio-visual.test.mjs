@@ -17,6 +17,12 @@ test("Story Studio routes NAVI design responses to a visual renderer, not chat",
   assert.match(app, /renderNaviStoryPlan\(parseNaviStoryPlan/);
 });
 
+test("Story Studio image replacement updates every art-directed image layer on that slide", () => {
+  assert.match(app, /const syncSlideImageElements=\(slide,imageIndex\)=>\{if\(Array\.isArray\(slide\.elements\)\)slide\.elements\.forEach\(item=>\{if\(item&&item\.type==="image"\)item\.imageIndex=imageIndex;\}\);\};/);
+  assert.match(app, /slide\.imageIndex=selected;syncSlideImageElements\(slide,selected\)/);
+  assert.match(app, /slide\.imageIndex=0;syncSlideImageElements\(slide,0\)/);
+});
+
 test("Story Studio renders vertical slides and exports PNG locally", () => {
   assert.match(app, /canvas\.width=Math\.round\(w\*scale\);canvas\.height=Math\.round\(h\*scale\)/);
   assert.match(app, /drawStorySlide\(exportCanvas,slide,index,plan\.slides\.length,1,storySlideImages/);
