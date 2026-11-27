@@ -177,3 +177,17 @@ test("Story Studio validates text and accent contrast against every no-photo gra
   assert.match(app, /gradient\(palette\[0\],palette\[1\],palette\[2\]\)/);
   assert.doesNotMatch(app, /addColorStop\(\.58,"#172337"\)/);
 });
+
+
+test("Story Studio executes NAVI composition decisions as real layout geometry", () => {
+  assert.match(app, /function resolveStoryComposition\(slide,layout,hasPhoto\)/);
+  assert.match(app, /textZone:zone,vertical,horizontal,align,verticalOffset,imageTreatment/);
+  assert.match(app, /comp\.imageTreatment==="portrait"/);
+  assert.match(app, /comp\.imageTreatment==="landscape"/);
+  assert.match(app, /comp\.imageTreatment==="offset"/);
+  assert.match(app, /design\.composition\.graphicMotif/);
+  assert.match(app, /const textOffsetY=design\.composition\.verticalOffset/);
+  assert.match(app, /composition.*textZone/);
+  assert.match(navi, /فیلد composition را واقعاً تصمیم‌گیری کن/);
+  assert.match(navi, /imageTreatment.*visualBalance.*negativeSpace.*graphicMotif/);
+});

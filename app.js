@@ -4763,6 +4763,22 @@ function storyReadableColorAcross(candidate,fallback,surfaces,minimum=4.5) {
   return /^#[0-9a-f]{6}$/i.test(String(candidate||""))&&
     surfaces.every(surface=>storyContrastRatio(candidate,surface)>=minimum)?candidate:fallback;
 }
+
+function resolveStoryComposition(slide,layout,hasPhoto) {
+  const raw=slide.composition&&typeof slide.composition==="object"?slide.composition:{};
+  const zones=["upper-left","upper-center","upper-right","middle-left","middle-center","middle-right","lower-left","lower-center","lower-right"];
+  const zone=zones.includes(raw.textZone)?raw.textZone:
+    (layout==="quote"?"middle-center":layout==="cover"?"upper-center":layout==="closing"?"middle-center":hasPhoto?"upper-right":"middle-right");
+  const [vertical,horizontal]=zone.split("-");
+  const imageTreatments=["portrait","landscape","offset","fullBleed","none"];
+  const imageTreatment=imageTreatments.includes(raw.imageTreatment)?raw.imageTreatment:(hasPhoto?(layout==="cover"?"fullBleed":"offset"):"none");
+  const balance=["left","right","center","diagonal"].includes(raw.visualBalance)?raw.visualBalance:(horizontal==="left"?"right":horizontal==="right"?"left":"center");
+  const negativeSpace=["open","balanced","compact"].includes(raw.negativeSpace)?raw.negativeSpace:"balanced";
+  const motifs=["none","arc","rule","corner"].includes(raw.graphicMotif)?raw.graphicMotif:"none";
+  const verticalOffset=vertical==="upper"?-150:vertical==="lower"?150:0;
+  const align=horizontal==="left"?"left":horizontal==="center"?"center":"right";
+  return {textZone:zone,vertical,horizontal,align,verticalOffset,imageTreatment,visualBalance:balance,negativeSpace,graphicMotif:motifs};
+}
 function resolveStorySlideDesign(slide,photo,index) {
   const layouts=["cover","editorial","split","quote","details","closing"];
   const layout=layouts.includes(slide.layout)?slide.layout:
@@ -4786,7 +4802,8 @@ function resolveStorySlideDesign(slide,photo,index) {
   const contrastSurfaces=photoBackground?[contrastSurface]:paletteStops;
   const accent=storyReadableColorAcross(requestedAccent,fallbackAccent,contrastSurfaces,3);
   const safeZone=photo?.safeZone??4,safeColumn=safeZone%3,safeRow=Math.floor(safeZone/3);
-  const align=["right","center","left"].includes(slide.headlineAlign)?slide.headlineAlign:(layout==="quote"?"center":photo?(safeColumn===0?"left":safeColumn===2?"right":"center"):(layout==="cover"||layout==="closing"?"center":"right"));
+  const composition=resolveStoryComposition(slide,layout,Boolean(photo));
+  const align=composition.align||(["right","center","left"].includes(slide.headlineAlign)?slide.headlineAlign:(layout==="quote"?"center":photo?(safeColumn===0?"left":safeColumn===2?"right":"center"):(layout==="cover"||layout==="closing"?"center":"right")));
   // Each art direction gets a deliberate Persian display face and a stable, highly legible body face.
   const serifDisplay=slide.typeTreatment==="serif"||artDirection==="editorial"||artDirection==="luxury"||layout==="quote";
   const family=serifDisplay?"Noto Naskh Arabic,serif":"Vazirmatn,sans-serif";
@@ -4804,7 +4821,8 @@ function resolveStorySlideDesign(slide,photo,index) {
   const kickerFont="700 48px "+bodyFamily;
   const matchupFont="800 76px "+bodyFamily;
   const ctaFont="800 60px "+bodyFamily;
-  const placement=slide.imagePlacement==="background"||slide.imagePlacement==="subject"?slide.imagePlacement:
+  const placement=composition.imageTreatment==="fullBleed"&&photo?"background":
+    slide.imagePlacement==="background"||slide.imagePlacement==="subject"?slide.imagePlacement:
     (photo?(layout==="cover"?"background":"subject"):"none");
   // Select text ink using the low-detail area of the actual photo.
   const photoInk=zoneBrightness>.46?"#17202b":"#ffffff";
@@ -4817,7 +4835,8 @@ function resolveStorySlideDesign(slide,photo,index) {
   return {layout,accent,family,bodyFamily,headlineFont,bodyFont,kickerFont,matchupFont,ctaFont,
     headlineLineHeight,bodyLineHeight,headlineWeight:displayWeight,bodyWeight,
     headlineColor:textColor,bodyColor,
-    align,headlineSize,textX,safeZone,safeRow,photoBrightness:bright,photoBusy:busy,placement,artDirection,imageFocus:["top","bottom","left","right","center"].includes(slide.imageFocus)?slide.imageFocus:"center",needsPanel:false};
+    align,headlineSize,textX,safeZone,safeRow,photoBrightness:bright,photoBusy:busy,placement,artDirection,composition,
+    imageFocus:["top","bottom","left","right","center"].includes(slide.imageFocus)?slide.imageFocus:"center",needsPanel:false};
 }
 function drawStorySlide(canvas, slide, index, total, renderScale = 0.5, photo = null) {
   const w=1080,h=1920,scale=Number.isFinite(renderScale)?renderScale:0.5;
@@ -4862,17 +4881,38 @@ function drawStorySlide(canvas, slide, index, total, renderScale = 0.5, photo = 
     }
     c.fillStyle=shade;c.fillRect(0,0,w,h);
   } else if(photo&&imagePlacement==="subject"){
-    const box=layout==="split"?{x:70,y:250,w:940,h:850}:layout==="cover"?{x:90,y:760,w:900,h:850}:layout==="closing"?{x:110,y:600,w:860,h:780}:{x:100,y:700,w:880,h:760};
-    roundedImage(photo,box.x,box.y,box.w,box.h,34);
-    c.strokeStyle=accent;c.lineWidth=5;c.beginPath();c.roundRect(box.x,box.y,box.w,box.h,34);c.stroke();
+    const comp=design.composition,opposite=comp.horizontal==="left"?"right":comp.horizontal==="right"?"left":comp.visualBalance==="right"?"left":"right";
+    const sideX=opposite==="left"?72:618,scale=comp.negativeSpace==="open"?.88:comp.negativeSpace==="compact"?1.08:1;
+    let box;
+    if(comp.imageTreatment==="portrait")box={x:sideX,y:300,w:390,h:1180};
+    else if(comp.imageTreatment==="landscape")box={x:90,y:comp.vertical==="lower"?260:1080,w:900,h:610};
+    else if(comp.imageTreatment==="offset")box={x:comp.visualBalance==="left"?110:comp.visualBalance==="right"?250:150,y:comp.vertical==="lower"?260:comp.vertical==="upper"?900:570,w:780,h:820};
+    else box=layout==="split"?{x:70,y:250,w:940,h:850}:layout==="cover"?{x:90,y:760,w:900,h:850}:layout==="closing"?{x:110,y:600,w:860,h:780}:{x:100,y:700,w:880,h:760};
+    if(["portrait","landscape","offset"].includes(comp.imageTreatment)){const cx=box.x+box.w/2,cy=box.y+box.h/2;box={x:cx-box.w*scale/2,y:cy-box.h*scale/2,w:box.w*scale,h:box.h*scale};}
+    roundedImage(photo,box.x,box.y,box.w,box.h,comp.imageTreatment==="portrait"?26:34);
+    c.strokeStyle=accent;c.lineWidth=comp.negativeSpace==="open"?3:5;c.beginPath();c.roundRect(box.x,box.y,box.w,box.h,comp.imageTreatment==="portrait"?26:34);c.stroke();
+  }
+  if(!photo||imagePlacement!=="background"){
+    const motif=design.composition.graphicMotif;
+    c.save();c.globalAlpha=.14;c.strokeStyle=accent;c.fillStyle=accent;c.lineWidth=8;
+    const mx=design.composition.horizontal==="left"?820:design.composition.horizontal==="right"?170:540;
+    if(motif==="arc"){c.beginPath();c.arc(mx,design.composition.vertical==="lower"?360:1510,210,Math.PI*.12,Math.PI*1.35);c.stroke();}
+    else if(motif==="rule"){c.fillRect(mx-110,design.composition.vertical==="lower"?330:1510,220,8);}
+    else if(motif==="corner"){const my=design.composition.vertical==="upper"?280:design.composition.vertical==="lower"?1510:900;c.beginPath();c.moveTo(mx-90,my-70);c.lineTo(mx+90,my-70);c.lineTo(mx+90,my+70);c.stroke();}
+    c.restore();
   }
   const drawRule=(x,y,width=130)=>{c.fillStyle=accent;c.fillRect(x,y,width,8);};
+  const textOffsetY=design.composition.verticalOffset;
+  const textAnchorX=design.composition.horizontal==="left"?115:design.composition.horizontal==="center"?540:965;
+  const textAnchorAlign=design.composition.align;
   const drawText=(text,x,y,font,color,align="right",maxWidth=860,shadow=false)=>{
+    y+=textOffsetY;x=textAnchorX;align=textAnchorAlign;
     c.save();c.direction="rtl";c.textAlign=align;c.font=font;c.fillStyle=color;
     if(shadow){c.shadowColor="rgba(0,0,0,.62)";c.shadowBlur=18;c.shadowOffsetY=3;}
     c.fillText(String(text||""),x,y,maxWidth);c.restore();
   };
   const wrap=(text,x,y,font,color,align="right",maxWidth=850,lineHeight=100,maxLines=4)=>{
+    y+=textOffsetY;x=textAnchorX;align=textAnchorAlign;
     c.save();c.direction="rtl";c.textAlign=align;c.font=font;c.fillStyle=color;
     const darkInk=textColor==="#17202b"||textColor==="#202a35"||bodyColor==="#26323d";
     c.shadowColor=photo&&imagePlacement==="background"?(darkInk?"rgba(255,255,255,.72)":"rgba(0,0,0,.62)"):"transparent";
@@ -5023,7 +5063,7 @@ improveStoryWithNavi?.addEventListener("click",()=>{
   "هر اسلاید را مثل یک پوستر یا صفحه مجله مستقل طراحی کن، اما کل مجموعه باید هویت و روایت یکپارچه داشته باشد. نسبت عکس و متن، مقیاس تیتر، محل تیتر، فضای منفی و ساختار را آگاهانه متنوع کن.",
   "اگر عکسی وجود ندارد، طرح را با گرافیک تایپوگرافیک اصیل کامل کن؛ عکس ساختگی یا ادعای وجود عکس واقعی ممنوع است.",
   "گزارش تحلیل محلی عکس‌ها:\n"+(photoContext||"هیچ عکس کاربری پیوست نشده است.")+"\n\nمحتوای مرجع:\n"+content,
-  "در فیلد reply پاسخ بیرونی NAVI، فقط یک رشته JSON معتبر و بدون Markdown قرار بده که دقیقاً این طرح داخلی را داشته باشد: {\"version\":\"nava.story.plan.v1\",\"slides\":[{\"layout\":\"cover|editorial|split|quote|details|closing\",\"kicker\":\"\",\"headline\":\"\",\"matchup\":\"\",\"body\":\"\",\"date\":\"\",\"time\":\"\",\"venue\":\"\",\"cta\":\"\",\"visual\":\"stadium|matchup|details|crowd|abstract\",\"accent\":\"#RRGGBB\",\"imageIndex\":0,\"imageRequest\":\"\",\"imagePlacement\":\"background|subject|none\",\"artDirection\":\"editorial|cinematic|poster|luxury|tech|organic|minimal|bold\",\"typeTreatment\":\"sans|serif|oversized\",\"headlineAlign\":\"right|center|left\",\"headlineColor\":\"#RRGGBB\",\"bodyColor\":\"#RRGGBB\",\"imageFocus\":\"center|top|bottom|left|right\",\"rationale\":\"\"}]}. خودت JSON داخلی را به‌صورت رشته صحیح در reply قرار بده؛ قرارداد بیرونی NAVI را تغییر نده.",
+  "در فیلد reply پاسخ بیرونی NAVI، فقط یک رشته JSON معتبر و بدون Markdown قرار بده که دقیقاً این طرح داخلی را داشته باشد: {\"version\":\"nava.story.plan.v1\",\"slides\":[{\"layout\":\"cover|editorial|split|quote|details|closing\",\"kicker\":\"\",\"headline\":\"\",\"matchup\":\"\",\"body\":\"\",\"date\":\"\",\"time\":\"\",\"venue\":\"\",\"cta\":\"\",\"visual\":\"stadium|matchup|details|crowd|abstract\",\"accent\":\"#RRGGBB\",\"imageIndex\":0,\"imageRequest\":\"\",\"imagePlacement\":\"background|subject|none\",\"artDirection\":\"editorial|cinematic|poster|luxury|tech|organic|minimal|bold\",\"typeTreatment\":\"sans|serif|oversized\",\"headlineAlign\":\"right|center|left\",\"headlineColor\":\"#RRGGBB\",\"bodyColor\":\"#RRGGBB\",\"imageFocus\":\"center|top|bottom|left|right\",\"composition\":{\"textZone\":\"upper-left|upper-center|upper-right|middle-left|middle-center|middle-right|lower-left|lower-center|lower-right\",\"imageTreatment\":\"portrait|landscape|offset|fullBleed|none\",\"visualBalance\":\"left|right|center|diagonal\",\"negativeSpace\":\"open|balanced|compact\",\"graphicMotif\":\"none|arc|rule|corner\"},\"rationale\":\"\"}]}. خودت JSON داخلی را به‌صورت رشته صحیح در reply قرار بده؛ قرارداد بیرونی NAVI را تغییر نده.",
   "برای اعلام مسابقه معمولاً ۳ اسلاید بساز: هوک و معرفی، جزئیات زمان و مکان، دعوت به تعامل. برای موضوع‌های دیگر روایت و تعداد مناسب را خودت انتخاب کن؛ حداکثر ۸ اسلاید.",
   "واقعیت‌ها، تاریخ، ساعت، نام‌ها و مکان را عیناً از ورودی بردار و چیزی اختراع نکن. متن روی تصویر کوتاه و فارسی باشد. از حافظه و گفت‌وگوهای قبلی استفاده نکن."
  ].join("\n\n");
