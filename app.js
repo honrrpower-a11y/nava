@@ -4471,7 +4471,7 @@ async function sendMessageToNavi(options = {}) {
     const threadBeforeNaming = isHomePage || options.videoPlan === true || storyPlan ? null : naviThreads.find(item => item.thread_id === naviActiveThreadId);
     const shouldNameThread = !isHomePage && threadBeforeNaming && Number(threadBeforeNaming.message_count || 0) === 0;
     if (storyPlan) {
-      window.dispatchEvent(new CustomEvent("nava:navi-reply", { detail: { service: selectedService, reply, storyPlan: true, status: "" } }));
+      window.dispatchEvent(new CustomEvent("nava:navi-reply", { detail: { service: selectedService, reply: data.storyPlan && typeof data.storyPlan === "object" ? data.storyPlan : reply, storyPlan: true, status: "" } }));
     } else if (options.videoPlan === true) {
       // Only the explicit "design/build with NAVI" flow returns a structured
       // scene plan to the video renderer. Ordinary NAVI chat is always guidance.
@@ -4707,11 +4707,14 @@ copyStory.addEventListener("click", async () => {
 });
 
 function parseNaviStoryPlan(raw) {
-  const source = String(raw || "").trim();
-  const fenced = source.match(/```(?:json)?\s*([\s\S]*?)```/i);
-  const candidate = fenced ? fenced[1].trim() : source.slice(source.indexOf("{"), source.lastIndexOf("}") + 1);
-  if (!candidate || candidate[0] !== "{") throw new Error("پاسخ NAVI ساختار طرح بصری ندارد.");
-  const plan = JSON.parse(candidate);
+  let plan = raw && typeof raw === "object" && !Array.isArray(raw) ? raw : null;
+  if (!plan) {
+    const source = String(raw || "").trim();
+    const fenced = source.match(/```(?:json)?\s*([\s\S]*?)```/i);
+    const candidate = fenced ? fenced[1].trim() : source.slice(source.indexOf("{"), source.lastIndexOf("}") + 1);
+    if (!candidate || candidate[0] !== "{") throw new Error("پاسخ NAVI ساختار طرح بصری ندارد.");
+    plan = JSON.parse(candidate);
+  }
   if (plan.version !== "nava.story.plan.v1" || !Array.isArray(plan.slides) || !plan.slides.length || plan.slides.length > 8) throw new Error("ساختار طرح استوری معتبر نیست.");
   plan.slides.forEach((slide,index)=>{if(!Array.isArray(slide.elements)||slide.elements.length<2||slide.elements.length>18)throw new Error("نقشه اجرایی اسلاید "+(index+1)+" از NAVI کامل نیست؛ طرح بصری معتبر دریافت نشد.");slide.elements.forEach(element=>{if(!element||!["text","image","shape"].includes(element.type))throw new Error("نوع یکی از عناصر طراحی اسلاید معتبر نیست.");for(const key of ["x","y","w","h"])if(!Number.isFinite(Number(element[key]))||Number(element[key])<0||Number(element[key])>100)throw new Error("مختصات یکی از عناصر طراحی معتبر نیست.");if(element.type==="text"&&!String(element.text||"").trim())throw new Error("یکی از لایه‌های متنی طراحی خالی است.");if(element.type==="image"&&(!Number.isInteger(Number(element.imageIndex))||Number(element.imageIndex)<0||Number(element.imageIndex)>storyPhotoAssets.length||(Number(element.imageIndex)===0&&!slide.imageRequest)))throw new Error("شماره عکس یکی از لایه‌های تصویری معتبر نیست.");});});
   return plan;
@@ -5152,7 +5155,7 @@ improveStoryWithNavi?.addEventListener("click",()=>{
   "هر اسلاید را مثل یک پوستر یا صفحه مجله مستقل طراحی کن، اما کل مجموعه باید هویت و روایت یکپارچه داشته باشد. نسبت عکس و متن، مقیاس تیتر، محل تیتر، فضای منفی و ساختار را آگاهانه متنوع کن.",
   "اگر عکسی وجود ندارد، طرح را با گرافیک تایپوگرافیک اصیل کامل کن؛ عکس ساختگی یا ادعای وجود عکس واقعی ممنوع است.",
   "گزارش تحلیل محلی عکس‌ها:\n"+(photoContext||"هیچ عکس کاربری پیوست نشده است.")+"\n\nمحتوای مرجع:\n"+content,
-  "در فیلد reply پاسخ بیرونی NAVI، فقط یک رشته JSON معتبر و بدون Markdown قرار بده که دقیقاً این طرح داخلی را داشته باشد: {\"version\":\"nava.story.plan.v1\",\"slides\":[{\"layout\":\"cover|editorial|split|quote|details|closing\",\"kicker\":\"\",\"headline\":\"\",\"matchup\":\"\",\"body\":\"\",\"date\":\"\",\"time\":\"\",\"venue\":\"\",\"cta\":\"\",\"visual\":\"stadium|matchup|details|crowd|abstract\",\"accent\":\"#RRGGBB\",\"imageIndex\":0,\"imageRequest\":\"\",\"imagePlacement\":\"background|subject|none\",\"artDirection\":\"editorial|cinematic|poster|luxury|tech|organic|minimal|bold\",\"typeTreatment\":\"sans|serif|oversized\",\"headlineAlign\":\"right|center|left\",\"headlineColor\":\"#RRGGBB\",\"bodyColor\":\"#RRGGBB\",\"imageFocus\":\"center|top|bottom|left|right\",\"backgroundColor\":\"#RRGGBB\",\"backgroundEndColor\":\"#RRGGBB\",\"elements\":[{\"type\":\"text|image|shape\",\"x\":0,\"y\":0,\"w\":40,\"h\":12,\"text\":\"\",\"fontRole\":\"display|body|label\",\"fontSize\":112,\"weight\":850,\"fontFamily\":\"Vazirmatn|Noto Naskh Arabic|Georgia\",\"color\":\"#RRGGBB\",\"align\":\"right|center|left\",\"maxLines\":3,\"verticalAlign\":\"top|center|bottom\",\"imageIndex\":0,\"fit\":\"cover|contain\",\"shape\":\"rect|circle|diamond|line|arc\",\"fill\":\"#RRGGBB|none\",\"stroke\":\"#RRGGBB\",\"strokeWidth\":3,\"radius\":24,\"rotation\":0,\"opacity\":1}],\"composition\":{\"textZone\":\"upper-left|upper-center|upper-right|middle-left|middle-center|middle-right|lower-left|lower-center|lower-right\",\"imageTreatment\":\"portrait|landscape|offset|fullBleed|none\",\"visualBalance\":\"left|right|center|diagonal\",\"negativeSpace\":\"open|balanced|compact\",\"graphicMotif\":\"none|arc|rule|corner\"},\"rationale\":\"\"}]}. خودت JSON داخلی را به‌صورت رشته صحیح در reply قرار بده؛ قرارداد بیرونی NAVI را تغییر نده.",
+  "قرارداد پاسخ: یک شیء JSON بیرونی با reply به‌صورت رشته کوتاه، storyPlan به‌صورت خودِ شیء JSON طرح، officeAction=null، navigation=null و memoryProposals=[] برگردان. هرگز طرح را داخل رشته reply قرار نده و JSON تو‌در‌تو نساز. storyPlan باید version=nava.story.plan.v1 و slides داشته باشد؛ هر اسلاید باید elements اجرایی از نوع text یا image یا shape با مختصات درصدی x,y,w,h، رنگ‌ها، تایپوگرافی و ترتیب لایه‌ها داشته باشد. type هر عنصر فقط یکی از text یا image یا shape باشد؛ imageIndex برای تصویر واقعی و 0 برای بدون تصویر است. خودِ storyPlan را به‌صورت object معتبر JSON تحویل بده.",
   "برای اعلام مسابقه معمولاً ۳ اسلاید بساز: هوک و معرفی، جزئیات زمان و مکان، دعوت به تعامل. برای موضوع‌های دیگر روایت و تعداد مناسب را خودت انتخاب کن؛ حداکثر ۸ اسلاید.",
   "واقعیت‌ها، تاریخ، ساعت، نام‌ها و مکان را عیناً از ورودی بردار و چیزی اختراع نکن. متن روی تصویر کوتاه و فارسی باشد. از حافظه و گفت‌وگوهای قبلی استفاده نکن."
  ].join("\n\n");
