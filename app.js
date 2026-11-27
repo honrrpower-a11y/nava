@@ -4328,7 +4328,9 @@ async function sendMessageToNavi(options = {}) {
   const promptService = officeRequestContext ? officeService : selectedService;
   const requestPage = options.pageOverride === "officePage"
     ? "officePage"
-    : officeRequestContext ? "officePage" : activePageId;
+    : options.pageOverride === "seoPage"
+      ? "seoPage"
+      : officeRequestContext ? "officePage" : activePageId;
   const resolvedRequestPage = options.storyPlan === true ? "storyPage" : requestPage;
   const activeOfficeFileInfo = officeRequestContext
     ? window.NavaOfficeTools?.getActiveFileInfo?.()
@@ -4624,6 +4626,29 @@ async function sendMessageToNavi(options = {}) {
     }
   }
 }
+
+// SEO Studio handoff: submit the real report through the authenticated NAVI request path.
+window.navaSeoNaviRequest = function({ message, context } = {}) {
+  const cleanMessage = String(message || "").trim();
+  if (!cleanMessage) return false;
+  const service = "سئو";
+  const seoContext = context && typeof context === "object" ? context : {};
+  if (!getNaviToken()) {
+    window.openNaviAssistant({ service, context: seoContext, message: cleanMessage });
+    return false;
+  }
+  if (Array.from(serviceSelect.options).some(option => option.value === service)) {
+    serviceSelect.value = service;
+  }
+  updateNaviAssistantContext(service, seoContext);
+  setNaviWidgetOpen(true, false);
+  return sendMessageToNavi({
+    pageOverride: "seoPage",
+    messageOverride: cleanMessage,
+    serviceOverride: service,
+    contextOverride: seoContext
+  });
+};
 
 sendRequest.addEventListener("click", sendMessageToNavi);
 window.navaVideoNaviRequest = function({ message, videoPlan = false, images = [] } = {}) { const cleanMessage=String(message||"").trim(); if(!cleanMessage||!getNaviToken())return false; if(Array.from(serviceSelect.options).some(option=>option.value==="ویدئو و صدا"))serviceSelect.value="ویدئو و صدا"; return sendMessageToNavi({messageOverride:cleanMessage,serviceOverride:"ویدئو و صدا",videoPlan:videoPlan===true,images:Array.isArray(images)?images.slice(0,6):[]}); };
