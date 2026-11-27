@@ -86,8 +86,8 @@ function metaContent(html, name) {
 function auditHtml(html, requestedUrl, finalUrl, status, contentType) {
   const title = cleanMarkup(html.match(/<title\b[^>]*>([\s\S]*?)<\/title>/i)?.[1] || "");
   const description = metaContent(html, "description");
-  const canonicalTag = (html.match(/<link\\b[^>]*>/gi) || []).find(tag => /\\brel\\s*=\\s*["'][^"']*canonical[^"']*["']/i.test(tag));
-  const canonicalRaw = canonicalTag?.match(/\\bhref\\s*=\\s*["']([^"']+)["']/i)?.[1] || "";
+  const canonicalTag = (html.match(/<link\b[^>]*>/gi) || []).find(tag => /\brel\s*=\s*["'][^"']*canonical[^"']*["']/i.test(tag));
+  const canonicalRaw = canonicalTag?.match(/\bhref\s*=\s*["']([^"']+)["']/i)?.[1] || "";
   let canonical = "";
   try { if (canonicalRaw) canonical = new URL(canonicalRaw, finalUrl).href; } catch { canonical = ""; }
   const lang = html.match(/<html\b[^>]*\blang\s*=\s*["']([^"']+)["']/i)?.[1] || "";
