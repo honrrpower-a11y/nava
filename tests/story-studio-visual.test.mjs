@@ -10,7 +10,7 @@ const navi = readFileSync(new URL("../modules/navi.js", import.meta.url), "utf8"
 
 test("Story Studio routes NAVI design responses to a visual renderer, not chat", () => {
   assert.match(app, /storyPlan\s*:\s*true/);
-  assert.match(app, /const requestPage = options\.storyPlan === true\s*\?\s*"storyPage"/);
+  assert.match(app, /const resolvedRequestPage = options\.storyPlan === true \? "storyPage" : requestPage/);
   assert.match(app, /if \(saveThisMessageToMemory && !storyPlan\)/);
   assert.match(app, /detail: \{ service: selectedService, reply, storyPlan: true/);
   assert.match(app, /nava\.story\.plan\.v1/);
