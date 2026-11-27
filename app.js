@@ -4903,14 +4903,16 @@ function drawStorySlide(canvas, slide, index, total, renderScale = 0.5, photo = 
   }
   const drawRule=(x,y,width=130)=>{c.fillStyle=accent;c.fillRect(x,y,width,8);};
   const textOffsetY=design.composition.verticalOffset;
+  const textAnchorX=design.composition.horizontal==="left"?115:design.composition.horizontal==="center"?540:965;
+  const textAnchorAlign=design.composition.align;
   const drawText=(text,x,y,font,color,align="right",maxWidth=860,shadow=false)=>{
-    y+=textOffsetY;
+    y+=textOffsetY;x=textAnchorX;align=textAnchorAlign;
     c.save();c.direction="rtl";c.textAlign=align;c.font=font;c.fillStyle=color;
     if(shadow){c.shadowColor="rgba(0,0,0,.62)";c.shadowBlur=18;c.shadowOffsetY=3;}
     c.fillText(String(text||""),x,y,maxWidth);c.restore();
   };
   const wrap=(text,x,y,font,color,align="right",maxWidth=850,lineHeight=100,maxLines=4)=>{
-    y+=textOffsetY;
+    y+=textOffsetY;x=textAnchorX;align=textAnchorAlign;
     c.save();c.direction="rtl";c.textAlign=align;c.font=font;c.fillStyle=color;
     const darkInk=textColor==="#17202b"||textColor==="#202a35"||bodyColor==="#26323d";
     c.shadowColor=photo&&imagePlacement==="background"?(darkInk?"rgba(255,255,255,.72)":"rgba(0,0,0,.62)"):"transparent";
