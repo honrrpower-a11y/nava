@@ -4246,6 +4246,7 @@ async function sendMessageToNavi(options = {}) {
   }
 
   const storyPlan = options.storyPlan === true;
+  const seoReport = options.seoReport === true;
   const selectedImage = options.videoPlan === true || storyPlan ? null : (naviImageInput?.files?.[0] || null);
   const visionImages = (options.videoPlan === true || storyPlan) && Array.isArray(options.images) ? options.images.slice(0, 6) : [];
   if ((options.videoPlan === true || storyPlan) && Array.isArray(options.images) && options.images.length > 6) { const message="تعداد تصاویر بیش از حد مجاز است؛ حداکثر ۶ عکس انتخاب کن."; if(storyPlan){const status=document.getElementById("storyMessage");if(status){status.textContent=message;status.classList.add("show");}}else window.dispatchEvent(new CustomEvent("nava:navi-error",{detail:{message}})); return; }
@@ -4303,13 +4304,13 @@ async function sendMessageToNavi(options = {}) {
   const selectedService = options.serviceOverride ||
     (isHomePage ? "انتخاب نشده" : serviceSelect.value);
   const contentHandoff = options.contentHandoff || (window.navaPendingContentHandoff && message.startsWith("در استودیوی تولید محتوای NAVA،") ? window.navaPendingContentHandoff : null);
-  const saveThisMessageToMemory = options.videoPlan === true || storyPlan
+  const saveThisMessageToMemory = options.videoPlan === true || storyPlan || seoReport
     ? false
     : Boolean(naviSaveComposerMessage?.checked);
   if (naviSaveComposerMessage) naviSaveComposerMessage.checked = false;
   // Home chat owns a separate persistent thread. It must never reuse the
   // dashboard/Office thread selected in the shared NAVI workspace state.
-  let requestThreadId = isHomePage || options.videoPlan === true || storyPlan ? "" : naviActiveThreadId;
+  let requestThreadId = isHomePage || options.videoPlan === true || storyPlan || seoReport ? "" : naviActiveThreadId;
 
   const contextLines = requestContext
     ? Object.entries(requestContext.context || {}).map(([key, value]) => key + ": " + value)
@@ -4367,7 +4368,7 @@ async function sendMessageToNavi(options = {}) {
   ].filter(Boolean).join("\n\n");
 
 
-  if (options.videoPlan !== true && !storyPlan) {
+  if (options.videoPlan !== true && !storyPlan && !seoReport) {
     sendRequest.disabled = true;
     sendRequest.textContent = "ناوی در حال پاسخ‌گویی...";
     setNaviStatus("پیامت ارسال شد؛ ناوی در حال بررسی آن است...");
@@ -4375,6 +4376,8 @@ async function sendMessageToNavi(options = {}) {
   } else if (storyPlan) {
     const status = document.getElementById("storyMessage");
     if (status) { status.textContent = "NAVI در حال طراحی اسلایدهاست…"; status.classList.add("show"); }
+  } else if (seoReport) {
+    window.dispatchEvent(new CustomEvent("nava:seo-status", { detail: { status: "در حال تحلیل گزارش با NAVI…" } }));
   }
 
   try {
@@ -4494,6 +4497,8 @@ async function sendMessageToNavi(options = {}) {
     const shouldNameThread = !isHomePage && threadBeforeNaming && Number(threadBeforeNaming.message_count || 0) === 0;
     if (storyPlan) {
       window.dispatchEvent(new CustomEvent("nava:navi-reply", { detail: { service: selectedService, reply: data.storyPlan && typeof data.storyPlan === "object" ? data.storyPlan : reply, storyPlan: true, status: "" } }));
+    } else if (seoReport) {
+      window.dispatchEvent(new CustomEvent("nava:seo-reply", { detail: { reply } }));
     } else if (options.videoPlan === true) {
       // Only the explicit "design/build with NAVI" flow returns a structured
       // scene plan to the video renderer. Ordinary NAVI chat is always guidance.
@@ -4511,7 +4516,7 @@ async function sendMessageToNavi(options = {}) {
       }
     }
     try {
-      if (!storyPlan) renderNaviOfficeAction(data.officeAction, { target: options.officeTarget ? "office" : "chat" });
+      if (!storyPlan && !seoReport) renderNaviOfficeAction(data.officeAction, { target: options.officeTarget ? "office" : "chat" });
       if (options.officeDiagnostic) {
         const card = document.getElementById("naviOfficeActionCard");
         const slot = document.getElementById(options.officeTarget ? "officeActionCardSlot" : "naviOfficeActionChatSlot");
@@ -4529,7 +4534,7 @@ async function sendMessageToNavi(options = {}) {
       });
       throw renderError;
     }
-    if (options.videoPlan !== true && !storyPlan) {
+    if (options.videoPlan !== true && !storyPlan && !seoReport) {
       userRequest.value = "";
       if (!isHomePage) appendLocalNaviMessages(finalMessage, reply);
       setNaviStatus("پاسخ ناوی دریافت شد.");
@@ -4542,7 +4547,7 @@ async function sendMessageToNavi(options = {}) {
         await loadNaviThreads();
       })());
     }
-    if (!isHomePage && options.videoPlan !== true && !storyPlan) backgroundJobs.push(loadNaviHistory({ silent: true }));
+    if (!isHomePage && options.videoPlan !== true && !storyPlan && !seoReport) backgroundJobs.push(loadNaviHistory({ silent: true }));
 
     const memoryResult = data.memory && typeof data.memory === "object" ? data.memory : null;
     if (memoryResult?.manualSaved || memoryResult?.manualDuplicate || memoryResult?.manualSaveError) {
@@ -4553,7 +4558,7 @@ async function sendMessageToNavi(options = {}) {
           : memoryResult.manualSaveError);
     }
 
-    if (!isHomePage && options.videoPlan !== true && !storyPlan && !naviMemoryBusy) {
+    if (!isHomePage && options.videoPlan !== true && !storyPlan && !seoReport && !naviMemoryBusy) {
       backgroundJobs.push((async () => {
         const refreshed = await loadNaviMemories(true);
         if (!refreshed || !memoryResult || !memoryResult.composerSaveRequested || memoryResult.commandRecognized) return;
@@ -4585,6 +4590,11 @@ async function sendMessageToNavi(options = {}) {
 
   } catch (error) {
     if (naviSessionVersion !== requestVersion) return;
+
+    if (seoReport) {
+      window.dispatchEvent(new CustomEvent("nava:seo-error", { detail: { message: error?.message || "ارتباط با NAVI ناموفق بود." } }));
+      return false;
+    }
 
     if (options.videoPlan === true) {
       const reason=String(error?.message||"ارتباط با NAVI ناموفق بود.").slice(0,260);
@@ -4622,30 +4632,20 @@ async function sendMessageToNavi(options = {}) {
     }
 
   } finally {
-    if (naviSessionVersion === requestVersion && options.videoPlan !== true && !storyPlan) {
+    if (naviSessionVersion === requestVersion && options.videoPlan !== true && !storyPlan && !seoReport) {
       sendRequest.disabled = false;
       sendRequest.textContent = "ارسال پیام به ناوی";
     }
   }
 }
 
-// SEO Studio handoff: submit the real report through the authenticated NAVI request path.
+// SEO Studio: use the same direct, button-triggered request pattern as Story Studio.
 window.navaSeoNaviRequest = function({ message, context } = {}) {
   const cleanMessage = String(message || "").trim();
-  if (!cleanMessage) return false;
+  if (!cleanMessage || !getNaviToken()) return false;
   const service = "سئو";
   const seoContext = context && typeof context === "object" ? context : {};
-  if (!getNaviToken()) {
-    window.openNaviAssistant({ service, context: seoContext, message: cleanMessage });
-    return false;
-  }
-  if (Array.from(serviceSelect.options).some(option => option.value === service)) {
-    serviceSelect.value = service;
-  }
-  // Keep the complete report visible in the composer as a fallback as well as passing it explicitly.
-  if (userRequest) userRequest.value = cleanMessage;
-  updateNaviAssistantContext(service, seoContext);
-  setNaviWidgetOpen(true, false);
+  if (Array.from(serviceSelect.options).some(option => option.value === service)) serviceSelect.value = service;
   return sendMessageToNavi({
     pageOverride: "seoPage",
     messageOverride: cleanMessage,
