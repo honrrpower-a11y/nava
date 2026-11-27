@@ -16,7 +16,7 @@ test("Story Studio routes NAVI design responses to a visual renderer, not chat",
 });
 
 test("Story Studio renders vertical slides and exports PNG locally", () => {
-  assert.match(app, /canvas\.width=Math\.round\(w\*scale\); canvas\.height=Math\.round\(h\*scale\)/);
+  assert.match(app, /canvas\.width=Math\.round\(w\*scale\);canvas\.height=Math\.round\(h\*scale\)/);
   assert.match(app, /drawStorySlide\(exportCanvas,slide,index,plan\.slides\.length,1,storySlideImages/);
   assert.match(app, /exportCanvas\.toBlob/);
   assert.match(app, /nava-story-/);
@@ -62,7 +62,7 @@ test("Story Studio analyzes selected photos locally and derives per-slide typogr
   assert.match(app, /design\.headlineFont/);
   assert.match(app, /design\.bodyFont/);
   assert.match(app, /needsPanel:false/);
-  assert.match(app, /Subtle shadow preserves legibility without covering any part of the uploaded image/);
+  assert.match(app, /shadowColor=photo\&\&imagePlacement==="background"/);
   assert.doesNotMatch(app, /c\.fillStyle="#07101fe8";c\.fillRect\(design\.panelX/);
   assert.match(app, /const photoAnalysis=photo\?analyzeStoryPhoto\(photo\):null/);
 });
@@ -74,6 +74,17 @@ test("Story Studio exposes photo-analysis results and uses the detected safe zon
   assert.match(app, /تحلیل عکس انجام شد/);
   assert.match(app, /safeZone/);
   assert.match(app, /count\*\.12/);
-  assert.match(app, /const textX=align==="left"\?110:align==="center"\?540:970/);
+  assert.match(app, /const textX=align==="left"\?115:align==="center"\?540:965/);
   assert.match(app, /فضای مناسب متن/);
+});
+
+test("Story Studio uses art-directed slide layouts with varied editorial compositions", () => {
+  assert.match(app, /const layouts=\["cover","editorial","split","quote","details","closing"\]/);
+  assert.match(app, /layout==="cover"/);
+  assert.match(app, /layout==="split"/);
+  assert.match(app, /layout==="quote"/);
+  assert.match(app, /layout==="details"/);
+  assert.match(app, /layout==="closing"/);
+  assert.match(navi, /layout/);
+  assert.match(navi, /layout را بی\u200cدلیل تکرار نکن/);
 });
