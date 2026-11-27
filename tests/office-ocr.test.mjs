@@ -50,7 +50,7 @@ test("Office accepts PowerPoint and Excel files and loads the local structured p
 });
 
 test("NAVI office replies expose Word and PDF export actions", () => {
-  assert.match(app, /NavaDocumentExport\?\.attach\(requestResponse,\s*service\)/);
+  assert.match(app, /NavaDocumentExport\?\.attach\(responseTarget, service\)/);
   assert.match(exporter, /typeof target\.value==="string"\?target\.value/);
   assert.match(exporter, /دریافت فایل Word/);
   assert.match(exporter, /دریافت PDF/);
