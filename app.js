@@ -4714,7 +4714,7 @@ function analyzeStoryPhoto(photo) {
     const accent="#"+[rr,gg,bb].map(v=>Math.max(0,Math.min(255,v)).toString(16).padStart(2,"0")).join("");
     const ranked=cells.map((c,i)=>({i,lum:c.lum/Math.max(1,c.n),busy:c.edge/Math.max(1,c.n)}))
       .sort((a,b)=>(a.busy*1.6+Math.abs(a.lum-.48))-(b.busy*1.6+Math.abs(b.lum-.48)));
-    const safeZone=ranked[0]?.i??4,busy=Math.min(1,cells.reduce((sum,c)=>sum+c.edge,0)/(count*2));
+    const safeZone=ranked[0]?.i??4,busy=Math.min(1,cells.reduce((sum,c)=>sum+c.edge,0)/(count*.12));
     return {brightness,saturation,busy,accent,safeZone,
       brightnessLabel:brightness<.34?"تاریک":brightness>.66?"روشن":"متعادل",
       busyLabel:busy>.42?"شلوغ":busy<.18?"خلوت":"با جزئیات متوسط"};
