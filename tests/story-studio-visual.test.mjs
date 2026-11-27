@@ -74,6 +74,17 @@ test("Story Studio exposes photo-analysis results and uses the detected safe zon
   assert.match(app, /تحلیل عکس انجام شد/);
   assert.match(app, /safeZone/);
   assert.match(app, /count\*\.12/);
-  assert.match(app, /const textX=align==="left"\?110:align==="center"\?540:970/);
+  assert.match(app, /const textX=align==="left"\?115:align==="center"\?540:965/);
   assert.match(app, /فضای مناسب متن/);
+});
+
+test("Story Studio uses art-directed slide layouts with varied editorial compositions", () => {
+  assert.match(app, /const layouts=\["cover","editorial","split","quote","details","closing"\]/);
+  assert.match(app, /layout==="cover"/);
+  assert.match(app, /layout==="split"/);
+  assert.match(app, /layout==="quote"/);
+  assert.match(app, /layout==="details"/);
+  assert.match(app, /layout==="closing"/);
+  assert.match(navi, /layout":"cover\|editorial\|split\|quote\|details\|closing/);
+  assert.match(navi, /layout را بی\u200cدلیل تکرار نکن/);
 });
