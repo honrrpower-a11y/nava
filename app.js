@@ -4471,7 +4471,7 @@ async function sendMessageToNavi(options = {}) {
     const threadBeforeNaming = isHomePage || options.videoPlan === true || storyPlan ? null : naviThreads.find(item => item.thread_id === naviActiveThreadId);
     const shouldNameThread = !isHomePage && threadBeforeNaming && Number(threadBeforeNaming.message_count || 0) === 0;
     if (storyPlan) {
-      window.dispatchEvent(new CustomEvent("nava:navi-reply", { detail: { service: selectedService, reply, storyPlan: true, status: "" } }));
+      window.dispatchEvent(new CustomEvent("nava:navi-reply", { detail: { service: selectedService, reply: data.storyPlan && typeof data.storyPlan === "object" ? data.storyPlan : reply, storyPlan: true, status: "" } }));
     } else if (options.videoPlan === true) {
       // Only the explicit "design/build with NAVI" flow returns a structured
       // scene plan to the video renderer. Ordinary NAVI chat is always guidance.
@@ -4707,11 +4707,14 @@ copyStory.addEventListener("click", async () => {
 });
 
 function parseNaviStoryPlan(raw) {
-  const source = String(raw || "").trim();
-  const fenced = source.match(/```(?:json)?\s*([\s\S]*?)```/i);
-  const candidate = fenced ? fenced[1].trim() : source.slice(source.indexOf("{"), source.lastIndexOf("}") + 1);
-  if (!candidate || candidate[0] !== "{") throw new Error("پاسخ NAVI ساختار طرح بصری ندارد.");
-  const plan = JSON.parse(candidate);
+  let plan = raw && typeof raw === "object" && !Array.isArray(raw) ? raw : null;
+  if (!plan) {
+    const source = String(raw || "").trim();
+    const fenced = source.match(/```(?:json)?\s*([\s\S]*?)```/i);
+    const candidate = fenced ? fenced[1].trim() : source.slice(source.indexOf("{"), source.lastIndexOf("}") + 1);
+    if (!candidate || candidate[0] !== "{") throw new Error("پاسخ NAVI ساختار طرح بصری ندارد.");
+    plan = JSON.parse(candidate);
+  }
   if (plan.version !== "nava.story.plan.v1" || !Array.isArray(plan.slides) || !plan.slides.length || plan.slides.length > 8) throw new Error("ساختار طرح استوری معتبر نیست.");
   plan.slides.forEach((slide,index)=>{if(!Array.isArray(slide.elements)||slide.elements.length<2||slide.elements.length>18)throw new Error("نقشه اجرایی اسلاید "+(index+1)+" از NAVI کامل نیست؛ طرح بصری معتبر دریافت نشد.");slide.elements.forEach(element=>{if(!element||!["text","image","shape"].includes(element.type))throw new Error("نوع یکی از عناصر طراحی اسلاید معتبر نیست.");for(const key of ["x","y","w","h"])if(!Number.isFinite(Number(element[key]))||Number(element[key])<0||Number(element[key])>100)throw new Error("مختصات یکی از عناصر طراحی معتبر نیست.");if(element.type==="text"&&!String(element.text||"").trim())throw new Error("یکی از لایه‌های متنی طراحی خالی است.");if(element.type==="image"&&(!Number.isInteger(Number(element.imageIndex))||Number(element.imageIndex)<0||Number(element.imageIndex)>storyPhotoAssets.length||(Number(element.imageIndex)===0&&!slide.imageRequest)))throw new Error("شماره عکس یکی از لایه‌های تصویری معتبر نیست.");});});
   return plan;
