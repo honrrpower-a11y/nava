@@ -316,7 +316,7 @@ test("assistant-style proposal text is not treated as user authorization", () =>
 test("Office-context requests are sent to the Office route even from the global NAVI chat", () => {
   assert.match(app, /const officeRequestContext =\s*requestContext\?\.service === officeService\s*\|\|\s*selectedService === officeService\s*\|\|\s*activePageId === "officePage"\s*\|\|\s*options\.pageOverride === "officePage"/);
   assert.match(app, /const requestPage = options\.pageOverride === "officePage"[\s\S]*?\? "officePage"[\s\S]*?: officeRequestContext \? "officePage" : activePageId/);
-  assert.match(app, /page: requestPage,/);
+  assert.match(app, /page: resolvedRequestPage,/);
 });
 
 test("Office form submissions route approval cards to NAVI chat while direct chat keeps its chat slot", () => {
@@ -343,7 +343,7 @@ test("Office context in the global NAVI chat consistently selects the Office rou
   assert.match(app, /const promptService = officeRequestContext \? officeService : selectedService/);
   assert.match(app, /officeRequestContext\s*\? "راهنمای اجرای Office:/);
   assert.match(app, /const requestPage = options\.pageOverride === "officePage"[\s\S]*?\? "officePage"[\s\S]*?: officeRequestContext \? "officePage" : activePageId/);
-  assert.match(app, /page: requestPage,/);
+  assert.match(app, /page: resolvedRequestPage,/);
 });
 
 test("Office approval card can render in NAVI chat without requiring the hidden Office host", () => {

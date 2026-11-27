@@ -4312,6 +4312,7 @@ async function sendMessageToNavi(options = {}) {
   const requestPage = options.pageOverride === "officePage"
     ? "officePage"
     : officeRequestContext ? "officePage" : activePageId;
+  const resolvedRequestPage = options.storyPlan === true ? "storyPage" : requestPage;
   const activeOfficeFileInfo = officeRequestContext
     ? window.NavaOfficeTools?.getActiveFileInfo?.()
     : null;
@@ -4322,7 +4323,7 @@ async function sendMessageToNavi(options = {}) {
       ? "شیت‌های فایل فعال (از فایل بارگذاری‌شده): " + JSON.stringify(activeOfficeFileInfo.sheetNames)
       : "";
   if (options.officeDiagnostic && naviOwnerVerified === true) updateOfficeActionDiagnostic("درخواست آماده ارسال", {
-    page: requestPage,
+    page: resolvedRequestPage,
     service: selectedService,
     messageCharacters: message.length,
     contextPresent: Boolean(requestContext)
@@ -4367,7 +4368,7 @@ async function sendMessageToNavi(options = {}) {
       },
       body: JSON.stringify({
         message: finalMessage,
-        page: options.videoPlan === true ? "avPage" : requestPage,
+        page: options.videoPlan === true ? "avPage" : resolvedRequestPage,
         videoPlan: options.videoPlan === true,
         storyPlan,
         videoEditorMode: videoEditorMode && options.videoPlan !== true,
@@ -4445,7 +4446,7 @@ async function sendMessageToNavi(options = {}) {
 
     // Give explicit, visible feedback whenever the user checked the
     // composer save option. Do not silently treat a missing result as success.
-    if (saveThisMessageToMemory) {
+    if (saveThisMessageToMemory && !storyPlan) {
       const manualMemory = data.memory && typeof data.memory === "object"
         ? data.memory
         : null;
