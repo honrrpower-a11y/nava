@@ -4395,7 +4395,8 @@ async function sendMessageToNavi(options = {}) {
         pageTab: document.querySelector("#bizPage .biz-tab.is-active")?.dataset.bizTab || "",
         businessId: document.querySelector("#bizProfileSelect")?.value || "",
         threadId: requestThreadId,
-        isolatedContext: isHomePage || options.videoPlan === true || storyPlan,
+        isolatedContext: isHomePage || options.videoPlan === true || storyPlan || options.seoReport === true,
+        seoReport: options.seoReport === true,
         saveToMemory: saveThisMessageToMemory,
         history: isHomePage || options.videoPlan === true || storyPlan ? [] : naviHistory.slice(-NAVI_CONTEXT_MESSAGES),
         image: visionImage,
@@ -4649,7 +4650,8 @@ window.navaSeoNaviRequest = function({ message, context } = {}) {
     pageOverride: "seoPage",
     messageOverride: cleanMessage,
     serviceOverride: service,
-    contextOverride: seoContext
+    contextOverride: seoContext,
+    seoReport: true
   });
 };
 
