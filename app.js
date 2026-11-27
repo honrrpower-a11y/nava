@@ -4809,7 +4809,7 @@ function drawStorySlide(canvas, slide, index, total, renderScale = 0.5, photo = 
     c.fillStyle=g;c.fillRect(0,0,w,h);
   };
   const direction=design.artDirection;
-  const lightLayout=layout==="editorial"||direction==="editorial"||direction==="organic"||direction==="minimal";
+  const lightLayout=direction==="editorial"||direction==="organic"||direction==="minimal";
   const palettes={luxury:["#100e0b","#251b10"],tech:["#071c2b","#030812"],bold:["#2a0d19","#09060a"],poster:["#17102b","#080710"],cinematic:["#101827","#050912"],editorial:["#f0ece3","#d9d2c5"],organic:["#e9eee5","#c9d8c6"],minimal:["#f3f4f2","#dfe3e0"]};
   const palette=palettes[direction]||palettes.cinematic;
   gradient(palette[0],palette[1]);
