@@ -125,6 +125,20 @@ test("Story Studio enforces phone-readable type sizes and WCAG contrast for gene
 });
 
 
+test("Story Studio applies art-direction typography profiles and Persian-safe role hierarchy", () => {
+  assert.match(app, /const serifDisplay=slide\.typeTreatment==="serif"\|\|artDirection==="editorial"\|\|artDirection==="luxury"\|\|layout==="quote"/);
+  assert.match(app, /const bodyFamily="Vazirmatn,sans-serif"/);
+  assert.match(app, /const displayWeight=artDirection==="bold"\|\|artDirection==="poster"\|\|artDirection==="tech"\?900/);
+  assert.match(app, /headlineLineHeight=serifDisplay\?142:132/);
+  assert.match(app, /bodyLineHeight=bodySize>=68\?96:90/);
+  assert.match(app, /design\.headlineLineHeight/);
+  assert.match(app, /design\.bodyLineHeight/);
+  assert.match(app, /design\.matchupFont/);
+  assert.match(navi, /فونت نستعلیق یا خوشنویسی را برای متن اطلاعاتی و بدنه انتخاب نکن/);
+  assert.match(navi, /در یک مجموعه، خانواده فونت‌ها هماهنگ بماند/);
+  assert.match(html, /Vazirmatn:wght@400;600;700;800;900/);
+});
+
 test("Story Studio protects selected typography colors against low contrast and photo highlights", () => {
   assert.match(app, /const contrastSurface=photoBackground\?/);
   assert.match(app, /rgba\(3,8,18,\.28\)/);
