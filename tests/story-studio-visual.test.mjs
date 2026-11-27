@@ -23,7 +23,7 @@ test("Story Studio renders vertical slides and exports PNG locally", () => {
   assert.match(css, /\.story-visual-canvas/);
 });
 
-test("Story design requests are isolated from chat history and memory", () => {
+test("NAVI can request optional user photos per slide and the renderer uses them in preview and PNG", () => {\n  assert.match(app, /imageRequest/);\n  assert.match(app, /imagePlacement/);\n  assert.match(app, /story-image-upload/);\n  assert.match(app, /storySlideImages/);\n  assert.match(navi, /عکس اختیاری است؛ طرح باید بدون آن کامل بماند/);\n  assert.match(css, /\\.story-image-request/);\n});\n\ntest("Story design requests are isolated from chat history and memory", () => {
   assert.match(app, /isolatedContext: isHomePage \|\| options\.videoPlan === true \|\| storyPlan/);
   assert.match(app, /saveThisMessageToMemory = options\.videoPlan === true \|\| storyPlan/);
   assert.match(app, /history: isHomePage \|\| options\.videoPlan === true \|\| storyPlan \? \[\]/);
