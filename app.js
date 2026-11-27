@@ -4769,7 +4769,10 @@ function resolveStorySlideDesign(slide,photo,index) {
   const surface=lightLayout?"#f0ece3":"#101827";
   const fallbackAccent=lightLayout?"#80520d":"#f2c66d";
   const requestedAccent=/^#[0-9a-f]{6}$/i.test(slide.accent||"")?slide.accent:(photo&&photo.saturation>.1?photo.accent:fallbackAccent);
-  const accent=storyReadableColor(requestedAccent,fallbackAccent,surface,3);
+  const photoBackground=Boolean(photo&&(slide.imagePlacement==="background"||(slide.imagePlacement!=="subject"&&layout==="cover")));
+  const zoneBrightness=photo?.zoneBrightness??photo?.brightness??.42;
+  const contrastSurface=photoBackground?(zoneBrightness>.46?"#f0ece3":"#101827"):surface;
+  const accent=storyReadableColor(requestedAccent,fallbackAccent,contrastSurface,3);
   const safeZone=photo?.safeZone??4,safeColumn=safeZone%3,safeRow=Math.floor(safeZone/3);
   const align=["right","center","left"].includes(slide.headlineAlign)?slide.headlineAlign:(layout==="quote"?"center":photo?(safeColumn===0?"left":safeColumn===2?"right":"center"):(layout==="cover"||layout==="closing"?"center":"right"));
   const family=slide.typeTreatment==="serif"||layout==="editorial"||layout==="quote"?"Noto Naskh Arabic,serif":"Vazirmatn,sans-serif";
@@ -4779,11 +4782,10 @@ function resolveStorySlideDesign(slide,photo,index) {
   const placement=slide.imagePlacement==="background"||slide.imagePlacement==="subject"?slide.imagePlacement:
     (photo?(layout==="cover"?"background":"subject"):"none");
   // Select text ink using the low-detail area of the actual photo.
-  const photoBackground=Boolean(photo&&placement==="background");
-  const zoneBrightness=photo?.zoneBrightness??photo?.brightness??.42;
   const photoInk=zoneBrightness>.46?"#17202b":"#ffffff";
   const preferredInk=photoBackground?photoInk:(lightLayout?"#202a35":"#ffffff");
   const preferredBody=photoBackground?(zoneBrightness>.46?"#26323d":"#f6f7fa"):(lightLayout?"#3d4852":"#f6f7fa");
+  // NAVI-selected ink is accepted only when it passes contrast against the actual art-direction surface.
   const textColor=photoBackground?preferredInk:storyReadableColor(slide.headlineColor,preferredInk,surface,4.5);
   const bodyColor=photoBackground?preferredBody:storyReadableColor(slide.bodyColor,preferredBody,surface,4.5);
   const textX=align==="left"?115:align==="center"?540:965;
@@ -4818,8 +4820,8 @@ function drawStorySlide(canvas, slide, index, total, renderScale = 0.5, photo = 
   const palettes={luxury:["#100e0b","#251b10"],tech:["#071c2b","#030812"],bold:["#2a0d19","#09060a"],poster:["#17102b","#080710"],cinematic:["#101827","#050912"],editorial:["#f0ece3","#d9d2c5"],organic:["#e9eee5","#c9d8c6"],minimal:["#f3f4f2","#dfe3e0"]};
   const palette=palettes[direction]||palettes.cinematic;
   gradient(palette[0],palette[1]);
-  const ink=lightLayout?"#202a35":design.headlineColor;
-  const secondary=lightLayout?"#4d5964":design.bodyColor;
+  const ink=storyReadableColor(design.headlineColor,lightLayout?"#202a35":"#ffffff",lightLayout?(direction==="organic"?"#e9eee5":direction==="minimal"?"#f3f4f2":"#f0ece3"):"#101827",4.5);
+  const secondary=storyReadableColor(design.bodyColor,lightLayout?"#3d4852":"#f6f7fa",lightLayout?(direction==="organic"?"#e9eee5":direction==="minimal"?"#f3f4f2":"#f0ece3"):"#101827",4.5);
   const imagePlacement=design.placement;
   if(photo&&imagePlacement==="background"){
     const crop=cropSource(photo,w,h,design.imageFocus);
@@ -4828,9 +4830,11 @@ function drawStorySlide(canvas, slide, index, total, renderScale = 0.5, photo = 
     const darkInk=design.headlineColor==="#17202b";
     const shade=c.createLinearGradient(0,safeTop?0:h*.35,0,safeTop?h*.72:h);
     if(darkInk){
-      shade.addColorStop(0,"rgba(255,255,255,.02)");shade.addColorStop(.48,"rgba(255,255,255,.08)");shade.addColorStop(1,"rgba(255,255,255,.18)");
+      // Broad, soft light veil keeps dark type readable even when the photo has local highlights.
+      shade.addColorStop(0,"rgba(255,255,255,.28)");shade.addColorStop(.48,"rgba(255,255,255,.42)");shade.addColorStop(1,"rgba(255,255,255,.58)");
     }else{
-      shade.addColorStop(0,"rgba(3,8,18,.04)");shade.addColorStop(.48,"rgba(3,8,18,.20)");shade.addColorStop(1,"rgba(3,8,18,.78)");
+      // Darken the photo progressively without a solid panel; the text keeps a stable contrast floor.
+      shade.addColorStop(0,"rgba(3,8,18,.28)");shade.addColorStop(.48,"rgba(3,8,18,.48)");shade.addColorStop(1,"rgba(3,8,18,.68)");
     }
     c.fillStyle=shade;c.fillRect(0,0,w,h);
   } else if(photo&&imagePlacement==="subject"){
