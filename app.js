@@ -4904,22 +4904,81 @@ function drawStorySlide(canvas, slide, index, total, renderScale = 0.5, photo = 
 function renderNaviStoryPlan(plan) {
   const host=document.getElementById("storyVisualSlides"),status=document.getElementById("storyMessage");if(!host)return;
   clearStorySlideImages();host.replaceChildren();host.hidden=false;
-  plan.slides.forEach((slide,index)=>{const imageIndex=Number(slide.imageIndex);const source=Number.isInteger(imageIndex)&&imageIndex>=1&&imageIndex<=storyPhotoAssets.length?storyPhotoAssets[imageIndex-1]:null;if(source)storySlideImages.set(index,{image:source.image,url:null,analysis:analyzeStoryPhoto(source.image)});});
+  plan.slides.forEach((slide,index)=>{
+    const imageIndex=Number(slide.imageIndex);
+    const source=Number.isInteger(imageIndex)&&imageIndex>=1&&imageIndex<=storyPhotoAssets.length?storyPhotoAssets[imageIndex-1]:null;
+    if(source)storySlideImages.set(index,{image:source.image,url:null,analysis:analyzeStoryPhoto(source.image)});
+    else slide.imageIndex=0;
+  });
   const rawPreview=document.getElementById("previewText");if(rawPreview)rawPreview.hidden=true;
-  plan.slides.forEach((slide,index)=>{const card=document.createElement("article");card.className="story-visual-card";const heading=document.createElement("h3");heading.textContent="اسلاید "+(index+1);const canvas=document.createElement("canvas");canvas.className="story-visual-canvas";canvas.setAttribute("role","img");canvas.setAttribute("aria-label",String(slide.headline||slide.title||"پیش‌نمایش استوری"));drawStorySlide(canvas,slide,index,plan.slides.length,0.5,storySlideImages.get(index)?.image||null);const actions=document.createElement("div");actions.className="story-visual-actions";const button=document.createElement("button");button.type="button";button.className="btn-primary";button.textContent="دریافت تصویر PNG";button.addEventListener("click",()=>{const exportCanvas=document.createElement("canvas");drawStorySlide(exportCanvas,slide,index,plan.slides.length,1,storySlideImages.get(index)?.image||null);exportCanvas.toBlob(blob=>{if(!blob){if(status)status.textContent="ساخت PNG در این مرورگر ممکن نشد.";exportCanvas.width=0;exportCanvas.height=0;return;}const url=URL.createObjectURL(blob),link=document.createElement("a");link.href=url;link.download="nava-story-"+(index+1)+".png";link.click();setTimeout(()=>URL.revokeObjectURL(url),1500);exportCanvas.width=0;exportCanvas.height=0;},"image/png");});card.append(heading,canvas);actions.append(button);
+  plan.slides.forEach((slide,index)=>{
+    const card=document.createElement("article");card.className="story-visual-card";
+    const heading=document.createElement("h3");heading.textContent="اسلاید "+(index+1);
+    const canvas=document.createElement("canvas");canvas.className="story-visual-canvas";canvas.setAttribute("role","img");canvas.setAttribute("aria-label",String(slide.headline||slide.title||"پیش‌نمایش استوری"));
+    drawStorySlide(canvas,slide,index,plan.slides.length,0.5,storySlideImages.get(index)?.image||null);
+    const actions=document.createElement("div");actions.className="story-visual-actions";
+    const button=document.createElement("button");button.type="button";button.className="btn-primary";button.textContent="دریافت تصویر PNG";
+    button.addEventListener("click",()=>{
+      const exportCanvas=document.createElement("canvas");drawStorySlide(exportCanvas,slide,index,plan.slides.length,1,storySlideImages.get(index)?.image||null);
+      exportCanvas.toBlob(blob=>{
+        if(!blob){if(status)status.textContent="ساخت PNG در این مرورگر ممکن نشد.";exportCanvas.width=0;exportCanvas.height=0;return;}
+        const url=URL.createObjectURL(blob),link=document.createElement("a");link.href=url;link.download="nava-story-"+(index+1)+".png";link.click();setTimeout(()=>URL.revokeObjectURL(url),1500);exportCanvas.width=0;exportCanvas.height=0;
+      },"image/png");
+    });
+    card.append(heading,canvas);
+    const imagePanel=document.createElement("div");imagePanel.className="story-image-request";
+    const imageLabel=document.createElement("label");imageLabel.className="story-image-select-label";imageLabel.textContent="تصویر این اسلاید";
+    const imageSelect=document.createElement("select");imageSelect.className="story-image-select";imageSelect.setAttribute("aria-label","انتخاب تصویر برای اسلاید "+(index+1));
+    const noneOption=document.createElement("option");noneOption.value="0";noneOption.textContent="بدون عکس";imageSelect.append(noneOption);
+    storyPhotoAssets.forEach((asset,assetIndex)=>{const option=document.createElement("option");option.value=String(assetIndex+1);option.textContent="عکس "+(assetIndex+1)+(asset.file?.name?" — "+asset.file.name:"");imageSelect.append(option);});
+    imageSelect.value=String(Number(slide.imageIndex)||0);
+    const imageFeedback=document.createElement("span");imageFeedback.className="story-image-feedback";imageFeedback.textContent="می‌توانی یک عکس را برای چند اسلاید انتخاب کنی یا هر اسلاید را بدون عکس بگذاری.";
+    imageSelect.addEventListener("change",()=>{
+      const selected=Number(imageSelect.value),old=storySlideImages.get(index);
+      if(old?.url)URL.revokeObjectURL(old.url);
+      if(selected===0){
+        storySlideImages.delete(index);slide.imageIndex=0;slide.imagePlacement="none";
+        drawStorySlide(canvas,slide,index,plan.slides.length);imageFeedback.textContent="این اسلاید بدون عکس طراحی می‌شود.";
+        return;
+      }
+      const source=storyPhotoAssets[selected-1];if(!source){imageSelect.value="0";return;}
+      storySlideImages.set(index,{image:source.image,url:null,analysis:analyzeStoryPhoto(source.image)});
+      slide.imageIndex=selected;if(slide.imagePlacement==="none")slide.imagePlacement=slide.layout==="cover"?"background":"subject";
+      drawStorySlide(canvas,slide,index,plan.slides.length,0.5,source.image);
+      imageFeedback.textContent="عکس "+selected+" برای این اسلاید انتخاب شد؛ می‌توانی همین عکس را در اسلایدهای دیگر هم انتخاب کنی.";
+    });
+    imageLabel.append(imageSelect);imagePanel.append(imageLabel,imageFeedback);card.append(imagePanel);
     const imageRequest=String(slide.imageRequest||"").trim().slice(0,240);
     if(imageRequest&&slide.imagePlacement!=="none"){
       const panel=document.createElement("div");panel.className="story-image-request";
       const request=document.createElement("p");request.textContent="تصویر پیشنهادی NAVI: "+imageRequest;
-      const label=document.createElement("label");label.className="story-image-upload-label";label.textContent="انتخاب عکس از گوشی";
+      const label=document.createElement("label");label.className="story-image-upload-label";label.textContent="انتخاب عکس دیگر از گوشی";
       const input=document.createElement("input");input.type="file";input.accept="image/jpeg,image/png,image/webp,image/avif";input.className="story-image-upload";
-      const feedback=document.createElement("span");feedback.className="story-image-feedback";feedback.textContent="اختیاری است؛ بدون عکس هم می‌توانی ادامه بدهی.";
-      input.addEventListener("change",()=>{const file=input.files?.[0];if(!file)return;if(!/^image\/(jpeg|png|webp|avif)$/i.test(file.type)||file.size>12*1024*1024){feedback.textContent="فقط عکس JPG، PNG، WebP یا AVIF تا حجم ۱۲ مگابایت انتخاب کن.";input.value="";return;}const url=URL.createObjectURL(file),image=new Image();image.onload=()=>{const old=storySlideImages.get(index);if(old?.url)URL.revokeObjectURL(old.url);const analysis=analyzeStoryPhoto(image);storySlideImages.set(index,{image,url,analysis});drawStorySlide(canvas,slide,index,plan.slides.length,0.5,image);const zone=["بالا-چپ","بالا-وسط","بالا-راست","میانه-چپ","مرکز","میانه-راست","پایین-چپ","پایین-وسط","پایین-راست"][analysis.safeZone]||"مرکز";feedback.textContent="تحلیل عکس انجام شد: نور "+analysis.brightnessLabel+"؛ شلوغی "+analysis.busyLabel+"؛ رنگ غالب "+analysis.accent+"؛ فضای مناسب متن: "+zone+". طراحی اسلاید براساس این ویژگی‌ها تنظیم شد.";};image.onerror=()=>{URL.revokeObjectURL(url);feedback.textContent="خواندن تصویر ناموفق بود؛ عکس دیگری انتخاب کن.";};image.src=url;feedback.textContent="در حال آماده‌سازی عکس…";});
-      const skip=document.createElement("button");skip.type="button";skip.className="story-image-skip";skip.textContent="بدون عکس ادامه بده";skip.addEventListener("click",()=>{const old=storySlideImages.get(index);if(old?.url)URL.revokeObjectURL(old.url);storySlideImages.delete(index);input.value="";drawStorySlide(canvas,slide,index,plan.slides.length);feedback.textContent="این اسلاید بدون عکس ادامه پیدا می‌کند.";});
+      const feedback=document.createElement("span");feedback.className="story-image-feedback";feedback.textContent="اختیاری است؛ می‌توانی عکس پیشنهادی را نادیده بگیری.";
+      input.addEventListener("change",()=>{
+        const file=input.files?.[0];if(!file)return;
+        if(!/^image\/(jpeg|png|webp|avif)$/i.test(file.type)||file.size>12*1024*1024){feedback.textContent="فقط عکس JPG، PNG، WebP یا AVIF تا حجم ۱۲ مگابایت انتخاب کن.";input.value="";return;}
+        const url=URL.createObjectURL(file),image=new Image();
+        image.onload=()=>{
+          const old=storySlideImages.get(index);if(old?.url)URL.revokeObjectURL(old.url);
+          const analysis=analyzeStoryPhoto(image);storySlideImages.set(index,{image,url,analysis});slide.imageIndex=0;
+          if(slide.imagePlacement==="none")slide.imagePlacement=slide.layout==="cover"?"background":"subject";
+          const customOption=Array.from(imageSelect.options).find(option=>option.value==="custom");
+          if(!customOption){const option=document.createElement("option");option.value="custom";option.textContent="عکس اختصاصی این اسلاید";imageSelect.append(option);}
+          imageSelect.value="custom";drawStorySlide(canvas,slide,index,plan.slides.length,0.5,image);
+          const zone=["بالا-چپ","بالا-وسط","بالا-راست","میانه-چپ","مرکز","میانه-راست","پایین-چپ","پایین-وسط","پایین-راست"][analysis.safeZone]||"مرکز";
+          feedback.textContent="عکس اختصاصی انتخاب شد؛ فضای مناسب متن: "+zone+".";
+        };
+        image.onerror=()=>{URL.revokeObjectURL(url);feedback.textContent="خواندن تصویر ناموفق بود؛ عکس دیگری انتخاب کن.";};
+        image.src=url;feedback.textContent="در حال آماده‌سازی عکس…";
+      });
+      const skip=document.createElement("button");skip.type="button";skip.className="story-image-skip";skip.textContent="بدون عکس ادامه بده";
+      skip.addEventListener("click",()=>{const old=storySlideImages.get(index);if(old?.url)URL.revokeObjectURL(old.url);storySlideImages.delete(index);slide.imageIndex=0;slide.imagePlacement="none";imageSelect.value="0";input.value="";drawStorySlide(canvas,slide,index,plan.slides.length);feedback.textContent="این اسلاید بدون عکس ادامه پیدا می‌کند.";});
       label.append(input);panel.append(request,label,skip,feedback);card.append(panel);
     }
-    card.append(actions);host.append(card);});
-  if(status){status.textContent="پیش‌نمایش بصری "+plan.slides.length+" اسلاید آماده شد؛ هر اسلاید با کیفیت ۱۰۸۰×۱۹۲۰ قابل دریافت است.";status.classList.add("show");}
+    actions.append(button);card.append(actions);host.append(card);
+  });
+  if(status){status.textContent="پیش‌نمایش بصری "+plan.slides.length+" اسلاید آماده شد؛ می‌توانی عکس هر اسلاید را جداگانه تغییر بدهی یا بدون عکس بگذاری.";status.classList.add("show");}
 }
 window.addEventListener("nava:navi-reply",event=>{if(!event.detail?.storyPlan)return;try{renderNaviStoryPlan(parseNaviStoryPlan(event.detail.reply));}catch(error){const status=document.getElementById("storyMessage");if(status){status.textContent=error.message||"طرح استوری قابل نمایش نیست.";status.classList.add("show");}}});
 improveStoryWithNavi?.addEventListener("click",()=>{
@@ -4930,7 +4989,7 @@ improveStoryWithNavi?.addEventListener("click",()=>{
  const photoContext=storyPhotoAssets.map((item,index)=>(index+1)+". "+item.file.name+"\n"+item.analysis.report).join("\n\n");
  const message=[
   "تو مدیر هنری، عکاس تبلیغاتی و طراح گرافیک یک استودیوی حرفه‌ای هستی. عکس‌های پیوست‌شده را واقعاً ببین؛ گزارش محلی فقط مکمل است.",
-  "هر عکس را جداگانه از نظر سوژه، محیط، حس، ترکیب‌بندی، نور، رنگ، فضای منفی و امکان برش بررسی کن؛ سپس ارتباط تصاویر را بفهم و برای هر اسلاید مستقل تصمیم بگیر عکس لازم است یا نه؛ imageIndex=0 یعنی همان اسلاید بدون عکس طراحی شود. اگر فقط یک عکس انتخاب شده، آن را پیش‌فرض فقط در مناسب‌ترین اسلاید به کار ببر و آن را در همه اسلایدها تکرار نکن مگر کاربر صریحاً بخواهد. عکس نامرتبط را فقط برای مصرف‌کردن وارد نکن.",
+  "هر عکس را جداگانه از نظر سوژه، محیط، حس، ترکیب‌بندی، نور، رنگ، فضای منفی و امکان برش بررسی کن؛ سپس ارتباط تصاویر را بفهم و برای هر اسلاید مستقل تصمیم بگیر عکس لازم است یا نه؛ imageIndex=0 یعنی همان اسلاید بدون عکس طراحی شود. استفاده از یک عکس در چند اسلاید کاملاً مجاز است؛ اگر از نظر روایت و طراحی مناسب است، همان عکس را در چند اسلاید تکرار کن. برای هر اسلاید مستقل تصمیم بگیر و imageIndex=0 را برای اسلاید بدون عکس به کار ببر. عکس نامرتبط را فقط برای مصرف‌کردن وارد نکن.",
   "برای هر اسلاید تصمیم طراحی اجرایی و مستقل بده: layout، artDirection، typeTreatment، headlineAlign، headlineColor، bodyColor، accent، imagePlacement، imageFocus و imageIndex. برای اسلاید بدون عکس imageIndex=0 و imagePlacement=none باشد. این تصمیم‌ها باید با عکس و محتوای واقعی هماهنگ باشند، نه قالب و رنگ ثابت.",
   "ترکیب‌بندی حرفه‌ای یعنی سلسله‌مراتب واضح، نقطه تمرکز واحد، فضای خالی کنترل‌شده، کنتراست دقیق، تایپوگرافی متناسب با شخصیت محتوا و تنوع هدفمند. از کارت‌های تکراری، پنل مات روی عکس، قاب‌های بی‌دلیل، متن طولانی و چند تیتر هم‌وزن پرهیز کن.",
   "هر اسلاید را مثل یک پوستر یا صفحه مجله مستقل طراحی کن، اما کل مجموعه باید هویت و روایت یکپارچه داشته باشد. نسبت عکس و متن، مقیاس تیتر، محل تیتر، فضای منفی و ساختار را آگاهانه متنوع کن.",
