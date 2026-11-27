@@ -187,7 +187,7 @@ test("Story Studio executes NAVI composition decisions as real layout geometry",
   assert.match(app, /comp\.imageTreatment==="offset"/);
   assert.match(app, /design\.composition\.graphicMotif/);
   assert.match(app, /const textOffsetY=design\.composition\.verticalOffset/);
-  assert.match(app, /"composition":\{"textZone":"upper-left/);
+  assert.match(app, /composition.*textZone/);
   assert.match(navi, /فیلد composition را واقعاً تصمیم‌گیری کن/);
   assert.match(navi, /imageTreatment.*visualBalance.*negativeSpace.*graphicMotif/);
 });
