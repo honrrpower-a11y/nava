@@ -53,18 +53,10 @@
         task: "اولویت‌بندی گزارش واقعی و تدوین برنامه اصلاح سئو",
         brief: "گزارش صفحه: " + report.finalUrl + "\n" + summary
       };
-      const token = window.NAVA_SEO_CONFIG?.getToken?.();
-      if (!token) {
-        window.openNaviAssistant?.({ service: "سئو", context, message });
-        return;
-      }
-      window.openNaviAssistant?.({ service: "سئو", context, message });
-      if (typeof window.sendMessageToNavi === "function") {
-        window.sendMessageToNavi({
-          messageOverride: message,
-          serviceOverride: "سئو",
-          contextOverride: context
-        });
+      if (typeof window.navaSeoNaviRequest === "function") {
+        window.navaSeoNaviRequest({ message, context });
+      } else {
+        setText(byId("seoAuditStatus"), "مسیر ارسال گزارش به NAVI بارگذاری نشده است. صفحه را تازه‌سازی کن و دوباره تلاش کن.");
       }
     };
     byId("seoDownloadReport").onclick = () => {
