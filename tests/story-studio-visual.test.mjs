@@ -23,7 +23,7 @@ test("Story Studio renders vertical slides and exports PNG locally", () => {
   assert.match(app, /exportCanvas\.toBlob/);
   assert.match(app, /nava-story-/);
   assert.match(html, /id="storyVisualSlides"/);
-  assert.match(html, /story=reply-contract-20261127-1/);
+  assert.match(html, /story=navi-freeform-scene-graph-20261127-1/);
   assert.match(css, /\.story-visual-canvas/);
 });
 
@@ -202,4 +202,15 @@ test("Story Studio measures and separates text blocks to prevent collisions", ()
   assert.match(app, /const blockHeight=Math\.max\(lineHeight,visible\.length\*lineHeight\)/);
   assert.match(app, /kickerFont="900 54px "\+family/);
   assert.match(app, /bodyFont=bodyWeight\+" "\+bodySize\+"px "\+bodyFamily/);
+});
+
+
+test("Story Studio executes NAVI-authored freeform scene graphs instead of choosing fixed templates", () => {
+  assert.match(app, /function drawNaviArtDirectedStorySlide\(canvas,slide,renderScale=0\.5,fallbackPhoto=null\)/);
+  assert.match(app, /if\(Array\.isArray\(slide\.elements\)&&slide\.elements\.length\)return drawNaviArtDirectedStorySlide/);
+  assert.match(app, /plan\.slides\.forEach\(\(slide,index\)=>\{if\(!Array\.isArray\(slide\.elements\)/);
+  assert.match(app, /item\.type==="shape"/);
+  assert.match(app, /item\.type==="image"/);
+  assert.match(app, /item\.type==="text"/);
+  assert.match(navi, /کلید elements اجباری است/);
 });
