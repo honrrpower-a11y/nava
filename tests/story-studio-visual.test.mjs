@@ -247,10 +247,10 @@ test("Story Studio preserves the complete content-studio output as an authoritat
   assert.equal(normalized.sourceReply, sourceReply);
   assert.equal(normalized.format, "پست اسلایدی");
   assert.equal(normalizeNaviStoryBrief({ source: "other", sourceReply }), null);
-  assert.match(app, /window\\.navaPendingStoryBrief = \\{/);
-  assert.match(app, /storyBrief: storyPlan && options\\.storyBrief/);
-  assert.match(app, /storyBrief,images:storyPhotoVisionImages/);
-  assert.match(navi, /normalizeNaviStoryBrief\\(input\\.storyBrief\\)/);
+  assert.ok(app.includes("window.navaPendingStoryBrief = {"));
+  assert.ok(app.includes("storyBrief: storyPlan && options.storyBrief"));
+  assert.ok(app.includes("storyBrief,images:storyPhotoVisionImages"));
+  assert.ok(navi.includes("normalizeNaviStoryBrief(input.storyBrief)"));
   assert.match(navi, /منبع ساختاریافته و اصلی/);
   assert.match(navi, /یادداشت کوتاه فعلی کاربر فقط توضیح تکمیلی است/);
 });
