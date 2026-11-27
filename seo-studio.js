@@ -86,7 +86,8 @@
       setText(state, "اتصال NAVI بارگذاری نشد.");
       throw new Error("اتصال NAVI در دسترس نیست؛ گزارش بررسی شد اما به ناوی ارسال نشد.");
     }
-    await window.navaSeoNaviRequest({ message, context });
+    const sent = await window.navaSeoNaviRequest({ message, context });
+    if (sent === false) throw new Error("گزارش بررسی شد، اما ارسال خودکار به NAVI انجام نشد. نشست ورود را بررسی کن.");
     setText(state, "ارسال شد");
   }
 
