@@ -4967,7 +4967,7 @@ function renderNaviStoryPlan(plan) {
           if(!customOption){const option=document.createElement("option");option.value="custom";option.textContent="عکس اختصاصی این اسلاید";imageSelect.append(option);}
           imageSelect.value="custom";drawStorySlide(canvas,slide,index,plan.slides.length,0.5,image);
           const zone=["بالا-چپ","بالا-وسط","بالا-راست","میانه-چپ","مرکز","میانه-راست","پایین-چپ","پایین-وسط","پایین-راست"][analysis.safeZone]||"مرکز";
-          feedback.textContent="عکس اختصاصی انتخاب شد؛ فضای مناسب متن: "+zone+".";
+          feedback.textContent="تحلیل عکس انجام شد؛ عکس اختصاصی انتخاب شد؛ فضای مناسب متن: "+zone+".";
         };
         image.onerror=()=>{URL.revokeObjectURL(url);feedback.textContent="خواندن تصویر ناموفق بود؛ عکس دیگری انتخاب کن.";};
         image.src=url;feedback.textContent="در حال آماده‌سازی عکس…";
