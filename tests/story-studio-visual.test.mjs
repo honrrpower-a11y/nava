@@ -6,6 +6,7 @@ import { getNaviMessageLimit, shouldUseNaviStoryPlanContext } from "../modules/n
 const app = readFileSync(new URL("../app.js", import.meta.url), "utf8");
 const html = readFileSync(new URL("../index.html", import.meta.url), "utf8");
 const css = readFileSync(new URL("../style.css", import.meta.url), "utf8");
+const navi = readFileSync(new URL("../modules/navi.js", import.meta.url), "utf8");
 
 test("Story Studio routes NAVI design responses to a visual renderer, not chat", () => {
   assert.match(app, /storyPlan\s*:\s*true/);
@@ -16,7 +17,7 @@ test("Story Studio routes NAVI design responses to a visual renderer, not chat",
 
 test("Story Studio renders vertical slides and exports PNG locally", () => {
   assert.match(app, /canvas\.width=Math\.round\(w\*scale\); canvas\.height=Math\.round\(h\*scale\)/);
-  assert.match(app, /drawStorySlide\(exportCanvas,slide,index,plan\.slides\.length,1\)/);
+  assert.match(app, /drawStorySlide\(exportCanvas,slide,index,plan\.slides\.length,1,storySlideImages/);
   assert.match(app, /exportCanvas\.toBlob/);
   assert.match(app, /nava-story-/);
   assert.match(html, /id="storyVisualSlides"/);
