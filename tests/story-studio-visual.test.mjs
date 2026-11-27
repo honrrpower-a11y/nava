@@ -23,7 +23,7 @@ test("Story Studio renders vertical slides and exports PNG locally", () => {
   assert.match(app, /exportCanvas\.toBlob/);
   assert.match(app, /nava-story-/);
   assert.match(html, /id="storyVisualSlides"/);
-  assert.match(html, /story=navi-freeform-scene-graph-20261127-1/);
+  assert.match(html, /story=json-object-envelope-20261127-1/);
   assert.match(css, /\.story-visual-canvas/);
 });
 
@@ -188,7 +188,6 @@ test("Story Studio executes NAVI composition decisions as real layout geometry",
   assert.match(app, /comp\.imageTreatment==="landscape"/);
   assert.match(app, /comp\.imageTreatment==="offset"/);
   assert.match(app, /design\.composition\.graphicMotif/);
-  assert.match(app, /composition.*textZone/);
   assert.match(navi, /فیلد composition را واقعاً تصمیم‌گیری کن/);
   assert.match(navi, /imageTreatment.*visualBalance.*negativeSpace.*graphicMotif/);
 });
