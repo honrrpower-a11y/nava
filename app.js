@@ -4856,6 +4856,7 @@ function drawNaviArtDirectedStorySlide(canvas,slide,renderScale=0.5,fallbackPhot
   ctx.fillStyle=background;ctx.fillRect(0,0,width,height);
   // NAVI owns the complete back-to-front scene graph; this renderer executes it directly.
   const elements=slide.elements.slice(0,18).filter(item=>item&&typeof item==="object");
+  const slideHasPhoto=Boolean(fallbackPhoto||Number(slide.imageIndex)>0||elements.some(item=>item.type==="image"&&Number(item.imageIndex)>0));
   const num=(value,min,max,fallback)=>{const n=Number(value);return Number.isFinite(n)?Math.max(min,Math.min(max,n)):fallback;};
   const rectOf=item=>({x:num(item.x,0,100,0)*10.8,y:num(item.y,0,100,0)*19.2,w:num(item.w,0,100,10)*10.8,h:num(item.h,0,100,10)*19.2});
   const imageFor=item=>{const n=Number(item.imageIndex);if(fallbackPhoto&&(item.imageIndex===undefined||n===0||n===Number(slide.imageIndex)))return fallbackPhoto;if(Number(slide.imageIndex)===0&&!slide.imageRequest)return null;if(Number.isInteger(n)&&n>=1&&n<=storyPhotoAssets.length)return storyPhotoAssets[n-1]?.image||null;return null;};
@@ -4863,9 +4864,14 @@ function drawNaviArtDirectedStorySlide(canvas,slide,renderScale=0.5,fallbackPhot
     const box=rectOf(item),opacity=num(item.opacity,0,1,1),rotation=num(item.rotation,-180,180,0)*Math.PI/180;
     ctx.save();ctx.globalAlpha=opacity;
     if(item.type==="shape"){
-      ctx.translate(box.x+box.w/2,box.y+box.h/2);if(rotation)ctx.rotate(rotation);
       const x=-box.w/2,y=-box.h/2,shape=String(item.shape||"rect");
-      ctx.fillStyle=validColor(item.fill||slide.accent||"#d9ad5b");ctx.strokeStyle=validColor(item.stroke||item.fill||slide.accent||"#d9ad5b");
+      // Large opaque rectangles on top of photography become generic color panels.
+      // Do not let an accidental NAVI shape turn into a repeated orange/photo card.
+      const largePhotoPanel=slideHasPhoto&&shape==="rect"&&box.w*box.h>width*height*0.045;
+      const intentionalSoftOverlay=item.role==="intentional-overlay"&&opacity<=0.22;
+      if(largePhotoPanel&&!intentionalSoftOverlay){ctx.restore();continue;}
+      ctx.translate(box.x+box.w/2,box.y+box.h/2);if(rotation)ctx.rotate(rotation);
+      ctx.fillStyle=validColor(item.fill||"#d9e2ec");ctx.strokeStyle=validColor(item.stroke||item.fill||slide.accent||"#687789");
       ctx.lineWidth=num(item.strokeWidth,0,32,0);ctx.beginPath();
       if(shape==="circle")ctx.ellipse(0,0,Math.max(1,box.w/2),Math.max(1,box.h/2),0,0,Math.PI*2);
       else if(shape==="line"){ctx.moveTo(x,y+box.h/2);ctx.lineTo(x+box.w,y+box.h/2);}
@@ -5151,7 +5157,7 @@ improveStoryWithNavi?.addEventListener("click",()=>{
   "هر عکس را جداگانه از نظر سوژه، محیط، حس، ترکیب‌بندی، نور، رنگ، فضای منفی و امکان برش بررسی کن؛ سپس ارتباط تصاویر را بفهم و برای هر اسلاید مستقل تصمیم بگیر عکس لازم است یا نه؛ imageIndex=0 یعنی همان اسلاید بدون عکس طراحی شود. استفاده از یک عکس در چند اسلاید کاملاً مجاز است؛ اگر از نظر روایت و طراحی مناسب است، همان عکس را در چند اسلاید تکرار کن. برای هر اسلاید مستقل تصمیم بگیر و imageIndex=0 را برای اسلاید بدون عکس به کار ببر. عکس نامرتبط را فقط برای مصرف‌کردن وارد نکن.",
   "برای هر اسلاید تصمیم طراحی اجرایی و مستقل بده: layout، artDirection، typeTreatment، headlineAlign، headlineColor، bodyColor، accent، imagePlacement، imageFocus و imageIndex. برای اسلاید بدون عکس imageIndex=0 و imagePlacement=none باشد. این تصمیم‌ها باید با عکس و محتوای واقعی هماهنگ باشند، نه قالب و رنگ ثابت.",
   "ترکیب‌بندی حرفه‌ای یعنی سلسله‌مراتب واضح، نقطه تمرکز واحد، فضای خالی کنترل‌شده، کنتراست دقیق، تایپوگرافی متناسب با شخصیت محتوا و تنوع هدفمند. از کارت‌های تکراری، پنل مات روی عکس، قاب‌های بی‌دلیل، متن طولانی و چند تیتر هم‌وزن پرهیز کن.",
-  "هر اسلاید را به‌صورت یک صحنه گرافیکی آزاد و اجرایی طراحی کن، نه با انتخاب یک قالب آماده. کلید elements اجباری است و باید ۴ تا ۱۴ عنصر واقعی از پشت‌زمینه به جلو داشته باشد؛ مختصات x,y,w,h درصدی از بوم ۱۰۸۰×۱۹۲۰ هستند و هر چهار مقدار باید بین ۰ تا ۱۰۰ باشند. با عناصر shape برای ساخت گرافیک اختصاصی (دایره، خط، لوزی، قوس و سطح‌های رنگی)، image برای قاب‌بندی عکس واقعی، و text برای هر لایه نوشتاری کار کن. ترتیب آرایه همان ترتیب رسم از عقب به جلو است. هر اسلاید باید نقشه مستقل داشته باشد: جای دقیق هر عنصر، اندازه، زاویه، رنگ، شفافیت، نقش فونت، اندازه و وزن فونت، تراز و محدوده متن را خودت تعیین کن. برای هر اسلاید بدون عکس هم با شکل‌ها و تایپوگرافی ترکیب‌بندی کامل بساز؛ صرفاً یک پس‌زمینه خالی و متن وسط ممنوع است. برای عکس از imageIndex معتبر استفاده کن؛ صفر یعنی عنصر عکس وجود ندارد. اگر یک عکس در چند اسلاید تکرار می‌شود، قاب، مقیاس و ترکیب‌بندی را تغییر بده. از اجزای بصری معنادار و متناسب با موضوع استفاده کن؛ عناصر تزئینی بی‌دلیل یا کارت‌های تکراری نساز. رندرر مختصات و لایه‌های تو را مستقیماً اجرا می‌کند و جایگاه عناصر را دوباره حدس نمی‌زند.",
+  "هر اسلاید را به‌صورت یک صحنه گرافیکی آزاد و اجرایی طراحی کن، نه با انتخاب یک قالب آماده. کلید elements اجباری است و باید ۴ تا ۱۴ عنصر واقعی از پشت‌زمینه به جلو داشته باشد؛ مختصات x,y,w,h درصدی از بوم ۱۰۸۰×۱۹۲۰ هستند و هر چهار مقدار باید بین ۰ تا ۱۰۰ باشند. با عناصر shape فقط برای گرافیک اختصاصی و معنادار مثل خط، دایره، قوس، لوزی و جزئیات هندسی استفاده کن؛ از مستطیل‌های بزرگ توپر، کارت و پنل رنگی به‌عنوان تزئین پیش‌فرض استفاده نکن. اگر اسلاید عکس دارد، عکس باید عنصر بصری غالب بماند و هیچ مستطیل بزرگ و مات روی آن قرار نگیرد؛ فقط اگر خوانایی واقعاً بدون آن ممکن نیست، یک پوشش بسیار ظریف با opacity حداکثر 0.22 و role=\"intentional-overlay\" مجاز است. رنگ نارنجی یا هر رنگ تأکیدی را به‌صورت پیش‌فرض به شکل پنل روی عکس نریز؛ رنگ و فرم را از تحلیل همان عکس و روایت همان اسلاید انتخاب کن. image برای قاب‌بندی عکس واقعی، و text برای هر لایه نوشتاری کار کن. ترتیب آرایه همان ترتیب رسم از عقب به جلو است. هر اسلاید باید نقشه مستقل داشته باشد: جای دقیق هر عنصر، اندازه، زاویه، رنگ، شفافیت، نقش فونت، اندازه و وزن فونت، تراز و محدوده متن را خودت تعیین کن. برای هر اسلاید بدون عکس هم با شکل‌ها و تایپوگرافی ترکیب‌بندی کامل بساز؛ صرفاً یک پس‌زمینه خالی و متن وسط ممنوع است. برای عکس از imageIndex معتبر استفاده کن؛ صفر یعنی عنصر عکس وجود ندارد. اگر یک عکس در چند اسلاید تکرار می‌شود، قاب، مقیاس و ترکیب‌بندی را تغییر بده. از اجزای بصری معنادار و متناسب با موضوع استفاده کن؛ عناصر تزئینی بی‌دلیل یا کارت‌های تکراری نساز. رندرر مختصات و لایه‌های تو را مستقیماً اجرا می‌کند و جایگاه عناصر را دوباره حدس نمی‌زند.",
   "هر اسلاید را مثل یک پوستر یا صفحه مجله مستقل طراحی کن، اما کل مجموعه باید هویت و روایت یکپارچه داشته باشد. نسبت عکس و متن، مقیاس تیتر، محل تیتر، فضای منفی و ساختار را آگاهانه متنوع کن.",
   "اگر عکسی وجود ندارد، طرح را با گرافیک تایپوگرافیک اصیل کامل کن؛ عکس ساختگی یا ادعای وجود عکس واقعی ممنوع است.",
   "گزارش تحلیل محلی عکس‌ها:\n"+(photoContext||"هیچ عکس کاربری پیوست نشده است.")+"\n\nمحتوای مرجع:\n"+content,
