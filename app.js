@@ -4729,15 +4729,15 @@ function resolveStorySlideDesign(slide,photo,index) {
   const safeZone=photo?.safeZone??4,safeColumn=safeZone%3;
   const align=photo?(safeColumn===0?"left":safeColumn===2?"right":"center"):(editorial?"center":"right");
   const family=editorial||photo?.brightness>.7?"Noto Naskh Arabic,serif":"Vazirmatn,sans-serif";
-  const headlineSize=busy>.42?72:(expressive?96:86);
-  const needsPanel=!!photo&&(busy>.28||bright>.62);
-  const panelX=align==="left"?54:align==="right"?54:90;
-  const panelWidth=align==="center"?900:972;
+  // Keep the photograph dominant: typography adapts, but never adds an opaque color panel.
+  const headlineSize=busy>.55?68:busy>.32?76:(expressive?88:82);
+  const bodySize=busy>.55?32:busy>.32?36:40;
+  const textColor="#ffffff";
+  const textX=align==="left"?110:align==="center"?540:970;
   return {accent,family,headlineFont:(expressive?"800 ":"700 ")+headlineSize+"px "+family,
-    bodyFont:"500 "+(busy>.42?"38":"42")+"px "+family,kickerFont:"700 32px Vazirmatn,sans-serif",
-    headlineColor:"#ffffff",bodyColor:"#f5f7fb",needsPanel,align,headlineSize,
-    textX:align==="left"?110:align==="center"?540:970,panelX,panelWidth,
-    safeZone,photoBrightness:bright,photoBusy:busy};
+    bodyFont:"500 "+bodySize+"px "+family,kickerFont:"700 30px Vazirmatn,sans-serif",
+    headlineColor:textColor,bodyColor:"#f7f8fb",needsPanel:false,align,headlineSize,
+    textX,safeZone,photoBrightness:bright,photoBusy:busy};
 }
 function drawStorySlide(canvas, slide, index, total, renderScale = 0.5, photo = null) {
   const w=1080,h=1920,scale=Number.isFinite(renderScale)?renderScale:0.5; canvas.width=Math.round(w*scale); canvas.height=Math.round(h*scale);
@@ -4752,8 +4752,8 @@ function drawStorySlide(canvas, slide, index, total, renderScale = 0.5, photo = 
   if(visual==="crowd"){for(let row=0;row<5;row++)for(let col=0;col<16;col++){const x=65+col*63+(row%2)*18,y=1040+row*88;c.fillStyle=row%2?accent+"88":"#dce7f055";c.beginPath();c.arc(x,y,16,0,Math.PI*2);c.fill();c.fillRect(x-13,y+15,26,42);}}
   const glow=c.createRadialGradient(540,520,20,540,520,700);glow.addColorStop(0,accent+"55");glow.addColorStop(1,"#07101f00");c.fillStyle=glow;c.fillRect(0,0,w,1100);
   c.fillStyle=accent;c.fillRect(80,115,150,10);c.direction="rtl";c.textAlign=design.align;c.fillStyle=accent;c.font=design.kickerFont;c.fillText(String(slide.kicker||("استوری "+(index+1))),design.textX,220,880);
-  if(design.needsPanel){c.fillStyle="#07101fe8";c.fillRect(design.panelX,300,design.panelWidth,760);}
-  const wrap=(text,y,font,color,maxLines=3)=>{c.textAlign=design.align;c.font=font;c.fillStyle=color;let line="",lines=[];for(const word of String(text||"").split(/\s+/)){const next=line?line+" "+word:word;if(c.measureText(next).width>850&&line){lines.push(line);line=word;}else line=next;}if(line)lines.push(line);lines.slice(0,maxLines).forEach((v,i)=>c.fillText(v,design.textX,y+i*105,850));return y+Math.min(lines.length,maxLines)*105;};
+  // Subtle shadow preserves legibility without covering any part of the uploaded image.
+  const wrap=(text,y,font,color,maxLines=3)=>{c.textAlign=design.align;c.font=font;c.fillStyle=color;c.shadowColor="rgba(0,0,0,.72)";c.shadowBlur=14;c.shadowOffsetX=0;c.shadowOffsetY=3;let line="",lines=[];for(const word of String(text||"").split(/\s+/)){const next=line?line+" "+word:word;if(c.measureText(next).width>850&&line){lines.push(line);line=word;}else line=next;}if(line)lines.push(line);lines.slice(0,maxLines).forEach((v,i)=>c.fillText(v,design.textX,y+i*105,850));c.shadowColor="transparent";c.shadowBlur=0;c.shadowOffsetY=0;return y+Math.min(lines.length,maxLines)*105;};
   let y=wrap(slide.headline||slide.title||"",430,design.headlineFont,design.headlineColor,3);
   if(slide.matchup){c.textAlign="center";c.fillStyle=accent;c.font="bold 65px Vazirmatn,sans-serif";c.fillText(String(slide.matchup),540,Math.max(720,y+85),900);y=Math.max(850,y+180);c.textAlign="right";}
   if(slide.body)y=wrap(slide.body,Math.max(900,y+70),design.bodyFont,design.bodyColor,4);
