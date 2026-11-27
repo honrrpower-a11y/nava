@@ -75,7 +75,6 @@ function cleanMarkup(value) {
 }
 
 function metaContent(html, name) {
-  const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   const tags = html.match(/<meta\b[^>]*>/gi) || [];
   for (const tag of tags) {
     const key = tag.match(/\b(?:name|property)\s*=\s*["']([^"']+)["']/i)?.[1]?.toLowerCase();
@@ -87,8 +86,10 @@ function metaContent(html, name) {
 function auditHtml(html, requestedUrl, finalUrl, status, contentType) {
   const title = cleanMarkup(html.match(/<title\b[^>]*>([\s\S]*?)<\/title>/i)?.[1] || "");
   const description = metaContent(html, "description");
-  const canonicalRaw = html.match(/<link\b(?=[^>]*\brel\s*=\s*["'][^"']*canonical[^"']*["'])[^>]*\bhref\s*=\s*["']([^"']+)["']/i)?.[1] || "";
-  const canonical = canonicalRaw ? new URL(canonicalRaw, finalUrl).href : "";
+  const canonicalTag = (html.match(/<link\\b[^>]*>/gi) || []).find(tag => /\\brel\\s*=\\s*["'][^"']*canonical[^"']*["']/i.test(tag));
+  const canonicalRaw = canonicalTag?.match(/\\bhref\\s*=\\s*["']([^"']+)["']/i)?.[1] || "";
+  let canonical = "";
+  try { if (canonicalRaw) canonical = new URL(canonicalRaw, finalUrl).href; } catch { canonical = ""; }
   const lang = html.match(/<html\b[^>]*\blang\s*=\s*["']([^"']+)["']/i)?.[1] || "";
   const viewport = /<meta\b[^>]*name\s*=\s*["']viewport["']/i.test(html);
   const robots = metaContent(html, "robots").toLowerCase();
