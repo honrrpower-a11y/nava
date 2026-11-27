@@ -221,7 +221,7 @@ function buildMemoryContext(memories) {
 // GEMINI RESPONSE PARSER
 // ======================================
 
-export function parseNaviGeminiResponse(rawText) {
+export function parseNaviGeminiResponse(rawText, { storyPlan = false } = {}) {
   const text = String(rawText || "").trim();
 
   if (!text) {
@@ -270,10 +270,15 @@ export function parseNaviGeminiResponse(rawText) {
   for (const candidate of candidates) {
     try {
       const parsed = JSON.parse(candidate);
-      if (!isObject(parsed) || typeof parsed.reply !== "string") continue;
+      if (!isObject(parsed)) continue;
+      const validStoryPlan = storyPlan && isObject(parsed.storyPlan) &&
+        parsed.storyPlan.version === "nava.story.plan.v1" &&
+        Array.isArray(parsed.storyPlan.slides);
+      if (typeof parsed.reply !== "string" && !validStoryPlan) continue;
 
       return {
-        reply: safeNaviText(parsed.reply, 20000),
+        reply: safeNaviText(typeof parsed.reply === "string" ? parsed.reply : "طرح بصری NAVI آماده شد.", 20000),
+        storyPlan: validStoryPlan ? parsed.storyPlan : null,
         memoryProposals: Array.isArray(parsed.memoryProposals)
           ? parsed.memoryProposals
           : [],
@@ -2644,7 +2649,7 @@ async function requestGeminiModel({
         throw error;
       }
 
-      return parseNaviGeminiResponse(rawText);
+      return parseNaviGeminiResponse(rawText, { storyPlan });
     } catch (error) {
       lastError = error;
       const retryable = error.retryable === true || shouldRetryNaviGeminiError(error);
@@ -3390,6 +3395,7 @@ async function handleChat({
 
   return successResponse({
     reply,
+    storyPlan: isStoryPlanRequest && isObject(parsed.storyPlan) ? parsed.storyPlan : null,
     officeAction,
     navigation: page === "homePage" ? parsed.navigation : null,
     assistant: "NAVI",
