@@ -30,7 +30,7 @@ test("NAVI can request optional user photos per slide and the renderer uses them
   assert.match(app, /story-image-upload/);
   assert.match(app, /storySlideImages/);
   assert.match(navi, /عکس اختیاری است؛ طرح باید بدون آن کامل بماند/);
-  assert.match(css, /\\.story-image-request/);
+  assert.match(css, /\.story-image-request/);
 });
 
 test("Story design requests are isolated from chat history and memory", () => {
