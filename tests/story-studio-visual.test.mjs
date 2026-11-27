@@ -143,7 +143,7 @@ test("Story Studio protects selected typography colors against low contrast and 
   assert.match(app, /const contrastSurface=photoBackground\?/);
   assert.match(app, /rgba\(3,8,18,\.28\)/);
   assert.match(app, /rgba\(3,8,18,\.68\)/);
-  assert.match(app, /storyReadableColor\(design\.headlineColor,lightLayout\?/);
+  assert.match(app, /storyReadableColorAcross\(slide\.headlineColor,preferredInk,contrastSurfaces,4\.5\)/);
   assert.match(navi, /headlineColor و bodyColor باید با سطح پس\u200cزمینه/);
   assert.match(navi, /accent حداقل 3:1/);
 });
@@ -165,4 +165,15 @@ test("Story Studio enforces a larger minimum type scale for mobile and NAVI avoi
   assert.match(app, /Math\.max\(100,headlineBase-/);
   assert.match(navi, /قانون سخت خوانایی موبایل/);
   assert.doesNotMatch(navi, /typeTreatment[^\n]{0,80}compact/);
+});
+
+
+test("Story Studio validates text and accent contrast against every no-photo gradient stop", () => {
+  assert.match(app, /function storyReadableColorAcross\(candidate,fallback,surfaces,minimum=4\.5\)/);
+  assert.match(app, /surfaces\.every\(surface=>storyContrastRatio\(candidate,surface\)>=minimum\)/);
+  assert.match(app, /const contrastSurfaces=photoBackground\?\[contrastSurface\]:paletteStops/);
+  assert.match(app, /storyReadableColorAcross\(slide\.headlineColor,preferredInk,contrastSurfaces,4\.5\)/);
+  assert.match(app, /storyReadableColorAcross\(slide\.bodyColor,preferredBody,contrastSurfaces,4\.5\)/);
+  assert.match(app, /gradient\(palette\[0\],palette\[1\],palette\[2\]\)/);
+  assert.doesNotMatch(app, /addColorStop\(\.58,"#172337"\)/);
 });
