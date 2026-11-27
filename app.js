@@ -4378,7 +4378,8 @@ async function sendMessageToNavi(options = {}) {
         saveToMemory: saveThisMessageToMemory,
         history: isHomePage || options.videoPlan === true || storyPlan ? [] : naviHistory.slice(-NAVI_CONTEXT_MESSAGES),
         image: visionImage,
-        images: (options.videoPlan === true || storyPlan) ? visionImages : undefined
+        images: options.videoPlan === true ? visionImages : undefined,
+        storyImages: storyPlan ? visionImages : undefined
       })
     });
 
