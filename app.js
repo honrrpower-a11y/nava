@@ -4867,7 +4867,7 @@ function drawNaviArtDirectedStorySlide(canvas,slide,renderScale=0.5,fallbackPhot
       const x=-box.w/2,y=-box.h/2,shape=String(item.shape||"rect");
       // Large opaque rectangles on top of photography become generic color panels.
       // Do not let an accidental NAVI shape turn into a repeated orange/photo card.
-      const largePhotoPanel=slideHasPhoto&&shape==="rect"&&box.w*box.h>width*height*0.045;
+      const rectangularShape=!["circle","line","diamond","arc"].includes(shape);const largePhotoPanel=slideHasPhoto&&rectangularShape&&box.w*box.h>width*height*0.045;
       const intentionalSoftOverlay=item.role==="intentional-overlay"&&opacity<=0.22;
       if(largePhotoPanel&&!intentionalSoftOverlay){ctx.restore();continue;}
       ctx.translate(box.x+box.w/2,box.y+box.h/2);if(rotation)ctx.rotate(rotation);
