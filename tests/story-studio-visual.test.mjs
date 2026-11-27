@@ -105,3 +105,12 @@ test("Story Studio uses art-directed slide layouts with varied editorial composi
   assert.match(app, /در فیلد reply پاسخ بیرونی NAVI، فقط یک رشته JSON معتبر/);
   assert.doesNotMatch(app, /فقط JSON معتبر و بدون Markdown با schema زیر برگردان/);
 });
+
+
+test("Story Studio enforces phone-readable type sizes and WCAG contrast for generated colors", () => {
+  assert.match(app, /function storyContrastRatio\(first,second\)/);
+  assert.match(app, /function storyReadableColor\(candidate,fallback,surface,minimum=4\.5\)/);
+  assert.match(app, /const bodySize=busy>\.55\?46:50/);
+  assert.match(app, /slide\.typeTreatment==="compact"\?82/);
+  assert.match(html, /story=mobile-readability-20261127-1/);
+});
