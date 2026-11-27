@@ -158,10 +158,11 @@ test("Story Studio has no forced NAVA/page footer and only renders an explicit o
 
 
 test("Story Studio enforces a larger minimum type scale for mobile and NAVI avoids compact typography", () => {
-  assert.match(app, /busy>\.55\?112:132/);
-  assert.match(app, /kickerFont:"700 48px/);
+  assert.match(app, /headlineBase=\{cover:128,editorial:112,split:108,quote:122,details:104,closing:120\}/);
+  assert.match(app, /kickerFont="700 48px /);
   assert.match(app, /const bodySize=busy>\.55\?62:68/);
-  assert.match(app, /700 60px Vazirmatn/);
+  assert.match(app, /ctaFont="800 60px /);
+  assert.match(app, /Math\.max\(100,headlineBase-/);
   assert.match(navi, /قانون سخت خوانایی موبایل/);
   assert.doesNotMatch(navi, /typeTreatment[^\n]{0,80}compact/);
 });
