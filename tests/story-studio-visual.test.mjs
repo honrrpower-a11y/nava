@@ -203,3 +203,14 @@ test("Story Studio measures and separates text blocks to prevent collisions", ()
   assert.match(app, /kickerFont="900 54px "\+family/);
   assert.match(app, /bodyFont=bodyWeight\+" "\+bodySize\+"px "\+bodyFamily/);
 });
+
+
+test("Story Studio executes NAVI-authored freeform scene graphs instead of choosing fixed templates", () => {
+  assert.match(app, /function drawNaviArtDirectedStorySlide\(canvas,slide,renderScale=0\.5,fallbackPhoto=null\)/);
+  assert.match(app, /if\(Array\.isArray\(slide\.elements\)&&slide\.elements\.length\)return drawNaviArtDirectedStorySlide/);
+  assert.match(app, /plan\.slides\.forEach\(\(slide,index\)=>\{if\(!Array\.isArray\(slide\.elements\)/);
+  assert.match(app, /item\.type==="shape"/);
+  assert.match(app, /item\.type==="image"/);
+  assert.match(app, /item\.type==="text"/);
+  assert.match(navi, /کلید elements اجباری است/);
+});
