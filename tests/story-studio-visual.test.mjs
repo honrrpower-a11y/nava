@@ -78,6 +78,17 @@ test("Story Studio exposes photo-analysis results and uses the detected safe zon
   assert.match(app, /فضای مناسب متن/);
 });
 
+test("Story Studio sends selected photos through NAVI vision and applies per-slide art direction", () => {
+  assert.match(app, /storyPhotosInput/);
+  assert.match(app, /NaviLocalImageAnalysis\?\.analyze/);
+  assert.match(app, /storyPhotoVisionImages/);
+  assert.match(app, /images: \(options\.videoPlan === true \|\| storyPlan\) \? visionImages : undefined/);
+  assert.match(app, /imageIndex/);
+  assert.match(navi, /هر تصویر را جداگانه از محتوای واقعی آن تحلیل کن/);
+  assert.match(navi, /typeTreatment/);
+  assert.match(navi, /headlineColor/);
+});
+
 test("Story Studio uses art-directed slide layouts with varied editorial compositions", () => {
   assert.match(app, /const layouts=\["cover","editorial","split","quote","details","closing"\]/);
   assert.match(app, /layout==="cover"/);
