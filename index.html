@@ -19,7 +19,7 @@
   <link rel="stylesheet" href="office-workspace.css?v=office-back-to-top-20261118-1">
   <script src="navi-image-analysis.js?v=navi-hybrid-vision-20261124-1" defer></script>
   <script src="app.js?v=seo-report-handoff-20261127-1" defer></script>
-  <script src="seo-studio.js?v=seo-shared-workspace-20261127-1" defer></script>
+  <script src="seo-studio.js?v=seo-story-button-20261127-1" defer></script>
   <script src="office-navi-guide.js?v=office-back-to-top-20261118-1" defer></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" defer></script>
   <script src="logo-renderer.js?v=logo-persian-native-text-20261121-1" defer></script>
@@ -821,7 +821,11 @@
           </div>
           <div class="seo-findings-heading"><h3>یافته‌ها و موارد قابل‌بهبود</h3><span>بر اساس HTML دریافت‌شده</span></div>
           <div class="seo-finding-list" id="seoFindingList"></div>
-          <div class="seo-navi-note"><span class="seo-navi-symbol">✦</span><div><strong>گزارش برای NAVI ارسال می‌شود</strong><p>ناوی یافته‌ها را اولویت‌بندی می‌کند و برنامه اصلاح مرحله‌ای پیشنهاد می‌دهد.</p></div><span class="seo-navi-state" id="seoNaviHandoffState">در انتظار ارسال</span></div>
+          <div class="seo-navi-note"><span class="seo-navi-symbol">✦</span><div><strong>تحلیل گزارش با NAVI</strong><p>پس از بررسی فنی، با فشردن این دکمه گزارش واقعی را برای اولویت‌بندی و دریافت برنامه اصلاح مرحله‌ای می‌فرستی.</p></div><span class="seo-navi-state" id="seoNaviHandoffState">آماده ارسال</span></div>
+          <button class="btn-primary seo-navi-action" id="seoNaviAnalyzeButton" type="button">تحلیل و بهبود با NAVI</button>
+          <section class="seo-navi-reply-wrap" id="seoNaviReplyWrap" hidden aria-live="polite">
+            <h3>پاسخ NAVI</h3><div class="seo-navi-reply" id="seoNaviReply"></div>
+          </section>
         </section>
 
         <aside class="studio-output-card seo-scope-panel">
