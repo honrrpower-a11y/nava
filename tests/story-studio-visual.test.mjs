@@ -159,9 +159,9 @@ test("Story Studio has no forced NAVA/page footer and only renders an explicit o
 
 test("Story Studio enforces a larger minimum type scale for mobile and NAVI avoids compact typography", () => {
   assert.match(app, /headlineBase=\{cover:128,editorial:112,split:108,quote:122,details:104,closing:120\}/);
-  assert.match(app, /kickerFont="700 48px /);
+  assert.match(app, /kickerFont="900 54px /);
   assert.match(app, /const bodySize=busy>\.55\?62:68/);
-  assert.match(app, /ctaFont="800 60px /);
+  assert.match(app, /ctaFont="900 66px /);
   assert.match(app, /Math\.max\(100,headlineBase-/);
   assert.match(navi, /قانون سخت خوانایی موبایل/);
   assert.doesNotMatch(navi, /typeTreatment[^\n]{0,80}compact/);
@@ -190,4 +190,16 @@ test("Story Studio executes NAVI composition decisions as real layout geometry",
   assert.match(app, /composition.*textZone/);
   assert.match(navi, /فیلد composition را واقعاً تصمیم‌گیری کن/);
   assert.match(navi, /imageTreatment.*visualBalance.*negativeSpace.*graphicMotif/);
+});
+
+
+test("Story Studio measures and separates text blocks to prevent collisions", () => {
+  assert.match(app, /const textBoxes=\[\]/);
+  assert.match(app, /function reserveTextBox|const reserveTextBox=/);
+  assert.match(app, /while\(overlaps\(candidate\)/);
+  assert.match(app, /y=reserveTextBox\(x,y,width,height,align\)/);
+  assert.match(app, /const blockHeight=Math\.max\(lineHeight,visible\.length\*lineHeight\)/);
+  assert.doesNotMatch(app, /y\+=textOffsetY;x=textAnchorX;align=textAnchorAlign/);
+  assert.match(app, /kickerFont="900 54px "\+family/);
+  assert.match(app, /bodyFont=bodyWeight\+" "\+bodySize\+"px "\+bodyFamily/);
 });
