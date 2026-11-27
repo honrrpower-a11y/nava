@@ -1,92 +1,107 @@
 (() => {
   "use strict";
   const byId = id => document.getElementById(id);
-  const escapeText = value => String(value ?? "");
-  const setText = (node, value) => { if (node) node.textContent = escapeText(value); };
+  const setText = (node, value) => { if (node) node.textContent = String(value ?? ""); };
+  const safeArray = value => Array.isArray(value) ? value : [];
+  let auditBusy = false;
 
   function renderReport(report) {
-    window.NAVA_SEO_LAST_REPORT = report;
     const panel = byId("seoAuditResults");
-    if (!panel) return;
+    if (!panel) throw new Error("بخش نمایش گزارش سئو پیدا نشد.");
+    const h1 = safeArray(report.h1);
+    const findings = safeArray(report.findings);
     panel.hidden = false;
+    window.NAVA_SEO_LAST_REPORT = report;
     setText(byId("seoFinalUrl"), report.finalUrl);
     setText(byId("seoTitleValue"), report.title || "ثبت نشده");
     setText(byId("seoDescriptionValue"), report.description || "ثبت نشده");
-    setText(byId("seoH1Value"), report.h1.length ? report.h1.join(" | ") : "ثبت نشده");
-    setText(byId("seoMetrics"), report.wordCount + " واژه · " + report.h2Count + " تیتر H2 · " +
-      report.imageCount + " تصویر · " + report.internalLinks + " لینک داخلی · " + report.externalLinks + " لینک خارجی");
-    setText(byId("seoCounts"), "موارد مهم: " + report.counts.critical + " · نیازمند بازبینی: " +
-      report.counts.warning + " · موارد مناسب: " + report.counts.good);
+    setText(byId("seoH1Value"), h1.length ? h1.join(" | ") : "ثبت نشده");
+    setText(byId("seoMetrics"), [
+      (report.wordCount ?? 0) + " واژه",
+      (report.h2Count ?? 0) + " تیتر H2",
+      (report.imageCount ?? 0) + " تصویر",
+      (report.internalLinks ?? 0) + " لینک داخلی",
+      (report.externalLinks ?? 0) + " لینک خارجی"
+    ].join(" · "));
+    const counts = report.counts || {};
+    setText(byId("seoCounts"), "موارد مهم: " + (counts.critical ?? 0) + "  |  نیازمند بازبینی: " +
+      (counts.warning ?? 0) + "  |  موارد مناسب: " + (counts.good ?? 0));
     const list = byId("seoFindingList");
     list.replaceChildren();
-    report.findings.forEach(item => {
+    findings.forEach(item => {
       const row = document.createElement("article");
-      row.className = "seo-finding seo-finding--" + item.severity;
+      const severity = ["critical", "warning", "good"].includes(item.severity) ? item.severity : "warning";
+      row.className = "seo-finding seo-finding--" + severity;
       const heading = document.createElement("strong");
-      heading.textContent = item.title;
+      heading.textContent = item.title || "یافته سئو";
       const detail = document.createElement("p");
-      detail.textContent = item.detail;
+      detail.textContent = item.detail || "";
       row.append(heading, detail);
       list.append(row);
     });
-    const sendReportToNavi = () => {
-      const summary = report.findings.map(item => "- " + item.title + ": " + item.detail).join("\n");
-      const message = [
-        "این گزارش واقعی بررسی صفحه من است. بر اساس آن، ایرادها را اولویت‌بندی کن و یک برنامه اصلاح عملی و مرحله‌ای ارائه بده.",
-        "برای هر اقدام، دلیل، اولویت و روش اجرای روشن بنویس. مواردی را که از این گزارش قابل نتیجه‌گیری نیستند، قطعی اعلام نکن.",
-        "",
-        "نشانی صفحه: " + report.finalUrl,
-        "عنوان صفحه: " + (report.title || "ثبت نشده"),
-        "توضیحات متا: " + (report.description || "ثبت نشده"),
-        "تیترهای H1: " + (report.h1.join(" | ") || "ثبت نشده"),
-        "تعداد واژه‌ها: " + report.wordCount,
-        "تعداد تیترهای H2: " + report.h2Count,
-        "تعداد تصاویر: " + report.imageCount,
-        "تصاویر بدون متن جایگزین: " + report.imagesMissingAlt,
-        "لینک‌های داخلی: " + report.internalLinks,
-        "لینک‌های خارجی: " + report.externalLinks,
-        "",
-        "یافته‌های تحلیل:",
-        summary || "یافته جزئی دیگری ثبت نشده است."
-      ].join("\n");
-      const context = {
-        task: "اولویت‌بندی گزارش واقعی و تدوین برنامه اصلاح سئو",
-        brief: "گزارش صفحه: " + report.finalUrl + "\n" + summary
-      };
-      if (typeof window.navaSeoNaviRequest === "function") {
-        window.navaSeoNaviRequest({ message, context });
-      } else {
-        setText(byId("seoAuditStatus"), "مسیر ارسال گزارش به NAVI بارگذاری نشده است. صفحه را تازه‌سازی کن و دوباره تلاش کن.");
-      }
+    byId("seoDownloadReport").onclick = () => downloadReport(report, findings);
+  }
+
+  function downloadReport(report, findings) {
+    const lines = [
+      "NAVA SEO — گزارش بررسی صفحه", "نشانی: " + report.finalUrl,
+      "عنوان: " + (report.title || "ثبت نشده"), "توضیحات: " + (report.description || "ثبت نشده"),
+      "H1: " + (safeArray(report.h1).join(" | ") || "ثبت نشده"),
+      "واژه‌ها: " + report.wordCount, "تصاویر: " + report.imageCount,
+      "تصاویر بدون alt: " + report.imagesMissingAlt, "",
+      ...findings.map(item => "[" + item.severity + "] " + item.title + "\n" + item.detail)
+    ];
+    const blob = new Blob(["\uFEFF" + lines.join("\n")], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url; link.download = "nava-seo-report.txt"; link.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+
+  async function sendReportToNavi(report) {
+    const state = byId("seoNaviHandoffState");
+    setText(state, "در حال ارسال…");
+    const findings = safeArray(report.findings);
+    const summary = findings.map(item => "- " + item.title + ": " + item.detail).join("\n");
+    const message = [
+      "این گزارش واقعی بررسی صفحه من است. بر اساس همین داده‌ها ایرادها را اولویت‌بندی کن و برنامه اصلاح عملی و مرحله‌ای بده.",
+      "برای هر اقدام دلیل، اولویت و روش اجرای روشن بنویس. چیزی را که از گزارش قابل تشخیص نیست قطعی اعلام نکن.",
+      "", "نشانی صفحه: " + report.finalUrl,
+      "عنوان صفحه: " + (report.title || "ثبت نشده"),
+      "توضیحات متا: " + (report.description || "ثبت نشده"),
+      "تیترهای H1: " + (safeArray(report.h1).join(" | ") || "ثبت نشده"),
+      "تعداد واژه‌ها: " + report.wordCount,
+      "تعداد تیترهای H2: " + report.h2Count,
+      "تعداد تصاویر: " + report.imageCount,
+      "تصاویر بدون متن جایگزین: " + report.imagesMissingAlt,
+      "لینک‌های داخلی: " + report.internalLinks,
+      "لینک‌های خارجی: " + report.externalLinks,
+      "", "یافته‌های تحلیل:", summary || "یافته جزئی دیگری ثبت نشده است."
+    ].join("\n");
+    const context = {
+      task: "اولویت‌بندی گزارش واقعی و تدوین برنامه اصلاح سئو",
+      brief: "گزارش صفحه: " + report.finalUrl + "\n" + summary
     };
-    sendReportToNavi();
-    byId("seoDownloadReport").onclick = () => {
-      const lines = [
-        "NAVA SEO — گزارش بررسی صفحه", "نشانی: " + report.finalUrl,
-        "عنوان: " + (report.title || "ثبت نشده"), "توضیحات: " + (report.description || "ثبت نشده"),
-        "H1: " + (report.h1.join(" | ") || "ثبت نشده"),
-        "واژه‌ها: " + report.wordCount, "تصاویر: " + report.imageCount,
-        "تصاویر بدون alt: " + report.imagesMissingAlt, "",
-        ...report.findings.map(item => "[" + item.severity + "] " + item.title + "\n" + item.detail)
-      ];
-      const blob = new Blob(["\uFEFF" + lines.join("\n")], { type: "text/plain;charset=utf-8" });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url; link.download = "nava-seo-report.txt"; link.click();
-      setTimeout(() => URL.revokeObjectURL(url), 1000);
-    };
+    if (typeof window.navaSeoNaviRequest !== "function") {
+      setText(state, "اتصال NAVI بارگذاری نشد.");
+      throw new Error("اتصال NAVI در دسترس نیست؛ گزارش بررسی شد اما به ناوی ارسال نشد.");
+    }
+    await window.navaSeoNaviRequest({ message, context });
+    setText(state, "ارسال شد");
   }
 
   function init() {
     const form = byId("seoAuditForm");
-    if (!form) return;
+    if (!form || form.dataset.initialized === "true") return;
+    form.dataset.initialized = "true";
     form.addEventListener("submit", async event => {
       event.preventDefault();
+      if (auditBusy || !form.reportValidity()) return;
       const input = byId("seoAuditUrl");
       const status = byId("seoAuditStatus");
       const button = byId("seoAuditSubmit");
       const value = input.value.trim();
-      if (!value) { setText(status, "ابتدا نشانی صفحه را وارد کن."); return; }
+      if (!value) { setText(status, "ابتدا آدرس صفحه را وارد کن."); return; }
       const config = window.NAVA_SEO_CONFIG;
       const token = config?.getToken?.();
       if (!token) {
@@ -94,7 +109,10 @@
         window.openNaviAssistant?.({ service: "سئو" });
         return;
       }
+      auditBusy = true;
       button.disabled = true;
+      button.querySelector("span").textContent = "در حال تحلیل…";
+      setText(byId("seoNaviHandoffState"), "در انتظار ارسال");
       setText(status, "در حال دریافت صفحه و بررسی عناصر واقعی آن…");
       byId("seoAuditResults").hidden = true;
       try {
@@ -105,12 +123,21 @@
           cache: "no-store"
         });
         const data = await response.json();
-        if (!response.ok || !data.success) throw new Error(data.error || "تحلیل صفحه انجام نشد.");
+        if (!response.ok || !data.success || !data.report) throw new Error(data.error || "تحلیل صفحه انجام نشد.");
         renderReport(data.report);
-        setText(status, "بررسی صفحه تمام شد. زمان بررسی: " + new Date(data.checkedAt).toLocaleString("fa-IR"));
+        setText(status, "تحلیل فنی تمام شد؛ گزارش در حال ارسال به NAVI است.");
+        await sendReportToNavi(data.report);
+        setText(status, "تحلیل کامل شد و گزارش برای اولویت‌بندی به NAVI ارسال شد. پاسخ ناوی در پنل گفت‌وگو نمایش داده می‌شود.");
       } catch (error) {
-        setText(status, error.message || "اتصال به سرویس تحلیل برقرار نشد.");
-      } finally { button.disabled = false; }
+        setText(status, error?.message || "در اجرای تحلیل خطایی رخ داد.");
+        if (byId("seoAuditResults") && !byId("seoAuditResults").hidden && byId("seoNaviHandoffState")?.textContent === "در حال ارسال…") {
+          setText(byId("seoNaviHandoffState"), "ارسال ناموفق");
+        }
+      } finally {
+        auditBusy = false;
+        button.disabled = false;
+        button.querySelector("span").textContent = "شروع تحلیل";
+      }
     });
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init, { once: true });
