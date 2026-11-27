@@ -4639,7 +4639,7 @@ storyPhotosInput?.addEventListener("change",async()=>{
  if(storyPhotosStatus)storyPhotosStatus.textContent="در حال تحلیل "+selected.length+" عکس؛ هر عکس جداگانه بررسی می‌شود…"+(files.length>6?" فقط ۶ عکس اول پردازش می‌شوند.":"");
  try{
   const assets=await Promise.all(selected.map(async(file,index)=>{
-   if(!/^image\\/(jpeg|png|webp|gif|avif)$/i.test(file.type))throw new Error("فرمت عکس شماره "+(index+1)+" پشتیبانی نمی‌شود.");
+   if(!/^image\/(jpeg|png|webp|gif)$/i.test(file.type))throw new Error("فرمت عکس شماره "+(index+1)+" پشتیبانی نمی‌شود.");
    if(file.size>20*1024*1024)throw new Error("حجم عکس شماره "+(index+1)+" بیشتر از ۲۰ مگابایت است.");
    const analysis=await window.NaviLocalImageAnalysis?.analyze?.(file);
    if(!analysis||typeof analysis.report!=="string"||!analysis.visionImage)throw new Error("تحلیل هوشمند عکس شماره "+(index+1)+" آماده نشد؛ دوباره عکس‌ها را انتخاب کن.");
@@ -4753,7 +4753,8 @@ function resolveStorySlideDesign(slide,photo,index) {
   const safeZone=photo?.safeZone??4,safeColumn=safeZone%3,safeRow=Math.floor(safeZone/3);
   const align=["right","center","left"].includes(slide.headlineAlign)?slide.headlineAlign:(layout==="quote"?"center":photo?(safeColumn===0?"left":safeColumn===2?"right":"center"):(layout==="cover"||layout==="closing"?"center":"right"));
   const family=slide.typeTreatment==="serif"||layout==="editorial"||layout==="quote"?"Noto Naskh Arabic,serif":"Vazirmatn,sans-serif";
-  const headlineSize=busy>.55?64:busy>.32?74:(layout==="cover"?100:layout==="quote"?94:84);
+  const artDirection=["editorial","cinematic","poster","luxury","tech","organic","minimal","bold"].includes(slide.artDirection)?slide.artDirection:"cinematic";
+  const headlineSize=slide.typeTreatment==="oversized"?(busy>.55?78:112):slide.typeTreatment==="compact"?(busy>.55?56:68):(busy>.55?64:busy>.32?74:(layout==="cover"?100:layout==="quote"?94:84));
   const bodySize=busy>.55?30:busy>.32?34:38;
   const textColor=/^#[0-9a-f]{6}$/i.test(slide.headlineColor||"")?slide.headlineColor:(bright>.68&&safeZone!==4?"#17202b":"#ffffff");
   const textX=align==="left"?115:align==="center"?540:965;
@@ -4762,7 +4763,7 @@ function resolveStorySlideDesign(slide,photo,index) {
   return {layout,accent,family,headlineFont:(layout==="cover"||layout==="quote"?"800 ":"700 ")+headlineSize+"px "+family,
     bodyFont:"500 "+bodySize+"px "+family,kickerFont:"700 27px Vazirmatn,sans-serif",
     headlineColor:textColor,bodyColor:/^#[0-9a-f]{6}$/i.test(slide.bodyColor||"")?slide.bodyColor:(textColor==="#ffffff"?"#f7f8fb":"#26313d"),
-    align,headlineSize,textX,safeZone,safeRow,photoBrightness:bright,photoBusy:busy,placement,needsPanel:false};
+    align,headlineSize,textX,safeZone,safeRow,photoBrightness:bright,photoBusy:busy,placement,artDirection,imageFocus:["top","bottom","left","right","center"].includes(slide.imageFocus)?slide.imageFocus:"center",needsPanel:false};
 }
 function drawStorySlide(canvas, slide, index, total, renderScale = 0.5, photo = null) {
   const w=1080,h=1920,scale=Number.isFinite(renderScale)?renderScale:0.5;
@@ -4770,23 +4771,32 @@ function drawStorySlide(canvas, slide, index, total, renderScale = 0.5, photo = 
   const c=canvas.getContext("2d");c.scale(scale,scale);
   const photoAnalysis=photo?analyzeStoryPhoto(photo):null;
   const design=resolveStorySlideDesign(slide,photoAnalysis,index),accent=design.accent,layout=design.layout;
-  const roundedImage=(img,x,y,bw,bh,radius=30)=>{
+  const cropSource=(img,bw,bh,focus)=>{
     const ratio=Math.max(bw/img.width,bh/img.height),sw=bw/ratio,sh=bh/ratio;
+    const sx=focus==="left"?0:focus==="right"?img.width-sw:(img.width-sw)/2;
+    const sy=focus==="top"?0:focus==="bottom"?img.height-sh:(img.height-sh)/2;
+    return {sx,sy,sw,sh};
+  };
+  const roundedImage=(img,x,y,bw,bh,radius=30)=>{
+    const crop=cropSource(img,bw,bh,design.imageFocus);
     c.save();c.beginPath();c.roundRect(x,y,bw,bh,radius);c.clip();
-    c.drawImage(img,(img.width-sw)/2,(img.height-sh)/2,sw,sh,x,y,bw,bh);c.restore();
+    c.drawImage(img,crop.sx,crop.sy,crop.sw,crop.sh,x,y,bw,bh);c.restore();
   };
   const gradient=(top="#101827",bottom="#050912")=>{
     const g=c.createLinearGradient(0,0,w,h);g.addColorStop(0,top);g.addColorStop(.58,"#172337");g.addColorStop(1,bottom);
     c.fillStyle=g;c.fillRect(0,0,w,h);
   };
-  const lightLayout=layout==="editorial";
-  gradient(lightLayout?"#f0ece3":"#101827",lightLayout?"#d9d2c5":"#050912");
+  const direction=design.artDirection;
+  const lightLayout=layout==="editorial"||direction==="organic"||direction==="minimal";
+  const palettes={luxury:["#100e0b","#251b10"],tech:["#071c2b","#030812"],bold:["#2a0d19","#09060a"],poster:["#17102b","#080710"],cinematic:["#101827","#050912"],editorial:["#f0ece3","#d9d2c5"],organic:["#e9eee5","#c9d8c6"],minimal:["#f3f4f2","#dfe3e0"]};
+  const palette=palettes[direction]||palettes.cinematic;
+  gradient(palette[0],palette[1]);
   const ink=lightLayout?"#202a35":design.headlineColor;
   const secondary=lightLayout?"#4d5964":design.bodyColor;
   const imagePlacement=design.placement;
   if(photo&&imagePlacement==="background"){
-    const ratio=Math.max(w/photo.width,h/photo.height),sw=w/ratio,sh=h/ratio;
-    c.drawImage(photo,(photo.width-sw)/2,(photo.height-sh)/2,sw,sh,0,0,w,h);
+    const crop=cropSource(photo,w,h,design.imageFocus);
+    c.drawImage(photo,crop.sx,crop.sy,crop.sw,crop.sh,0,0,w,h);
     const safeTop=design.safeRow===0;
     const shade=c.createLinearGradient(0,safeTop?0:h*.35,0,safeTop?h*.72:h);
     shade.addColorStop(0,"rgba(3,8,18,.04)");shade.addColorStop(.48,"rgba(3,8,18,.20)");shade.addColorStop(1,"rgba(3,8,18,.78)");
