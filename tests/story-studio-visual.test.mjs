@@ -12,7 +12,7 @@ test("Story Studio routes NAVI design responses to a visual renderer, not chat",
   assert.match(app, /storyPlan\s*:\s*true/);
   assert.match(app, /const resolvedRequestPage = options\.storyPlan === true \? "storyPage" : requestPage/);
   assert.match(app, /if \(saveThisMessageToMemory && !storyPlan\)/);
-  assert.match(app, /detail: \{ service: selectedService, reply, storyPlan: true/);
+  assert.match(app, /detail: \{ service: selectedService, reply: data\.storyPlan/);
   assert.match(app, /nava\.story\.plan\.v1/);
   assert.match(app, /renderNaviStoryPlan\(parseNaviStoryPlan/);
 });
