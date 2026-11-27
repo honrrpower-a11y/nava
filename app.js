@@ -4646,6 +4646,8 @@ window.navaSeoNaviRequest = function({ message, context } = {}) {
   const service = "سئو";
   const seoContext = context && typeof context === "object" ? context : {};
   if (Array.from(serviceSelect.options).some(option => option.value === service)) serviceSelect.value = service;
+  // Return the actual request promise so the SEO studio can await completion
+  // and surface failures instead of treating a fire-and-forget call as success.
   return sendMessageToNavi({
     pageOverride: "seoPage",
     messageOverride: cleanMessage,
