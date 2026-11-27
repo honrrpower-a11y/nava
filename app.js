@@ -4738,7 +4738,7 @@ function resolveStorySlideDesign(slide,photo,index) {
   return {layout,accent,family,headlineFont:(layout==="cover"||layout==="quote"?"800 ":"700 ")+headlineSize+"px "+family,
     bodyFont:"500 "+bodySize+"px "+family,kickerFont:"700 27px Vazirmatn,sans-serif",
     headlineColor:textColor,bodyColor:textColor==="#ffffff"?"#f7f8fb":"#26313d",
-    align,headlineSize,textX,safeZone,safeRow,photoBrightness:bright,photoBusy:busy,placement};
+    align,headlineSize,textX,safeZone,safeRow,photoBrightness:bright,photoBusy:busy,placement,needsPanel:false};
 }
 function drawStorySlide(canvas, slide, index, total, renderScale = 0.5, photo = null) {
   const w=1080,h=1920,scale=Number.isFinite(renderScale)?renderScale:0.5;
