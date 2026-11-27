@@ -21,6 +21,7 @@ test("Story Studio renders vertical slides and exports PNG locally", () => {
   assert.match(app, /exportCanvas\.toBlob/);
   assert.match(app, /nava-story-/);
   assert.match(html, /id="storyVisualSlides"/);
+  assert.match(html, /story=vision-art-direction-20261127-1/);
   assert.match(css, /\.story-visual-canvas/);
 });
 
@@ -76,6 +77,18 @@ test("Story Studio exposes photo-analysis results and uses the detected safe zon
   assert.match(app, /count\*\.12/);
   assert.match(app, /const textX=align==="left"\?115:align==="center"\?540:965/);
   assert.match(app, /فضای مناسب متن/);
+});
+
+test("Story Studio sends selected photos through NAVI vision and applies per-slide art direction", () => {
+  assert.match(app, /storyPhotosInput/);
+  assert.match(app, /NaviLocalImageAnalysis\?\.analyze/);
+  assert.match(app, /storyPhotoVisionImages/);
+  assert.match(app, /images: options\.videoPlan === true \? visionImages : undefined/);
+  assert.match(app, /storyImages: storyPlan \? visionImages : undefined/);
+  assert.match(app, /imageIndex/);
+  assert.match(navi, /هر تصویر را جداگانه از محتوای واقعی آن تحلیل کن/);
+  assert.match(navi, /typeTreatment/);
+  assert.match(navi, /headlineColor/);
 });
 
 test("Story Studio uses art-directed slide layouts with varied editorial compositions", () => {

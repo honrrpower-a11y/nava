@@ -4230,8 +4230,8 @@ async function sendMessageToNavi(options = {}) {
 
   const storyPlan = options.storyPlan === true;
   const selectedImage = options.videoPlan === true || storyPlan ? null : (naviImageInput?.files?.[0] || null);
-  const visionImages = options.videoPlan === true && Array.isArray(options.images) ? options.images.slice(0, 6) : [];
-  if (options.videoPlan === true && Array.isArray(options.images) && options.images.length > 6) { window.dispatchEvent(new CustomEvent("nava:navi-error",{detail:{message:"تعداد تصاویر بیش از حد مجاز است."}})); return; }
+  const visionImages = (options.videoPlan === true || storyPlan) && Array.isArray(options.images) ? options.images.slice(0, 6) : [];
+  if ((options.videoPlan === true || storyPlan) && Array.isArray(options.images) && options.images.length > 6) { const message="تعداد تصاویر بیش از حد مجاز است؛ حداکثر ۶ عکس انتخاب کن."; if(storyPlan){const status=document.getElementById("storyMessage");if(status){status.textContent=message;status.classList.add("show");}}else window.dispatchEvent(new CustomEvent("nava:navi-error",{detail:{message}})); return; }
   let localImageContext = "";
   let visionImage = null;
   if (selectedImage) {
@@ -4378,7 +4378,8 @@ async function sendMessageToNavi(options = {}) {
         saveToMemory: saveThisMessageToMemory,
         history: isHomePage || options.videoPlan === true || storyPlan ? [] : naviHistory.slice(-NAVI_CONTEXT_MESSAGES),
         image: visionImage,
-        images: options.videoPlan === true ? visionImages : undefined
+        images: options.videoPlan === true ? visionImages : undefined,
+        storyImages: storyPlan ? visionImages : undefined
       })
     });
 
@@ -4629,6 +4630,30 @@ const clearStory = document.getElementById("clearStory");
 const copyStory = document.getElementById("copyStory");
 const storyMessage = document.getElementById("storyMessage");
 const improveStoryWithNavi = document.getElementById("improveStoryWithNavi");
+const storyPhotosInput=document.getElementById("storyPhotosInput"),storyPhotosStatus=document.getElementById("storyPhotosStatus");
+let storyPhotoAssets=[],storyPhotoVisionImages=[],storyPhotoAnalysisBusy=false,storyPhotoSelectionRun=0;
+function clearStorySourcePhotos(){storyPhotoAssets.forEach(item=>{if(item?.url)URL.revokeObjectURL(item.url);});storyPhotoAssets=[];storyPhotoVisionImages=[];}
+storyPhotosInput?.addEventListener("change",async()=>{
+ const run=++storyPhotoSelectionRun;clearStorySourcePhotos();const files=Array.from(storyPhotosInput.files||[]);
+ if(!files.length){if(storyPhotosStatus)storyPhotosStatus.textContent="عکسی انتخاب نشده است؛ NAVI می‌تواند طراحی را بدون عکس هم انجام دهد.";return;}
+ const selected=files.slice(0,6);storyPhotoAnalysisBusy=true;
+ if(storyPhotosStatus)storyPhotosStatus.textContent="در حال تحلیل "+selected.length+" عکس؛ هر عکس جداگانه بررسی می‌شود…"+(files.length>6?" فقط ۶ عکس اول پردازش می‌شوند.":"");
+ try{
+  const assets=await Promise.all(selected.map(async(file,index)=>{
+   if(!/^image\/(jpeg|png|webp|gif)$/i.test(file.type))throw new Error("فرمت عکس شماره "+(index+1)+" پشتیبانی نمی‌شود.");
+   if(file.size>20*1024*1024)throw new Error("حجم عکس شماره "+(index+1)+" بیشتر از ۲۰ مگابایت است.");
+   const analysis=await window.NaviLocalImageAnalysis?.analyze?.(file);
+   if(!analysis||typeof analysis.report!=="string"||!analysis.visionImage)throw new Error("تحلیل هوشمند عکس شماره "+(index+1)+" آماده نشد؛ دوباره عکس‌ها را انتخاب کن.");
+   const url=URL.createObjectURL(file),image=new Image();
+   try{await new Promise((resolve,reject)=>{image.onload=resolve;image.onerror=()=>reject(new Error("بازکردن عکس شماره "+(index+1)+" ناموفق بود."));image.src=url;});}catch(error){URL.revokeObjectURL(url);throw error;}
+   return {file,image,url,analysis};
+  }));
+  if(run!==storyPhotoSelectionRun){assets.forEach(item=>URL.revokeObjectURL(item.url));return;}
+  storyPhotoAssets=assets;storyPhotoVisionImages=assets.map(item=>item.analysis.visionImage);
+  if(storyPhotosStatus)storyPhotosStatus.textContent="تحلیل "+assets.length+" عکس کامل شد؛ NAVI محتوای واقعی عکس‌ها را می‌بیند و برای هر اسلاید عکس مناسب را انتخاب می‌کند.";
+ }catch(error){if(run===storyPhotoSelectionRun){clearStorySourcePhotos();if(storyPhotosStatus)storyPhotosStatus.textContent=error.message||"تحلیل عکس‌ها ناموفق بود.";}}
+ finally{if(run===storyPhotoSelectionRun)storyPhotoAnalysisBusy=false;}
+});
 
 storyInput.addEventListener("input", () => {
   const text = storyInput.value.trim();
@@ -4725,20 +4750,21 @@ function resolveStorySlideDesign(slide,photo,index) {
   const layout=layouts.includes(slide.layout)?slide.layout:
     (index===0?"cover":slide.cta?"closing":slide.matchup?"split":slide.date||slide.time||slide.venue?"details":slide.body&&String(slide.body).length<110?"quote":"editorial");
   const bright=photo?.brightness??.42,busy=photo?.busy??.3,saturated=photo?.saturation??.35;
-  const accent=photo&&photo.saturation>.1?photo.accent:(/^#[0-9a-f]{6}$/i.test(slide.accent||"")?slide.accent:"#d8ad58");
+  const accent=(/^#[0-9a-f]{6}$/i.test(slide.accent||"")?slide.accent:(photo&&photo.saturation>.1?photo.accent:"#d8ad58"));
   const safeZone=photo?.safeZone??4,safeColumn=safeZone%3,safeRow=Math.floor(safeZone/3);
-  const align=layout==="quote"?"center":photo?(safeColumn===0?"left":safeColumn===2?"right":"center"):(layout==="cover"||layout==="closing"?"center":"right");
-  const family=layout==="editorial"||layout==="quote"?"Noto Naskh Arabic,serif":"Vazirmatn,sans-serif";
-  const headlineSize=busy>.55?64:busy>.32?74:(layout==="cover"?100:layout==="quote"?94:84);
+  const align=["right","center","left"].includes(slide.headlineAlign)?slide.headlineAlign:(layout==="quote"?"center":photo?(safeColumn===0?"left":safeColumn===2?"right":"center"):(layout==="cover"||layout==="closing"?"center":"right"));
+  const family=slide.typeTreatment==="serif"||layout==="editorial"||layout==="quote"?"Noto Naskh Arabic,serif":"Vazirmatn,sans-serif";
+  const artDirection=["editorial","cinematic","poster","luxury","tech","organic","minimal","bold"].includes(slide.artDirection)?slide.artDirection:"cinematic";
+  const headlineSize=slide.typeTreatment==="oversized"?(busy>.55?78:112):slide.typeTreatment==="compact"?(busy>.55?56:68):(busy>.55?64:busy>.32?74:(layout==="cover"?100:layout==="quote"?94:84));
   const bodySize=busy>.55?30:busy>.32?34:38;
-  const textColor=bright>.68&&safeZone!==4?"#17202b":"#ffffff";
+  const textColor=/^#[0-9a-f]{6}$/i.test(slide.headlineColor||"")?slide.headlineColor:(bright>.68&&safeZone!==4?"#17202b":"#ffffff");
   const textX=align==="left"?115:align==="center"?540:965;
   const placement=slide.imagePlacement==="background"||slide.imagePlacement==="subject"?slide.imagePlacement:
     (photo?(layout==="cover"?"background":"subject"):"none");
   return {layout,accent,family,headlineFont:(layout==="cover"||layout==="quote"?"800 ":"700 ")+headlineSize+"px "+family,
     bodyFont:"500 "+bodySize+"px "+family,kickerFont:"700 27px Vazirmatn,sans-serif",
-    headlineColor:textColor,bodyColor:textColor==="#ffffff"?"#f7f8fb":"#26313d",
-    align,headlineSize,textX,safeZone,safeRow,photoBrightness:bright,photoBusy:busy,placement,needsPanel:false};
+    headlineColor:textColor,bodyColor:/^#[0-9a-f]{6}$/i.test(slide.bodyColor||"")?slide.bodyColor:(textColor==="#ffffff"?"#f7f8fb":"#26313d"),
+    align,headlineSize,textX,safeZone,safeRow,photoBrightness:bright,photoBusy:busy,placement,artDirection,imageFocus:["top","bottom","left","right","center"].includes(slide.imageFocus)?slide.imageFocus:"center",needsPanel:false};
 }
 function drawStorySlide(canvas, slide, index, total, renderScale = 0.5, photo = null) {
   const w=1080,h=1920,scale=Number.isFinite(renderScale)?renderScale:0.5;
@@ -4746,23 +4772,32 @@ function drawStorySlide(canvas, slide, index, total, renderScale = 0.5, photo = 
   const c=canvas.getContext("2d");c.scale(scale,scale);
   const photoAnalysis=photo?analyzeStoryPhoto(photo):null;
   const design=resolveStorySlideDesign(slide,photoAnalysis,index),accent=design.accent,layout=design.layout;
-  const roundedImage=(img,x,y,bw,bh,radius=30)=>{
+  const cropSource=(img,bw,bh,focus)=>{
     const ratio=Math.max(bw/img.width,bh/img.height),sw=bw/ratio,sh=bh/ratio;
+    const sx=focus==="left"?0:focus==="right"?img.width-sw:(img.width-sw)/2;
+    const sy=focus==="top"?0:focus==="bottom"?img.height-sh:(img.height-sh)/2;
+    return {sx,sy,sw,sh};
+  };
+  const roundedImage=(img,x,y,bw,bh,radius=30)=>{
+    const crop=cropSource(img,bw,bh,design.imageFocus);
     c.save();c.beginPath();c.roundRect(x,y,bw,bh,radius);c.clip();
-    c.drawImage(img,(img.width-sw)/2,(img.height-sh)/2,sw,sh,x,y,bw,bh);c.restore();
+    c.drawImage(img,crop.sx,crop.sy,crop.sw,crop.sh,x,y,bw,bh);c.restore();
   };
   const gradient=(top="#101827",bottom="#050912")=>{
     const g=c.createLinearGradient(0,0,w,h);g.addColorStop(0,top);g.addColorStop(.58,"#172337");g.addColorStop(1,bottom);
     c.fillStyle=g;c.fillRect(0,0,w,h);
   };
-  const lightLayout=layout==="editorial";
-  gradient(lightLayout?"#f0ece3":"#101827",lightLayout?"#d9d2c5":"#050912");
+  const direction=design.artDirection;
+  const lightLayout=layout==="editorial"||direction==="organic"||direction==="minimal";
+  const palettes={luxury:["#100e0b","#251b10"],tech:["#071c2b","#030812"],bold:["#2a0d19","#09060a"],poster:["#17102b","#080710"],cinematic:["#101827","#050912"],editorial:["#f0ece3","#d9d2c5"],organic:["#e9eee5","#c9d8c6"],minimal:["#f3f4f2","#dfe3e0"]};
+  const palette=palettes[direction]||palettes.cinematic;
+  gradient(palette[0],palette[1]);
   const ink=lightLayout?"#202a35":design.headlineColor;
   const secondary=lightLayout?"#4d5964":design.bodyColor;
   const imagePlacement=design.placement;
   if(photo&&imagePlacement==="background"){
-    const ratio=Math.max(w/photo.width,h/photo.height),sw=w/ratio,sh=h/ratio;
-    c.drawImage(photo,(photo.width-sw)/2,(photo.height-sh)/2,sw,sh,0,0,w,h);
+    const crop=cropSource(photo,w,h,design.imageFocus);
+    c.drawImage(photo,crop.sx,crop.sy,crop.sw,crop.sh,0,0,w,h);
     const safeTop=design.safeRow===0;
     const shade=c.createLinearGradient(0,safeTop?0:h*.35,0,safeTop?h*.72:h);
     shade.addColorStop(0,"rgba(3,8,18,.04)");shade.addColorStop(.48,"rgba(3,8,18,.20)");shade.addColorStop(1,"rgba(3,8,18,.78)");
@@ -4830,6 +4865,7 @@ function drawStorySlide(canvas, slide, index, total, renderScale = 0.5, photo = 
 function renderNaviStoryPlan(plan) {
   const host=document.getElementById("storyVisualSlides"),status=document.getElementById("storyMessage");if(!host)return;
   clearStorySlideImages();host.replaceChildren();host.hidden=false;
+  plan.slides.forEach((slide,index)=>{const imageIndex=Number(slide.imageIndex);const source=Number.isInteger(imageIndex)&&imageIndex>=1&&imageIndex<=storyPhotoAssets.length?storyPhotoAssets[imageIndex-1]:null;if(source)storySlideImages.set(index,{image:source.image,url:null,analysis:analyzeStoryPhoto(source.image)});});
   const rawPreview=document.getElementById("previewText");if(rawPreview)rawPreview.hidden=true;
   plan.slides.forEach((slide,index)=>{const card=document.createElement("article");card.className="story-visual-card";const heading=document.createElement("h3");heading.textContent="اسلاید "+(index+1);const canvas=document.createElement("canvas");canvas.className="story-visual-canvas";canvas.setAttribute("role","img");canvas.setAttribute("aria-label",String(slide.headline||slide.title||"پیش‌نمایش استوری"));drawStorySlide(canvas,slide,index,plan.slides.length,0.5,storySlideImages.get(index)?.image||null);const actions=document.createElement("div");actions.className="story-visual-actions";const button=document.createElement("button");button.type="button";button.className="btn-primary";button.textContent="دریافت تصویر PNG";button.addEventListener("click",()=>{const exportCanvas=document.createElement("canvas");drawStorySlide(exportCanvas,slide,index,plan.slides.length,1,storySlideImages.get(index)?.image||null);exportCanvas.toBlob(blob=>{if(!blob){if(status)status.textContent="ساخت PNG در این مرورگر ممکن نشد.";exportCanvas.width=0;exportCanvas.height=0;return;}const url=URL.createObjectURL(blob),link=document.createElement("a");link.href=url;link.download="nava-story-"+(index+1)+".png";link.click();setTimeout(()=>URL.revokeObjectURL(url),1500);exportCanvas.width=0;exportCanvas.height=0;},"image/png");});card.append(heading,canvas);actions.append(button);
     const imageRequest=String(slide.imageRequest||"").trim().slice(0,240);
@@ -4848,25 +4884,30 @@ function renderNaviStoryPlan(plan) {
 }
 window.addEventListener("nava:navi-reply",event=>{if(!event.detail?.storyPlan)return;try{renderNaviStoryPlan(parseNaviStoryPlan(event.detail.reply));}catch(error){const status=document.getElementById("storyMessage");if(status){status.textContent=error.message||"طرح استوری قابل نمایش نیست.";status.classList.add("show");}}});
 improveStoryWithNavi?.addEventListener("click",()=>{
-  const content=storyInput?.value?.trim()||"";
-  if(!content){storyMessage.textContent="ابتدا محتوا را وارد یا از استودیوی تولید محتوا منتقل کن.";storyMessage.classList.add("show");return;}
-  const service="استوری‌ساز",context={content,source:"استودیوی تولید محتوا",output:"طرح بصری چنداسلایدی اینستاگرام"};
-  const message=[
-    "تو کارگردان هنری و طراح بصری استوری NAVA هستی. خروجی باید داده ساختاریافته برای رندر باشد، نه پیام خوشامد، کپشن عمومی یا توضیح.",
-    "فقط JSON معتبر و بدون Markdown با schema زیر برگردان: {\"version\":\"nava.story.plan.v1\",\"slides\":[{\"kicker\":\"\",\"headline\":\"\",\"matchup\":\"\",\"body\":\"\",\"date\":\"\",\"time\":\"\",\"venue\":\"\",\"cta\":\"\",\"visual\":\"stadium|matchup|details|crowd|abstract\",\"accent\":\"#RRGGBB\",\"imageRequest\":\"شرح عکس یا رشته خالی\",\"imagePlacement\":\"background|subject|none\"}]}",
-    "برای اعلام مسابقه ۳ اسلاید بساز: هوک و معرفی، جزئیات زمان و مکان، دعوت به تعامل. برای موضوع‌های دیگر روایت و تعداد مناسب را خودت انتخاب کن؛ حداکثر ۸ اسلاید.",
-    "برای هر اسلاید فقط وقتی عکس واقعی کیفیت طراحی را معنادار بهتر می‌کند imageRequest را با شرح دقیق عکس موردنیاز پر کن؛ در غیر این صورت رشته خالی بگذار. imagePlacement را background برای عکس تمام‌صفحه، subject برای عکس داخل قاب و none وقتی عکس لازم نیست انتخاب کن. عکس اختیاری است و طرح باید بدون آن هم کامل بماند. برای لوگو، چهره بازیکن یا مکان واقعی، عکس را از کاربر بخواه و آن را جعل نکن.",
-    "متن روی تصویر را کوتاه و فارسی نگه دار؛ واقعیت‌ها، تاریخ، ساعت، نام‌ها و مکان را عیناً از ورودی بردار و چیزی نساز. هشتگ‌ها و دستورالعمل‌های داخلی را روی تصویر نیاور.",
-    "محتوای مرجع:\n"+content
-  ].join("\n\n");
-  const host=document.getElementById("storyVisualSlides");if(host){host.replaceChildren();host.hidden=true;}
-  storyMessage.textContent="NAVI در حال طراحی اسلایدهاست…";storyMessage.classList.add("show");
-  if(!getNaviToken()){window.openNaviAssistant({service,context,message});return;}
-  if(Array.from(serviceSelect.options).some(option=>option.value===service))serviceSelect.value=service;
-  updateNaviAssistantContext(service,context);
-  sendMessageToNavi({messageOverride:message,serviceOverride:service,contextOverride:context,storyPlan:true});
+ const content=storyInput?.value?.trim()||"";
+ if(!content){storyMessage.textContent="ابتدا محتوا را وارد یا از استودیوی تولید محتوا منتقل کن.";storyMessage.classList.add("show");return;}
+ if(storyPhotoAnalysisBusy){storyMessage.textContent="تحلیل عکس‌ها هنوز کامل نشده؛ چند لحظه صبر کن.";storyMessage.classList.add("show");return;}
+ const service="استوری‌ساز",context={content,source:"استودیوی تولید محتوا",output:"طرح بصری چنداسلایدی اینستاگرام"};
+ const photoContext=storyPhotoAssets.map((item,index)=>(index+1)+". "+item.file.name+"\n"+item.analysis.report).join("\n\n");
+ const message=[
+  "تو مدیر هنری، عکاس تبلیغاتی و طراح گرافیک یک استودیوی حرفه‌ای هستی. عکس‌های پیوست‌شده را واقعاً ببین؛ گزارش محلی فقط مکمل است.",
+  "هر عکس را جداگانه از نظر سوژه، محیط، حس، ترکیب‌بندی، نور، رنگ، فضای منفی و امکان برش بررسی کن؛ سپس ارتباط تصاویر را بفهم و برای هر اسلاید بهترین عکس را با imageIndex یک‌مبنایی انتخاب کن. عکس نامرتبط را فقط برای مصرف‌کردن وارد نکن.",
+  "برای هر اسلاید تصمیم طراحی اجرایی و مستقل بده: layout، artDirection، typeTreatment، headlineAlign، headlineColor، bodyColor، accent، imagePlacement، imageFocus و imageIndex. این تصمیم‌ها باید با عکس و محتوای واقعی هماهنگ باشند، نه قالب و رنگ ثابت.",
+  "ترکیب‌بندی حرفه‌ای یعنی سلسله‌مراتب واضح، نقطه تمرکز واحد، فضای خالی کنترل‌شده، کنتراست دقیق، تایپوگرافی متناسب با شخصیت محتوا و تنوع هدفمند. از کارت‌های تکراری، پنل مات روی عکس، قاب‌های بی‌دلیل، متن طولانی و چند تیتر هم‌وزن پرهیز کن.",
+  "هر اسلاید را مثل یک پوستر یا صفحه مجله مستقل طراحی کن، اما کل مجموعه باید هویت و روایت یکپارچه داشته باشد. نسبت عکس و متن، مقیاس تیتر، محل تیتر، فضای منفی و ساختار را آگاهانه متنوع کن.",
+  "اگر عکسی وجود ندارد، طرح را با گرافیک تایپوگرافیک اصیل کامل کن؛ عکس ساختگی یا ادعای وجود عکس واقعی ممنوع است.",
+  "گزارش تحلیل محلی عکس‌ها:\n"+(photoContext||"هیچ عکس کاربری پیوست نشده است.")+"\n\nمحتوای مرجع:\n"+content,
+  "فقط JSON معتبر و بدون Markdown با schema زیر برگردان: {\"version\":\"nava.story.plan.v1\",\"slides\":[{\"layout\":\"cover|editorial|split|quote|details|closing\",\"kicker\":\"\",\"headline\":\"\",\"matchup\":\"\",\"body\":\"\",\"date\":\"\",\"time\":\"\",\"venue\":\"\",\"cta\":\"\",\"visual\":\"stadium|matchup|details|crowd|abstract\",\"accent\":\"#RRGGBB\",\"imageIndex\":0,\"imageRequest\":\"\",\"imagePlacement\":\"background|subject|none\",\"artDirection\":\"editorial|cinematic|poster|luxury|tech|organic|minimal|bold\",\"typeTreatment\":\"sans|serif|oversized|compact\",\"headlineAlign\":\"right|center|left\",\"headlineColor\":\"#RRGGBB\",\"bodyColor\":\"#RRGGBB\",\"imageFocus\":\"center|top|bottom|left|right\",\"rationale\":\"\"}]}",
+  "برای اعلام مسابقه معمولاً ۳ اسلاید بساز: هوک و معرفی، جزئیات زمان و مکان، دعوت به تعامل. برای موضوع‌های دیگر روایت و تعداد مناسب را خودت انتخاب کن؛ حداکثر ۸ اسلاید.",
+  "واقعیت‌ها، تاریخ، ساعت، نام‌ها و مکان را عیناً از ورودی بردار و چیزی اختراع نکن. متن روی تصویر کوتاه و فارسی باشد. از حافظه و گفت‌وگوهای قبلی استفاده نکن."
+ ].join("\n\n");
+ const host=document.getElementById("storyVisualSlides");if(host){host.replaceChildren();host.hidden=true;}
+ storyMessage.textContent="NAVI در حال مشاهده عکس‌ها، طراحی روایت و کارگردانی بصری اسلایدهاست…";storyMessage.classList.add("show");
+ if(!getNaviToken()){window.openNaviAssistant({service,context,message});return;}
+ if(Array.from(serviceSelect.options).some(option=>option.value===service))serviceSelect.value=service;
+ updateNaviAssistantContext(service,context);
+ sendMessageToNavi({messageOverride:message,serviceOverride:service,contextOverride:context,storyPlan:true,images:storyPhotoVisionImages});
 });
- 
 
 
 /* NAVA homepage entry points: reuse the existing authenticated NAVI flow. */
