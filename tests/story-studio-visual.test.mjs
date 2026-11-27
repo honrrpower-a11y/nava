@@ -54,3 +54,13 @@ test("backend uses a dedicated structured visual brief and excludes prior chat h
   assert.match(backend, /if \(!isVideoPlanRequest && !isStoryPlanRequest\)/);
   assert.match(backend, /storyPlan: isStoryPlanRequest/);
 });
+
+test("Story Studio analyzes selected photos locally and derives per-slide typography and palette", () => {
+  assert.match(app, /function analyzeStoryPhoto\(photo\)/);
+  assert.match(app, /getImageData\(0,0,36,36\)/);
+  assert.match(app, /function resolveStorySlideDesign\(slide,photo,index\)/);
+  assert.match(app, /design\.headlineFont/);
+  assert.match(app, /design\.bodyFont/);
+  assert.match(app, /design\.needsPanel/);
+  assert.match(app, /const photoAnalysis=photo\?analyzeStoryPhoto\(photo\):null/);
+});
