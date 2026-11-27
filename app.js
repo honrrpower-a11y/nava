@@ -4741,7 +4741,8 @@ function analyzeStoryPhoto(photo) {
     const ranked=cells.map((c,i)=>({i,lum:c.lum/Math.max(1,c.n),busy:c.edge/Math.max(1,c.n)}))
       .sort((a,b)=>(a.busy*1.6+Math.abs(a.lum-.48))-(b.busy*1.6+Math.abs(b.lum-.48)));
     const safeZone=ranked[0]?.i??4,busy=Math.min(1,cells.reduce((sum,c)=>sum+c.edge,0)/(count*.12));
-    return {brightness,saturation,busy,accent,safeZone,
+    const zoneBrightness=ranked[0]?.lum??brightness;
+    return {brightness,saturation,busy,accent,safeZone,zoneBrightness,
       brightnessLabel:brightness<.34?"تاریک":brightness>.66?"روشن":"متعادل",
       busyLabel:busy>.42?"شلوغ":busy<.18?"خلوت":"با جزئیات متوسط"};
   } catch { return {brightness:.45,saturation:.35,accent:"#e5b85e",busy:.5,safeZone:4,brightnessLabel:"نامشخص",busyLabel:"نامشخص"}; }
@@ -4775,13 +4776,17 @@ function resolveStorySlideDesign(slide,photo,index) {
   // Typography is sized for a full-screen phone story; busy photos change placement, never shrink copy to illegibility.
   const headlineSize=slide.typeTreatment==="oversized"?(busy>.55?112:132):(busy>.55?100:busy>.32?108:(layout==="cover"?120:layout==="quote"?116:108));
   const bodySize=busy>.55?62:68;
-  const preferredInk=lightLayout?"#202a35":"#ffffff";
-  const textColor=storyReadableColor(slide.headlineColor,preferredInk,surface,4.5);
-  const preferredBody=lightLayout?"#3d4852":"#f6f7fa";
-  const bodyColor=storyReadableColor(slide.bodyColor,preferredBody,surface,4.5);
-  const textX=align==="left"?115:align==="center"?540:965;
   const placement=slide.imagePlacement==="background"||slide.imagePlacement==="subject"?slide.imagePlacement:
     (photo?(layout==="cover"?"background":"subject"):"none");
+  // Select text ink using the low-detail area of the actual photo.
+  const photoBackground=Boolean(photo&&placement==="background");
+  const zoneBrightness=photo?.zoneBrightness??photo?.brightness??.42;
+  const photoInk=zoneBrightness>.46?"#17202b":"#ffffff";
+  const preferredInk=photoBackground?photoInk:(lightLayout?"#202a35":"#ffffff");
+  const preferredBody=photoBackground?(zoneBrightness>.46?"#26323d":"#f6f7fa"):(lightLayout?"#3d4852":"#f6f7fa");
+  const textColor=photoBackground?preferredInk:storyReadableColor(slide.headlineColor,preferredInk,surface,4.5);
+  const bodyColor=photoBackground?preferredBody:storyReadableColor(slide.bodyColor,preferredBody,surface,4.5);
+  const textX=align==="left"?115:align==="center"?540:965;
   return {layout,accent,family,headlineFont:(layout==="cover"||layout==="quote"?"800 ":"700 ")+headlineSize+"px "+family,
     bodyFont:"700 "+bodySize+"px "+family,kickerFont:"700 48px Vazirmatn,sans-serif",
     headlineColor:textColor,bodyColor,
@@ -4820,8 +4825,13 @@ function drawStorySlide(canvas, slide, index, total, renderScale = 0.5, photo = 
     const crop=cropSource(photo,w,h,design.imageFocus);
     c.drawImage(photo,crop.sx,crop.sy,crop.sw,crop.sh,0,0,w,h);
     const safeTop=design.safeRow===0;
+    const darkInk=design.headlineColor==="#17202b";
     const shade=c.createLinearGradient(0,safeTop?0:h*.35,0,safeTop?h*.72:h);
-    shade.addColorStop(0,"rgba(3,8,18,.04)");shade.addColorStop(.48,"rgba(3,8,18,.20)");shade.addColorStop(1,"rgba(3,8,18,.78)");
+    if(darkInk){
+      shade.addColorStop(0,"rgba(255,255,255,.02)");shade.addColorStop(.48,"rgba(255,255,255,.08)");shade.addColorStop(1,"rgba(255,255,255,.18)");
+    }else{
+      shade.addColorStop(0,"rgba(3,8,18,.04)");shade.addColorStop(.48,"rgba(3,8,18,.20)");shade.addColorStop(1,"rgba(3,8,18,.78)");
+    }
     c.fillStyle=shade;c.fillRect(0,0,w,h);
   } else if(photo&&imagePlacement==="subject"){
     const box=layout==="split"?{x:70,y:250,w:940,h:850}:layout==="cover"?{x:90,y:760,w:900,h:850}:layout==="closing"?{x:110,y:600,w:860,h:780}:{x:100,y:700,w:880,h:760};
@@ -4836,7 +4846,9 @@ function drawStorySlide(canvas, slide, index, total, renderScale = 0.5, photo = 
   };
   const wrap=(text,x,y,font,color,align="right",maxWidth=850,lineHeight=100,maxLines=4)=>{
     c.save();c.direction="rtl";c.textAlign=align;c.font=font;c.fillStyle=color;
-    c.shadowColor=photo&&imagePlacement==="background"?"rgba(0,0,0,.55)":"transparent";c.shadowBlur=photo&&imagePlacement==="background"?16:0;
+    const darkInk=textColor==="#17202b"||textColor==="#202a35"||bodyColor==="#26323d";
+    c.shadowColor=photo&&imagePlacement==="background"?(darkInk?"rgba(255,255,255,.72)":"rgba(0,0,0,.62)"):"transparent";
+    c.shadowBlur=photo&&imagePlacement==="background"?18:0;
     const lines=[];let line="";
     for(const word of String(text||"").split(/\s+/)){const next=line?line+" "+word:word;if(c.measureText(next).width>maxWidth&&line){lines.push(line);line=word;}else line=next;}
     if(line)lines.push(line);
@@ -4844,7 +4856,7 @@ function drawStorySlide(canvas, slide, index, total, renderScale = 0.5, photo = 
     c.restore();return y+Math.min(lines.length,maxLines)*lineHeight;
   };
   const isBackground=photo&&imagePlacement==="background";
-  const textColor=isBackground?"#ffffff":ink,bodyColor=isBackground?"#f6f7fa":secondary;
+  const textColor=design.headlineColor,bodyColor=design.bodyColor;
   const align=design.align==="left"?"left":design.align==="center"?"center":"right";
   const tx=align==="left"?115:align==="center"?540:965;
   if(layout==="cover"){
@@ -4918,13 +4930,13 @@ improveStoryWithNavi?.addEventListener("click",()=>{
  const photoContext=storyPhotoAssets.map((item,index)=>(index+1)+". "+item.file.name+"\n"+item.analysis.report).join("\n\n");
  const message=[
   "تو مدیر هنری، عکاس تبلیغاتی و طراح گرافیک یک استودیوی حرفه‌ای هستی. عکس‌های پیوست‌شده را واقعاً ببین؛ گزارش محلی فقط مکمل است.",
-  "هر عکس را جداگانه از نظر سوژه، محیط، حس، ترکیب‌بندی، نور، رنگ، فضای منفی و امکان برش بررسی کن؛ سپس ارتباط تصاویر را بفهم و برای هر اسلاید بهترین عکس را با imageIndex یک‌مبنایی انتخاب کن. عکس نامرتبط را فقط برای مصرف‌کردن وارد نکن.",
-  "برای هر اسلاید تصمیم طراحی اجرایی و مستقل بده: layout، artDirection، typeTreatment، headlineAlign، headlineColor، bodyColor، accent، imagePlacement، imageFocus و imageIndex. این تصمیم‌ها باید با عکس و محتوای واقعی هماهنگ باشند، نه قالب و رنگ ثابت.",
+  "هر عکس را جداگانه از نظر سوژه، محیط، حس، ترکیب‌بندی، نور، رنگ، فضای منفی و امکان برش بررسی کن؛ سپس ارتباط تصاویر را بفهم و برای هر اسلاید مستقل تصمیم بگیر عکس لازم است یا نه؛ imageIndex=0 یعنی همان اسلاید بدون عکس طراحی شود. اگر فقط یک عکس انتخاب شده، آن را پیش‌فرض فقط در مناسب‌ترین اسلاید به کار ببر و آن را در همه اسلایدها تکرار نکن مگر کاربر صریحاً بخواهد. عکس نامرتبط را فقط برای مصرف‌کردن وارد نکن.",
+  "برای هر اسلاید تصمیم طراحی اجرایی و مستقل بده: layout، artDirection، typeTreatment، headlineAlign، headlineColor، bodyColor، accent، imagePlacement، imageFocus و imageIndex. برای اسلاید بدون عکس imageIndex=0 و imagePlacement=none باشد. این تصمیم‌ها باید با عکس و محتوای واقعی هماهنگ باشند، نه قالب و رنگ ثابت.",
   "ترکیب‌بندی حرفه‌ای یعنی سلسله‌مراتب واضح، نقطه تمرکز واحد، فضای خالی کنترل‌شده، کنتراست دقیق، تایپوگرافی متناسب با شخصیت محتوا و تنوع هدفمند. از کارت‌های تکراری، پنل مات روی عکس، قاب‌های بی‌دلیل، متن طولانی و چند تیتر هم‌وزن پرهیز کن.",
   "هر اسلاید را مثل یک پوستر یا صفحه مجله مستقل طراحی کن، اما کل مجموعه باید هویت و روایت یکپارچه داشته باشد. نسبت عکس و متن، مقیاس تیتر، محل تیتر، فضای منفی و ساختار را آگاهانه متنوع کن.",
   "اگر عکسی وجود ندارد، طرح را با گرافیک تایپوگرافیک اصیل کامل کن؛ عکس ساختگی یا ادعای وجود عکس واقعی ممنوع است.",
   "گزارش تحلیل محلی عکس‌ها:\n"+(photoContext||"هیچ عکس کاربری پیوست نشده است.")+"\n\nمحتوای مرجع:\n"+content,
-  "در فیلد reply پاسخ بیرونی NAVI، فقط یک رشته JSON معتبر و بدون Markdown قرار بده که دقیقاً این طرح داخلی را داشته باشد: {\"version\":\"nava.story.plan.v1\",\"slides\":[{\"layout\":\"cover|editorial|split|quote|details|closing\",\"kicker\":\"\",\"headline\":\"\",\"matchup\":\"\",\"body\":\"\",\"date\":\"\",\"time\":\"\",\"venue\":\"\",\"cta\":\"\",\"visual\":\"stadium|matchup|details|crowd|abstract\",\"accent\":\"#RRGGBB\",\"imageIndex\":0,\"imageRequest\":\"\",\"imagePlacement\":\"background|subject|none\",\"artDirection\":\"editorial|cinematic|poster|luxury|tech|organic|minimal|bold\",\"typeTreatment\":\"sans|serif|oversized|compact\",\"headlineAlign\":\"right|center|left\",\"headlineColor\":\"#RRGGBB\",\"bodyColor\":\"#RRGGBB\",\"imageFocus\":\"center|top|bottom|left|right\",\"rationale\":\"\"}]}. خودت JSON داخلی را به‌صورت رشته صحیح در reply قرار بده؛ قرارداد بیرونی NAVI را تغییر نده.",
+  "در فیلد reply پاسخ بیرونی NAVI، فقط یک رشته JSON معتبر و بدون Markdown قرار بده که دقیقاً این طرح داخلی را داشته باشد: {\"version\":\"nava.story.plan.v1\",\"slides\":[{\"layout\":\"cover|editorial|split|quote|details|closing\",\"kicker\":\"\",\"headline\":\"\",\"matchup\":\"\",\"body\":\"\",\"date\":\"\",\"time\":\"\",\"venue\":\"\",\"cta\":\"\",\"visual\":\"stadium|matchup|details|crowd|abstract\",\"accent\":\"#RRGGBB\",\"imageIndex\":0,\"imageRequest\":\"\",\"imagePlacement\":\"background|subject|none\",\"artDirection\":\"editorial|cinematic|poster|luxury|tech|organic|minimal|bold\",\"typeTreatment\":\"sans|serif|oversized\",\"headlineAlign\":\"right|center|left\",\"headlineColor\":\"#RRGGBB\",\"bodyColor\":\"#RRGGBB\",\"imageFocus\":\"center|top|bottom|left|right\",\"rationale\":\"\"}]}. خودت JSON داخلی را به‌صورت رشته صحیح در reply قرار بده؛ قرارداد بیرونی NAVI را تغییر نده.",
   "برای اعلام مسابقه معمولاً ۳ اسلاید بساز: هوک و معرفی، جزئیات زمان و مکان، دعوت به تعامل. برای موضوع‌های دیگر روایت و تعداد مناسب را خودت انتخاب کن؛ حداکثر ۸ اسلاید.",
   "واقعیت‌ها، تاریخ، ساعت، نام‌ها و مکان را عیناً از ورودی بردار و چیزی اختراع نکن. متن روی تصویر کوتاه و فارسی باشد. از حافظه و گفت‌وگوهای قبلی استفاده نکن."
  ].join("\n\n");
