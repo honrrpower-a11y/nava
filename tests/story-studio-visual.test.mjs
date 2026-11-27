@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { getNaviMessageLimit, shouldUseNaviStoryPlanContext, parseNaviGeminiResponse } from "../modules/navi.js";
+import { getNaviMessageLimit, shouldUseNaviStoryPlanContext, normalizeNaviStoryBrief, parseNaviGeminiResponse } from "../modules/navi.js";
 
 const app = readFileSync(new URL("../app.js", import.meta.url), "utf8");
 const html = readFileSync(new URL("../index.html", import.meta.url), "utf8");
@@ -237,6 +237,23 @@ test("Story Studio executes NAVI-authored freeform scene graphs instead of choos
   assert.match(navi, /کلید elements اجباری است/);
 });
 
+
+test("Story Studio preserves the complete content-studio output as an authoritative structured brief", () => {
+  const sourceReply = "اسلاید ۱\\nتیتر: صدای خش‌خش برگ‌ها\\nتوضیح: لحظاتی دنج برای لذت بردن از نقاشی شگفت‌انگیز طبیعت\\nاسلاید ۲\\nدعوت: عکس یا فیلم پاییزی‌ات را برای ما بفرست.";
+  const normalized = normalizeNaviStoryBrief({
+    source: "content-studio", sourceReply, packageText: "بسته کامل",
+    format: "پست اسلایدی", topic: "پاییز", callToAction: "عکس یا فیلمت را بفرست"
+  });
+  assert.equal(normalized.sourceReply, sourceReply);
+  assert.equal(normalized.format, "پست اسلایدی");
+  assert.equal(normalizeNaviStoryBrief({ source: "other", sourceReply }), null);
+  assert.match(app, /window\\.navaPendingStoryBrief = \\{/);
+  assert.match(app, /storyBrief: storyPlan && options\\.storyBrief/);
+  assert.match(app, /storyBrief,images:storyPhotoVisionImages/);
+  assert.match(navi, /normalizeNaviStoryBrief\\(input\\.storyBrief\\)/);
+  assert.match(navi, /منبع ساختاریافته و اصلی/);
+  assert.match(navi, /یادداشت کوتاه فعلی کاربر فقط توضیح تکمیلی است/);
+});
 
 test("Story Studio accepts a direct structured plan object in the outer NAVI response", () => {
   const plan = { version: "nava.story.plan.v1", slides: [{ elements: [{ type: "text", x: 10, y: 10, w: 80, h: 20, text: "سلام" }] }] };
