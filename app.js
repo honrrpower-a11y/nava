@@ -4309,9 +4309,11 @@ async function sendMessageToNavi(options = {}) {
   // server prompt. A visible Office context must not be lost merely because
   // the compact service selector still says "انتخاب نشده".
   const promptService = officeRequestContext ? officeService : selectedService;
-  const requestPage = options.pageOverride === "officePage"
-    ? "officePage"
-    : officeRequestContext ? "officePage" : activePageId;
+  const requestPage = options.storyPlan === true
+    ? "storyPage"
+    : options.pageOverride === "officePage"
+      ? "officePage"
+      : officeRequestContext ? "officePage" : activePageId;
   const activeOfficeFileInfo = officeRequestContext
     ? window.NavaOfficeTools?.getActiveFileInfo?.()
     : null;
@@ -4445,7 +4447,7 @@ async function sendMessageToNavi(options = {}) {
 
     // Give explicit, visible feedback whenever the user checked the
     // composer save option. Do not silently treat a missing result as success.
-    if (saveThisMessageToMemory) {
+    if (saveThisMessageToMemory && !storyPlan) {
       const manualMemory = data.memory && typeof data.memory === "object"
         ? data.memory
         : null;
