@@ -23,7 +23,7 @@ test("Story Studio renders vertical slides and exports PNG locally", () => {
   assert.match(app, /exportCanvas\.toBlob/);
   assert.match(app, /nava-story-/);
   assert.match(html, /id="storyVisualSlides"/);
-  assert.match(html, /story=story-page-route-20261127-1/);
+  assert.match(html, /story=reply-contract-20261127-1/);
   assert.match(css, /\.story-visual-canvas/);
 });
 
