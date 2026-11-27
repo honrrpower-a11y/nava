@@ -204,6 +204,15 @@ test("Story Studio measures and separates text blocks to prevent collisions", ()
 });
 
 
+test("Story Studio prevents large opaque color panels from covering user photos", () => {
+  assert.match(app, /const slideHasPhoto=Boolean\(fallbackPhoto\|\|Number\(slide\.imageIndex\)>0/);
+  assert.match(app, /largePhotoPanel=slideHasPhoto&&shape==="rect"&&box\.w\*box\.h>width\*height\*0\.045/);
+  assert.match(app, /intentionalSoftOverlay=item\.role==="intentional-overlay"&&opacity<=0\.22/);
+  assert.match(app, /validColor\(item\.fill\|"#d9e2ec"\)/);
+  assert.match(app, /از مستطیل‌های بزرگ توپر، کارت و پنل رنگی به‌عنوان تزئین پیش‌فرض استفاده نکن/);
+  assert.match(navi, /role=\\?"intentional-overlay\\?"/);
+});
+
 test("Story Studio executes NAVI-authored freeform scene graphs instead of choosing fixed templates", () => {
   assert.match(app, /function drawNaviArtDirectedStorySlide\(canvas,slide,renderScale=0\.5,fallbackPhoto=null\)/);
   assert.match(app, /if\(Array\.isArray\(slide\.elements\)&&slide\.elements\.length\)return drawNaviArtDirectedStorySlide/);
