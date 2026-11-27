@@ -4818,9 +4818,9 @@ function resolveStorySlideDesign(slide,photo,index) {
   const bodyLineHeight=bodySize>=68?96:90;
   const headlineFont=displayWeight+" "+headlineSize+"px "+family;
   const bodyFont=bodyWeight+" "+bodySize+"px "+bodyFamily;
-  const kickerFont="700 48px "+bodyFamily;
-  const matchupFont="800 76px "+bodyFamily;
-  const ctaFont="800 60px "+bodyFamily;
+  const kickerFont="900 54px "+family;
+  const matchupFont="900 78px "+bodyFamily;
+  const ctaFont="900 66px "+family;
   const placement=composition.imageTreatment==="fullBleed"&&photo?"background":
     slide.imagePlacement==="background"||slide.imagePlacement==="subject"?slide.imagePlacement:
     (photo?(layout==="cover"?"background":"subject"):"none");
@@ -4902,17 +4902,31 @@ function drawStorySlide(canvas, slide, index, total, renderScale = 0.5, photo = 
     c.restore();
   }
   const drawRule=(x,y,width=130)=>{c.fillStyle=accent;c.fillRect(x,y,width,8);};
-  const textOffsetY=design.composition.verticalOffset;
-  const textAnchorX=design.composition.horizontal==="left"?115:design.composition.horizontal==="center"?540:965;
-  const textAnchorAlign=design.composition.align;
+  // Every text element reserves a measured rectangle. If a later element collides,
+  // it is moved into the next available vertical slot instead of being painted over it.
+  const textBoxes=[];
+  const reserveTextBox=(x,y,width,height,align,gap=28)=>{
+    const left=align==="center"?x-width/2:align==="left"?x:x-width;
+    const box={left:left-8,right:left+width+8,top:y-height+8,bottom:y+8};
+    const overlaps=(candidate)=>textBoxes.some(existing=>candidate.left<existing.right&&candidate.right>existing.left&&candidate.top<existing.bottom+gap&&candidate.bottom>existing.top-gap);
+    let candidate={...box};
+    while(overlaps(candidate)&&candidate.bottom<h-70){candidate.top+=24;candidate.bottom+=24;}
+    if(overlaps(candidate)){
+      candidate={...box};
+      while(overlaps(candidate)&&candidate.top>150){candidate.top-=24;candidate.bottom-=24;}
+    }
+    textBoxes.push(candidate);
+    return candidate.bottom-8;
+  };
   const drawText=(text,x,y,font,color,align="right",maxWidth=860,shadow=false)=>{
-    y+=textOffsetY;x=textAnchorX;align=textAnchorAlign;
     c.save();c.direction="rtl";c.textAlign=align;c.font=font;c.fillStyle=color;
+    const value=String(text||""),metrics=c.measureText(value),fontSize=Number((String(font).match(/(\\d+(?:\\.\\d+)?)px/)||[])[1])||64;
+    const width=Math.min(maxWidth,Math.max(32,metrics.width)),height=Math.max(fontSize*1.18,metrics.actualBoundingBoxAscent+metrics.actualBoundingBoxDescent);
+    y=reserveTextBox(x,y,width,height,align);
     if(shadow){c.shadowColor="rgba(0,0,0,.62)";c.shadowBlur=18;c.shadowOffsetY=3;}
-    c.fillText(String(text||""),x,y,maxWidth);c.restore();
+    c.fillText(value,x,y,maxWidth);c.restore();return y;
   };
   const wrap=(text,x,y,font,color,align="right",maxWidth=850,lineHeight=100,maxLines=4)=>{
-    y+=textOffsetY;x=textAnchorX;align=textAnchorAlign;
     c.save();c.direction="rtl";c.textAlign=align;c.font=font;c.fillStyle=color;
     const darkInk=textColor==="#17202b"||textColor==="#202a35"||bodyColor==="#26323d";
     c.shadowColor=photo&&imagePlacement==="background"?(darkInk?"rgba(255,255,255,.72)":"rgba(0,0,0,.62)"):"transparent";
@@ -4920,8 +4934,13 @@ function drawStorySlide(canvas, slide, index, total, renderScale = 0.5, photo = 
     const lines=[];let line="";
     for(const word of String(text||"").split(/\s+/)){const next=line?line+" "+word:word;if(c.measureText(next).width>maxWidth&&line){lines.push(line);line=word;}else line=next;}
     if(line)lines.push(line);
-    lines.slice(0,maxLines).forEach((value,i)=>c.fillText(value,x,y+i*lineHeight,maxWidth));
-    c.restore();return y+Math.min(lines.length,maxLines)*lineHeight;
+    const visible=lines.slice(0,maxLines);
+    const measuredWidth=Math.min(maxWidth,Math.max(32,...visible.map(value=>c.measureText(value).width)));
+    const blockHeight=Math.max(lineHeight,visible.length*lineHeight);
+    const bottom=reserveTextBox(x,y,measuredWidth,blockHeight,align,34);
+    y=bottom-blockHeight+lineHeight;
+    visible.forEach((value,i)=>c.fillText(value,x,y+i*lineHeight,maxWidth));
+    c.restore();return bottom;
   };
   const isBackground=photo&&imagePlacement==="background";
   const textColor=design.headlineColor,bodyColor=design.bodyColor;
