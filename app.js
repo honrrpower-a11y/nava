@@ -4881,7 +4881,13 @@ function drawStorySlide(canvas, slide, index, total, renderScale = 0.5, photo = 
     if(slide.body)wrap(slide.body,tx,y+55,design.bodyFont,bodyColor,align,850,72,4);
   }
   if(slide.cta&&layout!=="closing")wrap(slide.cta,965,1710,"700 42px Vazirmatn,sans-serif",accent,"right",820,60,2);
-  c.save();c.direction="ltr";c.textAlign="left";c.fillStyle=isBackground?"#ffffffaa":"#6c7884";c.font="600 23px Vazirmatn,sans-serif";c.fillText("NAVA  /  "+(index+1)+" — "+total,80,1840);c.restore();
+  const brandSignature=typeof slide.brandSignature==="string"?slide.brandSignature.trim().slice(0,32):"";
+  if(brandSignature){
+    c.save();c.direction="rtl";c.textAlign="right";
+    c.fillStyle=isBackground?"#ffffff":(lightLayout?"#4d5964":"#d5dce5");
+    c.font="700 28px Vazirmatn,sans-serif";
+    c.fillText(brandSignature,965,1840,420);c.restore();
+  }
 }
 function renderNaviStoryPlan(plan) {
   const host=document.getElementById("storyVisualSlides"),status=document.getElementById("storyMessage");if(!host)return;
