@@ -50,3 +50,6 @@
 .seo-navi-reply-wrap[hidden]{display:none}
 .seo-navi-reply-wrap h3{margin:0 0 10px;font-size:1rem}
 .seo-navi-reply{white-space:pre-wrap;overflow-wrap:anywhere;line-height:2;color:var(--text)}
+
+/* Keep the studio explanation compact inside the audit card, below the URL field. */
+.seo-intro-note{margin:2px 0 0;color:var(--muted);font-size:.82rem;line-height:1.75;max-width:68ch}
