@@ -6,6 +6,7 @@ import { handleLyricsRoute } from "./modules/lyrics.js";
 import { handleMusicRoute } from "./modules/music.js";
 import { handleLogoRoute } from "./modules/logo.js";
 import { handleBusinessRoute } from "./modules/business.js";
+import { handleSeoRoute } from "./modules/seo.js";
 
 export default {
   async fetch(request, env) {
@@ -40,6 +41,9 @@ export default {
     if (url.pathname === "/logo/generate") {
       return await handleLogoRoute({ request, env, origin, corsOrigin });
     }
+
+    const seoResponse = await handleSeoRoute({ request, env, origin, corsOrigin });
+    if (seoResponse) return seoResponse;
 
     const businessContext = { request, env, url, origin, corsOrigin };
     const businessResponse = await handleBusinessRoute(businessContext);
