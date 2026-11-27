@@ -82,7 +82,8 @@ test("Story Studio sends selected photos through NAVI vision and applies per-sli
   assert.match(app, /storyPhotosInput/);
   assert.match(app, /NaviLocalImageAnalysis\?\.analyze/);
   assert.match(app, /storyPhotoVisionImages/);
-  assert.match(app, /images: \(options\.videoPlan === true \|\| storyPlan\) \? visionImages : undefined/);
+  assert.match(app, /images: options\.videoPlan === true \? visionImages : undefined/);
+  assert.match(app, /storyImages: storyPlan \? visionImages : undefined/);
   assert.match(app, /imageIndex/);
   assert.match(navi, /هر تصویر را جداگانه از محتوای واقعی آن تحلیل کن/);
   assert.match(navi, /typeTreatment/);
