@@ -61,7 +61,6 @@ test("Story Studio analyzes selected photos locally and derives per-slide typogr
   assert.match(app, /function resolveStorySlideDesign\(slide,photo,index\)/);
   assert.match(app, /design\.headlineFont/);
   assert.match(app, /design\.bodyFont/);
-  assert.match(app, /design\.needsPanel/);
   assert.match(app, /needsPanel:false/);
   assert.match(app, /Subtle shadow preserves legibility without covering any part of the uploaded image/);
   assert.doesNotMatch(app, /c\.fillStyle="#07101fe8";c\.fillRect\(design\.panelX/);
@@ -75,6 +74,6 @@ test("Story Studio exposes photo-analysis results and uses the detected safe zon
   assert.match(app, /تحلیل عکس انجام شد/);
   assert.match(app, /safeZone/);
   assert.match(app, /count\*\.12/);
-  assert.match(app, /textX:align==="left"/);
+  assert.match(app, /const textX=align==="left"\?110:align==="center"\?540:970/);
   assert.match(app, /فضای مناسب متن/);
 });
