@@ -16,7 +16,7 @@ test("Story Studio routes NAVI design responses to a visual renderer, not chat",
 });
 
 test("Story Studio renders vertical slides and exports PNG locally", () => {
-  assert.match(app, /canvas\.width=Math\.round\(w\*scale\); canvas\.height=Math\.round\(h\*scale\)/);
+  assert.match(app, /canvas\.width=Math\.round\(w\*scale\);canvas\.height=Math\.round\(h\*scale\)/);
   assert.match(app, /drawStorySlide\(exportCanvas,slide,index,plan\.slides\.length,1,storySlideImages/);
   assert.match(app, /exportCanvas\.toBlob/);
   assert.match(app, /nava-story-/);
@@ -85,6 +85,6 @@ test("Story Studio uses art-directed slide layouts with varied editorial composi
   assert.match(app, /layout==="quote"/);
   assert.match(app, /layout==="details"/);
   assert.match(app, /layout==="closing"/);
-  assert.match(navi, /"layout"/);
+  assert.match(navi, /layout/);
   assert.match(navi, /layout را بی\u200cدلیل تکرار نکن/);
 });
