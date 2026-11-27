@@ -23,7 +23,7 @@ test("Story Studio renders vertical slides and exports PNG locally", () => {
   assert.match(app, /exportCanvas\.toBlob/);
   assert.match(app, /nava-story-/);
   assert.match(html, /id="storyVisualSlides"/);
-  assert.match(html, /story=json-object-envelope-20261127-1/);
+  assert.match(html, /story=photo-panel-autonomy-20261127-1/);
   assert.match(css, /\.story-visual-canvas/);
 });
 
@@ -203,6 +203,15 @@ test("Story Studio measures and separates text blocks to prevent collisions", ()
   assert.match(app, /bodyFont=bodyWeight\+" "\+bodySize\+"px "\+bodyFamily/);
 });
 
+
+test("Story Studio prevents large opaque color panels from covering user photos", () => {
+  assert.match(app, /const slideHasPhoto=Boolean\(fallbackPhoto\|\|Number\(slide\.imageIndex\)>0/);
+  assert.match(app, /rectangularShape=!\["circle","line","diamond","arc"\]\.includes\(shape\);const largePhotoPanel=slideHasPhoto&&rectangularShape&&box\.w\*box\.h>width\*height\*0\.045/);
+  assert.match(app, /intentionalSoftOverlay=item\.role==="intentional-overlay"&&opacity<=0\.22/);
+  assert.match(app, /validColor\(item\.fill\|\|"#d9e2ec"\)/);
+  assert.match(app, /از مستطیل‌های بزرگ توپر، کارت و پنل رنگی به‌عنوان تزئین پیش‌فرض استفاده نکن/);
+  assert.match(navi, /intentional-overlay/);
+});
 
 test("Story Studio executes NAVI-authored freeform scene graphs instead of choosing fixed templates", () => {
   assert.match(app, /function drawNaviArtDirectedStorySlide\(canvas,slide,renderScale=0\.5,fallbackPhoto=null\)/);
