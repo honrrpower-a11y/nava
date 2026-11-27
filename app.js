@@ -4309,11 +4309,10 @@ async function sendMessageToNavi(options = {}) {
   // server prompt. A visible Office context must not be lost merely because
   // the compact service selector still says "انتخاب نشده".
   const promptService = officeRequestContext ? officeService : selectedService;
-  const requestPage = options.storyPlan === true
-    ? "storyPage"
-    : options.pageOverride === "officePage"
-      ? "officePage"
-      : officeRequestContext ? "officePage" : activePageId;
+  const requestPage = options.pageOverride === "officePage"
+    ? "officePage"
+    : officeRequestContext ? "officePage" : activePageId;
+  const resolvedRequestPage = options.storyPlan === true ? "storyPage" : requestPage;
   const activeOfficeFileInfo = officeRequestContext
     ? window.NavaOfficeTools?.getActiveFileInfo?.()
     : null;
@@ -4324,7 +4323,7 @@ async function sendMessageToNavi(options = {}) {
       ? "شیت‌های فایل فعال (از فایل بارگذاری‌شده): " + JSON.stringify(activeOfficeFileInfo.sheetNames)
       : "";
   if (options.officeDiagnostic && naviOwnerVerified === true) updateOfficeActionDiagnostic("درخواست آماده ارسال", {
-    page: requestPage,
+    page: resolvedRequestPage,
     service: selectedService,
     messageCharacters: message.length,
     contextPresent: Boolean(requestContext)
@@ -4369,7 +4368,7 @@ async function sendMessageToNavi(options = {}) {
       },
       body: JSON.stringify({
         message: finalMessage,
-        page: options.videoPlan === true ? "avPage" : requestPage,
+        page: options.videoPlan === true ? "avPage" : resolvedRequestPage,
         videoPlan: options.videoPlan === true,
         storyPlan,
         videoEditorMode: videoEditorMode && options.videoPlan !== true,
