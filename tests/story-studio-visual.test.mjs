@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { getNaviMessageLimit, shouldUseNaviStoryPlanContext } from "../modules/navi.js";
+import { getNaviMessageLimit, shouldUseNaviStoryPlanContext, parseNaviGeminiResponse } from "../modules/navi.js";
 
 const app = readFileSync(new URL("../app.js", import.meta.url), "utf8");
 const html = readFileSync(new URL("../index.html", import.meta.url), "utf8");
@@ -108,7 +108,7 @@ test("Story Studio uses art-directed slide layouts with varied editorial composi
   assert.match(app, /layout==="closing"/);
   assert.match(navi, /layout/);
   assert.match(navi, /layout را بی\u200cدلیل تکرار نکن/);
-  assert.match(app, /در فیلد reply پاسخ بیرونی NAVI، فقط یک رشته JSON معتبر/);
+  assert.match(app, /storyPlan به‌صورت خودِ شیء JSON طرح/);
   assert.doesNotMatch(app, /فقط JSON معتبر و بدون Markdown با schema زیر برگردان/);
 });
 
@@ -213,4 +213,20 @@ test("Story Studio executes NAVI-authored freeform scene graphs instead of choos
   assert.match(app, /item\.type==="image"/);
   assert.match(app, /item\.type==="text"/);
   assert.match(navi, /کلید elements اجباری است/);
+});
+
+
+test("Story Studio accepts a direct structured plan object in the outer NAVI response", () => {
+  const plan = { version: "nava.story.plan.v1", slides: [{ elements: [{ type: "text", x: 10, y: 10, w: 80, h: 20, text: "سلام" }] }] };
+  const raw = JSON.stringify({ reply: "طرح بصری آماده شد.", storyPlan: plan, officeAction: null, navigation: null, memoryProposals: [] });
+  const parsed = parseNaviGeminiResponse(raw, { storyPlan: true });
+  assert.equal(parsed.reply, "طرح بصری آماده شد.");
+  assert.deepEqual(parsed.storyPlan, plan);
+  assert.equal(parseNaviGeminiResponse(raw).storyPlan, null);
+});
+
+test("Story Studio browser consumes a plan object without parsing a nested JSON string", () => {
+  assert.match(app, /reply: data\.storyPlan && typeof data\.storyPlan === "object" \? data\.storyPlan : reply/);
+  assert.match(app, /let plan = raw && typeof raw === "object"/);
+  assert.match(n, /JSON تو‌در‌تو داخل reply ممنوع است/);
 });
