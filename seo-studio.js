@@ -87,33 +87,30 @@
 
   async function submitReportToNavi() {
     const report = window.NAVA_SEO_LAST_REPORT;
-    const button = byId("seoNaviAnalyzeButton");
     const state = byId("seoNaviHandoffState");
-    if (!report || !button || button.disabled) return;
+    const replyWrap = byId("seoNaviReplyWrap");
+    if (!report) return false;
     if (typeof window.navaSeoNaviRequest !== "function") {
       setText(state, "اتصال NAVI بارگذاری نشد.");
-      return;
+      return false;
     }
     const token = window.NAVA_SEO_CONFIG?.getToken?.();
     if (!token) {
       setText(state, "برای ارسال گزارش، ابتدا وارد حساب نوا شو.");
-      return;
+      return false;
     }
-    button.disabled = true;
-    button.textContent = "در حال تحلیل با NAVI…";
-    setText(state, "در حال ارسال گزارش…");
+    setText(state, "در حال ارسال گزارش به NAVI…");
     setText(byId("seoNaviReply"), "");
-    byId("seoNaviReplyWrap").hidden = false;
+    if (replyWrap) replyWrap.hidden = false;
     const request = buildNaviRequest(report);
     try {
       const sent = await window.navaSeoNaviRequest(request);
       if (sent === false) throw new Error("ارسال گزارش به NAVI انجام نشد؛ نشست ورود را بررسی کن.");
+      return true;
     } catch (error) {
       setText(state, "ارسال ناموفق");
       setText(byId("seoNaviReply"), error?.message || "ارسال گزارش به NAVI ناموفق بود.");
-    } finally {
-      button.disabled = false;
-      button.textContent = "تحلیل و بهبود با NAVI";
+      return false;
     }
   }
 
@@ -121,7 +118,6 @@
     const form = byId("seoAuditForm");
     if (!form || form.dataset.initialized === "true") return;
     form.dataset.initialized = "true";
-    byId("seoNaviAnalyzeButton")?.addEventListener("click", submitReportToNavi);
     window.addEventListener("nava:seo-status", event => setText(byId("seoNaviHandoffState"), event.detail?.status || ""));
     window.addEventListener("nava:seo-reply", event => {
       setText(byId("seoNaviHandoffState"), "پاسخ NAVI دریافت شد");
@@ -164,7 +160,8 @@
         const data = await response.json();
         if (!response.ok || !data.success || !data.report) throw new Error(data.error || "تحلیل صفحه انجام نشد.");
         renderReport(data.report);
-        setText(status, "تحلیل فنی صفحه کامل شد. برای دریافت برنامه اصلاح، دکمه «تحلیل و بهبود با NAVI» را بزن.");
+        setText(status, "تحلیل فنی کامل شد؛ گزارش در حال ارسال خودکار به NAVI است…");
+        await submitReportToNavi();
       } catch (error) {
         setText(status, error?.message || "در اجرای تحلیل خطایی رخ داد.");
         if (byId("seoAuditResults") && !byId("seoAuditResults").hidden && byId("seoNaviHandoffState")?.textContent === "در حال ارسال…") {
