@@ -62,7 +62,7 @@ test("Story Studio analyzes selected photos locally and derives per-slide typogr
   assert.match(app, /design\.headlineFont/);
   assert.match(app, /design\.bodyFont/);
   assert.match(app, /needsPanel:false/);
-  assert.match(app, /Subtle shadow preserves legibility without covering any part of the uploaded image/);
+  assert.match(app, /shadowColor=photo\&\&imagePlacement==="background"/);
   assert.doesNotMatch(app, /c\.fillStyle="#07101fe8";c\.fillRect\(design\.panelX/);
   assert.match(app, /const photoAnalysis=photo\?analyzeStoryPhoto\(photo\):null/);
 });
