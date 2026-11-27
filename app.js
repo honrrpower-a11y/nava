@@ -5085,6 +5085,7 @@ function drawStorySlide(canvas, slide, index, total, renderScale = 0.5, photo = 
 }
 function renderNaviStoryPlan(plan) {
   const host=document.getElementById("storyVisualSlides"),status=document.getElementById("storyMessage");if(!host)return;
+  const syncSlideImageElements=(slide,imageIndex)=>{if(Array.isArray(slide.elements))slide.elements.forEach(item=>{if(item&&item.type==="image")item.imageIndex=imageIndex;});};
   clearStorySlideImages();host.replaceChildren();host.hidden=false;
   plan.slides.forEach((slide,index)=>{
     const imageIndex=Number(slide.imageIndex);
@@ -5119,13 +5120,13 @@ function renderNaviStoryPlan(plan) {
       const selected=Number(imageSelect.value),old=storySlideImages.get(index);
       if(old?.url)URL.revokeObjectURL(old.url);
       if(selected===0){
-        storySlideImages.delete(index);slide.imageIndex=0;slide.imagePlacement="none";
+        storySlideImages.delete(index);slide.imageIndex=0;syncSlideImageElements(slide,0);slide.imagePlacement="none";
         drawStorySlide(canvas,slide,index,plan.slides.length);imageFeedback.textContent="این اسلاید بدون عکس طراحی می‌شود.";
         return;
       }
       const source=storyPhotoAssets[selected-1];if(!source){imageSelect.value="0";return;}
       storySlideImages.set(index,{image:source.image,url:null,analysis:analyzeStoryPhoto(source.image)});
-      slide.imageIndex=selected;if(slide.imagePlacement==="none")slide.imagePlacement=slide.layout==="cover"?"background":"subject";
+      slide.imageIndex=selected;syncSlideImageElements(slide,selected);if(slide.imagePlacement==="none")slide.imagePlacement=slide.layout==="cover"?"background":"subject";
       drawStorySlide(canvas,slide,index,plan.slides.length,0.5,source.image);
       imageFeedback.textContent="عکس "+selected+" برای این اسلاید انتخاب شد؛ می‌توانی همین عکس را در اسلایدهای دیگر هم انتخاب کنی.";
     });
@@ -5143,7 +5144,7 @@ function renderNaviStoryPlan(plan) {
         const url=URL.createObjectURL(file),image=new Image();
         image.onload=()=>{
           const old=storySlideImages.get(index);if(old?.url)URL.revokeObjectURL(old.url);
-          const analysis=analyzeStoryPhoto(image);storySlideImages.set(index,{image,url,analysis});slide.imageIndex=0;
+          const analysis=analyzeStoryPhoto(image);storySlideImages.set(index,{image,url,analysis});slide.imageIndex=0;syncSlideImageElements(slide,0);
           if(slide.imagePlacement==="none")slide.imagePlacement=slide.layout==="cover"?"background":"subject";
           const customOption=Array.from(imageSelect.options).find(option=>option.value==="custom");
           if(!customOption){const option=document.createElement("option");option.value="custom";option.textContent="عکس اختصاصی این اسلاید";imageSelect.append(option);}
@@ -5155,7 +5156,7 @@ function renderNaviStoryPlan(plan) {
         image.src=url;feedback.textContent="در حال آماده‌سازی عکس…";
       });
       const skip=document.createElement("button");skip.type="button";skip.className="story-image-skip";skip.textContent="بدون عکس ادامه بده";
-      skip.addEventListener("click",()=>{const old=storySlideImages.get(index);if(old?.url)URL.revokeObjectURL(old.url);storySlideImages.delete(index);slide.imageIndex=0;slide.imagePlacement="none";imageSelect.value="0";input.value="";drawStorySlide(canvas,slide,index,plan.slides.length);feedback.textContent="این اسلاید بدون عکس ادامه پیدا می‌کند.";});
+      skip.addEventListener("click",()=>{const old=storySlideImages.get(index);if(old?.url)URL.revokeObjectURL(old.url);storySlideImages.delete(index);slide.imageIndex=0;syncSlideImageElements(slide,0);slide.imagePlacement="none";imageSelect.value="0";input.value="";drawStorySlide(canvas,slide,index,plan.slides.length);feedback.textContent="این اسلاید بدون عکس ادامه پیدا می‌کند.";});
       label.append(input);panel.append(request,label,skip,feedback);card.append(panel);
     }
     actions.append(button);card.append(actions);host.append(card);
