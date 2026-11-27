@@ -44,11 +44,14 @@ const NAVI_MAX_MESSAGE = 12000;
 // Isolated creative plans need a larger prompt budget than ordinary chat.
 const NAVI_MAX_VIDEO_PLAN_MESSAGE = 24000;
 const NAVI_MAX_STORY_PLAN_MESSAGE = 24000;
+// SEO audits carry a complete page report; keep it intact through prompt assembly.
+const NAVI_MAX_SEO_REPORT_MESSAGE = 24000;
 const NAVI_MAX_MEMORY_VALUE = 12000;
 
 export function getNaviMessageLimit(input, page) {
   if (input?.videoPlan === true && page === "avPage") return NAVI_MAX_VIDEO_PLAN_MESSAGE;
   if (input?.storyPlan === true && page === "storyPage") return NAVI_MAX_STORY_PLAN_MESSAGE;
+  if (input?.seoReport === true && page === "seoPage") return NAVI_MAX_SEO_REPORT_MESSAGE;
   return NAVI_MAX_MESSAGE;
 }
 const NAVI_MAX_PROPOSALS = 1;
@@ -3141,7 +3144,8 @@ async function handleChat({
 
   const contents = prepareNaviHistory(
     dbHistory,
-    message
+    message,
+    messageLimit
   );
 
   // Attach image bytes only to this transient Gemini request. The chat history,

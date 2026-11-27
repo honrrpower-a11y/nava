@@ -205,7 +205,8 @@ export async function getNaviDbHistory(
 
 export function prepareNaviHistory(
   history,
-  currentMessage
+  currentMessage,
+  currentMessageLimit = 12000
 ) {
   const messages = [];
 
@@ -239,7 +240,7 @@ export function prepareNaviHistory(
 
   const current = safeNaviText(
     currentMessage || "",
-    12000
+    Math.max(12000, Math.min(24000, Number(currentMessageLimit) || 12000))
   );
 
   if (current) {
