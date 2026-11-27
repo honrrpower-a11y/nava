@@ -168,11 +168,11 @@ async function fetchPage(startUrl) {
   throw new Error("TOO_MANY_REDIRECTS");
 }
 
-export async function handleSeoRoute({ request, origin, corsOrigin }) {
+export async function handleSeoRoute({ request, env, origin, corsOrigin }) {
   if (new URL(request.url).pathname !== "/seo-audit") return null;
   if (request.method !== "POST") return fail("روش درخواست پشتیبانی نمی‌شود.", 405, corsOrigin);
   if (origin !== ALLOWED_ORIGIN) return fail("مبدأ درخواست مجاز نیست.", 403, corsOrigin);
-  const auth = await authorizeNaviRequest(request, request.env || {});
+  const auth = await authorizeNaviRequest(request, env);
   if (!auth.valid) return fail(auth.error || "برای استفاده از تحلیل سئو وارد حساب شو.", auth.status || 401, corsOrigin);
   let input;
   try { input = await request.json(); } catch { return fail("نشانی سایت معتبر نیست.", 400, corsOrigin); }
