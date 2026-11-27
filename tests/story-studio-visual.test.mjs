@@ -182,11 +182,12 @@ test("Story Studio validates text and accent contrast against every no-photo gra
 test("Story Studio executes NAVI composition decisions as real layout geometry", () => {
   assert.match(app, /function resolveStoryComposition\(slide,layout,hasPhoto\)/);
   assert.match(app, /textZone:zone,vertical,horizontal,align,verticalOffset,imageTreatment/);
+  assert.match(app, /const textBoxes=\[\]/);
+  assert.match(app, /reserveTextBox/);
   assert.match(app, /comp\.imageTreatment==="portrait"/);
   assert.match(app, /comp\.imageTreatment==="landscape"/);
   assert.match(app, /comp\.imageTreatment==="offset"/);
   assert.match(app, /design\.composition\.graphicMotif/);
-  assert.match(app, /const textOffsetY=design\.composition\.verticalOffset/);
   assert.match(app, /composition.*textZone/);
   assert.match(navi, /فیلد composition را واقعاً تصمیم‌گیری کن/);
   assert.match(navi, /imageTreatment.*visualBalance.*negativeSpace.*graphicMotif/);
@@ -199,7 +200,6 @@ test("Story Studio measures and separates text blocks to prevent collisions", ()
   assert.match(app, /while\(overlaps\(candidate\)/);
   assert.match(app, /y=reserveTextBox\(x,y,width,height,align\)/);
   assert.match(app, /const blockHeight=Math\.max\(lineHeight,visible\.length\*lineHeight\)/);
-  assert.doesNotMatch(app, /y\+=textOffsetY;x=textAnchorX;align=textAnchorAlign/);
   assert.match(app, /kickerFont="900 54px "\+family/);
   assert.match(app, /bodyFont=bodyWeight\+" "\+bodySize\+"px "\+bodyFamily/);
 });
