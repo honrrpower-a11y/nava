@@ -213,6 +213,14 @@ test("Story Studio prevents large opaque color panels from covering user photos"
   assert.match(navi, /intentional-overlay/);
 });
 
+test("NAVI preserves the complete message hierarchy from the brief in visible slide text", () => {
+  assert.match(navi, /قانون پوشش محتوا/);
+  assert.match(navi, /تیتر، توضیح مکمل، پیام اصلی و دعوت به اقدام/);
+  assert.match(navi, /هر جمله را می\u200cتوانی برای خوانایی ویرایش کنی، اما معنا و اطلاعاتش باید حفظ شود/);
+  assert.match(navi, /پاسخ reply جایگزین متن روی تصویر نیست/);
+  assert.match(navi, /به یک کلمه کلیدی تقلیل نده/);
+});
+
 test("Story Studio drops empty optional text layers but rejects slides without real text", () => {
   assert.match(app, /slide\.elements=slide\.elements\.filter\(element=>!\(element&&element\.type==="text"&&!String\(element\.text\|\|""\)\.trim\(\)\)\)/);
   assert.match(app, /slide\.elements\.some\(element=>element&&element\.type==="text"&&String\(element\.text\|\|""\)\.trim\(\)\)/);
