@@ -4713,6 +4713,7 @@ function parseNaviStoryPlan(raw) {
   if (!candidate || candidate[0] !== "{") throw new Error("پاسخ NAVI ساختار طرح بصری ندارد.");
   const plan = JSON.parse(candidate);
   if (plan.version !== "nava.story.plan.v1" || !Array.isArray(plan.slides) || !plan.slides.length || plan.slides.length > 8) throw new Error("ساختار طرح استوری معتبر نیست.");
+  plan.slides.forEach((slide,index)=>{if(!Array.isArray(slide.elements)||slide.elements.length<2||slide.elements.length>18)throw new Error("نقشه اجرایی اسلاید "+(index+1)+" از NAVI کامل نیست؛ طرح بصری معتبر دریافت نشد.");slide.elements.forEach(element=>{if(!element||!["text","image","shape"].includes(element.type))throw new Error("نوع یکی از عناصر طراحی اسلاید معتبر نیست.");for(const key of ["x","y","w","h"])if(!Number.isFinite(Number(element[key]))||Number(element[key])<0||Number(element[key])>100)throw new Error("مختصات یکی از عناصر طراحی معتبر نیست.");if(element.type==="text"&&!String(element.text||"").trim())throw new Error("یکی از لایه‌های متنی طراحی خالی است.");});});
   return plan;
 }
 const storySlideImages = new Map();
@@ -4838,7 +4839,75 @@ function resolveStorySlideDesign(slide,photo,index) {
     align,headlineSize,textX,safeZone,safeRow,photoBrightness:bright,photoBusy:busy,placement,artDirection,composition,
     imageFocus:["top","bottom","left","right","center"].includes(slide.imageFocus)?slide.imageFocus:"center",needsPanel:false};
 }
+
+function drawNaviArtDirectedStorySlide(canvas,slide,renderScale=0.5,fallbackPhoto=null) {
+  const width=1080,height=1920,scale=Number.isFinite(renderScale)?renderScale:0.5;
+  canvas.width=Math.round(width*scale);canvas.height=Math.round(height*scale);
+  const ctx=canvas.getContext("2d");if(!ctx)return;
+  ctx.scale(scale,scale);
+  const validColor=value=>/^#[0-9a-f]{6}$/i.test(String(value||""))?value:"#182337";
+  const bg=validColor(slide.backgroundColor||slide.background?.color);
+  const bgEnd=validColor(slide.backgroundEndColor||slide.background?.endColor||bg);
+  const background=ctx.createLinearGradient(0,0,width,height);
+  background.addColorStop(0,bg);background.addColorStop(1,bgEnd);
+  ctx.fillStyle=background;ctx.fillRect(0,0,width,height);
+  // NAVI owns the complete back-to-front scene graph; this renderer executes it directly.
+  const elements=slide.elements.slice(0,18).filter(item=>item&&typeof item==="object");
+  const num=(value,min,max,fallback)=>{const n=Number(value);return Number.isFinite(n)?Math.max(min,Math.min(max,n)):fallback;};
+  const rectOf=item=>({x:num(item.x,0,100,0)*10.8,y:num(item.y,0,100,0)*19.2,w:num(item.w,0,100,10)*10.8,h:num(item.h,0,100,10)*19.2});
+  const imageFor=item=>{const n=Number(item.imageIndex);if(Number.isInteger(n)&&n>=1&&n<=storyPhotoAssets.length)return storyPhotoAssets[n-1]?.image||null;return item.imageIndex===undefined?fallbackPhoto:null;};
+  for(const item of elements){
+    const box=rectOf(item),opacity=num(item.opacity,0,1,1),rotation=num(item.rotation,-180,180,0)*Math.PI/180;
+    ctx.save();ctx.globalAlpha=opacity;
+    if(item.type==="shape"){
+      ctx.translate(box.x+box.w/2,box.y+box.h/2);if(rotation)ctx.rotate(rotation);
+      const x=-box.w/2,y=-box.h/2,shape=String(item.shape||"rect");
+      ctx.fillStyle=validColor(item.fill||slide.accent||"#d9ad5b");ctx.strokeStyle=validColor(item.stroke||item.fill||slide.accent||"#d9ad5b");
+      ctx.lineWidth=num(item.strokeWidth,0,32,0);ctx.beginPath();
+      if(shape==="circle")ctx.ellipse(0,0,Math.max(1,box.w/2),Math.max(1,box.h/2),0,0,Math.PI*2);
+      else if(shape==="line"){ctx.moveTo(x,y+box.h/2);ctx.lineTo(x+box.w,y+box.h/2);}
+      else if(shape==="diamond"){ctx.moveTo(0,y);ctx.lineTo(x+box.w,0);ctx.lineTo(0,y+box.h);ctx.lineTo(x,0);ctx.closePath();}
+      else if(shape==="arc")ctx.arc(0,0,Math.max(1,Math.min(box.w,box.h)/2),num(item.startAngle,0,6.28,0),num(item.endAngle,0,6.28,4.7));
+      else ctx.roundRect(x,y,Math.max(1,box.w),Math.max(1,box.h),num(item.radius,0,120,18));
+      if(shape==="line"||shape==="arc"){ctx.lineWidth=Math.max(2,num(item.strokeWidth,1,32,6));ctx.stroke();}
+      else{if(item.fill!=="none")ctx.fill();if(item.stroke&&item.strokeWidth)ctx.stroke();}
+      ctx.restore();continue;
+    }
+    if(item.type==="image"){
+      const img=imageFor(item);
+      if(img&&box.w>0&&box.h>0){
+        ctx.translate(box.x+box.w/2,box.y+box.h/2);if(rotation)ctx.rotate(rotation);
+        const radius=num(item.radius,0,120,22);ctx.beginPath();ctx.roundRect(-box.w/2,-box.h/2,box.w,box.h,radius);ctx.clip();
+        const iw=img.naturalWidth||img.width,ih=img.naturalHeight||img.height;
+        if(iw>0&&ih>0){const fit=item.fit==="contain"?Math.min(box.w/iw,box.h/ih):Math.max(box.w/iw,box.h/ih);ctx.drawImage(img,-iw*fit/2,-ih*fit/2,iw*fit,ih*fit);}
+        ctx.restore();
+        if(item.stroke){ctx.save();ctx.translate(box.x+box.w/2,box.y+box.h/2);if(rotation)ctx.rotate(rotation);ctx.strokeStyle=validColor(item.stroke);ctx.lineWidth=num(item.strokeWidth,1,24,3);ctx.beginPath();ctx.roundRect(-box.w/2,-box.h/2,box.w,box.h,radius);ctx.stroke();ctx.restore();}
+        continue;
+      }
+      ctx.restore();continue;
+    }
+    if(item.type==="text"){
+      const value=String(item.text||"").trim();if(!value){ctx.restore();continue;}
+      const role=item.fontRole==="display"?"display":item.fontRole==="label"?"label":"body";
+      const size=num(item.fontSize,24,160,role==="display"?112:role==="label"?38:62),weight=num(item.weight,400,900,role==="body"?650:850);
+      const family=item.fontFamily==="Noto Naskh Arabic"?"'Noto Naskh Arabic',serif":item.fontFamily==="Georgia"?"Georgia,serif":"'Vazirmatn',sans-serif";
+      const align=["left","center","right"].includes(item.align)?item.align:"right",lineHeight=num(item.lineHeight,size*1.35,240,size*1.35);
+      ctx.direction="rtl";ctx.textAlign=align;ctx.textBaseline="top";ctx.font=weight+" "+size+"px "+family;ctx.fillStyle=validColor(item.color||slide.textColor||"#ffffff");
+      if(item.shadow!==false){ctx.shadowColor="rgba(0,0,0,.3)";ctx.shadowBlur=12;ctx.shadowOffsetY=2;}
+      const words=value.split(/\s+/),lines=[];let line="";
+      for(const word of words){const next=line?line+" "+word:word;if(line&&ctx.measureText(next).width>box.w){lines.push(line);line=word;}else line=next;}
+      if(line)lines.push(line);
+      const visible=lines.slice(0,num(item.maxLines,1,8,Math.max(1,Math.floor(box.h/lineHeight)))),contentHeight=visible.length*lineHeight;
+      let y=box.y;if(item.verticalAlign==="center")y+=Math.max(0,(box.h-contentHeight)/2);else if(item.verticalAlign==="bottom")y+=Math.max(0,box.h-contentHeight);
+      visible.forEach((lineText,i)=>ctx.fillText(lineText,align==="left"?box.x:align==="center"?box.x+box.w/2:box.x+box.w,y+i*lineHeight,box.w));
+      ctx.restore();continue;
+    }
+    ctx.restore();
+  }
+}
+
 function drawStorySlide(canvas, slide, index, total, renderScale = 0.5, photo = null) {
+  if(Array.isArray(slide.elements)&&slide.elements.length)return drawNaviArtDirectedStorySlide(canvas,slide,renderScale,photo);
   const w=1080,h=1920,scale=Number.isFinite(renderScale)?renderScale:0.5;
   canvas.width=Math.round(w*scale);canvas.height=Math.round(h*scale);
   const c=canvas.getContext("2d");c.scale(scale,scale);
@@ -5079,10 +5148,11 @@ improveStoryWithNavi?.addEventListener("click",()=>{
   "هر عکس را جداگانه از نظر سوژه، محیط، حس، ترکیب‌بندی، نور، رنگ، فضای منفی و امکان برش بررسی کن؛ سپس ارتباط تصاویر را بفهم و برای هر اسلاید مستقل تصمیم بگیر عکس لازم است یا نه؛ imageIndex=0 یعنی همان اسلاید بدون عکس طراحی شود. استفاده از یک عکس در چند اسلاید کاملاً مجاز است؛ اگر از نظر روایت و طراحی مناسب است، همان عکس را در چند اسلاید تکرار کن. برای هر اسلاید مستقل تصمیم بگیر و imageIndex=0 را برای اسلاید بدون عکس به کار ببر. عکس نامرتبط را فقط برای مصرف‌کردن وارد نکن.",
   "برای هر اسلاید تصمیم طراحی اجرایی و مستقل بده: layout، artDirection، typeTreatment، headlineAlign، headlineColor، bodyColor، accent، imagePlacement، imageFocus و imageIndex. برای اسلاید بدون عکس imageIndex=0 و imagePlacement=none باشد. این تصمیم‌ها باید با عکس و محتوای واقعی هماهنگ باشند، نه قالب و رنگ ثابت.",
   "ترکیب‌بندی حرفه‌ای یعنی سلسله‌مراتب واضح، نقطه تمرکز واحد، فضای خالی کنترل‌شده، کنتراست دقیق، تایپوگرافی متناسب با شخصیت محتوا و تنوع هدفمند. از کارت‌های تکراری، پنل مات روی عکس، قاب‌های بی‌دلیل، متن طولانی و چند تیتر هم‌وزن پرهیز کن.",
+  "هر اسلاید را به‌صورت یک صحنه گرافیکی آزاد و اجرایی طراحی کن، نه با انتخاب یک قالب آماده. کلید elements اجباری است و باید ۴ تا ۱۴ عنصر واقعی از پشت‌زمینه به جلو داشته باشد؛ مختصات x,y,w,h درصدی از بوم ۱۰۸۰×۱۹۲۰ هستند و هر چهار مقدار باید بین ۰ تا ۱۰۰ باشند. با عناصر shape برای ساخت گرافیک اختصاصی (دایره، خط، لوزی، قوس و سطح‌های رنگی)، image برای قاب‌بندی عکس واقعی، و text برای هر لایه نوشتاری کار کن. ترتیب آرایه همان ترتیب رسم از عقب به جلو است. هر اسلاید باید نقشه مستقل داشته باشد: جای دقیق هر عنصر، اندازه، زاویه، رنگ، شفافیت، نقش فونت، اندازه و وزن فونت، تراز و محدوده متن را خودت تعیین کن. برای هر اسلاید بدون عکس هم با شکل‌ها و تایپوگرافی ترکیب‌بندی کامل بساز؛ صرفاً یک پس‌زمینه خالی و متن وسط ممنوع است. برای عکس از imageIndex معتبر استفاده کن؛ صفر یعنی عنصر عکس وجود ندارد. اگر یک عکس در چند اسلاید تکرار می‌شود، قاب، مقیاس و ترکیب‌بندی را تغییر بده. از اجزای بصری معنادار و متناسب با موضوع استفاده کن؛ عناصر تزئینی بی‌دلیل یا کارت‌های تکراری نساز. رندرر مختصات و لایه‌های تو را مستقیماً اجرا می‌کند و جایگاه عناصر را دوباره حدس نمی‌زند.",
   "هر اسلاید را مثل یک پوستر یا صفحه مجله مستقل طراحی کن، اما کل مجموعه باید هویت و روایت یکپارچه داشته باشد. نسبت عکس و متن، مقیاس تیتر، محل تیتر، فضای منفی و ساختار را آگاهانه متنوع کن.",
   "اگر عکسی وجود ندارد، طرح را با گرافیک تایپوگرافیک اصیل کامل کن؛ عکس ساختگی یا ادعای وجود عکس واقعی ممنوع است.",
   "گزارش تحلیل محلی عکس‌ها:\n"+(photoContext||"هیچ عکس کاربری پیوست نشده است.")+"\n\nمحتوای مرجع:\n"+content,
-  "در فیلد reply پاسخ بیرونی NAVI، فقط یک رشته JSON معتبر و بدون Markdown قرار بده که دقیقاً این طرح داخلی را داشته باشد: {\"version\":\"nava.story.plan.v1\",\"slides\":[{\"layout\":\"cover|editorial|split|quote|details|closing\",\"kicker\":\"\",\"headline\":\"\",\"matchup\":\"\",\"body\":\"\",\"date\":\"\",\"time\":\"\",\"venue\":\"\",\"cta\":\"\",\"visual\":\"stadium|matchup|details|crowd|abstract\",\"accent\":\"#RRGGBB\",\"imageIndex\":0,\"imageRequest\":\"\",\"imagePlacement\":\"background|subject|none\",\"artDirection\":\"editorial|cinematic|poster|luxury|tech|organic|minimal|bold\",\"typeTreatment\":\"sans|serif|oversized\",\"headlineAlign\":\"right|center|left\",\"headlineColor\":\"#RRGGBB\",\"bodyColor\":\"#RRGGBB\",\"imageFocus\":\"center|top|bottom|left|right\",\"composition\":{\"textZone\":\"upper-left|upper-center|upper-right|middle-left|middle-center|middle-right|lower-left|lower-center|lower-right\",\"imageTreatment\":\"portrait|landscape|offset|fullBleed|none\",\"visualBalance\":\"left|right|center|diagonal\",\"negativeSpace\":\"open|balanced|compact\",\"graphicMotif\":\"none|arc|rule|corner\"},\"rationale\":\"\"}]}. خودت JSON داخلی را به‌صورت رشته صحیح در reply قرار بده؛ قرارداد بیرونی NAVI را تغییر نده.",
+  "در فیلد reply پاسخ بیرونی NAVI، فقط یک رشته JSON معتبر و بدون Markdown قرار بده که دقیقاً این طرح داخلی را داشته باشد: {\"version\":\"nava.story.plan.v1\",\"slides\":[{\"layout\":\"cover|editorial|split|quote|details|closing\",\"kicker\":\"\",\"headline\":\"\",\"matchup\":\"\",\"body\":\"\",\"date\":\"\",\"time\":\"\",\"venue\":\"\",\"cta\":\"\",\"visual\":\"stadium|matchup|details|crowd|abstract\",\"accent\":\"#RRGGBB\",\"imageIndex\":0,\"imageRequest\":\"\",\"imagePlacement\":\"background|subject|none\",\"artDirection\":\"editorial|cinematic|poster|luxury|tech|organic|minimal|bold\",\"typeTreatment\":\"sans|serif|oversized\",\"headlineAlign\":\"right|center|left\",\"headlineColor\":\"#RRGGBB\",\"bodyColor\":\"#RRGGBB\",\"imageFocus\":\"center|top|bottom|left|right\",\"elements\":[{\"type\":\"text|image|shape\",\"x\":0,\"y\":0,\"w\":40,\"h\":12,\"text\":\"\",\"fontRole\":\"display|body|label\",\"fontSize\":112,\"weight\":850,\"fontFamily\":\"Vazirmatn|Noto Naskh Arabic|Georgia\",\"color\":\"#RRGGBB\",\"align\":\"right|center|left\",\"maxLines\":3,\"verticalAlign\":\"top|center|bottom\",\"imageIndex\":0,\"fit\":\"cover|contain\",\"shape\":\"rect|circle|diamond|line|arc\",\"fill\":\"#RRGGBB|none\",\"stroke\":\"#RRGGBB\",\"strokeWidth\":3,\"radius\":24,\"rotation\":0,\"opacity\":1}],\"composition\":{\"textZone\":\"upper-left|upper-center|upper-right|middle-left|middle-center|middle-right|lower-left|lower-center|lower-right\",\"imageTreatment\":\"portrait|landscape|offset|fullBleed|none\",\"visualBalance\":\"left|right|center|diagonal\",\"negativeSpace\":\"open|balanced|compact\",\"graphicMotif\":\"none|arc|rule|corner\"},\"rationale\":\"\"}]}. خودت JSON داخلی را به‌صورت رشته صحیح در reply قرار بده؛ قرارداد بیرونی NAVI را تغییر نده.",
   "برای اعلام مسابقه معمولاً ۳ اسلاید بساز: هوک و معرفی، جزئیات زمان و مکان، دعوت به تعامل. برای موضوع‌های دیگر روایت و تعداد مناسب را خودت انتخاب کن؛ حداکثر ۸ اسلاید.",
   "واقعیت‌ها، تاریخ، ساعت، نام‌ها و مکان را عیناً از ورودی بردار و چیزی اختراع نکن. متن روی تصویر کوتاه و فارسی باشد. از حافظه و گفت‌وگوهای قبلی استفاده نکن."
  ].join("\n\n");
