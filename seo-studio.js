@@ -29,7 +29,7 @@
       row.append(heading, detail);
       list.append(row);
     });
-    byId("seoDiscussWithNavi").onclick = () => {
+    const sendReportToNavi = () => {
       const summary = report.findings.map(item => "- " + item.title + ": " + item.detail).join("\n");
       const message = [
         "این گزارش واقعی بررسی صفحه من است. بر اساس آن، ایرادها را اولویت‌بندی کن و یک برنامه اصلاح عملی و مرحله‌ای ارائه بده.",
@@ -59,6 +59,7 @@
         setText(byId("seoAuditStatus"), "مسیر ارسال گزارش به NAVI بارگذاری نشده است. صفحه را تازه‌سازی کن و دوباره تلاش کن.");
       }
     };
+    sendReportToNavi();
     byId("seoDownloadReport").onclick = () => {
       const lines = [
         "NAVA SEO — گزارش بررسی صفحه", "نشانی: " + report.finalUrl,
