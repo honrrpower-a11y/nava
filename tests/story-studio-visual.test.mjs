@@ -102,4 +102,6 @@ test("Story Studio uses art-directed slide layouts with varied editorial composi
   assert.match(app, /layout==="closing"/);
   assert.match(navi, /layout/);
   assert.match(navi, /layout را بی\u200cدلیل تکرار نکن/);
+  assert.match(app, /در فیلد reply پاسخ بیرونی NAVI، فقط یک رشته JSON معتبر/);
+  assert.doesNotMatch(app, /فقط JSON معتبر و بدون Markdown با schema زیر برگردان/);
 });
