@@ -11,7 +11,7 @@ test("NAVI video creation runs in the background without opening or writing to c
   assert.doesNotMatch(requestBlock, /openNaviAssistant/);
   assert.match(app, /let requestThreadId = isHomePage \|\| options\.videoPlan === true \|\| storyPlan \? "" : naviActiveThreadId/);
   assert.match(app, /history: isHomePage \|\| options\.videoPlan === true \|\| storyPlan \? \[\] : naviHistory\.slice/);
-  assert.match(app, /if \(options\.videoPlan !== true\) \{[\s\S]{0,400}showNaviReply\("در حال دریافت پاسخ از ناوی/);
+  assert.match(app, /if \(options\.videoPlan !== true && !storyPlan\) \{[\s\S]{0,400}showNaviReply\("در حال دریافت پاسخ از ناوی/);
   assert.match(app, /The video studio owns this task's progress and result panel; never render it in chat/);
   assert.match(app, /The video studio displays this failure in its own lower result panel/);
 });
