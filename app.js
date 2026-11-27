@@ -4713,7 +4713,7 @@ function parseNaviStoryPlan(raw) {
   if (!candidate || candidate[0] !== "{") throw new Error("پاسخ NAVI ساختار طرح بصری ندارد.");
   const plan = JSON.parse(candidate);
   if (plan.version !== "nava.story.plan.v1" || !Array.isArray(plan.slides) || !plan.slides.length || plan.slides.length > 8) throw new Error("ساختار طرح استوری معتبر نیست.");
-  plan.slides.forEach((slide,index)=>{if(!Array.isArray(slide.elements)||slide.elements.length<2||slide.elements.length>18)throw new Error("نقشه اجرایی اسلاید "+(index+1)+" از NAVI کامل نیست؛ طرح بصری معتبر دریافت نشد.");slide.elements.forEach(element=>{if(!element||!["text","image","shape"].includes(element.type))throw new Error("نوع یکی از عناصر طراحی اسلاید معتبر نیست.");for(const key of ["x","y","w","h"])if(!Number.isFinite(Number(element[key]))||Number(element[key])<0||Number(element[key])>100)throw new Error("مختصات یکی از عناصر طراحی معتبر نیست.");if(element.type==="text"&&!String(element.text||"").trim())throw new Error("یکی از لایه‌های متنی طراحی خالی است.");});});
+  plan.slides.forEach((slide,index)=>{if(!Array.isArray(slide.elements)||slide.elements.length<2||slide.elements.length>18)throw new Error("نقشه اجرایی اسلاید "+(index+1)+" از NAVI کامل نیست؛ طرح بصری معتبر دریافت نشد.");slide.elements.forEach(element=>{if(!element||!["text","image","shape"].includes(element.type))throw new Error("نوع یکی از عناصر طراحی اسلاید معتبر نیست.");for(const key of ["x","y","w","h"])if(!Number.isFinite(Number(element[key]))||Number(element[key])<0||Number(element[key])>100)throw new Error("مختصات یکی از عناصر طراحی معتبر نیست.");if(element.type==="text"&&!String(element.text||"").trim())throw new Error("یکی از لایه‌های متنی طراحی خالی است.");if(element.type==="image"&&(!Number.isInteger(Number(element.imageIndex))||Number(element.imageIndex)<1||Number(element.imageIndex)>storyPhotoAssets.length))throw new Error("شماره عکس یکی از لایه‌های تصویری معتبر نیست.");});});
   return plan;
 }
 const storySlideImages = new Map();
@@ -4855,7 +4855,7 @@ function drawNaviArtDirectedStorySlide(canvas,slide,renderScale=0.5,fallbackPhot
   const elements=slide.elements.slice(0,18).filter(item=>item&&typeof item==="object");
   const num=(value,min,max,fallback)=>{const n=Number(value);return Number.isFinite(n)?Math.max(min,Math.min(max,n)):fallback;};
   const rectOf=item=>({x:num(item.x,0,100,0)*10.8,y:num(item.y,0,100,0)*19.2,w:num(item.w,0,100,10)*10.8,h:num(item.h,0,100,10)*19.2});
-  const imageFor=item=>{const n=Number(item.imageIndex);if(Number.isInteger(n)&&n>=1&&n<=storyPhotoAssets.length)return storyPhotoAssets[n-1]?.image||null;return item.imageIndex===undefined?fallbackPhoto:null;};
+  const imageFor=item=>{if(Number(slide.imageIndex)===0)return null;const n=Number(item.imageIndex);if(n===Number(slide.imageIndex)&&fallbackPhoto)return fallbackPhoto;if(Number.isInteger(n)&&n>=1&&n<=storyPhotoAssets.length)return storyPhotoAssets[n-1]?.image||null;return item.imageIndex===undefined?fallbackPhoto:null;};
   for(const item of elements){
     const box=rectOf(item),opacity=num(item.opacity,0,1,1),rotation=num(item.rotation,-180,180,0)*Math.PI/180;
     ctx.save();ctx.globalAlpha=opacity;
