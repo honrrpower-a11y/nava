@@ -4638,6 +4638,7 @@ storyInput.addEventListener("input", () => {
 
   previewText.classList.toggle("empty", !text);
   const visualHost=document.getElementById("storyVisualSlides");if(visualHost){visualHost.hidden=true;visualHost.replaceChildren();}
+  clearStorySlideImages();
   previewText.hidden=false;
 });
 
@@ -4650,6 +4651,7 @@ clearStory.addEventListener("click", () => {
   storyMessage.classList.remove("show");
   const visualHost = document.getElementById("storyVisualSlides");
   if (visualHost) { visualHost.replaceChildren(); visualHost.hidden = true; }
+  clearStorySlideImages();
   previewText.hidden = false;
 });
 
@@ -4713,9 +4715,21 @@ function drawStorySlide(canvas, slide, index, total, renderScale = 0.5, photo = 
 }
 function renderNaviStoryPlan(plan) {
   const host=document.getElementById("storyVisualSlides"),status=document.getElementById("storyMessage");if(!host)return;
-  host.replaceChildren();host.hidden=false;
+  clearStorySlideImages();host.replaceChildren();host.hidden=false;
   const rawPreview=document.getElementById("previewText");if(rawPreview)rawPreview.hidden=true;
-  plan.slides.forEach((slide,index)=>{const card=document.createElement("article");card.className="story-visual-card";const heading=document.createElement("h3");heading.textContent="اسلاید "+(index+1);const canvas=document.createElement("canvas");canvas.className="story-visual-canvas";canvas.setAttribute("role","img");canvas.setAttribute("aria-label",String(slide.headline||slide.title||"پیش‌نمایش استوری"));drawStorySlide(canvas,slide,index,plan.slides.length);const actions=document.createElement("div");actions.className="story-visual-actions";const button=document.createElement("button");button.type="button";button.className="btn-primary";button.textContent="دریافت تصویر PNG";button.addEventListener("click",()=>{const exportCanvas=document.createElement("canvas");drawStorySlide(exportCanvas,slide,index,plan.slides.length,1);exportCanvas.toBlob(blob=>{if(!blob){if(status)status.textContent="ساخت PNG در این مرورگر ممکن نشد.";exportCanvas.width=0;exportCanvas.height=0;return;}const url=URL.createObjectURL(blob),link=document.createElement("a");link.href=url;link.download="nava-story-"+(index+1)+".png";link.click();setTimeout(()=>URL.revokeObjectURL(url),1500);exportCanvas.width=0;exportCanvas.height=0;},"image/png");});actions.append(button);card.append(heading,canvas,actions);host.append(card);});
+  plan.slides.forEach((slide,index)=>{const card=document.createElement("article");card.className="story-visual-card";const heading=document.createElement("h3");heading.textContent="اسلاید "+(index+1);const canvas=document.createElement("canvas");canvas.className="story-visual-canvas";canvas.setAttribute("role","img");canvas.setAttribute("aria-label",String(slide.headline||slide.title||"پیش‌نمایش استوری"));drawStorySlide(canvas,slide,index,plan.slides.length,0.5,storySlideImages.get(index)?.image||null);const actions=document.createElement("div");actions.className="story-visual-actions";const button=document.createElement("button");button.type="button";button.className="btn-primary";button.textContent="دریافت تصویر PNG";button.addEventListener("click",()=>{const exportCanvas=document.createElement("canvas");drawStorySlide(exportCanvas,slide,index,plan.slides.length,1,storySlideImages.get(index)?.image||null);exportCanvas.toBlob(blob=>{if(!blob){if(status)status.textContent="ساخت PNG در این مرورگر ممکن نشد.";exportCanvas.width=0;exportCanvas.height=0;return;}const url=URL.createObjectURL(blob),link=document.createElement("a");link.href=url;link.download="nava-story-"+(index+1)+".png";link.click();setTimeout(()=>URL.revokeObjectURL(url),1500);exportCanvas.width=0;exportCanvas.height=0;},"image/png");});actions.append(button);
+    const imageRequest=String(slide.imageRequest||"").trim().slice(0,240);
+    if(imageRequest&&slide.imagePlacement!=="none"){
+      const panel=document.createElement("div");panel.className="story-image-request";
+      const request=document.createElement("p");request.textContent="تصویر پیشنهادی NAVI: "+imageRequest;
+      const label=document.createElement("label");label.className="story-image-upload-label";label.textContent="انتخاب عکس از گوشی";
+      const input=document.createElement("input");input.type="file";input.accept="image/jpeg,image/png,image/webp,image/avif";input.className="story-image-upload";
+      const feedback=document.createElement("span");feedback.className="story-image-feedback";feedback.textContent="اختیاری است؛ بدون عکس هم می‌توانی ادامه بدهی.";
+      input.addEventListener("change",()=>{const file=input.files?.[0];if(!file)return;if(!/^image\/(jpeg|png|webp|avif)$/i.test(file.type)||file.size>12*1024*1024){feedback.textContent="فقط عکس JPG، PNG، WebP یا AVIF تا حجم ۱۲ مگابایت انتخاب کن.";input.value="";return;}const url=URL.createObjectURL(file),image=new Image();image.onload=()=>{const old=storySlideImages.get(index);if(old?.url)URL.revokeObjectURL(old.url);storySlideImages.set(index,{image,url});drawStorySlide(canvas,slide,index,plan.slides.length,0.5,image);feedback.textContent="عکس در پیش‌نمایش و فایل PNG استفاده می‌شود.";};image.onerror=()=>{URL.revokeObjectURL(url);feedback.textContent="خواندن تصویر ناموفق بود؛ عکس دیگری انتخاب کن.";};image.src=url;feedback.textContent="در حال آماده‌سازی عکس…";});
+      const skip=document.createElement("button");skip.type="button";skip.className="story-image-skip";skip.textContent="بدون عکس ادامه بده";skip.addEventListener("click",()=>{const old=storySlideImages.get(index);if(old?.url)URL.revokeObjectURL(old.url);storySlideImages.delete(index);input.value="";drawStorySlide(canvas,slide,index,plan.slides.length);feedback.textContent="این اسلاید بدون عکس ادامه پیدا می‌کند.";});
+      label.append(input);panel.append(request,label,skip,feedback);card.append(panel);
+    }
+    card.append(heading,canvas,actions);host.append(card);});
   if(status){status.textContent="پیش‌نمایش بصری "+plan.slides.length+" اسلاید آماده شد؛ هر اسلاید با کیفیت ۱۰۸۰×۱۹۲۰ قابل دریافت است.";status.classList.add("show");}
 }
 window.addEventListener("nava:navi-reply",event=>{if(!event.detail?.storyPlan)return;try{renderNaviStoryPlan(parseNaviStoryPlan(event.detail.reply));}catch(error){const status=document.getElementById("storyMessage");if(status){status.textContent=error.message||"طرح استوری قابل نمایش نیست.";status.classList.add("show");}}});
@@ -4725,8 +4739,9 @@ improveStoryWithNavi?.addEventListener("click",()=>{
   const service="استوری‌ساز",context={content,source:"استودیوی تولید محتوا",output:"طرح بصری چنداسلایدی اینستاگرام"};
   const message=[
     "تو کارگردان هنری و طراح بصری استوری NAVA هستی. خروجی باید داده ساختاریافته برای رندر باشد، نه پیام خوشامد، کپشن عمومی یا توضیح.",
-    "فقط JSON معتبر و بدون Markdown با schema زیر برگردان: {\"version\":\"nava.story.plan.v1\",\"slides\":[{\"kicker\":\"\",\"headline\":\"\",\"matchup\":\"\",\"body\":\"\",\"date\":\"\",\"time\":\"\",\"venue\":\"\",\"cta\":\"\",\"visual\":\"stadium|matchup|details|crowd|abstract\",\"accent\":\"#RRGGBB\"}]}",
+    "فقط JSON معتبر و بدون Markdown با schema زیر برگردان: {\"version\":\"nava.story.plan.v1\",\"slides\":[{\"kicker\":\"\",\"headline\":\"\",\"matchup\":\"\",\"body\":\"\",\"date\":\"\",\"time\":\"\",\"venue\":\"\",\"cta\":\"\",\"visual\":\"stadium|matchup|details|crowd|abstract\",\"accent\":\"#RRGGBB\",\"imageRequest\":\"شرح عکس یا رشته خالی\",\"imagePlacement\":\"background|subject|none\"}]}",
     "برای اعلام مسابقه ۳ اسلاید بساز: هوک و معرفی، جزئیات زمان و مکان، دعوت به تعامل. برای موضوع‌های دیگر روایت و تعداد مناسب را خودت انتخاب کن؛ حداکثر ۸ اسلاید.",
+    "برای هر اسلاید فقط وقتی عکس واقعی کیفیت طراحی را معنادار بهتر می‌کند imageRequest را با شرح دقیق عکس موردنیاز پر کن؛ در غیر این صورت رشته خالی بگذار. imagePlacement را background برای عکس تمام‌صفحه، subject برای عکس داخل قاب و none وقتی عکس لازم نیست انتخاب کن. عکس اختیاری است و طرح باید بدون آن هم کامل بماند. برای لوگو، چهره بازیکن یا مکان واقعی، عکس را از کاربر بخواه و آن را جعل نکن.",
     "متن روی تصویر را کوتاه و فارسی نگه دار؛ واقعیت‌ها، تاریخ، ساعت، نام‌ها و مکان را عیناً از ورودی بردار و چیزی نساز. هشتگ‌ها و دستورالعمل‌های داخلی را روی تصویر نیاور.",
     "محتوای مرجع:\n"+content
   ].join("\n\n");
