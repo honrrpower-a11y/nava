@@ -43,3 +43,10 @@
 .seo-scope-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px}
 .seo-scope-grid span{padding:12px;border:1px solid var(--border);border-radius:11px;background:var(--panel2);color:var(--text);font-size:.85rem;line-height:1.6}
 @media(max-width:760px){.seo-url-row{grid-template-columns:1fr}.seo-submit-button{width:100%}.seo-facts-grid{grid-template-columns:1fr}.seo-scope-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.seo-results-heading{flex-direction:column}.seo-download-button{width:100%}.seo-navi-note{align-items:flex-start;flex-wrap:wrap}.seo-navi-state{margin-right:50px}}
+
+.seo-navi-action{display:flex;align-items:center;justify-content:center;gap:12px;width:100%;min-height:48px;margin-top:14px;padding:12px 20px;cursor:pointer}
+.seo-navi-action:disabled{opacity:.55;cursor:wait}
+.seo-navi-reply-wrap{margin-top:16px;padding:18px;border:1px solid var(--border);border-radius:15px;background:var(--panel);color:var(--text)}
+.seo-navi-reply-wrap[hidden]{display:none}
+.seo-navi-reply-wrap h3{margin:0 0 10px;font-size:1rem}
+.seo-navi-reply{white-space:pre-wrap;overflow-wrap:anywhere;line-height:2;color:var(--text)}

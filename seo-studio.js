@@ -58,9 +58,7 @@
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
 
-  async function sendReportToNavi(report) {
-    const state = byId("seoNaviHandoffState");
-    setText(state, "در حال ارسال…");
+  function buildNaviRequest(report) {
     const findings = safeArray(report.findings);
     const summary = findings.map(item => "- " + item.title + ": " + item.detail).join("\n");
     const message = [
@@ -78,23 +76,63 @@
       "لینک‌های خارجی: " + report.externalLinks,
       "", "یافته‌های تحلیل:", summary || "یافته جزئی دیگری ثبت نشده است."
     ].join("\n");
-    const context = {
-      task: "اولویت‌بندی گزارش واقعی و تدوین برنامه اصلاح سئو",
-      brief: "گزارش صفحه: " + report.finalUrl + "\n" + summary
+    return {
+      message,
+      context: {
+        task: "اولویت‌بندی گزارش واقعی و تدوین برنامه اصلاح سئو",
+        brief: "گزارش صفحه: " + report.finalUrl + "\n" + summary
+      }
     };
+  }
+
+  async function submitReportToNavi() {
+    const report = window.NAVA_SEO_LAST_REPORT;
+    const button = byId("seoNaviAnalyzeButton");
+    const state = byId("seoNaviHandoffState");
+    if (!report || !button || button.disabled) return;
     if (typeof window.navaSeoNaviRequest !== "function") {
       setText(state, "اتصال NAVI بارگذاری نشد.");
-      throw new Error("اتصال NAVI در دسترس نیست؛ گزارش بررسی شد اما به ناوی ارسال نشد.");
+      return;
     }
-    const sent = await window.navaSeoNaviRequest({ message, context });
-    if (sent === false) throw new Error("گزارش بررسی شد، اما ارسال خودکار به NAVI انجام نشد. نشست ورود را بررسی کن.");
-    setText(state, "ارسال شد");
+    const token = window.NAVA_SEO_CONFIG?.getToken?.();
+    if (!token) {
+      setText(state, "برای ارسال گزارش، ابتدا وارد حساب نوا شو.");
+      return;
+    }
+    button.disabled = true;
+    button.textContent = "در حال تحلیل با NAVI…";
+    setText(state, "در حال ارسال گزارش…");
+    setText(byId("seoNaviReply"), "");
+    byId("seoNaviReplyWrap").hidden = false;
+    const request = buildNaviRequest(report);
+    try {
+      const sent = await window.navaSeoNaviRequest(request);
+      if (sent === false) throw new Error("ارسال گزارش به NAVI انجام نشد؛ نشست ورود را بررسی کن.");
+    } catch (error) {
+      setText(state, "ارسال ناموفق");
+      setText(byId("seoNaviReply"), error?.message || "ارسال گزارش به NAVI ناموفق بود.");
+    } finally {
+      button.disabled = false;
+      button.textContent = "تحلیل و بهبود با NAVI";
+    }
   }
 
   function init() {
     const form = byId("seoAuditForm");
     if (!form || form.dataset.initialized === "true") return;
     form.dataset.initialized = "true";
+    byId("seoNaviAnalyzeButton")?.addEventListener("click", submitReportToNavi);
+    window.addEventListener("nava:seo-status", event => setText(byId("seoNaviHandoffState"), event.detail?.status || ""));
+    window.addEventListener("nava:seo-reply", event => {
+      setText(byId("seoNaviHandoffState"), "پاسخ NAVI دریافت شد");
+      setText(byId("seoNaviReply"), event.detail?.reply || "");
+      byId("seoNaviReplyWrap").hidden = false;
+    });
+    window.addEventListener("nava:seo-error", event => {
+      setText(byId("seoNaviHandoffState"), "ارسال ناموفق");
+      setText(byId("seoNaviReply"), event.detail?.message || "خطا در ارتباط با NAVI");
+      byId("seoNaviReplyWrap").hidden = false;
+    });
     form.addEventListener("submit", async event => {
       event.preventDefault();
       if (auditBusy || !form.reportValidity()) return;
@@ -126,9 +164,7 @@
         const data = await response.json();
         if (!response.ok || !data.success || !data.report) throw new Error(data.error || "تحلیل صفحه انجام نشد.");
         renderReport(data.report);
-        setText(status, "تحلیل فنی تمام شد؛ گزارش در حال ارسال به NAVI است.");
-        await sendReportToNavi(data.report);
-        setText(status, "تحلیل کامل شد و گزارش برای اولویت‌بندی به NAVI ارسال شد. پاسخ ناوی در پنل گفت‌وگو نمایش داده می‌شود.");
+        setText(status, "تحلیل فنی صفحه کامل شد. برای دریافت برنامه اصلاح، دکمه «تحلیل و بهبود با NAVI» را بزن.");
       } catch (error) {
         setText(status, error?.message || "در اجرای تحلیل خطایی رخ داد.");
         if (byId("seoAuditResults") && !byId("seoAuditResults").hidden && byId("seoNaviHandoffState")?.textContent === "در حال ارسال…") {
