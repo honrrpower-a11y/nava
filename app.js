@@ -4873,6 +4873,22 @@ function drawNaviArtDirectedStorySlide(canvas,slide,renderScale=0.5,fallbackPhot
   ctx.fillStyle=background;ctx.fillRect(0,0,width,height);
   // NAVI owns the complete back-to-front scene graph; this renderer executes it directly.
   const elements=slide.elements.slice(0,18).filter(item=>item&&typeof item==="object");
+  const hasImageElement=elements.some(item=>item.type==="image");
+  // A user may add a photo to a slide NAVI intentionally authored without an image node.
+  // In that case, place the selected photo behind the authored shapes and typography.
+  if(fallbackPhoto&&!hasImageElement){
+    const iw=fallbackPhoto.naturalWidth||fallbackPhoto.width,ih=fallbackPhoto.naturalHeight||fallbackPhoto.height;
+    if(iw>0&&ih>0){
+      const fit=Math.max(width/iw,height/ih),dw=iw*fit,dh=ih*fit;
+      ctx.drawImage(fallbackPhoto,(width-dw)/2,(height-dh)/2,dw,dh);
+      const textColors=elements.filter(item=>item.type==="text").map(item=>validColor(item.color||slide.textColor||"#ffffff"));
+      const darkText=textColors.length>0&&textColors.filter(color=>{const value=parseInt(color.slice(1),16);return (.2126*((value>>16)&255)+.7152*((value>>8)&255)+.0722*(value&255))/255<.48;}).length>textColors.length/2;
+      const veil=ctx.createLinearGradient(0,0,0,height);
+      veil.addColorStop(0,darkText?"rgba(255,255,255,.28)":"rgba(3,8,18,.28)");
+      veil.addColorStop(1,darkText?"rgba(255,255,255,.42)":"rgba(3,8,18,.48)");
+      ctx.fillStyle=veil;ctx.fillRect(0,0,width,height);
+    }
+  }
   const slideHasPhoto=Boolean(fallbackPhoto||Number(slide.imageIndex)>0||elements.some(item=>item.type==="image"&&Number(item.imageIndex)>0));
   const num=(value,min,max,fallback)=>{const n=Number(value);return Number.isFinite(n)?Math.max(min,Math.min(max,n)):fallback;};
   const rectOf=item=>({x:num(item.x,0,100,0)*10.8,y:num(item.y,0,100,0)*19.2,w:num(item.w,0,100,10)*10.8,h:num(item.h,0,100,10)*19.2});
