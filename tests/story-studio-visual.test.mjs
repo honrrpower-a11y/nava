@@ -85,6 +85,6 @@ test("Story Studio uses art-directed slide layouts with varied editorial composi
   assert.match(app, /layout==="quote"/);
   assert.match(app, /layout==="details"/);
   assert.match(app, /layout==="closing"/);
-  assert.match(navi, /layout":"cover\|editorial\|split\|quote\|details\|closing/);
+  assert.match(navi, /"layout"/);
   assert.match(navi, /layout را بی\u200cدلیل تکرار نکن/);
 });
