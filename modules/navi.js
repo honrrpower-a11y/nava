@@ -2907,6 +2907,9 @@ async function handleChat({
   let visionImages = [];
   try {
     visionImages = normalizeNaviVisionImages(input.images);
+    if (!visionImages.length && input.storyPlan === true && requestedMessagePage === "storyPage") {
+      visionImages = normalizeNaviVisionImages(input.storyImages);
+    }
     const singleVisionImage = normalizeNaviVisionImage(input.image);
     if (singleVisionImage && visionImages.length) throw new Error("ارسال هم‌زمان تصویر تکی و آرایه چندتصویری مجاز نیست.");
     if (singleVisionImage) visionImages = [singleVisionImage];
