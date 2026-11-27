@@ -206,7 +206,7 @@ test("Story Studio measures and separates text blocks to prevent collisions", ()
 
 test("Story Studio prevents large opaque color panels from covering user photos", () => {
   assert.match(app, /const slideHasPhoto=Boolean\(fallbackPhoto\|\|Number\(slide\.imageIndex\)>0/);
-  assert.match(app, /largePhotoPanel=slideHasPhoto&&shape==="rect"&&box\.w\*box\.h>width\*height\*0\.045/);
+  assert.match(app, /rectangularShape=!\["circle","line","diamond","arc"\]\.includes\(shape\);const largePhotoPanel=slideHasPhoto&&rectangularShape&&box\.w\*box\.h>width\*height\*0\.045/);
   assert.match(app, /intentionalSoftOverlay=item\.role==="intentional-overlay"&&opacity<=0\.22/);
   assert.match(app, /validColor\(item\.fill\|\|"#d9e2ec"\)/);
   assert.match(app, /از مستطیل‌های بزرگ توپر، کارت و پنل رنگی به‌عنوان تزئین پیش‌فرض استفاده نکن/);
