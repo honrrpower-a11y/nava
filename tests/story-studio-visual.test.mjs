@@ -89,6 +89,9 @@ test("Story Studio sends selected photos through NAVI vision and applies per-sli
   assert.match(app, /storyImages: storyPlan \? visionImages : undefined/);
   assert.match(app, /imageIndex/);
   assert.match(navi, /هر تصویر را جداگانه از محتوای واقعی آن تحلیل کن/);
+  assert.match(navi, /imageIndex=0 یعنی آن اسلاید عمداً بدون عکس باشد/);
+  assert.match(navi, /از تکرار خودکار یک عکس در تمام اسلایدها خودداری کن/);
+  assert.match(app, /اگر فقط یک عکس انتخاب شده، آن را پیش\u200bفرض فقط در مناسب\u200bترین اسلاید به کار ببر/);
   assert.match(navi, /typeTreatment/);
   assert.match(navi, /headlineColor/);
 });
@@ -110,9 +113,12 @@ test("Story Studio uses art-directed slide layouts with varied editorial composi
 test("Story Studio enforces phone-readable type sizes and WCAG contrast for generated colors", () => {
   assert.match(app, /function storyContrastRatio\(first,second\)/);
   assert.match(app, /function storyReadableColor\(candidate,fallback,surface,minimum=4\.5\)/);
+  assert.match(app, /const zoneBrightness=ranked\[0\]\?\.lum\?\?brightness/);
+  assert.match(app, /const photoInk=zoneBrightness>\.46\?"#17202b":"#ffffff"/);
+  assert.match(app, /const textColor=design\.headlineColor,bodyColor=design\.bodyColor/);
   assert.match(app, /const bodySize=busy>\.55\?62:68/);
   assert.match(app, /slide\.typeTreatment==="oversized"\?/);
-  assert.match(html, /story-mobile-type-floor-20261127-1/);
+  assert.match(html, /story-photo-contrast-and-independent-images-20261127-1/);
 });
 
 
