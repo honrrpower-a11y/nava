@@ -4692,41 +4692,52 @@ function parseNaviStoryPlan(raw) {
 const storySlideImages = new Map();
 function clearStorySlideImages(){for(const item of storySlideImages.values())if(item?.url)URL.revokeObjectURL(item.url);storySlideImages.clear();}
 function analyzeStoryPhoto(photo) {
-  const canvas=document.createElement("canvas");canvas.width=36;canvas.height=36;
+  const canvas=document.createElement("canvas");canvas.width=48;canvas.height=48;
   const ctx=canvas.getContext("2d",{willReadFrequently:true});
-  if(!ctx)return {brightness:0.45,saturation:0.35,accent:"#e5b85e",busy:0.5};
+  if(!ctx)return {brightness:.45,saturation:.35,accent:"#e5b85e",busy:.5,safeZone:4,brightnessLabel:"متوسط",busyLabel:"متوسط"};
   try {
-    ctx.drawImage(photo,0,0,36,36);
-    const data=ctx.getImageData(0,0,36,36).data;let lum=0,sat=0,r=0,g=0,b=0,edge=0,count=0;
-    const cells=Array.from({length:9},()=>({lum:0,n:0}));
-    for(let y=0;y<36;y++)for(let x=0;x<36;x++){
-      const i=(y*36+x)*4,R=data[i],G=data[i+1],B=data[i+2];
-      const max=Math.max(R,G,B),min=Math.min(R,G,B),l=(.2126*R+.7152*G+.0722*B)/255;
-      lum+=l;sat+=(max-min)/Math.max(1,max);r+=R;g+=G;b+=B;count++;
-      const cell=Math.min(2,Math.floor(y/12))*3+Math.min(2,Math.floor(x/12));cells[cell].lum+=l;cells[cell].n++;
-      if(x>0){const p=((y*36+x-1)*4);edge+=Math.abs(R-data[p])/(255)+Math.abs(G-data[p+1])/(255)+Math.abs(B-data[p+2])/(255);}
+    ctx.drawImage(photo,0,0,48,48);
+    const data=ctx.getImageData(0,0,48,48).data;let lum=0,sat=0,r=0,g=0,b=0,count=0;
+    const cells=Array.from({length:9},()=>({lum:0,sat:0,edge:0,n:0}));
+    let chromaR=0,chromaG=0,chromaB=0,chromaWeight=0;
+    for(let y=0;y<48;y++)for(let x=0;x<48;x++){
+      const i=(y*48+x)*4,R=data[i],G=data[i+1],B=data[i+2];
+      const max=Math.max(R,G,B),min=Math.min(R,G,B),l=(.2126*R+.7152*G+.0722*B)/255,s=(max-min)/Math.max(1,max);
+      lum+=l;sat+=s;r+=R;g+=G;b+=B;count++;
+      const cell=Math.min(2,Math.floor(y/16))*3+Math.min(2,Math.floor(x/16));cells[cell].lum+=l;cells[cell].sat+=s;cells[cell].n++;
+      const weight=Math.max(0,s-.12);chromaR+=R*weight;chromaG+=G*weight;chromaB+=B*weight;chromaWeight+=weight;
+      if(x>0){const p=((y*48+x-1)*4);cells[cell].edge+=(Math.abs(R-data[p])+Math.abs(G-data[p+1])+Math.abs(B-data[p+2]))/765;}
+      if(y>0){const p=((y-1)*48+x)*4;cells[cell].edge+=(Math.abs(R-data[p])+Math.abs(G-data[p+1])+Math.abs(B-data[p+2]))/765;}
     }
-    const brightness=lum/count,saturation=sat/count,busy=Math.min(1,edge/(count*0.42));
-    const rr=Math.round(r/count),gg=Math.round(g/count),bb=Math.round(b/count);
+    const brightness=lum/count,saturation=sat/count;
+    const rr=Math.round(chromaWeight?chromaR/chromaWeight:r/count),gg=Math.round(chromaWeight?chromaG/chromaWeight:g/count),bb=Math.round(chromaWeight?chromaB/chromaWeight:b/count);
     const accent="#"+[rr,gg,bb].map(v=>Math.max(0,Math.min(255,v)).toString(16).padStart(2,"0")).join("");
-    const zones=cells.map((c,i)=>({i,lum:c.lum/Math.max(1,c.n)})).sort((a,b)=>Math.abs(a.lum-.48)-Math.abs(b.lum-.48));
-    return {brightness,saturation,busy,accent,safeZone:zones[0]?.i??4};
-  } catch { return {brightness:0.45,saturation:0.35,accent:"#e5b85e",busy:0.5,safeZone:4}; }
+    const ranked=cells.map((c,i)=>({i,lum:c.lum/Math.max(1,c.n),busy:c.edge/Math.max(1,c.n)}))
+      .sort((a,b)=>(a.busy*1.6+Math.abs(a.lum-.48))-(b.busy*1.6+Math.abs(b.lum-.48)));
+    const safeZone=ranked[0]?.i??4,busy=Math.min(1,cells.reduce((sum,c)=>sum+c.edge,0)/(count*.12));
+    return {brightness,saturation,busy,accent,safeZone,
+      brightnessLabel:brightness<.34?"تاریک":brightness>.66?"روشن":"متعادل",
+      busyLabel:busy>.42?"شلوغ":busy<.18?"خلوت":"با جزئیات متوسط"};
+  } catch { return {brightness:.45,saturation:.35,accent:"#e5b85e",busy:.5,safeZone:4,brightnessLabel:"نامشخص",busyLabel:"نامشخص"}; }
 }
 function resolveStorySlideDesign(slide,photo,index) {
   const visual=["stadium","matchup","details","crowd"].includes(slide.visual)?slide.visual:"abstract";
-  const bright=photo?.brightness??0.35,busy=photo?.busy??0.35,saturated=photo?.saturation??0.4;
-  const accent=photo&&photo.saturation>.12?photo.accent:(/^#[0-9a-f]{6}$/i.test(slide.accent||"")?slide.accent:"#e5b85e");
+  const bright=photo?.brightness??.35,busy=photo?.busy??.35,saturated=photo?.saturation??.4;
+  const accent=photo&&photo.saturation>.1?photo.accent:(/^#[0-9a-f]{6}$/i.test(slide.accent||"")?slide.accent:"#e5b85e");
   const editorial=visual==="details"||(!photo&&index%3===1);
-  const expressive=visual==="crowd"||visual==="matchup"||(photo&&saturated>.48);
-  const family=editorial?"Noto Naskh Arabic,serif":"Vazirmatn,sans-serif";
-  const headlineWeight=expressive?"800":"700";
-  const headlineSize=busy>.62?76:(expressive?92:84);
-  const needsPanel=!!photo&&(busy>.48||bright>.58);
-  return {accent,family,headlineFont:headlineWeight+" "+headlineSize+"px "+family,
-    bodyFont:"500 40px "+family,kickerFont:"700 32px Vazirmatn,sans-serif",
-    headlineColor:"#ffffff",bodyColor:"#f5f7fb",needsPanel,
-    align:editorial?"center":"right",headlineSize,photoBrightness:bright};
+  const expressive=visual==="crowd"||visual==="matchup"||(photo&&saturated>.36);
+  const safeZone=photo?.safeZone??4,safeColumn=safeZone%3;
+  const align=photo?(safeColumn===0?"left":safeColumn===2?"right":"center"):(editorial?"center":"right");
+  const family=editorial||photo?.brightness>.7?"Noto Naskh Arabic,serif":"Vazirmatn,sans-serif";
+  const headlineSize=busy>.42?72:(expressive?96:86);
+  const needsPanel=!!photo&&(busy>.28||bright>.62);
+  const panelX=align==="left"?54:align==="right"?54:90;
+  const panelWidth=align==="center"?900:972;
+  return {accent,family,headlineFont:(expressive?"800 ":"700 ")+headlineSize+"px "+family,
+    bodyFont:"500 "+(busy>.42?"38":"42")+"px "+family,kickerFont:"700 32px Vazirmatn,sans-serif",
+    headlineColor:"#ffffff",bodyColor:"#f5f7fb",needsPanel,align,headlineSize,
+    textX:align==="left"?110:align==="center"?540:970,panelX,panelWidth,
+    safeZone,photoBrightness:bright,photoBusy:busy};
 }
 function drawStorySlide(canvas, slide, index, total, renderScale = 0.5, photo = null) {
   const w=1080,h=1920,scale=Number.isFinite(renderScale)?renderScale:0.5; canvas.width=Math.round(w*scale); canvas.height=Math.round(h*scale);
@@ -4740,9 +4751,9 @@ function drawStorySlide(canvas, slide, index, total, renderScale = 0.5, photo = 
   if(visual==="details"){c.strokeStyle=accent+"77";c.lineWidth=4;c.strokeRect(70,960,940,520);c.beginPath();c.moveTo(540,960);c.lineTo(540,1480);c.stroke();}
   if(visual==="crowd"){for(let row=0;row<5;row++)for(let col=0;col<16;col++){const x=65+col*63+(row%2)*18,y=1040+row*88;c.fillStyle=row%2?accent+"88":"#dce7f055";c.beginPath();c.arc(x,y,16,0,Math.PI*2);c.fill();c.fillRect(x-13,y+15,26,42);}}
   const glow=c.createRadialGradient(540,520,20,540,520,700);glow.addColorStop(0,accent+"55");glow.addColorStop(1,"#07101f00");c.fillStyle=glow;c.fillRect(0,0,w,1100);
-  c.fillStyle=accent;c.fillRect(80,115,150,10);c.direction="rtl";c.textAlign=design.align;c.fillStyle=accent;c.font=design.kickerFont;c.fillText(String(slide.kicker||("استوری "+(index+1))),design.align==="center"?540:970,220,880);
-  if(design.needsPanel){c.fillStyle="#07101fd9";c.fillRect(54,300,972,720);}
-  const wrap=(text,y,font,color,maxLines=3)=>{c.textAlign=design.align;c.font=font;c.fillStyle=color;let line="",lines=[];for(const word of String(text||"").split(/\s+/)){const next=line?line+" "+word:word;if(c.measureText(next).width>850&&line){lines.push(line);line=word;}else line=next;}if(line)lines.push(line);lines.slice(0,maxLines).forEach((v,i)=>c.fillText(v,design.align==="center"?540:970,y+i*105,850));return y+Math.min(lines.length,maxLines)*105;};
+  c.fillStyle=accent;c.fillRect(80,115,150,10);c.direction="rtl";c.textAlign=design.align;c.fillStyle=accent;c.font=design.kickerFont;c.fillText(String(slide.kicker||("استوری "+(index+1))),design.textX,220,880);
+  if(design.needsPanel){c.fillStyle="#07101fe8";c.fillRect(design.panelX,300,design.panelWidth,760);}
+  const wrap=(text,y,font,color,maxLines=3)=>{c.textAlign=design.align;c.font=font;c.fillStyle=color;let line="",lines=[];for(const word of String(text||"").split(/\s+/)){const next=line?line+" "+word:word;if(c.measureText(next).width>850&&line){lines.push(line);line=word;}else line=next;}if(line)lines.push(line);lines.slice(0,maxLines).forEach((v,i)=>c.fillText(v,design.textX,y+i*105,850));return y+Math.min(lines.length,maxLines)*105;};
   let y=wrap(slide.headline||slide.title||"",430,design.headlineFont,design.headlineColor,3);
   if(slide.matchup){c.textAlign="center";c.fillStyle=accent;c.font="bold 65px Vazirmatn,sans-serif";c.fillText(String(slide.matchup),540,Math.max(720,y+85),900);y=Math.max(850,y+180);c.textAlign="right";}
   if(slide.body)y=wrap(slide.body,Math.max(900,y+70),design.bodyFont,design.bodyColor,4);
@@ -4763,7 +4774,7 @@ function renderNaviStoryPlan(plan) {
       const label=document.createElement("label");label.className="story-image-upload-label";label.textContent="انتخاب عکس از گوشی";
       const input=document.createElement("input");input.type="file";input.accept="image/jpeg,image/png,image/webp,image/avif";input.className="story-image-upload";
       const feedback=document.createElement("span");feedback.className="story-image-feedback";feedback.textContent="اختیاری است؛ بدون عکس هم می‌توانی ادامه بدهی.";
-      input.addEventListener("change",()=>{const file=input.files?.[0];if(!file)return;if(!/^image\/(jpeg|png|webp|avif)$/i.test(file.type)||file.size>12*1024*1024){feedback.textContent="فقط عکس JPG، PNG، WebP یا AVIF تا حجم ۱۲ مگابایت انتخاب کن.";input.value="";return;}const url=URL.createObjectURL(file),image=new Image();image.onload=()=>{const old=storySlideImages.get(index);if(old?.url)URL.revokeObjectURL(old.url);storySlideImages.set(index,{image,url});drawStorySlide(canvas,slide,index,plan.slides.length,0.5,image);feedback.textContent="عکس در پیش‌نمایش و فایل PNG استفاده می‌شود.";};image.onerror=()=>{URL.revokeObjectURL(url);feedback.textContent="خواندن تصویر ناموفق بود؛ عکس دیگری انتخاب کن.";};image.src=url;feedback.textContent="در حال آماده‌سازی عکس…";});
+      input.addEventListener("change",()=>{const file=input.files?.[0];if(!file)return;if(!/^image\/(jpeg|png|webp|avif)$/i.test(file.type)||file.size>12*1024*1024){feedback.textContent="فقط عکس JPG، PNG، WebP یا AVIF تا حجم ۱۲ مگابایت انتخاب کن.";input.value="";return;}const url=URL.createObjectURL(file),image=new Image();image.onload=()=>{const old=storySlideImages.get(index);if(old?.url)URL.revokeObjectURL(old.url);const analysis=analyzeStoryPhoto(image);storySlideImages.set(index,{image,url,analysis});drawStorySlide(canvas,slide,index,plan.slides.length,0.5,image);const zone=["بالا-چپ","بالا-وسط","بالا-راست","میانه-چپ","مرکز","میانه-راست","پایین-چپ","پایین-وسط","پایین-راست"][analysis.safeZone]||"مرکز";feedback.textContent="تحلیل عکس انجام شد: نور "+analysis.brightnessLabel+"؛ شلوغی "+analysis.busyLabel+"؛ رنگ غالب "+analysis.accent+"؛ فضای مناسب متن: "+zone+". طراحی اسلاید براساس این ویژگی‌ها تنظیم شد.";};image.onerror=()=>{URL.revokeObjectURL(url);feedback.textContent="خواندن تصویر ناموفق بود؛ عکس دیگری انتخاب کن.";};image.src=url;feedback.textContent="در حال آماده‌سازی عکس…";});
       const skip=document.createElement("button");skip.type="button";skip.className="story-image-skip";skip.textContent="بدون عکس ادامه بده";skip.addEventListener("click",()=>{const old=storySlideImages.get(index);if(old?.url)URL.revokeObjectURL(old.url);storySlideImages.delete(index);input.value="";drawStorySlide(canvas,slide,index,plan.slides.length);feedback.textContent="این اسلاید بدون عکس ادامه پیدا می‌کند.";});
       label.append(input);panel.append(request,label,skip,feedback);card.append(panel);
     }

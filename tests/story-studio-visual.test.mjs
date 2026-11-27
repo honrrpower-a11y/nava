@@ -57,10 +57,21 @@ test("backend uses a dedicated structured visual brief and excludes prior chat h
 
 test("Story Studio analyzes selected photos locally and derives per-slide typography and palette", () => {
   assert.match(app, /function analyzeStoryPhoto\(photo\)/);
-  assert.match(app, /getImageData\(0,0,36,36\)/);
+  assert.match(app, /getImageData\(0,0,48,48\)/);
   assert.match(app, /function resolveStorySlideDesign\(slide,photo,index\)/);
   assert.match(app, /design\.headlineFont/);
   assert.match(app, /design\.bodyFont/);
   assert.match(app, /design\.needsPanel/);
   assert.match(app, /const photoAnalysis=photo\?analyzeStoryPhoto\(photo\):null/);
+});
+
+
+test("Story Studio exposes photo-analysis results and uses the detected safe zone in layout", () => {
+  assert.match(app, /brightnessLabel/);
+  assert.match(app, /busyLabel/);
+  assert.match(app, /تحلیل عکس انجام شد/);
+  assert.match(app, /safeZone/);
+  assert.match(app, /count\*\.12/);
+  assert.match(app, /textX:align==="left"/);
+  assert.match(app, /فضای مناسب متن/);
 });
