@@ -30,11 +30,11 @@
       list.append(row);
     });
     byId("seoDiscussWithNavi").onclick = () => {
-      const summary = report.findings.map(item => "- " + item.title + ": " + item.detail).join("\\n");
+      const summary = report.findings.map(item => "- " + item.title + ": " + item.detail).join("\n");
       window.openNaviAssistant?.({
         service: "سئو",
         context: { pageUrl: report.finalUrl, pageTitle: report.title, metaDescription: report.description, h1: report.h1, wordCount: report.wordCount, findings: report.findings },
-        message: "این گزارش واقعی بررسی صفحه من است. بر اساس آن، ایرادها را اولویت‌بندی کن و یک برنامه اصلاح عملی و مرحله‌ای ارائه بده. مواردی را که از این گزارش قابل نتیجه‌گیری نیستند، قطعی اعلام نکن.\\n\\n" + summary
+        message: "این گزارش واقعی بررسی صفحه من است. بر اساس آن، ایرادها را اولویت‌بندی کن و یک برنامه اصلاح عملی و مرحله‌ای ارائه بده. مواردی را که از این گزارش قابل نتیجه‌گیری نیستند، قطعی اعلام نکن.\n\n" + summary
       });
     };
     byId("seoDownloadReport").onclick = () => {
