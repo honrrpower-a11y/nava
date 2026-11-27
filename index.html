@@ -18,7 +18,7 @@
   <link rel="stylesheet" href="office-navi-guide.css?v=office-two-tabs-20261118-1">
   <link rel="stylesheet" href="office-workspace.css?v=office-back-to-top-20261118-1">
   <script src="navi-image-analysis.js?v=navi-hybrid-vision-20261124-1" defer></script>
-  <script src="app.js?v=content-studio-quality-gate-20261127-4&story=empty-text-layer-recovery-20261127-1&story-photo-contrast-and-independent-images-20261127-1&story-per-slide-image-selector-20261127-1&story-color-contrast-20261127-1&story-editorial-typography-20261127-1&story-no-photo-gradient-contrast-20261127-1&story-art-directed-composition-20261127-2&story-typography-flow-20261127-1" defer></script>
+  <script src="app.js?v=content-studio-quality-gate-20261127-4&story=empty-text-layer-recovery-20261127-1&story-photo-contrast-and-independent-images-20261127-1&story-per-slide-image-selector-20261127-1&story-color-contrast-20261127-1&story-editorial-typography-20261127-1&story-no-photo-gradient-contrast-20261127-1&story-art-directed-composition-20261127-2&story-typography-flow-20261127-1" defer></script>\n  <script src="seo-studio.js?v=seo-page-audit-20261127-1" defer></script>
   <script src="office-navi-guide.js?v=office-back-to-top-20261118-1" defer></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" defer></script>
   <script src="logo-renderer.js?v=logo-persian-native-text-20261121-1" defer></script>
@@ -26,7 +26,7 @@
   <link rel="stylesheet" href="video-studio.css?v=video-editor-final-export-20261125-1">
   <link rel="stylesheet" href="video-editor.css?v=video-editor-text-overlay-20261125-1">
   <link rel="stylesheet" href="video-editor-effects.css?v=video-editor-effects-mix-20261126-1">
-  <link rel="stylesheet" href="video-editor-guide.css?v=navi-video-editor-guide-20261126-1">
+  <link rel="stylesheet" href="video-editor-guide.css?v=navi-video-editor-guide-20261126-1">\n  <link rel="stylesheet" href="seo-studio.css?v=seo-page-audit-20261127-1">
 </head>
 <body>
 
@@ -773,30 +773,50 @@
     </div>
   </section>
   <section class="page nava-studio-page" id="seoPage" data-studio-service="سئو">
-    <div class="studio-workspace">
+    <div class="studio-workspace seo-workspace">
       <div class="studio-workspace-head">
-        <div><span class="studio-kicker">NAVA WORKSPACE / STUDIO</span><h1>استودیوی سئو</h1><p>برای تدوین بریف سئو، تحقیق موضوعی، ساختار محتوا و برنامه بهبود دیده‌شدن وب‌سایت.</p></div>
+        <div><span class="studio-kicker">NAVA SEARCH / SEO INTELLIGENCE</span><h1>استودیوی سئو</h1><p>بررسی واقعی ساختار صفحات وب‌سایت و تبدیل ایرادهای قابل‌تشخیص به اقدام‌های روشن برای بهبود دیده‌شدن در جست‌وجو.</p></div>
         <button class="btn-secondary" type="button" onclick="showPage('homePage')">بازگشت به استودیوها</button>
       </div>
       <div class="studio-workspace-grid">
-        <form class="studio-brief-card" onsubmit="event.preventDefault(); chooseService('سئو');">
-          <span class="studio-step">شروع کار</span><h2>بریف پروژه</h2>
-          <p>اطلاعات اولیه را وارد کن تا NAVI بتواند درخواست را دقیق‌تر دنبال کند.</p>
-          <label for="studioTask-seo">هدف یا خروجی سئو</label>
-          <select id="studioTask-seo" class="studio-control">
-            <option>پیشنهاد مناسب را NAVI انتخاب کند</option><option>ایده‌پردازی و برنامه‌ریزی</option><option>تولید پیش‌نویس</option><option>بازبینی و بهبود</option><option>راهنمای مرحله‌به‌مرحله</option>
-          </select>
-          <label for="studioAudience-seo">مخاطب و بازار هدف</label>
-          <input id="studioAudience-seo" class="studio-control" type="text" maxlength="180" placeholder="مخاطب یا استفاده‌کننده را مشخص کن">
-          <label for="studioBrief-seo">شرح درخواست و جزئیات</label>
-          <textarea id="studioBrief-seo" class="studio-control studio-brief-input" maxlength="3000" placeholder="نشانی یا معرفی سایت، موضوع فعالیت، کلیدواژه‌ها و رقبا"></textarea>
-          <div class="studio-brief-actions"><button class="btn-primary" type="submit">ادامه با NAVI</button><button class="btn-secondary" type="reset">پاک کردن فرم</button></div>
-          <p class="studio-note">این صفحه فعلاً قالب کاری و بریف پروژه است؛ تولید تخصصی فایل یا خروجی نهایی تا زمان اتصال ابزار مربوطه فعال محسوب نمی‌شود.</p>
-        </form>
+        <section class="seo-audit-card" aria-labelledby="seoAuditTitle">
+          <span class="studio-step">ابزار تحلیل صفحه</span>
+          <h2 id="seoAuditTitle">بررسی فنی و محتوایی صفحه</h2>
+          <p>نشانی یک صفحه عمومی را وارد کن. ابزار HTML همان صفحه را دریافت می‌کند و موارد پایه سئو را بررسی می‌کند.</p>
+          <form id="seoAuditForm" class="seo-audit-form">
+            <label for="seoAuditUrl">نشانی صفحه وب</label>
+            <input id="seoAuditUrl" type="url" inputmode="url" autocomplete="url" placeholder="https://example.com/page" required maxlength="2048">
+            <div class="seo-audit-actions"><button class="btn-primary" id="seoAuditSubmit" type="submit">شروع تحلیل صفحه</button></div>
+          </form>
+          <p class="seo-audit-hint">برای استفاده باید وارد حساب نوا باشی. فقط صفحات عمومی HTML بررسی می‌شوند؛ صفحه‌های پشت ورود، محتوای پویا و داده‌های Search Console در این گزارش پوشش داده نمی‌شوند.</p>
+          <p class="seo-audit-status" id="seoAuditStatus" role="status" aria-live="polite">آماده بررسی صفحه هستیم.</p>
+          <section class="seo-audit-results" id="seoAuditResults" hidden aria-live="polite">
+            <div class="studio-output-card">
+              <span class="studio-step">گزارش تحلیل</span><h2>نتیجه بررسی</h2>
+              <p id="seoFinalUrl" dir="ltr"></p>
+              <p id="seoCounts"></p>
+              <div class="seo-audit-summary">
+                <div class="seo-audit-metric"><small>عنوان صفحه</small><strong id="seoTitleValue"></strong></div>
+                <div class="seo-audit-metric"><small>توضیحات متا</small><strong id="seoDescriptionValue"></strong></div>
+                <div class="seo-audit-metric"><small>تیتر اصلی H1</small><strong id="seoH1Value"></strong></div>
+                <div class="seo-audit-metric"><small>ساختار صفحه</small><strong id="seoMetrics"></strong></div>
+              </div>
+              <div class="seo-audit-actions"><button class="btn-secondary" id="seoDownloadReport" type="button">دریافت گزارش متنی</button></div>
+              <div class="seo-finding-list" id="seoFindingList"></div>
+            </div>
+          </section>
+        </section>
         <aside class="studio-output-card">
-          <span class="studio-step">فضای پروژه</span><h2>مراحل انجام کار</h2>
-          <ol><li>ثبت بریف و هدف پروژه</li><li>بررسی نیازها با NAVI</li><li>تدوین پیش‌نویس و اصلاح آن</li><li>آماده‌سازی خروجی پس از فعال‌شدن ابزار تخصصی</li></ol>
-          <div class="studio-output-placeholder"><span aria-hidden="true">✦</span><strong>فضای خروجی پروژه</strong><p>نتیجه‌ها و فایل‌های این استودیو پس از تکمیل ابزار تخصصی در این قسمت نمایش داده می‌شوند.</p></div>
+          <span class="studio-step">دامنه بررسی</span><h2>چه چیزهایی تحلیل می‌شود؟</h2>
+          <ol>
+            <li>عنوان صفحه و توضیحات متا</li>
+            <li>ساختار H1 و H2 و زبان سند</li>
+            <li>متن جایگزین تصاویر</li>
+            <li>لینک‌های داخلی و خارجی</li>
+            <li>Canonical، viewport و دستورهای robots</li>
+            <li>حجم متن قابل‌استخراج از HTML</li>
+          </ol>
+          <div class="studio-output-placeholder"><span aria-hidden="true">✦</span><strong>گزارش مبتنی بر داده واقعی</strong><p>هر یافته از HTML دریافت‌شده استخراج می‌شود. این ابزار رتبه گوگل، حجم جست‌وجوی کلمات یا اعتبار دامنه را حدس نمی‌زند.</p></div>
         </aside>
       </div>
     </div>
