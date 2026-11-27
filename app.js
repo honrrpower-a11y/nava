@@ -2933,7 +2933,7 @@ async function updateNaviMemory(id, memoryValue, button, editor) {
       getNaviToken() !== token ||
       naviSessionVersion !== requestVersion
     ) {
-      return seoReport ? false : undefined;
+      return;
     }
 
     if (response.status === 401 || response.status === 403) {
