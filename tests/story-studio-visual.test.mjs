@@ -110,9 +110,9 @@ test("Story Studio uses art-directed slide layouts with varied editorial composi
 test("Story Studio enforces phone-readable type sizes and WCAG contrast for generated colors", () => {
   assert.match(app, /function storyContrastRatio\(first,second\)/);
   assert.match(app, /function storyReadableColor\(candidate,fallback,surface,minimum=4\.5\)/);
-  assert.match(app, /const bodySize=busy>\.55\?46:50/);
-  assert.match(app, /slide\.typeTreatment==="compact"\?82/);
-  assert.match(html, /story-optional-brand-signature-20261127-1/);
+  assert.match(app, /const bodySize=busy>\.55\?62:68/);
+  assert.match(app, /slide\.typeTreatment==="oversized"\?/);
+  assert.match(html, /story-mobile-type-floor-20261127-1/);
 });
 
 
@@ -122,4 +122,14 @@ test("Story Studio has no forced NAVA/page footer and only renders an explicit o
   assert.match(app, /if\(brandSignature\)/);
   assert.match(navi, /brandSignature/);
   assert.match(navi, /هرگز NAVA یا شماره اسلاید را خودکار اضافه نکن/);
+});
+
+
+test("Story Studio enforces a larger minimum type scale for mobile and NAVI avoids compact typography", () => {
+  assert.match(app, /busy>\.55\?112:132/);
+  assert.match(app, /kickerFont:"700 48px/);
+  assert.match(app, /const bodySize=busy>\.55\?62:68/);
+  assert.match(app, /700 60px Vazirmatn/);
+  assert.match(navi, /قانون سخت خوانایی موبایل/);
+  assert.doesNotMatch(navi, /typeTreatment[^\n]{0,80}compact/);
 });
