@@ -25,6 +25,13 @@ test("Story Studio never silently truncates generated Persian text layers", () =
   assert.doesNotMatch(app, /const visible=lines\.slice\(0,num\(item\.maxLines/);
 });
 
+test("Story Studio places a selected photo behind the scene when NAVI authored no image layer", () => {
+  assert.match(app, /const hasImageElement=elements\.some\(item=>item\.type==="image"\)/);
+  assert.match(app, /if\(fallbackPhoto&&!hasImageElement\)/);
+  assert.match(app, /ctx\.drawImage\(fallbackPhoto,/);
+  assert.match(app, /const veil=ctx\.createLinearGradient\(0,0,0,height\)/);
+});
+
 test("Story Studio applies the selected per-slide photo as the authoritative source for every image layer", () => {
   assert.match(app, /const imageFor=item=>\{if\(fallbackPhoto\)return fallbackPhoto/);
   assert.match(app, /slide\.imageIndex=selected;syncSlideImageElements\(slide,selected\)/);
