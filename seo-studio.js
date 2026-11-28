@@ -131,12 +131,35 @@
     });
     form.addEventListener("submit", async event => {
       event.preventDefault();
-      if (auditBusy || !form.reportValidity()) return;
+      if (auditBusy) return;
       const input = byId("seoAuditUrl");
       const status = byId("seoAuditStatus");
       const button = byId("seoAuditSubmit");
-      const value = input.value.trim();
-      if (!value) { setText(status, "ابتدا آدرس صفحه را وارد کن."); return; }
+      let value = input.value.trim();
+      if (!value) {
+        setText(status, "ابتدا آدرس صفحه را وارد کن.");
+        input.reportValidity();
+        input.focus();
+        return;
+      }
+      // Accept common user input such as example.com without requiring the scheme.
+      if (!value.includes("://")) value = "https://" + value;
+      input.value = value;
+      try {
+        const parsedUrl = new URL(value);
+        if (!["http:", "https:"].includes(parsedUrl.protocol) || !parsedUrl.hostname.includes(".")) {
+          throw new Error("نشانی باید یک آدرس معتبر وب با دامنه کامل باشد.");
+        }
+      } catch (validationError) {
+        setText(status, validationError?.message || "آدرس صفحه معتبر نیست. نمونه: https://example.com/page");
+        input.focus();
+        return;
+      }
+      if (!form.reportValidity()) {
+        setText(status, "فرمت آدرس صفحه معتبر نیست. نمونه: https://example.com/page");
+        input.focus();
+        return;
+      }
       const config = window.NAVA_SEO_CONFIG;
       const token = config?.getToken?.();
       if (!token) {
