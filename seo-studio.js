@@ -163,8 +163,9 @@
       const config = window.NAVA_SEO_CONFIG;
       const token = config?.getToken?.();
       if (!token) {
-        setText(status, "برای اجرای تحلیل، ابتدا وارد حساب نوا شو.");
-        window.openNaviAssistant?.({ service: "سئو" });
+        // Do not open the generic NAVI composer: SEO audit requires an authenticated
+        // session, and the empty composer otherwise prompts for an unrelated brief.
+        setText(status, "برای شروع تحلیل فنی، ابتدا از دکمه «ورود / ثبت‌نام» وارد حساب نوا شو؛ سپس دوباره همین آدرس را بررسی کن.");
         return;
       }
       auditBusy = true;
