@@ -145,20 +145,34 @@
         return;
       }
       auditBusy = true;
+      form.setAttribute("aria-busy", "true");
       button.disabled = true;
       button.querySelector("span").textContent = "در حال تحلیل…";
       setText(byId("seoNaviHandoffState"), "در انتظار ارسال");
       setText(status, "در حال دریافت صفحه و بررسی عناصر واقعی آن…");
       byId("seoAuditResults").hidden = true;
       try {
-        const response = await fetch(config.apiBase + "/seo-audit", {
-          method: "POST",
-          headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
-          body: JSON.stringify({ url: value }),
-          cache: "no-store"
-        });
-        const data = await response.json();
-        if (!response.ok || !data.success || !data.report) throw new Error(data.error || "تحلیل صفحه انجام نشد.");
+        let response;
+        try {
+          response = await fetch(config.apiBase + "/seo-audit", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
+            body: JSON.stringify({ url: value }),
+            cache: "no-store"
+          });
+        } catch (networkError) {
+          throw new Error("ارتباط با سرویس تحلیل سئو برقرار نشد. اتصال اینترنت یا دسترسی سرویس را بررسی کن.");
+        }
+        let data;
+        try {
+          data = await response.json();
+        } catch {
+          throw new Error("پاسخ سرویس تحلیل سئو قابل‌خواندن نیست (HTTP " + response.status + ").");
+        }
+        if (!response.ok || !data.success || !data.report) {
+          const reason = data?.error || data?.diagnostic || "تحلیل صفحه انجام نشد.";
+          throw new Error(reason + " (HTTP " + response.status + (data?.code ? " · " + data.code : "") + ")");
+        }
         renderReport(data.report);
         setText(status, "تحلیل فنی کامل شد؛ گزارش در حال ارسال خودکار به NAVI است…");
         await submitReportToNavi();
@@ -169,6 +183,7 @@
         }
       } finally {
         auditBusy = false;
+        form.removeAttribute("aria-busy");
         button.disabled = false;
         button.querySelector("span").textContent = "شروع تحلیل";
       }
