@@ -53,3 +53,35 @@
 
 /* Keep the studio explanation compact inside the audit card, below the URL field. */
 .seo-intro-note{display:block;width:100%;margin:3px 0 0;padding:0;color:var(--muted);font-size:.78rem;line-height:1.65;font-weight:400;max-width:68ch;grid-column:1/-1}
+
+
+/* SEO studio: use the same balanced workspace composition as the other studios. */
+.seo-main{
+  grid-template-columns:minmax(0,1.35fr) minmax(260px,.78fr);
+  grid-template-areas:
+    "audit scope"
+    "results results";
+  align-items:start;
+  column-gap:20px;
+  row-gap:20px;
+}
+.seo-input-panel{grid-area:audit}
+.seo-scope-panel{grid-area:scope;align-self:stretch}
+.seo-audit-results{grid-area:results}
+.seo-input-panel,.seo-scope-panel,.seo-audit-results{
+  width:100%;
+  box-sizing:border-box;
+}
+.seo-panel-heading{margin-bottom:16px}
+.seo-audit-form label{margin:10px 0 7px}
+.seo-assurance-row{margin-top:14px}
+.seo-audit-status{margin-top:12px}
+.seo-limit-note{font-size:.76rem}
+@media(max-width:760px){
+  .seo-main{
+    grid-template-columns:minmax(0,1fr);
+    grid-template-areas:"audit" "scope" "results";
+    gap:14px;
+  }
+  .seo-scope-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+}

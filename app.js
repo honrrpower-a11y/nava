@@ -2933,6 +2933,11 @@ async function updateNaviMemory(id, memoryValue, button, editor) {
       getNaviToken() !== token ||
       naviSessionVersion !== requestVersion
     ) {
+      if (seoReport) {
+        const message = "نشست ورود هنگام دریافت پاسخ تغییر کرد؛ دوباره وارد حساب شو و تحلیل را تکرار کن.";
+        window.dispatchEvent(new CustomEvent("nava:seo-error", { detail: { message } }));
+        return false;
+      }
       return;
     }
 
