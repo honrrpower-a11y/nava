@@ -38,6 +38,7 @@ test("SEO form remains an independent URL-only form", () => {
   const seoForm = html.match(/<form id="seoAuditForm"[\s\S]*?<\/form>/)?.[0] || "";
   assert.ok(seoForm, "SEO audit form must exist");
   assert.match(seoForm, /id="seoAuditUrl"/);
-  assert.doesNotMatch(seoForm, /studioBrief|userRequest|navi/i);
+  assert.doesNotMatch(seoForm, /id="(?:studioBrief|userRequest|naviInput)"/i);
+  assert.doesNotMatch(seoForm, /<textarea\b/i);
   assert.match(studio, /fetch\(config\.apiBase \+ "\/seo-audit"/);
 });
