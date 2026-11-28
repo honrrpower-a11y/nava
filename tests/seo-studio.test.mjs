@@ -22,3 +22,23 @@ test("SEO audit keeps explicit HTTP and HTTPS URL validation", () => {
   assert.match(studio, /new URL\(value\)/);
   assert.match(studio, /\["http:", "https:"\]\.includes\(parsedUrl\.protocol\)/);
 });
+
+test("SEO audit does not launch the generic NAVI composer when the session is missing", () => {
+  const authBranch = studio.indexOf('if (!token) {', studio.indexOf('const token = config?.getToken?.();'));
+  const nextBranch = studio.indexOf('auditBusy = true;', authBranch);
+  assert.notEqual(authBranch, -1, "SEO authentication guard must exist");
+  assert.notEqual(nextBranch, -1, "authenticated audit path must remain available");
+  const guard = studio.slice(authBranch, nextBranch);
+  assert.match(guard, /برای شروع تحلیل فنی، ابتدا از دکمه/);
+  assert.doesNotMatch(guard, /openNaviAssistant/);
+  assert.match(guard, /return;/);
+});
+
+test("SEO form remains an independent URL-only form", () => {
+  const seoForm = html.match(/<form id="seoAuditForm"[\s\S]*?<\/form>/)?.[0] || "";
+  assert.ok(seoForm, "SEO audit form must exist");
+  assert.match(seoForm, /id="seoAuditUrl"/);
+  assert.doesNotMatch(seoForm, /id="(?:studioBrief|userRequest|naviInput)"/i);
+  assert.doesNotMatch(seoForm, /<textarea\b/i);
+  assert.match(studio, /fetch\(config\.apiBase \+ "\/seo-audit"/);
+});
